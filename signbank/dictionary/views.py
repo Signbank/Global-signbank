@@ -2264,25 +2264,13 @@ def info(request):
 
 
 def extract_glossid_from_filename(filename):
-    file = os.path.basename(filename)
-    filename_without_extension = file.split('.')[0]
-
-    if filename_without_extension.endswith('_small'):
-        m = re.search(r".+-(\d+)\_small$", filename_without_extension)
-        gloss_pk = m.group(1)
-    elif filename_without_extension.endswith('_left'):
-        m = re.search(r".+-(\d+)\_left$", filename_without_extension)
-        gloss_pk = m.group(1)
-    elif filename_without_extension.endswith('_right'):
-        m = re.search(r".+-(\d+)\_right$", filename_without_extension)
-        gloss_pk = m.group(1)
-    elif re.search(r"\_nme_\d+$", filename_without_extension):
-        m = re.search(r".+-(\d+)\_nme_\d+$", filename_without_extension)
-        gloss_pk = m.group(1)
-    else:
-        gloss_pk = int(filename.split('.')[-2].split('-')[-1])
-
-    return gloss_pk
+    filename_without_extension, ext = os.path.splitext(os.path.basename(filename))
+    try:
+        if m := re.search(r".+-(\d+)_(small|left|right|nme_\d+|nme_\d+_left|nme_\d+_right)$", filename_without_extension):
+            return int(m.group(1))
+        return int(filename.split('.')[-2].split('-')[-1])
+    except (IndexError, ValueError) as e:
+        return None
 
 
 def protected_media(request, filename, document_root=WRITABLE_FOLDER, show_indexes=False):
@@ -2301,21 +2289,15 @@ def protected_media(request, filename, document_root=WRITABLE_FOLDER, show_index
 
             lookup_sentence = AnnotatedSentence.objects.filter(pk=sentence_pk).first()
             if not lookup_sentence:
-                HttpResponse(status=401)
+                return HttpResponse(status=401)
             pass
         elif 'handshape' in name:
             # handshape images are allowed to be seen in Show All Handshapes
             pass
         else:
-            try:
-                gloss_pk = extract_glossid_from_filename(filename)
-                glosspk = int(gloss_pk)
-            except (IndexError, ValueError):
+            glosspk = extract_glossid_from_filename(filename)
+            if glosspk is None or not Gloss.objects.filter(pk=glosspk, archived=False, inWeb=True).count() == 1:
                 return HttpResponse(status=401)
-
-            lookup_gloss = Gloss.objects.filter(pk=glosspk, archived=False, inWeb=True)
-            if not lookup_gloss.count() == 1:
-                HttpResponse(status=401)
 
         # If we got here, the gloss was found and in the web dictionary, so we can continue
 
