@@ -10,11 +10,13 @@ from signbank.video.models import GlossVideoDescription, GlossVideo, GlossVideoN
 def get_annotation_idgloss_per_language_dict(gloss):
     default_language = gloss.lemma.dataset.default_language
     gloss_annotations = gloss.annotationidglosstranslation_set.all()
-    if gloss_annotations:
-        gloss_default_annotationidglosstranslation = gloss.annotationidglosstranslation_set.get(
-            language=default_language).text
-    else:
+    default_annotationidglosstranslation = gloss.annotationidglosstranslation_set.filter(language=default_language).first()
+    if default_annotationidglosstranslation:
+        gloss_default_annotationidglosstranslation = default_annotationidglosstranslation.text
+    elif not gloss_annotations:
         gloss_default_annotationidglosstranslation = str(gloss.id)
+    else:
+        gloss_default_annotationidglosstranslation = gloss_annotations.first().text
 
     annotation_idgloss_per_language = dict()
     for language in gloss.dataset.translation_languages.all():
