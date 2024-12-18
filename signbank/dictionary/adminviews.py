@@ -6711,7 +6711,7 @@ class KeywordListView(ListView):
                     TaggedItem.objects.filter(tag__id__in=values).values_list('object_id', flat=True))
                 glosses_of_datasets = glosses_of_datasets.filter(id__in=glosses_with_tag)
 
-        glosses_of_datasets = glosses_of_datasets.order_by('lemma__lemmaidglosstranslation__text')
+        glosses_of_datasets = glosses_of_datasets.distinct().order_by('lemma__lemmaidglosstranslation__text')
 
         (interface_language, interface_language_code,
          default_language, default_language_code) = get_interface_language_and_default_language_codes(self.request)
