@@ -985,7 +985,10 @@ def queryset_glosssense_from_get(model, formclass, searchform, GET, qs):
     gloss_prefix = 'gloss__' if model in ['GlossSense', 'AnnotatedGloss'] else ''
     text_filter = 'iregex' if USE_REGULAR_EXPRESSIONS else 'icontains'
     for get_key, get_value in GET.items():
-        if get_key in ['csrfmiddlewaretoken', 'export_format', 'search_type', 'view_type', 'paginate_by', 'format']:
+        if get_key in ['csrfmiddlewaretoken', 'export_format', 'search_type', 'show_all',
+                       'view_type', 'paginate_by', 'format']:
+            continue
+        if get_value in ['', '0']:
             continue
         if get_key.endswith('[]'):
             if not get_value:
