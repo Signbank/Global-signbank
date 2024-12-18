@@ -822,11 +822,10 @@ class GlossListView(ListView):
 
         if self.search_type != 'sign':
             query_parameters['search_type'] = self.search_type
-
         qs = queryset_glosssense_from_get('Gloss', GlossSearchForm, self.search_form, get, qs)
         query_parameters = query_parameters_from_get(self.search_form, get, query_parameters)
+        qs = apply_language_filters_to_results('Gloss', qs, query_parameters)
         qs = apply_video_filters_to_results('Gloss', qs, query_parameters)
-
         # save the query parameters to a session variable
         self.request.session['query_parameters'] = json.dumps(query_parameters)
         self.request.session.modified = True
@@ -1162,42 +1161,20 @@ class GlossDetailView(DetailView):
 
         context['gloss'] = self.object
         gloss = self.object
+        context['active_id'] = gloss.id
 
-        otherrelations = []
-        for oth_rel in gloss.relation_sources.filter(target__archived__exact=False,
-                                                     source__archived__exact=False):
-            otherrelations.append((oth_rel, oth_rel.get_target_display()))
-        context['otherrelations'] = otherrelations
+        from signbank.dictionary.context_data_gloss import (get_other_relations, get_annotated_sentences,
+                                                            get_nme_video_descriptions, get_simultaneous_morphology, get_sequential_morphology,
+                                                            get_annotation_idgloss_per_language_dict)
 
-        annotated_sentences_1 = AnnotatedSentence.objects.filter(annotated_glosses__gloss=gloss,
-                                                                 annotated_glosses__isRepresentative=True).distinct().annotate(is_representative=V(1, output_field=IntegerField()))
-        annotated_sentences_2 = AnnotatedSentence.objects.filter(annotated_glosses__gloss=gloss,
-                                                                 annotated_glosses__isRepresentative=False).distinct().annotate(is_representative=V(0, output_field=IntegerField()))
-        annotated_sentences = annotated_sentences_1.union(annotated_sentences_2).order_by('-is_representative')
-        annotated_sentences_with_video = []
-        for annotated_sentence in annotated_sentences:
-            video_path = annotated_sentence.get_video_path()
-            if video_path and annotated_sentence not in annotated_sentences_with_video:
-                annotated_sentences_with_video.append(annotated_sentence)
-        annotated_sentences = annotated_sentences_with_video
-        if len(annotated_sentences) <= 3:
-            context['annotated_sentences'] = annotated_sentences
-        else:
-            context['annotated_sentences'] = annotated_sentences[0:3]
+        context['otherrelations'] = get_other_relations(gloss)
 
-        # Put nme video descriptions per language in the context
-        glossnmevideos = GlossVideoNME.objects.filter(gloss=gloss)
-        nme_video_descriptions = dict()
-        for nmevideo in glossnmevideos:
-            nme_video_descriptions[nmevideo] = {}
-            for language in gloss.dataset.translation_languages.all():
-                try:
-                    description_text = GlossVideoDescription.objects.get(nmevideo=nmevideo, language=language).text
-                except ObjectDoesNotExist:
-                    description_text = ""
-                nme_video_descriptions[nmevideo][language] = description_text
-        context['nme_video_descriptions'] = nme_video_descriptions
+        context['annotated_sentences'] = get_annotated_sentences(gloss)
 
+        context['nme_video_descriptions'] = get_nme_video_descriptions(gloss)
+
+        # it does not work to put this in a separate function
+        # the url parameter encoding is erased by Django of it's not constructed here
         lemma_group = gloss.lemma.gloss_set.all()
         if lemma_group.count() > 1:
             context['lemma_group'] = True
@@ -1208,66 +1185,18 @@ class GlossDetailView(DetailView):
             from urllib.parse import urlencode
             url_query = urlencode(lemma_group_url_params)
             url_query = ("?" + url_query) if url_query else ''
-            context['lemma_group_url'] = reverse_lazy('signs_search') + url_query
+            context['lemma_group_url'] = settings.PREFIX_URL + '/signs/search/' + url_query
         else:
             context['lemma_group'] = False
             context['lemma_group_url'] = ''
 
-        gloss_annotations = gloss.annotationidglosstranslation_set.all()
-        if gloss_annotations:
-            gloss_default_annotationidglosstranslation = gloss.annotationidglosstranslation_set.get(language=default_language).text
-        else:
-            gloss_default_annotationidglosstranslation = str(gloss.id)
-        # Put annotation_idgloss per language in the context
-        context['annotation_idgloss'] = {}
-        for language in gloss.dataset.translation_languages.all():
-            try:
-                annotation_text = gloss.annotationidglosstranslation_set.get(language=language).text
-            except ObjectDoesNotExist:
-                annotation_text = gloss_default_annotationidglosstranslation
-            context['annotation_idgloss'][language] = annotation_text
+        context['annotation_idgloss'] = get_annotation_idgloss_per_language_dict(gloss)
 
-        simultaneous_morphology = []
-        for sim_morph in gloss.simultaneous_morphology.filter(parent_gloss__archived__exact=False):
-            translated_morph_type = sim_morph.morpheme.mrpType.name if sim_morph.morpheme.mrpType else ''
-            morpheme_annotation_idgloss = {}
-            if sim_morph.morpheme.dataset:
-                for language in sim_morph.morpheme.dataset.translation_languages.all():
-                    morpheme_annotation_idgloss[language.language_code_2char] = sim_morph.morpheme.annotationidglosstranslation_set.filter(language=language)
-            else:
-                language = Language.objects.get(id=get_default_language_id())
-                morpheme_annotation_idgloss[language.language_code_2char] = sim_morph.morpheme.annotationidglosstranslation_set.filter(language=language)
-            if interface_language_code in morpheme_annotation_idgloss.keys():
-                morpheme_display = morpheme_annotation_idgloss[interface_language_code][0].text
-            else:
-                # default language if the interface language hasn't been set for this gloss
-                morpheme_display = morpheme_annotation_idgloss[default_language_code][0].text
+        context['simultaneous_morphology'] = get_simultaneous_morphology(gloss, interface_language)
+        context['simultaneous_morphology_display'] = [(sm[0].morpheme.pk, sm[1]) for sm in context['simultaneous_morphology']]
 
-            simultaneous_morphology.append((sim_morph, morpheme_display, translated_morph_type))
-
-        context['simultaneous_morphology'] = simultaneous_morphology
-        context['simultaneous_morphology_display'] = [(sm[0].morpheme.pk, sm[1]) for sm in simultaneous_morphology]
-
-        # Collect morphology definitions for sequential morphology section
-        morphdefs = []
-        for morphdef in gloss.parent_glosses.filter(parent_gloss__archived__exact=False,
-                                                    morpheme__archived__exact=False):
-
-            translated_role = morphdef.role.name if morphdef.role else ''
-
-            sign_display = str(morphdef.morpheme.id)
-            morph_texts = morphdef.morpheme.get_annotationidglosstranslation_texts()
-            if morph_texts.keys():
-                if interface_language_code in morph_texts.keys():
-                    sign_display = morph_texts[interface_language_code]
-                else:
-                    sign_display = morph_texts[default_language_code]
-
-            morphdefs.append((morphdef, translated_role, sign_display))
-
-        morphdefs = sorted(morphdefs, key=lambda tup: tup[1])
-        context['morphdefs'] = morphdefs
-        context['sequential_morphology_display'] = [(md[0].morpheme.pk, md[2]) for md in morphdefs]
+        context['morphdefs'] = get_sequential_morphology(gloss, interface_language)
+        context['sequential_morphology_display'] = [(md[0].morpheme.pk, md[2]) for md in context['morphdefs']]
 
         blend_morphology = []
         for ble_morph in gloss.blend_morphology.filter(parent_gloss__archived__exact=False,
@@ -1393,7 +1322,6 @@ class GlossDetailView(DetailView):
 
         # Pass info about which fields we want to see
         gl = context['gloss']
-        context['active_id'] = gl.id
 
         # the lemma field is non-empty because it's caught in the get method
         dataset_of_requested_gloss = gl.lemma.dataset
@@ -1595,27 +1523,6 @@ class GlossDetailView(DetailView):
 
         context['gloss_derivationhistory'] = list(gl.derivHist.all())
 
-        simultaneous_morphology = []
-        for sim_morph in gl.simultaneous_morphology.filter(parent_gloss__archived__exact=False):
-            translated_morph_type = sim_morph.morpheme.mrpType.name if sim_morph.morpheme.mrpType else ''
-            morpheme_annotation_idgloss = {}
-            if sim_morph.morpheme.dataset:
-                for language in sim_morph.morpheme.dataset.translation_languages.all():
-                    morpheme_annotation_idgloss[language.language_code_2char] = sim_morph.morpheme.annotationidglosstranslation_set.filter(language=language)
-            else:
-                language = Language.objects.get(id=get_default_language_id())
-                morpheme_annotation_idgloss[language.language_code_2char] = sim_morph.morpheme.annotationidglosstranslation_set.filter(language=language)
-            if interface_language_code in morpheme_annotation_idgloss.keys():
-                morpheme_display = morpheme_annotation_idgloss[interface_language_code][0].text
-            else:
-                # default language if the interface language hasn't been set for this gloss
-                morpheme_display = morpheme_annotation_idgloss[default_language_code][0].text
-
-            simultaneous_morphology.append((sim_morph, morpheme_display, translated_morph_type))
-
-        context['simultaneous_morphology'] = simultaneous_morphology
-        context['simultaneous_morphology_display'] = [(sm[0].morpheme.pk, sm[1]) for sm in simultaneous_morphology]
-
         # Obtain the number of morphemes in the dataset of this gloss
         # The template will not show the facility to add simultaneous morphology
         # if there are no morphemes to choose from
@@ -1650,19 +1557,6 @@ class GlossDetailView(DetailView):
             if "-duplicate" in annotation.text:
                 gloss_is_duplicate = True
         context['gloss_is_duplicate'] = gloss_is_duplicate
-
-        # Put nme video descriptions per language in the context
-        glossnmevideos = GlossVideoNME.objects.filter(gloss=gl)
-        nme_video_descriptions = dict()
-        for nmevideo in glossnmevideos:
-            nme_video_descriptions[nmevideo] = {}
-            for language in gl.dataset.translation_languages.all():
-                try:
-                    description_text = GlossVideoDescription.objects.get(nmevideo=nmevideo, language=language).text
-                except ObjectDoesNotExist:
-                    description_text = ""
-                nme_video_descriptions[nmevideo][language] = description_text
-        context['nme_video_descriptions'] = nme_video_descriptions
 
         return context
 

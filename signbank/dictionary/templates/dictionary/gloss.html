@@ -23,6 +23,7 @@
 <meta property="og:description" content="From the {{gloss.dataset.acronym}} dataset in Global Signbank." />
 <meta property="og:image" content="{{request.scheme}}://{{ request.get_host }}/media/{{protected_media_url}}{{gloss.get_image_url}}" />
 
+<script type="text/javascript" src='https://code.jquery.com/jquery-3.7.1.min.js'></script>
 <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.5.0/css/font-awesome.min.css">
 <script src="https://cdn.jsdelivr.net/sharer.js/latest/sharer.min.js"></script>
 
@@ -49,11 +50,10 @@ var show_dataset_interface_options = {{ SHOW_DATASET_INTERFACE_OPTIONS|yesno:"tr
 var search_type = '{{search_type}}';
 var model_view = 'gloss';
 var active_id = '{{active_id}}';
+console.log('active id: '+active_id);
 var this_gloss_id = {{gloss.id}};
 
 var search_results_url = '{% url 'dictionary:ajax_search_results' %}';
-
-{% include "dictionary/search_result_bar.html" %}
 
 function reloadVideo() {
     var video_player = document.getElementById("videoplayer");
@@ -183,6 +183,7 @@ $('#show_middle').click(function()
     $('#videoplayer_left').hide();
     $('#videoplayer_right').hide();
 });
+{% include "dictionary/search_result_bar.html" %}
 </script>
 <style>
     #view_tabs.affix {
