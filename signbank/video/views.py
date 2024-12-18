@@ -138,25 +138,37 @@ def get_glosses_from_eaf(eaf, dataset_acronym):
     glosses, labels_not_found, sentences = [], [], []
     sentence_dict = {}
 
-    # Add glosses from the right hand
-    for annotation in eaf.tiers['Glosses R'][0].values():
-        gloss_label = annotation[2]
-        if AnnotationIdglossTranslation.objects.filter(gloss__lemma__dataset__acronym=dataset_acronym, text__exact=gloss_label).exists():
-            start = int(eaf.timeslots[annotation[0]])
-            end = int(eaf.timeslots[annotation[1]])
-            glosses.append([gloss_label, start, end])
-        else:
-            labels_not_found.append(gloss_label)
+    # check whether to use 'Signbank ID glossen' or 'Glosses R' and 'Glosses L' tiers
+    if 'Signbank ID glossen' in eaf.tiers:
+        # Add glosses from this one tier
+        for annotation in eaf.tiers['Signbank ID glossen'][0].values():
+            gloss_label = annotation[2]
+            if AnnotationIdglossTranslation.objects.filter(gloss__lemma__dataset__acronym=dataset_acronym, text__exact=gloss_label).exists():
+                start = int(eaf.timeslots[annotation[0]])
+                end = int(eaf.timeslots[annotation[1]])
+                glosses.append([gloss_label, start, end])
+            else:
+                labels_not_found.append(gloss_label)
+    else:
+        # Add glosses from the right hand
+        for annotation in eaf.tiers['Glosses R'][0].values():
+            gloss_label = annotation[2]
+            if AnnotationIdglossTranslation.objects.filter(gloss__lemma__dataset__acronym=dataset_acronym, text__exact=gloss_label).exists():
+                start = int(eaf.timeslots[annotation[0]])
+                end = int(eaf.timeslots[annotation[1]])
+                glosses.append([gloss_label, start, end])
+            else:
+                labels_not_found.append(gloss_label)
 
-    # Add glosses from the left hand, if they don't overlap with the right hand
-    for annotation in find_non_overlapping_annotated_glosses(eaf.timeslots, eaf.tiers['Glosses R'][0].values(), eaf.tiers['Glosses L'][0].values()):
-        gloss_label = annotation[2]
-        if AnnotationIdglossTranslation.objects.filter(gloss__lemma__dataset__acronym=dataset_acronym, text__exact=gloss_label).exists():
-            start = int(eaf.timeslots[annotation[0]])
-            end = int(eaf.timeslots[annotation[1]])
-            glosses.append([gloss_label, start, end])
-        else:
-            labels_not_found.append(gloss_label)
+        # Add glosses from the left hand, if they don't overlap with the right hand
+        for annotation in find_non_overlapping_annotated_glosses(eaf.timeslots, eaf.tiers['Glosses R'][0].values(), eaf.tiers['Glosses L'][0].values()):
+            gloss_label = annotation[2]
+            if AnnotationIdglossTranslation.objects.filter(gloss__lemma__dataset__acronym=dataset_acronym, text__exact=gloss_label).exists():
+                start = int(eaf.timeslots[annotation[0]])
+                end = int(eaf.timeslots[annotation[1]])
+                glosses.append([gloss_label, start, end])
+            else:
+                labels_not_found.append(gloss_label)
 
     # Sort the list of glosses by the "start" value
     glosses = sorted(glosses, key=lambda x: x[1])
@@ -164,9 +176,12 @@ def get_glosses_from_eaf(eaf, dataset_acronym):
     if 'Sentences' in eaf.tiers:
         for annotation in eaf.tiers['Sentences'][0].values():
             sentences.append(annotation[2])
+    elif 'Nederlands' in eaf.tiers:
+        for annotation in eaf.tiers['Nederlands'][0].values():
+            sentences.append(annotation[2])
     
     dataset_language = Dataset.objects.get(acronym=dataset_acronym).default_language.language_code_3char
-    for sentence_i, sentence in enumerate(sentences):
+    for sentence in sentences:
         sentence_dict[dataset_language] = sentence
 
     return glosses, labels_not_found, sentence_dict
