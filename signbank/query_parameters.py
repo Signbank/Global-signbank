@@ -31,7 +31,7 @@ from django.urls import reverse
 from tagging.models import TaggedItem, Tag
 from django.shortcuts import render, get_object_or_404, redirect
 from guardian.shortcuts import get_objects_for_user
-from signbank.tools import get_selected_datasets_for_user, get_dataset_languages
+from signbank.tools import get_dataset_languages
 
 
 def list_to_query(query_list):
@@ -906,7 +906,8 @@ def set_up_language_fields(model, view, form):
     :form: GlossSearchForm, MorphemeSearchForm, FocusGlossSearchForm, LemmaSearchForm, AnnotatedSentenceForm
     :view: GlossListView, MorphemeListView, SenseListView, MinimalPairsListView, LemmaListView, AnnotatedSentenceListView
     """
-    selected_datasets = get_selected_datasets_for_user(view.request.user)
+    from signbank.dictionary.context_data import get_selected_datasets
+    selected_datasets = get_selected_datasets(view.request)
     dataset_languages = get_dataset_languages(selected_datasets)
     interface_language = [view.request.LANGUAGE_CODE]
     count_languages = len(dataset_languages)
@@ -955,7 +956,8 @@ def set_up_signlanguage_dialects_fields(view, form):
     :form: GlossSearchForm
     :view: GlossListView, SenseListView
     """
-    selected_datasets = get_selected_datasets_for_user(view.request.user)
+    from signbank.dictionary.context_data import get_selected_datasets
+    selected_datasets = get_selected_datasets(view.request)
     field_label_signlanguage = gettext("Sign Language")
     field_label_dialects = gettext("Dialect")
     form.fields['signLanguage'] = forms.ModelMultipleChoiceField(label=field_label_signlanguage,
