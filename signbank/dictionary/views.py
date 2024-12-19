@@ -1,5 +1,7 @@
+import os.path
+
 from django.conf import empty
-from django.http import HttpResponse, HttpResponseRedirect, HttpResponseBadRequest, HttpResponseNotAllowed, Http404
+from django.http import HttpResponse, HttpResponseRedirect, HttpResponseBadRequest, HttpResponseNotAllowed, Http404, JsonResponse
 from django.shortcuts import render, get_object_or_404, redirect
 from django.urls import reverse
 from django.contrib.auth.decorators import login_required
@@ -23,12 +25,13 @@ from signbank.dictionary.update_csv import (update_simultaneous_morphology, upda
 import signbank.dictionary.forms
 from signbank.video.models import GlossVideo, small_appendix, add_small_appendix
 
-from signbank.tools import save_media
-from signbank.tools import get_selected_datasets_for_user, get_default_annotationidglosstranslation, \
-    get_dataset_languages, \
-    create_gloss_from_valuedict, compare_valuedict_to_gloss, compare_valuedict_to_lemma, construct_scrollbar, \
-    get_interface_language_and_default_language_codes, detect_delimiter, split_csv_lines_header_body, \
-    split_csv_lines_sentences_header_body, create_sentence_from_valuedict
+from signbank.dictionary.context_data import get_selected_datasets
+from signbank.tools import save_media, get_two_letter_dir
+from signbank.tools import (get_default_annotationidglosstranslation,
+    get_dataset_languages,
+    create_gloss_from_valuedict, compare_valuedict_to_gloss, compare_valuedict_to_lemma, construct_scrollbar,
+    get_interface_language_and_default_language_codes, detect_delimiter, split_csv_lines_header_body,
+    split_csv_lines_sentences_header_body, create_sentence_from_valuedict)
 from signbank.dictionary.field_choices import fields_to_fieldcategory_dict
 
 from signbank.csv_interface import (csv_create_senses, csv_update_sentences, csv_create_sentence, required_csv_columns,
@@ -89,7 +92,7 @@ def gloss(request, glossid):
     else:
         request.session['search_type'] = 'sign'
 
-    selected_datasets = get_selected_datasets_for_user(request.user)
+    selected_datasets = get_selected_datasets(request)
     dataset_languages = Language.objects.filter(dataset__in=selected_datasets).distinct()
 
     show_dataset_interface = getattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS', False)
@@ -171,7 +174,7 @@ def gloss(request, glossid):
 def morpheme(request, glossid):
     # this is public view of a morpheme
 
-    selected_datasets = get_selected_datasets_for_user(request.user)
+    selected_datasets = get_selected_datasets(request)
     dataset_languages = Language.objects.filter(dataset__in=selected_datasets).distinct()
 
     show_dataset_interface = getattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS', False)
@@ -309,7 +312,7 @@ def missing_video_view(request):
         messages.add_message(self.request, messages.ERROR, _('Please login to use this functionality.'))
         return HttpResponseRedirect(settings.PREFIX_URL + '/datasets/available')
 
-    selected_datasets = get_selected_datasets_for_user(request.user)
+    selected_datasets = get_selected_datasets(request)
 
     glosses = missing_video_list(selected_datasets)
 
@@ -321,7 +324,7 @@ def try_code(request, pk):
     """A view for the developer to try out senses for a particular gloss"""
     context = {}
 
-    selected_datasets = get_selected_datasets_for_user(request.user)
+    selected_datasets = get_selected_datasets(request)
 
     dataset_languages = Language.objects.filter(dataset__in=selected_datasets).distinct()
 
@@ -377,7 +380,7 @@ def try_code(request, pk):
 def add_new_sign(request):
     context = {}
 
-    selected_datasets = get_selected_datasets_for_user(request.user)
+    selected_datasets = get_selected_datasets(request)
 
     default_dataset_acronym = settings.DEFAULT_DATASET_ACRONYM
     default_dataset = Dataset.objects.get(acronym=default_dataset_acronym)
@@ -411,7 +414,7 @@ def add_new_morpheme(request):
 
     context = {}
 
-    selected_datasets = get_selected_datasets_for_user(request.user)
+    selected_datasets = get_selected_datasets(request)
     dataset_languages = Language.objects.filter(dataset__in=selected_datasets).distinct()
     context['dataset_languages'] = dataset_languages
     context['default_dataset_lang'] = dataset_languages.first().language_code_2char if dataset_languages else LANGUAGE_CODE
@@ -444,7 +447,7 @@ def import_csv_create(request):
     user_datasets = guardian.shortcuts.get_objects_for_user(user, 'change_dataset', Dataset)
     user_datasets_names = [dataset.acronym for dataset in user_datasets]
 
-    selected_datasets = get_selected_datasets_for_user(user)
+    selected_datasets = get_selected_datasets(request)
     dataset_languages = get_dataset_languages(selected_datasets)
     selected_dataset_acronyms = [dataset.acronym for dataset in selected_datasets]
 
@@ -851,7 +854,7 @@ def import_csv_update(request):
     user_datasets = guardian.shortcuts.get_objects_for_user(user, 'change_dataset', Dataset)
     user_datasets_names = [dataset.acronym for dataset in user_datasets]
 
-    selected_datasets = get_selected_datasets_for_user(user)
+    selected_datasets = get_selected_datasets(request)
     dataset_languages = get_dataset_languages(selected_datasets)
 
     required_columns, language_fields, optional_columns = required_csv_columns(dataset_languages, 'update_gloss')
@@ -1408,7 +1411,7 @@ def import_csv_lemmas(request):
     user_datasets = guardian.shortcuts.get_objects_for_user(user, 'change_dataset', Dataset)
     user_datasets_names = [dataset.acronym for dataset in user_datasets]
 
-    selected_datasets = get_selected_datasets_for_user(user)
+    selected_datasets = get_selected_datasets(request)
     dataset_languages = Language.objects.filter(dataset__in=selected_datasets).distinct()
     translation_languages_dict = {}
     # this dictionary is used in the template
@@ -1713,8 +1716,9 @@ def switch_to_language(request,language):
 
     return HttpResponse('OK')
 
+
 def recently_added_glosses(request):
-    selected_datasets = get_selected_datasets_for_user(request.user)
+    selected_datasets = get_selected_datasets(request)
     dataset_languages = Language.objects.filter(dataset__in=selected_datasets).distinct()
     from signbank.settings.server_specific import RECENTLY_ADDED_SIGNS_PERIOD
 
@@ -1750,7 +1754,7 @@ def recently_added_glosses(request):
 
 
 def proposed_new_signs(request):
-    selected_datasets = get_selected_datasets_for_user(request.user)
+    selected_datasets = get_selected_datasets(request)
     dataset_languages = Language.objects.filter(dataset__in=selected_datasets).distinct()
     proposed_or_new_signs = (Gloss.objects.filter(isNew=True, archived=False) |
                              TaggedItem.objects.get_intersection_by_model(Gloss, "sign:_proposed")).order_by('creationDate').reverse()
@@ -1777,6 +1781,56 @@ def create_citation_image(request, pk):
         messages.add_message(request, messages.ERROR, feedback_message)
 
     return redirect(url)
+
+
+def generate_video_stills_for_gloss(request, pk):
+    if 'HTTP_REFERER' in request.META:
+        url = request.META['HTTP_REFERER']
+    else:
+        url = '/'
+
+    gloss = get_object_or_404(Gloss, pk=pk, archived=False)
+    try:
+        gloss.generate_stills()
+    except (PermissionError, OSError) as e:
+        feedback_message = getattr(e, 'message', repr(e))
+        messages.add_message(request, messages.ERROR, feedback_message)
+
+    return redirect(url)
+
+
+def save_chosen_still_for_gloss(request, pk):
+
+    gloss = get_object_or_404(Gloss, pk=pk, archived=False)
+    redirect_url = reverse('dictionary:admin_gloss_view', kwargs={'pk': pk})
+
+    imagepath = request.POST.get('imagepath', '')
+    if not imagepath:
+        return JsonResponse({'redirect_url': redirect_url})
+
+    image_location = os.path.join(WRITABLE_FOLDER, imagepath)
+    dataset_folder = gloss.lemma.dataset.acronym
+    idgloss = gloss.idgloss
+    two_char_folder = get_two_letter_dir(idgloss)
+
+    vfile_name = idgloss + '-' + str(gloss.id) + '.png'
+    still_goal_location = os.path.join(WRITABLE_FOLDER, GLOSS_IMAGE_DIRECTORY, dataset_folder, two_char_folder, vfile_name)
+    try:
+        if os.path.exists(still_goal_location):
+            os.remove(still_goal_location)
+        os.rename(image_location, still_goal_location)
+    except (PermissionError, OSError) as e:
+        feedback_message = getattr(e, 'message', repr(e))
+        messages.add_message(request, messages.ERROR, feedback_message)
+
+    # clean up the unused image files
+    from signbank.video.models import GlossVideo
+    glossvideo = GlossVideo.objects.filter(gloss=gloss, glossvideonme=None, glossvideoperspective=None, version=0).first()
+    if glossvideo:
+        glossvideo.delete_image_sequence()
+
+    return JsonResponse({'redirect_url': redirect_url})
+
 
 def add_image(request):
 
@@ -1996,7 +2050,7 @@ def gloss_annotations(this_gloss):
 
 def find_and_save_variants(request):
 
-    selected_datasets = get_selected_datasets_for_user(request.user)
+    selected_datasets = get_selected_datasets(request)
     dataset_languages = Language.objects.filter(dataset__in=selected_datasets).distinct()
 
     show_dataset_interface = getattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS', False)
@@ -2089,7 +2143,7 @@ def find_and_save_variants(request):
 
 def get_unused_videos(request):
 
-    selected_datasets = get_selected_datasets_for_user(request.user)
+    selected_datasets = get_selected_datasets(request)
     dataset_languages = Language.objects.filter(dataset__in=selected_datasets).distinct()
     selected_dataset_acronyms = [ds.acronym for ds in selected_datasets]
 
@@ -2164,12 +2218,12 @@ def package(request):
 
     video_urls = {os.path.splitext(os.path.basename(gv.videofile.name))[0]:
                       reverse('dictionary:protected_media', args=[gv.small_video(use_name=True) or gv.videofile.name])
-                  for gv in GlossVideo.objects.filter(gloss__in=available_glosses)
+                  for gv in GlossVideo.objects.filter(gloss__in=available_glosses, glossvideonme=None, glossvideoperspective=None, version=0)
                   if os.path.exists(str(gv.videofile.path))
                   and os.path.getmtime(str(gv.videofile.path)) > since_timestamp}
     image_urls = {os.path.splitext(os.path.basename(gv.videofile.name))[0]:
                        reverse('dictionary:protected_media', args=[gv.poster_file()])
-                  for gv in GlossVideo.objects.filter(gloss__in=available_glosses)
+                  for gv in GlossVideo.objects.filter(gloss__in=available_glosses, glossvideonme=None, glossvideoperspective=None, version=0)
                   if os.path.exists(str(gv.videofile.path))
                      and os.path.getmtime(str(gv.videofile.path)) > since_timestamp}
 
@@ -2209,26 +2263,43 @@ def info(request):
     return HttpResponse(json.dumps(user_datasets_names), content_type='application/json')
 
 
+def extract_glossid_from_filename(filename):
+    filename_without_extension, ext = os.path.splitext(os.path.basename(filename))
+    try:
+        if m := re.search(r".+-(\d+)_(small|left|right|nme_\d+|nme_\d+_left|nme_\d+_right)$", filename_without_extension):
+            return int(m.group(1))
+        return int(filename.split('.')[-2].split('-')[-1])
+    except (IndexError, ValueError) as e:
+        return None
+
+
 def protected_media(request, filename, document_root=WRITABLE_FOLDER, show_indexes=False):
 
     if not request.user.is_authenticated:
 
         # If we are not logged in, try to find if this maybe belongs to a gloss that is free to see for everbody?
         (name, ext) = os.path.splitext(os.path.basename(filename))
-        if 'handshape' in name:
-            # handshape images are allowed to be seen in Show All Handshapes
-            pass
-        else:
+        if 'annotatedvideo' in filename:
+            # check that the sentence exists
             try:
-                gloss_pk = int(filename.split('.')[-2].split('-')[-1])
+                file = os.path.basename(filename)
+                sentence_pk = int(file.split('.')[0])
             except IndexError:
                 return HttpResponse(status=401)
 
-            lookup_gloss = Gloss.objects.filter(pk=gloss_pk, archived=False, inWeb=True)
-            if not lookup_gloss.count() == 1:
-                HttpResponse(status=401)
+            lookup_sentence = AnnotatedSentence.objects.filter(pk=sentence_pk).first()
+            if not lookup_sentence:
+                return HttpResponse(status=401)
+            pass
+        elif 'handshape' in name:
+            # handshape images are allowed to be seen in Show All Handshapes
+            pass
+        else:
+            glosspk = extract_glossid_from_filename(filename)
+            if glosspk is None or not Gloss.objects.filter(pk=glosspk, archived=False, inWeb=True).count() == 1:
+                return HttpResponse(status=401)
 
-        #If we got here, the gloss was found and in the web dictionary, so we can continue
+        # If we got here, the gloss was found and in the web dictionary, so we can continue
 
     filename = os.path.normpath(filename)
 
@@ -2270,9 +2341,10 @@ def protected_media(request, filename, document_root=WRITABLE_FOLDER, show_index
         from django.views.static import serve
         return serve(request, filename, document_root, show_indexes)
 
+
 def show_glosses_with_no_lemma(request):
 
-    selected_datasets = get_selected_datasets_for_user(request.user)
+    selected_datasets = get_selected_datasets(request)
     dataset_languages = Language.objects.filter(dataset__in=selected_datasets).distinct()
 
     show_dataset_interface = getattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS', False)
@@ -2390,7 +2462,7 @@ from django.db import models
 
 def choice_lists(request):
 
-    selected_datasets = get_selected_datasets_for_user(request.user)
+    selected_datasets = get_selected_datasets(request)
     all_choice_lists = {}
 
     fields_with_choices = fields_to_fieldcategory_dict()
@@ -2451,7 +2523,7 @@ def gloss_revision_history(request,gloss_pk):
 
     gloss = get_object_or_404(Gloss, pk=gloss_pk, archived=False)
 
-    selected_datasets = get_selected_datasets_for_user(request.user)
+    selected_datasets = get_selected_datasets(request)
     dataset_languages = Language.objects.filter(dataset__in=selected_datasets).distinct()
 
     show_dataset_interface = getattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS', False)
@@ -2715,7 +2787,7 @@ def import_csv_create_sentences(request):
     user_datasets = guardian.shortcuts.get_objects_for_user(user, 'change_dataset', Dataset)
     user_datasets_names = [dataset.acronym for dataset in user_datasets]
 
-    selected_datasets = get_selected_datasets_for_user(user)
+    selected_datasets = get_selected_datasets(request)
     dataset_languages = get_dataset_languages(selected_datasets)
 
     translation_languages_dict = {}
@@ -2981,7 +3053,7 @@ def test_abstract_machine(request, datasetid):
     # used to test api method since PyCharm runserver does not support CORS
     dataset_id = int(datasetid)
     dataset = Dataset.objects.filter(id=dataset_id).first()
-    selected_datasets = get_selected_datasets_for_user(request.user)
+    selected_datasets = get_selected_datasets(request)
     dataset_languages = get_dataset_languages(selected_datasets)
     if not dataset or not (request.user.is_staff or request.user.is_superuser):
         translated_message = _('You do not have permission to use the test command.')
@@ -3007,7 +3079,7 @@ def test_am_update_gloss(request, datasetid, glossid):
     # used to test api method since PyCharm runserver does not support CORS
     dataset_id = int(datasetid)
     dataset = Dataset.objects.filter(id=dataset_id).first()
-    selected_datasets = get_selected_datasets_for_user(request.user)
+    selected_datasets = get_selected_datasets(request)
     dataset_languages = get_dataset_languages(selected_datasets)
     if not dataset or not (request.user.is_staff or request.user.is_superuser):
         translated_message = _('You do not have permission to use the test command.')

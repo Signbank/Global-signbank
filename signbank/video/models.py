@@ -10,7 +10,7 @@ import time
 import stat
 import shutil
 
-from signbank.video.convertvideo import extract_frame, convert_video, probe_format, make_thumbnail_video
+from signbank.video.convertvideo import extract_frame, convert_video, probe_format, make_thumbnail_video, generate_image_sequence, remove_stills
 
 from django.core.files.storage import FileSystemStorage
 from django.contrib.auth import models as authmodels
@@ -25,15 +25,6 @@ if sys.argv[0] == 'mod_wsgi':
     from signbank.dictionary.models import *
 else:
     from signbank.dictionary.models import Gloss, Language
-
-
-def get_two_letter_dir(idgloss):
-    foldername = idgloss[:2]
-
-    if len(foldername) == 1:
-        foldername += '-'
-
-    return foldername
 
 
 class GlossVideoStorage(FileSystemStorage):
@@ -133,6 +124,7 @@ class GlossVideoHistory(models.Model):
 
 def get_gloss_path_to_video_file_on_disk(gloss):
     idgloss = gloss.idgloss
+    from signbank.tools import get_two_letter_dir
     two_letter_dir = get_two_letter_dir(idgloss)
     dataset_dir = gloss.lemma.dataset.acronym
     filename = idgloss + '-' + str(gloss.id) + '.mp4'
@@ -158,6 +150,7 @@ def get_video_file_path(instance, filename, nmevideo=False, perspective='', offs
     (base, ext) = os.path.splitext(filename)
 
     idgloss = instance.gloss.idgloss
+    from signbank.tools import get_two_letter_dir
     two_letter_dir = get_two_letter_dir(idgloss)
 
     video_dir = settings.GLOSS_VIDEO_DIRECTORY
@@ -169,12 +162,14 @@ def get_video_file_path(instance, filename, nmevideo=False, perspective='', offs
             print('get_video_file_path: dataset_dir is empty for gloss ', str(instance.gloss.pk))
     if nmevideo:
         nme_video_offset = '_nme_' + str(offset)
-        filename = idgloss + '-' + str(instance.gloss.id) + nme_video_offset + ext + (version * ".bak")
+        filename = idgloss + '-' + str(instance.gloss.id) + nme_video_offset + ext
     elif perspective:
         video_perpsective = '_' + perspective
-        filename = idgloss + '-' + str(instance.gloss.id) + video_perpsective + ext + (version * ".bak")
+        filename = idgloss + '-' + str(instance.gloss.id) + video_perpsective + ext
+    elif version > 0:
+        filename = idgloss + '-' + str(instance.gloss.id) + ext + '.bak' + str(instance.id)
     else:
-        filename = idgloss + '-' + str(instance.gloss.id) + ext + (version * ".bak")
+        filename = idgloss + '-' + str(instance.gloss.id) + ext
 
     path = os.path.join(video_dir, dataset_dir, two_letter_dir, filename)
     if hasattr(settings, 'ESCAPE_UPLOADED_VIDEO_FILE_PATH') and settings.ESCAPE_UPLOADED_VIDEO_FILE_PATH:
@@ -230,8 +225,11 @@ def get_sentence_video_file_path(instance, filename, version=0):
         dataset_dir = os.path.join(instance.examplesentence.get_dataset().acronym, str(instance.examplesentence.id))
     except ObjectDoesNotExist:
         dataset_dir = ""
-    
-    filename = str(instance.examplesentence.id) + ext + (version * ".bak")
+
+    if version > 0:
+        filename = str(instance.examplesentence.id) + ext + '.bak' + str(instance.id)
+    else:
+        filename = str(instance.examplesentence.id) + ext
 
     path = os.path.join(video_dir, dataset_dir, filename)
     if hasattr(settings, 'ESCAPE_UPLOADED_VIDEO_FILE_PATH') and settings.ESCAPE_UPLOADED_VIDEO_FILE_PATH:
@@ -263,8 +261,11 @@ def get_annotated_video_file_path(instance, filename, version=0):
     (base, ext) = os.path.splitext(filename)
     video_dir = settings.ANNOTATEDSENTENCE_VIDEO_DIRECTORY
     dataset = instance.annotatedsentence.get_dataset().acronym
-    dataset_dir = os.path.join(dataset, str(instance.annotatedsentence.id))    
-    filename = str(instance.annotatedsentence.id) + ext + (version * ".bak")
+    dataset_dir = os.path.join(dataset, str(instance.annotatedsentence.id))
+    if version > 0:
+        filename = str(instance.annotatedsentence.id) + ext + '.bak' + str(instance.id)
+    else:
+        filename = str(instance.annotatedsentence.id) + ext
 
     path = os.path.join(video_dir, dataset_dir, filename)
     if hasattr(settings, 'ESCAPE_UPLOADED_VIDEO_FILE_PATH') and settings.ESCAPE_UPLOADED_VIDEO_FILE_PATH:
@@ -396,13 +397,9 @@ class ExampleVideo(models.Model):
             if self.version == 1:
                 # remove .bak from filename and decrement the version
                 (newname, bak) = os.path.splitext(self.videofile.name)
-                if bak != '.bak' + str(self.id):
-                    # hmm, something bad happened
-                    raise Exception('Unknown suffix on stored video file. Expected .bak')
-                    # print('Unknown suffix on stored video file. Expected .bak')
-                    # self.delete()
-                    # self.delete_files()
-                    # return
+                expected_extension = '.bak' + str(self.id)
+                if bak != expected_extension:
+                    raise Exception(f'Unknown suffix on stored video file. Expected {expected_extension}')
                 if os.path.isfile(os.path.join(storage.location, self.videofile.name)):
                     os.rename(os.path.join(storage.location, self.videofile.name),
                             os.path.join(storage.location, newname))
@@ -533,6 +530,9 @@ class AnnotatedVideo(models.Model):
     def select_annotations(self, eaf, tier_name, start_ms, end_ms):
         """ Select annotations that are within the selected range """
         
+        if tier_name not in eaf.tiers:
+            return
+        
         keys_to_remove = []
         for key in eaf.tiers[tier_name][0]:
             annotation_list = list(eaf.tiers[tier_name][0][key])
@@ -593,6 +593,8 @@ class AnnotatedVideo(models.Model):
         self.select_annotations(eaf, 'Sentences', start_ms, end_ms)
         self.select_annotations(eaf, 'Glosses R', start_ms, end_ms)
         self.select_annotations(eaf, 'Glosses L', start_ms, end_ms)
+        self.select_annotations(eaf, 'Nederlands', start_ms, end_ms)
+        self.select_annotations(eaf, 'Signbank ID glossen', start_ms, end_ms)
         # shift the timeslots to start at 0
         for key in eaf.timeslots:
             eaf.timeslots[key] -= start_ms
@@ -699,6 +701,14 @@ class GlossVideo(models.Model):
         else:
             return None
 
+    def make_image_sequence(self):
+
+        generate_image_sequence(self.videofile)
+
+    def delete_image_sequence(self):
+
+        remove_stills(self.videofile)
+
     def make_small_video(self):
         # this method is not called (bugs)
         name, _ = os.path.splitext(self.videofile.path)
@@ -777,13 +787,10 @@ class GlossVideo(models.Model):
                 if self.version == 1:
                     # remove .bak from filename and decrement the version
                     (newname, bak) = os.path.splitext(self.videofile.name)
-                    if bak != '.bak' + str(self.id):
+                    expected_extension = '.bak' + str(self.id)
+                    if bak != expected_extension:
                         # hmm, something bad happened
-                        raise Exception('Unknown suffix on stored video file. Expected .bak')
-                        # print('Unknown suffix on stored video file. Expected .bak')
-                        # self.delete()
-                        # self.delete_files()
-                        # return
+                        raise Exception(f'Unknown suffix on stored video file. Expected {expected_extension}')
                     if os.path.isfile(os.path.join(storage.location, self.videofile.name)):
                         os.rename(os.path.join(storage.location, self.videofile.name),
                                   os.path.join(storage.location, newname))

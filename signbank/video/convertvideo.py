@@ -18,6 +18,8 @@ import glob
 import ffmpeg
 from subprocess import Popen, PIPE
 import re
+import subprocess
+from signbank.settings.server_specific import DEBUG_VIDEOS
 
 
 def parse_ffmpeg_output(text):
@@ -121,6 +123,53 @@ def probe_format(file):
     return r['inputvideoformat']
 
 
+def generate_image_sequence(sourcefile):
+    basename, _ = os.path.splitext(sourcefile.path)
+    temp_location_frames = os.path.join(settings.WRITABLE_FOLDER,
+                                        settings.GLOSS_IMAGE_DIRECTORY, "signbank-thumbnail-frames")
+    filename, ext = os.path.splitext(os.path.basename(sourcefile.name))
+    filename = filename.replace(' ', '_')
+    folder_name, _ = os.path.splitext(filename)
+    temp_video_frames_folder = os.path.join(temp_location_frames, folder_name)
+    # Create the necessary subfolder if needed
+    if not os.path.isdir(temp_location_frames):
+        os.mkdir(temp_location_frames)
+    if not os.path.isdir(temp_video_frames_folder):
+        os.mkdir(temp_video_frames_folder)
+    else:
+        # remove old files before generating again
+        stills_pattern = temp_video_frames_folder + "/*.png"
+        for f in glob.glob(stills_pattern):
+            os.remove(f)
+    (
+        ffmpeg
+        .input(sourcefile.path, ss=0.5)
+        .filter('fps', fps=25, round='up')
+        .output("%s/%s-%%04d.png" % (temp_video_frames_folder, folder_name), **{'qscale:v': 2})
+        .run(quiet=True)
+    )
+    stills = []
+    for filename in os.listdir(temp_video_frames_folder):
+        still_path = os.path.join(temp_video_frames_folder, filename)
+        stills.append(still_path)
+
+    return stills
+
+
+def remove_stills(sourcefile):
+    basename, _ = os.path.splitext(sourcefile.path)
+    temp_location_frames = os.path.join(settings.WRITABLE_FOLDER,
+                                        settings.GLOSS_IMAGE_DIRECTORY, "signbank-thumbnail-frames")
+    filename, ext = os.path.splitext(os.path.basename(sourcefile.name))
+    filename = filename.replace(' ', '_')
+    folder_name, _ = os.path.splitext(filename)
+    temp_video_frames_folder = os.path.join(temp_location_frames, folder_name)
+    # remove the temp files
+    stills_pattern = temp_video_frames_folder+"/*.png"
+    for f in glob.glob(stills_pattern):
+        os.remove(f)
+
+
 def make_thumbnail_video(sourcefile, targetfile):
     # this method is not called (need to move temp files to /tmp instead)
     # this function also works on source quicktime videos
@@ -160,6 +209,30 @@ def make_thumbnail_video(sourcefile, targetfile):
     for f in glob.glob(stills_pattern):
         os.remove(f)
     os.remove(temp_target)
+
+
+def video_file_type_extension(video_file_full_path):
+    if not os.path.exists(video_file_full_path):
+        return ""
+    filetype_output = subprocess.run(["file", video_file_full_path], stdout=subprocess.PIPE)
+    filetype = str(filetype_output.stdout)
+    if 'MOV' in filetype:
+        desired_video_extension = '.mov'
+    elif 'M4V' in filetype:
+        desired_video_extension = '.m4v'
+    elif 'MP4' in filetype:
+        desired_video_extension = '.mp4'
+    elif 'Matroska' in filetype:
+        desired_video_extension = '.webm'
+    elif 'MKV' in filetype:
+        desired_video_extension = '.mkv'
+    elif 'MPEG-2' in filetype:
+        desired_video_extension = '.m2v'
+    else:
+        if DEBUG_VIDEOS:
+            print('video:admin:convertvideo:video_file_type_extension:file:UNKNOWN ', filetype)
+        desired_video_extension = '.unknown'
+    return desired_video_extension
 
 
 def convert_video(sourcefile, targetfile, force=False):

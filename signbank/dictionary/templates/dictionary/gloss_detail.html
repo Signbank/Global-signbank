@@ -202,6 +202,61 @@ function checkKey(e)
     <script type="text/javascript" src="{{STATIC_URL}}js/recordscript.js"></script>
 
     <script type='text/javascript'>
+        $('.quick_createstills').click(function(e)
+        {
+            var glossid = $(this).attr('data-glossid');
+            $.ajax({
+               url : url + "/dictionary/generate_video_stills_for_gloss/" + glossid,
+               type: 'POST',
+               data: { 'csrfmiddlewaretoken': csrf_token },
+               success : function(data) {
+                    var lookup = "#stills_gloss_video";
+                    $(lookup).empty();
+                    $.ajax({
+                        url : url + "/dictionary/ajax/fetch_video_stills_for_gloss/" + glossid + "/",
+                        datatype: "json",
+                        async: true,
+                        data: { 'csrfmiddlewaretoken': csrf_token },
+                        success : function(result) {
+                            var parsed = $.parseHTML(result);
+                            $(lookup).first().append(result);
+                            var stills_modal = '#stills_modal';
+                            $(stills_modal).modal("show");
+                        }
+                    });
+               }
+            });
+        });
+        $('.choose_still').click(function(e)
+        {
+            var glossid = $(this).attr('data-glossid');
+            var lookup = "#stills_gloss_video";
+            var chosen_image = [];
+            $(lookup).find('input[name="stillimage"]').each(function() {
+                if (this.checked) {
+                    chosen_image.push(this.value);
+                }
+            });
+            if (!chosen_image.length > 0) {
+                return;
+            }
+            var chosen = chosen_image[0];
+            $.ajax({
+               url : url + "/dictionary/save_chosen_still_for_gloss/" + glossid,
+               type: 'POST',
+               datatype: "json",
+               data: { 'csrfmiddlewaretoken': csrf_token,
+                       'imagepath': chosen },
+               success: function(data) {
+                    var stills_modal = '#stills_modal';
+                    var lookup = "#stills_gloss_video";
+                    $(lookup).empty();
+                    $(stills_modal).modal("hide");
+                    var redirect_url = data.redirect_url;
+                    window.location.replace(redirect_url);
+               }
+            });
+        });
         function play_perspective() {
             $('#videoplayer_middle').trigger('play');
             $('#videoplayer_left').trigger('play');
@@ -228,6 +283,63 @@ function checkKey(e)
             restart_video(left);
             var right = $('#videoplayer_right');
             restart_video(right);
+        }
+
+        function openFullscreen() {
+            // Get the videos with IDs videoplayer_[direction]
+            const videoIds = ['videoplayer_left', 'videoplayer_middle', 'videoplayer_right']; 
+            let activeVideo = null;
+
+            // Loop through the video IDs and check which one is active
+            videoIds.forEach(id => {
+                const video = document.getElementById(id);
+                if (video && window.getComputedStyle(video).display !== 'none') { 
+                    activeVideo = video;
+                }
+            });
+
+            if (activeVideo) {
+
+                // turn on controls in fullscreen
+                activeVideo.controls = true;
+                // activate fullscreen mode
+                if (activeVideo.requestFullscreen) {
+                    activeVideo.requestFullscreen();
+                } else if (activeVideo.mozRequestFullScreen) { // Firefox
+                    activeVideo.mozRequestFullScreen();
+                } else if (activeVideo.webkitRequestFullscreen) { // Chrome, Safari, and Opera
+                    activeVideo.webkitRequestFullscreen();
+                } else if (activeVideo.msRequestFullscreen) { // IE/Edge
+                    activeVideo.msRequestFullscreen();
+                }
+            } 
+            // on exit fullscreen mode, reset each video
+            document.addEventListener('fullscreenchange', resetVideos);
+            document.addEventListener('webkitfullscreenchange', resetVideos); // For Safari
+            document.addEventListener('mozfullscreenchange', resetVideos); // For Firefox
+            document.addEventListener('MSFullscreenChange', resetVideos); // For IE/Edge
+        }
+
+        function resetVideos() {
+            if (!document.fullscreenElement && !document.webkitFullscreenElement && 
+                !document.mozFullScreenElement && !document.msFullscreenElement) {
+                
+                // Get the videos with IDs videoplayer_[direction]
+                const videoIds = ['videoplayer_middle', 'videoplayer_left', 'videoplayer_right'];
+                videoIds.forEach(id => {
+                    const video = document.getElementById(id);
+                    if (video) {
+                        video.controls = false; 
+                        video.currentTime = 0; 
+                    }
+                });
+
+                // Remove fullscreen event listeners when exiting fullscreen
+                document.removeEventListener('fullscreenchange', resetVideos);
+                document.removeEventListener('webkitfullscreenchange', resetVideos);
+                document.removeEventListener('mozfullscreenchange', resetVideos);
+                document.removeEventListener('MSFullscreenChange', resetVideos);
+            }
         }
 
         // This script gets minimal pairs data and displays it as table rows
@@ -401,8 +513,19 @@ textarea {
 textarea:focus {
     border: 1px solid red;
 }
+.radio_stills label:has(+ input[type="radio"]:checked) > img {
+    outline: 2px solid red;
+}
+.zoom {
+  background-color: transparent;
+  transition: transform .2s; /* Animation */
+  margin: 0 auto;
+}
+.zoom:hover {
+  transform: scale(1.5);
+  outline: 2px solid red;
+}
 </style>
-
 {% endblock %}
 
 {% block content %}
@@ -814,6 +937,8 @@ textarea:focus {
                 style="font-size:16px;background-color:transparent;"><span class="glyphicon glyphicon-play"></span></button>
         <button class="btn" id="pause_perspective" onclick="pause_perspective();"
                 style="font-size:16px;background-color:transparent;"><span class="glyphicon glyphicon-pause"></span></button>
+        <button class="btn" id="fullscreen_perspective" onclick="openFullscreen();"
+                style="font-size:16px;background-color:transparent;"><span class="glyphicon glyphicon-fullscreen"></span></button>
         </div>
         <br>
     {% else %}
@@ -957,9 +1082,43 @@ textarea:focus {
     {% if gloss.has_video and "change_dataset" in dataset_perms %}
         <div class="editform">
             <h4>{% trans "Create Citation Form Image from Current Video" %}</h4>
-            <a href="{% url 'dictionary:create_citation_image'  gloss.id %}" class="btn btn-primary">Create</a>
-        </div>
+            <a href="{% url 'dictionary:create_citation_image'  gloss.id %}" class="btn btn-primary">{% trans "Create" %}</a>
 
+            <button id='quick_create_stills'
+                class="quick_createstills btn btn-primary" style="width:auto;"
+                name='quick_createstills'
+                data-glossid='{{gloss.id}}'
+                type="submit" >{% trans "Choose Still Image" %}
+            </button>
+        </div>
+        <div class="modal fade" id="stills_modal" tabindex="-1" role="dialog" aria-labelledby="#modalTitleStills" aria-hidden="true">
+             <div class="modal-dialog modal-lg left-modal">
+                <div class="modal-content">
+                    <div class='modal-header'>
+                        <h2 id='modalTitleStills'>{% trans "Choose a Still Image" %}</h2>
+                    </div>
+                    <div class='modal-body'>
+
+                        <div style="width:800px;">
+                            <table class='table table-condensed'>
+                                <tbody class="tbody tbody-light">
+                                    <tr>
+                                        <td id="stills_gloss_video">
+
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <input type="submit" class="choose_still btn btn-primary" id="choose_still" data-glossid="{{gloss.id}}"
+                               style="width:auto;" value='{% trans "Choose Image" %}'>
+                        <button type="button" class="btn btn-primary" data-dismiss="modal">{% trans "Dismiss" %}</button>
+                    </div>
+                </div>
+            </div>
+        </div>
     {% endif %}
 
     {% if "change_dataset" in dataset_perms %}
@@ -1310,7 +1469,7 @@ textarea:focus {
                                     {% endif %}
                                     {% with sense_to_similar_senses|get_item:sense.id as similar_senses %}
                                     {% if similar_senses %}
-                                        <span class='glyphicon glyphicon-link sense_link' style="color:black" data-toggle='modal' data-target='#link_sense_modal_{{sense.id}}'></span>
+                                        <span class='glyphicon glyphicon-link sense_link' data-toggle='modal' data-target='#link_sense_modal_{{sense.id}}'></span>
                                         <div class="modal fade modal-sense" id="link_sense_modal_{{sense.id}}" role="dialog" aria-labelledby="#modalTitleSimilarSense" aria-hidden="true">
                                             <div class="modal-dialog modal-lg left-modal">
                                                 <div class="modal-content modal-content-sense" style="width:calc(({{gloss.lemma.dataset.translation_languages.count}}+3)*200px);">
@@ -1589,6 +1748,25 @@ textarea:focus {
                         {% endif %}
                     </table>
                 </td>
+            </tr>
+
+            <tr>
+                <th>
+                    Synsets
+                </th>
+                <td>
+                    {% for synset in synsets %}
+                        <span class="synset">
+                            {% if synset.url %}
+                                <a href='{{ synset.url }}'>{{synset.name}}</a> 
+                            {% else %}
+                                {{synset.name}}
+                            {% endif %}
+                            {% if synset.lemmas %}
+                            {{synset.lemmas}} | {{synset.description}}
+                            {% endif %}
+                        </span><br>
+                    {% endfor %}
             </tr>
 
             {% for value,name,label,kind in main_fields %}
@@ -2188,7 +2366,7 @@ textarea:focus {
              data-target='#minimalpairs'>{% trans "Minimal Pairs" %}
         </div>
         <div id='minimalpairs' class='collapse'>
-            <table class='table table-condensed' id = "header_mp_rows">
+            <table class='table table-condensed' id="header_mp_rows">
 
             {% if minimalpairs %}
                <tr>

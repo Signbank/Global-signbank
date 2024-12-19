@@ -1752,7 +1752,7 @@ def gloss_from_identifier(value):
 
 
 def get_default_annotationidglosstranslation(gloss):
-    if not gloss.lemma or gloss.lemma.dataset:
+    if not gloss.lemma or not gloss.lemma.dataset:
         return str(gloss.id)
     dataset = gloss.lemma.dataset
     language = dataset.default_language
@@ -1760,6 +1760,10 @@ def get_default_annotationidglosstranslation(gloss):
         language = dataset.translation_languages.first()
 
     annotationidglosstranslations = gloss.annotationidglosstranslation_set.all()
+
+    if not annotationidglosstranslations:
+        return str(gloss.id)
+
     if annotationidglosstranslations.filter(language=language):
         return annotationidglosstranslations.get(language=language).text
 
@@ -1954,7 +1958,7 @@ def write_ecv_file_for_dataset(dataset_name):
     from django.template.loader import get_template
     ecv_template = get_template('dictionary/ecv.xml')
     xmlstr = ecv_template.render(context)
-    ecv_file = os.path.join(ECV_FOLDER, dataset_name.lower().replace(" ","_") + ".ecv")
+    ecv_file = os.path.join(ECV_FOLDER_ABSOLUTE_PATH, dataset_name.lower().replace(" ","_") + ".ecv")
     import codecs
     try:
         f = codecs.open(ecv_file, "w", "utf-8")

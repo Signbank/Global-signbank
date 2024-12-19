@@ -24,7 +24,7 @@ from collections import OrderedDict
 from datetime import datetime, date
 
 from signbank.settings.base import FIELDS, DEFAULT_KEYWORDS_LANGUAGE, \
-    WRITABLE_FOLDER, DATASET_METADATA_DIRECTORY
+    WRITABLE_FOLDER, DATASET_METADATA_DIRECTORY, ECV_FOLDER
 from signbank.dictionary.translate_choice_list import choicelist_queryset_to_translated_dict
 
 
@@ -2389,13 +2389,16 @@ class Gloss(models.Model):
             # Backup the existing video objects stored in the database
             glossvideos_nme = [gv.id for gv in GlossVideoNME.objects.filter(gloss=self)]
             glossvideos_persp = [gv.id for gv in GlossVideoPerspective.objects.filter(gloss=self)]
-            existing_videos = GlossVideo.objects.filter(gloss=self,
-                                                        glossvideonme=None,
-                                                        glossvideoperspective=None, version=0).exclude(
+            # get existing gloss video objects but exclude NME and perspective videos
+            existing_videos = GlossVideo.objects.filter(gloss=self).exclude(
                 id__in=glossvideos_nme).exclude(id__in=glossvideos_persp)
-            for video_object in existing_videos:
+            # order them by version number
+            existing_videos_all = existing_videos.order_by('version')
+            # revert all the old video objects
+            for video_object in existing_videos_all:
                 video_object.reversion(revert=False)
 
+            # see if there is a file with the correct path that is not referred to by an object
             already_existing_relative_target_path = get_gloss_path_to_video_file_on_disk(self)
             if already_existing_relative_target_path:
                 # a video file without a GlossVideo object already exists, remove the file
@@ -2517,6 +2520,16 @@ class Gloss(models.Model):
             raise ValidationError(msg)
         glossvideo = glossvideos.first()
         glossvideo.make_poster_image()
+
+    def generate_stills(self):
+        from signbank.video.models import GlossVideo
+        glossvideos = GlossVideo.objects.filter(gloss=self, glossvideonme=None, glossvideoperspective=None, version=0)
+        if not glossvideos:
+            msg = ("Gloss::create_stills: no video for gloss %s"
+                   % self.pk)
+            raise ValidationError(msg)
+        glossvideo = glossvideos.first()
+        glossvideo.make_image_sequence()
 
     def published_definitions(self):
         """Return a query set of just the published definitions for this gloss
@@ -3260,6 +3273,17 @@ class Dataset(models.Model):
         goal_string = DATASET_METADATA_DIRECTORY + '/' + metafile_name
 
         return goal_string
+
+    def get_ecv_path(self, check_existence=True):
+        """Returns the path within the writable folder"""
+
+        dataset_filename = self.acronym.lower().replace(" ", "_") + ".ecv"
+        ecv_file_path = os.path.join(WRITABLE_FOLDER, ECV_FOLDER, dataset_filename)
+        ecv_relative_path = os.path.join(ECV_FOLDER, dataset_filename)
+        if check_existence and os.path.exists(ecv_file_path):
+            return ecv_relative_path
+
+        return ''
 
     def uploaded_eafs(self):
 
@@ -4314,3 +4338,14 @@ class AnnotatedSentenceSource(models.Model):
         if not parsed_url.scheme:
             return 'http://' + self.url
         return self.url
+
+class Synset(models.Model):
+    """A synset is a set of glosses that are synonymous"""
+    name = models.CharField(max_length=200, verbose_name=_("Name"))
+    lemmas = models.TextField(blank=True, verbose_name=_("Lemmas"))
+    url = models.TextField(blank=True, verbose_name=_("Url"))
+    description = models.TextField(blank=True, verbose_name=_("Description"))
+    glosses = models.ManyToManyField(Gloss, related_name = 'synsets', verbose_name=_("Glosses"))
+
+    def __str__(self):
+        return self.name

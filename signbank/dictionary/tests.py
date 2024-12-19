@@ -1,9 +1,8 @@
 from django.db.models import CharField, TextField
-#from django.forms import TextInput, Textarea, CharField
+# from django.forms import TextInput, Textarea, CharField
 from signbank.dictionary.adminviews import *
 from signbank.dictionary.forms import GlossCreateForm, FieldChoiceForm
 from signbank.dictionary.models import *
-from signbank.tools import get_selected_datasets_for_user
 from signbank.settings.base import *
 from django.utils.translation import override, gettext_lazy as _, activate
 
@@ -429,7 +428,7 @@ class ECVsNonEmptyTests(TestCase):
         # it is not checked whether there is an ecv file for all datasets
         # ecv files for non-existing datasets are reported if empty
 
-        location_ecv_files = ECV_FOLDER
+        location_ecv_files = ECV_FOLDER_ABSOLUTE_PATH
         print('Checking for empty ECV files in location: ', location_ecv_files)
         ecv_folder_exists = os.path.exists(location_ecv_files)
         if not ecv_folder_exists:
@@ -518,7 +517,7 @@ class ImportExportTests(TestCase):
         print('Test DatasetListView export_ecv with permission change_dataset')
         print('Test Dataset is: ', self.test_dataset.acronym)
 
-        location_ecv_files = ECV_FOLDER
+        location_ecv_files = ECV_FOLDER_ABSOLUTE_PATH
         dataset_ecv_folder_exists = os.path.exists(location_ecv_files)
         if not dataset_ecv_folder_exists:
             print('The ecv folder is missing: ', location_ecv_files)
@@ -563,7 +562,7 @@ class ImportExportTests(TestCase):
         response = client.get(url, follow=True)
         self.assertTrue("ECV successfully updated." in str(response.content))
 
-        location_ecv_files = ECV_FOLDER
+        location_ecv_files = ECV_FOLDER_ABSOLUTE_PATH
         for filename in os.listdir(location_ecv_files):
             if filename == self.test_dataset.acronym.lower() + '.ecv':
                 filename_path = os.path.join(location_ecv_files, filename)
@@ -895,7 +894,7 @@ class VideoTests(TestCase):
         print('User has logged out.')
         print('Attempt to see video. Must log in.')
         response = client.get(video_url)
-        self.assertEqual(response.status_code,200)
+        self.assertEqual(response.status_code,401)
 
         # Remove the video
         client.login(username='test-user',password='test-user')
@@ -1001,7 +1000,7 @@ class VideoTests(TestCase):
         print('User has logged out.')
         print('Attempt to see video. Must log in.')
         response = client.get(video_url)
-        self.assertEqual(response.status_code,200)
+        self.assertEqual(response.status_code,401)
 
         # Remove the video
         client.login(username='test-user',password='test-user')
