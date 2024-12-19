@@ -1,9 +1,8 @@
 from django.db.models import CharField, TextField
-#from django.forms import TextInput, Textarea, CharField
+# from django.forms import TextInput, Textarea, CharField
 from signbank.dictionary.adminviews import *
 from signbank.dictionary.forms import GlossCreateForm, FieldChoiceForm
 from signbank.dictionary.models import *
-from signbank.tools import get_selected_datasets_for_user
 from signbank.settings.base import *
 from django.utils.translation import override, gettext_lazy as _, activate
 
@@ -895,7 +894,7 @@ class VideoTests(TestCase):
         print('User has logged out.')
         print('Attempt to see video. Must log in.')
         response = client.get(video_url)
-        self.assertEqual(response.status_code,200)
+        self.assertEqual(response.status_code,401)
 
         # Remove the video
         client.login(username='test-user',password='test-user')
@@ -1001,7 +1000,7 @@ class VideoTests(TestCase):
         print('User has logged out.')
         print('Attempt to see video. Must log in.')
         response = client.get(video_url)
-        self.assertEqual(response.status_code,200)
+        self.assertEqual(response.status_code,401)
 
         # Remove the video
         client.login(username='test-user',password='test-user')

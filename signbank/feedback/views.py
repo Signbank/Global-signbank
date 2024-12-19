@@ -13,7 +13,7 @@ from django.http import HttpResponse, HttpResponseRedirect
 from django.urls import reverse
 from django.contrib import messages
 from django.utils.safestring import mark_safe
-from signbank.tools import get_selected_datasets_for_user
+from signbank.dictionary.context_data import get_selected_datasets
 from django.utils.translation import override, gettext_lazy as _, activate, gettext
 from signbank.settings.server_specific import RECENTLY_ADDED_SIGNS_PERIOD
 import datetime as DT
@@ -27,7 +27,7 @@ import time
 
 def index(request):
     return render(request, 'feedback/index.html',
-                  {'selected_datasets': get_selected_datasets_for_user(request.user),
+                  {'selected_datasets': get_selected_datasets(request),
                    'SHOW_DATASET_INTERFACE_OPTIONS': settings.SHOW_DATASET_INTERFACE_OPTIONS,
                    'language': settings.LANGUAGE_NAME})
 
@@ -62,7 +62,7 @@ def generalfeedback(request):
             # return HttpResponseRedirect("")
             return render(request, 'feedback/generalfeedback.html',
                           {'language': settings.LANGUAGE_NAME,
-                           'selected_datasets': get_selected_datasets_for_user(request.user),
+                           'selected_datasets': get_selected_datasets(request),
                            'SHOW_DATASET_INTERFACE_OPTIONS': settings.SHOW_DATASET_INTERFACE_OPTIONS,
                            'title': gettext("General Feedback"),
                            'form': form,
@@ -72,7 +72,7 @@ def generalfeedback(request):
 
     return render(request, "feedback/generalfeedback.html",
                   {'language': settings.LANGUAGE_NAME,
-                   'selected_datasets': get_selected_datasets_for_user(request.user),
+                   'selected_datasets': get_selected_datasets(request),
                    'SHOW_DATASET_INTERFACE_OPTIONS': settings.SHOW_DATASET_INTERFACE_OPTIONS,
                    'title': gettext("General Feedback"),
                    'form': form,
@@ -84,7 +84,7 @@ def missingsign(request):
 
     posted = False  # was the feedback posted?
 
-    selected_datasets = get_selected_datasets_for_user(request.user)
+    selected_datasets = get_selected_datasets(request)
     sign_languages = [dataset.signlanguage.id for dataset in selected_datasets]
     # get rid of duplicates
     sign_languages = list(set(sign_languages))
@@ -133,7 +133,7 @@ def missingsign(request):
 
     return render(request, 'feedback/missingsign.html',
                   {'language': settings.LANGUAGE_NAME,
-                   'selected_datasets': get_selected_datasets_for_user(request.user),
+                   'selected_datasets': get_selected_datasets(request),
                    'signlanguage_to_dataset': signlanguage_to_dataset,
                    'SHOW_DATASET_INTERFACE_OPTIONS': settings.SHOW_DATASET_INTERFACE_OPTIONS,
                    'posted': posted,
@@ -154,7 +154,7 @@ def showfeedback(request):
     if group_editor not in groups_of_user:
         messages.add_message(request, messages.ERROR, _('You must be in group Editor to view feedback.'))
         return render(request, 'feedback/index.html',
-                      {'selected_datasets': get_selected_datasets_for_user(request.user),
+                      {'selected_datasets': get_selected_datasets(request),
                        'SHOW_DATASET_INTERFACE_OPTIONS': settings.SHOW_DATASET_INTERFACE_OPTIONS,
                        'language': settings.LANGUAGE_NAME})
 
@@ -162,7 +162,7 @@ def showfeedback(request):
     
     return render(request, "feedback/show_general_feedback.html",
                   {'general': general,
-                   'selected_datasets': get_selected_datasets_for_user(request.user),
+                   'selected_datasets': get_selected_datasets(request),
                    'SHOW_DATASET_INTERFACE_OPTIONS': settings.SHOW_DATASET_INTERFACE_OPTIONS})
 
 
@@ -180,17 +180,17 @@ def showfeedback_signs(request):
     if group_editor not in groups_of_user:
         messages.add_message(request, messages.ERROR, _('You must be in group Editor to view feedback.'))
         return render(request, 'feedback/index.html',
-                      {'selected_datasets': get_selected_datasets_for_user(request.user),
+                      {'selected_datasets': get_selected_datasets(request),
                        'SHOW_DATASET_INTERFACE_OPTIONS': settings.SHOW_DATASET_INTERFACE_OPTIONS,
                        'language': settings.LANGUAGE_NAME})
 
-    selected_datasets = get_selected_datasets_for_user(request.user)
+    selected_datasets = get_selected_datasets(request)
     signfb = SignFeedback.objects.filter(Q(**{'gloss__lemma__dataset__in': selected_datasets})).filter(
         status__in=('unread', 'read'))
 
     return render(request, "feedback/show_feedback_signs.html",
                   {'signfb': signfb,
-                   'selected_datasets': get_selected_datasets_for_user(request.user),
+                   'selected_datasets': get_selected_datasets(request),
                    'SHOW_DATASET_INTERFACE_OPTIONS': settings.SHOW_DATASET_INTERFACE_OPTIONS})
 
 
@@ -208,18 +208,18 @@ def showfeedback_morphemes(request):
     if group_editor not in groups_of_user:
         messages.add_message(request, messages.ERROR, _('You must be in group Editor to view feedback.'))
         return render(request, 'feedback/index.html',
-                      {'selected_datasets': get_selected_datasets_for_user(request.user),
+                      {'selected_datasets': get_selected_datasets(request),
                        'SHOW_DATASET_INTERFACE_OPTIONS': settings.SHOW_DATASET_INTERFACE_OPTIONS,
                        'language': settings.LANGUAGE_NAME})
 
-    selected_datasets = get_selected_datasets_for_user(request.user)
+    selected_datasets = get_selected_datasets(request)
     # morpheme feedback exists since after the morpheme field was added to the MorphemeFeedback model
     morphfb = MorphemeFeedback.objects.filter(Q(**{'morpheme__lemma__dataset__in': selected_datasets})).filter(
         status__in=('unread', 'read'))
 
     return render(request, "feedback/show_feedback_morphemes.html",
                   {'morphfb': morphfb,
-                   'selected_datasets': get_selected_datasets_for_user(request.user),
+                   'selected_datasets': get_selected_datasets(request),
                    'SHOW_DATASET_INTERFACE_OPTIONS': settings.SHOW_DATASET_INTERFACE_OPTIONS})
 
 
@@ -237,7 +237,7 @@ def showfeedback_missing(request):
     if group_editor not in groups_of_user:
         messages.add_message(request, messages.ERROR, _('You must be in group Editor to view feedback.'))
         return render(request, 'feedback/index.html',
-                      {'selected_datasets': get_selected_datasets_for_user(request.user),
+                      {'selected_datasets': get_selected_datasets(request),
                        'SHOW_DATASET_INTERFACE_OPTIONS': settings.SHOW_DATASET_INTERFACE_OPTIONS,
                        'language': settings.LANGUAGE_NAME})
 
@@ -245,7 +245,7 @@ def showfeedback_missing(request):
 
     return render(request, "feedback/show_feedback_missing_signs.html",
                   {'missing': missing,
-                   'selected_datasets': get_selected_datasets_for_user(request.user),
+                   'selected_datasets': get_selected_datasets(request),
                    'SHOW_DATASET_INTERFACE_OPTIONS': settings.SHOW_DATASET_INTERFACE_OPTIONS})
 
 
@@ -317,18 +317,18 @@ def recordsignfeedback(request, glossid):
             messages.add_message(request, messages.INFO, mark_safe('Thank you. Your feedback has been saved. <a href="'+redirect_page+'">Return to Detail View</a>'))
             return render(request, feedback_template, {'feedback_form': feedback_form,
                                                        'sourcepage': sourcepage,
-                                                       'selected_datasets': get_selected_datasets_for_user(request.user),
+                                                       'selected_datasets': get_selected_datasets(request),
                                                        'SHOW_DATASET_INTERFACE_OPTIONS': settings.SHOW_DATASET_INTERFACE_OPTIONS})
         except (KeyError, PermissionError):
             messages.add_message(request, messages.ERROR, 'There was an error processing your feedback data.')
             return render(request, feedback_template, {'feedback_form': feedback_form,
                                                        'sourcepage': sourcepage,
-                                                       'selected_datasets': get_selected_datasets_for_user(request.user),
+                                                       'selected_datasets': get_selected_datasets(request),
                                                        'SHOW_DATASET_INTERFACE_OPTIONS': settings.SHOW_DATASET_INTERFACE_OPTIONS})
     return render(request, feedback_template,
                   {'feedback_form': feedback_form,
                    'sourcepage': sourcepage,
-                   'selected_datasets': get_selected_datasets_for_user(request.user),
+                   'selected_datasets': get_selected_datasets(request),
                    'SHOW_DATASET_INTERFACE_OPTIONS': settings.SHOW_DATASET_INTERFACE_OPTIONS})
 
 #
@@ -387,11 +387,11 @@ def recent_feedback(request):
     if group_editor not in groups_of_user:
         messages.add_message(request, messages.ERROR, _('You must be in group Editor to view feedback.'))
         return render(request, 'feedback/index.html',
-                      {'selected_datasets': get_selected_datasets_for_user(request.user),
+                      {'selected_datasets': get_selected_datasets(request),
                        'SHOW_DATASET_INTERFACE_OPTIONS': settings.SHOW_DATASET_INTERFACE_OPTIONS,
                        'language': settings.LANGUAGE_NAME})
 
-    selected_datasets = get_selected_datasets_for_user(request.user)
+    selected_datasets = get_selected_datasets(request)
     signfb = SignFeedback.objects.filter(Q(**{'gloss__lemma__dataset__in': selected_datasets})).filter(
         status__in=('unread', 'read'))
     recently_added_feedback_since_date = DT.datetime.now(tz=get_current_timezone()) - RECENTLY_ADDED_SIGNS_PERIOD
@@ -401,6 +401,6 @@ def recent_feedback(request):
 
     return render(request, "feedback/recent_feedback.html",
                   {'signfb': signfb,
-                   'selected_datasets': get_selected_datasets_for_user(request.user),
+                   'selected_datasets': get_selected_datasets(request),
                    'SHOW_DATASET_INTERFACE_OPTIONS': settings.SHOW_DATASET_INTERFACE_OPTIONS})
 

@@ -143,8 +143,8 @@ def generate_image_sequence(sourcefile):
             os.remove(f)
     (
         ffmpeg
-        .input(sourcefile.path, ss=1)
-        .filter('fps', fps=15, round='up')
+        .input(sourcefile.path, ss=0.5)
+        .filter('fps', fps=25, round='up')
         .output("%s/%s-%%04d.png" % (temp_video_frames_folder, folder_name), **{'qscale:v': 2})
         .run(quiet=True)
     )

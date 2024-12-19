@@ -175,18 +175,23 @@ function update_gloss_senses(data) {
 
     var tbody_modal_senses = '#tbody_modal_sensetranslations_' + glossid;
     var modalSensesTable = $(tbody_modal_senses);
-
     for (var i=0; i < regrouped_keywords.length; i++) {
+        var inputEltIndex = regrouped_keywords[i]['inputEltIndex'];
         var originalIndex = regrouped_keywords[i]['originalIndex'];
         var orderIndex = regrouped_keywords[i]['orderIndex'];
         var langid = regrouped_keywords[i]['language'];
         var trans_id = regrouped_keywords[i]['trans_id'];
-        var span_id = '#span_cell_' + glossid + '_' + langid + '_' + trans_id;
+        var span_id = 'span_cell_' + glossid + '_' + langid + '_' + trans_id;
+        var parent_id = '#sense_translations_' + glossid + '_' + langid + '_' + originalIndex;
         // this is the cell for the sense keyword
-        var spanTDParent = $(span_id).parent();
-        var spanCell = $(span_id).detach();
-        var spanCellOrderInput = spanCell.find('input[name="translation"]');
-        spanCellOrderInput.attr('data-order_index', orderIndex);
+        var spanTDParent = $(parent_id);
+        var spanCell = $('#'+span_id).find('input[name="translation"]');
+        var spanCellText = spanCell.attr('value');
+        $('#'+span_id).remove();
+        var regroupElt = '<span class="span-cell" id="' + span_id +'"/>';
+        regroupElt += '<input type="text" size="50" data-order_index="'+orderIndex + '" data-language="'+
+                    langid+'" name="translation" data-trans_id="' + trans_id + '" value="' + spanCellText + '">';
+        regroupElt += "</span>";
         // replace with an empty cell
         var span_html = '<span class="span-cell"/>';
         span_html += '<input type="text" size="50" data-new_order_index="'+originalIndex + '" data-new_language="'+
@@ -207,7 +212,7 @@ function update_gloss_senses(data) {
                 var cell_lang = 'sense_translations_' + glossid + '_' + this_language + '_' + orderIndex;
                 var cellTDhtml = '<td id="'+ cell_lang + '"/>';
                 if (langid == this_language) {
-                    cellTDhtml += spanCell.html();
+                    cellTDhtml += regroupElt;
                 } else {
                     cellTDhtml += '<span class="span-cell"/>';
                     cellTDhtml += '<input type="text" size="50" data-new_order_index="'+orderIndex + '" data-new_language="'+
@@ -223,9 +228,9 @@ function update_gloss_senses(data) {
             for (var inx in dataset_languages) {
                 var this_language = dataset_languages[inx];
                 var cell_lang = 'sense_translations_' + glossid +'_' + this_language + '_' + orderIndex;
-                var senseLangCell = senseTranslationsRow.find('#'+cell_lang);
+                var senseLangCell = $('#'+cell_lang);
                 if (langid == this_language) {
-                    senseLangCell.append(spanCell);
+                    senseLangCell.append(regroupElt);
                 } else {
                     var span_cell_html = '<span class="span-cell"/>';
                     span_cell_html += '<input type="text" size="50" data-new_order_index="'+orderIndex + '" data-new_language="'+
@@ -289,6 +294,36 @@ function update_gloss_senses(data) {
     $.each(emptyCells, function(index, elt) {
         $(elt).remove();
     });
+    // remove table rows with empty senses
+    for (var order in deleted_sense_numbers) {
+        var empty_row_id = '#modal_sensetranslations_' + glossid + '_row_'
+                                    + deleted_sense_numbers[order];
+        var empty_row = $(empty_row_id);
+        if (empty_row) {
+            empty_row.empty();
+            empty_row.remove();
+        }
+    }
+    for (var inx in dataset_languages) {
+        for (var order in deleted_sense_numbers) {
+            var tbody = $('#tbody_senses_' + glossid  + '_' + dataset_languages[inx]);
+            var outer_senses_row_id = '#senses_' + glossid  + '_'
+                                    + dataset_languages[inx] + '_row_' + deleted_sense_numbers[order];
+            var outer_senses_row = $(outer_senses_row_id);
+            if (outer_senses_row) {
+                outer_senses_row.empty();
+                outer_senses_row.remove();
+            }
+            var tbody = $('#tbody_modal_senses_' + glossid  + '_' + dataset_languages[inx]);
+            var sense_row_id = '#modal_senses_' + glossid + '_'
+                                    + dataset_languages[inx] + '_row_' + deleted_sense_numbers[order];
+            var sense_row = $(sense_row_id);
+            if (sense_row) {
+                sense_row.empty();
+                sense_row.remove();
+            }
+        }
+    }
 }
 
 // the following function expects more fields from the ajax call json data
