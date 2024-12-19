@@ -3501,7 +3501,8 @@ class HandshapeListView(ListView):
 
         context['handshapefieldchoicecount'] = Handshape.objects.filter(machine_value__gt=1).count()
 
-        context['selected_datasets'] = get_selected_datasets(request)
+        selected_datasets = get_selected_datasets(self.request)
+        context['selected_datasets'] = selected_datasets
 
         dataset_languages = get_dataset_languages(selected_datasets)
         context['dataset_languages'] = dataset_languages
