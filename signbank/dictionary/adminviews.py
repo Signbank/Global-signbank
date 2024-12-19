@@ -5460,7 +5460,7 @@ class RecentGlossListView(ListView):
         # Call the base implementation first to get a context
         context = super(RecentGlossListView, self).get_context_data(**kwargs)
 
-        selected_datasets = get_selected_datasets_for_user(self.request.user)
+        selected_datasets = get_selected_datasets(self.request)
         context['selected_datasets'] = selected_datasets
         context['dataset_languages'] = Language.objects.filter(dataset__in=selected_datasets).distinct()
 
@@ -5469,6 +5469,7 @@ class RecentGlossListView(ListView):
 
         context['language'] = interface_language
         context['number_of_days'] = RECENTLY_ADDED_SIGNS_PERIOD.days
+        context['searchform'] = self.search_form
         context['USE_REGULAR_EXPRESSIONS'] = settings.USE_REGULAR_EXPRESSIONS
         context['SHOW_DATASET_INTERFACE_OPTIONS'] = settings.SHOW_DATASET_INTERFACE_OPTIONS
 
@@ -5476,7 +5477,7 @@ class RecentGlossListView(ListView):
 
     def get_queryset(self):
 
-        selected_datasets = get_selected_datasets_for_user(self.request.user)
+        selected_datasets = get_selected_datasets(self.request)
         dataset_languages = Language.objects.filter(dataset__in=selected_datasets).distinct()
         from signbank.settings.server_specific import RECENTLY_ADDED_SIGNS_PERIOD
 

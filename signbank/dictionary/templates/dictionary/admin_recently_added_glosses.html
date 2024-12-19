@@ -41,13 +41,40 @@ var csrf_token = '{{csrf_token}}';
 
             <div class="panel panel-default">
               <div class="panel-heading" data-toggle="collapse"
+                       data-target="#days_period">{% trans "Search by Days" %}</div>
+
+                  <div id='days_period' class='collapse'>
+                  <table class='table table-condensed' style="width:40%;">
+                  <tr>
+                      <td style="padding-left:30px;"><label for='id_days'>{% trans "Days" %}</label></td>
+                      <td style="width:300px;">{{searchform.days}}</td>
+                  </tr>
+                  </table>
+              </div>
+            </div>
+
+            <div class="panel panel-default">
+              <div class="panel-heading" data-toggle="collapse"
+                       data-target="#timeline">{% trans "Timeline" %}</div>
+
+                  <div id='timeline' class='collapse'>
+                  <table class='table table-condensed' style="width:40%;">
+                  <tr>
+                      <td style="padding-left:30px;"><label for='id_timeline'>{% trans "Timeline" %}</label></td>
+                      <td style="width:300px;">{{searchform.timeline}}</td>
+                  </tr>
+                  </table>
+              </div>
+            </div>
+            <div class="panel panel-default">
+              <div class="panel-heading" data-toggle="collapse"
                        data-target="#pub_search">{% trans "Search by Tags" %}</div>
 
                   <div id='pub_search' class='collapse'>
-                  <table class='table table-condensed' style="width:65%;">
+                  <table class='table table-condensed' style="width:40%;">
                   <tr>
                       <td style="padding-left:30px;"><label for='id_tags'>{% trans "Tags" %}</label></td>
-                      <td style="width:600px;">{{searchform.tags}}</td>
+                      <td style="width:300px;">{{searchform.tags}}</td>
                   </tr>
                   </table>
                   </div>

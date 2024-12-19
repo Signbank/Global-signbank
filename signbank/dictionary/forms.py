@@ -1089,6 +1089,12 @@ class FocusGlossSearchForm(forms.ModelForm):
             self.fields[boolean_field].choices = [('0', '-'), ('2', _('Yes')), ('3', _('No'))]
 
 
+TIME_ORDER = [('Chronological', 'Chronological'), ('Reverse Chronological', 'Reverse Chronological')]
+
+import datetime
+RECENTLY_ADDED_TIMEDELTA_60_DAYS = datetime.timedelta(days=60)
+RECENTLY_ADDED_TIMEDELTA_30_DAYS = datetime.timedelta(days=30)
+
 class RecentGlossSearchForm(forms.ModelForm):
 
     use_required_attribute = False  # otherwise the html required attribute will show up on every form
@@ -1108,6 +1114,17 @@ class RecentGlossSearchForm(forms.ModelForm):
         self.fields['tags'] = forms.ModelChoiceField(label=_('Tags'),
                                                      queryset=Tag.objects.all(), empty_label=None,
                                                      widget=forms.Select(attrs=ATTRS_FOR_FORMS))
+        days_30 = RECENTLY_ADDED_TIMEDELTA_30_DAYS.days
+        days_60 = RECENTLY_ADDED_TIMEDELTA_60_DAYS.days
+        from signbank.settings.server_specific import RECENTLY_ADDED_SIGNS_PERIOD
+        days_default = RECENTLY_ADDED_SIGNS_PERIOD.days
+        self.fields['days'] = forms.ChoiceField(label=_('Days'),
+                                                choices=[(days_default, days_default), (days_60, days_60), (days_30, days_30)],
+                                                widget=forms.Select(attrs=ATTRS_FOR_FORMS), required=True)
+
+        self.fields['timeline'] = forms.ChoiceField(label=_('Timeline'),
+                                                choices=TIME_ORDER,
+                                                widget=forms.Select(attrs=ATTRS_FOR_FORMS), required=True)
 
 
 class FieldChoiceColorForm(forms.Form):
