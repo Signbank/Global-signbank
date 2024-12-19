@@ -495,9 +495,11 @@ $('#show_middle').click(function()
          data-toggle='collapse' data-target='#phonology'>{% trans "Phonology" %}
     </div>
     <div id='phonology' class='collapse'>
+        {% if not morphdefs %}
         <table class='table table-condensed'>
         {% for value,name,label,kind in phonology_fields %}
             {% if name == 'handedness' %}
+                {% if value != '-' %}
                 <tr >
                     <th>{{label}}</th>
                     <td id='{{name}}'
@@ -512,7 +514,9 @@ $('#show_middle').click(function()
                         {% endif %}
                     {% endfor %}
                 </tr>
-            {% elif name == 'domhndsh' and SHOW_LETTER_NUMBER_PHONOLOGY %}
+                {% endif %}
+            {% elif name == 'domhndsh' %}
+                {% if value != '-' %}
                 <tr >
                     <th>{{label}}</th>
                     <td id='{{name}}' value='{{value}}' >
@@ -521,6 +525,7 @@ $('#show_middle').click(function()
                                             href="{{PREFIX_URL}}/dictionary/handshape/{{StrongHand}}/"
                                         {% endif %}>{{value}}</a>
                     </td>
+                    {% if SHOW_LETTER_NUMBER_PHONOLOGY %}
                     {% for value,name,label,kind in etymology_fields_dom %}
                         {% if name == 'domhndsh_letter' %}
                         <td id='{{name}}'
@@ -530,12 +535,16 @@ $('#show_middle').click(function()
                             value="{{value}}">{% if value %}number{% else %}&nbsp;{% endif %}</td>
                         {% endif %}
                     {% endfor %}
+                    {% endif %}
                 </tr>
-            {% elif name == 'subhndsh' and SHOW_LETTER_NUMBER_PHONOLOGY %}
+                {% endif %}
+            {% elif name == 'subhndsh' %}
+                {% if value != '-' %}
                 <tr >
                     <th>{{label}}</th>
                     <td id='{{name}}'
                         value='{{value}}' >{% value value %}</td>
+                    {% if SHOW_LETTER_NUMBER_PHONOLOGY %}
                     {% for value,name,label,kind in etymology_fields_sub %}
                         {% if name == 'subhndsh_letter' %}
                         <td id='{{name}}'
@@ -545,8 +554,11 @@ $('#show_middle').click(function()
                             value="{{value}}">{% if value %}number{% else %}&nbsp;{% endif %}</td>
                         {% endif %}
                     {% endfor %}
+                    {% endif %}
                 </tr>
+                {% endif %}
             {% elif value == '-' or value == ' ' or value == '' or value == None %}
+            {% elif name in HANDSHAPE_ETYMOLOGY_FIELDS or name in HANDEDNESS_ARTICULATION_FIELDS %}
             {% else %}
              <tr>
                 <th>{{label}}</th>
@@ -559,6 +571,7 @@ $('#show_middle').click(function()
             {% endif %}
         {% endfor %}
         </table>
+        {% endif %}
     </div>
 </div>
 <!-- Semantics -->
