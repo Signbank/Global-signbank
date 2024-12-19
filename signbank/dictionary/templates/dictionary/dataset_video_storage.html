@@ -1,0 +1,395 @@
+{% extends 'baselayout.html' %}
+{% load i18n %}
+{% load stylesheet %}
+{% load annotation_idgloss_translation %}
+{% load has_group %}
+{% load bootstrap3 %}
+
+{% load guardian_tags %}
+
+
+{% block extrajs %}
+<script type='text/javascript'>
+var url = '{{PREFIX_URL}}';
+var csrf_token = '{{csrf_token}}';
+
+function update_gloss_video_backups(el) {
+    var glossid = $(el).attr('data-glossid');
+    var lookup = "#videos_"+glossid;
+    $.ajax({
+        url : url + "/dictionary/update_gloss_video_backups/"+glossid+ "/",
+        datatype: "json",
+        data: {
+            'csrfmiddlewaretoken': csrf_token
+        },
+        type: "POST",
+        async: true,
+        success : function(result) {
+            console.log(result);
+            if ($.isEmptyObject(result)) {
+                return;
+            };
+            var videos = result.videos;
+            $(lookup).html('');
+            $(lookup).append(videos);
+        }
+    });
+};
+</script>
+
+<style>
+list {
+    overflow-y: scroll;
+    overflow-x: hidden;
+    scrollbar-width: thin;
+}
+dl:after {
+    content: none;
+}
+dl {
+    margin-bottom: 0px;
+}
+dt {
+    margin-left: 0px;
+}
+dd {
+    margin-left: 0px;
+}
+
+.list-group-item {
+    padding: 0px 8px;
+}
+.list-group-item:hover {
+
+}
+.list-group-item.active {
+    background-color: inherit;
+    color: inherit;
+}
+.list-group-item.active:hover {
+    color: white;
+    background-color: DodgerBlue;
+}
+.list-group-item-contents {
+    background-color: inherit;
+    color: inherit;
+}
+.row.list-group-item.list-group-item-contents:hover {
+    background-color: DodgerBlue;
+    color: white;
+}
+.table-condensed {
+    border-collapse: collapse;
+}
+</style>
+{% endblock %}
+
+{% block bootstrap3_title %}
+{% blocktrans %}Manage Dataset Video Storage{% endblocktrans %}
+{% endblock %}
+
+{% block content %}
+<div>
+<h3>{% trans "Manage Dataset Video Storage" %}</h3>
+{% url 'dictionary:protected_media' '' as protected_media_url %}
+
+<table class='table table-condensed table-condensed-light'>
+<tr><th style="width:300px;">{% trans "Dataset name" %}</th><td style="width:1200px;">{{dataset.name}}</td></tr>
+<tr><th>{% trans "Acronym" %}</th><td>{{dataset.acronym}}</td></tr>
+<tr><th>{% trans "Number of glosses" %}</th><td>{{nr_of_glosses}} total</td></tr>
+</table>
+<br>
+
+<div id='video_storage_toggles' class='panel-group'>
+<div class="panel panel-default panel-light panel-toggles">
+<div class='panel-heading panel-light' data-toggle='collapse' data-parent='#video_storage_toggles'
+     data-target='#toggle_unlinked_videos'>{% trans "Unlinked Gloss Video Files Available in File System" %}
+    <span>({{unlinked_video_files_for_dataset|length}} {% trans "results found" %})</span>
+</div>
+<div id='toggle_unlinked_videos' class="panel-collapse collapse">
+<div class="panel-body" style="display:inline-block;border-color:transparent;">
+    {% if unlinked_video_files_for_dataset %}
+    <table class='table table-condensed table-condensed-light' style="width:100%;">
+    <tr>
+        <th style="width:1000px;">{% trans "Video Paths" %}</th>
+    </tr>
+        {% for videopath in unlinked_video_files_for_dataset %}
+        <tr>
+            <td><a href="{{protected_media_url}}{{videopath}}" target="_blank">{{videopath}}</a></td>
+        </tr>
+        {% endfor %}
+    </table>
+    {% endif %}
+</div>
+</div>
+<br>
+<div class='panel-heading panel-light' data-toggle='collapse' data-parent='#video_storage_toggles'
+     data-target='#toggle_multiple_version_0_videos'>{% trans "Glosses with Multiple Version 0 Videos" %}
+    <span>({{glosses_with_too_many_videos|length}} {% trans "results found" %})</span>
+</div>
+<div id='toggle_multiple_version_0_videos' class="panel-collapse collapse">
+<div class="panel-body" style="display:inline-block;border-color:transparent;">
+    {% if glosses_with_too_many_videos %}
+    <table class='table table-condensed table-condensed-light' style="width:100%;">
+    <tr>
+        <th style="width:300px;">{% trans "Lemma" %} ({{default_language.name}})</th>
+        <th style="width:150px;">{% trans "Gloss ID" %}</th>
+        {% for language in dataset_languages %}
+        <th style="width:300px;">{% trans "Annotation" %} ({{language.name}})</th>
+        {% endfor %}
+        <th style="width:1000px;">{% trans "Video Paths" %}</th>
+    </tr>
+    {% for gloss, videos in glosses_with_too_many_videos %}
+    <tr>
+        <td>{{gloss.idgloss}}</td>
+        <td>{{gloss.id}}</td>
+        {% for language in dataset_languages %}
+        <td>{{gloss|get_annotation_idgloss_translation_no_default:language}}</td>
+        {% endfor %}
+        <td>{{videos}}</td>
+    </tr>
+    {% endfor %}
+    </table>
+    {% endif %}
+</div>
+</div>
+<br>
+<div class='panel-heading panel-light' data-toggle='collapse' data-parent='#video_storage_toggles'
+     data-target='#toggle_extra_characters_in_filename'>{% trans "Glosses with Extra Characters in Video Filename" %}
+    <span>({{glosses_with_weird_filenames|length}} {% trans "results found" %})</span>
+</div>
+<div id='toggle_extra_characters_in_filename' class="panel-collapse collapse">
+<div class="panel-body" style="display:inline-block;border-color:transparent;">
+    {% if glosses_with_weird_filenames %}
+    <table class='table table-condensed table-condensed-light' style="width:100%;">
+    <tr>
+        <th style="width:300px;">{% trans "Lemma" %} ({{default_language.name}})</th>
+        <th style="width:150px;">{% trans "Gloss ID" %}</th>
+        {% for language in dataset_languages %}
+        <th style="width:300px;">{% trans "Annotation" %} ({{language.name}})</th>
+        {% endfor %}
+        <th style="width:1000px;">{% trans "Video Paths" %}</th></tr>
+        {% for gloss, videos in glosses_with_weird_filenames %}
+        <tr>
+            <td>{{gloss.idgloss}}</td>
+            <td>{{gloss.id}}</td>
+            {% for language in dataset_languages %}
+            <td>{{gloss|get_annotation_idgloss_translation_no_default:language}}</td>
+            {% endfor %}
+            <td>{{videos}}</td></tr>
+        {% endfor %}
+    </table>
+    {% endif %}
+</div>
+</div>
+<br>
+
+<div class='panel-heading panel-light' data-toggle='collapse' data-parent='#video_storage_toggles'
+     data-target='#toggle_wrong_folder'>{% trans "Glosses with Wrong Folder for Video" %}
+    <span>({{wrong_folder|length}} {% trans "results found" %})</span>
+</div>
+<div id='toggle_wrong_folder' class="panel-collapse collapse">
+<div class="panel-body" style="display:inline-block;border-color:transparent;">
+    {% if wrong_folder %}
+    <table class='table table-condensed table-condensed-light' style="width:100%;">
+    <tr>
+        <th style="width:300px;">{% trans "Lemma" %} ({{default_language.name}})</th>
+        <th style="width:150px;">{% trans "Gloss ID" %}</th>
+        {% for language in dataset_languages %}
+        <th style="width:300px;">{% trans "Annotation" %} ({{language.name}})</th>
+        {% endfor %}
+        <th style="width:1000px;">{% trans "Video Paths" %}</th>
+        <th style="width:100px;">{% trans "Exists" %}</th>
+        </tr>
+        {% for gloss, videos in wrong_folder %}
+        <tr>
+            <td>{{gloss.idgloss}}</td>
+            <td>{{gloss.id}}</td>
+            {% for language in dataset_languages %}
+            <td>{{gloss|get_annotation_idgloss_translation_no_default:language}}</td>
+            {% endfor %}
+            <td colspan="2">
+                <table>
+                <tr><th style="width:1000px;"></th><th style="width:100px;"></th></tr>
+                {% for version, path, exists in videos %}
+                <tr>
+                <td style="width:1000px;">{{version}}: {{path}}</td>
+                <td style="width:100px;">{{exists}}</td>
+                </tr>
+                {% endfor %}
+                </table>
+            </td>
+        </tr>
+        {% endfor %}
+    </table>
+    {% endif %}
+</div>
+</div>
+<br>
+
+<div class='panel-heading panel-light' data-toggle='collapse' data-parent='#video_storage_toggles'
+     data-target='#toggle_non_mp4'>{% trans "Gloss Video Files with non-mp4 Extensions" %}
+    <span>({{non_mp4_videos|length}} {% trans "results found" %})</span>
+</div>
+<div id='toggle_non_mp4' class="panel-collapse collapse">
+<div class="panel-body" style="display:inline-block;border-color:transparent;">
+    {% if non_mp4_videos %}
+    <table class='table table-condensed table-condensed-light' style="width:100%;">
+    <tr>
+        <th style="width:300px;">{% trans "Lemma" %} ({{default_language.name}})</th>
+        <th style="width:150px;">{% trans "Gloss ID" %}</th>
+        {% for language in dataset_languages %}
+        <th style="width:300px;">{% trans "Annotation" %} ({{language.name}})</th>
+        {% endfor %}
+        <th style="width:1000px;">{% trans "Video Paths" %}</th></tr>
+        {% for gloss, videos in non_mp4_videos %}
+        <tr>
+            <td>{{gloss.idgloss}}</td>
+            <td>{{gloss.id}}</td>
+            {% for language in dataset_languages %}
+            <td>{{gloss|get_annotation_idgloss_translation_no_default:language}}</td>
+            {% endfor %}
+            <td>{{videos}}</td></tr>
+        {% endfor %}
+    </table>
+    {% endif %}
+</div>
+</div>
+<br>
+
+<div class='panel-heading panel-light' data-toggle='collapse' data-parent='#video_storage_toggles'
+     data-target='#toggle_nme_videos'>{% trans "Gloss NME Videos" %}
+    <span>({{gloss_nme_videos|length}} {% trans "results found" %})</span>
+</div>
+<div id='toggle_nme_videos' class="panel-collapse collapse">
+<div class="panel-body" style="display:inline-block;border-color:transparent;">
+    {% if gloss_nme_videos %}
+    <table class='table table-condensed table-condensed-light' style="width:100%;">
+    <tr>
+        <td class="list-group-hover" style="padding: 0;">
+        <dl class="row list-group-item active"  style="padding: 0;">
+            <dt class="col-sm-2" style="width:300px;">{% trans "Lemma" %} ({{default_language.name}})</dt>
+            <dt class="col-sm-2" style="width:150px;">{% trans "Gloss ID" %}</dt>
+            {% for language in dataset_languages %}
+            <dt class="col-sm-2" style="width:300px;">{% trans "Annotation" %} ({{language.name}})</dt>
+            {% endfor %}
+            <dt class="col-sm-2" style="width:600px;">{% trans "Video Paths" %}</dt>
+        </dl>
+        <list id="document_tuples" style="height:280px; display:block;">
+              {% for gloss, videos in gloss_nme_videos %}
+                  <dl id="gloss_nme_videos_{{gloss.id}}" class="row list-group-item list-group-item-contents" style="padding: 0;">
+                      <dd class="col-sm-2" style="width:300px;">{{gloss.idgloss}}</dd>
+                      <dd class="col-sm-2" style="width:150px;">{{gloss.id}}</dd>
+                      {% for language in dataset_languages %}
+                        <dd class="col-sm-2" style="width:300px;">{{gloss|get_annotation_idgloss_translation_no_default:language}}</dd>
+                      {% endfor %}
+                      <dd class="col-sm-2" style="width:600px;" id='nme_videos_{{gloss.id}}'>{{videos}}</dd>
+                  </dl>
+             {% endfor %}
+        </list>
+        </td>
+        </tr>
+    </table>
+    {% endif %}
+</div>
+</div>
+<br>
+
+<div class='panel-heading panel-light' data-toggle='collapse' data-parent='#video_storage_toggles'
+     data-target='#toggle_persp_videos'>{% trans "Gloss Perspective Videos" %}
+    <span>({{gloss_perspective_videos|length}} {% trans "results found" %})</span>
+</div>
+<div id='toggle_persp_videos' class="panel-collapse collapse">
+<div class="panel-body" style="display:inline-block;border-color:transparent;">
+    {% if gloss_perspective_videos %}
+    <table class='table table-condensed table-condensed-light' style="width:100%;">
+
+    <tr>
+        <td class="list-group-hover" style="padding: 0;">
+        <dl class="row list-group-item active"  style="padding: 0;">
+            <dt class="col-sm-2" style="width:300px;">{% trans "Lemma" %} ({{default_language.name}})</dt>
+            <dt class="col-sm-2" style="width:150px;">{% trans "Gloss ID" %}</dt>
+            {% for language in dataset_languages %}
+            <dt class="col-sm-2" style="width:300px;">{% trans "Annotation" %} ({{language.name}})</dt>
+            {% endfor %}
+            <dt class="col-sm-2" style="width:600px;">{% trans "Video Paths" %}</dt>
+        </dl>
+        <list id="document_tuples" style="height:280px; display:block;">
+              {% for gloss, videos in gloss_perspective_videos %}
+                  <dl id="gloss_persp_videos_{{gloss.id}}" class="row list-group-item list-group-item-contents" style="padding: 0;">
+                      <dd class="col-sm-2" style="width:300px;">{{gloss.idgloss}}</dd>
+                      <dd class="col-sm-2" style="width:150px;">{{gloss.id}}</dd>
+                      {% for language in dataset_languages %}
+                        <dd class="col-sm-2" style="width:300px;">{{gloss|get_annotation_idgloss_translation_no_default:language}}</dd>
+                      {% endfor %}
+                      <dd class="col-sm-2" style="width:600px;" id='persp_videos_{{gloss.id}}'>{{videos}}</dd>
+                  </dl>
+             {% endfor %}
+        </list>
+        </td>
+        </tr>
+    </table>
+    {% endif %}
+</div>
+</div>
+<br>
+
+<div class='panel-heading panel-light' data-toggle='collapse' data-parent='#video_storage_toggles'
+     data-target='#toggle_gloss_videos'>{% trans "Gloss Videos" %}
+    <span>({{gloss_videos|length}} {% trans "results found" %})</span>
+</div>
+<div id='toggle_gloss_videos' class="panel-collapse collapse" style="width:auto;">
+<div class="panel-body" style="display:inline-block;border-color:transparent;">
+    {% if gloss_videos %}
+    <table class='table table-condensed table-condensed-light'>
+    <tr>
+        <td class="list-group-hover" style="padding: 0;">
+        <dl class="row list-group-item active"  style="padding: 0;">
+            <dt class="col-sm-2" style="width:300px;">{% trans "Lemma" %} ({{default_language.name}})</dt>
+            <dt class="col-sm-2" style="width:150px;">{% trans "Gloss ID" %}</dt>
+            {% for language in dataset_languages %}
+            <dt class="col-sm-2" style="width:300px;">{% trans "Annotation" %} ({{language.name}})</dt>
+            {% endfor %}
+            <dt class="col-sm-2" style="width:400px;">{% trans "Video Paths" %}</dt>
+            <dt class="col-sm-2" style="width:300px;">
+                <span class="hasTooltip">{% trans "Operations" %}
+                    <span id="tooltip" class="glyphicon glyphicon-question-sign" aria-hidden="true" data-container="body"
+                          data-toggle="tooltip" data-placement="top" data-html="true" title=""></span>
+                    <span class="isTooltip">{% trans "Renumber backup files; match extension to video type." %}</span>
+                </span>
+            </dt>
+        </dl>
+        <list id="document_tuples" style="height:280px; display:block;">
+              {% for gloss, num_videos, extra_chars, videos in gloss_videos %}
+                  <dl id="gloss_videos_{{gloss.id}}" class="row list-group-item list-group-item-contents" style="padding: 0;">
+                      <dd class="col-sm-2" style="width:300px;">{{gloss.idgloss}}</dd>
+                      <dd class="col-sm-2" style="width:150px;">{{gloss.id}}</dd>
+                      {% for language in dataset_languages %}
+                        <dd class="col-sm-2" style="width:300px;">{{gloss|get_annotation_idgloss_translation_no_default:language}}</dd>
+                      {% endfor %}
+                      <dd class="col-sm-2" style="width:400px;" id='videos_{{gloss.id}}'>{{videos}}</dd>
+                      <dd class="col-sm-2" style="width:300px;">
+                            <div class='btn-group' >
+                                {% if num_videos > 1 or extra_chars %}
+                                <button id="update_gloss_video_backups_{{gloss.id}}" class="btn btn-success"
+                                        onclick='update_gloss_video_backups(this)'
+                                        style="padding-top: 0; padding-bottom: 0; margin-top: 0;"
+                                        data-glossid='{{gloss.id}}'>{% trans "Rename" %}</button>
+                                {% endif %}
+                            </div>
+                      </dd>
+                  </dl>
+             {% endfor %}
+        </list>
+        </td>
+        </tr>
+    </table>
+    {% endif %}
+</div>
+</div>
+</div>
+<br>
+</div>
+</div>
+{% endblock %}
+

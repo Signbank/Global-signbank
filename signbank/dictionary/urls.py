@@ -25,6 +25,7 @@ import signbank.gloss_update
 import signbank.dictionary.batch_edit
 import signbank.gloss_morphology_update
 import signbank.frequency
+import signbank.dataset_operations
 
 app_name = 'dictionary'
 urlpatterns = [
@@ -244,6 +245,9 @@ urlpatterns = [
             signbank.dictionary.update.restore_gloss, name='restore_gloss'),
 
     re_path(r'^trash_gloss/(?P<glossid>\d+)$', signbank.dictionary.update.trash_gloss, name='trash_gloss'),
+
+    re_path(r'update_gloss_video_backups/(?P<glossid>\d+)/$',
+            permission_required('dictionary.change_gloss')(signbank.dataset_operations.update_gloss_video_backups)),
 
     re_path(r'info/$', signbank.dictionary.views.info),
     re_path(r'protected_media/(?P<filename>.*)$', signbank.dictionary.views.protected_media, name='protected_media'),
