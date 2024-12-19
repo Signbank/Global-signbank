@@ -50,7 +50,6 @@ var show_dataset_interface_options = {{ SHOW_DATASET_INTERFACE_OPTIONS|yesno:"tr
 var search_type = '{{search_type}}';
 var model_view = 'gloss';
 var active_id = '{{active_id}}';
-console.log('active id: '+active_id);
 var this_gloss_id = {{gloss.id}};
 
 var search_results_url = '{% url 'dictionary:ajax_search_results' %}';
