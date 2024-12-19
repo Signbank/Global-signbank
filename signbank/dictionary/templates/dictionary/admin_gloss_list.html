@@ -754,15 +754,14 @@ function do_toggle_language(el) {
                                 <td class='td td-light' style="padding-left:30px;"><label>{{searchform.dialects.label}}</label></td>
                                 <td class='td td-light' style="width:600px;">{{ searchform.dialects }}</td>
                             </tr>
-
                             {% for fieldname,field,label in input_names_fields_and_labels.main %}
+                                {% if not public or fieldname in PUBLIC_MAIN_FIELDS %}
 
                                 <tr><td class='td td-light' style="padding-left:30px;">
                                     <label for='id_{{fieldname}}'>{{label}}</label></td>
                                     <td class='td td-light' style="width:600px;">{{field}}</td></tr>
-
+                            {% endif %}
                             {% endfor %}
-
                         </table>
 
                         </div>
@@ -776,6 +775,7 @@ function do_toggle_language(el) {
                         <tr>
                           <td class='td td-light'>
                             <table class='table table-condensed table-condensed-light'>
+                                {% if not public %}
                                 <tr>
                                     <td class='td td-light' style="padding-left:30px;"><label for='id_morpheme'>{{searchform.morpheme.label}}</label></td>
                                     <td class='td td-light' style="width:600px;">
@@ -786,6 +786,7 @@ function do_toggle_language(el) {
                                         <input type="hidden" name='morpheme' id='morpheme_id' value="">
                                     </td>
                                 </tr>
+                                {% endif %}
                                 <tr><td class='td td-light' style="padding-left:30px;"><label for='id_hasComponentOfType'>{{searchform.hasComponentOfType.label}}</label></td>
                                     <td class='td td-light' style="width:600px;">{{searchform.hasComponentOfType}}</td></tr>
                                 <tr><td class='td td-light' style="padding-left:30px;"><label for='id_mrpType'>{{searchform.mrpType.label}}</label></td>
@@ -812,10 +813,10 @@ function do_toggle_language(el) {
                           <td class='td td-light'>
                             <table class='table table-condensed table-condensed-light'>
                                 {% for fieldname,field,label in input_names_fields_and_labels.phonology %}
-
+                                {% if not public or fieldname in PUBLIC_PHONOLOGY_FIELDS %}
                                     <tr>
-                                        <td class='td td-light' style="padding-left:30px;"><label>{{label}}</label></td>
-                                        <td class='td td-light'>{{field}}</td>
+                                        <td class='td td-light' style="padding-left:30px;width:200px;"><label>{{label}}</label></td>
+                                        <td class='td td-light' style="width:600px;">{{field}}</td>
                                         {% if fieldname == 'handedness' %}
                                             {% for handednessfieldname,handednessfield,handednesslabel in input_names_fields_labels_handedness %}
                                                 <td class='td td-light'><label for='id_{{handednessfieldname}}'>{{handednesslabel}}</label></td><td class='td td-light'>{{handednessfield}}</td>
@@ -828,8 +829,11 @@ function do_toggle_language(el) {
                                             {% for subhndshfieldname,subhndshfield,subhndshlabel in input_names_fields_labels_subhndsh %}
                                                 <td class='td td-light'><label for='id_{{subhndshfieldname}}'>{{subhndshlabel}}</label></td><td class='td td-light'>{{subhndshfield}}</td>
                                             {% endfor %}
+                                        {% else %}
+                                            <td style="width:200px;"></td><td style="width:200px;"></td>
                                         {% endif %}
                                     </tr>
+                                {% endif %}
                                 {% endfor %}
 
                             </table>
@@ -850,14 +854,11 @@ function do_toggle_language(el) {
                           <td class='td td-light'>
                             <table class='table table-condensed table-condensed-light' style="width:65%;">
                                 {% for fieldname,field,label in input_names_fields_and_labels.semantics %}
-
+                                {% if not public or fieldname in PUBLIC_SEMANTICS_FIELDS %}
                                     <tr><td class='td td-light' style="padding-left:30px;"><label for='id_{{fieldname}}'>{{label}}</label></td>
                                         <td class='td td-light' style="width:600px;">{{field}}</td></tr>
-
+                                {% endif %}
                                 {% endfor %}
-
-
-
                             </table>
 
                           </td>
@@ -979,11 +980,13 @@ function do_toggle_language(el) {
             {% endif %}
         </button>
 &nbsp;&nbsp;      <span class="span-text span-text-light">
-        {% trans "Number of Matches:" %} {{page_obj.paginator.count}} {% if user.is_anonymous %}(publically available){% endif %} {% trans "out of" %} {{glosscount}}.
+        {% trans "Number of Matches:" %}
+        {{page_obj.paginator.count}}
+        {% trans "out of" %} {{glosscount}}{% if user.is_anonymous %} (publically available){% endif %}
 
         {% if SHOW_DATASET_INTERFACE_OPTIONS and selected_datasets %}
         {% trans "Datasets:" %}
-        {% for ds in selected_datasets %}{{ds.acronym}}{% if not forloop.last %}, {% else %}.{% endif %}
+        {% for ds in selected_datasets %}{{ds.acronym}}{% if not forloop.last %}, {% else %}{% endif %}
         {% endfor %}
         {% endif %}
         </span>

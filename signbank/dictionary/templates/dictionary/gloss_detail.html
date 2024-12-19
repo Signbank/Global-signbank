@@ -676,9 +676,11 @@ textarea:focus {
 
     <div id="view_tabs" style="margin-right:15px;margin-top:10px;z-index:100;" class='view-tabs view-tabs-light'>
     <ul class='nav nav-tabs nav-tabs-light'>
+        {% if gloss.lemma.dataset.is_public and gloss.inWeb %}
         <li class="nav-item">
             <a class='nav-link' href="{{PREFIX_URL}}/dictionary/gloss/{{gloss.id}}.html">{% trans "Public View" %}</a>
         </li>
+        {% endif %}
         <li class="nav-item">
             <a class='nav-link active' href="{{PREFIX_URL}}/dictionary/gloss/{{gloss.id}}/">{% trans "Details" %}</a>
         </li>
