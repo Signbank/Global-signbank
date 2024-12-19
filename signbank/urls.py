@@ -27,7 +27,7 @@ from signbank.dictionary.adminviews import (GlossListView, MorphemeListView, Dat
                                             QueryListView, SemanticFieldListView, DerivationHistoryListView,
                                             SearchHistoryView, SenseListView, LemmaListView, ToggleListView,
                                             DatasetMediaView, BatchEditView, AnnotatedGlossListView,
-                                            AnnotatedSentenceListView)
+                                            AnnotatedSentenceListView, RecentGlossListView)
 from signbank.dictionary.dataset_views import DatasetConstraintsView
 from signbank.dictionary.views import add_image, delete_image, add_new_morpheme, add_handshape_image
 
@@ -88,7 +88,7 @@ urlpatterns = [
     re_path(r'^analysis/toggle_view/$', ToggleListView.as_view(), name='admin_toggle_list'),
     re_path(r'^analysis/batch_edit_view/$', BatchEditView.as_view(), name='admin_batch_edit_view'),
 
-    re_path(r'^signs/recently_added/$', login_required(signbank.dictionary.views.recently_added_glosses),
+    re_path(r'^signs/recently_added/$', login_required(RecentGlossListView.as_view()),
             name='recently_added_glosses'),
     re_path(r'^signs/proposed_new/$', signbank.dictionary.views.proposed_new_signs),
     re_path(r'^handshapes/show_all/$', HandshapeListView.as_view(), {'show_all': True}),
