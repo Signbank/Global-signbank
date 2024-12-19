@@ -1,12 +1,13 @@
 
+from signbank.dictionary.context_data import get_selected_datasets
 from django.views.generic.list import ListView
 from django.views.generic.detail import DetailView
 from django.core.paginator import Paginator
 from django.views.generic.edit import CreateView, DeleteView, UpdateView
 from signbank.dictionary.models import Dataset, Gloss, AnnotationIdglossTranslation
-from signbank.dataset_operations import (gloss_annotations_check, gloss_videos_check, gloss_video_filename_check,
-                                         gloss_subclass_videos_check, find_unlinked_video_files_for_dataset)
-from signbank.tools import get_selected_datasets_for_user, get_dataset_languages
+
+from signbank.dataset_operations import (find_unlinked_video_files_for_dataset, gloss_annotations_check, gloss_videos_check, gloss_video_filename_check, gloss_subclass_videos_check)
+from signbank.tools import get_dataset_languages
 from signbank.settings.server_specific import *
 from guardian.shortcuts import get_objects_for_user
 from django.core.exceptions import PermissionDenied, ObjectDoesNotExist
@@ -27,7 +28,7 @@ class DatasetConstraintsView(DetailView):
 
     # Overriding the get method get permissions right
     def get(self, request, *args, **kwargs):
-        selected_datasets = get_selected_datasets_for_user(self.request.user)
+        selected_datasets = get_selected_datasets(self.request)
 
         try:
             self.object = super().get_object()
@@ -44,7 +45,9 @@ class DatasetConstraintsView(DetailView):
 
         dataset = context['dataset']
 
-        context['dataset_languages'] = dataset.translation_languages.all()
+        selected_datasets = get_selected_datasets(self.request)
+        dataset_languages = get_dataset_languages(selected_datasets)
+        context['dataset_languages'] = dataset_languages
         context['default_language'] = dataset.default_language
 
         context['SHOW_DATASET_INTERFACE_OPTIONS'] = getattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS', False)

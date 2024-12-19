@@ -63,9 +63,9 @@ def page(request, url='/'):
     f.title = mark_safe(f.title)
     f.content = mark_safe(f.content)
 
-    from signbank.tools import get_selected_datasets_for_user
+    from signbank.dictionary.context_data import get_selected_datasets
 
-    selected_datasets = get_selected_datasets_for_user(request.user)
+    selected_datasets = get_selected_datasets(request)
     dataset_languages = get_dataset_languages(selected_datasets)
 
     response = HttpResponse(t.render({'page': f,
