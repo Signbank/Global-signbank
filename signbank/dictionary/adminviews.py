@@ -1173,7 +1173,7 @@ class GlossDetailView(DetailView):
 
         from signbank.dictionary.context_data_gloss import (get_other_relations, get_annotated_sentences,
                                                             get_nme_video_descriptions, get_simultaneous_morphology, get_sequential_morphology,
-                                                            get_annotation_idgloss_per_language_dict)
+                                                            get_annotation_idgloss_per_language_dict, get_notes_groupedby_role)
 
         context['otherrelations'] = get_other_relations(gloss)
 
@@ -1200,6 +1200,8 @@ class GlossDetailView(DetailView):
 
         context['annotation_idgloss'] = get_annotation_idgloss_per_language_dict(gloss)
 
+        context['gloss_dialects'] = gloss.dialect.all()
+
         context['simultaneous_morphology'] = get_simultaneous_morphology(gloss, interface_language)
         context['simultaneous_morphology_display'] = [(sm[0].morpheme.pk, sm[1]) for sm in context['simultaneous_morphology']]
 
@@ -1217,9 +1219,32 @@ class GlossDetailView(DetailView):
 
         context['SemanticFieldDefined'] = self.object.semField.all().count() > 0
 
-        if self.public:
+        context['SHOW_LETTER_NUMBER_PHONOLOGY'] = getattr(settings, 'SHOW_LETTER_NUMBER_PHONOLOGY', False)
 
-            context['gloss_dialects'] = gloss.dialect.all()
+        # set up weak drop weak prop fields
+        context['handedness_fields'] = []
+        weak_drop = getattr(gloss, 'weakdrop')
+        weak_prop = getattr(gloss, 'weakprop')
+        context['handedness_fields'].append([weak_drop,'weakdrop',labels['weakdrop'],'list'])
+        context['handedness_fields'].append([weak_prop,'weakprop',labels['weakprop'],'list'])
+
+        context['etymology_fields_dom'] = []
+        domhndsh_letter = getattr(gloss, 'domhndsh_letter')
+        domhndsh_number = getattr(gloss, 'domhndsh_number')
+
+        context['etymology_fields_sub'] = []
+        subhndsh_letter = getattr(gloss, 'subhndsh_letter')
+        subhndsh_number = getattr(gloss, 'subhndsh_number')
+
+        context['etymology_fields_dom'].append([domhndsh_letter,'domhndsh_letter',labels['domhndsh_letter'],'check'])
+        context['etymology_fields_dom'].append([domhndsh_number,'domhndsh_number',labels['domhndsh_number'],'check'])
+        context['etymology_fields_sub'].append([subhndsh_letter,'subhndsh_letter',labels['subhndsh_letter'],'check'])
+        context['etymology_fields_sub'].append([subhndsh_number,'subhndsh_number',labels['subhndsh_number'],'check'])
+
+        context['StrongHand'] = gloss.domhndsh.machine_value if gloss.domhndsh else 0
+        context['WeakHand'] = gloss.subhndsh.machine_value if gloss.subhndsh else 0
+
+        if self.public:
 
             # Put translations (senses) per language in the context
             sensetranslations_per_language = dict()
@@ -1318,14 +1343,6 @@ class GlossDetailView(DetailView):
             if self.object.domhndsh and self.object.domhndsh.machine_value else 0        # minimal machine value -s 3
         context['tokNo'] = self.object.tokNo                 # Number of occurrences of Sign, used to display Stars
 
-        # check for existence of strong hand and weak hand shapes
-        if self.object.domhndsh:
-            strong_hand_obj = Handshape.objects.filter(machine_value=self.object.domhndsh.machine_value).first()
-        else:
-            strong_hand_obj = None
-        context['StrongHand'] = self.object.domhndsh.machine_value if strong_hand_obj else 0
-        context['WeakHand'] = self.object.subhndsh.machine_value if self.object.subhndsh else 0
-
         context['DerivationHistoryDefined'] = self.object.derivHist.all().count() > 0
 
         # Pass info about which fields we want to see
@@ -1338,26 +1355,6 @@ class GlossDetailView(DetailView):
         self.last_used_dataset = dataset_of_requested_gloss.acronym
 
         self.request.session['last_used_dataset'] = self.last_used_dataset
-
-        # set up weak drop weak prop fields
-        context['handedness_fields'] = []
-        weak_drop = getattr(gl, 'weakdrop')
-        weak_prop = getattr(gl, 'weakprop')
-        context['handedness_fields'].append([weak_drop,'weakdrop',labels['weakdrop'],'list'])
-        context['handedness_fields'].append([weak_prop,'weakprop',labels['weakprop'],'list'])
-
-        context['etymology_fields_dom'] = []
-        domhndsh_letter = getattr(gl, 'domhndsh_letter')
-        domhndsh_number = getattr(gl, 'domhndsh_number')
-
-        context['etymology_fields_sub'] = []
-        subhndsh_letter = getattr(gl, 'subhndsh_letter')
-        subhndsh_number = getattr(gl, 'subhndsh_number')
-
-        context['etymology_fields_dom'].append([domhndsh_letter,'domhndsh_letter',labels['domhndsh_letter'],'check'])
-        context['etymology_fields_dom'].append([domhndsh_number,'domhndsh_number',labels['domhndsh_number'],'check'])
-        context['etymology_fields_sub'].append([subhndsh_letter,'subhndsh_letter',labels['subhndsh_letter'],'check'])
-        context['etymology_fields_sub'].append([subhndsh_number,'subhndsh_number',labels['subhndsh_number'],'check'])
 
         phonology_list_kinds = []
         gloss_phonology = []
@@ -1454,16 +1451,7 @@ class GlossDetailView(DetailView):
 
         context['homonyms_but_not_saved'] = homonyms_but_not_saved
 
-        # Regroup notes
-        notes = context['gloss'].definition_set.all()
-        notes_groupedby_role = {}
-        for note in notes:
-            translated_note_role = note.role.name if note.role else '-'
-            role_id = (note.role, translated_note_role)
-            if role_id not in notes_groupedby_role:
-                notes_groupedby_role[role_id] = []
-            notes_groupedby_role[role_id].append(note)
-        context['notes_groupedby_role'] = notes_groupedby_role
+        context['notes_groupedby_role'] = get_notes_groupedby_role(gloss)
 
         # Gather the OtherMedia
         context['other_media'] = []
@@ -1504,31 +1492,6 @@ class GlossDetailView(DetailView):
 
         context['sense_to_similar_senses'] = sense_to_similar_senses
 
-        bad_dialect = False
-        gloss_dialects = []
-
-        gloss_signlanguage = gl.lemma.dataset.signlanguage if gl.lemma and gl.lemma.dataset else None
-
-        initial_gloss_dialects = gl.dialect.all()
-        gloss_dialect_choices = list(Dialect.objects.filter(signlanguage=gloss_signlanguage))
-
-        for gd in initial_gloss_dialects:
-            if gd in gloss_dialect_choices:
-                gloss_dialects.append(gd)
-            else:
-                bad_dialect = True
-                print('Bad dialect found in gloss ', gl.pk, ': ', gd)
-
-        context['gloss_dialects'] = gloss_dialects
-
-        # This is a patch
-        if bad_dialect:
-            print('PATCH: Remove bad dialect from gloss ', gl.pk)
-            # take care of bad dialects due to evolution of Lemma, Dataset, SignLanguage setup
-            gl.dialect.clear()
-            for d in gloss_dialects:
-                gl.dialect.add(d)
-
         context['gloss_derivationhistory'] = list(gl.derivHist.all())
 
         # Obtain the number of morphemes in the dataset of this gloss
@@ -1555,7 +1518,6 @@ class GlossDetailView(DetailView):
 
         context['SHOW_DATASET_INTERFACE_OPTIONS'] = getattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS', False)
         context['USE_REGULAR_EXPRESSIONS'] = getattr(settings, 'USE_REGULAR_EXPRESSIONS', False)
-        context['SHOW_LETTER_NUMBER_PHONOLOGY'] = getattr(settings, 'SHOW_LETTER_NUMBER_PHONOLOGY', False)
         context['USE_DERIVATIONHISTORY'] = getattr(settings, 'USE_DERIVATIONHISTORY', False)
         context['SHOW_QUERY_PARAMETERS_AS_BUTTON'] = getattr(settings, 'SHOW_QUERY_PARAMETERS_AS_BUTTON', False)
 

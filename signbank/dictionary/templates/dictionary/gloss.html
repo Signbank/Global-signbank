@@ -498,7 +498,56 @@ $('#show_middle').click(function()
     <div id='phonology' class='collapse'>
         <table class='table table-condensed'>
         {% for value,name,label,kind in phonology_fields %}
-            {% if value == '-' or value == ' ' or value == '' or value == None %}
+            {% if name == 'handedness' %}
+                <tr >
+                    <th>{{label}}</th>
+                    <td id='{{name}}'
+                        value='{{value}}' style="width:400px;">{% value value %}</td>
+                    {% for value,name,label,kind in handedness_fields %}
+                        {% if name == 'weakdrop' %}
+                        <td id='{{name}}'
+                            value="{{value}}">{% if value %}+WD{% elif value == None %}&nbsp;{% else %}-WD{% endif %}</td>
+                        {% else %}
+                        <td id='{{name}}'
+                            value="{{value}}">{% if value %}+WP{% elif value == None %}&nbsp;{% else %}-WP{% endif %}</td>
+                        {% endif %}
+                    {% endfor %}
+                </tr>
+            {% elif name == 'domhndsh' and SHOW_LETTER_NUMBER_PHONOLOGY %}
+                <tr >
+                    <th>{{label}}</th>
+                    <td id='{{name}}' value='{{value}}' >
+                        <a id="strong_hand_link" style="color: {% if StrongHand %}blue{% else %}red{% endif %}; display: visible;"
+                                        {% if StrongHand %}
+                                            href="{{PREFIX_URL}}/dictionary/handshape/{{StrongHand}}/"
+                                        {% endif %}>{{value}}</a>
+                    </td>
+                    {% for value,name,label,kind in etymology_fields_dom %}
+                        {% if name == 'domhndsh_letter' %}
+                        <td id='{{name}}'
+                            value="{{value}}">{% if value %}letter{% else %}&nbsp;{% endif %}</td>
+                        {% else %}
+                        <td id='{{name}}'
+                            value="{{value}}">{% if value %}number{% else %}&nbsp;{% endif %}</td>
+                        {% endif %}
+                    {% endfor %}
+                </tr>
+            {% elif name == 'subhndsh' and SHOW_LETTER_NUMBER_PHONOLOGY %}
+                <tr >
+                    <th>{{label}}</th>
+                    <td id='{{name}}'
+                        value='{{value}}' >{% value value %}</td>
+                    {% for value,name,label,kind in etymology_fields_sub %}
+                        {% if name == 'subhndsh_letter' %}
+                        <td id='{{name}}'
+                            value="{{value}}">{% if value %}letter{% else %}&nbsp;{% endif %}</td>
+                        {% else %}
+                        <td id='{{name}}'
+                            value="{{value}}">{% if value %}number{% else %}&nbsp;{% endif %}</td>
+                        {% endif %}
+                    {% endfor %}
+                </tr>
+            {% elif value == '-' or value == ' ' or value == '' or value == None %}
             {% else %}
              <tr>
                 <th>{{label}}</th>

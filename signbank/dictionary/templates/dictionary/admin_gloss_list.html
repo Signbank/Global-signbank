@@ -817,15 +817,15 @@ function do_toggle_language(el) {
                                     <tr>
                                         <td class='td td-light' style="padding-left:30px;width:200px;"><label>{{label}}</label></td>
                                         <td class='td td-light' style="width:600px;">{{field}}</td>
-                                        {% if fieldname == 'handedness' and not public %}
+                                        {% if fieldname == 'handedness' %}
                                             {% for handednessfieldname,handednessfield,handednesslabel in input_names_fields_labels_handedness %}
                                                 <td class='td td-light'><label for='id_{{handednessfieldname}}'>{{handednesslabel}}</label></td><td class='td td-light'>{{handednessfield}}</td>
                                             {% endfor %}
-                                        {% elif fieldname == 'domhndsh' and not public %}
+                                        {% elif fieldname == 'domhndsh' %}
                                             {% for domhndshfieldname,domhndshfield,domhndshlabel in input_names_fields_labels_domhndsh %}
                                                 <td class='td td-light'><label for='id_{{domhndshfieldname}}'>{{domhndshlabel}}</label></td><td class='td td-light'>{{domhndshfield}}</td>
                                             {% endfor %}
-                                        {% elif fieldname == 'subhndsh' and not public %}
+                                        {% elif fieldname == 'subhndsh' %}
                                             {% for subhndshfieldname,subhndshfield,subhndshlabel in input_names_fields_labels_subhndsh %}
                                                 <td class='td td-light'><label for='id_{{subhndshfieldname}}'>{{subhndshlabel}}</label></td><td class='td td-light'>{{subhndshfield}}</td>
                                             {% endfor %}

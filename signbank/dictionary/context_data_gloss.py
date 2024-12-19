@@ -110,3 +110,15 @@ def get_nme_video_descriptions(gloss):
             nme_video_descriptions[nmevideo][language] = description_text
     return nme_video_descriptions
 
+
+def get_notes_groupedby_role(gloss):
+    notes = gloss.definition_set.all()
+    notes_groupedby_role = {}
+    for note in notes:
+        translated_note_role = note.role.name if note.role else '-'
+        role_id = (note.role, translated_note_role)
+        if role_id not in notes_groupedby_role:
+            notes_groupedby_role[role_id] = []
+        notes_groupedby_role[role_id].append(note)
+    return notes_groupedby_role
+

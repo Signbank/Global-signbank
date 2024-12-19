@@ -129,7 +129,9 @@ FIELDS['phonology'] = ['handedness', 'domhndsh', 'subhndsh', 'handCh', 'relatArt
 PUBLIC_PHONOLOGY_FIELDS = ['handedness', 'domhndsh', 'subhndsh', 'handCh', 'relatArtic', 'locprim',
                            'contType', 'movSh', 'movDir',
                            'repeat', 'altern',
-                           'relOriMov', 'relOriLoc', 'oriCh']
+                           'relOriMov', 'relOriLoc', 'oriCh',
+                           'domhndsh_letter', 'domhndsh_number', 'subhndsh_letter', 'subhndsh_number',
+                           'weakdrop', 'weakprop']
 
 FIELDS['semantics'] = ['semField', 'derivHist', 'namEnt','valence','iconImg','concConcSet']
 
