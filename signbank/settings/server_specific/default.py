@@ -314,3 +314,6 @@ GUARDED_MORPHEME_DELETE = True
 FILE_UPLOAD_HANDLERS = ['django.core.files.uploadhandler.TemporaryFileUploadHandler',]
 
 FILE_UPLOAD_MAX_MEMORY_SIZE = 15728640 # 15 MB
+
+WORDNET_USERNAME = 'Spongebob Squarepants'
+WORDNET_PASSWORD = 'SecretSpongebobPassword'
