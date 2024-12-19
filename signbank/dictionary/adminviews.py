@@ -364,7 +364,12 @@ class AnnotatedSentenceListView(ListView):
         selected_datasets = get_selected_datasets(self.request)
         dataset_languages = get_dataset_languages(selected_datasets)
 
+        if not self.search_form.is_bound:
+            # make sure the form has the dynamic language fields that require the request
+            set_up_language_fields(AnnotatedSentence, self, self.search_form)
+
         get = self.request.GET
+
         valid_regex, search_fields, field_values = check_language_fields_annotatedsentence(
             self.search_form, AnnotatedSentenceSearchForm, get, dataset_languages
         )
@@ -431,7 +436,6 @@ class AnnotatedSentenceListView(ListView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
 
-        set_up_language_fields(AnnotatedSentence, self, self.search_form)
         selected_datasets = get_selected_datasets(self.request)
         dataset_languages = get_dataset_languages(selected_datasets)
         nr_sentences_in_dataset = AnnotatedSentence.objects.annotate(
@@ -497,9 +501,6 @@ class GlossListView(ListView):
         context['PUBLIC_PHONOLOGY_FIELDS'] = settings.PUBLIC_PHONOLOGY_FIELDS
         context['PUBLIC_SEMANTICS_FIELDS'] = settings.PUBLIC_SEMANTICS_FIELDS
         context['PUBLIC_MAIN_FIELDS'] = settings.PUBLIC_MAIN_FIELDS
-
-        set_up_language_fields(Gloss, self, self.search_form)
-        set_up_signlanguage_dialects_fields(self, self.search_form)
 
         context = get_context_data_for_list_view(self.request, self, self.kwargs, context)
         self.queryset_language_codes = context['queryset_language_codes']
@@ -724,6 +725,11 @@ class GlossListView(ListView):
         selected_datasets = get_selected_datasets(self.request)
         dataset_languages = get_dataset_languages(selected_datasets)
 
+        if not self.search_form.is_bound:
+            # make sure the form has the dynamic language fields that require the request
+            set_up_language_fields(Gloss, self, self.search_form)
+            set_up_signlanguage_dialects_fields(self, self.search_form)
+
         valid_regex, search_fields, field_values = check_language_fields(self.search_form, GlossSearchForm, get, dataset_languages)
 
         if USE_REGULAR_EXPRESSIONS and not valid_regex:
@@ -872,9 +878,6 @@ class SenseListView(ListView):
         # Call the base implementation first to get a context
         context = super(SenseListView, self).get_context_data(**kwargs)
 
-        set_up_language_fields(GlossSense, self, self.search_form)
-        set_up_signlanguage_dialects_fields(self, self.search_form)
-
         context = get_context_data_for_list_view(self.request, self, self.kwargs, context)
 
         context = get_context_data_for_gloss_search_form(self.request, self, self.search_form, self.kwargs,
@@ -974,6 +977,11 @@ class SenseListView(ListView):
 
         selected_datasets = get_selected_datasets(self.request)
         dataset_languages = get_dataset_languages(selected_datasets)
+
+        if not self.search_form.is_bound:
+            # make sure the form has the dynamic language fields that require the request
+            set_up_language_fields(GlossSense, self, self.search_form)
+            set_up_signlanguage_dialects_fields(self, self.search_form)
 
         valid_regex, search_fields, field_values = check_language_fields(self.search_form, GlossSearchForm, get, dataset_languages)
 
@@ -2025,8 +2033,6 @@ class MorphemeListView(ListView):
         # Call the base implementation first to get a context
         context = super(MorphemeListView, self).get_context_data(**kwargs)
 
-        set_up_language_fields(Morpheme, self, self.search_form)
-
         selected_datasets = get_selected_datasets(self.request)
         dataset_languages = get_dataset_languages(selected_datasets)
         context['dataset_languages'] = dataset_languages
@@ -2161,6 +2167,10 @@ class MorphemeListView(ListView):
 
         selected_datasets = get_selected_datasets(self.request)
         dataset_languages = get_dataset_languages(selected_datasets)
+
+        if not self.search_form.is_bound:
+            # make sure the form has the dynamic language fields that require the request
+            set_up_language_fields(Morpheme, self, self.search_form)
 
         valid_regex, search_fields, field_values = check_language_fields(self.search_form, MorphemeSearchForm, get, dataset_languages)
 
@@ -2620,8 +2630,6 @@ class MinimalPairsListView(ListView):
     def get_context_data(self, **kwargs):
         context = super(MinimalPairsListView, self).get_context_data(**kwargs)
 
-        set_up_language_fields(Gloss, self, self.search_form)
-
         selected_datasets = get_selected_datasets(self.request)
         dataset_languages = get_dataset_languages(selected_datasets)
         context['dataset_languages'] = dataset_languages
@@ -2740,6 +2748,10 @@ class MinimalPairsListView(ListView):
 
         selected_datasets = get_selected_datasets(self.request)
         dataset_languages = get_dataset_languages(selected_datasets)
+
+        if not self.search_form.is_bound:
+            # make sure the form has the dynamic language fields that require the request
+            set_up_language_fields(Gloss, self, self.search_form)
 
         valid_regex, search_fields, field_values = check_language_fields(self.search_form, FocusGlossSearchForm, get, dataset_languages)
 
@@ -6101,6 +6113,10 @@ class LemmaListView(ListView):
         selected_datasets = get_selected_datasets(self.request)
         dataset_languages = get_dataset_languages(selected_datasets)
 
+        if not self.search_form.is_bound:
+            # make sure the form has the dynamic language fields that require the request
+            set_up_language_fields(LemmaIdgloss, self, self.search_form)
+
         valid_regex, search_fields, field_values = check_language_fields(self.search_form, LemmaSearchForm, get, dataset_languages)
 
         if USE_REGULAR_EXPRESSIONS and not valid_regex:
@@ -6155,8 +6171,6 @@ class LemmaListView(ListView):
 
     def get_context_data(self, **kwargs):
         context = super(LemmaListView, self).get_context_data(**kwargs)
-
-        set_up_language_fields(LemmaIdgloss, self, self.search_form)
 
         context['SHOW_DATASET_INTERFACE_OPTIONS'] = getattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS', False)
         context['USE_REGULAR_EXPRESSIONS'] = getattr(settings, 'USE_REGULAR_EXPRESSIONS', False)
@@ -7292,9 +7306,6 @@ class AnnotatedGlossListView(ListView):
         # Call the base implementation first to get a context
         context = super(AnnotatedGlossListView, self).get_context_data(**kwargs)
 
-        set_up_language_fields(Gloss, self, self.search_form)
-        set_up_signlanguage_dialects_fields(self, self.search_form)
-
         context = get_context_data_for_list_view(self.request, self, self.kwargs, context)
 
         context = get_context_data_for_gloss_search_form(self.request, self, self.search_form, self.kwargs,
@@ -7375,6 +7386,11 @@ class AnnotatedGlossListView(ListView):
 
         # sort order matches interface language if available, otherwise the default language for the dataset
         order_by = 'annotationidglosstranslation_order_' + lang_attr_name
+
+        if not self.search_form.is_bound:
+            # make sure the form has the dynamic language fields that require the request
+            set_up_language_fields(Gloss, self, self.search_form)
+            set_up_signlanguage_dialects_fields(self, self.search_form)
 
         valid_regex, search_fields, field_values = check_language_fields(self.search_form, GlossSearchForm, get, dataset_languages)
 

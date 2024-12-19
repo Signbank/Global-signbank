@@ -971,6 +971,17 @@ def set_up_signlanguage_dialects_fields(view, form):
                                                                  signlanguage__dataset__in=selected_datasets))
 
 
+def legitimate_search_form_url_parameter(searchform, get_key):
+
+    if not searchform:
+        return False
+
+    if get_key in searchform.fields.keys():
+        return True
+
+    return False
+
+
 def queryset_glosssense_from_get(model, formclass, searchform, GET, qs):
     """
     Function used by both GlossListView and SenseListView
@@ -985,9 +996,6 @@ def queryset_glosssense_from_get(model, formclass, searchform, GET, qs):
     gloss_prefix = 'gloss__' if model in ['GlossSense', 'AnnotatedGloss'] else ''
     text_filter = 'iregex' if USE_REGULAR_EXPRESSIONS else 'icontains'
     for get_key, get_value in GET.items():
-        if get_key in ['csrfmiddlewaretoken', 'export_format', 'search_type', 'show_all',
-                       'view_type', 'paginate_by', 'format']:
-            continue
         if get_value in ['', '0']:
             continue
         if get_key.endswith('[]'):
@@ -1031,9 +1039,9 @@ def queryset_glosssense_from_get(model, formclass, searchform, GET, qs):
             else:
                 query_filter = gloss_prefix + field + '__machine_value__in'
                 qs = qs.filter(**{query_filter: vals})
+        elif not legitimate_search_form_url_parameter(searchform, get_key):
+            continue
         elif get_key.startswith(formclass.gloss_search_field_prefix):
-            if get_value in ['']:
-                continue
             language_code_2char = get_key[len(formclass.gloss_search_field_prefix):]
             language = Language.objects.filter(language_code_2char=language_code_2char).first()
             query_filter_annotation_text = gloss_prefix + 'annotationidglosstranslation__text__' + text_filter
@@ -1042,8 +1050,6 @@ def queryset_glosssense_from_get(model, formclass, searchform, GET, qs):
                               query_filter_language: language})
             continue
         elif get_key.startswith(formclass.lemma_search_field_prefix):
-            if get_value in ['']:
-                continue
             language_code_2char = get_key[len(formclass.lemma_search_field_prefix):]
             language = Language.objects.filter(language_code_2char=language_code_2char).first()
             query_filter_lemma_text = gloss_prefix + 'lemma__lemmaidglosstranslation__text__' + text_filter
@@ -1052,8 +1058,6 @@ def queryset_glosssense_from_get(model, formclass, searchform, GET, qs):
                               query_filter_language: language})
             continue
         elif get_key.startswith(formclass.keyword_search_field_prefix):
-            if get_value in ['']:
-                continue
             language_code_2char = get_key[len(formclass.keyword_search_field_prefix):]
             language = Language.objects.filter(language_code_2char=language_code_2char).first()
             query_filter_sense_text = gloss_prefix + 'translation__translation__text__' + text_filter
