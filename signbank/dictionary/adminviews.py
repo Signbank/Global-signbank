@@ -7387,6 +7387,7 @@ class AnnotatedGlossListView(ListView):
             gloss_query = Gloss.objects.all().prefetch_related('lemma').filter(lemma__dataset__in=selected_datasets,
                                                                                archived__exact=False)
             gloss_query = apply_language_filters_to_results('Gloss', gloss_query, self.query_parameters)
+            gloss_query = gloss_query.distinct()
             gloss_query = apply_video_filters_to_results('Gloss', gloss_query, self.query_parameters)
             gloss_query = apply_nmevideo_filters_to_results('Gloss', gloss_query, self.query_parameters)
             gloss_query = gloss_query.distinct()
