@@ -54,7 +54,8 @@ from signbank.dictionary.consistency_senses import consistent_senses, check_cons
     reorder_sensetranslations, reorder_senses
 from signbank.query_parameters import (convert_query_parameters_to_filter, pretty_print_query_fields,
                                        pretty_print_query_values, query_parameters_this_gloss,
-                                       apply_language_filters_to_results, apply_video_filters_to_results,
+                                       apply_language_filters_to_results,
+                                       apply_video_filters_to_results, apply_nmevideo_filters_to_results,
                                        search_fields_from_get, queryset_from_get,
                                        set_up_fieldchoice_translations, set_up_language_fields,
                                        set_up_signlanguage_dialects_fields,
@@ -739,6 +740,7 @@ class GlossListView(ListView):
             qs = apply_language_filters_to_results('Gloss', qs, self.query_parameters)
             qs = qs.distinct()
             qs = apply_video_filters_to_results('Gloss', qs, self.query_parameters)
+            qs = apply_nmevideo_filters_to_results('Gloss', qs, self.query_parameters)
 
             query = convert_query_parameters_to_filter(self.query_parameters)
             if query:
@@ -808,6 +810,7 @@ class GlossListView(ListView):
         qs = queryset_glosssense_from_get('Gloss', GlossSearchForm, self.search_form, get, qs)
         query_parameters = query_parameters_from_get(self.search_form, get, query_parameters)
         qs = apply_video_filters_to_results('Gloss', qs, query_parameters)
+        qs = apply_nmevideo_filters_to_results('Gloss', qs, query_parameters)
 
         # save the query parameters to a session variable
         self.request.session['query_parameters'] = json.dumps(query_parameters)
@@ -975,7 +978,9 @@ class SenseListView(ListView):
             gloss_query = Gloss.objects.all().prefetch_related('lemma').filter(lemma__dataset__in=selected_datasets,
                                                                                archived__exact=False)
             gloss_query = apply_language_filters_to_results('Gloss', gloss_query, self.query_parameters)
+            gloss_query = gloss_query.distinct()
             gloss_query = apply_video_filters_to_results('Gloss', gloss_query, self.query_parameters)
+            gloss_query = apply_nmevideo_filters_to_results('Gloss', gloss_query, self.query_parameters)
             gloss_query = gloss_query.distinct()
 
             query = convert_query_parameters_to_filter(self.query_parameters)
@@ -997,6 +1002,7 @@ class SenseListView(ListView):
         # it is saved to self.query_parameters after the parameters are processed
         query_parameters = query_parameters_from_get(self.search_form, get, query_parameters)
         qs = apply_video_filters_to_results('GlossSense', qs, query_parameters)
+        qs = apply_nmevideo_filters_to_results('GlossSense', qs, query_parameters)
 
         if self.search_type != 'sign':
             query_parameters['search_type'] = self.search_type
@@ -7382,6 +7388,7 @@ class AnnotatedGlossListView(ListView):
                                                                                archived__exact=False)
             gloss_query = apply_language_filters_to_results('Gloss', gloss_query, self.query_parameters)
             gloss_query = apply_video_filters_to_results('Gloss', gloss_query, self.query_parameters)
+            gloss_query = apply_nmevideo_filters_to_results('Gloss', gloss_query, self.query_parameters)
             gloss_query = gloss_query.distinct()
             query = convert_query_parameters_to_filter(self.query_parameters)
             if query:
@@ -7416,6 +7423,7 @@ class AnnotatedGlossListView(ListView):
         # it is saved to self.query_parameters after the parameters are processed
         query_parameters = query_parameters_from_get(self.search_form, get, query_parameters)
         qs = apply_video_filters_to_results('AnnotatedGloss', qs, query_parameters)
+        qs = apply_nmevideo_filters_to_results('AnnotatedGloss', qs, query_parameters)
 
         query_parameters['search_type'] = self.search_type
 
