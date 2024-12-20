@@ -16,6 +16,14 @@ var show_dataset_interface_options = {{ SHOW_DATASET_INTERFACE_OPTIONS|yesno:"tr
 var csrf_token = '{{csrf_token}}';
 
 </script>
+<style>
+input[type="radio] {
+    height: 30px;
+}
+.radio {
+    height: 30px;
+}
+</style>
 {% endblock %}
 
 {% block content %}
@@ -41,40 +49,44 @@ var csrf_token = '{{csrf_token}}';
 
             <div class="panel panel-default">
               <div class="panel-heading" data-toggle="collapse"
-                       data-target="#days_period">{% trans "Search by Days" %}</div>
+                       data-target="#time_window">{% trans "Timeframe" %}</div>
 
-                  <div id='days_period' class='collapse'>
-                  <table class='table table-condensed' style="width:40%;">
+                  <div id='time_window' class='collapse in'>
+                  <table class='table table-condensed' style="width:60%;">
                   <tr>
-                      <td style="padding-left:30px;"><label for='id_days'>{% trans "Days" %}</label></td>
-                      <td style="width:300px;">{{searchform.days}}</td>
+                      <td style="padding-left:30px;">
+                          <label for='id_timeline'>{% trans "Order" %}</label></td>
+                      <td style="width:600px;">
+                            {% for radio in searchform.timeline %}
+                            <label for="{{ radio.id_for_label }}">
+                                    {{ radio.choice_label }} <span class="radio">{{ radio.tag }}</span>
+                            </label>
+                            <span>&nbsp;&nbsp;&nbsp;</span>
+                          {% endfor %}
+                      </td>
                   </tr>
-                  </table>
-              </div>
-            </div>
-
-            <div class="panel panel-default">
-              <div class="panel-heading" data-toggle="collapse"
-                       data-target="#timeline">{% trans "Timeline" %}</div>
-
-                  <div id='timeline' class='collapse'>
-                  <table class='table table-condensed' style="width:40%;">
                   <tr>
-                      <td style="padding-left:30px;"><label for='id_timeline'>{% trans "Timeline" %}</label></td>
-                      <td style="width:300px;">{{searchform.timeline}}</td>
+                      <td style="padding-left:30px;">
+                          <label for='id_days'>{% trans "Days" %}</label></td>
+                      <td style="width:600px;">
+                          {% for radio in searchform.days %}
+                            <label for="{{ radio.id_for_label }}">
+                                    {{ radio.choice_label }} <span class="radio">{{ radio.tag }}</span>
+                            </label>
+                            <span>&nbsp;&nbsp;&nbsp;</span>
+                          {% endfor %}
+                      </td>
                   </tr>
-                  </table>
-              </div>
-            </div>
-            <div class="panel panel-default">
-              <div class="panel-heading" data-toggle="collapse"
-                       data-target="#pub_search">{% trans "Search by Tags" %}</div>
-
-                  <div id='pub_search' class='collapse'>
-                  <table class='table table-condensed' style="width:40%;">
                   <tr>
-                      <td style="padding-left:30px;"><label for='id_tags'>{% trans "Tags" %}</label></td>
-                      <td style="width:300px;">{{searchform.tags}}</td>
+                      <td style="padding-left:30px;"><label for='id_timetype'>{% trans "Date" %}</label></td>
+                      <td style="width:600px;">
+                          {% for radio in searchform.timetype %}
+                            <label for="{{ radio.id_for_label }}">
+                                    {{ radio.choice_label }} <span class="radio">{{ radio.tag }}</span>
+                            </label>
+                            <span>&nbsp;&nbsp;&nbsp;</span>
+                          {% endfor %}
+                      </td>
                   </tr>
                   </table>
                   </div>
