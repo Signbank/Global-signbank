@@ -61,7 +61,8 @@ def addvideo(request):
                 if not gloss:
                     redirect(redirect_url)
                 offset = form.cleaned_data['offset']
-                nmevideo = gloss.add_nme_video(request.user, vfile, offset, recorded)
+                perspective = form.cleaned_data['nme_perspective']
+                nmevideo = gloss.add_nme_video(request.user, vfile, offset, recorded, perspective)
                 translation_languages = gloss.lemma.dataset.translation_languages.all()
                 descriptions = dict()
                 for language in translation_languages:
@@ -69,7 +70,8 @@ def addvideo(request):
                     form_value = form.cleaned_data[form_field]
                     descriptions[language.language_code_2char] = form_value.strip()
                 nmevideo.add_descriptions(descriptions)
-                nmevideo.perspective = form.cleaned_data['perspective'] #This is incorrect
+                nmevideo.perspective = perspective
+                nmevideo.save()
             elif object_type == 'morpheme_video':
                 morpheme = Morpheme.objects.filter(id=object_id).first()
                 if not morpheme:

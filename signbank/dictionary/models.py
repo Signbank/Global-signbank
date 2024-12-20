@@ -2442,15 +2442,14 @@ class Gloss(models.Model):
         nmevideos = GlossVideoNME.objects.filter(gloss=self)
         return nmevideos
 
-    def add_nme_video(self, user, videofile, new_offset, recorded):
+    def add_nme_video(self, user, videofile, new_offset, recorded, perspective='center'):
         # Preventing circular import
         from signbank.video.models import GlossVideoNME, GlossVideoHistory, get_video_file_path
-        # Create a new GlossVideo object
-        existing_nmevideos = GlossVideoNME.objects.filter(gloss=self)
-        existing_offsets = [nmev.offset for nmev in existing_nmevideos]
-        if new_offset in existing_offsets:
+
+        existing_offsets_for_this_perspective = [nmev.offset for nmev in GlossVideoNME.objects.filter(gloss=self,perspective=perspective)]
+        if new_offset in existing_offsets_for_this_perspective:
             # override given offset to avoid duplicate usage
-            offset = max(existing_offsets)+1
+            offset = max(existing_offsets_for_this_perspective)+1
         else:
             offset = new_offset
 

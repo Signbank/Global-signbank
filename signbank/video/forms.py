@@ -19,6 +19,7 @@ PERSPECTIVE_CHOICES = (('left', 'Left'),
                        ('right', 'Right')
                        )
 
+NME_PERSPECTIVE_CHOICES = (('left','Left'),('right','Right'),('center', 'Center'))
 
 class VideoUploadForObjectForm(forms.Form):
     """Form for video upload for all video types"""
@@ -32,6 +33,10 @@ class VideoUploadForObjectForm(forms.Form):
     perspective = forms.ChoiceField(label=_('Video Perspective'),
                                     choices=PERSPECTIVE_CHOICES, required=False,
                                     widget=forms.Select(attrs=ATTRS_FOR_FORMS))
+    nme_perspective = forms.ChoiceField(label=_('NME video perspective'),
+                                        choices=NME_PERSPECTIVE_CHOICES, required=False,
+                                        widget=forms.Select(attrs=ATTRS_FOR_FORMS)) 
+
     eaffile = forms.FileField(label="Upload EAF", widget=forms.FileInput(attrs={'accept':'text/xml'}), required=False)
     feedbackdata = forms.CharField(widget=forms.HiddenInput, required=False)
     translations = forms.CharField(widget=forms.HiddenInput, required=False)
