@@ -2727,6 +2727,15 @@ class MinimalPairsListView(ListView):
 
     def get_queryset(self):
 
+        if not self.search_form.is_bound:
+            # if the search_form is not bound, then
+            # this is the first time the get_queryset function is called for this view
+            # it has already been initialised with the __init__ method, but
+            # the language fields are dynamic and are not inside the form yet
+            # they depend on the selected datasets which are inside the request, which
+            # is not available to the __init__ method
+            set_up_language_fields(Gloss, self, self.search_form)
+
         get = self.request.GET
 
         if not get:
@@ -2738,15 +2747,6 @@ class MinimalPairsListView(ListView):
 
         selected_datasets = get_selected_datasets(self.request)
         dataset_languages = get_dataset_languages(selected_datasets)
-
-        if not self.search_form.is_bound:
-            # if the search_form is not bound, then
-            # this is the first time the get_queryset function is called for this view
-            # it has already been initialised with the __init__ method, but
-            # the language fields are dynamic and are not inside the form yet
-            # they depend on the selected datasets which are inside the request, which
-            # is not available to the __init__ method
-            set_up_language_fields(Gloss, self, self.search_form)
 
         valid_regex, search_fields, field_values = check_language_fields(self.search_form, FocusGlossSearchForm, get, dataset_languages)
 
@@ -6097,6 +6097,15 @@ class LemmaListView(ListView):
 
     def get_queryset(self, **kwargs):
 
+        if not self.search_form.is_bound:
+            # if the search_form is not bound, then
+            # this is the first time the get_queryset function is called for this view
+            # it has already been initialised with the __init__ method, but
+            # the language fields are dynamic and are not inside the form yet
+            # they depend on the selected datasets which are inside the request, which
+            # is not available to the __init__ method
+            set_up_language_fields(LemmaIdgloss, self, self.search_form)
+
         get = self.request.GET
 
         page_number = self.request.GET.get("page", 1)
@@ -6108,15 +6117,6 @@ class LemmaListView(ListView):
 
         selected_datasets = get_selected_datasets(self.request)
         dataset_languages = get_dataset_languages(selected_datasets)
-
-        if not self.search_form.is_bound:
-            # if the search_form is not bound, then
-            # this is the first time the get_queryset function is called for this view
-            # it has already been initialised with the __init__ method, but
-            # the language fields are dynamic and are not inside the form yet
-            # they depend on the selected datasets which are inside the request, which
-            # is not available to the __init__ method
-            set_up_language_fields(LemmaIdgloss, self, self.search_form)
 
         valid_regex, search_fields, field_values = check_language_fields(self.search_form, LemmaSearchForm, get, dataset_languages)
 
