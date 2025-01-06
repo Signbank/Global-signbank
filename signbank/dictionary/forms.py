@@ -224,6 +224,8 @@ class GlossSearchForm(forms.ModelForm):
     translation = forms.CharField(label=_('Search Senses'))
     hasvideo = forms.ChoiceField(label=_('Has Video'), choices=[(0, '-')],
                                  widget=forms.Select(attrs=ATTRS_FOR_BOOLEAN_FORMS))
+    hasnmevideo = forms.ChoiceField(label=_('Has NME Video'), choices=[(0, '-')],
+                                    widget=forms.Select(attrs=ATTRS_FOR_BOOLEAN_FORMS))
     hasothermedia = forms.ChoiceField(label=_('Other Media'), choices=[(0, '-')],
                                       widget=forms.Select(attrs=ATTRS_FOR_BOOLEAN_FORMS))
     defspublished = forms.ChoiceField(label=_("All Definitions Published"), choices=[(0, '-')],
@@ -345,7 +347,7 @@ class GlossSearchForm(forms.ModelForm):
         self.fields['tags'] = forms.ModelChoiceField(label=_('Tags'),
                                                      queryset=Tag.objects.all(), empty_label=None,
                                                      widget=forms.Select(attrs=ATTRS_FOR_FORMS))
-        for boolean_field in ['hasvideo', 'repeat', 'altern', 'isNew', 'inWeb', 'defspublished',
+        for boolean_field in ['hasvideo', 'hasnmevideo', 'repeat', 'altern', 'isNew', 'inWeb', 'defspublished',
                               'excludeFromEcv', 'hasRelationToForeignSign', 'hasmultiplesenses',
                               'hasothermedia', 'isablend', 'ispartofablend']:
             self.fields[boolean_field].choices = [('0', '-'), ('2', _('Yes')), ('3', _('No'))]
