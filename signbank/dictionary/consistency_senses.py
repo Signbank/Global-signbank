@@ -37,7 +37,7 @@ def consistent_senses(gloss, include_translations=False, allow_empty_language=Fa
                 for t in translations:
                     print("'gloss': ", str(gloss.id), ", 'sense': ", str(order),
                           ", 'orderIndex': ", str(t.orderIndex), ", 'language': ", str(t.language),
-                          ", 'index': ", str(t.index), ", 'translation_id': ", str(t.id),
+                          ", 'index': ", str(t.translation.index), ", 'translation_id': ", str(t.id),
                           ", 'translation.text': ", t.translation.text)
                 print('-------')
             for trans in translations:
