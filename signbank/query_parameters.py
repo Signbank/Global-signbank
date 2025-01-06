@@ -998,6 +998,17 @@ def set_up_signlanguage_dialects_fields(view, form):
                                                                  signlanguage__dataset__in=selected_datasets))
 
 
+def legitimate_search_form_url_parameter(searchform, get_key):
+
+    if not searchform:
+        return False
+
+    if get_key in searchform.fields.keys():
+        return True
+
+    return False
+
+
 def queryset_glosssense_from_get(model, formclass, searchform, GET, qs):
     """
     Function used by both GlossListView and SenseListView
@@ -1012,6 +1023,8 @@ def queryset_glosssense_from_get(model, formclass, searchform, GET, qs):
     gloss_prefix = 'gloss__' if model in ['GlossSense', 'AnnotatedGloss'] else ''
     text_filter = 'iregex' if USE_REGULAR_EXPRESSIONS else 'icontains'
     for get_key, get_value in GET.items():
+        if get_value in ['', '0']:
+            continue
         if get_key.endswith('[]'):
             if not get_value:
                 continue
@@ -1053,8 +1066,32 @@ def queryset_glosssense_from_get(model, formclass, searchform, GET, qs):
             else:
                 query_filter = gloss_prefix + field + '__machine_value__in'
                 qs = qs.filter(**{query_filter: vals})
-        elif get_key not in searchform.fields.keys() \
-                or get_value in ['', '0']:
+        elif not legitimate_search_form_url_parameter(searchform, get_key):
+            continue
+        elif get_key.startswith(formclass.gloss_search_field_prefix):
+            language_code_2char = get_key[len(formclass.gloss_search_field_prefix):]
+            language = Language.objects.filter(language_code_2char=language_code_2char).first()
+            query_filter_annotation_text = gloss_prefix + 'annotationidglosstranslation__text__' + text_filter
+            query_filter_language = gloss_prefix + 'annotationidglosstranslation__language'
+            qs = qs.filter(**{query_filter_annotation_text: get_value,
+                              query_filter_language: language})
+            continue
+        elif get_key.startswith(formclass.lemma_search_field_prefix):
+            language_code_2char = get_key[len(formclass.lemma_search_field_prefix):]
+            language = Language.objects.filter(language_code_2char=language_code_2char).first()
+            query_filter_lemma_text = gloss_prefix + 'lemma__lemmaidglosstranslation__text__' + text_filter
+            query_filter_language = gloss_prefix + 'lemma__lemmaidglosstranslation__language'
+            qs = qs.filter(**{query_filter_lemma_text: get_value,
+                              query_filter_language: language})
+            continue
+        elif get_key.startswith(formclass.keyword_search_field_prefix):
+            language_code_2char = get_key[len(formclass.keyword_search_field_prefix):]
+            language = Language.objects.filter(language_code_2char=language_code_2char).first()
+            query_filter_sense_text = gloss_prefix + 'translation__translation__text__' + text_filter
+            query_filter_language = gloss_prefix + 'translation__language'
+            # for some reason, distinct is needed here
+            qs = qs.filter(**{query_filter_sense_text: get_value,
+                              query_filter_language: language}).distinct()
             continue
         elif searchform.fields[get_key].widget.input_type in ['text']:
             if get_key in ['search', 'sortOrder', 'translation']:
@@ -1092,31 +1129,6 @@ def queryset_glosssense_from_get(model, formclass, searchform, GET, qs):
                 first_name = gloss_prefix + 'creator__first_name__icontains'
                 last_name = gloss_prefix + 'creator__last_name__icontains'
                 qs = qs.filter(Q(**{first_name:get_value}) | Q(**{last_name:get_value}))
-            elif hasattr(searchform, 'gloss_search_field_prefix') and \
-                    get_key.startswith(formclass.gloss_search_field_prefix):
-                language_code_2char = get_key[len(formclass.gloss_search_field_prefix):]
-                language = Language.objects.filter(language_code_2char=language_code_2char).first()
-                query_filter_annotation_text = gloss_prefix + 'annotationidglosstranslation__text__' + text_filter
-                query_filter_language = gloss_prefix + 'annotationidglosstranslation__language'
-                qs = qs.filter(**{query_filter_annotation_text: get_value,
-                                  query_filter_language: language})
-            elif hasattr(searchform, 'lemma_search_field_prefix') and \
-                    get_key.startswith(formclass.lemma_search_field_prefix):
-                language_code_2char = get_key[len(formclass.lemma_search_field_prefix):]
-                language = Language.objects.filter(language_code_2char=language_code_2char).first()
-                query_filter_lemma_text = gloss_prefix + 'lemma__lemmaidglosstranslation__text__' + text_filter
-                query_filter_language = gloss_prefix + 'lemma__lemmaidglosstranslation__language'
-                qs = qs.filter(**{query_filter_lemma_text: get_value,
-                                  query_filter_language: language})
-            elif hasattr(searchform, 'keyword_search_field_prefix') and \
-                    get_key.startswith(formclass.keyword_search_field_prefix):
-                language_code_2char = get_key[len(formclass.keyword_search_field_prefix):]
-                language = Language.objects.filter(language_code_2char=language_code_2char).first()
-                query_filter_sense_text = gloss_prefix + 'translation__translation__text__' + text_filter
-                query_filter_language = gloss_prefix + 'translation__language'
-                # for some reason, distinct is needed here
-                qs = qs.filter(**{query_filter_sense_text: get_value,
-                                  query_filter_language: language}).distinct()
             else:
                 # normal text field
                 query_filter = gloss_prefix + get_key + '__icontains'

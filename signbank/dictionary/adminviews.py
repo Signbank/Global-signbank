@@ -365,7 +365,17 @@ class AnnotatedSentenceListView(ListView):
         selected_datasets = get_selected_datasets(self.request)
         dataset_languages = get_dataset_languages(selected_datasets)
 
+        if not self.search_form.is_bound:
+            # if the search_form is not bound, then
+            # this is the first time the get_queryset function is called for this view
+            # it has already been initialised with the __init__ method, but
+            # the language fields are dynamic and are not inside the form yet
+            # they depend on the selected datasets which are inside the request, which
+            # is not available to the __init__ method
+            set_up_language_fields(AnnotatedSentence, self, self.search_form)
+
         get = self.request.GET
+
         valid_regex, search_fields, field_values = check_language_fields_annotatedsentence(
             self.search_form, AnnotatedSentenceSearchForm, get, dataset_languages
         )
@@ -432,7 +442,6 @@ class AnnotatedSentenceListView(ListView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
 
-        set_up_language_fields(AnnotatedSentence, self, self.search_form)
         selected_datasets = get_selected_datasets(self.request)
         dataset_languages = get_dataset_languages(selected_datasets)
         nr_sentences_in_dataset = AnnotatedSentence.objects.annotate(
@@ -480,6 +489,7 @@ class GlossListView(ListView):
     query_parameters = dict()
     search_form_data = QueryDict(mutable=True)
     search_form = GlossSearchForm()
+    public = False
 
     def get_template_names(self):
         return ['dictionary/admin_gloss_list.html']
@@ -493,8 +503,10 @@ class GlossListView(ListView):
         # Call the base implementation first to get a context
         context = super(GlossListView, self).get_context_data(**kwargs)
 
-        set_up_language_fields(Gloss, self, self.search_form)
-        set_up_signlanguage_dialects_fields(self, self.search_form)
+        context['public'] = self.public
+        context['PUBLIC_PHONOLOGY_FIELDS'] = settings.PUBLIC_PHONOLOGY_FIELDS
+        context['PUBLIC_SEMANTICS_FIELDS'] = settings.PUBLIC_SEMANTICS_FIELDS
+        context['PUBLIC_MAIN_FIELDS'] = settings.PUBLIC_MAIN_FIELDS
 
         context = get_context_data_for_list_view(self.request, self, self.kwargs, context)
         self.queryset_language_codes = context['queryset_language_codes']
@@ -508,15 +520,25 @@ class GlossListView(ListView):
         glosses_ordered_by_lemma_id = Gloss.objects.filter(id__in=list_of_object_ids).order_by('lemma_id')
         context['glosses_ordered_by_lemma_id'] = glosses_ordered_by_lemma_id
 
-        if context['search_type'] == 'sign' or not self.request.user.is_authenticated:
+        if not self.request.user.is_authenticated:
             # Only count the none-morpheme glosses
             # this branch is slower than the other one
             context['glosscount'] = Gloss.none_morpheme_objects().select_related('lemma').select_related(
-                'dataset').filter(lemma__dataset__in=context['selected_datasets']).count()
+                'dataset').filter(lemma__dataset__in=context['selected_datasets'],
+                                  archived__exact=False,
+                                  inWeb=True).count()
+        elif context['search_type'] == 'sign':
+            # Only count the none-morpheme glosses
+            # this branch is slower than the other one
+            context['glosscount'] = Gloss.none_morpheme_objects().select_related('lemma').select_related(
+                'dataset').filter(lemma__dataset__in=context['selected_datasets'],
+                                  archived__exact=False).count()
         else:
             context['glosscount'] = Gloss.objects.select_related('lemma').select_related(
                 'dataset').filter(lemma__dataset__in=context['selected_datasets'],
                                   archived__exact=False).count()
+
+        context['public'] = self.public
 
         context['page_number'] = context['page_obj'].number
 
@@ -687,6 +709,8 @@ class GlossListView(ListView):
         self.web_search = get_web_search(self.request)
         setattr(self.request, 'web_search', self.web_search)
 
+        self.public = not self.request.user.is_authenticated
+
         if self.show_all:
             self.query_parameters = dict()
             # erase the previous query
@@ -706,6 +730,16 @@ class GlossListView(ListView):
 
         selected_datasets = get_selected_datasets(self.request)
         dataset_languages = get_dataset_languages(selected_datasets)
+
+        if not self.search_form.is_bound:
+            # if the search_form is not bound, then
+            # this is the first time the get_queryset function is called for this view
+            # it has already been initialised with the __init__ method, but
+            # the language fields are dynamic and are not inside the form yet
+            # they depend on the selected datasets which are inside the request, which
+            # is not available to the __init__ method
+            set_up_language_fields(Gloss, self, self.search_form)
+            set_up_signlanguage_dialects_fields(self, self.search_form)
 
         valid_regex, search_fields, field_values = check_language_fields(self.search_form, GlossSearchForm, get, dataset_languages)
 
@@ -806,9 +840,10 @@ class GlossListView(ListView):
 
         if self.search_type != 'sign':
             query_parameters['search_type'] = self.search_type
-
         qs = queryset_glosssense_from_get('Gloss', GlossSearchForm, self.search_form, get, qs)
         query_parameters = query_parameters_from_get(self.search_form, get, query_parameters)
+        qs = apply_language_filters_to_results('Gloss', qs, query_parameters)
+        qs = qs.distinct()
         qs = apply_video_filters_to_results('Gloss', qs, query_parameters)
         qs = apply_nmevideo_filters_to_results('Gloss', qs, query_parameters)
 
@@ -857,9 +892,6 @@ class SenseListView(ListView):
     def get_context_data(self, **kwargs):
         # Call the base implementation first to get a context
         context = super(SenseListView, self).get_context_data(**kwargs)
-
-        set_up_language_fields(GlossSense, self, self.search_form)
-        set_up_signlanguage_dialects_fields(self, self.search_form)
 
         context = get_context_data_for_list_view(self.request, self, self.kwargs, context)
 
@@ -961,6 +993,16 @@ class SenseListView(ListView):
         selected_datasets = get_selected_datasets(self.request)
         dataset_languages = get_dataset_languages(selected_datasets)
 
+        if not self.search_form.is_bound:
+            # if the search_form is not bound, then
+            # this is the first time the get_queryset function is called for this view
+            # it has already been initialised with the __init__ method, but
+            # the language fields are dynamic and are not inside the form yet
+            # they depend on the selected datasets which are inside the request, which
+            # is not available to the __init__ method
+            set_up_language_fields(GlossSense, self, self.search_form)
+            set_up_signlanguage_dialects_fields(self, self.search_form)
+
         valid_regex, search_fields, field_values = check_language_fields(self.search_form, GlossSearchForm, get, dataset_languages)
 
         if USE_REGULAR_EXPRESSIONS and not valid_regex:
@@ -1032,18 +1074,34 @@ class GlossDetailView(DetailView):
     last_used_dataset = None
     query_parameters = dict()
     dark_mode = False
+    public = False
 
     def get_template_names(self):
+        if not self.request.user.is_authenticated:
+            self.public = True
+        elif 'public' in self.kwargs:
+            self.public = self.kwargs['public']
+        if self.public:
+            return ['dictionary/gloss.html']
         return ['dictionary/gloss_detail.html']
 
     # Overriding the get method get permissions right
     def get(self, request, *args, **kwargs):
+        selected_datasets = get_selected_datasets(request)
+
+        if not self.request.user.is_authenticated:
+            self.public = True
+        elif 'public' in self.kwargs:
+            self.public = self.kwargs['public']
+
         selected_datasets = get_selected_datasets(self.request)
 
         try:
-            self.object = super().get_object()
-            if self.object.archived:
-                raise ObjectDoesNotExist
+            if 'glossid' in self.kwargs:
+                glossid = self.kwargs['glossid']
+                self.object = Gloss.objects.get(id=int(glossid), archived=False)
+            else:
+                self.object = super().get_object()
         except (Http404, ObjectDoesNotExist):
             translated_message = _('The requested gloss does not exist.')
             return show_warning(request, translated_message, selected_datasets)
@@ -1052,28 +1110,32 @@ class GlossDetailView(DetailView):
             translated_message = _('Requested gloss has no lemma or dataset.')
             return show_warning(request, translated_message, selected_datasets)
 
-        if not request.user.is_authenticated:
-            if self.object.inWeb:
-                return HttpResponseRedirect(reverse('dictionary:public_gloss', kwargs={'glossid': self.object.pk}))
-            else:
-                return HttpResponseRedirect(reverse('registration:login'))
-
         dataset_of_requested_gloss = self.object.lemma.dataset
-        datasets_user_can_view = get_objects_for_user(request.user, ['view_dataset'],
-                                                      Dataset, accept_global_perms=True, any_perm=True)
+
+        if self.public and not dataset_of_requested_gloss.is_public:
+            translated_message = _('Requested dataset is not available for public viewing.')
+            return show_warning(request, translated_message, selected_datasets)
+
+        if self.public and not self.object.inWeb:
+            translated_message = _('Requested gloss is not available for public viewing.')
+            return show_warning(request, translated_message, selected_datasets)
 
         if dataset_of_requested_gloss not in selected_datasets:
             translated_message = _('The gloss you are trying to view is not in your selected datasets.')
             translated_message2 = _(' It is in dataset ') + dataset_of_requested_gloss.acronym
             return show_warning(request, translated_message + translated_message2, selected_datasets)
 
+        if self.public:
+            datasets_user_can_view = list(get_datasets_with_public_glosses())
+        else:
+            from guardian.shortcuts import get_objects_for_user
+            datasets_user_can_view = get_objects_for_user(request.user, ['view_dataset'],
+                                                          Dataset, accept_global_perms=True, any_perm=True)
+
         if dataset_of_requested_gloss not in datasets_user_can_view:
-            if self.object.inWeb:
-                return HttpResponseRedirect(reverse('dictionary:public_gloss', kwargs={'glossid': self.object.pk}))
-            else:
-                translated_message = _('The gloss you are trying to view is not in a dataset you can view.')
-                translated_message2 = _(' It is in dataset ') + dataset_of_requested_gloss.name
-                return show_warning(request, translated_message + translated_message2, selected_datasets)
+            translated_message = _('The gloss you are trying to view is not in a dataset you can view.')
+            translated_message2 = _(' It is in dataset ') + dataset_of_requested_gloss.acronym
+            return show_warning(request, translated_message + translated_message2, selected_datasets)
 
         senses_consistent = consistent_senses(self.object, include_translations=True,
                                               allow_empty_language=True)
@@ -1109,6 +1171,10 @@ class GlossDetailView(DetailView):
         # Call the base implementation first to get a context
         context = super(GlossDetailView, self).get_context_data(**kwargs)
 
+        context['public'] = self.public
+        context['gloss_or_morpheme'] = 'gloss'
+        context['translations_per_language'] = {}
+
         context['search_type'] = self.request.session['search_type']
 
         if 'dark_mode' in self.request.session.keys():
@@ -1121,6 +1187,138 @@ class GlossDetailView(DetailView):
         selected_datasets = get_selected_datasets(self.request)
         dataset_languages = get_dataset_languages(selected_datasets)
         context['dataset_languages'] = dataset_languages
+
+        labels = self.object.field_labels()
+
+        context['gloss'] = self.object
+        gloss = self.object
+        context['active_id'] = gloss.id
+
+        from signbank.dictionary.context_data_gloss import (get_other_relations, get_annotated_sentences,
+                                                            get_nme_video_descriptions, get_simultaneous_morphology, get_sequential_morphology,
+                                                            get_annotation_idgloss_per_language_dict, get_notes_groupedby_role)
+
+        context['otherrelations'] = get_other_relations(gloss)
+
+        context['annotated_sentences'] = get_annotated_sentences(gloss)
+
+        context['nme_video_descriptions'] = get_nme_video_descriptions(gloss)
+
+        # it does not work to put this in a separate function
+        # the url parameter encoding is erased by Django of it's not constructed here
+        lemma_group = gloss.lemma.gloss_set.all()
+        if lemma_group.count() > 1:
+            context['lemma_group'] = True
+            lemma_group_url_params = {'search_type': 'sign', 'view_type': 'lemma_groups'}
+            for lemmaidglosstranslation in gloss.lemma.lemmaidglosstranslation_set.prefetch_related('language'):
+                lang_code_2char = lemmaidglosstranslation.language.language_code_2char
+                lemma_group_url_params['lemma_'+lang_code_2char] = '^' + lemmaidglosstranslation.text + '$'
+            from urllib.parse import urlencode
+            url_query = urlencode(lemma_group_url_params)
+            url_query = ("?" + url_query) if url_query else ''
+            context['lemma_group_url'] = settings.PREFIX_URL + '/signs/search/' + url_query
+        else:
+            context['lemma_group'] = False
+            context['lemma_group_url'] = ''
+
+        context['annotation_idgloss'] = get_annotation_idgloss_per_language_dict(gloss)
+
+        context['gloss_dialects'] = gloss.dialect.all()
+
+        context['simultaneous_morphology'] = get_simultaneous_morphology(gloss, interface_language)
+        context['simultaneous_morphology_display'] = [(sm[0].morpheme.pk, sm[1]) for sm in context['simultaneous_morphology']]
+
+        context['morphdefs'] = get_sequential_morphology(gloss, interface_language)
+        context['sequential_morphology_display'] = [(md[0].morpheme.pk, md[2]) for md in context['morphdefs']]
+
+        blend_morphology = []
+        for ble_morph in gloss.blend_morphology.filter(parent_gloss__archived__exact=False,
+                                                       glosses__archived__exact=False):
+            morpheme_display = get_default_annotationidglosstranslation(ble_morph.glosses)
+            blend_morphology.append((ble_morph, morpheme_display))
+        context['blend_morphology'] = blend_morphology
+
+        context['gloss_semanticfields'] = list(gloss.semField.all())
+
+        context['SemanticFieldDefined'] = self.object.semField.all().count() > 0
+
+        context['SHOW_LETTER_NUMBER_PHONOLOGY'] = getattr(settings, 'SHOW_LETTER_NUMBER_PHONOLOGY', False)
+
+        # set up weak drop weak prop fields
+        context['handedness_fields'] = []
+        weak_drop = getattr(gloss, 'weakdrop')
+        weak_prop = getattr(gloss, 'weakprop')
+        context['handedness_fields'].append([weak_drop,'weakdrop',labels['weakdrop'],'list'])
+        context['handedness_fields'].append([weak_prop,'weakprop',labels['weakprop'],'list'])
+
+        context['etymology_fields_dom'] = []
+        domhndsh_letter = getattr(gloss, 'domhndsh_letter')
+        domhndsh_number = getattr(gloss, 'domhndsh_number')
+
+        context['etymology_fields_sub'] = []
+        subhndsh_letter = getattr(gloss, 'subhndsh_letter')
+        subhndsh_number = getattr(gloss, 'subhndsh_number')
+
+        context['etymology_fields_dom'].append([domhndsh_letter,'domhndsh_letter',labels['domhndsh_letter'],'check'])
+        context['etymology_fields_dom'].append([domhndsh_number,'domhndsh_number',labels['domhndsh_number'],'check'])
+        context['etymology_fields_sub'].append([subhndsh_letter,'subhndsh_letter',labels['subhndsh_letter'],'check'])
+        context['etymology_fields_sub'].append([subhndsh_number,'subhndsh_number',labels['subhndsh_number'],'check'])
+
+        context['StrongHand'] = gloss.domhndsh.machine_value if gloss.domhndsh else 0
+        context['WeakHand'] = gloss.subhndsh.machine_value if gloss.subhndsh else 0
+
+        if self.public:
+
+            # Put translations (senses) per language in the context
+            sensetranslations_per_language = dict()
+            for language in gloss.lemma.dataset.translation_languages.all():
+                sensetranslations_per_language[language] = dict()
+                sensetranslations_for_language = dict()
+                for sensei, sense in enumerate(gloss.ordered_senses().all(), 1):
+                    if sense.senseTranslations.filter(language=language).exists():
+                        sensetranslation = sense.senseTranslations.get(language=language)
+                        translations = sensetranslation.translations.all().order_by('index')
+                        if translations:
+                            keywords_list = [trans.translation.text for trans in translations]
+                            sensetranslations_for_language[sensei] = ', '.join(keywords_list)
+                sensetranslations_per_language[language] = sensetranslations_for_language
+            context['sensetranslations_per_language'] = sensetranslations_per_language
+
+            for topic in ['main', 'phonology', 'semantics']:
+                context[topic + '_fields'] = []
+                for field in FIELDS[topic]:
+                    if topic == 'main' and field not in settings.PUBLIC_MAIN_FIELDS:
+                        continue
+                    if topic == 'phonology' and field not in settings.PUBLIC_PHONOLOGY_FIELDS:
+                        continue
+                    if topic == 'semantics' and field not in settings.PUBLIC_SEMANTICS_FIELDS:
+                        continue
+                    kind = fieldname_to_kind(field)
+
+                    if field in ['semField', 'derivHist']:
+                        # these are many to many fields and not in the gloss table of the database
+                        # they are not fields of Gloss
+                        continue
+
+                    # Take the human value in the language we are using
+                    field_value = getattr(gloss, field)
+                    if isinstance(field_value, FieldChoice) or isinstance(field_value, Handshape):
+                        human_value = field_value.name if field_value else field_value
+                    else:
+                        # take care of different representations of empty text in database
+                        if fieldname_to_kind(field) == 'text' and (
+                                field_value is None or field_value in ['-', ' ', '------', '']):
+                            human_value = ''
+                        else:
+                            human_value = field_value
+
+                    if field in ['repeat', 'altern'] and not human_value:
+                        # do not display these because they are by default False
+                        continue
+
+                    context[topic + '_fields'].append([human_value, field, labels[field], kind])
+
+            return context
 
         phonology_matrix = context['gloss'].phonology_matrix_homonymns(use_machine_value=True)
         phonology_focus = [field for field in phonology_matrix.keys()
@@ -1168,22 +1366,10 @@ class GlossDetailView(DetailView):
             if self.object.domhndsh and self.object.domhndsh.machine_value else 0        # minimal machine value -s 3
         context['tokNo'] = self.object.tokNo                 # Number of occurrences of Sign, used to display Stars
 
-        # check for existence of strong hand and weak hand shapes
-        if self.object.domhndsh:
-            strong_hand_obj = Handshape.objects.filter(machine_value=self.object.domhndsh.machine_value).first()
-        else:
-            strong_hand_obj = None
-        context['StrongHand'] = self.object.domhndsh.machine_value if strong_hand_obj else 0
-        context['WeakHand'] = self.object.subhndsh.machine_value if self.object.subhndsh else 0
-
-        context['SemanticFieldDefined'] = self.object.semField.all().count() > 0
-
         context['DerivationHistoryDefined'] = self.object.derivHist.all().count() > 0
 
         # Pass info about which fields we want to see
         gl = context['gloss']
-        context['active_id'] = gl.id
-        labels = gl.field_labels()
 
         # the lemma field is non-empty because it's caught in the get method
         dataset_of_requested_gloss = gl.lemma.dataset
@@ -1192,26 +1378,6 @@ class GlossDetailView(DetailView):
         self.last_used_dataset = dataset_of_requested_gloss.acronym
 
         self.request.session['last_used_dataset'] = self.last_used_dataset
-
-        # set up weak drop weak prop fields
-        context['handedness_fields'] = []
-        weak_drop = getattr(gl, 'weakdrop')
-        weak_prop = getattr(gl, 'weakprop')
-        context['handedness_fields'].append([weak_drop,'weakdrop',labels['weakdrop'],'list'])
-        context['handedness_fields'].append([weak_prop,'weakprop',labels['weakprop'],'list'])
-
-        context['etymology_fields_dom'] = []
-        domhndsh_letter = getattr(gl, 'domhndsh_letter')
-        domhndsh_number = getattr(gl, 'domhndsh_number')
-
-        context['etymology_fields_sub'] = []
-        subhndsh_letter = getattr(gl, 'subhndsh_letter')
-        subhndsh_number = getattr(gl, 'subhndsh_number')
-
-        context['etymology_fields_dom'].append([domhndsh_letter,'domhndsh_letter',labels['domhndsh_letter'],'check'])
-        context['etymology_fields_dom'].append([domhndsh_number,'domhndsh_number',labels['domhndsh_number'],'check'])
-        context['etymology_fields_sub'].append([subhndsh_letter,'subhndsh_letter',labels['subhndsh_letter'],'check'])
-        context['etymology_fields_sub'].append([subhndsh_number,'subhndsh_number',labels['subhndsh_number'],'check'])
 
         phonology_list_kinds = []
         gloss_phonology = []
@@ -1267,27 +1433,6 @@ class GlossDetailView(DetailView):
         context['gloss_phonology'] = gloss_phonology
         context['phonology_list_kinds'] = phonology_list_kinds
 
-        # Collect morphology definitions for sequential morphology section
-        morphdefs = []
-        for morphdef in context['gloss'].parent_glosses.filter(parent_gloss__archived__exact=False,
-                                                               morpheme__archived__exact=False):
-
-            translated_role = morphdef.role.name if morphdef.role else ''
-
-            sign_display = str(morphdef.morpheme.id)
-            morph_texts = morphdef.morpheme.get_annotationidglosstranslation_texts()
-            if morph_texts.keys():
-                if interface_language_code in morph_texts.keys():
-                    sign_display = morph_texts[interface_language_code]
-                else:
-                    sign_display = morph_texts[default_language_code]
-
-            morphdefs.append((morphdef, translated_role, sign_display))
-
-        morphdefs = sorted(morphdefs, key=lambda tup: tup[1])
-        context['morphdefs'] = morphdefs
-        context['sequential_morphology_display'] = [(md[0].morpheme.pk, md[2]) for md in morphdefs]
-
         (homonyms_of_this_gloss, homonyms_not_saved, saved_but_not_homonyms) = gl.homonyms()
         homonyms_different_phonology = []
 
@@ -1329,16 +1474,7 @@ class GlossDetailView(DetailView):
 
         context['homonyms_but_not_saved'] = homonyms_but_not_saved
 
-        # Regroup notes
-        notes = context['gloss'].definition_set.all()
-        notes_groupedby_role = {}
-        for note in notes:
-            translated_note_role = note.role.name if note.role else '-'
-            role_id = (note.role, translated_note_role)
-            if role_id not in notes_groupedby_role:
-                notes_groupedby_role[role_id] = []
-            notes_groupedby_role[role_id].append(note)
-        context['notes_groupedby_role'] = notes_groupedby_role
+        context['notes_groupedby_role'] = get_notes_groupedby_role(gloss)
 
         # Gather the OtherMedia
         context['other_media'] = []
@@ -1364,43 +1500,8 @@ class GlossDetailView(DetailView):
 
         context['separate_english_idgloss_field'] = SEPARATE_ENGLISH_IDGLOSS_FIELD
 
-        lemma_group = gl.lemma.gloss_set.all()
-        if lemma_group.count() > 1:
-            context['lemma_group'] = True
-            lemma_group_url_params = {'search_type': 'sign', 'view_type': 'lemma_groups'}
-            for lemmaidglosstranslation in gl.lemma.lemmaidglosstranslation_set.prefetch_related('language'):
-                lang_code_2char = lemmaidglosstranslation.language.language_code_2char
-                lemma_group_url_params['lemma_'+lang_code_2char] = '^' + lemmaidglosstranslation.text + '$'
-            from urllib.parse import urlencode
-            url_query = urlencode(lemma_group_url_params)
-            url_query = ("?" + url_query) if url_query else ''
-            context['lemma_group_url'] = reverse_lazy('signs_search') + url_query
-        else:
-            context['lemma_group'] = False
-            context['lemma_group_url'] = ''
-
-        gloss_annotations = gl.annotationidglosstranslation_set.all()
-        if gloss_annotations:
-            gloss_default_annotationidglosstranslation = gl.annotationidglosstranslation_set.get(language=default_language).text
-        else:
-            gloss_default_annotationidglosstranslation = str(gl.id)
-        # Put annotation_idgloss per language in the context
-        context['annotation_idgloss'] = {}
-        for language in gl.dataset.translation_languages.all():
-            try:
-                annotation_text = gl.annotationidglosstranslation_set.get(language=language).text
-            except ObjectDoesNotExist:
-                annotation_text = gloss_default_annotationidglosstranslation
-            context['annotation_idgloss'][language] = annotation_text
-
         # Put translations (keywords) per language in the context
-        context['sensetranslations_per_language'] = {}
-        if gl.dataset:
-            for language in gl.dataset.translation_languages.all():
-                context['sensetranslations_per_language'][language] = gl.translation_set.filter(language=language).order_by('translation__index')
-        else:
-            language = Language.objects.get(id=get_default_language_id())
-            context['sensetranslations_per_language'][language] = gl.translation_set.filter(language=language).order_by('translation__index')
+        context['sensetranslations_per_language'] = sensetranslations_per_language_dict(gloss)
 
         sentencetype_choices = FieldChoice.objects.filter(field__iexact='SentenceType').order_by('machine_value')
         sentencetype_choice_list = choicelist_queryset_to_translated_dict(sentencetype_choices, id_prefix='', ordered=False)
@@ -1414,71 +1515,7 @@ class GlossDetailView(DetailView):
 
         context['sense_to_similar_senses'] = sense_to_similar_senses
 
-        annotated_sentences_1 = AnnotatedSentence.objects.filter(annotated_glosses__gloss=gl, annotated_glosses__isRepresentative=True).distinct().annotate(is_representative=V(1, output_field=IntegerField()))
-        annotated_sentences_2 = AnnotatedSentence.objects.filter(annotated_glosses__gloss=gl, annotated_glosses__isRepresentative=False).distinct().annotate(is_representative=V(0, output_field=IntegerField()))
-        annotated_sentences = annotated_sentences_1.union(annotated_sentences_2).order_by('-is_representative')
-        annotated_sentences_with_video = []
-        for annotated_sentence in annotated_sentences:
-            video_path = annotated_sentence.get_video_path()
-            if video_path and annotated_sentence not in annotated_sentences_with_video:
-                annotated_sentences_with_video.append(annotated_sentence)
-        annotated_sentences = annotated_sentences_with_video
-        if len(annotated_sentences) <= 3:
-            context['annotated_sentences'] = annotated_sentences
-        else:
-            context['annotated_sentences'] = annotated_sentences[0:3]
-
-        context['synsets'] = gl.synsets.all()
-
-        bad_dialect = False
-        gloss_dialects = []
-
-        gloss_signlanguage = gl.lemma.dataset.signlanguage if gl.lemma and gl.lemma.dataset else None
-
-        initial_gloss_dialects = gl.dialect.all()
-        gloss_dialect_choices = list(Dialect.objects.filter(signlanguage=gloss_signlanguage))
-
-        for gd in initial_gloss_dialects:
-            if gd in gloss_dialect_choices:
-                gloss_dialects.append(gd)
-            else:
-                bad_dialect = True
-                print('Bad dialect found in gloss ', gl.pk, ': ', gd)
-
-        context['gloss_dialects'] = gloss_dialects
-
-        # This is a patch
-        if bad_dialect:
-            print('PATCH: Remove bad dialect from gloss ', gl.pk)
-            # take care of bad dialects due to evolution of Lemma, Dataset, SignLanguage setup
-            gl.dialect.clear()
-            for d in gloss_dialects:
-                gl.dialect.add(d)
-
-        context['gloss_semanticfields'] = list(gl.semField.all())
-
         context['gloss_derivationhistory'] = list(gl.derivHist.all())
-
-        simultaneous_morphology = []
-        for sim_morph in gl.simultaneous_morphology.filter(parent_gloss__archived__exact=False):
-            translated_morph_type = sim_morph.morpheme.mrpType.name if sim_morph.morpheme.mrpType else ''
-            morpheme_annotation_idgloss = {}
-            if sim_morph.morpheme.dataset:
-                for language in sim_morph.morpheme.dataset.translation_languages.all():
-                    morpheme_annotation_idgloss[language.language_code_2char] = sim_morph.morpheme.annotationidglosstranslation_set.filter(language=language)
-            else:
-                language = Language.objects.get(id=get_default_language_id())
-                morpheme_annotation_idgloss[language.language_code_2char] = sim_morph.morpheme.annotationidglosstranslation_set.filter(language=language)
-            if interface_language_code in morpheme_annotation_idgloss.keys():
-                morpheme_display = morpheme_annotation_idgloss[interface_language_code][0].text
-            else:
-                # default language if the interface language hasn't been set for this gloss
-                morpheme_display = morpheme_annotation_idgloss[default_language_code][0].text
-
-            simultaneous_morphology.append((sim_morph, morpheme_display, translated_morph_type))
-
-        context['simultaneous_morphology'] = simultaneous_morphology
-        context['simultaneous_morphology_display'] = [(sm[0].morpheme.pk, sm[1]) for sm in simultaneous_morphology]
 
         # Obtain the number of morphemes in the dataset of this gloss
         # The template will not show the facility to add simultaneous morphology
@@ -1486,19 +1523,6 @@ class GlossDetailView(DetailView):
         dataset_id_of_gloss = gl.dataset
         count_morphemes_in_dataset = Morpheme.objects.filter(lemma__dataset=dataset_id_of_gloss).count()
         context['count_morphemes_in_dataset'] = count_morphemes_in_dataset
-
-        blend_morphology = []
-        for ble_morph in gl.blend_morphology.filter(parent_gloss__archived__exact=False,
-                                                    glosses__archived__exact=False):
-            morpheme_display = get_default_annotationidglosstranslation(ble_morph.glosses)
-            blend_morphology.append((ble_morph, morpheme_display))
-        context['blend_morphology'] = blend_morphology
-
-        otherrelations = []
-        for oth_rel in gl.relation_sources.filter(target__archived__exact=False,
-                                                  source__archived__exact=False):
-            otherrelations.append((oth_rel, oth_rel.get_target_display()))
-        context['otherrelations'] = otherrelations
 
         context['related_objects'] = gloss_is_related_to(gl, interface_language_code, default_language_code)
 
@@ -1517,7 +1541,6 @@ class GlossDetailView(DetailView):
 
         context['SHOW_DATASET_INTERFACE_OPTIONS'] = getattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS', False)
         context['USE_REGULAR_EXPRESSIONS'] = getattr(settings, 'USE_REGULAR_EXPRESSIONS', False)
-        context['SHOW_LETTER_NUMBER_PHONOLOGY'] = getattr(settings, 'SHOW_LETTER_NUMBER_PHONOLOGY', False)
         context['USE_DERIVATIONHISTORY'] = getattr(settings, 'USE_DERIVATIONHISTORY', False)
         context['SHOW_QUERY_PARAMETERS_AS_BUTTON'] = getattr(settings, 'SHOW_QUERY_PARAMETERS_AS_BUTTON', False)
 
@@ -1527,19 +1550,6 @@ class GlossDetailView(DetailView):
             if "-duplicate" in annotation.text:
                 gloss_is_duplicate = True
         context['gloss_is_duplicate'] = gloss_is_duplicate
-
-        # Put nme video descriptions per language in the context
-        glossnmevideos = GlossVideoNME.objects.filter(gloss=gl)
-        nme_video_descriptions = dict()
-        for nmevideo in glossnmevideos:
-            nme_video_descriptions[nmevideo] = {}
-            for language in gl.dataset.translation_languages.all():
-                try:
-                    description_text = GlossVideoDescription.objects.get(nmevideo=nmevideo, language=language).text
-                except ObjectDoesNotExist:
-                    description_text = ""
-                nme_video_descriptions[nmevideo][language] = description_text
-        context['nme_video_descriptions'] = nme_video_descriptions
 
         return context
 
@@ -2008,8 +2018,6 @@ class MorphemeListView(ListView):
         # Call the base implementation first to get a context
         context = super(MorphemeListView, self).get_context_data(**kwargs)
 
-        set_up_language_fields(Morpheme, self, self.search_form)
-
         selected_datasets = get_selected_datasets(self.request)
         dataset_languages = get_dataset_languages(selected_datasets)
         context['dataset_languages'] = dataset_languages
@@ -2144,6 +2152,15 @@ class MorphemeListView(ListView):
 
         selected_datasets = get_selected_datasets(self.request)
         dataset_languages = get_dataset_languages(selected_datasets)
+
+        if not self.search_form.is_bound:
+            # if the search_form is not bound, then
+            # this is the first time the get_queryset function is called for this view
+            # it has already been initialised with the __init__ method, but
+            # the language fields are dynamic and are not inside the form yet
+            # they depend on the selected datasets which are inside the request, which
+            # is not available to the __init__ method
+            set_up_language_fields(Morpheme, self, self.search_form)
 
         valid_regex, search_fields, field_values = check_language_fields(self.search_form, MorphemeSearchForm, get, dataset_languages)
 
@@ -2603,8 +2620,6 @@ class MinimalPairsListView(ListView):
     def get_context_data(self, **kwargs):
         context = super(MinimalPairsListView, self).get_context_data(**kwargs)
 
-        set_up_language_fields(Gloss, self, self.search_form)
-
         selected_datasets = get_selected_datasets(self.request)
         dataset_languages = get_dataset_languages(selected_datasets)
         context['dataset_languages'] = dataset_languages
@@ -2723,6 +2738,15 @@ class MinimalPairsListView(ListView):
 
         selected_datasets = get_selected_datasets(self.request)
         dataset_languages = get_dataset_languages(selected_datasets)
+
+        if not self.search_form.is_bound:
+            # if the search_form is not bound, then
+            # this is the first time the get_queryset function is called for this view
+            # it has already been initialised with the __init__ method, but
+            # the language fields are dynamic and are not inside the form yet
+            # they depend on the selected datasets which are inside the request, which
+            # is not available to the __init__ method
+            set_up_language_fields(Gloss, self, self.search_form)
 
         valid_regex, search_fields, field_values = check_language_fields(self.search_form, FocusGlossSearchForm, get, dataset_languages)
 
@@ -6085,6 +6109,15 @@ class LemmaListView(ListView):
         selected_datasets = get_selected_datasets(self.request)
         dataset_languages = get_dataset_languages(selected_datasets)
 
+        if not self.search_form.is_bound:
+            # if the search_form is not bound, then
+            # this is the first time the get_queryset function is called for this view
+            # it has already been initialised with the __init__ method, but
+            # the language fields are dynamic and are not inside the form yet
+            # they depend on the selected datasets which are inside the request, which
+            # is not available to the __init__ method
+            set_up_language_fields(LemmaIdgloss, self, self.search_form)
+
         valid_regex, search_fields, field_values = check_language_fields(self.search_form, LemmaSearchForm, get, dataset_languages)
 
         if USE_REGULAR_EXPRESSIONS and not valid_regex:
@@ -6139,8 +6172,6 @@ class LemmaListView(ListView):
 
     def get_context_data(self, **kwargs):
         context = super(LemmaListView, self).get_context_data(**kwargs)
-
-        set_up_language_fields(LemmaIdgloss, self, self.search_form)
 
         context['SHOW_DATASET_INTERFACE_OPTIONS'] = getattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS', False)
         context['USE_REGULAR_EXPRESSIONS'] = getattr(settings, 'USE_REGULAR_EXPRESSIONS', False)
@@ -7276,9 +7307,6 @@ class AnnotatedGlossListView(ListView):
         # Call the base implementation first to get a context
         context = super(AnnotatedGlossListView, self).get_context_data(**kwargs)
 
-        set_up_language_fields(Gloss, self, self.search_form)
-        set_up_signlanguage_dialects_fields(self, self.search_form)
-
         context = get_context_data_for_list_view(self.request, self, self.kwargs, context)
 
         context = get_context_data_for_gloss_search_form(self.request, self, self.search_form, self.kwargs,
@@ -7359,6 +7387,16 @@ class AnnotatedGlossListView(ListView):
 
         # sort order matches interface language if available, otherwise the default language for the dataset
         order_by = 'annotationidglosstranslation_order_' + lang_attr_name
+
+        if not self.search_form.is_bound:
+            # if the search_form is not bound, then
+            # this is the first time the get_queryset function is called for this view
+            # it has already been initialised with the __init__ method, but
+            # the language fields are dynamic and are not inside the form yet
+            # they depend on the selected datasets which are inside the request, which
+            # is not available to the __init__ method
+            set_up_language_fields(Gloss, self, self.search_form)
+            set_up_signlanguage_dialects_fields(self, self.search_form)
 
         valid_regex, search_fields, field_values = check_language_fields(self.search_form, GlossSearchForm, get, dataset_languages)
 
