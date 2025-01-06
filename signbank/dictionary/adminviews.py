@@ -365,7 +365,12 @@ class AnnotatedSentenceListView(ListView):
         dataset_languages = get_dataset_languages(selected_datasets)
 
         if not self.search_form.is_bound:
-            # make sure the form has the dynamic language fields that require the request
+            # if the search_form is not bound, then
+            # this is the first time the get_queryset function is called for this view
+            # it has already been initialised with the __init__ method, but
+            # the language fields are dynamic and are not inside the form yet
+            # they depend on the selected datasets which are inside the request, which
+            # is not available to the __init__ method
             set_up_language_fields(AnnotatedSentence, self, self.search_form)
 
         get = self.request.GET
@@ -726,7 +731,12 @@ class GlossListView(ListView):
         dataset_languages = get_dataset_languages(selected_datasets)
 
         if not self.search_form.is_bound:
-            # make sure the form has the dynamic language fields that require the request
+            # if the search_form is not bound, then
+            # this is the first time the get_queryset function is called for this view
+            # it has already been initialised with the __init__ method, but
+            # the language fields are dynamic and are not inside the form yet
+            # they depend on the selected datasets which are inside the request, which
+            # is not available to the __init__ method
             set_up_language_fields(Gloss, self, self.search_form)
             set_up_signlanguage_dialects_fields(self, self.search_form)
 
@@ -979,7 +989,12 @@ class SenseListView(ListView):
         dataset_languages = get_dataset_languages(selected_datasets)
 
         if not self.search_form.is_bound:
-            # make sure the form has the dynamic language fields that require the request
+            # if the search_form is not bound, then
+            # this is the first time the get_queryset function is called for this view
+            # it has already been initialised with the __init__ method, but
+            # the language fields are dynamic and are not inside the form yet
+            # they depend on the selected datasets which are inside the request, which
+            # is not available to the __init__ method
             set_up_language_fields(GlossSense, self, self.search_form)
             set_up_signlanguage_dialects_fields(self, self.search_form)
 
@@ -2131,7 +2146,12 @@ class MorphemeListView(ListView):
         dataset_languages = get_dataset_languages(selected_datasets)
 
         if not self.search_form.is_bound:
-            # make sure the form has the dynamic language fields that require the request
+            # if the search_form is not bound, then
+            # this is the first time the get_queryset function is called for this view
+            # it has already been initialised with the __init__ method, but
+            # the language fields are dynamic and are not inside the form yet
+            # they depend on the selected datasets which are inside the request, which
+            # is not available to the __init__ method
             set_up_language_fields(Morpheme, self, self.search_form)
 
         valid_regex, search_fields, field_values = check_language_fields(self.search_form, MorphemeSearchForm, get, dataset_languages)
@@ -2712,7 +2732,12 @@ class MinimalPairsListView(ListView):
         dataset_languages = get_dataset_languages(selected_datasets)
 
         if not self.search_form.is_bound:
-            # make sure the form has the dynamic language fields that require the request
+            # if the search_form is not bound, then
+            # this is the first time the get_queryset function is called for this view
+            # it has already been initialised with the __init__ method, but
+            # the language fields are dynamic and are not inside the form yet
+            # they depend on the selected datasets which are inside the request, which
+            # is not available to the __init__ method
             set_up_language_fields(Gloss, self, self.search_form)
 
         valid_regex, search_fields, field_values = check_language_fields(self.search_form, FocusGlossSearchForm, get, dataset_languages)
@@ -6077,7 +6102,12 @@ class LemmaListView(ListView):
         dataset_languages = get_dataset_languages(selected_datasets)
 
         if not self.search_form.is_bound:
-            # make sure the form has the dynamic language fields that require the request
+            # if the search_form is not bound, then
+            # this is the first time the get_queryset function is called for this view
+            # it has already been initialised with the __init__ method, but
+            # the language fields are dynamic and are not inside the form yet
+            # they depend on the selected datasets which are inside the request, which
+            # is not available to the __init__ method
             set_up_language_fields(LemmaIdgloss, self, self.search_form)
 
         valid_regex, search_fields, field_values = check_language_fields(self.search_form, LemmaSearchForm, get, dataset_languages)
@@ -7351,7 +7381,12 @@ class AnnotatedGlossListView(ListView):
         order_by = 'annotationidglosstranslation_order_' + lang_attr_name
 
         if not self.search_form.is_bound:
-            # make sure the form has the dynamic language fields that require the request
+            # if the search_form is not bound, then
+            # this is the first time the get_queryset function is called for this view
+            # it has already been initialised with the __init__ method, but
+            # the language fields are dynamic and are not inside the form yet
+            # they depend on the selected datasets which are inside the request, which
+            # is not available to the __init__ method
             set_up_language_fields(Gloss, self, self.search_form)
             set_up_signlanguage_dialects_fields(self, self.search_form)
 
