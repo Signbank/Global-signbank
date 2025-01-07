@@ -1,0 +1,634 @@
+{% extends "baselayout.html" %}
+{% load i18n %}
+{% load stylesheet %}
+{% load annotation_idgloss_translation %}
+{% load bootstrap3 %}
+{% load guardian_tags %}
+
+{% block bootstrap3_title %}
+{% blocktrans %}Sign for {{gloss}}{% endblocktrans %}
+{% endblock %}
+
+{% block script %}
+    function replay() {
+        $f('player').play();
+    }
+{% endblock %}
+
+{% block extrahead %}
+<meta name="twitter:card" content="summary_large_image">
+<meta property="og:title" content="{{public_title}} (in {{gloss.dataset.acronym}})" />
+<meta property="og:url" content="{{ request.build_absolute_uri  }}" />
+<meta property="og:type" content="website" />
+<meta property="og:description" content="From the {{gloss.dataset.acronym}} dataset in Global Signbank." />
+<meta property="og:image" content="{{request.scheme}}://{{ request.get_host }}/media/{{protected_media_url}}{{gloss.get_image_url}}" />
+
+<script type="text/javascript" src='https://code.jquery.com/jquery-3.7.1.min.js'></script>
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.5.0/css/font-awesome.min.css">
+<script src="https://cdn.jsdelivr.net/sharer.js/latest/sharer.min.js"></script>
+
+<style>
+.video_button:hover {
+    color: red;
+}
+.video_button.active {
+    color: red;
+}
+.panel-heading:hover {
+    background-color: #D2D2D2;
+}
+</style>
+{% endblock %}
+
+{% block extrajs %}
+<script type='text/javascript'>
+var dark_mode = '{{request.session.dark_mode}}';
+var dark_mode_django = '{{dark_mode}}';
+var url = '{{PREFIX_URL}}';
+var show_dataset_interface_options = {{ SHOW_DATASET_INTERFACE_OPTIONS|yesno:"true,false" }};
+
+var search_type = '{{search_type}}';
+var model_view = 'gloss';
+var active_id = '{{active_id}}';
+var this_gloss_id = {{gloss.id}};
+
+var search_results_url = '{% url 'dictionary:ajax_search_results' %}';
+
+function reloadVideo() {
+    var video_player = document.getElementById("videoplayer");
+    video_player_src = video_player.src;
+    video_player_src = "";
+    video_player.src = video_player_src;
+    video_player.type = "video/mp4";
+    video_player.load();
+}
+
+function play_perspective() {
+    $('#videoplayer_middle').trigger('play');
+    $('#videoplayer_left').trigger('play');
+    $('#videoplayer_right').trigger('play');
+}
+
+function pause_perspective() {
+    $('#videoplayer_middle').trigger('pause');
+    $('#videoplayer_left').trigger('pause');
+    $('#videoplayer_right').trigger('pause');
+}
+
+function restart_video(vid) {
+    if (!vid) { return; }
+    vid.trigger('pause');
+    vid.currentTime = 0;
+    vid.trigger('play');
+}
+
+function restart_perspective() {
+    var middle = $('#videoplayer_middle');
+    restart_video(middle);
+    var left = $('#videoplayer_left');
+    restart_video(left);
+    var right = $('#videoplayer_right');
+    restart_video(right);
+}
+
+function openFullscreen() {
+    // Get the videos with IDs videoplayer_[direction]
+    const videoIds = ['videoplayer_left', 'videoplayer_middle', 'videoplayer_right'];
+    let activeVideo = null;
+
+    // Loop through the video IDs and check which one is active
+    videoIds.forEach(id => {
+        const video = document.getElementById(id);
+        if (video && window.getComputedStyle(video).display !== 'none') {
+            activeVideo = video;
+        }
+    });
+
+    if (activeVideo) {
+
+        // turn on controls in fullscreen
+        activeVideo.controls = true;
+        // activate fullscreen mode
+        if (activeVideo.requestFullscreen) {
+            activeVideo.requestFullscreen();
+        } else if (activeVideo.mozRequestFullScreen) { // Firefox
+            activeVideo.mozRequestFullScreen();
+        } else if (activeVideo.webkitRequestFullscreen) { // Chrome, Safari, and Opera
+            activeVideo.webkitRequestFullscreen();
+        } else if (activeVideo.msRequestFullscreen) { // IE/Edge
+            activeVideo.msRequestFullscreen();
+        }
+    }
+    // on exit fullscreen mode, reset each video
+    document.addEventListener('fullscreenchange', resetVideos);
+    document.addEventListener('webkitfullscreenchange', resetVideos); // For Safari
+    document.addEventListener('mozfullscreenchange', resetVideos); // For Firefox
+    document.addEventListener('MSFullscreenChange', resetVideos); // For IE/Edge
+}
+
+function resetVideos() {
+    if (!document.fullscreenElement && !document.webkitFullscreenElement &&
+        !document.mozFullScreenElement && !document.msFullscreenElement) {
+
+        // Get the videos with IDs videoplayer_[direction]
+        const videoIds = ['videoplayer_middle', 'videoplayer_left', 'videoplayer_right'];
+        videoIds.forEach(id => {
+            const video = document.getElementById(id);
+            if (video) {
+                video.controls = false;
+                video.currentTime = 0;
+            }
+        });
+
+        // Remove fullscreen event listeners when exiting fullscreen
+        document.removeEventListener('fullscreenchange', resetVideos);
+        document.removeEventListener('webkitfullscreenchange', resetVideos);
+        document.removeEventListener('mozfullscreenchange', resetVideos);
+        document.removeEventListener('MSFullscreenChange', resetVideos);
+    }
+}
+
+$(document).ready(function() {
+    $('#videoplayer_middle').show();
+    $('#videoplayer_left').hide();
+    $('#videoplayer_right').hide();
+});
+
+$('#searchquery').css({'margin-bottom': 10, 'padding-bottom': 10});
+$('#definitionblock').css({'padding-top': Math.round($('#searchquery').height() + $('#signinfo').height() + 10)});
+$('#view_tabs').css({'padding-top': 10, 'margin-top': 10});
+
+$('#show_left').click(function()
+{
+    $('.video_button').removeClass("active");
+    $(this).addClass("active");
+    $('#videoplayer_middle').hide();
+    $('#videoplayer_left').show();
+    $('#videoplayer_right').hide();
+});
+$('#show_right').click(function()
+{
+    $('.video_button').removeClass("active");
+    $(this).addClass("active");
+    $('#videoplayer_middle').hide();
+    $('#videoplayer_left').hide();
+    $('#videoplayer_right').show();
+});
+$('#show_middle').click(function()
+{
+    $('.video_button').removeClass("active");
+    $(this).addClass("active");
+    $('#videoplayer_middle').show();
+    $('#videoplayer_left').hide();
+    $('#videoplayer_right').hide();
+});
+{% include "dictionary/search_result_bar.html" %}
+</script>
+<style>
+    #view_tabs.affix {
+        position:fixed;
+    }
+    #searchquery.affix {
+        position:fixed;
+    }
+</style>
+{% endblock %}
+
+
+{% block content %}
+{% url 'dictionary:protected_media' '' as protected_media_url %}
+<nav class="navbar navbar-light" id="searchquery" style="background-color:inherit; color:inherit;z-index: 50;">
+<table class="table-responsive">
+<tr>
+    <td>
+    <div id="searchresults" class='navbar navbar-light' style="overflow-y:hidden;border:0;box-sizing:content-box; z-index: 50;">
+    {% if request.session.search_results %}
+    <div id="results-inline" class="btn-group" role="group" aria-label="search results"
+         style="white-space:nowrap;">
+    </div>
+    {% endif %}
+</div>
+</td>
+</tr>
+</table>
+</nav>
+{% if request.GET.warning %}
+<div class="alert alert-warning">{{request.GET.warning}}</div>
+{% endif %}
+    <div id="signinfo" class='navbar navbar-collapse' style="background-color:inherit;border:0;">
+
+        <div id="view_tabs" style="margin-right:15px;margin-top:10px;z-index:100;" class='view-tabs view-tabs-light'>
+        {% if perms.dictionary.search_gloss %}
+        <br><br>
+        <ul class='nav nav-tabs nav-tabs-light'>
+            <li class="nav-item">
+                <a class='nav-link active' href="{{PREFIX_URL}}/dictionary/{{gloss_or_morpheme}}/{{gloss.id}}.html">{% trans "Public View" %}</a>
+            </li>
+            <li class="nav-item">
+                <a class='nav-link' href="{{PREFIX_URL}}/dictionary/{{gloss_or_morpheme}}/{{gloss.id}}">{% trans "Details" %}</a>
+            </li>
+            {% if gloss_or_morpheme == 'gloss' %}
+            <li class="nav-item">
+                <a class='nav-link' href="{{PREFIX_URL}}/dictionary/gloss_relations/{{gloss.id}}">{% trans "Relations" %}</a>
+            </li>
+            {% if gloss.has_frequency_data %}
+            <li class="nav-item">
+                <a class='nav-link' href="{{PREFIX_URL}}/dictionary/gloss_frequency/{{gloss.id}}/">{% trans "Frequencies" %}</a>
+            </li>
+            {% endif %}
+            <li class="nav-item">
+                <a class='nav-link' href="{{PREFIX_URL}}/dictionary/gloss/{{gloss.id}}/history">{% trans "Revision History" %}</a>
+            </li>
+            <li class="nav-item">
+            <a class='nav-link' href="{{PREFIX_URL}}/dictionary/gloss/{{gloss.id}}/glossvideos">{% trans "Videos" %}</a>
+            </li>
+            {% endif %}
+        </ul>
+        {% endif %}
+        </div>
+        <br>
+    </div>
+<br>
+<div id="definitionblock" style="width:1600px;">
+
+<div id="leftblock" style="width:auto;">
+
+    <div id="videos" style="z-index: 0;opacity:.99; position: relative;">
+        <div class='col-md-4'>
+            <div id="videocontainer">
+            {% if gloss.has_perspective_videos %}
+            <div id="buttonbar-top" style="background-color:transparent;height:auto;">
+            {% for perspvideo in gloss.get_perspective_videos %}
+                {% if perspvideo.perspective == 'left' %}
+                <button class="btn video_button" id="show_left" style="font-size:18px;background-color:transparent;">
+                    <span class="glyphicon glyphicon-facetime-video" style="transform:rotateZ(-30deg);rotateY(0deg);height:auto;"></span>
+                </button>
+                {% endif %}
+            {% endfor %}
+            <button class="btn video_button active" id="show_middle" style="font-size:18px;background-color:transparent;">
+                <span class="glyphicon glyphicon-user"></span>
+            </button>
+            {% for perspvideo in gloss.get_perspective_videos %}
+                {% if perspvideo.perspective == 'right' %}
+                <button class="btn video_button" id="show_right" style="font-size:18px;background-color:transparent;">
+                    <span class="glyphicon glyphicon-facetime-video" style="transform:rotateZ(210deg);height:auto;"></span></button>
+                {% endif %}
+            {% endfor %}
+            </div>
+            {% endif %}
+            {% if gloss.has_video %}
+                <div id="player" style="height:259px;width:auto;">
+                    <video id='videoplayer_middle' src="{{protected_media_url}}{{gloss.get_video_url}}?v={% now 'YmdHis' %}"
+                           playsinline autoplay muted style="height:259px;width:auto;"></video>
+
+                {% for perspvideo in gloss.get_perspective_videos %}
+                    <video id='videoplayer_{{perspvideo.perspective}}' src="{{protected_media_url}}{{perspvideo.get_video_path}}?v={% now 'YmdHis' %}"
+                           playsinline autoplay muted style="height:259px;width:auto;"></video>
+                {% endfor %}
+                </div>
+                <div id="buttonbar" style="background-color:transparent;">
+                <button class="btn" id="play_perspective" onclick="play_perspective();"
+                        style="font-size:16px;background-color:transparent;"><span class="glyphicon glyphicon-play"></span></button>
+                <button class="btn" id="pause_perspective" onclick="pause_perspective();"
+                        style="font-size:16px;background-color:transparent;"><span class="glyphicon glyphicon-pause"></span></button>
+                <button class="btn" id="fullscreen_perspective" onclick="openFullscreen();"
+                        style="font-size:16px;background-color:transparent;"><span class="glyphicon glyphicon-fullscreen"></span></button>
+                </div>
+            {% else %}
+            <div id='player' style="height:259px;width:auto;">
+             <img id='novideo' src='{{STATIC_URL}}images/no-video-ngt.png' style="height:259px;width:auto;">
+            </div>
+            <br>
+            {% endif %}
+            </div>
+        </div>
+    </div>
+    <div>
+        {% if gloss.get_image_path %}
+            <img id="imageframe" src="{{protected_media_url}}{{gloss.get_image_url}}?v={% now 'YmdHis' %}"
+                 style="height:259px;width:auto;">
+        {% endif %}
+    </div>
+</div>
+
+<div class='panel-group' >
+<div id="definition" style="z-index: 0;opacity:.99; width:auto;">
+<div id='language_fields_summary'>
+    <table class='table table-condensed table-condensed-light' style="width:auto;">
+        <tr>
+            <th>{% trans "Lemma ID Gloss" %}</th>
+            <td><span id="lemma">{{gloss.lemma}}
+                    {% if lemma_group %}
+                        <a href='{{lemma_group_url}}' title='{% trans "Show Lemma Group" %}'><span class="glyphicon glyphicon-th-list"></span></a>
+                    {% endif %}
+                </span>
+            </td>
+        </tr>
+        {% for lang, annotation_idgloss_translation in annotation_idgloss.items %}
+        <tr>
+            <th>
+                {% trans "Annotation ID Gloss" %}
+                {% if SHOW_DATASET_INTERFACE_OPTIONS %} ({{ lang }}) {% endif %}
+            </th>
+
+            <td id='annotation_idgloss_{{lang.language_code_2char}}'
+                style="color:inherit;"
+                colspan="2">{{annotation_idgloss_translation}}</td>
+        </tr>
+        <tr>
+            <th></th>
+            <td>
+
+            {% for morphdef_id, morphdef_display in simultaneous_morphology_display %}
+            <span class="gloss_detail_morpheme"><a href='{% url "dictionary:admin_morpheme_view" pk=morphdef_id %}'>
+                {{morphdef_display}}</a>{% if not forloop.last %}, {% endif %}
+            </span>
+            {% endfor %}
+
+            {% for component_id, component_display in sequential_morphology_display %}
+            <span class="gloss_detail_component"><a href='{% url "dictionary:admin_gloss_view" pk=component_id %}'>
+                {{component_display}}</a>{% if not forloop.last %} + {% endif %}
+            </span>
+            {% endfor %}
+            </td>
+        </tr>
+        {% endfor %}
+        {% for lang, sensetranslations in sensetranslations_per_language.items %}
+        {% if sensetranslations %}
+        <tr id="senses_{{lang.language_code_2char}}">
+            <th>{% trans "Senses" %} ({{lang.name}})</th>
+            <td class="translation_{{lang.language_code_2char}}">
+                <div>
+                {% for key, value in sensetranslations.items %}
+                    {% if value != "" %}
+                        {{key}}. {{ value|safe }}
+                    {% if not forloop.last %}<br> {% endif %}
+                    {% endif %}
+                {% endfor %}
+                </div>
+            </td>
+        </tr>
+        {% endif %}
+        {% if gloss_dialects %}
+        <tr>
+            <th>{% trans "Dialect" %}</th>
+            <td id='dialect'>{% for dia in gloss_dialects %}{{dia}}{% if not forloop.last %}, {% endif %}{% endfor %}</td>
+        </tr>
+        {% endif %}
+        {% endfor %}
+            {% for value,name,label,kind in main_fields %}
+                {% if value != '-' %}
+                <tr><th>{{label}}</th>
+                    {% if kind == 'text' %}
+                    <td id='{{name}}'
+                        value='{{value}}'>{% value value %}
+                    </td>
+                    {% else %}
+                    <td id='{{name}}'
+                        value='{{value}}'>{% value value %}
+                    </td>
+                    {% endif %}
+                </tr>
+                {% endif %}
+            {% endfor %}
+    </table>
+</div>
+<div class="panel panel-default panel-light">
+    <div class='panel-heading panel-light' id='nme_videos_heading'
+         data-toggle='collapse' data-target='#nme_videos'>{% trans "Videos with Non-manual Elements" %}
+    </div>
+    <div id='nme_videos' class='collapse'>
+       {% if gloss.get_nme_videos %}
+       <table class='table table-condensed' style="text-align: left;width:auto;">
+        <tr style="overflow-y:auto;">
+            <td class="td td-light" style="display:inline-block;">
+            {% for videonme in gloss.get_nme_videos %}
+                <div style="display:inline-block;">
+                       <table class="table table-condensed">
+                           <tr>
+                               <td class="td td-light" colspan="2">
+                                   <div id="nmeplayer" style="width:400px;">
+                                    <video id='videonmeplayer' src="{{protected_media_url}}{{videonme.get_video_path}}?v={% now 'YmdHis' %}"
+                                           style="height:auto;width:400px;" controls muted></video>
+                                   </div>
+                                </td>
+                           </tr>
+                           {% with nme_video_descriptions|get_item:videonme as nme_descriptions %}
+                           {% for lang, description in nme_descriptions.items %}
+                            <tr style="text-align: left;">
+                                <td class="td td-light">
+                                    {% if SHOW_DATASET_INTERFACE_OPTIONS %}{{lang.name}}:{% endif %}
+                                </td>
+                                <td class="td td-light" style="height:80;">{{description}}</td>
+                            </tr>
+                           {% endfor %}
+                           {% endwith %}
+                       </table>
+                </div>
+            {% endfor %}
+            </td>
+        </tr>
+       </table>
+       {% endif %}
+    </div>
+</div>
+   <!-- Sequential Morphology -->
+   <div class="panel panel-default panel-light">
+        <div class='panel-heading panel-light' data-toggle='collapse'
+             data-target='#morphology'>{% trans "Morphology" %}
+        </div>
+        <div id='morphology' class='collapse'>
+            {% if simultaneous_morphology %}
+            <h5>{% trans "Simultaneous Morphology" %}</h5>
+            <table class='table table-condensed'>
+                <tr>
+                    <th style="width:22em;">{% trans "Morpheme" %}</th>
+                    <th>{% trans "Meaning in This Sign" %}</th>
+                </tr>
+
+                {% for morpheme, morph_display, morpheme_type in simultaneous_morphology %}
+                <tr>
+                    <td id='morpheme-definition_{{morpheme.pk}}'>
+                        <a href='{% url "dictionary:admin_morpheme_view" pk=morpheme.morpheme.pk %}'>{{morph_display}} ({{morpheme_type}})</a></td>
+                    <td id='morpheme-definition-meaning_{{morpheme.pk}}'>{{morpheme.role}}</td>
+               </tr>
+                {% endfor %}
+            </table>
+            <br>
+            {% endif %}
+            {% if morphdefs %}
+            <h5>{% trans "Sequential Morphology" %}</h5>
+            <table class='table table-condensed table-condensed-light'>
+               <tbody class="tbody tbody-light">
+               {% for morphdef, translated_role, sign_display in morphdefs %}
+               <tr>
+                    <td class="td td-light" style="width:300px;"
+                        id='morphology-definition-role_{{morphdef.id}}' >{{translated_role}}</td>
+                    <td class="td td-light" id='morphology-definition-morpheme_{{morphdef.id}}'>
+                        <a href='{% url "dictionary:admin_gloss_view" pk=morphdef.morpheme.pk %}'>{{sign_display}}</a>
+                    </td>
+               </tr>
+               {% endfor %}
+               </tbody>
+            </table>
+            {% endif %}
+            {% if blend_morphology %}
+            <h5>{% trans "Blend Morphology" %}</h5>
+            <table class='table table-condensed'>
+                <tr>
+                    <th style="width:22em;">{% trans "Gloss" %}</th>
+                    <th colspan="2">{% trans "Role in This Sign" %}</th>
+                </tr>
+                {% for blend, blend_display in blend_morphology %}
+                <tr>
+                    <td id='blend-definition_{{blend.pk}}'><a href='{% url "dictionary:admin_gloss_view" pk=blend.glosses.pk %}'>{{blend_display}}</a></td>
+                    <td id='blend-definition-role_{{blend.pk}}'>{{blend.role}}</td>
+               </tr>
+                {% endfor %}
+            </table>
+            {% endif %}
+        </div>
+   </div>
+<!-- Phonology -->
+<div class="panel panel-default panel-light">
+    <div class='panel-heading panel-light' id='phonology_heading'
+         data-toggle='collapse' data-target='#phonology'>{% trans "Phonology" %}
+    </div>
+    <div id='phonology' class='collapse'>
+        {% if not morphdefs %}
+        <table class='table table-condensed'>
+        {% for value,name,label,kind in phonology_fields %}
+            {% if name == 'handedness' %}
+                {% if value != '-' %}
+                <tr >
+                    <th>{{label}}</th>
+                    <td id='{{name}}'
+                        value='{{value}}' style="width:400px;">{% value value %}</td>
+                    {% for value,name,label,kind in handedness_fields %}
+                        {% if name == 'weakdrop' %}
+                        <td id='{{name}}'
+                            value="{{value}}">{% if value %}+WD{% elif value == None %}&nbsp;{% else %}-WD{% endif %}</td>
+                        {% else %}
+                        <td id='{{name}}'
+                            value="{{value}}">{% if value %}+WP{% elif value == None %}&nbsp;{% else %}-WP{% endif %}</td>
+                        {% endif %}
+                    {% endfor %}
+                </tr>
+                {% endif %}
+            {% elif name == 'domhndsh' %}
+                {% if value != '-' %}
+                <tr >
+                    <th>{{label}}</th>
+                    <td id='{{name}}' value='{{value}}' >
+                        <a id="strong_hand_link" style="color: {% if StrongHand %}blue{% else %}red{% endif %}; display: visible;"
+                                        {% if StrongHand %}
+                                            href="{{PREFIX_URL}}/dictionary/handshape/{{StrongHand}}/"
+                                        {% endif %}>{{value}}</a>
+                    </td>
+                    {% if SHOW_LETTER_NUMBER_PHONOLOGY %}
+                    {% for value,name,label,kind in etymology_fields_dom %}
+                        {% if name == 'domhndsh_letter' %}
+                        <td id='{{name}}'
+                            value="{{value}}">{% if value %}letter{% else %}&nbsp;{% endif %}</td>
+                        {% else %}
+                        <td id='{{name}}'
+                            value="{{value}}">{% if value %}number{% else %}&nbsp;{% endif %}</td>
+                        {% endif %}
+                    {% endfor %}
+                    {% endif %}
+                </tr>
+                {% endif %}
+            {% elif name == 'subhndsh' %}
+                {% if value != '-' %}
+                <tr >
+                    <th>{{label}}</th>
+                    <td id='{{name}}'
+                        value='{{value}}' >{% value value %}</td>
+                    {% if SHOW_LETTER_NUMBER_PHONOLOGY %}
+                    {% for value,name,label,kind in etymology_fields_sub %}
+                        {% if name == 'subhndsh_letter' %}
+                        <td id='{{name}}'
+                            value="{{value}}">{% if value %}letter{% else %}&nbsp;{% endif %}</td>
+                        {% else %}
+                        <td id='{{name}}'
+                            value="{{value}}">{% if value %}number{% else %}&nbsp;{% endif %}</td>
+                        {% endif %}
+                    {% endfor %}
+                    {% endif %}
+                </tr>
+                {% endif %}
+            {% elif value == '-' or value == ' ' or value == '' or value == None %}
+            {% elif name in HANDSHAPE_ETYMOLOGY_FIELDS or name in HANDEDNESS_ARTICULATION_FIELDS %}
+            {% else %}
+             <tr>
+                <th>{{label}}</th>
+                {% if kind == "check" %}
+                <td id='{{name}}'>{% if value %}{% trans "Yes" %}{% else %}{% trans "No" %}{% endif %}</td>
+                {% else %}
+                <td id='{{name}}'>{% value value %}</td>
+                {% endif %}
+            </tr>
+            {% endif %}
+        {% endfor %}
+        </table>
+        {% endif %}
+    </div>
+</div>
+<!-- Semantics -->
+<div class="panel panel-default panel-light">
+    <div class='panel-heading panel-light' data-toggle='collapse' data-target='#semantics'>{% trans "Semantics" %}
+                {% if SemanticFieldDefined %}
+                <div class="pull-right">
+                <span id="semantics-icon"><img id='ball' src='{{STATIC_URL}}images/black_circle.png'
+                                               style="width:15px; height:15px; margin: 0px;"></span>
+                </div>
+                {% endif %}
+    </div>
+    <div id='semantics' class='collapse'>
+        {% if gloss_semanticfields %}
+        <table class='table table-condensed'>
+            <tr>
+                <th>{% trans "Semantic Field" %}</th>
+                <td style="width:500px;"
+                    id='semanticfield'>{% for sf in gloss_semanticfields %}{{sf}}{% if not forloop.last %}, {% endif %}{% endfor %}</td>
+                </td>
+            </tr>
+        </table>
+        {% endif %}
+    </div>
+</div>
+<!-- Relations to other signs -->
+<div class="panel panel-default panel-light">
+    <div class='panel-heading panel-light' data-toggle='collapse'
+         data-target='#relations'>{% trans "Relations to Other Signs" %}
+    </div>
+    <div id='relations' class='collapse'>
+       {% if otherrelations %}
+       <table class='table table-condensed'>
+           {% for rel, target_display in otherrelations %}
+           <tr id='row_{{rel.id}}'>
+                <td class="td td-light" id='relationrole_{{rel.id}}'>{{rel.get_role_display}}</td>
+                <td class="td td-light" id='relationtarget_{{rel.id}}'>
+                    <a id='relation_target_hyperlink_{{rel.id}}'
+                       href='{% url "dictionary:admin_gloss_view" pk=rel.target.pk %}'>{{target_display}}</a>
+                </td>
+            </tr>
+           {% endfor %}
+       </table>
+       {% endif %}
+    </div>
+</div>
+<br>
+</div>
+</div>
+</div>
+
+<div class="social" id="lowerblock">
+  <a target="_blank" href="mailto:?subject={{public_title}} (in {{gloss.dataset.acronym}})&amp;body={{ request.build_absolute_uri  }}" id="share-em" class="sharer button"><i class="fa fa-3x fa-envelope-square"></i></a>
+  <a target="_blank" href="http://www.twitter.com/share?url={{ request.build_absolute_uri  }}" id="share-tw" class="sharer button"><i class="fa fa-3x fa-twitter-square"></i></a>
+  <a target="_blank" href="https://api.whatsapp.com/send?text={{ request.build_absolute_uri  }}" id="share-wa" class="sharer button"><i class="fa fa-3x fa-whatsapp"></i></a>
+  <a target="_blank" href="https://www.facebook.com/sharer/sharer.php?u=#url" id="share-fb" class="sharer button"><i class="fa fa-3x fa-facebook-square"></i></a>
+</div>
+
+<br><br>
+{% endblock %}
