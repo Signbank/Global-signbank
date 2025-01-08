@@ -105,7 +105,6 @@ class GlossVideoFilenameFilter(admin.SimpleListFilter):
 
     def queryset(self, request, queryset):
         import re
-
         def filename_matches_nme(filename):
             filename_without_extension, ext = os.path.splitext(os.path.basename(filename))
             try:
@@ -124,23 +123,47 @@ class GlossVideoFilenameFilter(admin.SimpleListFilter):
             except (IndexError, ValueError):
                 return 'False'
 
-        def matching_filename(videofile, nmevideo, perspective, key):
+        def filename_matches_video(filename):
+            filename_without_extension, ext = os.path.splitext(os.path.basename(filename))
+            try:
+                if m := re.search(r".+-(\d+)$", filename_without_extension):
+                    return 'True'
+                return 'False'
+            except (IndexError, ValueError):
+                return 'False'
+
+        def filename_matches_backup_video(filename):
+            filename_with_extension = os.path.basename(filename)
+            try:
+                if m := re.search(r".+-(\d+)\.(mp4|m4v|mov|webm|mkv|m2v)\.(bak\d+)$", filename_with_extension):
+                    return 'True'
+                return 'False'
+            except (IndexError, ValueError):
+                return 'False'
+
+        def matching_filename(videofile, nmevideo, perspective, version, key):
             if not key:
                 return False
             from pathlib import Path
             video_file_full_path = Path(WRITABLE_FOLDER, videofile)
             if nmevideo:
-                filename_correct = filename_matches_nme(video_file_full_path)
-                return key == filename_correct
+                filename_is_correct = filename_matches_nme(video_file_full_path)
+                return key == filename_is_correct
             elif perspective:
-                filename_correct = filename_matches_perspective(video_file_full_path)
-                return key == filename_correct
+                filename_is_correct = filename_matches_perspective(video_file_full_path)
+                return key == filename_is_correct
+            elif version > 0:
+                filename_is_correct = filename_matches_backup_video(video_file_full_path)
+                return key == filename_is_correct
             else:
-                return key == 'False'
+                filename_is_correct = filename_matches_video(video_file_full_path)
+                return key == filename_is_correct
 
-        queryset_res = queryset.values('id', 'videofile', 'glossvideonme', 'glossvideoperspective')
+        queryset_res = queryset.values('id', 'videofile', 'glossvideonme', 'glossvideoperspective', 'version')
         results = [qv['id'] for qv in queryset_res
-                   if matching_filename(qv['videofile'], qv['glossvideonme'], qv['glossvideoperspective'], self.value())]
+                   if matching_filename(qv['videofile'],
+                                        qv['glossvideonme'],
+                                        qv['glossvideoperspective'], qv['version'], self.value())]
 
         if self.value():
             return queryset.filter(id__in=results)
@@ -159,7 +182,10 @@ class GlossVideoNMEFilter(admin.SimpleListFilter):
 
     def queryset(self, request, queryset):
         if self.value():
-            return queryset.filter(glossvideonme__isnull=False)
+            if self.value() == 'True':
+                return queryset.filter(glossvideonme__isnull=False)
+            else:
+                return queryset.filter(glossvideonme__isnull=True)
         return queryset.all()
 
 
@@ -174,7 +200,10 @@ class GlossVideoPerspectiveFilter(admin.SimpleListFilter):
 
     def queryset(self, request, queryset):
         if self.value():
-            return queryset.filter(glossvideoperspective__isnull=False)
+            if self.value() == 'True':
+                return queryset.filter(glossvideoperspective__isnull=False)
+            else:
+                return queryset.filter(glossvideoperspective__isnull=True)
         return queryset.all()
 
 
@@ -210,7 +239,7 @@ class GlossVideoFileTypeFilter(admin.SimpleListFilter):
             return queryset.all()
 
 
-@admin.action(description="Rename extension to match video type")
+@admin.action(description="Rename files to match video type")
 def rename_extension_videos(modeladmin, request, queryset):
     import os
     # retrieve glosses of selected GlossVideo objects for later step
@@ -245,13 +274,16 @@ def rename_extension_videos(modeladmin, request, queryset):
             source = os.path.join(WRITABLE_FOLDER, current_relative_path)
             destination = os.path.join(WRITABLE_FOLDER, GLOSS_VIDEO_DIRECTORY,
                                        dataset_dir, two_letter_dir, desired_filename)
-            print('video:admin:rename_extension_videos:rename: ', source, destination)
-
+            desired_relative_path = os.path.join(GLOSS_VIDEO_DIRECTORY,
+                                                 dataset_dir, two_letter_dir, desired_filename)
+            if DEBUG_VIDEOS:
+                print('video:admin:rename_extension_videos:os.rename: ', source, destination)
             if os.path.exists(video_file_full_path):
-                # os.rename(source, destination)
-                print('rename fake')
-            # glossvideo.videofile.name = desired_filename
-            # glossvideo.save()
+                os.rename(source, destination)
+            if DEBUG_VIDEOS:
+                print('video:admin:rename_extension_videos:videofile.name = ', desired_relative_path)
+            glossvideo.videofile.name = desired_relative_path
+            glossvideo.save()
 
 
 class GlossVideoAdmin(admin.ModelAdmin):
