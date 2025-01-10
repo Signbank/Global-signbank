@@ -5492,6 +5492,9 @@ class RecentGlossListView(ListView):
         else:
             lang_attr_name = default_language_code
 
+        get = self.request.GET
+        days = get.get('days', '')
+
         recently_added_signs_since_date = DT.datetime.now(tz=get_current_timezone()) - RECENTLY_ADDED_SIGNS_PERIOD
         recent_glosses = Gloss.objects.filter(morpheme=None, lemma__dataset__in=selected_datasets, archived=False).filter(
             creationDate__range=[recently_added_signs_since_date, DT.datetime.now(tz=get_current_timezone())]).order_by(
