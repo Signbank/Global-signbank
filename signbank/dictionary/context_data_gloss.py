@@ -122,3 +122,22 @@ def get_notes_groupedby_role(gloss):
         notes_groupedby_role[role_id].append(note)
     return notes_groupedby_role
 
+
+def get_phonology_list_kinds():
+    phonology_list_kinds = []
+    for field in FIELDS['phonology']:
+        if field in settings.HANDSHAPE_ETYMOLOGY_FIELDS + settings.HANDEDNESS_ARTICULATION_FIELDS:
+            continue
+        kind = fieldname_to_kind(field)
+        if kind == 'list':
+            phonology_list_kinds.append(field)
+    return phonology_list_kinds
+
+
+def get_human_value_for_field_value(field_value):
+    # normalise string empty string values to '' for display in Gloss Detail View
+    # take care of different representations of empty text in database
+    field_type = type(field_value).__name__
+    if field_type == 'str' and (field_value is None or field_value in ['-', ' ', '------', '']):
+        return ''
+    return field_value
