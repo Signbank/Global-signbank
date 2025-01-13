@@ -72,7 +72,7 @@ def query_parameters_this_gloss(phonology_focus, phonology_matrix):
             # these mappings match the choices in the Gloss Search Form
             NEUTRALBOOLEANCHOICES = {'None': '1', 'True': '2', 'False': '3'}
             query_parameters[field_key] = NEUTRALBOOLEANCHOICES[field_value]
-        elif field_key in ['defspublished', 'hasmultiplesenses']:
+        elif field_key in ['defspublished', 'hasmultiplesenses', 'hasannotatedsentences']:
             # these mappings match the choices in the Gloss Search Form and get_queryset
             # some of these are legacy mappings
             YESNOCHOICES = {'None': '-', 'True': _('Yes'), 'False': _('No')}
@@ -282,6 +282,14 @@ def convert_query_parameters_to_filter(query_parameters):
                 multiple_senses = [gsv['gloss'] for gsv in GlossSense.objects.values(
                     'gloss').annotate(Count('id')).filter(id__count=1)]
             query_list.append(Q(id__in=multiple_senses))
+
+        elif get_key == 'hasannotatedsentences' and get_value:
+            glosses_with_annotated_sentences = [gsv['gloss'] for gsv in AnnotatedGloss.objects.values('gloss')]
+            val = get_value == 'yes'
+            if val:
+                query_list.append(Q(pk__in=glosses_with_annotated_sentences))
+            else:
+                query_list.append(~Q(pk__in=glosses_with_annotated_sentences))
 
         elif get_key == 'negative' and get_value:
             sentences_with_negative_type = ExampleSentence.objects.filter(negative__exact=True)
@@ -615,7 +623,7 @@ def pretty_print_query_values(dataset_languages,query_parameters):
                 query_dict[key] = _('No')
         elif key in ['inWeb', 'isNew', 'excludeFromEcv', 'hasvideo', 'hasothermedia']:
             query_dict[key] = NULLBOOLEANCHOICES[query_parameters[key]]
-        elif key in ['defspublished', 'hasmultiplesenses', 'negative']:
+        elif key in ['defspublished', 'hasmultiplesenses', 'negative', 'hasannotatedsentences']:
             query_dict[key] = YESNOCHOICES[query_parameters[key]]
         elif key in ['hasRelation']:
             choices_for_category = [RELATION_ROLE_CHOICES[val] for val in query_parameters[key]]
@@ -1126,6 +1134,14 @@ def queryset_glosssense_from_get(model, formclass, searchform, GET, qs):
                         'gloss').annotate(Count('id')).filter(id__count=1)]
                 query_filter = gloss_prefix + 'id__in'
                 qs = qs.filter(**{query_filter: multiple_senses})
+                continue
+            elif get_key in ['hasannotatedsentences']:
+                glosses_with_annotated_sentences = [gsv['gloss'] for gsv in AnnotatedGloss.objects.values('gloss')]
+                query_filter = gloss_prefix + 'id__in'
+                if get_value == '2':
+                    qs = qs.filter(**{query_filter: glosses_with_annotated_sentences})
+                else:
+                    qs = qs.exclude(**{query_filter: glosses_with_annotated_sentences})
                 continue
             elif get_key in ['hasothermedia']:
                 pks_for_glosses_with_othermedia = [om.parent_gloss.pk for om in OtherMedia.objects.all()]
