@@ -226,6 +226,12 @@ def get_video_extension_from_stored_filenpath(video_file_full_path):
 
 
 def video_file_type_extension(video_file_full_path):
+
+    if not video_file_full_path:
+        return ''
+    if 'glossvideo' not in video_file_full_path:
+        return ''
+
     if not os.path.exists(video_file_full_path):
         return get_video_extension_from_stored_filenpath(video_file_full_path)
 

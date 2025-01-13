@@ -13,6 +13,7 @@ from django.db.models import Q, Count, CharField, TextField, Value as V
 from signbank.tools import get_two_letter_dir
 from signbank.video.convertvideo import video_file_type_extension
 import subprocess
+import re
 
 
 class GlossVideoDatasetFilter(admin.SimpleListFilter):
@@ -77,6 +78,8 @@ class GlossVideoExistenceFilter(admin.SimpleListFilter):
         def matching_file_exists(videofile, key):
             if not key:
                 return False
+            if 'glossvideo' not in videofile:
+                return False
             from pathlib import Path
             video_file_full_path = Path(WRITABLE_FOLDER, videofile)
             if video_file_full_path.exists():
@@ -87,11 +90,50 @@ class GlossVideoExistenceFilter(admin.SimpleListFilter):
         queryset_res = queryset.values('id', 'videofile')
         results = [qv['id'] for qv in queryset_res
                    if matching_file_exists(qv['videofile'], self.value())]
-
         if self.value():
             return queryset.filter(id__in=results)
         else:
             return queryset.all()
+
+
+def filename_matches_nme(filename):
+    filename_without_extension, ext = os.path.splitext(os.path.basename(filename))
+    try:
+        if m := re.search(r".+-(\d+)_(nme_\d+|nme_\d+_left|nme_\d+_right)$", filename_without_extension):
+            return True
+        return False
+    except (IndexError, ValueError):
+        return False
+
+
+def filename_matches_perspective(filename):
+    filename_without_extension, ext = os.path.splitext(os.path.basename(filename))
+    try:
+        if m := re.search(r".+-(\d+)_(left|right|nme_\d+_left|nme_\d+_right)$", filename_without_extension):
+            return True
+        return False
+    except (IndexError, ValueError):
+        return False
+
+
+def filename_matches_video(filename):
+    filename_without_extension, ext = os.path.splitext(os.path.basename(filename))
+    try:
+        if m := re.search(r".+-(\d+)$", filename_without_extension):
+            return True
+        return False
+    except (IndexError, ValueError):
+        return False
+
+
+def filename_matches_backup_video(filename):
+    filename_with_extension = os.path.basename(filename)
+    try:
+        if m := re.search(r".+-(\d+)\.(mp4|m4v|mov|webm|mkv|m2v)\.(bak\d+)$", filename_with_extension):
+            return True
+        return False
+    except (IndexError, ValueError):
+        return False
 
 
 class GlossVideoFilenameFilter(admin.SimpleListFilter):
@@ -104,42 +146,6 @@ class GlossVideoFilenameFilter(admin.SimpleListFilter):
         return file_exists
 
     def queryset(self, request, queryset):
-        import re
-        def filename_matches_nme(filename):
-            filename_without_extension, ext = os.path.splitext(os.path.basename(filename))
-            try:
-                if m := re.search(r".+-(\d+)_(nme_\d+|nme_\d+_left|nme_\d+_right)$", filename_without_extension):
-                    return 'True'
-                return 'False'
-            except (IndexError, ValueError):
-                return 'False'
-
-        def filename_matches_perspective(filename):
-            filename_without_extension, ext = os.path.splitext(os.path.basename(filename))
-            try:
-                if m := re.search(r".+-(\d+)_(left|right|nme_\d+_left|nme_\d+_right)$", filename_without_extension):
-                    return 'True'
-                return 'False'
-            except (IndexError, ValueError):
-                return 'False'
-
-        def filename_matches_video(filename):
-            filename_without_extension, ext = os.path.splitext(os.path.basename(filename))
-            try:
-                if m := re.search(r".+-(\d+)$", filename_without_extension):
-                    return 'True'
-                return 'False'
-            except (IndexError, ValueError):
-                return 'False'
-
-        def filename_matches_backup_video(filename):
-            filename_with_extension = os.path.basename(filename)
-            try:
-                if m := re.search(r".+-(\d+)\.(mp4|m4v|mov|webm|mkv|m2v)\.(bak\d+)$", filename_with_extension):
-                    return 'True'
-                return 'False'
-            except (IndexError, ValueError):
-                return 'False'
 
         def matching_filename(videofile, nmevideo, perspective, version, key):
             if not key:
@@ -148,16 +154,16 @@ class GlossVideoFilenameFilter(admin.SimpleListFilter):
             video_file_full_path = Path(WRITABLE_FOLDER, videofile)
             if nmevideo:
                 filename_is_correct = filename_matches_nme(video_file_full_path)
-                return key == filename_is_correct
+                return key == str(filename_is_correct)
             elif perspective:
                 filename_is_correct = filename_matches_perspective(video_file_full_path)
-                return key == filename_is_correct
+                return key == str(filename_is_correct)
             elif version > 0:
                 filename_is_correct = filename_matches_backup_video(video_file_full_path)
-                return key == filename_is_correct
+                return key == str(filename_is_correct)
             else:
                 filename_is_correct = filename_matches_video(video_file_full_path)
-                return key == filename_is_correct
+                return key == str(filename_is_correct)
 
         queryset_res = queryset.values('id', 'videofile', 'glossvideonme', 'glossvideoperspective', 'version')
         results = [qv['id'] for qv in queryset_res
@@ -352,6 +358,30 @@ def renumber_backups(modeladmin, request, queryset):
             video.save()
 
 
+@admin.action(description="Set incorrect NME/Perspective filenames to empty string")
+def unlink_files(modeladmin, request, queryset):
+    # allow to erase the filename from an object if it has the wrong format and it is for a subclass video
+    # this is a patch for repairing doubly linked files
+    import os
+    for obj in queryset:
+        if not hasattr(obj, 'glossvideonme') and not hasattr(obj, 'glossvideoperspective'):
+            # this is not a subclass video that was selected by the user
+            continue
+
+        from pathlib import Path
+        video_file_full_path = Path(WRITABLE_FOLDER, str(obj.videofile))
+        if hasattr(obj, 'glossvideonme') and filename_matches_nme(video_file_full_path):
+            continue
+        if hasattr(obj, 'glossvideoperspective') and filename_matches_perspective(video_file_full_path):
+            continue
+
+        # erase the file path if it has the wrong format
+        if DEBUG_VIDEOS:
+            print('unlink_files: erase incorrect path from object: ', obj, video_file_full_path)
+        obj.videofile.name = ""
+        obj.save()
+
+
 class GlossVideoAdmin(admin.ModelAdmin):
 
     list_display = ['id', 'gloss', 'video_file', 'perspective', 'NME', 'file_timestamp', 'file_group', 'permissions', 'file_size', 'video_type',  'version']
@@ -360,11 +390,11 @@ class GlossVideoAdmin(admin.ModelAdmin):
                    GlossVideoFilenameFilter, GlossVideoBackupFilter)
 
     search_fields = ['^gloss__annotationidglosstranslation__text', '^gloss__lemma__lemmaidglosstranslation__text']
-    actions = [rename_extension_videos, remove_backups, renumber_backups]
+    actions = [rename_extension_videos, remove_backups, renumber_backups, unlink_files]
 
     def video_file(self, obj=None):
         # this will display the full path in the list view
-        if obj is None:
+        if obj is None or not str(obj.videofile):
             return ""
         import os
         video_file_full_path = os.path.join(WRITABLE_FOLDER, str(obj.videofile))
@@ -383,7 +413,7 @@ class GlossVideoAdmin(admin.ModelAdmin):
 
     def file_timestamp(self, obj=None):
         # if the file exists, this will display its timestamp in the list view
-        if obj is None:
+        if obj is None or not str(obj.videofile):
             return ""
         import os
         import datetime
@@ -395,7 +425,7 @@ class GlossVideoAdmin(admin.ModelAdmin):
 
     def file_group(self, obj=None):
         # this will display a group in the list view
-        if obj is None:
+        if obj is None or not str(obj.videofile):
             return ""
         else:
             from pathlib import Path
@@ -408,7 +438,7 @@ class GlossVideoAdmin(admin.ModelAdmin):
 
     def file_size(self, obj=None):
         # this will display a group in the list view
-        if obj is None:
+        if obj is None or not str(obj.videofile):
             return ""
         else:
             from pathlib import Path
@@ -421,7 +451,7 @@ class GlossVideoAdmin(admin.ModelAdmin):
 
     def permissions(self, obj=None):
         # this will display a group in the list view
-        if obj is None:
+        if obj is None or not str(obj.videofile):
             return ""
         else:
             from pathlib import Path
@@ -435,7 +465,7 @@ class GlossVideoAdmin(admin.ModelAdmin):
 
     def video_type(self, obj=None):
         # if the file exists, this will display its timestamp in the list view
-        if obj is None:
+        if obj is None or not str(obj.videofile):
             return ""
         import os
         video_file_full_path = os.path.join(WRITABLE_FOLDER, str(obj.videofile))
