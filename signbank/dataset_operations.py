@@ -39,6 +39,8 @@ def gloss_annotations_check(dataset):
 
 def gloss_backup_videos(gloss):
 
+    if not gloss:
+        return GlossVideo.objects.none()
     backup_videos = GlossVideo.objects.filter(gloss=gloss,
                                               glossvideonme=None,
                                               glossvideoperspective=None,
@@ -46,23 +48,12 @@ def gloss_backup_videos(gloss):
     return backup_videos
 
 
-def remove_backup_glossvideo_objects_with_no_file(gloss):
-    # NOT CALLED
-    glossvideos = gloss_backup_videos(gloss)
-    objects_with_missing_files = []
-    for glossvideo in glossvideos:
-        video_file_full_path = os.path.join(WRITABLE_FOLDER, str(glossvideo.videofile))
-        if not os.path.exists(video_file_full_path):
-            objects_with_missing_files.append(glossvideo)
-    for obj in objects_with_missing_files:
-        if settings.DEBUG_VIDEOS:
-            relative_path = str(glossvideo.videofile)
-            print('dataset_operations:remove_backup_glossvideo_objects_with_no_file: ', relative_path)
-        obj.delete()
-
-
 def renumber_backup_videos(gloss):
+    # this method accounts for poorly enumerated or missing version numbers
+    # it renumbers the existing backup videos starting with 1
     glossvideos = gloss_backup_videos(gloss)
+    if not glossvideos:
+        return
     for inx, gloss_video in enumerate(glossvideos, 1):
         current_version = gloss_video.version
         if inx != current_version:
@@ -74,13 +65,16 @@ def renumber_backup_videos(gloss):
 
 def rename_backup_videos(gloss):
     glossvideos = gloss_backup_videos(gloss)
+    if not glossvideos:
+        return
     idgloss = gloss.idgloss
+    glossid = str(gloss.id)
     two_letter_dir = get_two_letter_dir(idgloss)
     dataset_dir = gloss.lemma.dataset.acronym
     for inx, glossvideo in enumerate(glossvideos, 1):
         video_file_full_path = os.path.join(WRITABLE_FOLDER, str(glossvideo.videofile))
         video_extension = video_file_type_extension(video_file_full_path)
-        desired_filename_without_extension = idgloss + '-' + str(gloss.id) + video_extension
+        desired_filename_without_extension = f'{idgloss}-{glossid}{video_extension}'
         _, bak = os.path.splitext(glossvideo.videofile.name)
         desired_extension = '.bak' + str(glossvideo.id)
         desired_filename = desired_filename_without_extension + desired_extension
@@ -177,11 +171,12 @@ def rename_gloss_video(gloss):
     if not glossvideo:
         return
     idgloss = gloss.idgloss
+    glossid = str(gloss.id)
     two_letter_dir = get_two_letter_dir(idgloss)
     dataset_dir = gloss.lemma.dataset.acronym
     video_file_full_path = os.path.join(WRITABLE_FOLDER, str(glossvideo.videofile))
     video_extension = video_file_type_extension(video_file_full_path)
-    desired_filename = idgloss + '-' + str(gloss.id) + video_extension
+    desired_filename = f'{idgloss}-{glossid}{video_extension}'
     desired_relative_path = os.path.join(settings.GLOSS_VIDEO_DIRECTORY,
                                          dataset_dir, two_letter_dir, desired_filename)
     current_relative_path = str(glossvideo.videofile)
@@ -355,11 +350,6 @@ def update_gloss_video_backups(request, glossid):
 
     if not gloss:
         return JsonResponse({})
-
-    # commented out
-    # this only makes sense on the production server, since there are no files on the development servers
-    # and we can't test the code if we delete the objects
-    # remove_backup_glossvideo_objects_with_no_file(gloss)
 
     rename_gloss_video(gloss)
     rename_backup_videos(gloss)
