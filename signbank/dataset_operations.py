@@ -39,8 +39,6 @@ def gloss_annotations_check(dataset):
 
 def gloss_backup_videos(gloss):
 
-    if not gloss:
-        return GlossVideo.objects.none()
     backup_videos = GlossVideo.objects.filter(gloss=gloss,
                                               glossvideonme=None,
                                               glossvideoperspective=None,
@@ -52,21 +50,20 @@ def renumber_backup_videos(gloss):
     # this method accounts for poorly enumerated or missing version numbers
     # it renumbers the existing backup videos starting with 1
     glossvideos = gloss_backup_videos(gloss)
-    if not glossvideos:
-        return
     for inx, gloss_video in enumerate(glossvideos, 1):
         current_version = gloss_video.version
-        if inx != current_version:
-            if settings.DEBUG_VIDEOS:
-                print('dataset_operations:renumber_backup_videos: change version ', current_version, inx)
-            gloss_video.version = inx
-            gloss_video.save()
+        if inx == current_version:
+            continue
+
+        if settings.DEBUG_VIDEOS:
+            print('dataset_operations:renumber_backup_videos: change version ', current_version, inx)
+
+        gloss_video.version = inx
+        gloss_video.save()
 
 
 def rename_backup_videos(gloss):
     glossvideos = gloss_backup_videos(gloss)
-    if not glossvideos:
-        return
     idgloss = gloss.idgloss
     glossid = str(gloss.id)
     two_letter_dir = get_two_letter_dir(idgloss)
