@@ -1278,10 +1278,10 @@ class Gloss(models.Model):
                         trans.save()
                     except (DatabaseError, IntegrityError, TransactionManagementError):
                         print('reorder_senses exception saving translation to other sense, removing offender')
-                        print("'gloss': ", str(self.id), ", 'sense': ", str(inx),
-                              ", 'orderIndex': ", str(trans.orderIndex), ", 'language': ", str(trans.language),
-                              ", 'index': ", str(trans.index), ", 'translation_id': ", str(trans.id),
-                              ", 'translation.text': ", trans.translation.text)
+                        # print("'gloss': ", str(self.id), ", 'sense': ", str(inx),
+                        #       ", 'orderIndex': ", str(trans.orderIndex), ", 'language': ", str(trans.language),
+                        #       ", 'index': ", str(trans.index), ", 'translation_id': ", str(trans.id),
+                        #       ", 'translation.text': ", trans.translation.text)
                         sensetrans.translations.remove(trans)
                         trans.delete()
 
