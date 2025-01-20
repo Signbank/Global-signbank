@@ -183,8 +183,8 @@ def update_senses(gloss, new_value):
     """"
     new_value is a string of comma separated senses, where each sense is a string of comma separated translations
     """
-    new_senses, _ = convert_string_to_dict_of_list_of_lists(new_value)
-
+    # new_senses, _ = convert_string_to_dict_of_list_of_lists(new_value)
+    new_senses = new_value
     dataset = gloss.lemma.dataset
     dataset_languages = dataset.translation_languages.all()
 
@@ -201,23 +201,40 @@ def update_senses(gloss, new_value):
         gloss.senses.remove(old_sense)
         old_sense.delete()
 
-    # Then add the new senses
-    for dataset_language in dataset_languages:
-        if dataset_language.language_code_2char in new_senses:
-            for new_sense_i, new_sense in enumerate(new_senses[dataset_language.language_code_2char], 1):
-                # Make a new sense object or get the existing one
-                if gloss.senses.count() < new_sense_i:
-                    sense = Sense.objects.create()
-                    gloss.senses.add(sense, through_defaults={'order':new_sense_i})
-                else:
-                    sense = gloss.senses.get(glosssense__order=new_sense_i)
+    old_translations = [trans.pk for trans in Translation.objects.filter(gloss=gloss)]
+    for old_trans in old_translations:
+        # remove the old translation objects
+        retrieved = Translation.objects.get(pk=old_trans)
+        retrieved.delete()
 
-                try:
-                    sensetranslation = sense.senseTranslations.get(language=dataset_language)
-                except ObjectDoesNotExist:
-                    # there should only be one per language
-                    sensetranslation = SenseTranslation.objects.create(language=dataset_language)
-                    sense.senseTranslations.add(sensetranslation)
+    new_senses_dict = dict()
+    number_of_senses_to_create = dict()
+    for key in new_senses.keys():
+        number_of_senses_to_create[key] = len(new_senses[key])
+    num_senses_per_language = [number_of_senses_to_create[key] for key in new_senses.keys()]
+    flatten_total = list(set(num_senses_per_language))
+    if len(flatten_total) != 1:
+        # fail the lists don't match
+        return
+    num_senses = flatten_total[0]
+    new_senses_per_language_dict = dict()
+    for i in range(1, num_senses+1):
+        sense_i = Sense.objects.create()
+        new_senses_dict[i] = sense_i
+    for i in range(1, num_senses+1):
+        sense_i = new_senses_dict[i]
+        new_senses_per_language_dict[i] = dict()
+        for dataset_language in dataset_languages:
+            language_code = dataset_language.language_code_2char
+            sensetranslation = SenseTranslation.objects.create(language=dataset_language)
+            sense_i.senseTranslations.add(sensetranslation)
+            new_senses_per_language_dict[i][language_code] = sensetranslation
+    for dataset_language in dataset_languages:
+        language_code = dataset_language.language_code_2char
+        if language_code in new_senses:
+            for new_sense_i, new_sense in enumerate(new_senses[language_code], 1):
+                # sense = new_senses_dict[new_sense_i]
+                sense_translations = new_senses_per_language_dict[new_sense_i][language_code]
                 new_sense_translations = remove_duplicates_preserve_order(new_sense)
                 for inx, kw in enumerate(new_sense_translations, 1):
                     # this is a new sense so it has no translations yet
@@ -231,10 +248,16 @@ def update_senses(gloss, new_value):
                                               gloss=gloss,
                                               orderIndex=new_sense_i,
                                               index=inx)
-                    translation.save()
-                    sensetranslation.translations.add(translation)
-                sensetranslation.save()
-                sense.save()
+                    try:
+                        translation.save()
+                        sense_translations.translations.add(translation)
+                    except (TransactionManagementError, IntegrityError):
+                        print('constraint violation: ', inx, kw)
+                        continue
+    for i in range(1, num_senses+1):
+        sense_i = new_senses_dict[i]
+        gloss.senses.add(sense_i)
+    ### print('saved: ', gloss.senses.all())
     gloss.lastUpdated = DT.datetime.now(tz=get_current_timezone())
     gloss.save()
     
