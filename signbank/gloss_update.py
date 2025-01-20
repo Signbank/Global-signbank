@@ -191,26 +191,15 @@ def update_senses(gloss, new_value):
     # First remove the senses from the gloss
     old_senses = gloss.senses.all()
     for old_sense in old_senses:
+        for sense_translation in old_sense.senseTranslations.all():
+            # iterate over a list because the objects will be removed
+            for translation in sense_translation.translations.all():
+                sense_translation.translations.remove(translation)
+                translation.delete()
+            old_sense.senseTranslations.remove(sense_translation)
+            sense_translation.delete()
         gloss.senses.remove(old_sense)
-
-        # if this sense is part of another gloss, don't delete it
-        other_glosses_for_sense = GlossSense.objects.filter(sense=old_sense).exclude(gloss=gloss).count()
-        if not other_glosses_for_sense:
-            # If this is this only gloss this sense was in, delete the sense
-            for sense_translation in old_sense.senseTranslations.all():
-                # iterate over a list because the objects will be removed
-                for translation in sense_translation.translations.all():
-                    sense_translation.translations.remove(translation)
-                    translation.delete()
-                old_sense.senseTranslations.remove(sense_translation)
-                sense_translation.delete()
-            # also remove its examplesentences if they are not in another sense
-            example_sentences = old_sense.exampleSentences.all()
-            for example_sentence in example_sentences:
-                old_sense.exampleSentences.remove(example_sentence)
-                if Sense.objects.filter(exampleSentences=example_sentence).count() == 0:
-                    example_sentence.delete()
-            old_sense.delete()
+        old_sense.delete()
 
     # Then add the new senses
     for dataset_language in dataset_languages:
