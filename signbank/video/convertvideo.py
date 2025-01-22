@@ -123,13 +123,18 @@ def probe_format(file):
     return r['inputvideoformat']
 
 
-def generate_image_sequence(sourcefile):
-    basename, _ = os.path.splitext(sourcefile.path)
+def get_folder_name(gloss):
+    gloss_video_filename = gloss.idgloss + '-' + str(gloss.id)
+    filename = gloss_video_filename.replace(' ', '_')
+    folder_name = filename.replace('.', '-')
+    return folder_name
+
+
+def generate_image_sequence(gloss, sourcefile):
+
     temp_location_frames = os.path.join(settings.WRITABLE_FOLDER,
                                         settings.GLOSS_IMAGE_DIRECTORY, "signbank-thumbnail-frames")
-    filename, ext = os.path.splitext(os.path.basename(sourcefile.name))
-    filename = filename.replace(' ', '_')
-    folder_name, _ = os.path.splitext(filename)
+    folder_name = get_folder_name(gloss)
     temp_video_frames_folder = os.path.join(temp_location_frames, folder_name)
     # Create the necessary subfolder if needed
     if not os.path.isdir(temp_location_frames):
@@ -156,13 +161,10 @@ def generate_image_sequence(sourcefile):
     return stills
 
 
-def remove_stills(sourcefile):
-    basename, _ = os.path.splitext(sourcefile.path)
+def remove_stills(gloss):
     temp_location_frames = os.path.join(settings.WRITABLE_FOLDER,
                                         settings.GLOSS_IMAGE_DIRECTORY, "signbank-thumbnail-frames")
-    filename, ext = os.path.splitext(os.path.basename(sourcefile.name))
-    filename = filename.replace(' ', '_')
-    folder_name, _ = os.path.splitext(filename)
+    folder_name = get_folder_name(gloss)
     temp_video_frames_folder = os.path.join(temp_location_frames, folder_name)
     # remove the temp files
     stills_pattern = temp_video_frames_folder+"/*.png"
@@ -213,7 +215,8 @@ def make_thumbnail_video(sourcefile, targetfile):
 
 def video_file_type_extension(video_file_full_path):
     if not os.path.exists(video_file_full_path):
-        return ""
+        # the video file does not exist
+        return ".mp4"
     filetype_output = subprocess.run(["file", video_file_full_path], stdout=subprocess.PIPE)
     filetype = str(filetype_output.stdout)
     if 'MOV' in filetype:
@@ -229,9 +232,10 @@ def video_file_type_extension(video_file_full_path):
     elif 'MPEG-2' in filetype:
         desired_video_extension = '.m2v'
     else:
+        # no match found, print something to the log and just keep using mp4
         if DEBUG_VIDEOS:
             print('video:admin:convertvideo:video_file_type_extension:file:UNKNOWN ', filetype)
-        desired_video_extension = '.unknown'
+        desired_video_extension = '.mp4'
     return desired_video_extension
 
 
