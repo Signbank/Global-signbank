@@ -7,21 +7,48 @@
 {% load wrong_sign %}
 
 {% block bootstrap3_title %}
-{% blocktrans %}Recently Added Signs{% endblocktrans %}
+{% blocktrans %}Signbank: Recently Added Signs{% endblocktrans %}
 {% endblock %}
 
 {% block extrajs %}
 <script type='text/javascript'>
 var show_dataset_interface_options = {{ SHOW_DATASET_INTERFACE_OPTIONS|yesno:"true,false" }};
 var csrf_token = '{{csrf_token}}';
+var days_field = '{{days_field}}';
+var timestamp_field = '{{timestamp_field}}';
+var timeline_field = '{{timeline_field}}';
 
+$(document).ready(function() {
+    $('#id_days').val(days_field);
+    $("input[name='days']").each(function() {
+        if ($(this).attr('value') == days_field) {
+            $(this).prop('checked', true);
+        };
+    });
+    $('#id_timetype').val(timestamp_field);
+    $("input[name='timetype']").each(function() {
+        if ($(this).attr('value') == timestamp_field) {
+            $(this).prop('checked', true);
+        };
+    });
+    $('#id_timeline').val(timeline_field);
+    $("input[name='timeline']").each(function() {
+        if ($(this).attr('value') == timeline_field) {
+            $(this).prop('checked', true);
+        };
+    });
+});
 </script>
 <style>
 input[type="radio] {
     height: 30px;
+    opacity: 1;
 }
 .radio {
     height: 30px;
+}
+.radio-inline {
+    padding-left: 0;
 }
 </style>
 {% endblock %}
@@ -37,9 +64,9 @@ input[type="radio] {
     <form name='adminsearch' id='adminsearch' method='get' action='{{PREFIX_URL}}/signs/recently_added/'>
     {% csrf_token %}
     <div class="panel panel-default">
-        <div class="panel-heading" data-toggle="collapse" data-target="#query-area">{% trans "Construct Filter" %}
+        <div class="panel-heading" data-toggle="collapse" data-target="#query-area">{% trans "Timeframe" %}
         </div>
-        <div id='query-area' class='collapse {% if request.GET|length == 0 and not show_all %} in {% endif %}'>
+        <div id='query-area' class='collapse in'>
             <div id='searchformwell' class='well search-results-collapsable'>
 
             <div class="hidden">
@@ -48,55 +75,56 @@ input[type="radio] {
             </div>
 
             <div class="panel panel-default">
-              <div class="panel-heading" data-toggle="collapse"
-                       data-target="#time_window">{% trans "Timeframe" %}</div>
-
-                  <div id='time_window' class='collapse in'>
-                  <table class='table table-condensed' style="width:60%;">
+                  <table class='table table-condensed' style="width:80%;text-align:left;">
                   <tr>
-                      <td style="padding-left:30px;">
-                          <label for='id_timeline'>{% trans "Order" %}</label></td>
-                      <td style="width:600px;">
-                            {% for radio in searchform.timeline %}
-                            <label for="{{ radio.id_for_label }}">
-                                    {{ radio.choice_label }} <span class="radio">{{ radio.tag }}</span>
+                      <td style="padding-left:30px;width:200px;">
+                          <label class="radio-inline" for='id_timeline'>{% trans "Sort Order of Timeline" %}</label></td>
+                      <td style="text-align:left;">
+                          <div style="white-space:nowrap;width:auto;text-align:left;">
+                           {% for radio in searchform.timeline %}
+                            <label class="radio-inline" for="{{ radio.id_for_label }}">
+                                {{ radio.tag }} <span style="padding-right:30px;width:auto;">{{ radio.choice_label }}</span>
                             </label>
                             <span>&nbsp;&nbsp;&nbsp;</span>
-                          {% endfor %}
+                           {% endfor %}
+                          </div>
                       </td>
                   </tr>
                   <tr>
-                      <td style="padding-left:30px;">
-                          <label for='id_days'>{% trans "Days" %}</label></td>
-                      <td style="width:600px;">
+                      <td style="padding-left:30px;width:200px;">
+                          <label class="radio-inline" for='id_days'>{% trans "Days Prior to Today" %}</label></td>
+                      <td style="text-align:left;">
+                          <div style="white-space:nowrap;width:auto;text-align:left;">
                           {% for radio in searchform.days %}
-                            <label for="{{ radio.id_for_label }}">
-                                    {{ radio.choice_label }} <span class="radio">{{ radio.tag }}</span>
+                            <label class="radio-inline" for="{{ radio.id_for_label }}">
+                                {{ radio.tag }} <span style="padding-right:30px;width:auto;">{{ radio.choice_label }}</span>
                             </label>
-                            <span>&nbsp;&nbsp;&nbsp;</span>
+                              <span>&nbsp;&nbsp;&nbsp;</span>
                           {% endfor %}
+                          </div>
                       </td>
                   </tr>
                   <tr>
-                      <td style="padding-left:30px;"><label for='id_timetype'>{% trans "Date" %}</label></td>
-                      <td style="width:600px;">
+                      <td style="padding-left:30px;width:200px;">
+                          <label class="radio-inline" for='id_timetype'>{% trans "Timestamp on Gloss" %}</label></td>
+                      <td style="text-align:left;">
+                          <div style="white-space:nowrap;width:auto;text-align:left;">
                           {% for radio in searchform.timetype %}
-                            <label for="{{ radio.id_for_label }}">
-                                    {{ radio.choice_label }} <span class="radio">{{ radio.tag }}</span>
+                            <label class="radio-inline" for="{{ radio.id_for_label }}">
+                                <span style="width:50px;">{{ radio.tag }}</span> <span style="padding-right:50px;width:auto;">{{ radio.choice_label }}</span>
                             </label>
-                            <span>&nbsp;&nbsp;&nbsp;</span>
+                              <span>&nbsp;&nbsp;&nbsp;</span>
                           {% endfor %}
+                          </div>
                       </td>
                   </tr>
                   </table>
-                  </div>
                 </div>
             </div>
         </div>
-        <div class='btn-group' style="margin-bottom: 20px">
-        <input class='btn btn-primary' type='submit' name="filter" value='Apply Filter'>
-        <input class='btn btn-primary' type='reset' onclick="clearForm();"
-                       value='{% trans "Reset" %}'>
+        <br>
+        <div class='btn-group'>
+        <input class='btn btn-primary' type='submit' name="filter" value='Apply'>
         </div>
     </div>
 
@@ -104,7 +132,7 @@ input[type="radio] {
     </div>
 
     {% if object_list %}
-    <br>
+    <div>
     <table class="table table-condensed">
         <thead class="thead thead-light">
         <tr>
@@ -149,9 +177,11 @@ input[type="radio] {
         {% endfor %}
     </tbody>
     </table>
-
+    </div>
     {% else %}
+    <div>
     {% trans "No recently added signs for the selected datasets" %} ({{number_of_days}} {% trans "days" %})
+    </div>
     {% endif %}
 </div>
 {% endblock content %}

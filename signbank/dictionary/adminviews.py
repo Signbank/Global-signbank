@@ -5473,6 +5473,9 @@ class RecentGlossListView(ListView):
     search_form_data = QueryDict(mutable=True)
     search_form = RecentGlossSearchForm()
     public = False
+    timestamp_field = 'creationDate'
+    timeline = 'chronological'
+    days = RecentGlossSearchForm.days_default
 
     def get_template_names(self):
         return ['dictionary/admin_recently_added_glosses.html']
@@ -5494,6 +5497,13 @@ class RecentGlossListView(ListView):
         context['language'] = interface_language
         context['number_of_days'] = RECENTLY_ADDED_SIGNS_PERIOD.days
         context['searchform'] = self.search_form
+        context['timestamp_field'] = self.timestamp_field
+        context['days_field'] = self.days
+        context['timeline_field'] = self.timeline
+        self.search_form.fields['timetype'].value = self.timestamp_field
+        self.search_form.fields['timeline'].value = self.timeline
+        self.search_form.fields['days'].value = self.days
+
         context['USE_REGULAR_EXPRESSIONS'] = settings.USE_REGULAR_EXPRESSIONS
         context['SHOW_DATASET_INTERFACE_OPTIONS'] = settings.SHOW_DATASET_INTERFACE_OPTIONS
 
@@ -5517,13 +5527,26 @@ class RecentGlossListView(ListView):
             lang_attr_name = default_language_code
 
         get = self.request.GET
-        days = get.get('days', '')
+        days_input = get.get('days', RecentGlossSearchForm.days_default)
+        self.days = days_input
 
-        recently_added_signs_since_date = DT.datetime.now(tz=get_current_timezone()) - RECENTLY_ADDED_SIGNS_PERIOD
-        recent_glosses = Gloss.objects.filter(morpheme=None, lemma__dataset__in=selected_datasets, archived=False).filter(
-            creationDate__range=[recently_added_signs_since_date, DT.datetime.now(tz=get_current_timezone())]).order_by(
-            '-creationDate')
+        days = datetime.timedelta(days=int(days_input))
+        timetype = get.get('timetype', self.timestamp_field)
+        self.timestamp_field = timetype
 
+        filter_field = timetype + '__range'
+        timeline = get.get('timeline', 'chronological')
+        self.timeline = timeline
+        if timeline == 'chronological':
+            ordering = timetype
+        else:
+            ordering = '-' + timetype
+
+        glosses = Gloss.objects.filter(morpheme=None, lemma__dataset__in=selected_datasets, archived=False)
+        recently_added_signs_since_date = DT.datetime.now(tz=get_current_timezone()) - days
+        recent_glosses = glosses.filter(Q(**{filter_field:[recently_added_signs_since_date, DT.datetime.now(tz=get_current_timezone())]}))
+            # creationDate__range=[recently_added_signs_since_date, DT.datetime.now(tz=get_current_timezone())])
+        recent_glosses = recent_glosses.order_by(ordering)
         items = construct_scrollbar(recent_glosses, 'sign', lang_attr_name)
         self.request.session['search_results'] = items
         self.request.session['search_type'] = 'sign'

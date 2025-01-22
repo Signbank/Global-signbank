@@ -1089,6 +1089,7 @@ class FocusGlossSearchForm(forms.ModelForm):
             self.fields[boolean_field].choices = [('0', '-'), ('2', _('Yes')), ('3', _('No'))]
 
 
+from signbank.settings.server_specific import RECENTLY_ADDED_SIGNS_PERIOD
 import datetime
 RECENTLY_ADDED_TIMEDELTA_60_DAYS = datetime.timedelta(days=60)
 RECENTLY_ADDED_TIMEDELTA_30_DAYS = datetime.timedelta(days=30)
@@ -1097,6 +1098,9 @@ RECENTLY_ADDED_TIMEDELTA_30_DAYS = datetime.timedelta(days=30)
 class RecentGlossSearchForm(forms.ModelForm):
 
     use_required_attribute = False  # otherwise the html required attribute will show up on every form
+    days_30 = RECENTLY_ADDED_TIMEDELTA_30_DAYS.days
+    days_60 = RECENTLY_ADDED_TIMEDELTA_60_DAYS.days
+    days_default = RECENTLY_ADDED_SIGNS_PERIOD.days
 
     class Meta:
 
