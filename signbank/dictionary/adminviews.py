@@ -1543,6 +1543,8 @@ class GlossDetailView(DetailView):
                 gloss_is_duplicate = True
         context['gloss_is_duplicate'] = gloss_is_duplicate
 
+        context['synsets'] = gl.synsets.all()
+
         return context
 
     def post(self, request, *args, **kwargs):
@@ -7587,8 +7589,8 @@ def fetch_video_stills_for_gloss(request, gloss_id):
 
     gloss = Gloss.objects.get(id=gloss_id, archived=False)
 
-    folder = gloss.idgloss + '-' + gloss_id
-    folder = folder.replace(' ', '_')
+    from signbank.video.convertvideo import get_folder_name
+    folder = get_folder_name(gloss)
     temp_location_frames = os.path.join(settings.GLOSS_IMAGE_DIRECTORY, "signbank-thumbnail-frames", folder)
     temp_video_frames_folder = os.path.join(settings.WRITABLE_FOLDER,
                                             settings.GLOSS_IMAGE_DIRECTORY, "signbank-thumbnail-frames", folder)

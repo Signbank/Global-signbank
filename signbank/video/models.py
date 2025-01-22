@@ -703,11 +703,11 @@ class GlossVideo(models.Model):
 
     def make_image_sequence(self):
 
-        generate_image_sequence(self.videofile)
+        generate_image_sequence(self.gloss, self.videofile)
 
     def delete_image_sequence(self):
 
-        remove_stills(self.videofile)
+        remove_stills(self.gloss)
 
     def make_small_video(self):
         # this method is not called (bugs)
