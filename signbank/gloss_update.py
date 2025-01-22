@@ -311,7 +311,7 @@ def detect_type_related_problems_for_gloss_update(changes, dataset, language_cod
             continue
         if field in language_fields:
             continue
-        if field == "Senses":
+        if field in ['Senses', 'senses']:
             continue
         if isinstance(field, FieldChoiceForeignKey):
             field_choice_category = field.field_choice_category
@@ -474,17 +474,17 @@ def gloss_update_do_changes(user, gloss, changes, language_code):
                 handshape = Handshape.objects.get(name__iexact=new_value)
                 setattr(gloss, field.name, handshape)
                 changes_done.append((field.name, original_value, new_value))
+            elif field in ["senses", "Senses"]:
+                original_senses = collect_revision_history_for_senses(gloss)
+                update_senses(gloss, new_value)
+                new_senses = collect_revision_history_for_senses(gloss)
+                changes_done.append((field.name, original_senses, new_senses))
             elif field.name == 'semField':
                 update_semantic_field(gloss, new_value, language_code)
                 changes_done.append((field.name, original_value, new_value))
             elif field.name == 'derivHist':
                 update_derivation_history_field(gloss, new_value, language_code)
                 changes_done.append((field.name, original_value, new_value))
-            elif field.name == "senses" and isinstance(field, models.ManyToManyField):
-                original_senses = collect_revision_history_for_senses(gloss)
-                update_senses(gloss, new_value)
-                new_senses = collect_revision_history_for_senses(gloss)
-                changes_done.append((field.name, original_senses, new_senses))
             else:
                 # text field
                 setattr(gloss, field.name, new_value)
@@ -522,7 +522,6 @@ def gloss_update(gloss, update_fields_dict, language_code):
     dataset = gloss.lemma.dataset
     language_fields, api_fields_2024 = api_update_gloss_fields(dataset, language_code)
     human_readable_to_internal, human_readable_to_json = update_gloss_columns_to_value_dict_keys(dataset, language_code)
-
     combined_fields = api_fields_2024
     for language_field in language_fields:
         gloss_dict_language_field = human_readable_to_json[language_field]
