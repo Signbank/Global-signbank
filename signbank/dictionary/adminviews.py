@@ -1543,6 +1543,8 @@ class GlossDetailView(DetailView):
                 gloss_is_duplicate = True
         context['gloss_is_duplicate'] = gloss_is_duplicate
 
+        context['synsets'] = gl.synsets.all()
+
         return context
 
     def post(self, request, *args, **kwargs):
