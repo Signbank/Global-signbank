@@ -25,6 +25,7 @@ import signbank.gloss_update
 import signbank.dictionary.batch_edit
 import signbank.gloss_morphology_update
 import signbank.frequency
+import signbank.dataset_operations
 
 app_name = 'dictionary'
 urlpatterns = [
@@ -32,7 +33,7 @@ urlpatterns = [
     re_path(r'^tag/(?P<tag>[^/]*)/?$', signbank.dictionary.tagviews.taglist),
 
     # an alternate view for direct display of a gloss
-    re_path(r'gloss/(?P<glossid>\d+).html$', signbank.dictionary.views.gloss, name='public_gloss'),
+    re_path(r'gloss/(?P<glossid>\d+).html$', GlossDetailView.as_view(), {'public': True}, name='public_gloss'),
     re_path(r'morpheme/(?P<glossid>\d+).html$', signbank.dictionary.views.morpheme, name='public_morpheme'),
 
     re_path(r'^update/gloss/(?P<glossid>\d+)$', signbank.dictionary.update.update_gloss, name='update_gloss'),
@@ -245,6 +246,9 @@ urlpatterns = [
 
     re_path(r'^trash_gloss/(?P<glossid>\d+)$', signbank.dictionary.update.trash_gloss, name='trash_gloss'),
 
+    re_path(r'update_gloss_video_backups/(?P<glossid>\d+)/$',
+            permission_required('dictionary.change_gloss')(signbank.dataset_operations.update_gloss_video_backups)),
+
     re_path(r'info/$', signbank.dictionary.views.info),
     re_path(r'protected_media/(?P<filename>.*)$', signbank.dictionary.views.protected_media, name='protected_media'),
 
@@ -258,7 +262,7 @@ urlpatterns = [
     re_path(r'^gloss/(?P<gloss_pk>\d+)/history', signbank.dictionary.views.gloss_revision_history, name='gloss_revision_history'),
     re_path(r'^gloss/(?P<pk>\d+)/glossvideos', GlossVideosView.as_view(), name='gloss_videos'),
     re_path(r'^api_update_gloss/(?P<gloss_id>\d+)/video', signbank.api_interface.api_add_video, name='api_add_video'),
-    re_path(r'^gloss/(?P<pk>\d+)', GlossDetailView.as_view(), name='admin_gloss_view'),
+    re_path(r'^gloss/(?P<pk>\d+)', GlossDetailView.as_view(), {'public': False}, name='admin_gloss_view'),
     re_path(r'^gloss_preview/(?P<pk>\d+)', GlossDetailView.as_view(), name='admin_gloss_view_colors'),
     re_path(r'^gloss_frequency/(?P<gloss_id>.*)/$', GlossFrequencyView.as_view(), name='admin_frequency_gloss'),
     re_path(r'^lemma_frequency/(?P<gloss_id>.*)/$', LemmaFrequencyView.as_view(), name='admin_frequency_lemma'),

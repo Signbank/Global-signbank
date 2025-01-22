@@ -109,10 +109,12 @@ RIGHT_DOUBLE_QUOTE_PATTERNS = '[\"\u201d]'
 REGEX_SPECIAL_CHARACTERS = '[+]'
 USE_REGULAR_EXPRESSIONS = False
 
-#From all possible gloss fields available, display these
+# From all possible gloss fields available, display these
 FIELDS = {}
 
-FIELDS['main'] = ['useInstr','wordClass']
+FIELDS['main'] = ['useInstr', 'wordClass']
+
+PUBLIC_MAIN_FIELDS = ['wordClass']
 
 # fields are ordered per kind: Field Choice Lists, Text, Boolean
 # followed by etymology and articulation
@@ -124,7 +126,16 @@ FIELDS['phonology'] = ['handedness', 'domhndsh', 'subhndsh', 'handCh', 'relatArt
                        'domhndsh_letter', 'domhndsh_number', 'subhndsh_letter', 'subhndsh_number',
                        'weakdrop', 'weakprop']
 
+PUBLIC_PHONOLOGY_FIELDS = ['handedness', 'domhndsh', 'subhndsh', 'handCh', 'relatArtic', 'locprim',
+                           'contType', 'movSh', 'movDir',
+                           'repeat', 'altern',
+                           'relOriMov', 'relOriLoc', 'oriCh',
+                           'domhndsh_letter', 'domhndsh_number', 'subhndsh_letter', 'subhndsh_number',
+                           'weakdrop', 'weakprop']
+
 FIELDS['semantics'] = ['semField', 'derivHist', 'namEnt','valence','iconImg','concConcSet']
+
+PUBLIC_SEMANTICS_FIELDS = ['semField']
 
 FIELDS['frequency'] = ['tokNo','tokNoSgnr']
 
@@ -314,3 +325,6 @@ GUARDED_MORPHEME_DELETE = True
 FILE_UPLOAD_HANDLERS = ['django.core.files.uploadhandler.TemporaryFileUploadHandler',]
 
 FILE_UPLOAD_MAX_MEMORY_SIZE = 15728640 # 15 MB
+
+WORDNET_USERNAME = 'Spongebob Squarepants'
+WORDNET_PASSWORD = 'SecretSpongebobPassword'
