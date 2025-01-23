@@ -140,7 +140,11 @@ input[type="radio] {
             <th style="width:300px;">{% trans "Lemma ID Gloss" %}</th>
             <th>{% trans "Annotation ID Gloss" %}</th>
             <th style="width:180px;">{% trans "Creator" %}</th>
+            {% if timestamp_field == 'creationDate' %}
             <th style="width:180px">{% trans "Creation Date" %}</th>
+            {% else %}
+            <th style="width:180px">{% trans "Last Updated" %}</th>
+            {% endif %}
         </tr>
         <tr></tr>
         </thead>
@@ -172,7 +176,11 @@ input[type="radio] {
                     {% endif %}
                 {% endfor %}
             </td>
+            {% if timestamp_field == 'creationDate' %}
             <td>{{gloss.creationDate}}</td>
+            {% else %}
+            <td>{{gloss.lastUpdated}}</td>
+            {% endif %}
         </tr>
         {% endfor %}
     </tbody>
@@ -180,7 +188,7 @@ input[type="radio] {
     </div>
     {% else %}
     <div>
-    {% trans "No recently added signs for the selected datasets" %} ({{number_of_days}} {% trans "days" %})
+    {% trans "No recently added signs for the selected datasets" %} ({{days_field}} {% trans "days" %})
     </div>
     {% endif %}
 </div>

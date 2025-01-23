@@ -1093,14 +1093,20 @@ from signbank.settings.server_specific import RECENTLY_ADDED_SIGNS_PERIOD
 import datetime
 RECENTLY_ADDED_TIMEDELTA_60_DAYS = datetime.timedelta(days=60)
 RECENTLY_ADDED_TIMEDELTA_30_DAYS = datetime.timedelta(days=30)
+RECENTLY_ADDED_TIMEDELTA_14_DAYS = datetime.timedelta(days=14)
+RECENTLY_ADDED_TIMEDELTA_7_DAYS = datetime.timedelta(days=7)
 
 
 class RecentGlossSearchForm(forms.ModelForm):
 
     use_required_attribute = False  # otherwise the html required attribute will show up on every form
-    days_30 = RECENTLY_ADDED_TIMEDELTA_30_DAYS.days
-    days_60 = RECENTLY_ADDED_TIMEDELTA_60_DAYS.days
+
+    from signbank.settings.server_specific import RECENTLY_ADDED_SIGNS_PERIOD
     days_default = RECENTLY_ADDED_SIGNS_PERIOD.days
+    days_60 = RECENTLY_ADDED_TIMEDELTA_60_DAYS.days
+    days_30 = RECENTLY_ADDED_TIMEDELTA_30_DAYS.days
+    days_14 = RECENTLY_ADDED_TIMEDELTA_14_DAYS.days
+    days_7 = RECENTLY_ADDED_TIMEDELTA_7_DAYS.days
 
     class Meta:
 
@@ -1112,12 +1118,15 @@ class RecentGlossSearchForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         super(RecentGlossSearchForm, self).__init__(*args, **kwargs)
 
-        days_30 = RECENTLY_ADDED_TIMEDELTA_30_DAYS.days
-        days_60 = RECENTLY_ADDED_TIMEDELTA_60_DAYS.days
-        from signbank.settings.server_specific import RECENTLY_ADDED_SIGNS_PERIOD
         days_default = RECENTLY_ADDED_SIGNS_PERIOD.days
+        days_60 = RECENTLY_ADDED_TIMEDELTA_60_DAYS.days
+        days_30 = RECENTLY_ADDED_TIMEDELTA_30_DAYS.days
+        days_14 = RECENTLY_ADDED_TIMEDELTA_14_DAYS.days
+        days_7 = RECENTLY_ADDED_TIMEDELTA_7_DAYS.days
+
         self.fields['days'] = forms.ChoiceField(label=_('Days'),
-                                                choices=[(days_default, _('90 days')), (days_60, _('60 days')), (days_30, _('30 days'))],
+                                                choices=[(days_default, _('90 days')), (days_60, _('60 days')),
+                                                         (days_30, _('30 days')), (days_14, _('14 days')), (days_7, _('7 days'))],
                                                 widget=forms.RadioSelect, required=True, initial=days_default)
 
         TIME_ORDER = [('chronological', _('Chronological')), ('reverse', _('Reverse chronological'))]
