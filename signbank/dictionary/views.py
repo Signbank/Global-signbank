@@ -2177,15 +2177,20 @@ def get_unused_videos(request):
 
 def package(request):
 
+    if 'dataset_name' not in request.GET:
+        return HttpResponseBadRequest('No dataset name provided.')
+    dataset_acronym = request.GET['dataset_name']
+    if not dataset_acronym:
+        return HttpResponseBadRequest('Dataset name empty.')
+    dataset = Dataset.objects.filter(acronym=dataset_acronym).first()
+    if not dataset:
+        return HttpResponseBadRequest('Dataset not found.')
     if request.user.is_authenticated:
-        if 'dataset_name' in request.GET:
-            dataset = Dataset.objects.get(acronym=request.GET['dataset_name'])
-        else:
-            dataset = Dataset.objects.get(id=settings.DEFAULT_DATASET_PK)
         available_glosses = Gloss.objects.filter(lemma__dataset=dataset, archived=False)
         inWebSet = False  # not necessary
+    elif not dataset.is_public:
+        return HttpResponseBadRequest('Dataset is not public.')
     else:
-        dataset = Dataset.objects.get(id=settings.DEFAULT_DATASET_PK)
         available_glosses = Gloss.objects.filter(lemma__dataset=dataset, inWeb=True, archived=False)
         inWebSet = True
 
