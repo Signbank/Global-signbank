@@ -478,7 +478,7 @@ def gloss_update_do_changes(user, gloss, changes, language_code):
                 original_senses = collect_revision_history_for_senses(gloss)
                 update_senses(gloss, new_value)
                 new_senses = collect_revision_history_for_senses(gloss)
-                changes_done.append((field.name, original_senses, new_senses))
+                changes_done.append((field, original_senses, new_senses))
             elif field.name == 'semField':
                 update_semantic_field(gloss, new_value, language_code)
                 changes_done.append((field.name, original_value, new_value))
