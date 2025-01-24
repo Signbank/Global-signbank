@@ -19,7 +19,7 @@
     },
     {
       "url": "https://signbank-dev.cls.ru.nl",
-      "description": "Development server (empty database)"
+      "description": "Development server"
     },
     {
       "url": "https://signbank-test.cls.ru.nl",
