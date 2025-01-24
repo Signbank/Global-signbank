@@ -2188,8 +2188,6 @@ def package(request):
     if request.user.is_authenticated:
         available_glosses = Gloss.objects.filter(lemma__dataset=dataset, archived=False)
         inWebSet = False  # not necessary
-    elif not dataset.is_public:
-        return HttpResponseBadRequest('Dataset is not public.')
     else:
         available_glosses = Gloss.objects.filter(lemma__dataset=dataset, inWeb=True, archived=False)
         inWebSet = True
