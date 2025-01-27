@@ -2219,13 +2219,13 @@ def package(request):
     video_urls = {os.path.splitext(os.path.basename(gv.videofile.name))[0]:
                       reverse('dictionary:protected_media', args=[gv.small_video(use_name=True) or gv.videofile.name])
                   for gv in GlossVideo.objects.filter(gloss__in=available_glosses, glossvideonme=None, glossvideoperspective=None, version=0)
-                  if os.path.exists(str(gv.videofile.path))
+                  if gv.videofile and gv.videofile.name and os.path.exists(str(gv.videofile.path))
                   and os.path.getmtime(str(gv.videofile.path)) > since_timestamp}
     image_urls = {os.path.splitext(os.path.basename(gv.videofile.name))[0]:
                        reverse('dictionary:protected_media', args=[gv.poster_file()])
                   for gv in GlossVideo.objects.filter(gloss__in=available_glosses, glossvideonme=None, glossvideoperspective=None, version=0)
-                  if os.path.exists(str(gv.videofile.path))
-                     and os.path.getmtime(str(gv.videofile.path)) > since_timestamp}
+                  if gv.videofile and gv.videofile.name and os.path.exists(str(gv.videofile.path))
+                  and os.path.getmtime(str(gv.videofile.path)) > since_timestamp}
 
     interface_language_code = get_interface_language_api(request, request.user)
 
