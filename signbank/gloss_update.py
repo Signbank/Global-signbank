@@ -257,7 +257,7 @@ def update_senses(gloss, new_value):
     for i in range(1, num_senses+1):
         sense_i = new_senses_dict[i]
         gloss.senses.add(sense_i)
-    ### print('saved: ', gloss.senses.all())
+
     gloss.lastUpdated = DT.datetime.now(tz=get_current_timezone())
     gloss.save()
     
@@ -314,7 +314,7 @@ def type_check_multiselect(category, new_values, language_code):
     return True
 
 
-def detect_type_related_problems_for_gloss_update(changes, dataset, language_code):
+def detect_type_related_problems_for_gloss_update(gloss, changes, dataset, language_code):
 
     language_fields = internal_language_fields(dataset, language_code)
     errors = dict()
@@ -324,6 +324,8 @@ def detect_type_related_problems_for_gloss_update(changes, dataset, language_cod
         if field in language_fields:
             continue
         if field in ['Senses', 'senses']:
+            if gloss.has_sense_with_examplesentences():
+                errors[field] = gettext('API UPDATE NOT AVAILABLE: The gloss has senses with example sentences.')
             continue
         if isinstance(field, FieldChoiceForeignKey):
             field_choice_category = field.field_choice_category
@@ -648,7 +650,7 @@ def api_update_gloss(request, datasetid, glossid):
         return JsonResponse(results, safe=False)
 
     fields_to_update = gloss_update(gloss, value_dict, interface_language_code)
-    errors = detect_type_related_problems_for_gloss_update(fields_to_update, dataset, interface_language_code)
+    errors = detect_type_related_problems_for_gloss_update(gloss, fields_to_update, dataset, interface_language_code)
     if errors:
         results['errors'] = errors
         results['updatestatus'] = "Failed"
