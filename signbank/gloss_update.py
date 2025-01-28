@@ -324,7 +324,7 @@ def detect_type_related_problems_for_gloss_update(gloss, changes, dataset, langu
         if field in language_fields:
             continue
         if field in ['Senses', 'senses']:
-            if gloss.has_sense_with_examplesentences():
+            if ExampleSentence.objects.filter(senses__glosses=gloss).exists():
                 errors[field] = gettext('API UPDATE NOT AVAILABLE: The gloss has senses with example sentences.')
             continue
         if isinstance(field, FieldChoiceForeignKey):

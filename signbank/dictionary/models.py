@@ -782,10 +782,6 @@ class Sense(models.Model):
                 return True
         return False
 
-    def has_examplesentences(self):
-        """Return true if the sense has example sentences"""
-        return self.exampleSentences.all().count() > 0
-
     def get_senses_with_similar_sensetranslations_dict(self, gloss_detail_view):
         """Return a list of senses with sensetranslations that have the same string as this sense"""
         this_dataset = self.get_dataset()
@@ -1083,13 +1079,6 @@ class Gloss(models.Model):
                 return True
         return False
 
-    def has_sense_with_examplesentences(self):
-        """Return true if the sense has any examplesentences"""
-        for sense in self.senses.all():
-            if sense.has_examplesentences():
-                return True
-        return False
-
     def ordered_senses(self):
         """Return a properly ordered set of senses"""
         return self.senses.all().order_by('glosssense__order')
@@ -1289,10 +1278,6 @@ class Gloss(models.Model):
                         trans.save()
                     except (DatabaseError, IntegrityError, TransactionManagementError):
                         print('reorder_senses exception saving translation to other sense, removing offender')
-                        # print("'gloss': ", str(self.id), ", 'sense': ", str(inx),
-                        #       ", 'orderIndex': ", str(trans.orderIndex), ", 'language': ", str(trans.language),
-                        #       ", 'index': ", str(trans.index), ", 'translation_id': ", str(trans.id),
-                        #       ", 'translation.text': ", trans.translation.text)
                         sensetrans.translations.remove(trans)
                         trans.delete()
 
