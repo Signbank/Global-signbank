@@ -142,8 +142,10 @@ input[type="radio] {
             <th style="width:180px;">{% trans "Creator" %}</th>
             {% if timestamp_field == 'creationDate' %}
             <th style="width:180px">{% trans "Creation Date" %}</th>
+            <th style="width:180px">{% trans "Last Updated" %}</th>
             {% else %}
             <th style="width:180px">{% trans "Last Updated" %}</th>
+            <th style="width:180px">{% trans "Creation Date" %}</th>
             {% endif %}
         </tr>
         <tr></tr>
@@ -178,8 +180,10 @@ input[type="radio] {
             </td>
             {% if timestamp_field == 'creationDate' %}
             <td>{{gloss.creationDate}}</td>
+            <td>{{gloss.lastUpdated}}</td>
             {% else %}
             <td>{{gloss.lastUpdated}}</td>
+            <td>{{gloss.creationDate}}</td>
             {% endif %}
         </tr>
         {% endfor %}
