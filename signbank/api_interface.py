@@ -5,7 +5,9 @@ import shutil
 import os
 import stat
 import zipfile
+import sys
 
+from urllib.parse import quote
 from urllib.error import URLError
 from requests.exceptions import InvalidURL
 from guardian.shortcuts import get_objects_for_user, get_user_perms
@@ -26,6 +28,7 @@ from django.db import DatabaseError, IntegrityError
 from django.db.transaction import TransactionManagementError
 from django.db.models import FileField
 
+import signbank.tools
 from signbank.dictionary.models import *
 from signbank.dictionary.forms import *
 from signbank.settings.server_specific import LANGUAGES, LEFT_DOUBLE_QUOTE_PATTERNS, RIGHT_DOUBLE_QUOTE_PATTERNS, VIDEOS_TO_IMPORT_FOLDER
@@ -686,14 +689,7 @@ def upload_videos_to_glosses(request, datasetid):
         headers={"Content-Disposition": 'attachment; filename='+'glosses.json'},
     )
 
-
-@csrf_exempt
-@put_api_user_in_request
-def api_add_video(request, gloss_id):
-
-    CENTER_VIDEO_LABELS = ['center', 'centered', 'mid', 'default', 'file', 'video']
-    LEFT_VIDEO_LABELS = ['left', 'l']
-    RIGHT_VIDEO_LABELS = ['right', 'r']
+def verify_conditions_for_file_upload(request, gloss_id):
 
     if not request.user:
         return JsonResponse({'error': 'User not found'}, status=401)
@@ -724,6 +720,21 @@ def api_add_video(request, gloss_id):
 
     if len(request.FILES) == 0:
         return JsonResponse({'error': 'No file uploaded'}, status=400)
+
+@csrf_exempt
+@put_api_user_in_request
+def api_add_video(request, gloss_id):
+
+    CENTER_VIDEO_LABELS = ['center', 'centered', 'mid', 'default', 'file', 'video']
+    LEFT_VIDEO_LABELS = ['left', 'l']
+    RIGHT_VIDEO_LABELS = ['right', 'r']
+
+    error_response = verify_conditions_for_file_upload(request, gloss_id)
+
+    if error_response:
+        return error_response
+
+    gloss = Gloss.objects.filter(id=gloss_id).first()
 
     for label in request.FILES.keys():
         if label not in CENTER_VIDEO_LABELS and label not in LEFT_VIDEO_LABELS and label not in RIGHT_VIDEO_LABELS:
@@ -760,3 +771,55 @@ def api_add_video(request, gloss_id):
         nr_of_videos += 1
 
     return JsonResponse({'message': f'Uploaded {nr_of_videos} videos to dataset {dataset}.' }, status=200)
+
+
+@csrf_exempt
+@put_api_user_in_request
+def api_add_image(request, gloss_id):
+
+    error_response = verify_conditions_for_file_upload(request, gloss_id)
+
+    if error_response:
+        return error_response
+
+    gloss = Gloss.objects.filter(id=gloss_id).first()
+
+    label = list(request.FILES.keys())[0]
+    image_file = request.FILES[label]
+
+    #First check the extension
+    file_extension = os.path.splitext(image_file.name)[1].lower()
+    if file_extension not in settings.SUPPORTED_CITATION_IMAGE_EXTENSIONS:
+        return JsonResponse({'error': 'File extension not supported! Please convert to png or jpg'}, status=400)
+
+    # Construct a filename for the image, use sn if present, otherwise use idgloss+gloss id
+    if gloss.sn is not None:
+        image_file.name = f'{gloss.sn}{file_extension}'
+    else:
+        image_file.name = f'{gloss.idgloss}-{gloss.pk}{file_extension}'
+
+    # Prepare the file's new path and name
+    goal_path = os.path.join(WRITABLE_FOLDER, settings.GLOSS_IMAGE_DIRECTORY, gloss.lemma.dataset.acronym, signbank.tools.get_two_letter_dir(gloss.idgloss))
+    goal_location = os.path.join(goal_path, quote(image_file.name, safe=''))
+
+    #First make the dir if needed
+    if not os.path.exists(goal_path):
+        try:
+            os.makedirs(goal_path)
+        except OSError as ose:
+            return JsonResponse({'error': f'Failed to create directory {goal_path}: {ose}'}, status=500)
+
+    # Save the file
+    try:
+        destination = File(open(goal_location.encode(sys.getfilesystemencoding()), 'wb+'))
+
+    except (SystemError, OSError, IOError):
+        return JsonResponse({'error': f'Failed to open file {goal_location} for writing.'}, status=500)
+
+    # if we get to here, destination has been opened
+    for chunk in image_file.chunks():
+        destination.write(chunk)
+
+    destination.close()
+
+    return JsonResponse({'message': 'Image upload successful.'}, status=200)
