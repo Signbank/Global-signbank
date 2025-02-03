@@ -398,7 +398,6 @@ $('#show_middle').click(function()
          data-toggle='collapse' data-target='#nme_videos'>{% trans "Videos with Non-manual Elements" %}
     </div>
     <div id='nme_videos' class='collapse'>
-       {% if gloss.get_nme_videos %}
        <table class='table table-condensed' style="text-align: left;width:auto;">
         <tr style="overflow-y:auto;">
             <td class="td td-light" style="display:inline-block;">
@@ -429,7 +428,6 @@ $('#show_middle').click(function()
             </td>
         </tr>
        </table>
-       {% endif %}
     </div>
 </div>
    <!-- Sequential Morphology -->
@@ -438,6 +436,7 @@ $('#show_middle').click(function()
              data-target='#morphology'>{% trans "Morphology" %}
         </div>
         <div id='morphology' class='collapse'>
+            <br>
             {% if simultaneous_morphology %}
             <h5>{% trans "Simultaneous Morphology" %}</h5>
             <table class='table table-condensed'>
@@ -495,6 +494,7 @@ $('#show_middle').click(function()
          data-toggle='collapse' data-target='#phonology'>{% trans "Phonology" %}
     </div>
     <div id='phonology' class='collapse'>
+        <br>
         {% if not morphdefs %}
         <table class='table table-condensed'>
         {% for value,name,label,kind in phonology_fields %}
@@ -585,6 +585,7 @@ $('#show_middle').click(function()
                 {% endif %}
     </div>
     <div id='semantics' class='collapse'>
+        <br>
         {% if gloss_semanticfields %}
         <table class='table table-condensed'>
             <tr>
@@ -603,6 +604,7 @@ $('#show_middle').click(function()
          data-target='#relations'>{% trans "Relations to Other Signs" %}
     </div>
     <div id='relations' class='collapse'>
+        <br>
        {% if otherrelations %}
        <table class='table table-condensed'>
            {% for rel, target_display in otherrelations %}
