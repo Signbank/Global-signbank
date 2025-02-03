@@ -24,12 +24,17 @@ from signbank.video.models import AnnotatedVideo
 class DatasetAdmin(GuardedModelAdmin):
     model = Dataset
     list_display = ('name', 'is_public', 'signlanguage',)
+    readonly_fields = ['acronym', 'default_language']
 
     def get_actions(self, request):
         actions = super().get_actions(request)
         if 'delete_selected' in actions:
             del actions['delete_selected']
         return actions
+
+    def has_delete_permission(self, request, obj=None):
+        return False
+
 
 class KeywordAdmin(VersionAdmin):
     search_fields = ['^text']
@@ -257,7 +262,6 @@ class SenseNumberListFilter(SimpleListFilter):
             return queryset.filter(sense__gte=1)
 
 
-
 class GlossAdminForm(forms.ModelForm):
     readonly_fields = ['id', 'lemma', 'signlanguage', 'dialect'] + FIELDS['main'] \
                       + FIELDS['phonology'] \
@@ -329,6 +333,15 @@ class GlossAdmin(VersionAdmin):
 
     def __init__(self, *args, **kwargs):
         super(GlossAdmin, self).__init__(*args, **kwargs)
+
+    def has_add_permission(self, request):
+        return False
+
+    def has_delete_permission(self, request, obj=None):
+        return False
+
+    def has_change_permission(self, request, obj=None):
+        return False
 
 
 class MorphologyDefinitionAdmin(VersionAdmin):
@@ -1035,31 +1048,6 @@ class LemmaIdglossAdminForm(forms.ModelForm):
             'all': ('css/custom_admin.css',)
         }
 
-    def __init__(self, *args, **kwargs):
-
-        super(LemmaIdglossAdminForm, self).__init__(*args, **kwargs)
-
-        if self.instance:
-            if self.instance.dataset:
-                dataset_acronym = self.instance.dataset.acronym
-                self.fields['dataset'].initial = dataset_acronym
-                self.fields['dataset'].disabled = True
-                self.fields['dataset'].widget.can_change_related = False
-                self.fields['dataset'].widget.can_add_related = False
-            else:
-                # dataset is not set
-                if self.instance.id:
-                    # if we are editing a lemma without a dataset, do not allow setting the dataset
-                    self.fields['dataset'].disabled = True
-                    self.fields['dataset'].widget.can_change_related = False
-                    self.fields['dataset'].widget.can_add_related = False
-                else:
-                    datasets = Dataset.objects.all()
-                    dataset_choices = [(str(f.id), f.acronym) for f in datasets]
-                    self.fields['dataset'].widget = forms.Select(choices=dataset_choices)
-                    self.fields['dataset'].limit_choices_to = dataset_choices
-                    self.fields['dataset'].widget.can_change_related = False
-                    self.fields['dataset'].widget.can_add_related = False
 
 class LemmaIdglossAdmin(VersionAdmin):
 
@@ -1111,6 +1099,13 @@ class LemmaIdglossAdmin(VersionAdmin):
     def has_add_permission(self, request):
         return False
 
+    def has_delete_permission(self, request, obj=None):
+        return False
+
+    def has_change_permission(self, request, obj=None):
+        return False
+
+
 class LemmaIdglossTranslationAdmin(VersionAdmin):
     readonly_fields = ['lemma', 'language', 'text']
     fields = ['lemma', 'language', 'text']
@@ -1147,6 +1142,12 @@ class LemmaIdglossTranslationAdmin(VersionAdmin):
         return new_queryset, use_distinct
 
     def has_add_permission(self, request):
+        return False
+
+    def has_delete_permission(self, request, obj=None):
+        return False
+
+    def has_change_permission(self, request, obj=None):
         return False
 
 
@@ -1342,26 +1343,77 @@ class SearchHistoryAdmin(VersionAdmin):
         view = super(SearchHistoryAdmin, self).change_view(request, object_id, form_url, extra_context)
         return view
 
+
 class GlossSenseAdmin(admin.ModelAdmin):
     list_display = ("gloss", "sense", "order")
+
+    def has_add_permission(self, request):
+        return False
+
+    def has_delete_permission(self, request, obj=None):
+        return False
+
+    def has_change_permission(self, request, obj=None):
+        return False
+
 
 class SenseTranslationAdmin(admin.ModelAdmin):
     list_display = ("get_translations", "language")
     list_filter = ['language']
     search_fields = ['translations__translation__text']
 
+    def has_add_permission(self, request):
+        return False
+
+    def has_delete_permission(self, request, obj=None):
+        return False
+
+    def has_change_permission(self, request, obj=None):
+        return False
+
+
 class SenseAdmin(admin.ModelAdmin):
     list_display = ("get_sense_translations", "get_example_sentences", "get_dataset")
     search_fields = ['senseTranslations__translations__translation__text']
+
+    def has_add_permission(self, request):
+        return False
+
+    def has_delete_permission(self, request, obj=None):
+        return False
+
+    def has_change_permission(self, request, obj=None):
+        return False
+
 
 class ExampleSentenceAdmin(admin.ModelAdmin):
     list_display = ("get_examplestc_translations", "get_type", "negative", "get_dataset", "get_video_path")
     search_fields = ['examplesentencetranslation__text']
 
+    def has_add_permission(self, request):
+        return False
+
+    def has_delete_permission(self, request, obj=None):
+        return False
+
+    def has_change_permission(self, request, obj=None):
+        return False
+
+
 class ExampleSentenceTranslationAdmin(admin.ModelAdmin):
     list_display = ("text", "examplesentence", "language")
     search_fields = ['text']
     list_filter = ['language']
+
+    def has_add_permission(self, request):
+        return False
+
+    def has_delete_permission(self, request, obj=None):
+        return False
+
+    def has_change_permission(self, request, obj=None):
+        return False
+
 
 class AnnotatedSentenceSourceAdmin(admin.ModelAdmin):
     list_display = ("name", "source", "url", "dataset")

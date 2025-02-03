@@ -39,7 +39,7 @@ from signbank.dictionary.translate_choice_list import machine_value_to_translate
     choicelist_queryset_to_translated_dict, choicelist_queryset_to_machine_value_dict, choicelist_queryset_to_colors, \
     choicelist_queryset_to_field_colors
 from signbank.dictionary.field_choices import get_static_choice_lists, get_frequencies_for_category, category_to_fields, \
-    fields_to_categories, fields_to_fieldcategory_dict
+    fields_to_categories, fields_to_fieldcategory_dict, get_static_choice_lists_per_field
 
 from signbank.dictionary.forms import *
 from signbank.tools import (write_ecv_file_for_dataset,
@@ -1169,7 +1169,7 @@ class GlossDetailView(DetailView):
 
         from signbank.dictionary.context_data_gloss import (get_other_relations, get_annotated_sentences,
                                                             get_nme_video_descriptions, get_simultaneous_morphology, get_sequential_morphology,
-                                                            get_annotation_idgloss_per_language_dict, get_notes_groupedby_role)
+                                                            get_annotation_idgloss_per_language_dict, get_notes_groupedby_role, get_phonology_list_kinds, get_human_value_for_field_value)
 
         context['otherrelations'] = get_other_relations(gloss)
 
@@ -1195,6 +1195,9 @@ class GlossDetailView(DetailView):
             context['lemma_group_url'] = ''
 
         context['annotation_idgloss'] = get_annotation_idgloss_per_language_dict(gloss)
+
+        # Put translations (senses) per language in the context
+        context['sensetranslations_per_language'] = sensetranslations_per_language_dict(gloss)
 
         context['gloss_dialects'] = gloss.dialect.all()
 
@@ -1242,21 +1245,6 @@ class GlossDetailView(DetailView):
 
         if self.public:
 
-            # Put translations (senses) per language in the context
-            sensetranslations_per_language = dict()
-            for language in gloss.lemma.dataset.translation_languages.all():
-                sensetranslations_per_language[language] = dict()
-                sensetranslations_for_language = dict()
-                for sensei, sense in enumerate(gloss.ordered_senses().all(), 1):
-                    if sense.senseTranslations.filter(language=language).exists():
-                        sensetranslation = sense.senseTranslations.get(language=language)
-                        translations = sensetranslation.translations.all().order_by('index')
-                        if translations:
-                            keywords_list = [trans.translation.text for trans in translations]
-                            sensetranslations_for_language[sensei] = ', '.join(keywords_list)
-                sensetranslations_per_language[language] = sensetranslations_for_language
-            context['sensetranslations_per_language'] = sensetranslations_per_language
-
             for topic in ['main', 'phonology', 'semantics']:
                 context[topic + '_fields'] = []
                 for field in FIELDS[topic]:
@@ -1266,7 +1254,6 @@ class GlossDetailView(DetailView):
                         continue
                     if topic == 'semantics' and field not in settings.PUBLIC_SEMANTICS_FIELDS:
                         continue
-                    kind = fieldname_to_kind(field)
 
                     if field in ['semField', 'derivHist']:
                         # these are many to many fields and not in the gloss table of the database
@@ -1278,18 +1265,14 @@ class GlossDetailView(DetailView):
                     if isinstance(field_value, FieldChoice) or isinstance(field_value, Handshape):
                         human_value = field_value.name if field_value else field_value
                     else:
-                        # take care of different representations of empty text in database
-                        if fieldname_to_kind(field) == 'text' and (
-                                field_value is None or field_value in ['-', ' ', '------', '']):
-                            human_value = ''
-                        else:
-                            human_value = field_value
+                        human_value = get_human_value_for_field_value(field_value)
 
                     if field in ['repeat', 'altern'] and not human_value:
-                        # do not display these because they are by default False
+                        # do not display these when False because they are by default False
+                        # in public vidw, these cannot be edited so just don't show them
                         continue
 
-                    context[topic + '_fields'].append([human_value, field, labels[field], kind])
+                    context[topic + '_fields'].append([human_value, field, labels[field], fieldname_to_kind(field)])
 
             return context
 
@@ -1336,7 +1319,7 @@ class GlossDetailView(DetailView):
         context['handedness'] = (int(self.object.handedness.machine_value) > 1) \
             if self.object.handedness and self.object.handedness.machine_value else 0  # minimal machine value is 2
         context['domhndsh'] = (int(self.object.domhndsh.machine_value) > 1) \
-            if self.object.domhndsh and self.object.domhndsh.machine_value else 0        # minimal machine value -s 3
+            if self.object.domhndsh and self.object.domhndsh.machine_value else 0      # minimal machine value is 2
         context['tokNo'] = self.object.tokNo                 # Number of occurrences of Sign, used to display Stars
 
         context['DerivationHistoryDefined'] = self.object.derivHist.all().count() > 0
@@ -1352,8 +1335,8 @@ class GlossDetailView(DetailView):
 
         self.request.session['last_used_dataset'] = self.last_used_dataset
 
-        phonology_list_kinds = []
-        gloss_phonology = []
+        context['gloss_phonology'] = FIELDS['phonology']
+        context['phonology_list_kinds'] = get_phonology_list_kinds()
 
         context['frequency_fields'] = []
         for f_field in FIELDS['frequency']:
@@ -1364,47 +1347,32 @@ class GlossDetailView(DetailView):
         for p_field in FIELDS['publication'] + ['excludeFromEcv']:
             context['publication_fields'].append([getattr(gl,p_field), p_field, labels[p_field], 'check'])
 
-        context['static_choice_lists'] = {}
-        context['static_choice_list_colors'] = {}
+        # do not lazy evaluate these; evaluate before putting in context variables
+        static_choice_lists, static_choice_list_colors = get_static_choice_lists_per_field()
+        context['static_choice_lists'] = static_choice_lists
+        context['static_choice_list_colors'] = static_choice_list_colors
+
         # Translate the machine values to human values in the correct language, and save the choice lists along the way
         for topic in ['main', 'phonology', 'semantics']:
             context[topic+'_fields'] = []
             for field in FIELDS[topic]:
                 # these do not appear in the phonology querying list
-                if field not in settings.HANDSHAPE_ETYMOLOGY_FIELDS + settings.HANDEDNESS_ARTICULATION_FIELDS:
-                    kind = fieldname_to_kind(field)
+                if field in settings.HANDSHAPE_ETYMOLOGY_FIELDS + settings.HANDEDNESS_ARTICULATION_FIELDS:
+                    continue
 
-                    if topic == 'phonology':
-                        gloss_phonology.append(field)
-                        # Add the kind of field
-                        if kind == 'list':
-                            phonology_list_kinds.append(field)
+                if field in ['semField', 'derivHist']:
+                    # these are many to many fields and not in the gloss table of the database
+                    # they are not fields of Gloss
+                    continue
 
-                    (static_choice_lists, static_choice_list_colors) = get_static_choice_lists(field)
+                # Get the human value in the language we are using
+                field_value = getattr(gl, field)
+                if isinstance(field_value, FieldChoice) or isinstance(field_value, Handshape):
+                    human_value = field_value.name if field_value else field_value
+                else:
+                    human_value = get_human_value_for_field_value(field_value)
 
-                    context['static_choice_lists'][field] = static_choice_lists
-                    context['static_choice_list_colors'][field] = static_choice_list_colors
-
-                    if field in ['semField', 'derivHist']:
-                        # these are many to many fields and not in the gloss table of the database
-                        # they are not fields of Gloss
-                        continue
-
-                    # Take the human value in the language we are using
-                    field_value = getattr(gl, field)
-                    if isinstance(field_value, FieldChoice) or isinstance(field_value, Handshape):
-                        human_value = field_value.name if field_value else field_value
-                    else:
-                        # take care of different representations of empty text in database
-                        if fieldname_to_kind(field) == 'text' and (field_value is None or field_value in ['-',' ','------','']):
-                            human_value = ''
-                        else:
-                            human_value = field_value
-
-                    context[topic+'_fields'].append([human_value,field,labels[field],kind])
-
-        context['gloss_phonology'] = gloss_phonology
-        context['phonology_list_kinds'] = phonology_list_kinds
+                context[topic+'_fields'].append([human_value,field,labels[field],fieldname_to_kind(field)])
 
         (homonyms_of_this_gloss, homonyms_not_saved, saved_but_not_homonyms) = gl.homonyms()
         homonyms_different_phonology = []
@@ -1472,9 +1440,6 @@ class GlossDetailView(DetailView):
         context['other_media_field_choices'] = json.dumps(context['other_media_field_choices'])
 
         context['separate_english_idgloss_field'] = SEPARATE_ENGLISH_IDGLOSS_FIELD
-
-        # Put translations (keywords) per language in the context
-        context['sensetranslations_per_language'] = sensetranslations_per_language_dict(gloss)
 
         sentencetype_choices = FieldChoice.objects.filter(field__iexact='SentenceType').order_by('machine_value')
         sentencetype_choice_list = choicelist_queryset_to_translated_dict(sentencetype_choices, id_prefix='', ordered=False)
@@ -5418,6 +5383,99 @@ class MorphemeDetailView(DetailView):
         context['default_dataset_lang'] = dataset_languages.first().language_code_2char if dataset_languages else LANGUAGE_CODE
         context['lemma_create_field_prefix'] = LemmaCreateForm.lemma_create_field_prefix
         return context
+
+
+class RecentGlossListView(ListView):
+
+    model = Gloss
+    paginate_by = 100
+    search_type = 'sign'
+    queryset_language_codes = []
+    query_parameters = dict()
+    search_form_data = QueryDict(mutable=True)
+    search_form = RecentGlossSearchForm()
+    public = False
+    timestamp_field = 'creationDate'
+    timeline = 'chronological'
+    days = RecentGlossSearchForm.days_default
+
+    def get_template_names(self):
+        return ['dictionary/admin_recently_added_glosses.html']
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+    def get_context_data(self, **kwargs):
+        # Call the base implementation first to get a context
+        context = super(RecentGlossListView, self).get_context_data(**kwargs)
+
+        selected_datasets = get_selected_datasets(self.request)
+        context['selected_datasets'] = selected_datasets
+        context['dataset_languages'] = Language.objects.filter(dataset__in=selected_datasets).distinct()
+
+        (interface_language, interface_language_code,
+         default_language, default_language_code) = get_interface_language_and_default_language_codes(self.request)
+
+        context['language'] = interface_language
+        context['number_of_days'] = RECENTLY_ADDED_SIGNS_PERIOD.days
+        context['searchform'] = self.search_form
+        context['timestamp_field'] = self.timestamp_field
+        context['days_field'] = self.days
+        context['timeline_field'] = self.timeline
+        self.search_form.fields['timetype'].value = self.timestamp_field
+        self.search_form.fields['timeline'].value = self.timeline
+        self.search_form.fields['days'].value = self.days
+
+        context['USE_REGULAR_EXPRESSIONS'] = settings.USE_REGULAR_EXPRESSIONS
+        context['SHOW_DATASET_INTERFACE_OPTIONS'] = settings.SHOW_DATASET_INTERFACE_OPTIONS
+
+        return context
+
+    def get_queryset(self):
+
+        selected_datasets = get_selected_datasets(self.request)
+        dataset_languages = Language.objects.filter(dataset__in=selected_datasets).distinct()
+        from signbank.settings.server_specific import RECENTLY_ADDED_SIGNS_PERIOD
+
+        (interface_language, interface_language_code,
+         default_language, default_language_code) = get_interface_language_and_default_language_codes(self.request)
+
+        dataset_display_languages = []
+        for lang in dataset_languages:
+            dataset_display_languages.append(lang.language_code_2char)
+        if interface_language_code in dataset_display_languages:
+            lang_attr_name = interface_language_code
+        else:
+            lang_attr_name = default_language_code
+
+        get = self.request.GET
+        days_input = get.get('days', RecentGlossSearchForm.days_default)
+        self.days = days_input
+
+        days = datetime.timedelta(days=int(days_input))
+        timetype = get.get('timetype', self.timestamp_field)
+        self.timestamp_field = timetype
+
+        filter_field = timetype + '__range'
+        timeline = get.get('timeline', 'chronological')
+        self.timeline = timeline
+        if timeline == 'chronological':
+            ordering = timetype
+        else:
+            ordering = '-' + timetype
+
+        glosses = Gloss.objects.filter(morpheme=None, lemma__dataset__in=selected_datasets, archived=False)
+        recently_added_signs_since_date = DT.datetime.now(tz=get_current_timezone()) - days
+        recent_glosses = glosses.filter(Q(**{filter_field:[recently_added_signs_since_date, DT.datetime.now(tz=get_current_timezone())]}))
+            # creationDate__range=[recently_added_signs_since_date, DT.datetime.now(tz=get_current_timezone())])
+        recent_glosses = recent_glosses.order_by(ordering)
+        items = construct_scrollbar(recent_glosses, 'sign', lang_attr_name)
+        self.request.session['search_results'] = items
+        self.request.session['search_type'] = 'sign'
+        self.request.session.modified = True
+
+        return recent_glosses
+
 
 def gloss_ajax_search_results(request):
     """Returns a JSON list of glosses that match the previous search stored in sessions"""
