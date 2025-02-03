@@ -232,7 +232,8 @@ class GlossSearchForm(forms.ModelForm):
                                       widget=forms.Select(attrs=ATTRS_FOR_BOOLEAN_FORMS))
     hasmultiplesenses = forms.ChoiceField(label=_("Has Multiple Senses"), choices=[(0, '-')],
                                           widget=forms.Select(attrs=ATTRS_FOR_BOOLEAN_FORMS))
-
+    hasannotatedsentences = forms.ChoiceField(label=_("Has Annotated Sentences"), choices=[(0, '-')],
+                                              widget=forms.Select(attrs=ATTRS_FOR_BOOLEAN_FORMS))
     relation = forms.CharField(label=_('Gloss of Related Sign'),
                                widget=forms.TextInput(attrs=ATTRS_FOR_FORMS))
     relationToForeignSign = forms.CharField(label=_('Gloss of Foreign Sign'),
@@ -349,7 +350,7 @@ class GlossSearchForm(forms.ModelForm):
                                                      widget=forms.Select(attrs=ATTRS_FOR_FORMS))
         for boolean_field in ['hasvideo', 'hasnmevideo', 'repeat', 'altern', 'isNew', 'inWeb', 'defspublished',
                               'excludeFromEcv', 'hasRelationToForeignSign', 'hasmultiplesenses',
-                              'hasothermedia', 'isablend', 'ispartofablend']:
+                              'hasothermedia', 'isablend', 'ispartofablend', 'hasannotatedsentences']:
             self.fields[boolean_field].choices = [('0', '-'), ('2', _('Yes')), ('3', _('No'))]
         for boolean_field in ['weakdrop', 'weakprop']:
             self.fields[boolean_field].choices = [(0, '-'), (1, _('Neutral')), (2, _('True')), (3, _('False'))]
@@ -1089,6 +1090,44 @@ class FocusGlossSearchForm(forms.ModelForm):
                                                        required=False, widget=Select2)
         for boolean_field in ['repeat', 'altern']:
             self.fields[boolean_field].choices = [('0', '-'), ('2', _('Yes')), ('3', _('No'))]
+
+
+import datetime
+RECENTLY_ADDED_TIME_DELTAS = {days: datetime.timedelta(days=days).days for days in [90, 60, 30, 14, 7]}
+
+class RecentGlossSearchForm(forms.ModelForm):
+
+    use_required_attribute = False  # otherwise the html required attribute will show up on every form
+
+    from signbank.settings.server_specific import RECENTLY_ADDED_SIGNS_PERIOD
+    days_default = RECENTLY_ADDED_SIGNS_PERIOD.days
+
+    class Meta:
+
+        ATTRS_FOR_FORMS = {'class': 'form-control'}
+
+        model = Gloss
+        fields = settings.MINIMAL_PAIRS_SEARCH_FIELDS
+
+    def __init__(self, *args, **kwargs):
+        super(RecentGlossSearchForm, self).__init__(*args, **kwargs)
+
+        self.fields['days'] = forms.ChoiceField(label=_('Days'),
+                                                choices=[(RECENTLY_ADDED_TIME_DELTAS[90], _('90 days')),
+                                                         (RECENTLY_ADDED_TIME_DELTAS[60], _('60 days')),
+                                                         (RECENTLY_ADDED_TIME_DELTAS[30], _('30 days')),
+                                                         (RECENTLY_ADDED_TIME_DELTAS[14], _('14 days')),
+                                                         (RECENTLY_ADDED_TIME_DELTAS[7], _('7 days'))],
+                                                widget=forms.RadioSelect, required=True, initial=self.days_default)
+
+        TIME_ORDER = [('chronological', _('Chronological')), ('reverse', _('Reverse chronological'))]
+
+        self.fields['timeline'] = forms.ChoiceField(label=_('Timeline'),
+                                                    choices=TIME_ORDER,
+                                                    widget=forms.RadioSelect, required=True, initial='chronological')
+        self.fields['timetype'] = forms.ChoiceField(label=_('Time Field'),
+                                                    choices=[('creationDate', _('Creation date')), ('lastUpdated', _('Last updated'))],
+                                                    widget=forms.RadioSelect, required=True, initial='creationDate')
 
 
 class FieldChoiceColorForm(forms.Form):

@@ -1,0 +1,199 @@
+{% extends 'baselayout.html' %}
+{% load stylesheet %}
+{% load bootstrap3 %}
+{% load i18n %}
+{% load annotation_idgloss_translation %}
+{% load tagging_tags %}
+{% load wrong_sign %}
+
+{% block bootstrap3_title %}
+{% blocktrans %}Signbank: Recently Added Signs{% endblocktrans %}
+{% endblock %}
+
+{% block extrajs %}
+<script type='text/javascript'>
+var show_dataset_interface_options = {{ SHOW_DATASET_INTERFACE_OPTIONS|yesno:"true,false" }};
+var csrf_token = '{{csrf_token}}';
+var days_field = '{{days_field}}';
+var timestamp_field = '{{timestamp_field}}';
+var timeline_field = '{{timeline_field}}';
+
+$(document).ready(function() {
+    $('#id_days').val(days_field);
+    $("input[name='days']").each(function() {
+        if ($(this).attr('value') == days_field) {
+            $(this).prop('checked', true);
+        };
+    });
+    $('#id_timetype').val(timestamp_field);
+    $("input[name='timetype']").each(function() {
+        if ($(this).attr('value') == timestamp_field) {
+            $(this).prop('checked', true);
+        };
+    });
+    $('#id_timeline').val(timeline_field);
+    $("input[name='timeline']").each(function() {
+        if ($(this).attr('value') == timeline_field) {
+            $(this).prop('checked', true);
+        };
+    });
+});
+</script>
+<style>
+input[type="radio] {
+    height: 30px;
+    opacity: 1;
+}
+.radio {
+    height: 30px;
+}
+.radio-inline {
+    padding-left: 0;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+
+<div id="definitionblock">
+{% url 'dictionary:protected_media' '' as protected_media_url %}
+
+<h3>{% trans "Recently Added Signs" %}</h3>
+
+    <div id='searchform_outer' class='well '>
+    <form name='adminsearch' id='adminsearch' method='get' action='{{PREFIX_URL}}/signs/recently_added/'>
+    {% csrf_token %}
+    <div class="panel panel-default">
+        <div class="panel-heading" data-toggle="collapse" data-target="#query-area">{% trans "Timeframe" %}
+        </div>
+        <div id='query-area' class='collapse in'>
+            <div id='searchformwell' class='well search-results-collapsable'>
+
+            <div class="hidden">
+                <input name='sortOrder' class='form-control' value='' >
+                <input name='search_type' class='form-control' value='{{search_type}}'>
+            </div>
+
+            <div class="panel panel-default">
+                  <table class='table table-condensed' style="width:80%;text-align:left;">
+                  <tr>
+                      <td style="padding-left:30px;width:200px;">
+                          <label class="radio-inline" for='id_timeline'>{% trans "Sort Order of Timeline" %}</label></td>
+                      <td style="text-align:left;">
+                          <div style="white-space:nowrap;width:auto;text-align:left;">
+                           {% for radio in searchform.timeline %}
+                            <label class="radio-inline" for="{{ radio.id_for_label }}">
+                                {{ radio.tag }} <span style="padding-right:30px;width:auto;">{{ radio.choice_label }}</span>
+                            </label>
+                            <span>&nbsp;&nbsp;&nbsp;</span>
+                           {% endfor %}
+                          </div>
+                      </td>
+                  </tr>
+                  <tr>
+                      <td style="padding-left:30px;width:200px;">
+                          <label class="radio-inline" for='id_days'>{% trans "Days Prior to Today" %}</label></td>
+                      <td style="text-align:left;">
+                          <div style="white-space:nowrap;width:auto;text-align:left;">
+                          {% for radio in searchform.days %}
+                            <label class="radio-inline" for="{{ radio.id_for_label }}">
+                                {{ radio.tag }} <span style="padding-right:30px;width:auto;">{{ radio.choice_label }}</span>
+                            </label>
+                              <span>&nbsp;&nbsp;&nbsp;</span>
+                          {% endfor %}
+                          </div>
+                      </td>
+                  </tr>
+                  <tr>
+                      <td style="padding-left:30px;width:200px;">
+                          <label class="radio-inline" for='id_timetype'>{% trans "Timestamp on Gloss" %}</label></td>
+                      <td style="text-align:left;">
+                          <div style="white-space:nowrap;width:auto;text-align:left;">
+                          {% for radio in searchform.timetype %}
+                            <label class="radio-inline" for="{{ radio.id_for_label }}">
+                                <span style="width:50px;">{{ radio.tag }}</span> <span style="padding-right:50px;width:auto;">{{ radio.choice_label }}</span>
+                            </label>
+                              <span>&nbsp;&nbsp;&nbsp;</span>
+                          {% endfor %}
+                          </div>
+                      </td>
+                  </tr>
+                  </table>
+                </div>
+            </div>
+        </div>
+        <br>
+        <div class='btn-group'>
+        <input class='btn btn-primary' type='submit' name="filter" value='Apply'>
+        </div>
+    </div>
+
+    </form>
+    </div>
+
+    {% if object_list %}
+    <div>
+    <table class="table table-condensed">
+        <thead class="thead thead-light">
+        <tr>
+            {%if SHOW_DATASET_INTERFACE_OPTIONS %}<th>{% trans "Dataset" %}</th>{% endif %}
+            <th style="width:300px;">{% trans "Lemma ID Gloss" %}</th>
+            <th>{% trans "Annotation ID Gloss" %}</th>
+            <th style="width:180px;">{% trans "Creator" %}</th>
+            {% if timestamp_field == 'creationDate' %}
+            <th style="width:180px">{% trans "Creation Date" %}</th>
+            <th style="width:180px">{% trans "Last Updated" %}</th>
+            {% else %}
+            <th style="width:180px">{% trans "Last Updated" %}</th>
+            <th style="width:180px">{% trans "Creation Date" %}</th>
+            {% endif %}
+        </tr>
+        <tr></tr>
+        </thead>
+        <br>
+        <tbody class="tbody tbody-light">
+        {% for gloss in object_list %}
+        <tr>
+        {%if SHOW_DATASET_INTERFACE_OPTIONS %}<td>{% value gloss.dataset %}</td>{% endif %}
+         <td id='idgloss'>
+             {% value gloss.idgloss %}
+         </td>
+            {% with gloss|get_annotation_idgloss_translation:language as annotationidglosstranslation %}
+          <td>
+              {% if annotationidglosstranslation %}
+                {% if gloss.is_morpheme %}
+                <div class="morpheme_gloss"><a href="{{PREFIX_URL}}/dictionary/morpheme/{{gloss.pk}}/">{{annotationidglosstranslation}}</a></div>
+                {% else %}
+                <div><a href="{{PREFIX_URL}}/dictionary/gloss/{{gloss.pk}}/">{{annotationidglosstranslation}}</a></div>
+                {% endif %}
+              {% endif %}
+          </td>
+            {% endwith %}
+            <td>
+                {% for creator in gloss.creator.all %}
+                    {% if forloop.last %}
+                        {{creator.first_name}} {{creator.last_name}}
+                    {% else %}
+                        {{creator.first_name}} {{creator.last_name}},
+                    {% endif %}
+                {% endfor %}
+            </td>
+            {% if timestamp_field == 'creationDate' %}
+            <td>{{gloss.creationDate}}</td>
+            <td>{{gloss.lastUpdated}}</td>
+            {% else %}
+            <td>{{gloss.lastUpdated}}</td>
+            <td>{{gloss.creationDate}}</td>
+            {% endif %}
+        </tr>
+        {% endfor %}
+    </tbody>
+    </table>
+    </div>
+    {% else %}
+    <div>
+    {% trans "No recently added signs for the selected datasets" %} ({{days_field}} {% trans "days" %})
+    </div>
+    {% endif %}
+</div>
+{% endblock content %}

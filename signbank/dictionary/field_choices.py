@@ -217,3 +217,60 @@ def category_to_fields():
         category_to_fields_dict[category].append(fieldname)
 
     return category_to_fields_dict
+
+
+def get_static_choice_lists_per_field():
+    # this function constructs two dictionaries for a given field
+    # if the field does not have choices, these are empty
+    # they are constructed here to be consistent since the colors should match up with the choices
+    # the queried models all have color fields
+    # these are eventually used in the select2 pull-downs
+    static_choice_lists_per_field = dict()
+    static_choice_list_colors_per_field = dict()
+    choice_list = []
+
+    fieldnames = []
+    for topic in ['main', 'phonology', 'semantics']:
+        for fieldname in FIELDS[topic]:
+            if fieldname in settings.HANDSHAPE_ETYMOLOGY_FIELDS + settings.HANDEDNESS_ARTICULATION_FIELDS:
+                continue
+            fieldnames.append(fieldname)
+
+    for fieldname in fieldnames:
+        static_choice_lists = dict()
+        static_choice_list_colors = dict()
+        if fieldname in ['domhndsh', 'subhndsh', 'final_domhndsh', 'final_subhndsh']:
+            choice_list = Handshape.objects.all()
+        elif fieldname in ['semField']:
+            choice_list = SemanticField.objects.all()
+        elif fieldname in ['derivHist']:
+            choice_list = DerivationHistory.objects.all()
+        elif fieldname in Gloss.get_field_names():
+            gloss_field = Gloss.get_field(fieldname)
+            if hasattr(gloss_field, 'field_choice_category'):
+                choice_list = FieldChoice.objects.filter(field__iexact=gloss_field.field_choice_category)
+            else:
+                choice_list = FieldChoice.objects.none()
+
+        if not choice_list:
+            # there are no choices in the database for this field
+            static_choice_lists_per_field[fieldname] = static_choice_lists
+            static_choice_list_colors_per_field[fieldname] = static_choice_list_colors
+            continue
+
+        # there are choices for this fieldname
+        # these functions add the '_' prefix to the machine value key
+        display_choice_list = choicelist_queryset_to_translated_dict(choice_list)
+        display_choice_list_colors = choicelist_queryset_to_colors(choice_list)
+        for (key, value) in display_choice_list.items():
+            this_value = value
+            static_choice_lists[key] = this_value
+
+        for (key, value) in display_choice_list_colors.items():
+            this_value = value
+            static_choice_list_colors[key] = this_value
+
+        static_choice_lists_per_field[fieldname] = static_choice_lists
+        static_choice_list_colors_per_field[fieldname] = static_choice_list_colors
+
+    return static_choice_lists_per_field, static_choice_list_colors_per_field
