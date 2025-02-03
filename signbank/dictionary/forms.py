@@ -230,7 +230,8 @@ class GlossSearchForm(forms.ModelForm):
                                       widget=forms.Select(attrs=ATTRS_FOR_BOOLEAN_FORMS))
     hasmultiplesenses = forms.ChoiceField(label=_("Has Multiple Senses"), choices=[(0, '-')],
                                           widget=forms.Select(attrs=ATTRS_FOR_BOOLEAN_FORMS))
-
+    hasannotatedsentences = forms.ChoiceField(label=_("Has Annotated Sentences"), choices=[(0, '-')],
+                                              widget=forms.Select(attrs=ATTRS_FOR_BOOLEAN_FORMS))
     relation = forms.CharField(label=_('Gloss of Related Sign'),
                                widget=forms.TextInput(attrs=ATTRS_FOR_FORMS))
     relationToForeignSign = forms.CharField(label=_('Gloss of Foreign Sign'),
@@ -347,7 +348,7 @@ class GlossSearchForm(forms.ModelForm):
                                                      widget=forms.Select(attrs=ATTRS_FOR_FORMS))
         for boolean_field in ['hasvideo', 'repeat', 'altern', 'isNew', 'inWeb', 'defspublished',
                               'excludeFromEcv', 'hasRelationToForeignSign', 'hasmultiplesenses',
-                              'hasothermedia', 'isablend', 'ispartofablend']:
+                              'hasothermedia', 'isablend', 'ispartofablend', 'hasannotatedsentences']:
             self.fields[boolean_field].choices = [('0', '-'), ('2', _('Yes')), ('3', _('No'))]
         for boolean_field in ['weakdrop', 'weakprop']:
             self.fields[boolean_field].choices = [(0, '-'), (1, _('Neutral')), (2, _('True')), (3, _('False'))]
