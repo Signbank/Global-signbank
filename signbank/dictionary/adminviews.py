@@ -5427,6 +5427,99 @@ class MorphemeDetailView(DetailView):
         context['lemma_create_field_prefix'] = LemmaCreateForm.lemma_create_field_prefix
         return context
 
+
+class RecentGlossListView(ListView):
+
+    model = Gloss
+    paginate_by = 100
+    search_type = 'sign'
+    queryset_language_codes = []
+    query_parameters = dict()
+    search_form_data = QueryDict(mutable=True)
+    search_form = RecentGlossSearchForm()
+    public = False
+    timestamp_field = 'creationDate'
+    timeline = 'chronological'
+    days = RecentGlossSearchForm.days_default
+
+    def get_template_names(self):
+        return ['dictionary/admin_recently_added_glosses.html']
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+    def get_context_data(self, **kwargs):
+        # Call the base implementation first to get a context
+        context = super(RecentGlossListView, self).get_context_data(**kwargs)
+
+        selected_datasets = get_selected_datasets(self.request)
+        context['selected_datasets'] = selected_datasets
+        context['dataset_languages'] = Language.objects.filter(dataset__in=selected_datasets).distinct()
+
+        (interface_language, interface_language_code,
+         default_language, default_language_code) = get_interface_language_and_default_language_codes(self.request)
+
+        context['language'] = interface_language
+        context['number_of_days'] = RECENTLY_ADDED_SIGNS_PERIOD.days
+        context['searchform'] = self.search_form
+        context['timestamp_field'] = self.timestamp_field
+        context['days_field'] = self.days
+        context['timeline_field'] = self.timeline
+        self.search_form.fields['timetype'].value = self.timestamp_field
+        self.search_form.fields['timeline'].value = self.timeline
+        self.search_form.fields['days'].value = self.days
+
+        context['USE_REGULAR_EXPRESSIONS'] = settings.USE_REGULAR_EXPRESSIONS
+        context['SHOW_DATASET_INTERFACE_OPTIONS'] = settings.SHOW_DATASET_INTERFACE_OPTIONS
+
+        return context
+
+    def get_queryset(self):
+
+        selected_datasets = get_selected_datasets(self.request)
+        dataset_languages = Language.objects.filter(dataset__in=selected_datasets).distinct()
+        from signbank.settings.server_specific import RECENTLY_ADDED_SIGNS_PERIOD
+
+        (interface_language, interface_language_code,
+         default_language, default_language_code) = get_interface_language_and_default_language_codes(self.request)
+
+        dataset_display_languages = []
+        for lang in dataset_languages:
+            dataset_display_languages.append(lang.language_code_2char)
+        if interface_language_code in dataset_display_languages:
+            lang_attr_name = interface_language_code
+        else:
+            lang_attr_name = default_language_code
+
+        get = self.request.GET
+        days_input = get.get('days', RecentGlossSearchForm.days_default)
+        self.days = days_input
+
+        days = datetime.timedelta(days=int(days_input))
+        timetype = get.get('timetype', self.timestamp_field)
+        self.timestamp_field = timetype
+
+        filter_field = timetype + '__range'
+        timeline = get.get('timeline', 'chronological')
+        self.timeline = timeline
+        if timeline == 'chronological':
+            ordering = timetype
+        else:
+            ordering = '-' + timetype
+
+        glosses = Gloss.objects.filter(morpheme=None, lemma__dataset__in=selected_datasets, archived=False)
+        recently_added_signs_since_date = DT.datetime.now(tz=get_current_timezone()) - days
+        recent_glosses = glosses.filter(Q(**{filter_field:[recently_added_signs_since_date, DT.datetime.now(tz=get_current_timezone())]}))
+            # creationDate__range=[recently_added_signs_since_date, DT.datetime.now(tz=get_current_timezone())])
+        recent_glosses = recent_glosses.order_by(ordering)
+        items = construct_scrollbar(recent_glosses, 'sign', lang_attr_name)
+        self.request.session['search_results'] = items
+        self.request.session['search_type'] = 'sign'
+        self.request.session.modified = True
+
+        return recent_glosses
+
+
 def gloss_ajax_search_results(request):
     """Returns a JSON list of glosses that match the previous search stored in sessions"""
     if 'search_type' in request.session.keys() and 'search_results' in request.session.keys() \
