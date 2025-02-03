@@ -28,7 +28,7 @@ from signbank.video.models import GlossVideo, small_appendix, add_small_appendix
 from signbank.dictionary.context_data import get_selected_datasets
 from signbank.tools import save_media, get_two_letter_dir
 from signbank.tools import (get_default_annotationidglosstranslation,
-    get_dataset_languages,
+    get_dataset_languages, get_datasets_with_public_glosses,
     create_gloss_from_valuedict, compare_valuedict_to_gloss, compare_valuedict_to_lemma, construct_scrollbar,
     get_interface_language_and_default_language_codes, detect_delimiter, split_csv_lines_header_body,
     split_csv_lines_sentences_header_body, create_sentence_from_valuedict)
@@ -2177,15 +2177,18 @@ def get_unused_videos(request):
 
 def package(request):
 
+    if 'dataset_name' not in request.GET:
+        return HttpResponseBadRequest('No dataset name provided.')
+    dataset_acronym = request.GET['dataset_name']
+    if not dataset_acronym:
+        return HttpResponseBadRequest('Dataset name empty.')
+    dataset = Dataset.objects.filter(acronym=dataset_acronym).first()
+    if not dataset:
+        return HttpResponseBadRequest('Dataset not found.')
     if request.user.is_authenticated:
-        if 'dataset_name' in request.GET:
-            dataset = Dataset.objects.get(acronym=request.GET['dataset_name'])
-        else:
-            dataset = Dataset.objects.get(id=settings.DEFAULT_DATASET_PK)
         available_glosses = Gloss.objects.filter(lemma__dataset=dataset, archived=False)
         inWebSet = False  # not necessary
     else:
-        dataset = Dataset.objects.get(id=settings.DEFAULT_DATASET_PK)
         available_glosses = Gloss.objects.filter(lemma__dataset=dataset, inWeb=True, archived=False)
         inWebSet = True
 
@@ -2249,16 +2252,13 @@ def package(request):
 @put_api_user_in_request
 def info(request):
     import guardian
-    user_datasets = guardian.shortcuts.get_objects_for_user(request.user, 'change_dataset', Dataset)
-    user_datasets_names = [dataset.acronym for dataset in user_datasets]
-
-    # Put the default dataset in first position
-    if settings.DEFAULT_DATASET_ACRONYM in user_datasets_names:
-        user_datasets_names.insert(0, user_datasets_names.pop(user_datasets_names.index(settings.DEFAULT_DATASET_ACRONYM)))
+    user_datasets = guardian.shortcuts.get_objects_for_user(request.user, 'view_dataset', Dataset)
+    viewable_datasets = get_datasets_with_public_glosses()
 
     if not request.user.is_authenticated:
-        # anonymous users are allowed to read the default dataset
-        user_datasets_names = [settings.DEFAULT_DATASET_ACRONYM]
+        user_datasets_names = [dataset.acronym for dataset in viewable_datasets]
+    else:
+        user_datasets_names = [dataset.acronym for dataset in user_datasets]
 
     return HttpResponse(json.dumps(user_datasets_names), content_type='application/json')
 
