@@ -21,7 +21,7 @@ import ast
 import base64
 
 
-def api_update_gloss_fields(dataset, language_code='en'):
+def names_of_update_gloss_fields(dataset, language_code):
     activate(language_code)
 
     dataset_languages = dataset.translation_languages.all()
@@ -32,18 +32,15 @@ def api_update_gloss_fields(dataset, language_code='en'):
 
     language_fields = annotationidglosstranslation_fields + lemmaidglosstranslation_fields
 
-    api_fields_2024 = []
-    fieldnames = FIELDS['main'] + FIELDS['phonology'] + FIELDS['semantics'] + ['inWeb', 'isNew', 'excludeFromEcv', 'senses']
+    verbose_field_names = []
+    fieldnames = FIELDS['main'] + FIELDS['phonology'] + FIELDS['semantics'] + ['inWeb', 'isNew', 'excludeFromEcv']
     gloss_fields = [Gloss.get_field(fname) for fname in fieldnames if fname in Gloss.get_field_names()]
 
-    # TO DO
-    extra_columns = ['Sign Languages', 'Dialects',
-                     'Relations to other signs', 'Relations to foreign signs', 'Tags', 'Notes']
-
+    activate(language_code)
     for field in gloss_fields:
-        api_fields_2024.append(field.verbose_name.title())
+        verbose_field_names.append(field.verbose_name.title())
 
-    return language_fields, api_fields_2024
+    return language_fields, verbose_field_names
 
 
 def internal_language_fields(dataset, language_code):
@@ -63,7 +60,7 @@ def internal_language_fields(dataset, language_code):
 def update_gloss_columns_to_value_dict_keys(dataset, language_code):
     """
     Function to create mapping dictionaries for the different label representations
-    Called from gloss_update
+    Called from gloss_pre_update
     Representations:
     1. Human readable labels (multilingual, with language name in parentheses)
     2. JSON keys (multilingual, with colon before language name)
@@ -101,7 +98,7 @@ def update_gloss_columns_to_value_dict_keys(dataset, language_code):
         human_readable_to_json[human_readable_lemma] = lemma_api_field_name
         human_readable_to_json[human_readable_annotation] = annotation_api_field_name
 
-    fieldnames = FIELDS['main'] + FIELDS['phonology'] + FIELDS['semantics'] + ['inWeb', 'isNew', 'excludeFromEcv', 'senses']
+    fieldnames = FIELDS['main'] + FIELDS['phonology'] + FIELDS['semantics'] + ['inWeb', 'isNew', 'excludeFromEcv']
     gloss_fields = [Gloss.get_field(fname) for fname in fieldnames if fname in Gloss.get_field_names()]
 
     for field in gloss_fields:
@@ -116,21 +113,21 @@ def get_gloss_update_human_readable_value_dict(request):
     value_dict = dict()
     for field in post_data.keys():
         value = post_data.get(field, '')
-        value_dict[field] = value.strip()
+        value_dict[field] = value
     return value_dict
 
 
 def check_fields_can_be_updated(value_dict, dataset, language_code):
-    language_fields, api_fields_2024 = api_update_gloss_fields(dataset, language_code)
+    activate(language_code)
+    language_fields, gloss_fields = names_of_update_gloss_fields(dataset, language_code)
+    available_fields = language_fields + gloss_fields
     errors = dict()
     for field in value_dict.keys():
-        if field not in api_fields_2024 and field not in language_fields:
-            errors[field] = _("Field update not available")
-        if field == "Senses":
-            new_senses, formatting_error_senses = convert_string_to_dict_of_list_of_lists(value_dict[field])
-            if formatting_error_senses:
-                errors[field] = formatting_error_senses
-
+        if field in gloss_fields or field in language_fields:
+            continue
+        errors[field] = _("Field name not found in fields that can be updated.")
+    if errors:
+        errors["Available Fields"] = ", ".join(available_fields)
     return errors
 
 
@@ -311,25 +308,29 @@ def detect_type_related_problems_for_gloss_update(changes, dataset, language_cod
             continue
         if field in language_fields:
             continue
-        if field in ['Senses', 'senses']:
-            continue
         if isinstance(field, FieldChoiceForeignKey):
             field_choice_category = field.field_choice_category
             try:
                 fieldchoice = FieldChoice.objects.get(field=field_choice_category, name__iexact=new_value)
+                continue
             except (ObjectDoesNotExist, MultipleObjectsReturned):
                 normalised_choice = normalize_field_choice(new_value)
                 try:
                     fieldchoice = FieldChoice.objects.get(field=field_choice_category, name__iexact=normalised_choice)
+                    continue
                 except (ObjectDoesNotExist, MultipleObjectsReturned):
                     errors[field.verbose_name.title()] = gettext('NOT FOUND: ') + new_value
-        elif isinstance(field, models.ForeignKey) and field.related_model == Handshape:
+                    continue
+        if isinstance(field, models.ForeignKey) and field.related_model == Handshape:
             try:
                 handshape = Handshape.objects.get(name__iexact=new_value)
+                continue
             except (ObjectDoesNotExist, MultipleObjectsReturned):
                 errors[field.verbose_name.title()] = gettext('NOT FOUND: ') + new_value
-        elif field.__class__.__name__ == 'BooleanField':
-            if new_value not in ['true', 'True', 'TRUE', 'false', 'False', 'FALSE', 'Neutral', 'None']:
+                continue
+        if field.__class__.__name__ == 'BooleanField':
+            normalised_boolean_string = new_value.lower()
+            if normalised_boolean_string not in ['true', 'false', 'neutral', 'ja', 'nee']:
                 errors[field.verbose_name.title()] = gettext('NOT FOUND: ') + new_value
         elif field.name == 'semField':
             type_check = type_check_multiselect('SemField', new_value, language_code)
@@ -517,50 +518,42 @@ def get_original_senses_value(gloss):
     return senses_dict
 
 
-def gloss_update(gloss, update_fields_dict, language_code):
+def gloss_pre_update(gloss, input_fields_dict, language_code):
 
     dataset = gloss.lemma.dataset
-    language_fields, api_fields_2024 = api_update_gloss_fields(dataset, language_code)
+    language_fields, gloss_fields = names_of_update_gloss_fields(dataset, language_code)
     human_readable_to_internal, human_readable_to_json = update_gloss_columns_to_value_dict_keys(dataset, language_code)
-    combined_fields = api_fields_2024
+    # initial value of fields is put in combined_fields variable
+    combined_fields = gloss_fields
     for language_field in language_fields:
         gloss_dict_language_field = human_readable_to_json[language_field]
         combined_fields.append(gloss_dict_language_field)
-    gloss_data_dict = gloss.get_fields_dict(combined_fields, language_code)
+    # retrieve what the packages knows for these fields
+    gloss_package_data_dict = gloss.get_fields_dict(combined_fields, language_code)
     fields_to_update = dict()
-    for human_readable_field, new_field_value in update_fields_dict.items():
+    for human_readable_field, new_field_value in input_fields_dict.items():
         if not new_field_value:
             continue
+        if human_readable_field not in gloss_package_data_dict.keys():
+            # ignore the field if it's not visible to the API user
+            continue
+        original_value = gloss_package_data_dict[human_readable_field]
+
         if human_readable_field in language_fields:
             gloss_language_field = human_readable_to_json[human_readable_field]
-            original_value = gloss_data_dict[gloss_language_field]
             gloss_field = human_readable_to_internal[human_readable_field]
             fields_to_update[gloss_field] = (original_value, new_field_value)
             continue
-        if human_readable_field == 'Senses':
-            original_value = get_original_senses_value(gloss)
-            new_senses, errors = convert_string_to_dict_of_list_of_lists(new_field_value)
-            if errors:
-                # already checked at a previous step
-                continue
-            if original_value != new_senses:
-                fields_to_update[human_readable_field] = (original_value, new_senses)
+        if human_readable_field not in human_readable_to_internal.keys():
+            # if this field is not available, ignore it
             continue
-        elif human_readable_field not in gloss_data_dict.keys():
-            # new value
-            original_value = ''
-            gloss_field = human_readable_to_internal[human_readable_field]
-            fields_to_update[gloss_field] = (original_value, new_field_value)
+        if original_value in ['False'] and new_field_value in ['', 'False']:
+            # treat empty as False
             continue
-        if human_readable_field in human_readable_to_internal.keys():
-            original_value = gloss_data_dict[human_readable_field]
-            if original_value in ['False'] and new_field_value in ['', 'False']:
-                # treat empty as False
-                continue
-            if new_field_value == original_value:
-                continue
-            gloss_field = human_readable_to_internal[human_readable_field]
-            fields_to_update[gloss_field] = (original_value, new_field_value)
+        if new_field_value == original_value:
+            continue
+        gloss_field = human_readable_to_internal[human_readable_field]
+        fields_to_update[gloss_field] = (original_value, new_field_value)
     return fields_to_update
 
 
@@ -583,14 +576,14 @@ def api_update_gloss(request, datasetid, glossid):
         errors[gettext("Dataset")] = gettext("Dataset ID does not exist.")
         results['errors'] = errors
         results['updatestatus'] = "Failed"
-        return JsonResponse(results, safe=False)
+        return JsonResponse(results, status=400)
 
     change_permit_datasets = get_objects_for_user(request.user, 'change_dataset', Dataset)
     if dataset not in change_permit_datasets:
         errors[gettext("Dataset")] = gettext("No change permission for dataset.")
         results['errors'] = errors
         results['updatestatus'] = "Failed"
-        return JsonResponse(results, safe=False)
+        return JsonResponse(results, status=400)
 
     try:
         gloss_id = int(glossid)
@@ -600,7 +593,7 @@ def api_update_gloss(request, datasetid, glossid):
         errors[gettext("Gloss")] = gettext("Gloss ID must be a number.")
         results['errors'] = errors
         results['updatestatus'] = "Failed"
-        return JsonResponse(results, safe=False)
+        return JsonResponse(results, status=400)
 
     gloss = Gloss.objects.filter(id=gloss_id, archived=False).first()
 
@@ -608,52 +601,62 @@ def api_update_gloss(request, datasetid, glossid):
         errors[gettext("Gloss")] = gettext("Gloss not found.")
         results['errors'] = errors
         results['updatestatus'] = "Failed"
-        return JsonResponse(results, safe=False)
+        return JsonResponse(results, status=400)
 
     if not gloss.lemma:
         errors[gettext("Gloss")] = gettext("Gloss does not have a lemma.")
         results['errors'] = errors
         results['updatestatus'] = "Failed"
-        return JsonResponse(results, safe=False)
+        return JsonResponse(results, status=400)
 
     if gloss.lemma.dataset != dataset:
         errors[gettext("Gloss")] = gettext("Gloss not found in the dataset.")
         results['errors'] = errors
         results['updatestatus'] = "Failed"
-        return JsonResponse(results, safe=False)
+        return JsonResponse(results, status=400)
 
     if not request.user.has_perm('dictionary.change_gloss'):
         errors[gettext("Gloss")] = gettext("No change gloss permission.")
         results['errors'] = errors
         results['updatestatus'] = "Failed"
-        return JsonResponse(results, safe=False)
+        return JsonResponse(results, status=400)
 
     value_dict = get_gloss_update_human_readable_value_dict(request)
+
     errors = check_fields_can_be_updated(value_dict, dataset, interface_language_code)
     if errors:
+        # "Field name not found in fields that can be updated."
         results['errors'] = errors
         results['updatestatus'] = "Failed"
-        return JsonResponse(results, safe=False)
+        return JsonResponse(errors, status=400)
 
-    fields_to_update = gloss_update(gloss, value_dict, interface_language_code)
+    fields_to_update = gloss_pre_update(gloss, value_dict, interface_language_code)
     errors = detect_type_related_problems_for_gloss_update(fields_to_update, dataset, interface_language_code)
     if errors:
+        # "New value has wrong type."
         results['errors'] = errors
         results['updatestatus'] = "Failed"
-        return JsonResponse(results, safe=False)
+        return JsonResponse(results, status=400)
 
     errors = check_constraints_on_gloss_language_fields(gloss, interface_language_code, fields_to_update)
     if errors:
+        # "Constraint violation on language fields."
         results['errors'] = errors
         results['updatestatus'] = "Failed"
-        return JsonResponse(results, safe=False)
+        return JsonResponse(results, status=400)
 
-    gloss_update_do_changes(request.user, gloss, fields_to_update, interface_language_code)
+    try:
+        gloss_update_do_changes(request.user, gloss, fields_to_update, interface_language_code)
+    except (TransactionManagementError, ValueError, IntegrityError):
+        errors['Exception'] = "Transaction management error."
+        results['errors'] = errors
+        results['updatestatus'] = "Failed"
+        return JsonResponse(results, status=400)
 
     results['errors'] = {}
-    results['updatestatus'] = "Success"
+    results['updatestatus'] = "Gloss successfully updated."
 
-    return JsonResponse(results, safe=False)
+    return JsonResponse(results, status=201)
 
 
 def check_confirmed(value_dict):
