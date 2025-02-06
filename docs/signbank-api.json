@@ -475,7 +475,7 @@
     {
       "post":
       {
-        "description": "Change a gloss. Only include those gloss fields you wish to update. Values of fields with choices should match those available in Signbank. Between languages the number of senses given must be the same, but the number of words in a sense can differ.",
+        "description": "Change a gloss. Only include those gloss fields you wish to update. Values of fields with choices should match those available in Signbank. Between languages the number of senses given must be the same, but the number of words in a sense can differ. Use DOUBLE QUOTES.",
         "parameters":
         [
           {
