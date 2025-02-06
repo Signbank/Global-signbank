@@ -118,16 +118,21 @@ def get_gloss_update_human_readable_value_dict(request):
     return value_dict
 
 
-def check_fields_can_be_updated(value_dict, dataset, language_code):
+def check_fields_can_be_updated(gloss, value_dict, dataset, language_code):
     activate(language_code)
     language_fields, gloss_fields = names_of_update_gloss_fields(dataset, language_code)
     available_fields = language_fields + gloss_fields
     errors = dict()
     for field in value_dict.keys():
-        if field in ["Senses", "Betekenissen"] and isinstance(value_dict[field], str):
-            new_senses, formatting_error_senses = convert_string_to_dict_of_list_of_lists(value_dict[field])
-            if formatting_error_senses:
-                errors[field] = formatting_error_senses
+        if field in ["Senses", "Betekenissen"]:
+            if ExampleSentence.objects.filter(senses__glosses=gloss).exists():
+                errors[field] = gettext(
+                    'API UPDATE NOT AVAILABLE: The gloss has senses with example sentences.')
+            elif isinstance(value_dict[field], str):
+                new_senses, formatting_error_senses = convert_string_to_dict_of_list_of_lists(value_dict[field])
+                if formatting_error_senses:
+                    errors[field] = formatting_error_senses
+            continue
         elif field in gloss_fields or field in language_fields:
             continue
         errors[field] = _("Field name not found in fields that can be updated.")
@@ -327,10 +332,6 @@ def detect_type_related_problems_for_gloss_update(gloss, changes, dataset, langu
             continue
         if field in language_fields:
             continue
-        if field in ['Senses', 'senses']:
-            if ExampleSentence.objects.filter(senses__glosses=gloss).exists():
-                errors[field] = gettext('API UPDATE NOT AVAILABLE: The gloss has senses with example sentences.')
-            continue
         if isinstance(field, FieldChoiceForeignKey):
             field_choice_category = field.field_choice_category
             try:
@@ -503,6 +504,11 @@ def gloss_update_do_changes(user, gloss, changes, language_code):
                 handshape = Handshape.objects.get(name__iexact=new_value)
                 setattr(gloss, field.name, handshape)
                 changes_done.append((field.name, original_value, new_value))
+            elif field.name in ["senses"]:
+                original_senses = collect_revision_history_for_senses(gloss)
+                update_senses(gloss, new_value)
+                new_senses = collect_revision_history_for_senses(gloss)
+                changes_done.append((field, original_senses, new_senses))
             elif field.name == 'semField':
                 update_semantic_field(gloss, new_value, language_code)
                 changes_done.append((field.name, original_value, new_value))
@@ -683,7 +689,7 @@ def api_update_gloss(request, datasetid, glossid):
     value_dict = get_gloss_update_human_readable_value_dict(request)
     if settings.DEBUG_API:
         print('api_update_gloss ', glossid, ' input value_dict: ', value_dict)
-    errors = check_fields_can_be_updated(value_dict, dataset, interface_language_code)
+    errors = check_fields_can_be_updated(gloss, value_dict, dataset, interface_language_code)
     if errors:
         # "Field name not found in fields that can be updated."
         results['errors'] = errors
