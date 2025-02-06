@@ -116,7 +116,7 @@ def get_gloss_update_human_readable_value_dict(request):
     value_dict = dict()
     for field in post_data.keys():
         value = post_data.get(field, '')
-        value_dict[field] = value.strip()
+        value_dict[field] = value.strip() if isinstance(value, str) else value
     return value_dict
 
 
@@ -126,7 +126,7 @@ def check_fields_can_be_updated(value_dict, dataset, language_code):
     for field in value_dict.keys():
         if field not in api_fields_2024 and field not in language_fields:
             errors[field] = _("Field update not available")
-        if field == "Senses":
+        if field == "Senses" and isinstance(value_dict[field], str):
             new_senses, formatting_error_senses = convert_string_to_dict_of_list_of_lists(value_dict[field])
             if formatting_error_senses:
                 errors[field] = formatting_error_senses
@@ -553,10 +553,12 @@ def gloss_update(gloss, update_fields_dict, language_code):
             continue
         if human_readable_field == 'Senses':
             original_value = get_original_senses_value(gloss)
-            new_senses, errors = convert_string_to_dict_of_list_of_lists(new_field_value)
-            if errors:
-                # already checked at a previous step
-                continue
+            new_senses = new_field_value
+            if isinstance(new_senses, str):
+                new_senses, errors = convert_string_to_dict_of_list_of_lists(new_field_value)
+                if errors:
+                    # already checked at a previous step
+                    continue
             if original_value != new_senses:
                 fields_to_update[human_readable_field] = (original_value, new_senses)
             continue
