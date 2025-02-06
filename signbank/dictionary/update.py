@@ -40,7 +40,7 @@ from signbank.dictionary.consistency_senses import reorder_translations
 from signbank.dictionary.related_objects import gloss_related_objects, morpheme_related_objects
 from signbank.dictionary.update_glosses import *
 from signbank.dictionary.batch_edit import batch_edit_update_gloss, add_gloss_update_to_revision_history
-
+import datetime as DT
 
 def show_error(request, translated_message, form, dataset_languages):
     from signbank.dictionary.context_data import get_selected_datasets
@@ -134,7 +134,7 @@ def add_gloss(request):
 
     try:
         gloss = form.save()
-        gloss.creationDate = datetime.now()
+        gloss.creationDate = DT.datetime.now()
         gloss.excludeFromEcv = False
         gloss.lemma = lemmaidgloss
 
@@ -240,7 +240,7 @@ def update_examplesentence(request, examplesentenceid):
                                      field_name=sentence_label,
                                      gloss=gloss,
                                      user=request.user,
-                                     time=datetime.now(tz=get_current_timezone()))
+                                     time=DT.datetime.now(tz=get_current_timezone()))
             revision.save()
 
     return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': request.POST['glossid']})+'?edit')
@@ -295,7 +295,7 @@ def create_examplesentence(request, senseid):
                                      field_name=sentence_label,
                                      gloss=gloss,
                                      user=request.user,
-                                     time=datetime.now(tz=get_current_timezone()))
+                                     time=DT.datetime.now(tz=get_current_timezone()))
             revision.save()
 
     return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': request.POST['glossid']})+'?edit')
@@ -327,7 +327,7 @@ def delete_examplesentence(request, senseid):
                                  field_name=sentence_label,
                                  gloss=gloss,
                                  user=request.user,
-                                 time=datetime.now(tz=get_current_timezone()))
+                                 time=DT.datetime.now(tz=get_current_timezone()))
         revision.save()
 
     return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': request.POST['glossid']})+'?edit')
@@ -566,7 +566,7 @@ def update_sense(request, senseid):
                              field_name=sense_label,
                              gloss=gloss,
                              user=request.user,
-                             time=datetime.now(tz=get_current_timezone()))
+                             time=DT.datetime.now(tz=get_current_timezone()))
     revision.save()
 
     messages.add_message(request, messages.INFO, _('Given sense was updated.'))
@@ -647,7 +647,7 @@ def create_sense(request, glossid):
                              field_name=sense_label,
                              gloss=gloss,
                              user=request.user,
-                             time=datetime.now(tz=get_current_timezone()))
+                             time=DT.datetime.now(tz=get_current_timezone()))
     revision.save()
 
     return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': glossid})+'?edit')
@@ -705,7 +705,7 @@ def delete_sense(request, glossid):
                              field_name=sense_label,
                              gloss=gloss,
                              user=request.user,
-                             time=datetime.now(tz=get_current_timezone()))
+                             time=DT.datetime.now(tz=get_current_timezone()))
     revision.save()
 
     return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': glossid})+'?edit')
@@ -1097,7 +1097,7 @@ def update_gloss(request, glossid):
                              field_name=field,
                              gloss=gloss,
                              user=request.user,
-                             time=datetime.now(tz=get_current_timezone()))
+                             time=DT.datetime.now(tz=get_current_timezone()))
     revision.save()
     # The machine_value (value) representation is also returned to accommodate Hyperlinks to Handshapes in gloss_edit.js
     return HttpResponse(str(original_value) + '\t' + str(newvalue) + '\t' +  str(value) + '\t' + category_value
@@ -1352,7 +1352,7 @@ def update_semanticfield(request, gloss, field, values):
     new_semanticfield_value = ", ".join([str(sf.name) for sf in gloss.semField.all()])
 
     revision = GlossRevision(old_value=original_semanticfield_value, new_value=new_semanticfield_value, field_name='semField',
-                             gloss=gloss, user=request.user, time=datetime.now(tz=get_current_timezone()))
+                             gloss=gloss, user=request.user, time=DT.datetime.now(tz=get_current_timezone()))
     revision.save()
 
     return HttpResponse(str(new_semanticfield_value), {'content-type': 'text/plain'})
@@ -1390,7 +1390,7 @@ def update_derivationhistory(request, gloss, field, values):
     new_derivationhistory_value = ", ".join([str(sf.name) for sf in gloss.derivHist.all()])
 
     revision = GlossRevision(old_value=original_derivationhistory_value, new_value=new_derivationhistory_value, field_name='derivHist',
-                             gloss=gloss, user=request.user, time=datetime.now(tz=get_current_timezone()))
+                             gloss=gloss, user=request.user, time=DT.datetime.now(tz=get_current_timezone()))
     revision.save()
 
     return HttpResponse(str(new_derivationhistory_value), {'content-type': 'text/plain'})
@@ -2390,7 +2390,7 @@ def add_morpheme(request):
     if form.is_valid() and (lemmaidgloss or lemma_form.is_valid()):
         try:
             morpheme = form.save()
-            morpheme.creationDate = datetime.now()
+            morpheme.creationDate = DT.datetime.now()
             morpheme.creator.add(request.user)
             if lemma_form:
                 lemmaidgloss = lemma_form.save()
@@ -2751,7 +2751,7 @@ def add_tag(request, glossid):
         new_tags_string = ''
 
         revision = GlossRevision(old_value=old_tags_string, new_value=new_tags_string, field_name=tags_label,
-                                 gloss=thisgloss, user=request.user, time=datetime.now(tz=get_current_timezone()))
+                                 gloss=thisgloss, user=request.user, time=DT.datetime.now(tz=get_current_timezone()))
         revision.save()
         response = HttpResponse('deleted', {'content-type': 'text/plain'})
     else:
@@ -2761,7 +2761,7 @@ def add_tag(request, glossid):
         Tag.objects.add_tag(thisgloss, '"%s"' % tag)
         new_tags_string = tag
         revision = GlossRevision(old_value=old_tags_string, new_value=new_tags_string, field_name=tags_label,
-                                 gloss=thisgloss, user=request.user, time=datetime.now(tz=get_current_timezone()))
+                                 gloss=thisgloss, user=request.user, time=DT.datetime.now(tz=get_current_timezone()))
         revision.save()
         # response is new HTML for the tag list and form
         response = render(request, 'dictionary/glosstags.html',
@@ -3870,7 +3870,7 @@ def add_affiliation(request, glossid):
             new_tags_string = ''
 
             revision = GlossRevision(old_value=old_tags_string, new_value=new_tags_string, field_name=tags_label,
-                                     gloss=thisgloss, user=request.user, time=datetime.now(tz=get_current_timezone()))
+                                     gloss=thisgloss, user=request.user, time=DT.datetime.now(tz=get_current_timezone()))
             revision.save()
         # response = HttpResponse('deleted', {'content-type': 'text/plain'})
         result = {'affiliation': affiliation_id}
@@ -3882,7 +3882,7 @@ def add_affiliation(request, glossid):
         new_affiliation, created = AffiliatedGloss.objects.get_or_create(affiliation=affiliation, gloss=thisgloss)
         new_tags_string = affiliation.name
         revision = GlossRevision(old_value=old_tags_string, new_value=new_tags_string, field_name=tags_label,
-                                 gloss=thisgloss, user=request.user, time=datetime.now(tz=get_current_timezone()))
+                                 gloss=thisgloss, user=request.user, time=DT.datetime.now(tz=get_current_timezone()))
         revision.save()
 
     result = {'affiliation': affiliation_id}
