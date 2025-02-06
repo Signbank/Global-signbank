@@ -776,6 +776,9 @@ def api_add_video(request, gloss_id):
 @csrf_exempt
 @put_api_user_in_request
 def api_add_image(request, gloss_id):
+    """
+    Handles the upload of an image file for a specific gloss via the API, and saves it to the correct location.
+    """
 
     error_response = verify_conditions_for_file_upload(request, gloss_id)
 
@@ -783,26 +786,19 @@ def api_add_image(request, gloss_id):
         return error_response
 
     gloss = Gloss.objects.filter(id=gloss_id).first()
+    image_file = list(request.FILES.values())[0]
 
-    label = list(request.FILES.keys())[0]
-    image_file = request.FILES[label]
-
-    #First check the extension
+    # Construct a filename for the image, use sn if present, otherwise use idgloss+gloss id
     file_extension = os.path.splitext(image_file.name)[1].lower()
     if file_extension not in settings.SUPPORTED_CITATION_IMAGE_EXTENSIONS:
         return JsonResponse({'error': 'File extension not supported! Please convert to png or jpg'}, status=400)
 
-    # Construct a filename for the image, use sn if present, otherwise use idgloss+gloss id
-    if gloss.sn is not None:
-        image_file.name = f'{gloss.sn}{file_extension}'
-    else:
-        image_file.name = f'{gloss.idgloss}-{gloss.pk}{file_extension}'
+    image_file.name = f'{gloss.sn}{file_extension}' if gloss.sn is not None else f'{gloss.idgloss}-{gloss.pk}{file_extension}'
 
     # Prepare the file's new path and name
     goal_path = os.path.join(WRITABLE_FOLDER, settings.GLOSS_IMAGE_DIRECTORY, gloss.lemma.dataset.acronym, signbank.tools.get_two_letter_dir(gloss.idgloss))
     goal_location = os.path.join(goal_path, quote(image_file.name, safe=''))
 
-    #First make the dir if needed
     if not os.path.exists(goal_path):
         try:
             os.makedirs(goal_path)
@@ -812,14 +808,12 @@ def api_add_image(request, gloss_id):
     # Save the file
     try:
         destination = File(open(goal_location.encode(sys.getfilesystemencoding()), 'wb+'))
-
     except (SystemError, OSError, IOError):
         return JsonResponse({'error': f'Failed to open file {goal_location} for writing.'}, status=500)
 
-    # if we get to here, destination has been opened
     for chunk in image_file.chunks():
         destination.write(chunk)
 
     destination.close()
 
-    return JsonResponse({'message': 'Image upload successful.'}, status=200)
+    return JsonResponse({'message': 'Image upload successful.'}, status=200) 
