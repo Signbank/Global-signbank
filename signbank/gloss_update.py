@@ -307,7 +307,6 @@ def detect_type_related_problems_for_gloss_update(changes, dataset, language_cod
     # in the following loop, field is either a language field as described above
     # or a field of model Gloss, not a string
     for field, (original_value, new_value) in changes.items():
-        print('field: ', field, type(field))
         if not new_value:
             continue
         if field in language_fields:
@@ -536,7 +535,7 @@ def gloss_pre_update(gloss, input_fields_dict, language_code):
     for language_field in language_fields:
         package_gloss_language_field = human_readable_to_json[language_field]
         combined_fields.append(package_gloss_language_field)
-    # retrieve what the packages knows for these fields
+    # retrieve what the current values for the fields, using the same string representation as package uses
     gloss_package_data_dict = gloss.get_fields_dict(combined_fields, language_code)
     fields_to_update = dict()
     for human_readable_field, new_field_value in input_fields_dict.items():
