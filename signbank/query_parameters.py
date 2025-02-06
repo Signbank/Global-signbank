@@ -25,7 +25,7 @@ from django.utils.dateformat import format
 from django.core.exceptions import ObjectDoesNotExist, EmptyResultSet
 from django.db import OperationalError, ProgrammingError
 from django.db.models import Q, Count, CharField, TextField, Value as V
-from django.db.models.fields import BooleanField, BooleanField
+from django.db.models.fields import BooleanField
 
 from django.urls import reverse
 from tagging.models import TaggedItem, Tag

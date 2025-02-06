@@ -5868,10 +5868,10 @@ def glosslist_ajax_complete(request, gloss_id):
 
     this_gloss = Gloss.objects.get(id=gloss_id, archived=False)
     default_language = this_gloss.lemma.dataset.default_language.language_code_2char
-
+    activate(default_language)
     # TO DO could use the following method to generate the column values
     # but the domain of that method is the column header
-    # gloss_data = this_gloss.get_fields_dict(display_fields)
+    # gloss_data = this_gloss.get_fields_dict(display_fields, default_language)
     # list_gloss_data = list(gloss_data)
     # print(list_gloss_data)
 

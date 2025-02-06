@@ -3,6 +3,7 @@ from django.utils.translation import gettext_lazy as _, activate, gettext
 
 from signbank.attachments.views import upload_file
 from signbank.dictionary.models import *
+from django.db.models.fields import BooleanField
 from signbank.video.models import GlossVideoDescription, GlossVideoNME
 from signbank.tools import get_default_annotationidglosstranslation
 from django.db.transaction import atomic
@@ -11,7 +12,7 @@ from django.views.decorators.csrf import csrf_exempt
 from django.http import JsonResponse
 from guardian.shortcuts import get_objects_for_user
 from signbank.tools import get_interface_language_and_default_language_codes
-from signbank.csv_interface import normalize_field_choice
+from signbank.csv_interface import normalize_field_choice, normalize_boolean
 from signbank.api_token import put_api_user_in_request
 import datetime as DT
 from signbank.tools import get_default_annotationidglosstranslation
@@ -303,7 +304,10 @@ def detect_type_related_problems_for_gloss_update(changes, dataset, language_cod
 
     language_fields = internal_language_fields(dataset, language_code)
     errors = dict()
+    # in the following loop, field is either a language field as described above
+    # or a field of model Gloss, not a string
     for field, (original_value, new_value) in changes.items():
+        print('field: ', field, type(field))
         if not new_value:
             continue
         if field in language_fields:
@@ -319,27 +323,30 @@ def detect_type_related_problems_for_gloss_update(changes, dataset, language_cod
                     fieldchoice = FieldChoice.objects.get(field=field_choice_category, name__iexact=normalised_choice)
                     continue
                 except (ObjectDoesNotExist, MultipleObjectsReturned):
-                    errors[field.verbose_name.title()] = gettext('NOT FOUND: ') + new_value
+                    errors[field.verbose_name.title()] = gettext('Incorrect value')
                     continue
         if isinstance(field, models.ForeignKey) and field.related_model == Handshape:
             try:
                 handshape = Handshape.objects.get(name__iexact=new_value)
                 continue
             except (ObjectDoesNotExist, MultipleObjectsReturned):
-                errors[field.verbose_name.title()] = gettext('NOT FOUND: ') + new_value
+                errors[field.verbose_name.title()] = gettext('Incorrect value')
                 continue
         if field.__class__.__name__ == 'BooleanField':
-            normalised_boolean_string = new_value.lower()
-            if normalised_boolean_string not in ['true', 'false', 'neutral', 'ja', 'nee']:
-                errors[field.verbose_name.title()] = gettext('NOT FOUND: ') + new_value
+            if field.name in ['weakdrop', 'weakprop']:
+                if new_value not in ['True', 'False', 'None']:
+                    errors[field.verbose_name.title()] = gettext('Incorrect value')
+            else:
+                if new_value not in ['True', 'False']:
+                    errors[field.verbose_name.title()] = gettext('Incorrect value')
         elif field.name == 'semField':
             type_check = type_check_multiselect('SemField', new_value, language_code)
             if not type_check:
-                errors[field.verbose_name.title()] = gettext('NOT FOUND: ') + new_value
+                errors[field.verbose_name.title()] = gettext('Incorrect value')
         elif field.name == 'derivHist':
             type_check = type_check_multiselect('derivHist', new_value, language_code)
             if not type_check:
-                errors[field.verbose_name.title()] = gettext('NOT FOUND: ') + new_value
+                errors[field.verbose_name.title()] = gettext('Incorrect value')
     return errors
 
 
@@ -461,25 +468,22 @@ def gloss_update_do_changes(user, gloss, changes, language_code):
                 setattr(gloss, field.name, fieldchoice)
                 changes_done.append((field.name, original_value, new_value))
             elif field.__class__.__name__ == 'BooleanField':
+                # the new value is a string, do not use a coercion because we want
+                # to store None as a value
                 if new_value in ['true', 'True', 'TRUE']:
-                    new_value = True
+                    boolean_value = True
                 elif new_value in ['false', 'False', 'FALSE']:
-                    new_value = False
+                    boolean_value = False
                 elif new_value == 'None' or new_value == 'Neutral':
-                    new_value = None
+                    boolean_value = None
                 else:
-                    new_value = False
-                setattr(gloss, field.name, new_value)
+                    boolean_value = False
+                setattr(gloss, field.name, boolean_value)
                 changes_done.append((field.name, original_value, new_value))
             elif isinstance(field, models.ForeignKey) and field.related_model == Handshape:
                 handshape = Handshape.objects.get(name__iexact=new_value)
                 setattr(gloss, field.name, handshape)
                 changes_done.append((field.name, original_value, new_value))
-            elif field in ["senses", "Senses"]:
-                original_senses = collect_revision_history_for_senses(gloss)
-                update_senses(gloss, new_value)
-                new_senses = collect_revision_history_for_senses(gloss)
-                changes_done.append((field, original_senses, new_senses))
             elif field.name == 'semField':
                 update_semantic_field(gloss, new_value, language_code)
                 changes_done.append((field.name, original_value, new_value))
@@ -520,40 +524,62 @@ def get_original_senses_value(gloss):
 
 def gloss_pre_update(gloss, input_fields_dict, language_code):
 
+    # this returns a dictionary mapping internal Gloss fields to tuples of original and new values
+    # for fields of Gloss, this is the internal model field
+    # for language fields, which are relations, this is an encoding of the field used in many interfaces
+    # of the templates and the methods
     dataset = gloss.lemma.dataset
     language_fields, gloss_fields = names_of_update_gloss_fields(dataset, language_code)
     human_readable_to_internal, human_readable_to_json = update_gloss_columns_to_value_dict_keys(dataset, language_code)
     # initial value of fields is put in combined_fields variable
     combined_fields = gloss_fields
     for language_field in language_fields:
-        gloss_dict_language_field = human_readable_to_json[language_field]
-        combined_fields.append(gloss_dict_language_field)
+        package_gloss_language_field = human_readable_to_json[language_field]
+        combined_fields.append(package_gloss_language_field)
     # retrieve what the packages knows for these fields
     gloss_package_data_dict = gloss.get_fields_dict(combined_fields, language_code)
     fields_to_update = dict()
     for human_readable_field, new_field_value in input_fields_dict.items():
         if not new_field_value:
             continue
-        if human_readable_field not in gloss_package_data_dict.keys():
-            # ignore the field if it's not visible to the API user
-            continue
-        original_value = gloss_package_data_dict[human_readable_field]
-
         if human_readable_field in language_fields:
-            gloss_language_field = human_readable_to_json[human_readable_field]
+            package_gloss_language_field = human_readable_to_json[human_readable_field]
+            original_value = gloss_package_data_dict[package_gloss_language_field]
+            if original_value == new_field_value:
+                continue
             gloss_field = human_readable_to_internal[human_readable_field]
             fields_to_update[gloss_field] = (original_value, new_field_value)
             continue
         if human_readable_field not in human_readable_to_internal.keys():
-            # if this field is not available, ignore it
+            if settings.DEBUG_API:
+                print('gloss_pre_update: json field not found in Gloss fields: ', human_readable_field)
             continue
-        if original_value in ['False'] and new_field_value in ['', 'False']:
-            # treat empty as False
-            continue
+        internal_field = human_readable_to_internal[human_readable_field]
+        original_internal_value = getattr(gloss, internal_field.name)
+        if original_internal_value is None and internal_field.name in ['weakdrop', 'weakprop']:
+            original_value = 'Neutral'
+        elif isinstance(original_internal_value, bool):
+            original_value = str(original_internal_value)
+        elif isinstance(internal_field, FieldChoiceForeignKey):
+            original_value = original_internal_value.name if original_internal_value else '-'
+        elif internal_field.name in ['domhndsh', 'subhndsh',
+                                     'semField', 'derivHist', 'dialect', 'signlanguage']:
+            display_method = 'get_'+internal_field.name+'_display'
+            original_value = getattr(gloss, display_method)()
+        else:
+            # value is a string
+            original_value = original_internal_value
         if new_field_value == original_value:
             continue
-        gloss_field = human_readable_to_internal[human_readable_field]
-        fields_to_update[gloss_field] = (original_value, new_field_value)
+        if internal_field.__class__.__name__ == 'BooleanField':
+            # normalise if this is a Boolean and compare again
+            normalised_new_boolean = normalize_boolean(internal_field, new_field_value, original_value)
+            if original_value == normalised_new_boolean:
+                continue
+            fields_to_update[internal_field] = (original_value, normalised_new_boolean)
+        else:
+            fields_to_update[internal_field] = (original_value, new_field_value)
+    # return the dictionary of input fields that differ from stored values
     return fields_to_update
 
 
@@ -622,7 +648,8 @@ def api_update_gloss(request, datasetid, glossid):
         return JsonResponse(results, status=400)
 
     value_dict = get_gloss_update_human_readable_value_dict(request)
-
+    if settings.DEBUG_API:
+        print('api_update_gloss ', glossid, ' input value_dict: ', value_dict)
     errors = check_fields_can_be_updated(value_dict, dataset, interface_language_code)
     if errors:
         # "Field name not found in fields that can be updated."
@@ -645,10 +672,15 @@ def api_update_gloss(request, datasetid, glossid):
         results['updatestatus'] = "Failed"
         return JsonResponse(results, status=400)
 
+    if settings.DEBUG_API:
+        # now we are ready to do the update, save the intended update fields to the log
+        print('api_update_gloss ', glossid, ' fields_to_update: ', fields_to_update)
+
     try:
         gloss_update_do_changes(request.user, gloss, fields_to_update, interface_language_code)
     except (TransactionManagementError, ValueError, IntegrityError):
-        errors['Exception'] = "Transaction management error."
+        errors = dict()
+        errors[gettext('Exception')] = gettext("Transaction management error.")
         results['errors'] = errors
         results['updatestatus'] = "Failed"
         return JsonResponse(results, status=400)

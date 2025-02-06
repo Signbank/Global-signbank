@@ -1141,6 +1141,21 @@ def csv_focusgloss_to_minimalpairs(focusgloss, dataset, language_code, csv_rows)
     return csv_rows
 
 
+def normalize_boolean(gloss_field, new_boolean, original_boolean):
+    # return 'True', 'False', 'None' depending on field type
+    print('normalize boolean: ', gloss_field, new_boolean, original_boolean)
+    if gloss_field.name in ['weakdrop', 'weakprop'] and new_boolean.lower() in ['neutral']:
+        return 'None'
+    elif new_boolean.lower() in ['true', 'ja', 'yes']:
+        return 'True'
+    elif new_boolean.lower() in ['false', 'nee', 'no']:
+        return 'False'
+    else:
+        if settings.DEBUG_API:
+            print('normalize_boolean NO MATCH: ', gloss_field, new_boolean)
+        return original_boolean
+
+
 def normalize_field_choice(field_choice):
     # add spaces around > and +
 

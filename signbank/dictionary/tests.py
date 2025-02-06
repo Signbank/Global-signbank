@@ -340,7 +340,7 @@ class BasicCRUDTests(TestCase):
         # this calculates the data retrieved by get_gloss_data for packages
         # it shows the format/display of the returned gloss fields
         # note that the value of the phonology fields are numerical rather than human readable
-        result = changed_gloss.get_fields_dict(settings.API_FIELDS)
+        result = changed_gloss.get_fields_dict(settings.API_FIELDS, 'en')
         print('test_package_function: settings.API_FIELDS: ', settings.API_FIELDS)
         print('test_package_function: get_fields_dict: ', result)
 
