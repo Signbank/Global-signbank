@@ -228,3 +228,8 @@ legend
     max-width: 360px;
     font-size: 12px;
 }
+
+#definitionblock div.panel
+{
+    overflow: unset;
+}

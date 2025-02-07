@@ -2636,6 +2636,8 @@ def choice_lists(request):
         # Get and save the choice list for this field
         if fieldchoice_category in CATEGORY_MODELS_MAPPING.keys():
             choice_list = CATEGORY_MODELS_MAPPING[fieldchoice_category].objects.all()
+        elif fieldchoice_category == 'WordClass':
+            choice_list = FieldChoice.objects.filter(field__exact='WordClass')
         else:
             choice_list = FieldChoice.objects.filter(field__iexact=fieldchoice_category)
 
@@ -2801,6 +2803,9 @@ def gif_prototype(request):
 
     return render(request,'dictionary/gif_prototype.html')
 
+def get_all_emails(request):
+
+    return HttpResponse('; '.join([user.email for user in User.objects.all()]))
 
 @csrf_exempt
 def gloss_api_get_sign_name_and_media_info(request):

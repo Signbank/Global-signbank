@@ -31,6 +31,7 @@ MODELTRANSLATION_LANGUAGES = ['en']
 # Documented to be 'eng'. Use 'ame' to be unique in multilingual database.
 LANGUAGES_LANGUAGE_CODE_3CHAR = (
     ('en-us', 'eng'),
+    ('en_US', 'eng'),
 )
 
 LANGUAGE_CODE = "en-us"
@@ -101,3 +102,7 @@ DEFAULT_DATASET_PK = 2
 SWITCH_TO_MYSQL = False
 
 SECRET_KEY = 'f2w3fkjv'
+
+FREQUENCY_CATEGORIES = ['Occurences', 'Signers']
+
+DEFAULT_FROM_EMAIL = 'aslsignbank@haskins.yale.edu'

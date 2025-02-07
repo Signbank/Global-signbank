@@ -251,6 +251,10 @@
 				},
 				buttons: function (settings, original) {
 					var form = this;
+                    
+					var td_value = $('#' + settings.params.field).attr('value');
+                    var td_value_width = (td_value === undefined) ? settings.width : td_value.length * 16;
+
 					if (settings.submit) {
 						if (settings.submit.match(/>$/)) {
 							var submit = $(settings.submit).click(function () {
@@ -258,11 +262,31 @@
 									form.submit();
 								}
 							});
-							submit.css({
-                                'display': 'inline-block', 'position': 'absolute', 'left': settings.width-150
-                            });
+							if (settings.type == "textarea") {
+							    var submitlefttext = 0;
+                                submit.css({
+                                    'display': 'block', 'position': 'relative', 'left': submitlefttext
+                                });
+							} else if (settings.type == "multiselect" || settings.type == 'text') {
+							    var submitlefttext = settings.width + 100;
+                                submit.css({
+                                    'display': 'inline-block', 'position': 'absolute', 'left': submitlefttext
+    	                            });
+								} else if (settings.type == 'select') {
+                                submit.css({
+                                    'display': 'inline-block', 'position': 'absolute', 'left': td_value_width+150
+
+                                });								
+							} else {
+                                submit.css({
+                                    'display': 'inline-block', 'position': 'absolute', 'left': settings.submitleft
+                                });
+                            }
 						} else {
 							var submit = $('<button type="submit" />');
+                            submit.css({
+                                'display': 'inline-block', 'position': 'absolute', 'left': settings.submitleft
+                            });							
 							submit.html(settings.submit);
 						}
 						$(this).append(submit);
@@ -270,11 +294,30 @@
 					if (settings.cancel) {
 						if (settings.cancel.match(/>$/)) {
 							var cancel = $(settings.cancel);
-							cancel.css({
-                                'display': 'inline-block', 'position': 'absolute', 'left': settings.width-50
-                            });
+							if (settings.type == "textarea") {
+							    var cancellefttext = 0;
+                                cancel.css({
+                                    'display': 'block', 'position': 'relative', 'left': cancellefttext
+                                });
+							} else if (settings.type == "multiselect" || settings.type == 'text') {
+								var cancellefttext = settings.width;
+                                cancel.css({
+                                    'display': 'inline-block', 'position': 'absolute', 'left': cancellefttext
+                                });
+							} else if (settings.type == 'select') {
+                                cancel.css({
+                                    'display': 'inline-block', 'position': 'absolute', 'left': td_value_width+50									
+                                });
+							} else {
+                                cancel.css({
+                                    'display': 'inline-block', 'position': 'absolute', 'left': settings.cancelleft
+                                });
+                            }
 						} else {
 							var cancel = $('<button type="cancel" />');
+                            cancel.css({
+                                'display': 'inline-block', 'position': 'absolute', 'left': settings.cancelleft
+                            });							
 							cancel.html(settings.cancel);
 						}
 						$(this).append(cancel);
@@ -313,7 +356,12 @@
 					if (settings.rows) {
 						textarea.attr('rows', settings.rows);
 					} else if (settings.height != "none") {
-						textarea.height(settings.height);
+					    var notestextarea = settings.height;
+					    if (settings.height > 20) {
+					        // more than one row for this field
+					        notestextarea = notestextarea * 2;
+					    }
+						textarea.height(notestextarea);
 					}
 					if (settings.cols) {
 						textarea.attr('cols', settings.cols);

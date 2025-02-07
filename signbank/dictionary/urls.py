@@ -129,5 +129,7 @@ urlpatterns = [
 
     re_path(r'createcitationimage/(?P<pk>\d+)', permission_required('dictionary.change_gloss')(create_citation_image), name='create_citation_image'),
 
-    re_path(r'gloss/api/', signbank.dictionary.views.gloss_api_get_sign_name_and_media_info, name='gloss_api_get_info')
+    re_path(r'gloss/api/', signbank.dictionary.views.gloss_api_get_sign_name_and_media_info, name='gloss_api_get_info'),
+
+    re_path(r'get_all_emails/', signbank.dictionary.views.get_all_emails, name='get_all_emails')
 ]

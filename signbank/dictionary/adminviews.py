@@ -1585,7 +1585,10 @@ class GlossDetailView(DetailView):
 
         for morphdef in context['gloss'].parent_glosses.all():
 
-            translated_role = morphdef.role.name
+            try:
+                translated_role = morphdef.role.name
+            except AttributeError:
+                translated_role = ''
 
             sign_display = str(morphdef.morpheme.id)
             morph_texts = morphdef.morpheme.get_annotationidglosstranslation_texts()
