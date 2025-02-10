@@ -1046,17 +1046,17 @@ class GlossVideoPerspective(GlossVideo):
         self.delete()
 
 
-def move_videos_for_dataset(dataset: Dataset, move_files_on_disk: bool=False) -> None:
+def move_videos_for_filter(filter, move_files_on_disk: bool=False) -> None:
     """
-    Changes GlossVideo.videofile values for a Dataset
-    and moves files on disk if move_file_on_disk is True (default is False)
+    Changes GlossVideo.videofile values for a filter dict
+    and moves files on disk if move_file_on_disk is True (default is False).
+    A filter dict is used in the QuerySet.filter method as **filter
     """
-    for glossvideo in GlossVideo.objects.filter(gloss__lemma__dataset=dataset, glossvideonme=None,
-                                                glossvideoperspective=None):
+    for glossvideo in GlossVideo.objects.filter(**filter, glossvideonme=None, glossvideoperspective=None):
         glossvideo.move_video(move_files_on_disk=move_files_on_disk)
-    for glossvideo_nme in GlossVideoNME.objects.filter(gloss__lemma__dataset=dataset):
+    for glossvideo_nme in GlossVideoNME.objects.filter(**filter):
         glossvideo_nme.move_video(move_files_on_disk=move_files_on_disk)
-    for glossvideos_perspective in GlossVideoPerspective.objects.filter(gloss__lemma__dataset=dataset):
+    for glossvideos_perspective in GlossVideoPerspective.objects.filter(**filter):
         glossvideos_perspective.move_video(move_files_on_disk=move_files_on_disk)
 
 
@@ -1073,7 +1073,7 @@ def process_dataset_changes(sender, instance, **kwargs):
     # and rename directories.
     dataset = instance
     if dataset._initial['acronym'] and dataset.acronym != dataset._initial['acronym']:
-        move_videos_for_dataset(dataset, move_files_on_disk=False)
+        move_videos_for_filter({'gloss__lemma_dataset': dataset}, move_files_on_disk=False)
 
         # Rename dirs
         glossvideo_path_original = os.path.join(WRITABLE_FOLDER, GLOSS_VIDEO_DIRECTORY, dataset._initial['acronym'])
@@ -1092,7 +1092,7 @@ def process_dataset_changes(sender, instance, **kwargs):
     # If the default language has been changed, change all GlossVideos
     # and move all video/poster files accordingly.
     if dataset._initial['default_language'] and dataset.default_language_id != dataset._initial['default_language']:
-        move_videos_for_dataset(dataset, move_files_on_disk=True)
+        move_videos_for_filter({'gloss__lemma_dataset': dataset}, move_files_on_disk=True)
 
         # Make sure that _initial reflect the database for the dataset object
         dataset._initial['default_language'] = dataset.default_language_id
@@ -1107,10 +1107,7 @@ def process_lemmaidglosstranslation_changes(sender, instance, **kwargs):
     :param kwargs: 
     :return: 
     """
-    lemmaidglosstranslation = instance
-    glossvideos = GlossVideo.objects.filter(gloss__lemma__lemmaidglosstranslation=lemmaidglosstranslation)
-    for glossvideo in glossvideos:
-        glossvideo.move_video(move_files_on_disk=True)
+    move_videos_for_filter({'gloss__lemma__lemmaidglosstranslation': instance}, move_files_on_disk=True)
 
 
 @receiver(models.signals.post_save, sender=LemmaIdgloss)
@@ -1122,10 +1119,7 @@ def process_lemmaidgloss_changes(sender, instance, **kwargs):
     :param kwargs:
     :return:
     """
-    lemmaidgloss = instance
-    glossvideos = GlossVideo.objects.filter(gloss__lemma=lemmaidgloss)
-    for glossvideo in glossvideos:
-        glossvideo.move_video(move_files_on_disk=True)
+    move_videos_for_filter({'gloss__lemma': instance}, move_files_on_disk=True)
 
 
 @receiver(models.signals.post_save, sender=Gloss)
