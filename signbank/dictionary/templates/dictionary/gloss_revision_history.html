@@ -12,16 +12,40 @@
 
 {% block extrajs %}
     <script type='text/javascript'>
+    var url = '{{ PREFIX_URL }}';
+    var csrf_token = '{{csrf_token}}';
+
     var search_type = '{{search_type}}';
     var model_view = 'gloss';
     var active_id = '{{active_id}}';
     var search_results_url = '{% url 'dictionary:ajax_search_results' %}';
 
-    {% include "dictionary/search_result_bar.html" %}	
+    {% include "dictionary/search_result_bar.html" %}
+
+    function do_nothing(data) {
+        if ($.isEmptyObject(data)) {
+            return;
+        };
+        return;
+    };
+
+    $('.quick_revision').click(function(e)
+	 {
+         e.preventDefault();
+	     var glossid = $(this).attr('value');
+         $.ajax({
+            url : url + "/dictionary/gloss_revision/cleanup/" + glossid,
+            type: 'POST',
+            data: { 'csrfmiddlewaretoken': csrf_token },
+            datatype: "json",
+            success : do_nothing
+         });
+     });
     </script>
 {% endblock %}
 
 {% block content %}
+{% get_obj_perms request.user for gloss.lemma.dataset as "dataset_perms" %}
 
 <div id="searchresults" class='navbar navbar-light' style="overflow-y:hidden;border:0;box-sizing:content-box; z-index: 50;">
     {% if request.session.search_results %}{# See if search_results in sessions is empty #}
@@ -58,6 +82,16 @@
 </div>
 <br><br>
 <div id="definitionblock" style="z-index:0;padding-top: 100px;">
+{% if "change_dataset" in dataset_perms %}
+<div class='pull-right' style="margin-right:15px;margin-top:10px;">
+
+     <button id='clean_up_revision_history'
+             class='btn btn-primary quick_revision' name='quick_revision' value='{{gloss.id}}'
+             type="submit"
+             style="width:auto;padding:3px 12px;">{% trans "Clean Up" %}</button>
+</div>
+{% endif %}
+<br>
     <table class="table table-condensed">
         <thead>
             <tr>
