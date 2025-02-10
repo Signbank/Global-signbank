@@ -295,7 +295,7 @@ def missing_video_list(selected_datasets):
     glosses = Gloss.objects.filter(archived=False, morpheme=None, lemma__dataset__in=selected_datasets)
     for gloss in glosses:
         gloss_video_path = video_file_path(gloss)
-        gloss_video = GlossVideo.objects.filter(gloss=gloss, version=0, glossvideonme=None)
+        gloss_video = GlossVideo.objects.filter(gloss=gloss, version=0, glossvideonme=None, glossvideoperspective=None)
         if not gloss_video.count():
             # does not have GlossVideo object
             file_path = os.path.join(settings.WRITABLE_FOLDER, gloss_video_path)
@@ -309,7 +309,7 @@ def missing_video_view(request):
 
     # check that the user is logged in
     if not request.user.is_authenticated:
-        messages.add_message(self.request, messages.ERROR, _('Please login to use this functionality.'))
+        messages.add_message(request, messages.ERROR, _('Please login to use this functionality.'))
         return HttpResponseRedirect(settings.PREFIX_URL + '/datasets/available')
 
     selected_datasets = get_selected_datasets(request)
