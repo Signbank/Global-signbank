@@ -14,6 +14,7 @@ from signbank.video.convertvideo import extract_frame, convert_video, probe_form
 
 from django.core.files.storage import FileSystemStorage
 from django.contrib.auth import models as authmodels
+from django.utils.encoding import escape_uri_path
 from signbank.settings.base import WRITABLE_FOLDER, GLOSS_VIDEO_DIRECTORY, GLOSS_IMAGE_DIRECTORY, FFMPEG_PROGRAM
 # from django.contrib.auth.models import User
 from datetime import datetime
@@ -913,7 +914,7 @@ class GlossVideoNME(GlossVideo):
     def get_video_path(self):
         if settings.DEBUG_VIDEOS:
             print('get_video_path GlossVideoNME: ', str(self.videofile))
-        return self.videofile.name
+        return escape_uri_path(self.videofile.name) if self.videofile else ''
 
     def ensure_mp4(self):
         """Ensure that the video file is an h264 format
@@ -987,7 +988,7 @@ class GlossVideoPerspective(GlossVideo):
         ordering = ['perspective', ]
 
     def get_video_path(self):
-        return self.videofile.name
+        return escape_uri_path(self.videofile.name) if self.videofile else ''
 
     def save(self, *args, **kwargs):
         super(GlossVideoPerspective, self).save(*args, **kwargs)
