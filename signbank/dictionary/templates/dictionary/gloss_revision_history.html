@@ -22,13 +22,6 @@
 
     {% include "dictionary/search_result_bar.html" %}
 
-    function do_nothing(data) {
-        if ($.isEmptyObject(data)) {
-            return;
-        };
-        return;
-    };
-
     $('.quick_revision').click(function(e)
 	 {
          e.preventDefault();
@@ -38,7 +31,9 @@
             type: 'POST',
             data: { 'csrfmiddlewaretoken': csrf_token },
             datatype: "json",
-            success : do_nothing
+            success : function(data) {
+                window.location.href = url + '/dictionary/gloss/'+glossid+'/history';;
+            }
          });
      });
     </script>
