@@ -697,7 +697,7 @@ class GlossRevisionAdmin(VersionAdmin):
     list_display = ['time', 'user', 'dataset', 'gloss', 'field_name', 'old_value', 'new_value']
     readonly_fields = ['user', 'gloss', 'field_name', 'old_value', 'new_value', 'time', 'old_value']
     list_filter = (GlossRevisionDatasetFilter, GlossRevisionUserFilter,)
-    search_fields = ['gloss__lemma__lemmaidglosstranslation__text']
+    search_fields = ['gloss__lemma__lemmaidglosstranslation__text', 'field_name', 'old_value', 'new_value']
 
     def has_add_permission(self, request):
         return False
