@@ -904,25 +904,6 @@ class SenseListView(ListView):
 
         context['objects_on_page'] = [ g.id for g in context['page_obj'].object_list ]
 
-        # this is needed to avoid crashing the browser if you go to the last page
-        # of an extremely long list and then go to Details on the objects
-
-        this_page_number = context['page_obj'].number
-        this_paginator = context['page_obj'].paginator
-        if len(self.object_list) > settings.MAX_SCROLL_BAR:
-            this_page = this_paginator.page(this_page_number)
-            if this_page.has_previous():
-                previous_objects = this_paginator.page(this_page_number - 1).object_list
-            else:
-                previous_objects = []
-            if this_page.has_next():
-                next_objects = this_paginator.page(this_page_number + 1).object_list
-            else:
-                next_objects = []
-            list_of_objects = previous_objects + list(context['page_obj'].object_list) + next_objects
-        else:
-            list_of_objects = self.object_list
-
         # construct scroll bar
         # the following retrieves language code for English (or DEFAULT LANGUAGE)
         # so the sorting of the scroll bar matches the default sorting of the results in Gloss List View
@@ -938,7 +919,7 @@ class SenseListView(ListView):
         else:
             lang_attr_name = default_language_code
 
-        items = construct_scrollbar(list_of_objects, context['search_type'], lang_attr_name)
+        items = construct_scrollbar(self.object_list, context['search_type'], lang_attr_name)
         self.request.session['search_results'] = items
 
         if 'paginate_by' in self.request.GET:
@@ -2033,14 +2014,6 @@ class MorphemeListView(ListView):
                                                                         self.search_form[fieldname].label))
         context['page_number'] = context['page_obj'].number
 
-        # this is needed to avoid crashing the browser if you go to the last page
-        # of an extremely long list and go to Details on the objects
-
-        if len(self.object_list) > settings.MAX_SCROLL_BAR:
-            list_of_objects = context['page_obj'].object_list
-        else:
-            list_of_objects = self.object_list
-
         # construct scroll bar
         # the following retrieves language code for English (or DEFAULT LANGUAGE)
         # so the sorting of the scroll bar matches the default sorting of the results in Gloss List View
@@ -2056,7 +2029,7 @@ class MorphemeListView(ListView):
         else:
             lang_attr_name = default_language_code
 
-        items = construct_scrollbar(list_of_objects, self.search_type, lang_attr_name)
+        items = construct_scrollbar(self.object_list, self.search_type, lang_attr_name)
         self.request.session['search_results'] = items
 
         if 'paginate_by' in self.request.GET:
@@ -2420,14 +2393,6 @@ class SemanticFieldListView(ListView):
         selected_datasets = get_selected_datasets(self.request)
         context['selected_datasets'] = selected_datasets
 
-        # this is needed to avoid crashing the browser if you go to the last page
-        # of an extremely long list and go to Details on the objects
-
-        if len(self.object_list) > settings.MAX_SCROLL_BAR:
-            list_of_objects = context['page_obj'].object_list
-        else:
-            list_of_objects = self.object_list
-
         dataset_languages = get_dataset_languages(selected_datasets)
         context['dataset_languages'] = dataset_languages
 
@@ -2497,14 +2462,6 @@ class DerivationHistoryListView(ListView):
 
         selected_datasets = get_selected_datasets(self.request)
         context['selected_datasets'] = selected_datasets
-
-        # this is needed to avoid crashing the browser if you go to the last page
-        # of an extremely long list and go to Details on the objects
-
-        if len(self.object_list) > settings.MAX_SCROLL_BAR:
-            list_of_objects = context['page_obj'].object_list
-        else:
-            list_of_objects = self.object_list
 
         dataset_languages = get_dataset_languages(selected_datasets)
         context['dataset_languages'] = dataset_languages
@@ -7397,22 +7354,6 @@ class AnnotatedGlossListView(ListView):
 
         items = construct_scrollbar(self.object_list, self.search_type, lang_attr_name)
         self.request.session['search_results'] = items
-
-        this_page_number = context['page_obj'].number
-        this_paginator = context['page_obj'].paginator
-        if len(self.object_list) > settings.MAX_SCROLL_BAR:
-            this_page = this_paginator.page(this_page_number)
-            if this_page.has_previous():
-                previous_objects = this_paginator.page(this_page_number - 1).object_list
-            else:
-                previous_objects = []
-            if this_page.has_next():
-                next_objects = this_paginator.page(this_page_number + 1).object_list
-            else:
-                next_objects = []
-            list_of_objects = previous_objects + list(context['page_obj'].object_list) + next_objects
-        else:
-            list_of_objects = self.object_list
 
         return context
 

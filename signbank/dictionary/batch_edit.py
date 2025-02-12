@@ -14,6 +14,7 @@ from signbank.dictionary.models import *
 from signbank.dictionary.forms import *
 from signbank.tools import get_default_annotationidglosstranslation
 
+import datetime as hotfix_datetime
 
 def internal_batch_update_fields_for_gloss(gloss):
 
@@ -133,7 +134,7 @@ def add_gloss_update_to_revision_history(user, gloss, field, oldvalue, newvalue)
                              field_name=field,
                              gloss=gloss,
                              user=user,
-                             time=datetime.now(tz=get_current_timezone()))
+                             time=hotfix_datetime.datetime.now(tz=get_current_timezone()))
     revision.save()
 
 

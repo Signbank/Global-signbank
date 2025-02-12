@@ -398,7 +398,6 @@ $('#show_middle').click(function()
          data-toggle='collapse' data-target='#nme_videos'>{% trans "Videos with Non-manual Elements" %}
     </div>
     <div id='nme_videos' class='collapse'>
-       {% if gloss.get_nme_videos %}
        <table class='table table-condensed' style="text-align: left;width:auto;">
         <tr style="overflow-y:auto;">
             <td class="td td-light" style="display:inline-block;">
@@ -429,7 +428,6 @@ $('#show_middle').click(function()
             </td>
         </tr>
        </table>
-       {% endif %}
     </div>
 </div>
    <!-- Sequential Morphology -->
@@ -438,6 +436,7 @@ $('#show_middle').click(function()
              data-target='#morphology'>{% trans "Morphology" %}
         </div>
         <div id='morphology' class='collapse'>
+            <br>
             {% if simultaneous_morphology %}
             <h5>{% trans "Simultaneous Morphology" %}</h5>
             <table class='table table-condensed'>
@@ -495,6 +494,7 @@ $('#show_middle').click(function()
          data-toggle='collapse' data-target='#phonology'>{% trans "Phonology" %}
     </div>
     <div id='phonology' class='collapse'>
+        <br>
         {% if not morphdefs %}
         <table class='table table-condensed'>
         {% for value,name,label,kind in phonology_fields %}
@@ -585,6 +585,7 @@ $('#show_middle').click(function()
                 {% endif %}
     </div>
     <div id='semantics' class='collapse'>
+        <br>
         {% if gloss_semanticfields %}
         <table class='table table-condensed'>
             <tr>
@@ -603,6 +604,7 @@ $('#show_middle').click(function()
          data-target='#relations'>{% trans "Relations to Other Signs" %}
     </div>
     <div id='relations' class='collapse'>
+        <br>
        {% if otherrelations %}
        <table class='table table-condensed'>
            {% for rel, target_display in otherrelations %}
@@ -616,6 +618,92 @@ $('#show_middle').click(function()
            {% endfor %}
        </table>
        {% endif %}
+    </div>
+</div>
+<!-- Example sentences -->
+<div class="panel panel-default panel-light">
+    <div class='panel-heading panel-light' data-toggle='collapse'
+         data-target='#exSentence'>{% trans "Example Sentences" %}
+    </div>
+
+    <div id="exSentence" class="collapse">
+    <br>
+    {% if annotated_sentences %}
+        <table class='table table-condensed' style="width:100%;">
+            <tr style="display:flex; flex-wrap:wrap;">
+                {% for annotated_sentence in annotated_sentences %}
+                    {% if annotated_sentence.get_video_path %}
+                        <td class="td td-light" style="flex: 0 0 30%;">
+
+                            <style>.highlight {background-color: rgb(255, 149, 63);}</style>
+
+                            <video id="myVideo_{{forloop.counter}}" controls style="width:400px;">
+                                <source src="{{protected_media_url}}{{annotated_sentence.annotatedvideo.videofile}}?v={% now 'YmdHis' %}" type="video/mp4">
+                            </video>
+
+                            <br><br><i>{% trans "Glosses" %}</i><br>
+                            <div id="glossContainer_{{ forloop.counter }}">
+                                {% for annotated_gloss in annotated_sentence.annotated_glosses.all %}
+                                    <span data-start="{{ annotated_gloss.get_start }}" data-end="{{ annotated_gloss.get_end }}">
+                                        <a href="{{PREFIX_URL}}/dictionary/gloss/{{annotated_gloss.gloss.id}}">{{ annotated_gloss.show_annotationidglosstranslation }}</a>
+                                    </span>
+                                {% endfor %}
+                            </div><br>
+                            <script>
+                                const video_{{ forloop.counter }} = document.getElementById('myVideo_{{ forloop.counter }}');
+                                const glosses_{{ forloop.counter }} = document.querySelectorAll('#glossContainer_{{ forloop.counter }} span');
+                                video_{{ forloop.counter }}.addEventListener('timeupdate', () => {
+                                    const currentTime = Math.floor(video_{{ forloop.counter }}.currentTime);
+                                    for (const gloss_{{ forloop.counter }} of glosses_{{ forloop.counter }}) {
+                                        const start = parseInt(gloss_{{ forloop.counter }}.getAttribute('data-start'));
+                                        const end = parseInt(gloss_{{ forloop.counter }}.getAttribute('data-end'));
+                                        if (currentTime >= start && currentTime <= end) {
+                                            gloss_{{ forloop.counter }}.classList.add('highlight');
+                                        } else {
+                                            gloss_{{ forloop.counter }}.classList.remove('highlight');
+                                        }
+                                    }
+                                });
+                            </script>
+                            <p>
+                                {% if annotated_sentence.has_contexts %}
+                                <i>{% trans "Sentence context" %}</i><br>
+                                {% for annotated_sentence_context in annotated_sentence.annotated_sentence_contexts.all %}
+                                    {{ annotated_sentence_context.language }}: {{ annotated_sentence_context.text }}{% if not forloop.last %}<br>{% endif %}
+                                {% endfor %}
+                                {% endif %}
+                            </p>
+                            <p>
+                                {% if annotated_sentence.has_translations %}
+                                <i>{% trans "Sentence translation" %}</i><br>
+                                {% for annotated_sentence_translation in annotated_sentence.annotated_sentence_translations.all %}
+                                    {{ annotated_sentence_translation.language }}: {{ annotated_sentence_translation.text }}{% if not forloop.last %}<br>{% endif %}
+                                {% endfor %}
+                                {% endif %}
+                            </p>
+                            <p>
+                                {% if annotated_sentence.annotatedvideo.source %}
+                                    <i>{% trans "Source" %}</i><br>
+                                    {{ annotated_sentence.annotatedvideo.source.source }}
+                                    {% if annotated_sentence.annotatedvideo.source.url %}
+                                        , <a href="{{protected_media_url}}/{{annotated_sentence.annotatedvideo.source.get_absolute_url}}?v={% now 'YmdHis' %}">{{ annotated_sentence.annotatedvideo.source.url }}</a>
+                                    {% endif %}
+                                {% endif %}
+                            </p>
+                            <p>
+                                {% if annotated_sentence.annotatedvideo.url %}
+                                <i>{% trans "Original video" %}</i><br>
+                                <a href="{{ annotated_sentence.annotatedvideo.get_absolute_url }}">{{ annotated_sentence.annotatedvideo.url }}</a>
+                                {% endif %}
+                            </p>
+                        </td>
+                    {% else %}
+                        <td class="td td-light" style="flex: 0 0 30%;"></td>
+                    {% endif %}
+                {% endfor %}
+            </tr>
+        </table>
+    {% endif %}
     </div>
 </div>
 <br>
