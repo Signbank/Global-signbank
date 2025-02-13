@@ -211,13 +211,15 @@ def get_fields_data_json(request, datasetid):
 
 @csrf_exempt
 @put_api_user_in_request
-def get_gloss_data_json(request, datasetid, glossid):
-    interface_language_code = request.headers.get('Accept-Language', 'en')
+def get_gloss_data_json(request, datasetid, glossid, language_code='en'):
+    interface_language_code = request.headers.get('Accept-Language', '')
     if interface_language_code not in settings.MODELTRANSLATION_LANGUAGES:
+        # language code not provided in request header or not available
         interface_language_code = 'en'
+    if language_code != interface_language_code:
+        # the provided or default language code does not match that explicitly of the url
+        interface_language_code = language_code
     activate(interface_language_code)
-    if request.user.is_authenticated:
-        interface_language_code = get_interface_language_api(request, request.user)
 
     sequence_of_digits = True
     for i in datasetid:
