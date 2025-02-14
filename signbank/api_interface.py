@@ -122,7 +122,7 @@ def check_api_file_storage(dataset):
     return {}, 200
 
 
-def api_fields(dataset, language_code='en', advanced=False):
+def api_fields(dataset, language_code='en', advanced=False):    
     activate(language_code)
     api_fields_2023 = []
     if not dataset:
@@ -148,9 +148,11 @@ def api_fields(dataset, language_code='en', advanced=False):
         api_fields_2023.append(gettext("Named Entity"))
         api_fields_2023.append(gettext("Link"))
         api_fields_2023.append(gettext("Video"))
+        api_fields_2023.append(gettext("Perspective Videos"))
     else:
         api_fields_2023.append(gettext("Link"))
         api_fields_2023.append(gettext("Video"))
+        api_fields_2023.append(gettext("Perspective Videos"))
         api_fields_2023.append(gettext("Tags"))
         api_fields_2023.append(gettext("Notes"))
         api_fields_2023.append(gettext("Affiliation"))
