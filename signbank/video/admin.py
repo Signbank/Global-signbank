@@ -95,42 +95,22 @@ class GlossVideoExistenceFilter(admin.SimpleListFilter):
 
 def filename_matches_nme(filename):
     filename_without_extension, ext = os.path.splitext(os.path.basename(filename))
-    try:
-        if m := re.search(r".+-(\d+)_(nme_\d+|nme_\d+_left|nme_\d+_right)$", filename_without_extension):
-            return True
-        return False
-    except (IndexError, ValueError):
-        return False
+    return re.search(r".+-(\d+)_(nme_\d+|nme_\d+_left|nme_\d+_right)$", filename_without_extension)
 
 
 def filename_matches_perspective(filename):
     filename_without_extension, ext = os.path.splitext(os.path.basename(filename))
-    try:
-        if m := re.search(r".+-(\d+)_(left|right|nme_\d+_left|nme_\d+_right)$", filename_without_extension):
-            return True
-        return False
-    except (IndexError, ValueError):
-        return False
+    return re.search(r".+-(\d+)_(left|right|nme_\d+_left|nme_\d+_right)$", filename_without_extension)
 
 
 def filename_matches_video(filename):
     filename_without_extension, ext = os.path.splitext(os.path.basename(filename))
-    try:
-        if m := re.search(r".+-(\d+)$", filename_without_extension):
-            return True
-        return False
-    except (IndexError, ValueError):
-        return False
+    return re.search(r".+-(\d+)$", filename_without_extension)
 
 
 def filename_matches_backup_video(filename):
     filename_with_extension = os.path.basename(filename)
-    try:
-        if m := re.search(r".+-(\d+)\.(mp4|m4v|mov|webm|mkv|m2v)\.(bak\d+)$", filename_with_extension):
-            return True
-        return False
-    except (IndexError, ValueError):
-        return False
+    return re.search(r".+-(\d+)\.(mp4|m4v|mov|webm|mkv|m2v)\.(bak\d+)$", filename_with_extension)
 
 
 class GlossVideoFilenameFilter(admin.SimpleListFilter):
@@ -149,16 +129,16 @@ class GlossVideoFilenameFilter(admin.SimpleListFilter):
                 return False
             video_file_full_path = Path(WRITABLE_FOLDER, videofile)
             if nmevideo:
-                filename_is_correct = filename_matches_nme(video_file_full_path)
+                filename_is_correct = filename_matches_nme(video_file_full_path) is not None
                 return key == str(filename_is_correct)
             elif perspective:
-                filename_is_correct = filename_matches_perspective(video_file_full_path)
+                filename_is_correct = filename_matches_perspective(video_file_full_path) is not None
                 return key == str(filename_is_correct)
             elif version > 0:
-                filename_is_correct = filename_matches_backup_video(video_file_full_path)
+                filename_is_correct = filename_matches_backup_video(video_file_full_path) is not None
                 return key == str(filename_is_correct)
             else:
-                filename_is_correct = filename_matches_video(video_file_full_path)
+                filename_is_correct = filename_matches_video(video_file_full_path) is not None
                 return key == str(filename_is_correct)
 
         queryset_res = queryset.values('id', 'videofile', 'glossvideonme', 'glossvideoperspective', 'version')
