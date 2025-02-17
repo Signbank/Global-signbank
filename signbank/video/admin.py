@@ -16,7 +16,12 @@ import datetime as DT
 
 
 class GlossVideoDatasetFilter(admin.SimpleListFilter):
-
+    """
+    Filter the GlossVideo objects on the Dataset of the gloss
+    The values of lookups show in the right-hand column of the admin under a heading "Dataset"
+    Called from GlossVideoAdmin
+    :model: GlossVideoAdmin
+    """
     title = _('Dataset')
     parameter_name = 'videos_per_dataset'
 
@@ -33,7 +38,12 @@ class GlossVideoDatasetFilter(admin.SimpleListFilter):
 
 
 class GlossVideoFileSystemGroupFilter(admin.SimpleListFilter):
-
+    """
+    Filter the GlossVideo objects on the file system group of the video file
+    The values of lookups show in the right-hand column of the admin under a heading "File System Group"
+    Called from GlossVideoAdmin
+    :model: GlossVideoAdmin
+    """
     title = _('File System Group')
     parameter_name = 'filesystem_group'
 
@@ -63,7 +73,12 @@ class GlossVideoFileSystemGroupFilter(admin.SimpleListFilter):
 
 
 class GlossVideoExistenceFilter(admin.SimpleListFilter):
-
+    """
+    Filter the GlossVideo objects on whether the the video file exists
+    The values of lookups show in the right-hand column of the admin under a heading "File Exists"
+    Called from GlossVideoAdmin
+    :model: GlossVideoAdmin
+    """
     title = _('File Exists')
     parameter_name = 'file_exists'
 
@@ -114,7 +129,12 @@ def filename_matches_backup_video(filename):
 
 
 class GlossVideoFilenameFilter(admin.SimpleListFilter):
-
+    """
+    Filter the GlossVideo objects on whether the filename is correct for the type of video
+    The values of lookups show in the right-hand column of the admin under a heading "Filename Correct"
+    Called from GlossVideoAdmin
+    :model: GlossVideoAdmin
+    """
     title = _('Filename Correct')
     parameter_name = 'filename_correct'
 
@@ -154,7 +174,12 @@ class GlossVideoFilenameFilter(admin.SimpleListFilter):
 
 
 class GlossVideoNMEFilter(admin.SimpleListFilter):
-
+    """
+    Filter the GlossVideo objects on whether the video is an NME Video
+    The values of lookups show in the right-hand column of the admin under a heading "NME Video"
+    Called from GlossVideoAdmin
+    :model: GlossVideoAdmin
+    """
     title = _('NME Video')
     parameter_name = 'nme_videos'
 
@@ -172,7 +197,12 @@ class GlossVideoNMEFilter(admin.SimpleListFilter):
 
 
 class GlossVideoPerspectiveFilter(admin.SimpleListFilter):
-
+    """
+    Filter the GlossVideo objects on whether the video is a Perspective Video
+    The values of lookups show in the right-hand column of the admin under a heading "Perspective Video"
+    Called from GlossVideoAdmin
+    :model: GlossVideoAdmin
+    """
     title = _('Perspective Video')
     parameter_name = 'perspective_videos'
 
@@ -190,7 +220,12 @@ class GlossVideoPerspectiveFilter(admin.SimpleListFilter):
 
 
 class GlossVideoFileTypeFilter(admin.SimpleListFilter):
-
+    """
+    Filter the GlossVideo objects on whether the video is an MP4 video
+    The values of lookups show in the right-hand column of the admin under a heading "MP4 File"
+    Called from GlossVideoAdmin
+    :model: GlossVideoAdmin
+    """
     title = _('MP4 File')
     parameter_name = 'file_type'
 
@@ -221,13 +256,18 @@ class GlossVideoFileTypeFilter(admin.SimpleListFilter):
 
 
 class GlossVideoBackupFilter(admin.SimpleListFilter):
-
+    """
+    Filter the GlossVideo objects on whether the video is a backup video
+    The values of lookups show in the right-hand column of the admin under a heading "Backup Video"
+    Called from GlossVideoAdmin
+    :model: GlossVideoAdmin
+    """
     title = _('Backup Video')
     parameter_name = 'backup_videos'
 
     def lookups(self, request, model_admin):
-        nme_video = tuple((b, b) for b in ('True', 'False'))
-        return nme_video
+        is_backup = tuple((b, b) for b in ('True', 'False'))
+        return is_backup
 
     def queryset(self, request, queryset):
         if self.value():
@@ -511,6 +551,7 @@ class AnnotatedVideoDatasetFilter(admin.SimpleListFilter):
                 return None
             return queryset.filter(annotatedsentence_id__in=annotated_sentences_ids)
         return queryset.all()
+
 
 class AnnotatedVideoAdmin(admin.ModelAdmin):
     actions = None
