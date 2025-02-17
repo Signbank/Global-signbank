@@ -1,19 +1,18 @@
-import os.path
 
 from django.contrib import admin
-from django import forms
-from django.db import models
 from signbank.video.models import GlossVideo, GlossVideoHistory, AnnotatedVideo, ExampleVideoHistory
 from signbank.dictionary.models import Dataset, AnnotatedGloss, Gloss
 from django.contrib.auth.models import User
 from signbank.settings.base import *
 from signbank.settings.server_specific import WRITABLE_FOLDER, FILESYSTEM_SIGNBANK_GROUPS, DEBUG_VIDEOS
-from django.utils.translation import override, gettext_lazy as _
-from django.db.models import Q, Count, CharField, TextField, Value as V
+from django.utils.translation import gettext_lazy as _
 from signbank.tools import get_two_letter_dir
 from signbank.video.convertvideo import video_file_type_extension
-import subprocess
 import re
+from pathlib import Path
+import os
+import stat
+import datetime as DT
 
 
 class GlossVideoDatasetFilter(admin.SimpleListFilter):
@@ -47,7 +46,6 @@ class GlossVideoFileSystemGroupFilter(admin.SimpleListFilter):
         def matching_file_group(videofile, key):
             if not key:
                 return False
-            from pathlib import Path
             video_file_full_path = Path(WRITABLE_FOLDER, videofile)
             if video_file_full_path.exists():
                 return video_file_full_path.group() == key
@@ -80,7 +78,6 @@ class GlossVideoExistenceFilter(admin.SimpleListFilter):
                 return False
             if 'glossvideo' not in videofile:
                 return False
-            from pathlib import Path
             video_file_full_path = Path(WRITABLE_FOLDER, videofile)
             if video_file_full_path.exists():
                 return key == 'True'
@@ -150,7 +147,6 @@ class GlossVideoFilenameFilter(admin.SimpleListFilter):
         def matching_filename(videofile, nmevideo, perspective, version, key):
             if not key:
                 return False
-            from pathlib import Path
             video_file_full_path = Path(WRITABLE_FOLDER, videofile)
             if nmevideo:
                 filename_is_correct = filename_matches_nme(video_file_full_path)
@@ -227,7 +223,6 @@ class GlossVideoFileTypeFilter(admin.SimpleListFilter):
         def matching_file_type(videofile, key):
             if not key:
                 return False
-            from pathlib import Path
             video_file_full_path = Path(WRITABLE_FOLDER, videofile)
             if video_file_full_path.exists():
                 file_extension = video_file_type_extension(video_file_full_path)
@@ -265,7 +260,6 @@ class GlossVideoBackupFilter(admin.SimpleListFilter):
 
 @admin.action(description="Rename video files to match type")
 def rename_extension_videos(modeladmin, request, queryset):
-    import os
     # retrieve glosses of selected GlossVideo objects for later step
     distinct_glosses = Gloss.objects.filter(glossvideo__in=queryset).distinct()
 
@@ -312,7 +306,6 @@ def rename_extension_videos(modeladmin, request, queryset):
 
 @admin.action(description="Remove selected backups")
 def remove_backups(modeladmin, request, queryset):
-    import os
     for obj in queryset.filter(glossvideonme=None, glossvideoperspective=None, version__gt=0):
         # unlink all the files
         relative_path = str(obj.videofile)
@@ -337,7 +330,6 @@ def remove_backups(modeladmin, request, queryset):
 
 @admin.action(description="Renumber selected backups")
 def renumber_backups(modeladmin, request, queryset):
-    import os
     # retrieve glosses of selected GlossVideo objects for later step
     distinct_glosses = Gloss.objects.filter(glossvideo__in=queryset).distinct()
     # construct data structure for glosses and backup videos including those that are not selected
@@ -362,13 +354,11 @@ def renumber_backups(modeladmin, request, queryset):
 def unlink_files(modeladmin, request, queryset):
     # allow to erase the filename from an object if it has the wrong format and it is for a subclass video
     # this is a patch for repairing doubly linked files
-    import os
     for obj in queryset:
         if not hasattr(obj, 'glossvideonme') and not hasattr(obj, 'glossvideoperspective'):
             # this is not a subclass video that was selected by the user
             continue
 
-        from pathlib import Path
         video_file_full_path = Path(WRITABLE_FOLDER, str(obj.videofile))
         if hasattr(obj, 'glossvideonme') and filename_matches_nme(video_file_full_path):
             continue
@@ -396,7 +386,6 @@ class GlossVideoAdmin(admin.ModelAdmin):
         # this will display the full path in the list view
         if obj is None or not str(obj.videofile):
             return ""
-        import os
         video_file_full_path = os.path.join(WRITABLE_FOLDER, str(obj.videofile))
 
         return video_file_full_path
@@ -415,11 +404,9 @@ class GlossVideoAdmin(admin.ModelAdmin):
         # if the file exists, this will display its timestamp in the list view
         if obj is None or not str(obj.videofile):
             return ""
-        import os
-        import datetime
         video_file_full_path = os.path.join(WRITABLE_FOLDER, str(obj.videofile))
         if os.path.exists(video_file_full_path):
-            return datetime.datetime.fromtimestamp(os.path.getctime(video_file_full_path))
+            return DT.datetime.fromtimestamp(os.path.getctime(video_file_full_path))
         else:
             return ""
 
@@ -428,7 +415,6 @@ class GlossVideoAdmin(admin.ModelAdmin):
         if obj is None or not str(obj.videofile):
             return ""
         else:
-            from pathlib import Path
             video_file_full_path = Path(WRITABLE_FOLDER, str(obj.videofile))
             if video_file_full_path.exists():
                 group = video_file_full_path.group()
@@ -441,7 +427,6 @@ class GlossVideoAdmin(admin.ModelAdmin):
         if obj is None or not str(obj.videofile):
             return ""
         else:
-            from pathlib import Path
             video_file_full_path = Path(WRITABLE_FOLDER, str(obj.videofile))
             if video_file_full_path.exists():
                 size = str(video_file_full_path.stat().st_size)
@@ -454,8 +439,6 @@ class GlossVideoAdmin(admin.ModelAdmin):
         if obj is None or not str(obj.videofile):
             return ""
         else:
-            from pathlib import Path
-            import stat
             video_file_full_path = Path(WRITABLE_FOLDER, str(obj.videofile))
             if video_file_full_path.exists():
                 stats = stat.filemode(video_file_full_path.stat().st_mode)
@@ -467,7 +450,6 @@ class GlossVideoAdmin(admin.ModelAdmin):
         # if the file exists, this will display its timestamp in the list view
         if obj is None or not str(obj.videofile):
             return ""
-        import os
         video_file_full_path = os.path.join(WRITABLE_FOLDER, str(obj.videofile))
         if os.path.exists(video_file_full_path):
             return video_file_type_extension(video_file_full_path)
@@ -585,11 +567,9 @@ class AnnotatedVideoAdmin(admin.ModelAdmin):
         # if the file exists, this will display its timestamp in the list view
         if obj is None:
             return ""
-        import os
-        import datetime
         video_file_full_path = os.path.join(WRITABLE_FOLDER, str(obj.videofile))
         if os.path.exists(video_file_full_path):
-            return datetime.datetime.fromtimestamp(os.path.getctime(video_file_full_path))
+            return DT.datetime.fromtimestamp(os.path.getctime(video_file_full_path))
         else:
             return ""
 
@@ -602,11 +582,9 @@ class AnnotatedVideoAdmin(admin.ModelAdmin):
         # if the file exists, this will display its timestamp in the list view
         if obj is None:
             return ""
-        import os
-        import datetime
         eaf_file_full_path = os.path.join(WRITABLE_FOLDER, str(obj.eaffile))
         if os.path.exists(eaf_file_full_path):
-            return datetime.datetime.fromtimestamp(os.path.getctime(eaf_file_full_path))
+            return DT.datetime.fromtimestamp(os.path.getctime(eaf_file_full_path))
         else:
             return ""
 
