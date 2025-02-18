@@ -280,26 +280,43 @@ class GlossVideoBackupFilter(admin.SimpleListFilter):
 
 @admin.action(description="Rename video files to match type")
 def rename_extension_videos(modeladmin, request, queryset):
-    # retrieve glosses of selected GlossVideo objects for later step
+    """
+    Command for the GlossVideo objects selected in queryset
+    The command appears in the admin pull-down list of commands for the selected gloss videos
+    The command determines which glosses are selected, then retrieves the normal video objects for those glosses
+    This allows the user to merely select one of the objects and hereby change them all instead of numerous selections
+    For those gloss video objects, it renames the file if the filename is not correct
+    This also applies to wrong video types in filenames, e.g., a webm video that has mp4 in its filename
+    This applies to backup videos as well as normal videos
+    Called from GlossVideoAdmin
+    :model: GlossVideoAdmin
+    """
+    # retrieve glosses of selected GlossVideo objects
     distinct_glosses = Gloss.objects.filter(glossvideo__in=queryset).distinct()
 
     for gloss in distinct_glosses:
         for glossvideo in GlossVideo.objects.filter(gloss=gloss, glossvideonme=None, glossvideoperspective=None).order_by('version', 'id'):
+            current_relative_path = str(glossvideo.videofile)
+            if not current_relative_path:
+                # make sure the path is not empty
+                continue
 
-            video_file_full_path = os.path.join(WRITABLE_FOLDER, str(glossvideo.videofile))
+            video_file_full_path = os.path.join(WRITABLE_FOLDER, current_relative_path)
 
-            # the video is a backup video that exists on the file system
+            # retrieve the actual filename stored in the gloss video object
+            # and also compute the name it should have
+
             base_filename = os.path.basename(video_file_full_path)
 
             idgloss = gloss.idgloss
             two_letter_dir = get_two_letter_dir(idgloss)
             dataset_dir = gloss.lemma.dataset.acronym
-            desired_filename_without_extension = idgloss + '-' + str(gloss.id)
+            desired_filename_without_extension = f'{idgloss}-{gloss.id}'
 
             # use the file system command 'file' to determine the extension for the type of video file
             desired_video_extension = video_file_type_extension(video_file_full_path)
             if glossvideo.version > 0:
-                desired_extension = desired_video_extension + '.bak' + str(glossvideo.id)
+                desired_extension = f'{desired_video_extension}.bak{glossvideo.id}'
             else:
                 desired_extension = desired_video_extension
 
@@ -307,8 +324,8 @@ def rename_extension_videos(modeladmin, request, queryset):
             if base_filename == desired_filename:
                 continue
 
-            current_relative_path = str(glossvideo.videofile)
-
+            # if we get to here, the file has the wrong path
+            # the path needs to be fixed and the file renamed
             source = os.path.join(WRITABLE_FOLDER, current_relative_path)
             destination = os.path.join(WRITABLE_FOLDER, GLOSS_VIDEO_DIRECTORY,
                                        dataset_dir, two_letter_dir, desired_filename)
@@ -326,23 +343,36 @@ def rename_extension_videos(modeladmin, request, queryset):
 
 @admin.action(description="Remove selected backups")
 def remove_backups(modeladmin, request, queryset):
+    """
+    Command for the GlossVideo objects selected in queryset
+    The command appears in the admin pull-down list of commands for the selected gloss videos
+    The command removes the selected backup files
+    Other selected objects are ignored
+    This allows the user to keep a number of the backup files by not selecting everything
+    Called from GlossVideoAdmin
+    :model: GlossVideoAdmin
+    """
+    # make sure the queryset only applies to backups for normal videos
     for obj in queryset.filter(glossvideonme=None, glossvideoperspective=None, version__gt=0):
-        # unlink all the files
         relative_path = str(obj.videofile)
-        video_file_full_path = os.path.join(WRITABLE_FOLDER, str(obj.videofile))
-        if os.path.exists(video_file_full_path):
-            # remove the video file so the GlossVideo object can be deleted
-            # this is in addition to  the signal pre_delete of a GlossVideo object, which may not delete the files
-            try:
-                os.unlink(obj.videofile.path)
-                os.remove(video_file_full_path)
-                if DEBUG_VIDEOS:
-                    print('video:admin:remove_backups:os.remove: ', video_file_full_path)
-            except (OSError, PermissionError):
-                if DEBUG_VIDEOS:
-                    print('Exception video:admin:remove_backups: could not delete video file: ', video_file_full_path)
-                continue
+        if not relative_path:
+            continue
+        video_file_full_path = os.path.join(WRITABLE_FOLDER, relative_path)
+        if not os.path.exists(video_file_full_path):
+            continue
+        # first remove the video file so the GlossVideo object can be deleted later
+        # this is done to avoid the signals on GlossVideo delete
+        try:
+            os.unlink(obj.videofile.path)
+            os.remove(video_file_full_path)
+            if DEBUG_VIDEOS:
+                print('video:admin:remove_backups:os.remove: ', video_file_full_path)
+        except (OSError, PermissionError):
+            if DEBUG_VIDEOS:
+                print('Exception video:admin:remove_backups: could not delete video file: ', video_file_full_path)
+            continue
         # only backup videos are deleted here
+        # the object does not point to anything anymore, so it can be deleted
         if DEBUG_VIDEOS:
             print('video:admin:remove_backups:delete object: ', relative_path)
         obj.delete()
@@ -350,6 +380,16 @@ def remove_backups(modeladmin, request, queryset):
 
 @admin.action(description="Renumber selected backups")
 def renumber_backups(modeladmin, request, queryset):
+    """
+    Command for the GlossVideo objects selected in queryset
+    The command appears in the admin pull-down list of commands for the selected gloss videos
+    The command renumbers the backup video objects for the GlossVideo queryset
+    The command determines which glosses are selected, then retrieves the backup video objects for those glosses
+    This allows the user to merely select one of the objects and hereby renumber them all
+    Because the backup objects are numbered by version, all of the objects must be renumbered
+    Called from GlossVideoAdmin
+    :model: GlossVideoAdmin
+    """
     # retrieve glosses of selected GlossVideo objects for later step
     distinct_glosses = Gloss.objects.filter(glossvideo__in=queryset).distinct()
     # construct data structure for glosses and backup videos including those that are not selected
@@ -361,33 +401,44 @@ def renumber_backups(modeladmin, request, queryset):
                                                                version__gt=0).order_by('version', 'id')
     for gloss, videos in lookup_backup_files.items():
         # enumerate over the backup videos and give them new version numbers
+        # the version of the gloss video object is updated since objects may have been deleted
         for inx, video in enumerate(videos, 1):
-            if DEBUG_VIDEOS:
-                original_version = video.version
-                print('video:admin:renumber_backups: ', original_version, inx, str(video.videofile))
-            # the version of the gloss video object is updated since objects may have been deleted
+            if inx == video.version:
+                continue
             video.version = inx
             video.save()
 
 
 @admin.action(description="Set incorrect NME/Perspective filenames to empty string")
 def unlink_files(modeladmin, request, queryset):
-    # allow to erase the filename from an object if it has the wrong format and it is for a subclass video
-    # this is a patch for repairing doubly linked files
+    """
+    Command for the GlossVideo objects selected in queryset
+    The command appears in the admin pull-down list of commands for the selected gloss videos
+    The command only applies to Perspective and NME videos, other selected videos are ignored.
+    Allow to erase the filename from an object if it has the wrong format
+    This is for the purpose of repairing doubly linked files where the subclass object points to the normal video
+    Once the filename has been cleared, the user can delete the object as normal with the Admin delete command
+    This prevents a normal video linked to by a subclass video from being deleted
+    Called from GlossVideoAdmin
+    :model: GlossVideoAdmin
+    """
     for obj in queryset:
         if not hasattr(obj, 'glossvideonme') and not hasattr(obj, 'glossvideoperspective'):
-            # this is not a subclass video that was selected by the user
+            # the selected gloss video is not a subclass video
             continue
-
-        video_file_full_path = Path(WRITABLE_FOLDER, str(obj.videofile))
+        relative_path = str(obj.videofile)
+        if not relative_path:
+            continue
+        video_file_full_path = Path(WRITABLE_FOLDER, relative_path)
+        # ignore the files that have the correct filename
         if hasattr(obj, 'glossvideonme') and filename_matches_nme(video_file_full_path):
             continue
         if hasattr(obj, 'glossvideoperspective') and filename_matches_perspective(video_file_full_path):
             continue
 
-        # erase the file path if it has the wrong format
+        # erase the file path since it has the wrong format
         if DEBUG_VIDEOS:
-            print('unlink_files: erase incorrect path from object: ', obj, video_file_full_path)
+            print('unlink_files: erase incorrect path from NME or Perspective object: ', obj, video_file_full_path)
         obj.videofile.name = ""
         obj.save()
 
