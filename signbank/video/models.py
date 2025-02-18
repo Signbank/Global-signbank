@@ -355,7 +355,7 @@ class ExampleVideo(models.Model):
         from signbank.tools import generate_still_image
         try:
             generate_still_image(self)
-        except OSError:
+        except (OSError, PermissionError):
             import sys
             print('Error generating still image', sys.exc_info())
 
@@ -377,7 +377,7 @@ class ExampleVideo(models.Model):
         small_video_path = self.small_video()
         try:
             os.unlink(self.videofile.path)
-        except OSError:
+        except (OSError, PermissionError):
             pass
 
     def reversion(self, revert=False):
@@ -503,7 +503,7 @@ class AnnotatedVideo(models.Model):
             if not only_eaf:
                 video_path = os.path.join(settings.WRITABLE_FOLDER, settings.ANNOTATEDSENTENCE_VIDEO_DIRECTORY, self.annotatedsentence.get_dataset().acronym, str(self.annotatedsentence.id))
                 shutil.rmtree(video_path)
-        except OSError:
+        except (OSError, PermissionError):
             pass
 
     def get_eaffile_name(self):
@@ -732,7 +732,7 @@ class GlossVideo(models.Model):
         from signbank.tools import generate_still_image
         try:
             generate_still_image(self)
-        except OSError:
+        except (OSError, PermissionError):
             import sys
             print('Error generating still image', sys.exc_info())
 
