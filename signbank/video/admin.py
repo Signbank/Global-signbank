@@ -57,10 +57,9 @@ class GlossVideoFileSystemGroupFilter(admin.SimpleListFilter):
             if not key:
                 return False
             video_file_full_path = Path(WRITABLE_FOLDER, videofile)
-            if video_file_full_path.exists():
-                return video_file_full_path.group() == key
-            else:
+            if not video_file_full_path.exists():
                 return False
+            return video_file_full_path.group() == key
 
         queryset_res = queryset.values('id', 'videofile')
         results = [qv['id'] for qv in queryset_res
@@ -239,11 +238,10 @@ class GlossVideoFileTypeFilter(admin.SimpleListFilter):
             if not key:
                 return False
             video_file_full_path = Path(WRITABLE_FOLDER, videofile)
-            if video_file_full_path.exists():
-                file_extension = video_file_type_extension(video_file_full_path)
-                return key == str((file_extension == '.mp4'))
-            else:
+            if not video_file_full_path.exists():
                 return key == 'False'
+            file_extension = video_file_type_extension(video_file_full_path)
+            return key == str((file_extension == '.mp4'))
 
         queryset_res = queryset.values('id', 'videofile')
         results = [qv['id'] for qv in queryset_res
@@ -476,56 +474,48 @@ class GlossVideoAdmin(admin.ModelAdmin):
         if obj is None or not str(obj.videofile):
             return ""
         video_file_full_path = os.path.join(WRITABLE_FOLDER, str(obj.videofile))
-        if os.path.exists(video_file_full_path):
-            return DT.datetime.fromtimestamp(os.path.getctime(video_file_full_path))
-        else:
+        if not os.path.exists(video_file_full_path):
             return ""
+        return DT.datetime.fromtimestamp(os.path.getctime(video_file_full_path))
 
     def file_group(self, obj=None):
         # this will display a group in the list view
         if obj is None or not str(obj.videofile):
             return ""
-        else:
-            video_file_full_path = Path(WRITABLE_FOLDER, str(obj.videofile))
-            if video_file_full_path.exists():
-                group = video_file_full_path.group()
-                return group
-            else:
-                return ""
+        video_file_full_path = Path(WRITABLE_FOLDER, str(obj.videofile))
+        if not video_file_full_path.exists():
+            return ""
+        group = video_file_full_path.group()
+        return group
 
     def file_size(self, obj=None):
         # this will display a group in the list view
         if obj is None or not str(obj.videofile):
             return ""
-        else:
-            video_file_full_path = Path(WRITABLE_FOLDER, str(obj.videofile))
-            if video_file_full_path.exists():
-                size = str(video_file_full_path.stat().st_size)
-                return size
-            else:
-                return ""
+        video_file_full_path = Path(WRITABLE_FOLDER, str(obj.videofile))
+        if not video_file_full_path.exists():
+            return ""
+        size = str(video_file_full_path.stat().st_size)
+        return size
 
     def permissions(self, obj=None):
         # this will display a group in the list view
         if obj is None or not str(obj.videofile):
             return ""
-        else:
-            video_file_full_path = Path(WRITABLE_FOLDER, str(obj.videofile))
-            if video_file_full_path.exists():
-                stats = stat.filemode(video_file_full_path.stat().st_mode)
-                return stats
-            else:
-                return ""
+        video_file_full_path = Path(WRITABLE_FOLDER, str(obj.videofile))
+        if not video_file_full_path.exists():
+            return ""
+        stats = stat.filemode(video_file_full_path.stat().st_mode)
+        return stats
 
     def video_type(self, obj=None):
         # if the file exists, this will display its timestamp in the list view
         if obj is None or not str(obj.videofile):
             return ""
         video_file_full_path = os.path.join(WRITABLE_FOLDER, str(obj.videofile))
-        if os.path.exists(video_file_full_path):
-            return video_file_type_extension(video_file_full_path)
-        else:
+        if not os.path.exists(video_file_full_path):
             return ""
+        return video_file_type_extension(video_file_full_path)
 
     def get_list_display_links(self, request, list_display):
         # do not allow the user to view individual revisions in list
