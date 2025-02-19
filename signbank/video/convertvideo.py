@@ -216,7 +216,7 @@ def make_thumbnail_video(sourcefile, targetfile):
 ACCEPTABLE_VIDEO_EXTENSIONS = ['.mp4', '.mov', '.webm', '.m4v', '.mkv', '.m2v']
 
 
-def get_video_extension_from_stored_filenpath(video_file_full_path):
+def get_video_extension_from_stored_filepath(video_file_full_path):
     file_path, file_extension = os.path.splitext(video_file_full_path)
     if '.bak' in file_extension:
         # this is a backup file, remove the extension again
@@ -229,13 +229,11 @@ def get_video_extension_from_stored_filenpath(video_file_full_path):
 
 def video_file_type_extension(video_file_full_path):
 
-    if not video_file_full_path:
-        return ''
-    if 'glossvideo' not in video_file_full_path:
+    if not video_file_full_path or 'glossvideo' not in video_file_full_path:
         return ''
 
     if not os.path.exists(video_file_full_path):
-        return get_video_extension_from_stored_filenpath(video_file_full_path)
+        return get_video_extension_from_stored_filepath(video_file_full_path)
 
     filetype_output = subprocess.run(["file", video_file_full_path], stdout=subprocess.PIPE)
     filetype = str(filetype_output.stdout)
@@ -255,7 +253,7 @@ def video_file_type_extension(video_file_full_path):
         # no match found, print something to the log and just keep using mp4
         if DEBUG_VIDEOS:
             print('video:admin:convertvideo:video_file_type_extension:file:UNKNOWN ', filetype)
-        desired_video_extension = get_video_extension_from_stored_filenpath(video_file_full_path)
+        desired_video_extension = get_video_extension_from_stored_filepath(video_file_full_path)
     return desired_video_extension
 
 

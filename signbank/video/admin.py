@@ -1,6 +1,7 @@
 
 from django.contrib import admin
-from signbank.video.models import GlossVideo, GlossVideoHistory, AnnotatedVideo, ExampleVideoHistory
+from signbank.video.models import (GlossVideo, GlossVideoHistory, AnnotatedVideo, ExampleVideoHistory,
+                                   filename_matches_nme, filename_matches_perspective, filename_matches_video, filename_matches_backup_video)
 from signbank.dictionary.models import Dataset, AnnotatedGloss, Gloss
 from django.contrib.auth.models import User
 from signbank.settings.base import *
@@ -105,26 +106,6 @@ class GlossVideoExistenceFilter(admin.SimpleListFilter):
             return queryset.filter(id__in=results)
         else:
             return queryset.all()
-
-
-def filename_matches_nme(filename):
-    filename_without_extension, ext = os.path.splitext(os.path.basename(filename))
-    return re.search(r".+-(\d+)_(nme_\d+|nme_\d+_left|nme_\d+_right)$", filename_without_extension)
-
-
-def filename_matches_perspective(filename):
-    filename_without_extension, ext = os.path.splitext(os.path.basename(filename))
-    return re.search(r".+-(\d+)_(left|right|nme_\d+_left|nme_\d+_right)$", filename_without_extension)
-
-
-def filename_matches_video(filename):
-    filename_without_extension, ext = os.path.splitext(os.path.basename(filename))
-    return re.search(r".+-(\d+)$", filename_without_extension)
-
-
-def filename_matches_backup_video(filename):
-    filename_with_extension = os.path.basename(filename)
-    return re.search(r".+-(\d+)\.(mp4|m4v|mov|webm|mkv|m2v)\.(bak\d+)$", filename_with_extension)
 
 
 class GlossVideoFilenameFilter(admin.SimpleListFilter):
@@ -357,6 +338,9 @@ def remove_backups(modeladmin, request, queryset):
             continue
         video_file_full_path = os.path.join(WRITABLE_FOLDER, relative_path)
         if not os.path.exists(video_file_full_path):
+            if DEBUG_VIDEOS:
+                print('video:admin:remove_backups:delete object: ', relative_path)
+            obj.delete()
             continue
         # first remove the video file so the GlossVideo object can be deleted later
         # this is done to avoid the signals on GlossVideo delete

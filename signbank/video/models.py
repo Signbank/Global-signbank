@@ -9,6 +9,8 @@ import os
 import time
 import stat
 import shutil
+# from signbank.video.admin import filename_matches_nme, filename_matches_perspective
+
 
 from signbank.video.convertvideo import extract_frame, convert_video, probe_format, make_thumbnail_video, generate_image_sequence, remove_stills
 
@@ -26,6 +28,27 @@ if sys.argv[0] == 'mod_wsgi':
     from signbank.dictionary.models import *
 else:
     from signbank.dictionary.models import Gloss, Language
+
+
+def filename_matches_nme(filename):
+    filename_without_extension, ext = os.path.splitext(os.path.basename(filename))
+    return re.search(r".+-(\d+)_(nme_\d+|nme_\d+_left|nme_\d+_right)$", filename_without_extension)
+
+
+def filename_matches_perspective(filename):
+    filename_without_extension, ext = os.path.splitext(os.path.basename(filename))
+    return re.search(r".+-(\d+)_(left|right|nme_\d+_left|nme_\d+_right)$", filename_without_extension)
+
+
+def filename_matches_video(filename):
+    filename_without_extension, ext = os.path.splitext(os.path.basename(filename))
+    return re.search(r".+-(\d+)$", filename_without_extension)
+
+
+def filename_matches_backup_video(filename):
+    filename_with_extension = os.path.basename(filename)
+    return re.search(r".+-(\d+)\.(mp4|m4v|mov|webm|mkv|m2v)\.(bak\d+)$", filename_with_extension)
+
 
 
 class GlossVideoStorage(FileSystemStorage):
@@ -754,7 +777,7 @@ class GlossVideo(models.Model):
         if settings.DEBUG_VIDEOS:
             print('delete_files GlossVideo: ', str(self.videofile))
 
-        if not self.videofile.name:
+        if not self.videofile or not self.videofile.name:
             return
 
         small_video_path = self.small_video()
@@ -945,47 +968,51 @@ class GlossVideoNME(GlossVideo):
         :return:
         """
         old_path = str(self.videofile)
+        if not move_files_on_disk or not old_path:
+            return
         new_path = get_video_file_path(self, old_path, nmevideo=True, perspective='', offset=self.offset, version=0)
-        if old_path != new_path:
-            if move_files_on_disk:
-                source = os.path.join(settings.WRITABLE_FOLDER, old_path)
-                destination = os.path.join(settings.WRITABLE_FOLDER, new_path)
-                if os.path.exists(source):
-                    destination_dir = os.path.dirname(destination)
-                    if not os.path.exists(destination_dir):
-                        os.makedirs(destination_dir)
-                    if os.path.isdir(destination_dir):
-                        shutil.move(source, destination)
+        if old_path == new_path:
+            return
+        source = os.path.join(settings.WRITABLE_FOLDER, old_path)
+        destination = os.path.join(settings.WRITABLE_FOLDER, new_path)
+        if not os.path.exists(source):
+            return
+        destination_dir = os.path.dirname(destination)
+        if not os.path.exists(destination_dir):
+            os.makedirs(destination_dir)
+        if os.path.isdir(destination_dir):
+            shutil.move(source, destination)
 
-                    self.videofile.name = new_path
-                    self.save()
+        self.videofile.name = new_path
+        self.save()
 
     def delete_files(self):
         """Delete the files associated with this object"""
         old_path = str(self.videofile)
         if not old_path:
-            return
+            return True
         file_system_path = os.path.join(settings.WRITABLE_FOLDER, old_path)
-        if settings.DEBUG_VIDEOS:
-            print('delete_files GlossVideoNME: ', file_system_path)
+        if filename_matches_nme(file_system_path) is None:
+            # this points to the normal video file, just erase the name rather than delete file
+            self.videofile.name = ""
+            self.save()
+            return True
         if not os.path.exists(file_system_path):
-            # Video file not found on server
-            # on the production server this is a problem
-            msg = "GlossVideoNME video file not found: " + file_system_path
-            print(msg)
-            return
+            return True
         try:
             os.unlink(file_system_path)
-        except (OSError, PermissionError):
-            if settings.DEBUG_VIDEOS:
-                print('delete_files exception GlossVideoNME OSError, PermissionError: ', file_system_path)
-            pass
+            return True
+        except (OSError, PermissionError) as e:
+            print(e)
+            return False
 
     def reversion(self, revert=False):
         """Delete the video file of this object"""
-        print("DELETE NME VIDEO", self.videofile.name)
-        self.delete_files()
-        self.delete()
+        status = self.delete_files()
+        if not status:
+            print("DELETE NME VIDEO FAILED: ", self.videofile.name)
+        else:
+            self.delete()
 
 
 PERSPECTIVE_CHOICES = (('left', 'Left'),
