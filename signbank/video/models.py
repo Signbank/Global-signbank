@@ -1042,6 +1042,8 @@ class GlossVideoPerspective(GlossVideo):
             return
         # other code does this too. It's a dubious way to obtain the path
         old_path = str(self.videofile)
+        if not old_path:
+            return
         new_path = get_video_file_path(self, old_path, nmevideo=False, perspective=str(self.perspective))
         if old_path == new_path:
             return
@@ -1055,38 +1057,36 @@ class GlossVideoPerspective(GlossVideo):
             if os.path.isdir(destination_dir):
                 shutil.move(source, destination)
 
-            self.videofile.name = new_path
-            self.save()
-        else:
-            # on the production server this is a problem
-            msg = "Perspective video file not found: " + source
-            print(msg)
+        self.videofile.name = new_path
+        self.save()
 
     def delete_files(self):
         """Delete the files associated with this object"""
         old_path = str(self.videofile)
         if not old_path:
-            return
+            return True
         file_system_path = os.path.join(settings.WRITABLE_FOLDER, old_path)
-        if settings.DEBUG_VIDEOS:
-            print('perspective video delete files: ', file_system_path)
+        if filename_matches_perspective(file_system_path) is None:
+            # this points to the normal video file, just erase the name rather than delete file
+            self.videofile.name = ""
+            self.save()
+            return True
         if not os.path.exists(file_system_path):
-            # Video file not found on server
-            # on the production server this is a problem
-            msg = "Perspective video file not found: " + file_system_path
-            print(msg)
-            return
+            return True
         try:
             os.unlink(file_system_path)
-        except (PermissionError, OSError):
-            msg = "Perspective video file could not be deleted: " + file_system_path
-            print(msg)
+            return True
+        except (PermissionError, OSError) as e:
+            print(e)
+            return False
 
     def reversion(self, revert=False):
         """Delete the video file of this object"""
-        print("DELETE Perspective VIDEO", self.videofile.name)
-        self.delete_files()
-        self.delete()
+        status = self.delete_files()
+        if not status:
+            print("DELETE Perspective VIDEO FAILED: ", self.videofile.name)
+        else:
+            self.delete()
 
 
 def move_videos_for_filter(filter, move_files_on_disk: bool=False) -> None:
@@ -1248,10 +1248,10 @@ def delete_files(sender, instance, **kwargs):
         print('delete_files settings.DELETE_FILES_ON_GLOSSVIDEO_DELETE: ', settings.DELETE_FILES_ON_GLOSSVIDEO_DELETE)
     if hasattr(instance, 'glossvideonme'):
         # before deleting a GlossVideoNME object, delete the files
-        instance.delete_files()
+        status = instance.delete_files()
     elif hasattr(instance, 'glossvideoperspective'):
         # before deleting a GlossVideoPerspective object, delete the files
-        instance.delete_files()
+        status = instance.delete_files()
     elif settings.DELETE_FILES_ON_GLOSSVIDEO_DELETE:
         # before a GlossVideo object, only delete the files if the setting is True
         # default.py has this set to false so primary gloss video files are (never) deleted
