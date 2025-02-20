@@ -1545,13 +1545,12 @@ class Gloss(models.Model):
         if blend_morphology_fieldname in fieldnames and blend_morphology:
             fields[blend_morphology_fieldname] = blend_morphology
 
-        perspective_videos = gettext("Perspective Videos")
+        perspective_videos_label = gettext("Perspective Videos") 
         gloss_perspective_videos = self.get_perspective_videos()
 
-        if perspective_videos in fieldnames and gloss_perspective_videos:
+        if perspective_videos_label in fieldnames and gloss_perspective_videos:
             from signbank.video.models import GlossVideoPerspective
             perspective_video_list = []
-
             for perspectivevideo in gloss_perspective_videos:
 
                 perspective_info = dict()
@@ -1563,7 +1562,7 @@ class Gloss(models.Model):
                 perspective_info['Checksum'] = get_checksum_for_path(os.path.join(settings.WRITABLE_FOLDER, perspectivevideo.get_video_path()))
                 perspective_video_list.append(perspective_info)
 
-            fields[perspective_videos] = perspective_video_list
+            fields[perspective_videos_label] = perspective_video_list
 
         nme_videos = gettext("NME Videos")
         gloss_nme_videos = self.get_nme_videos()

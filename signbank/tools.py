@@ -2308,10 +2308,12 @@ def create_sentence_from_valuedict(valuedict, dataset, row_nr, earlier_creation_
 
 def get_checksum_for_path(file_path):
 
+    BYTES_PER_CHUNK = 8192 #"8 KB is a common practice to efficiently handle large files without consuming too much memory"
+
     try:
         with open(file_path, 'rb') as f:
             file_hash = hashlib.md5()
-            while chunk := f.read(8192):
+            while chunk := f.read(BYTES_PER_CHUNK):
                 file_hash.update(chunk)
             return file_hash.hexdigest()
     except FileNotFoundError:
