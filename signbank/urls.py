@@ -15,6 +15,8 @@ import signbank.feedback.views
 import signbank.attachments.urls
 import signbank.video.urls
 import signbank.video.views
+import signbank.animation.urls
+
 import signbank.registration.urls
 import django.contrib.auth.views
 import django.contrib.admindocs.urls
@@ -51,7 +53,7 @@ urlpatterns = [
     re_path(r'^feedback/', include(signbank.feedback.urls)),
     re_path(r'^attachments/', include(signbank.attachments.urls)),
     re_path(r'^video/', include(signbank.video.urls)),
-
+    re_path(r'^animation/', include(signbank.animation.urls)),
     re_path(r'^image/upload/', add_image),
     re_path(r'^handshapeimage/upload/', add_handshape_image),
     re_path(r'^image/delete/(?P<pk>[0-9]+)$', delete_image),

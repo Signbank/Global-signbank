@@ -1,0 +1,109 @@
+{% extends 'baselayout.html' %}
+{% load i18n %}
+{% load stylesheet %}
+{% load bootstrap3 %}
+{% load guardian_tags %}
+{% block bootstrap3_title %}
+{% blocktrans %}Signbank: Create New Animation{% endblocktrans %}
+{% endblock %}
+
+{% block extrajs %}
+    <script type="text/javascript" src="{{STATIC_URL}}js/typeahead.bundle.min.js"></script>
+
+    <script type="text/javascript">
+    var url = '{{PREFIX_URL}}';
+    var csrf_token = '{{csrf_token}}';
+
+    var gloss_bloodhound = new Bloodhound({
+      datumTokenizer: function(d) { return d.tokens; },
+      queryTokenizer: Bloodhound.tokenizers.whitespace,
+      remote: url+'/dictionary/ajax/gloss/%QUERY'
+    });
+
+    gloss_bloodhound.initialize();
+
+    function glosstypeahead(target) {
+
+         $(target).typeahead(null, {
+              name: 'glosstarget',
+              displayKey: 'annotation_idgloss',
+              source: gloss_bloodhound.ttAdapter(),
+              templates: {
+                  suggestion: function(gloss) {
+                      return("<p><strong>" + gloss.annotation_idgloss +  "</strong></p>");
+                  }
+              }
+          });
+    };
+
+    $(document).ready(function(){
+
+        glosstypeahead($('.glosstypeahead'));
+        $('.glosstypeahead').bind('typeahead:selected', function(ev, suggestion) {
+            $(this).parent().next().val(suggestion.pk)
+        });
+        $('.glosstypeahead').on("input", function() {
+            $(this).parent().next().val("")
+        });
+
+        // setup requried for Ajax POST
+        function csrfSafeMethod(method) {
+            // these HTTP methods do not require CSRF protection
+            return (/^(GET|HEAD|OPTIONS|TRACE)$/.test(method));
+        }
+
+        $.ajaxSetup({
+            crossDomain: false, // obviates need for sameOrigin test
+            beforeSend: function(xhr, settings) {
+                if (!csrfSafeMethod(settings.type)) {
+                    xhr.setRequestHeader("X-CSRFToken", csrf_token);
+                }
+            }
+        });
+
+    });
+
+    </script>
+
+{% endblock %}
+
+{% block content %}
+
+{% get_obj_perms request.user for dataset as "dataset_perms" %}
+
+        {% if "change_dataset" in dataset_perms %}
+
+            <div class='editform' style="width:800px;height:800px;">
+                <form action="{{PREFIX_URL}}/animation/upload/" method="post" enctype="multipart/form-data">
+                {% csrf_token %}
+                <fieldset>
+                    <h4>{% trans "Upload New Animation" %}</h4>
+            <table class="table">
+            <tr>
+                <td id="gloss_cell" class='td td-light'>
+                <input class='form-control form-control-light glosstypeahead glosstypeahead-light'
+                       value=""
+                       placeholder='{% trans "Gloss" %}' >
+                <input type="hidden" name='gloss_id' id='gloss_id' value="">
+                <input type="hidden" name="datasetid" id="dataset_id" value="{{dataset.id}}">
+                </td>
+            </tr>
+            <tr>
+                <td>{{add_animation_form.file}}</td>
+            </tr>
+            <tr>
+                <td>
+                <input type='hidden' name='redirect' value='{{PREFIX_URL}}/dictionary/animation/add/'>
+                <input type='hidden' name='object_type' value='gloss_animation'>
+                <input class='btn btn-primary' type='submit' value='Upload'>
+                </td>
+            </tr>
+            </table>
+            </fieldset>
+            </form>
+            </div>
+    {% else %}
+        <p>(% trans "You are not allowed to add animations." %}</p>
+    {% endif %}
+
+{% endblock %}
