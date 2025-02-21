@@ -9,10 +9,8 @@ import os
 import time
 import stat
 import shutil
-# from signbank.video.admin import filename_matches_nme, filename_matches_perspective
 
-
-from signbank.video.convertvideo import extract_frame, convert_video, probe_format, make_thumbnail_video, generate_image_sequence, remove_stills
+from signbank.video.convertvideo import extract_frame, convert_video, make_thumbnail_video, generate_image_sequence, remove_stills
 
 from django.core.files.storage import FileSystemStorage
 from django.contrib.auth import models as authmodels
@@ -48,7 +46,6 @@ def filename_matches_video(filename):
 def filename_matches_backup_video(filename):
     filename_with_extension = os.path.basename(filename)
     return re.search(r".+-(\d+)\.(mp4|m4v|mov|webm|mkv|m2v)\.(bak\d+)$", filename_with_extension)
-
 
 
 class GlossVideoStorage(FileSystemStorage):

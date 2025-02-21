@@ -257,7 +257,7 @@ class GlossVideoBackupFilter(admin.SimpleListFilter):
         return queryset.all()
 
 
-@admin.action(description="Rename video files to match type")
+@admin.action(description="Rename normal video files to match type")
 def rename_extension_videos(modeladmin, request, queryset):
     """
     Command for the GlossVideo objects selected in queryset
@@ -282,6 +282,13 @@ def rename_extension_videos(modeladmin, request, queryset):
 
             video_file_full_path = os.path.join(WRITABLE_FOLDER, current_relative_path)
 
+            # use the file system command 'file' to determine the extension for the type of video file
+            desired_video_extension = video_file_type_extension(video_file_full_path)
+            if not desired_video_extension:
+                # if we get here, the file extension for the video type could not be determined
+                # either there is no file for this object or it has an unknown video type
+                continue
+
             # retrieve the actual filename stored in the gloss video object
             # and also compute the name it should have
 
@@ -292,8 +299,6 @@ def rename_extension_videos(modeladmin, request, queryset):
             dataset_dir = gloss.lemma.dataset.acronym
             desired_filename_without_extension = f'{idgloss}-{gloss.id}'
 
-            # use the file system command 'file' to determine the extension for the type of video file
-            desired_video_extension = video_file_type_extension(video_file_full_path)
             if glossvideo.version > 0:
                 desired_extension = f'{desired_video_extension}.bak{glossvideo.id}'
             else:
