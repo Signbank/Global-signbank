@@ -1394,7 +1394,7 @@ class Gloss(models.Model):
                 other_media_paths.append(other_media_filename)
         return ", ".join(other_media_paths)
 
-    def get_fields_dict(self, fieldnames, language_code='en'):
+    def get_fields_dict(self, fieldnames, language_code='en', include_checksums=False):
 
         from django.utils import translation
         translation.activate(language_code)
@@ -1489,8 +1489,9 @@ class Gloss(models.Model):
             if video_path:
                 fields[video_fieldname] = settings.URL + settings.PREFIX_URL + '/dictionary/protected_media/' + video_path
 
-                from signbank.tools import get_checksum_for_path
-                fields[video_fieldname + '_checksum'] = get_checksum_for_path(os.path.join(settings.WRITABLE_FOLDER, self.get_video_path()))   
+                if include_checksums:
+                    from signbank.tools import get_checksum_for_path
+                    fields[video_fieldname + '_checksum'] = get_checksum_for_path(os.path.join(settings.WRITABLE_FOLDER, self.get_video_path()))   
 
         tags_fieldname = gettext("Tags")
         tags_of_gloss = TaggedItem.objects.filter(object_id=self.id)
@@ -1558,8 +1559,10 @@ class Gloss(models.Model):
                 perspective_path = settings.URL + settings.PREFIX_URL + '/dictionary/protected_media/' + perspectivevideo.get_video_path()
                 perspective_info[gettext("Link")] = perspective_path
 
-                from signbank.tools import get_checksum_for_path
-                perspective_info['Checksum'] = get_checksum_for_path(os.path.join(settings.WRITABLE_FOLDER, perspectivevideo.get_video_path()))
+                if include_checksums:
+                    from signbank.tools import get_checksum_for_path
+                    perspective_info['Checksum'] = get_checksum_for_path(os.path.join(settings.WRITABLE_FOLDER, perspectivevideo.get_video_path()))
+
                 perspective_video_list.append(perspective_info)
 
             fields[perspective_videos_label] = perspective_video_list
@@ -1583,8 +1586,9 @@ class Gloss(models.Model):
                 nme_path = settings.URL + settings.PREFIX_URL + '/dictionary/protected_media/' + nmevideo.get_video_path()
                 nme_info[gettext("Link")] = nme_path
 
-                from signbank.tools import get_checksum_for_path
-                nme_info['Checksum'] = get_checksum_for_path(os.path.join(settings.WRITABLE_FOLDER, nmevideo.get_video_path()))
+                if include_checksums:
+                    from signbank.tools import get_checksum_for_path
+                    nme_info['Checksum'] = get_checksum_for_path(os.path.join(settings.WRITABLE_FOLDER, nmevideo.get_video_path()))
                 
                 nme_video_list.append(nme_info)
             fields[nme_videos] = nme_video_list

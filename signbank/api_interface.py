@@ -257,7 +257,7 @@ def get_gloss_data_json(request, datasetid, glossid):
         api_fields_2023 = api_fields(dataset, interface_language_code, advanced=False)
 
     gloss_data = dict()
-    gloss_data[str(gloss.pk)] = gloss.get_fields_dict(api_fields_2023, interface_language_code)
+    gloss_data[str(gloss.pk)] = gloss.get_fields_dict(api_fields_2023, interface_language_code, include_checksums=True) 
 
     return JsonResponse(gloss_data, safe=False)
 
