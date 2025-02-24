@@ -26,6 +26,7 @@ import signbank.dictionary.batch_edit
 import signbank.gloss_morphology_update
 import signbank.frequency
 import signbank.dataset_operations
+import signbank.dictionary.gloss_revision
 
 app_name = 'dictionary'
 urlpatterns = [
@@ -144,6 +145,10 @@ urlpatterns = [
     re_path(r'^update/toggle_language_fields/(?P<glossid>\d+)$',
             signbank.dictionary.update.toggle_language_fields,
             name='toggle_language_fields'),
+
+    re_path(r'^gloss_revision/cleanup/(?P<glossid>\d+)$',
+            signbank.dictionary.gloss_revision.cleanup,
+            name='gloss_revision_cleanup'),
 
     # The next one does not have a permission check because it should be accessible from a cronjob
     re_path(r'^update_ecv/', GlossListView.as_view(only_export_ecv=True)),
