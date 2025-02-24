@@ -317,6 +317,8 @@ DEBUG_SENSES = False
 
 DEBUG_VIDEOS = False
 
+DEBUG_API = False
+
 # Set this to True to avoid deleting glosses that are in relations with other glosses
 GUARDED_GLOSS_DELETE = False
 
