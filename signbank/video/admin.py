@@ -441,7 +441,11 @@ class GlossVideoAdmin(admin.ModelAdmin):
     actions = [rename_extension_videos, remove_backups, renumber_backups, unlink_files]
 
     def video_file(self, obj=None):
-        # this will display the full path in the list view
+        """
+        column VIDEO FILE
+        this will display the full path in the list view, also for non-existent files
+        this allows to browse the file paths also on the development servers
+        """
         if obj is None or not str(obj.videofile):
             return ""
         video_file_full_path = os.path.join(WRITABLE_FOLDER, str(obj.videofile))
@@ -449,17 +453,28 @@ class GlossVideoAdmin(admin.ModelAdmin):
         return video_file_full_path
 
     def perspective(self, obj=None):
+        """
+        column PERSPECTIVE
+        This will be True if the object is of subclass GlossVideoPerspective
+        """
         if obj is None:
             return ""
         return obj.is_glossvideoperspective() is True
 
     def NME(self, obj=None):
+        """
+        column NME
+        This will be True if the object is of subclass GlossVideoNME
+        """
         if obj is None:
             return ""
         return obj.is_glossvideonme() is True
 
     def file_timestamp(self, obj=None):
-        # if the file exists, this will display its timestamp in the list view
+        """
+        column FILE TIMESTAMP
+        if the file exists, this will display its timestamp in the list view
+        """
         if obj is None or not str(obj.videofile):
             return ""
         video_file_full_path = os.path.join(WRITABLE_FOLDER, str(obj.videofile))
@@ -468,7 +483,10 @@ class GlossVideoAdmin(admin.ModelAdmin):
         return DT.datetime.fromtimestamp(os.path.getctime(video_file_full_path))
 
     def file_group(self, obj=None):
-        # this will display a group in the list view
+        """
+        column FILE GROUP
+        if the file exists, this will display the file system group in the list view
+        """
         if obj is None or not str(obj.videofile):
             return ""
         video_file_full_path = Path(WRITABLE_FOLDER, str(obj.videofile))
@@ -478,7 +496,10 @@ class GlossVideoAdmin(admin.ModelAdmin):
         return group
 
     def file_size(self, obj=None):
-        # this will display a group in the list view
+        """
+        column FILE SIZE
+        if the file exists, this will display the file size in the list view
+        """
         if obj is None or not str(obj.videofile):
             return ""
         video_file_full_path = Path(WRITABLE_FOLDER, str(obj.videofile))
@@ -488,7 +509,10 @@ class GlossVideoAdmin(admin.ModelAdmin):
         return size
 
     def permissions(self, obj=None):
-        # this will display a group in the list view
+        """
+        column PERMISSIONS
+        if the file exists, this will display the file system permissions in the list view
+        """
         if obj is None or not str(obj.videofile):
             return ""
         video_file_full_path = Path(WRITABLE_FOLDER, str(obj.videofile))
@@ -498,7 +522,10 @@ class GlossVideoAdmin(admin.ModelAdmin):
         return stats
 
     def video_type(self, obj=None):
-        # if the file exists, this will display its timestamp in the list view
+        """
+        column VIDEO TYPE
+        if the file exists, this will display the video type in file extension format
+        """
         if obj is None or not str(obj.videofile):
             return ""
         video_file_full_path = os.path.join(WRITABLE_FOLDER, str(obj.videofile))
@@ -507,7 +534,7 @@ class GlossVideoAdmin(admin.ModelAdmin):
         return video_file_type_extension(video_file_full_path)
 
     def get_list_display_links(self, request, list_display):
-        # do not allow the user to view individual revisions in list
+        # do not allow the user to click on data of individual elements in the list display
         self.list_display_links = (None, )
         return self.list_display_links
 
@@ -515,6 +542,7 @@ class GlossVideoAdmin(admin.ModelAdmin):
         return False
 
     def has_delete_permission(self, request, obj=None):
+        # Only allow to delete objects without any file
         if not self.file_timestamp(obj):
             return True
         return False
