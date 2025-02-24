@@ -10,6 +10,8 @@ import json
 import re
 from urllib.parse import quote
 import csv
+import hashlib
+
 from django.db.models import Q
 from django.http import QueryDict
 
@@ -2304,3 +2306,15 @@ def create_sentence_from_valuedict(valuedict, dataset, row_nr, earlier_creation_
     return new_sentence, already_exists, errors_found, earlier_creation_same_csv, earlier_creation_annotationidgloss, \
         earlier_creation_lemmaidgloss
 
+def get_checksum_for_path(file_path):
+
+    BYTES_PER_CHUNK = 8192 #"8 KB is a common practice to efficiently handle large files without consuming too much memory"
+
+    try:
+        with open(file_path, 'rb') as f:
+            file_hash = hashlib.md5()
+            while chunk := f.read(BYTES_PER_CHUNK):
+                file_hash.update(chunk)
+            return file_hash.hexdigest()
+    except FileNotFoundError:
+        return None   

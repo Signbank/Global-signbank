@@ -806,6 +806,81 @@
         ]
       }
     },
+    "/dictionary/api_update_gloss/{glossid}/image":
+    {
+      "post":
+      {
+        "description": "Updates the image of a gloss.",
+        "parameters":
+        [
+          {
+            "name": "glossid",
+            "in": "path",
+            "description": "ID of the gloss to be updated",
+            "required": true,
+            "schema":
+            {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody":
+        {
+          "content":
+          {
+            "multipart/form-data":
+            {
+              "schema":
+              {
+                "type": "object",
+                "properties":
+                {
+                  "FILE":
+                  {
+                    "type": "string",
+                    "format": "binary",
+                    "description": "The image file to upload."
+                  }
+                },
+                "required":
+                [
+                ]
+              }
+            }
+          }
+        },
+        "responses":
+        {
+          "200":
+          {
+            "description": "Update successful"
+          },
+          "400":
+          {
+            "description": "No file uploaded"
+          },
+          "401":
+          {
+            "description": "User not found"
+          },
+          "403":
+          {
+            "description": "No permission"
+          },
+          "404":
+          {
+            "description": "Gloss not found"
+          }
+        },
+        "tags": ["Updating Signbank data"],
+        "security":
+        [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
     "/dictionary/api_update_gloss_morphology/{datasetid}/{glossid}/": 
     {
       "post":
