@@ -48,6 +48,17 @@ def filename_matches_backup_video(filename):
     return re.search(r".+-(\d+)\.(mp4|m4v|mov|webm|mkv|m2v)\.(bak\d+)$", filename_with_extension)
 
 
+def flattened_video_path(filename):
+    relative_path_components, filename_component = os.path.split(filename)
+    m = re.search(r"^glossvideo/(.+)/(..)$", relative_path_components)
+    if m:
+        # prefix the filename with part of the dataset-specific part of the relative path
+        dataset_folder = m.group(1)
+        two_char_folder = m.group(2)
+        return dataset_folder + '_' + two_char_folder + '_' + filename_component
+    return filename_component
+
+
 class GlossVideoStorage(FileSystemStorage):
     """Implement our shadowing video storage system"""
 

@@ -1,18 +1,18 @@
 
 from django.contrib import admin
 from signbank.video.models import (GlossVideo, GlossVideoHistory, AnnotatedVideo, ExampleVideoHistory,
-                                   filename_matches_nme, filename_matches_perspective, filename_matches_video, filename_matches_backup_video)
+                                   filename_matches_nme, filename_matches_perspective, filename_matches_video, filename_matches_backup_video, flattened_video_path)
 from signbank.dictionary.models import Dataset, AnnotatedGloss, Gloss
 from django.contrib.auth.models import User
 from signbank.settings.base import *
-from signbank.settings.server_specific import WRITABLE_FOLDER, FILESYSTEM_SIGNBANK_GROUPS, DEBUG_VIDEOS
+from signbank.settings.server_specific import WRITABLE_FOLDER, FILESYSTEM_SIGNBANK_GROUPS, DEBUG_VIDEOS, DELETED_FILES_FOLDER
 from django.utils.translation import gettext_lazy as _
 from signbank.tools import get_two_letter_dir
 from signbank.video.convertvideo import video_file_type_extension
-import re
 from pathlib import Path
 import os
 import stat
+import shutil
 import datetime as DT
 
 
@@ -325,12 +325,14 @@ def rename_extension_videos(modeladmin, request, queryset):
             glossvideo.save()
 
 
-@admin.action(description="Remove selected backups")
+@admin.action(description="Move selected backup files to trash")
 def remove_backups(modeladmin, request, queryset):
     """
     Command for the GlossVideo objects selected in queryset
     The command appears in the admin pull-down list of commands for the selected gloss videos
-    The command removes the selected backup files
+    The command moves the selected backup files to the DELETED_FILES_FOLDER location
+    To prevent the gloss video object from pointing to the deleted files folder location
+    the name stored in the object is set to empty before deleting the object
     Other selected objects are ignored
     This allows the user to keep a number of the backup files by not selecting everything
     Called from GlossVideoAdmin
@@ -347,18 +349,23 @@ def remove_backups(modeladmin, request, queryset):
                 print('video:admin:remove_backups:delete object: ', relative_path)
             obj.delete()
             continue
-        # first remove the video file so the GlossVideo object can be deleted later
+        # move the video file to DELETED_FILES_FOLDER and erase the videofile name in the object
         # this is done to avoid the signals on GlossVideo delete
-        try:
-            os.unlink(obj.videofile.path)
-            os.remove(video_file_full_path)
-            if DEBUG_VIDEOS:
-                print('video:admin:remove_backups:os.remove: ', video_file_full_path)
-        except (OSError, PermissionError):
-            if DEBUG_VIDEOS:
-                print('Exception video:admin:remove_backups: could not delete video file: ', video_file_full_path)
-            continue
-        # only backup videos are deleted here
+        deleted_file_name = flattened_video_path(relative_path)
+        destination = os.path.join(WRITABLE_FOLDER, DELETED_FILES_FOLDER, deleted_file_name)
+        destination_dir = os.path.dirname(destination)
+        if not os.path.exists(destination_dir):
+            os.makedirs(destination_dir)
+        if os.path.isdir(destination_dir):
+            try:
+                obj.videofile.name = ""
+                obj.save()
+                shutil.move(video_file_full_path, destination)
+                if DEBUG_VIDEOS:
+                    print('video:admin:remove_backups:shutil.move: ', video_file_full_path, destination)
+            except (OSError, PermissionError) as e:
+                print(e)
+                continue
         # the object does not point to anything anymore, so it can be deleted
         if DEBUG_VIDEOS:
             print('video:admin:remove_backups:delete object: ', relative_path)
