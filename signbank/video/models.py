@@ -48,15 +48,20 @@ def filename_matches_backup_video(filename):
     return re.search(r".+-(\d+)\.(mp4|m4v|mov|webm|mkv|m2v)\.(bak\d+)$", filename_with_extension)
 
 
-def flattened_video_path(filename):
-    relative_path_components, filename_component = os.path.split(filename)
-    m = re.search(r"^glossvideo/(.+)/(..)$", relative_path_components)
+def flattened_video_path(relative_path):
+    """
+    This constructs the filename to be used in the DELETED_FILES_FOLDER
+    Take apart the gloss video relative path
+    If this succeeds, prefix the filename with the dataset-specific components
+    Otherwise just return the filename
+    """
+    relative_path_folders, filename = os.path.split(relative_path)
+    m = re.search(r"^glossvideo/(.+)/(..)$", relative_path_folders)
     if m:
-        # prefix the filename with part of the dataset-specific part of the relative path
         dataset_folder = m.group(1)
         two_char_folder = m.group(2)
-        return dataset_folder + '_' + two_char_folder + '_' + filename_component
-    return filename_component
+        return f"{dataset_folder}_{two_char_folder}_{filename}"
+    return filename
 
 
 class GlossVideoStorage(FileSystemStorage):
