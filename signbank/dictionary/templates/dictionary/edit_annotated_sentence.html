@@ -105,7 +105,7 @@
 
         <br><br>
         {% trans "Download the current .eaf file here:" %}
-        <a href="{{ annotated_sentence.annotatedvideo.eaffile.url }}" download>{{ annotated_sentence.annotatedvideo.get_eaffile_name }}</a>
+        <a href="{% url 'dictionary:protected_media' annotated_sentence.annotatedvideo.eaffile %}" download>{{ annotated_sentence.annotatedvideo.get_eaffile_name }}</a>
         <br><br>
         {% trans "Choose the updated annotation file (.eaf) here:" %} 
         <input type="file" id="eaffile" name="eaffile">
