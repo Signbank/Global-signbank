@@ -213,10 +213,44 @@ def make_thumbnail_video(sourcefile, targetfile):
     os.remove(temp_target)
 
 
+# this is only for documentation purposes in the patterns, it's not a setting
+# these were found to work properly on Ubuntu and match older files and older code
+ACCEPTABLE_VIDEO_EXTENSIONS = ['.mp4', '.mov', '.webm', '.m4v', '.mkv', '.m2v']
+
+
+def extension_on_filename(filename):
+    # used to retrieve a video type file extension from a filename where there is no file
+    # if this is a backup file, then the extension at the end is not the video file type extension
+    # otherwise, just retrieve the normal extension from the filename
+    # caveat, some video files in the database have weird backup sequences and have no video extension
+    # the .mp4 is for those
+    filename_with_extension = os.path.basename(filename)
+    filename_without_extension, ext = os.path.splitext(os.path.basename(filename))
+
+    if ext in ACCEPTABLE_VIDEO_EXTENSIONS:
+        return ext
+
+    m = re.search(r".+-(\d+)\.(mp4|m4v|mov|webm|mkv|m2v)\.(bak\d+)$", filename_with_extension)
+    if m:
+        return m.group(2)
+    m = re.search(r".+-(\d+)\.(mp4|m4v|mov|webm|mkv|m2v)\.(bak\d+)$", filename_without_extension)
+    if m:
+        return m.group(2)
+    # the function is only called if there is no file
+    # if we get here, the filename does not match any correct pattern and the extension
+    # does not match any video file type
+    # this allows the function to work on the development servers
+    return '.mp4'
+
+
 def video_file_type_extension(video_file_full_path):
+
+    if not video_file_full_path or 'glossvideo' not in video_file_full_path:
+        return ''
+
     if not os.path.exists(video_file_full_path):
-        # the video file does not exist
-        return ".mp4"
+        return extension_on_filename(video_file_full_path)
+
     filetype_output = subprocess.run(["file", video_file_full_path], stdout=subprocess.PIPE)
     filetype = str(filetype_output.stdout)
     if 'MOV' in filetype:
@@ -232,10 +266,10 @@ def video_file_type_extension(video_file_full_path):
     elif 'MPEG-2' in filetype:
         desired_video_extension = '.m2v'
     else:
-        # no match found, print something to the log and just keep using mp4
+        # no match found, print something to the log and just keep using what's on the filename
         if DEBUG_VIDEOS:
             print('video:admin:convertvideo:video_file_type_extension:file:UNKNOWN ', filetype)
-        desired_video_extension = '.mp4'
+        desired_video_extension = extension_on_filename(video_file_full_path)
     return desired_video_extension
 
 

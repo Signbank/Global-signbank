@@ -1,0 +1,131 @@
+
+GLOSS VIDEO ADMIN
+
+
+Gloss Video Admin allows to view the filenames and file properties of stored video objects.
+The video files themselves are stored in location GLOSS_VIDEO_DIRECTORY in a folder for the dataset.
+The dataset folder is organised in sub-folders based on the first two characters of the lemma text of the gloss.
+The lemma text is that of the default language of the dataset. The dataset folder is the dataset acronym.
+
+Caution: Modification of either the dataset acronym or its default language will rename and move all of the video files for the dataset.
+
+
+The Gloss Video Admin is described below.
+
+
+VIDEO FILENAMES
+
+Gloss video filenames have the following structure, where attribute idgloss is the lemma text in the default language of the dataset.
+The description uses pseudo-code patterns that include regular expression syntax. Video file type extensions are shown explicitly.
+
+Primary video: {gloss.idgloss}-{gloss.id}.(mp4|m4v|mov|webm|mkv|m2v)
+
+Perspective video: {gloss.idgloss}-{gloss.id}_(left|right|nme_\d+_left|nme_\d+_right).(mp4|m4v|mov|webm|mkv|m2v)
+The perspective video pattern also matches perspective NME video filenames.
+
+Non-manual elements video: {gloss.idgloss}-{gloss.id}_(nme_\d+|nme_\d+_left|nme_\d+_right).(mp4|m4v|mov|webm|mkv|m2v)
+The ciphers string after the "nme_" in the pattern is the ordering index of the video, for identification and display.
+
+Backup video: {gloss.idgloss}-{gloss.id}.(mp4|m4v|mov|webm|mkv|m2v).(bak\d+)
+The ciphers string after the "bak" is the ID of the backup video object. These are internal and not visible to users.
+
+
+
+COLUMNS
+
+The tabular display shows the following columns as indicated in list_display of the class GlossVideoAdmin:
+
+    ID, GLOSS, VIDEO FILE, PERSPECTIVE, NME, FILE TIMESTAMP, FILE GROUP, PERMISSIONS, FILE SIZE, VIDEO TYPE,  VERSION
+
+Some of these column values are computed based on the associated video file.
+For these, there are corresponding methods in the class. Django displays the columns in upper case.
+The version column indicates a backup file when it's greater than 0.
+
+
+FILTERS
+
+Filters are available as shown in list_filter to reduce the amount of data shown in the table.
+For each filter, a class model has been defined. The filters appear in the right-hand column of the admin.
+
+GlossVideoDatasetFilter (Dataset) filters on the dataset. A list of all the dataset acronyms is shown.
+
+GlossVideoFileSystemGroupFilter (File System Group) filters on the file system group. The selection in FILESYSTEM_SIGNBANK_GROUPS is shown.
+
+The remaining filters are all Boolean
+
+GlossVideoExistenceFilter (File Exists) filters on whether a video file exists for the gloss video object
+
+GlossVideoFileTypeFilter (MP4 File) filters on the type of the video file, MP4 File (True, False)
+
+GlossVideoNMEFilter (NME Video) filters on whether the gloss video object is a non-manual elements video
+
+GlossVideoPerspectiveFilter (Perspective Video) filters on whether the gloss video object is a perspective video
+
+GlossVideoFilenameFilter (Filename Correct) filters on whether the filename associated with the file is correct
+Methods defined in video models.py are available for this.
+They compare the filename to acceptable patterns for the type of file.
+Some older files use an older pattern for the backup filenames that did not include the video file type extension in the filename. (See Commands)
+
+
+GlossVideoBackupFilter (Backup Video) filters on whether the gloss video object is a backup video
+
+
+SEARCH
+
+There is one search field input area in the Gloss Video Admin.
+Here you can search on the initial text (regular expression carrot) that appears in the gloss annotation or lemma.
+The Django query strings appear in search_fields:
+
+'^gloss__annotationidglosstranslation__text' search on the gloss annotation text, any language
+
+'^gloss__lemma__lemmaidglosstranslation__text' search on the lemma annotation text, any language
+
+
+ACTIONS
+
+Django allows to make a selection from the objects displayed on the specific page of admin results.
+To this queryset, a command can be applied to the selected objects.
+These are shown in the actions field of the class. The commands are shown in a pull-down list.
+The primary default action is Delete, which also appears in the pull-down.
+Delete does not appear in the actions list of the class, but as a method of the class.
+
+Signbank only allows to delete gloss video objects in the admin when there is no video file.
+This is because of the backup system, which is invoked via signals when an object is deleted.
+As a safeguard, normal delete is thus not available if there is a video file.
+
+Due to legacy code, backup files have undergone name changes over the years.
+Originally, the backup files had as an extension, sequences of ".bak.bak" added to them where the number of extensions corresponded to the version.
+The video file type was omitted because all videos were converted to mp4.
+However, with the introduction of webcam capture and the API, the various video formats were no longer converted.
+It's also browser-specific whether a file is a video file.
+
+The Gloss Video Admin queryset commands are as follows:
+
+
+"Rename normal video files to match type" (rename_extension_videos)
+
+This command only applies to selected normal video file objects, including backup files.
+The filenames are updated to match the acceptable pattern.
+This has the result of repairing legacy backup video names to match the new format.
+It also makes the video file type file extension match the type of the video file.
+This is necessary for legacy files where there was no video type in the filename.
+It also applies to videos that were not converted to mp4 but include mp4 in the filename.
+
+
+"Move selected backup files to trash" (remove_backups)
+
+This command moves the selected backup files to the DELETED_FILES_FOLDER location.
+This only applies to objects in the query, allowing the user to keep a number of the backup files by not selecting everything.
+The files are renamed as {dataset_acronym}_{two_char_lemma}_{filename}. This allows convenient sorting of the DELETED_FILES_FOLDER.
+
+"Renumber selected backups" (renumber_backups)
+
+If some backup files are missing or the objects have been deleted, the version numbers can be made sequential again with this command.
+This also works for all the backup objects for the gloss of any selected objects, allowing to only select one of them, but renumber them all.
+
+"Set incorrect NME/Perspective filenames to empty string" (unlink_files)
+
+For some files in the database, a subclass perspective or NME video may be pointing to the normal video file.
+These can be found using the filter Filename Correct plus the subclass filter.
+Using this command, the name stored in the object can be set to empty to allow deletion of the object without deleting the file.
+This command is only applied on subclass objects and when the filename is not correct. Other objects in the queryset are ignored.
