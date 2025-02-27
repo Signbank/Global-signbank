@@ -1,15 +1,46 @@
 
 GLOSS VIDEO ADMIN
 
+
+Gloss Video Admin allows to view the filenames and file properties of stored video objects.
+The video files themselves are stored in location GLOSS_VIDEO_DIRECTORY in a folder for the dataset.
+The dataset folder is organised in sub-folders based on the first two characters of the lemma text of the gloss.
+The lemma text is that of the default language of the dataset. The dataset folder is the dataset acronym.
+
+Caution: Modification of either the dataset acronym or its default language will rename and move all of the video files for the dataset.
+
+
+The Gloss Video Admin is described below.
+
+
+VIDEO FILENAMES
+
+Gloss video filenames have the following structure, where attribute idgloss is the lemma text in the default language of the dataset.
+The description uses pseudo-code patterns that include regular expression syntax. Video file type extensions are shown explicitly.
+
+Primary video: {gloss.idgloss}-{gloss.id}.(mp4|m4v|mov|webm|mkv|m2v)
+
+Perspective video: {gloss.idgloss}-{gloss.id}_(left|right|nme_\d+_left|nme_\d+_right).(mp4|m4v|mov|webm|mkv|m2v)
+The perspective video pattern also matches perspective NME video filenames.
+
+Non-manual elements video: {gloss.idgloss}-{gloss.id}_(nme_\d+|nme_\d+_left|nme_\d+_right).(mp4|m4v|mov|webm|mkv|m2v)
+The ciphers string after the "nme_" in the pattern is the ordering index of the video, for identification and display.
+
+Backup video: {gloss.idgloss}-{gloss.id}.(mp4|m4v|mov|webm|mkv|m2v).(bak\d+)
+The ciphers string after the "bak" is the ID of the backup video object. These are internal and not visible to users.
+
+
+
 COLUMNS
 
 The tabular display shows the following columns as indicated in list_display of the class GlossVideoAdmin:
 
-    ID, GLOSS, VIDEO FILE, PERSPECTIVE, NME, FILE_TIMESTAMP, FILE GROUP, PERMISSIONS, FILE SIZE, VIDEO TYPE,  VERSION
+    ID, GLOSS, VIDEO FILE, PERSPECTIVE, NME, FILE TIMESTAMP, FILE GROUP, PERMISSIONS, FILE SIZE, VIDEO TYPE,  VERSION
 
 Some of these column values are computed based on the associated video file.
 For these, there are corresponding methods in the class. Django displays the columns in upper case.
 The version column indicates a backup file when it's greater than 0.
+
 
 FILTERS
 
