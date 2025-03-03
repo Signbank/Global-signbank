@@ -22,6 +22,7 @@ import os
 import json
 from collections import OrderedDict
 from datetime import datetime, date
+from urllib.parse import urlparse, unquote
 
 from signbank.settings.base import FIELDS, DEFAULT_KEYWORDS_LANGUAGE, \
     WRITABLE_FOLDER, DATASET_METADATA_DIRECTORY, ECV_FOLDER
@@ -1491,7 +1492,7 @@ class Gloss(models.Model):
 
                 if include_checksums:
                     from signbank.tools import get_checksum_for_path
-                    fields[video_fieldname + '_checksum'] = get_checksum_for_path(os.path.join(settings.WRITABLE_FOLDER, self.get_video_path()))   
+                    fields[video_fieldname + '_checksum'] = get_checksum_for_path(os.path.join(settings.WRITABLE_FOLDER, unquote(self.get_video_path())))  
 
         tags_fieldname = gettext("Tags")
         tags_of_gloss = TaggedItem.objects.filter(object_id=self.id)
@@ -1561,7 +1562,7 @@ class Gloss(models.Model):
 
                 if include_checksums:
                     from signbank.tools import get_checksum_for_path
-                    perspective_info['Checksum'] = get_checksum_for_path(os.path.join(settings.WRITABLE_FOLDER, perspectivevideo.get_video_path()))
+                    perspective_info['Checksum'] = get_checksum_for_path(os.path.join(settings.WRITABLE_FOLDER, unquote(perspectivevideo.get_video_path())))
 
                 perspective_video_list.append(perspective_info)
 
@@ -1588,7 +1589,7 @@ class Gloss(models.Model):
 
                 if include_checksums:
                     from signbank.tools import get_checksum_for_path
-                    nme_info['Checksum'] = get_checksum_for_path(os.path.join(settings.WRITABLE_FOLDER, nmevideo.get_video_path()))
+                    nme_info['Checksum'] = get_checksum_for_path(os.path.join(settings.WRITABLE_FOLDER, unquote(nmevideo.get_video_path())))
                 
                 nme_video_list.append(nme_info)
             fields[nme_videos] = nme_video_list
@@ -4324,7 +4325,6 @@ class AnnotatedSentenceSource(models.Model):
         return self.source
 
     def get_absolute_url(self):
-        from urllib.parse import urlparse
         parsed_url = urlparse(self.url)
         if not parsed_url.scheme:
             return 'http://' + self.url
