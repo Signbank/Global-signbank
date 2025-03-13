@@ -285,13 +285,9 @@ def rename_extension_videos(modeladmin, request, queryset):
             # use the file system command 'file' to determine the extension for the type of video file
             desired_video_extension = video_file_type_extension(video_file_full_path)
             if not desired_video_extension:
-                # if we get here, the file extension for the video type could not be determined
-                # either there is no file for this object or it has an unknown video type
                 continue
 
-            # retrieve the actual filename stored in the gloss video object
-            # and also compute the name it should have
-
+            # compare the stored filename to the name it should have
             base_filename = os.path.basename(video_file_full_path)
 
             idgloss = gloss.idgloss
@@ -308,8 +304,7 @@ def rename_extension_videos(modeladmin, request, queryset):
             if base_filename == desired_filename:
                 continue
 
-            # if we get to here, the file has the wrong path
-            # the path needs to be fixed and the file renamed
+            # if we get to here, the file has the wrong filename
             source = os.path.join(WRITABLE_FOLDER, current_relative_path)
             destination = os.path.join(WRITABLE_FOLDER, GLOSS_VIDEO_DIRECTORY,
                                        dataset_dir, two_letter_dir, desired_filename)
@@ -349,8 +344,8 @@ def remove_backups(modeladmin, request, queryset):
                 print('video:admin:remove_backups:delete object: ', relative_path)
             obj.delete()
             continue
-        # move the video file to DELETED_FILES_FOLDER and erase the videofile name in the object
-        # this is done to avoid the signals on GlossVideo delete
+
+        # move the video file to DELETED_FILES_FOLDER and erase the name to avoid the signals on GlossVideo delete
         deleted_file_name = flattened_video_path(relative_path)
         destination = os.path.join(WRITABLE_FOLDER, DELETED_FILES_FOLDER, deleted_file_name)
         destination_dir = os.path.dirname(destination)
@@ -384,7 +379,7 @@ def renumber_backups(modeladmin, request, queryset):
     Called from GlossVideoAdmin
     :model: GlossVideoAdmin
     """
-    # retrieve glosses of selected GlossVideo objects for later step
+    # retrieve glosses of selected GlossVideo objects
     distinct_glosses = Gloss.objects.filter(glossvideo__in=queryset).distinct()
     # construct data structure for glosses and backup videos including those that are not selected
     lookup_backup_files = dict()
@@ -395,7 +390,6 @@ def renumber_backups(modeladmin, request, queryset):
                                                                version__gt=0).order_by('version', 'id')
     for gloss, videos in lookup_backup_files.items():
         # enumerate over the backup videos and give them new version numbers
-        # the version of the gloss video object is updated since objects may have been deleted
         for inx, video in enumerate(videos, 1):
             if inx == video.version:
                 continue
@@ -430,7 +424,6 @@ def unlink_files(modeladmin, request, queryset):
         if hasattr(obj, 'glossvideoperspective') and filename_matches_perspective(video_file_full_path):
             continue
 
-        # erase the file path since it has the wrong format
         if DEBUG_VIDEOS:
             print('unlink_files: erase incorrect path from NME or Perspective object: ', obj, video_file_full_path)
         obj.videofile.name = ""

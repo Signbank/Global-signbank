@@ -1260,13 +1260,8 @@ def delete_files(sender, instance, **kwargs):
         print('delete_files pre_delete: ', str(instance))
         print('delete_files settings.DELETE_FILES_ON_GLOSSVIDEO_DELETE: ', settings.DELETE_FILES_ON_GLOSSVIDEO_DELETE)
     if hasattr(instance, 'glossvideonme'):
-        # before deleting a GlossVideoNME object, delete the files
         status = instance.delete_files()
     elif hasattr(instance, 'glossvideoperspective'):
-        # before deleting a GlossVideoPerspective object, delete the files
         status = instance.delete_files()
     elif settings.DELETE_FILES_ON_GLOSSVIDEO_DELETE:
-        # before a GlossVideo object, only delete the files if the setting is True
-        # default.py has this set to false so primary gloss video files are (never) deleted
-        # check whether this conflicts with reversion. If the file is not deleted, the object cannot be deleted
         instance.delete_files()

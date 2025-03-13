@@ -213,17 +213,12 @@ def make_thumbnail_video(sourcefile, targetfile):
     os.remove(temp_target)
 
 
-# this is only for documentation purposes in the patterns, it's not a setting
-# these were found to work properly on Ubuntu and match older files and older code
+# Documentation only: works on Ubuntu and matches older files/code.
 ACCEPTABLE_VIDEO_EXTENSIONS = ['.mp4', '.mov', '.webm', '.m4v', '.mkv', '.m2v']
 
 
 def extension_on_filename(filename):
     # used to retrieve a video type file extension from a filename where there is no file
-    # if this is a backup file, then the extension at the end is not the video file type extension
-    # otherwise, just retrieve the normal extension from the filename
-    # caveat, some video files in the database have weird backup sequences and have no video extension
-    # the .mp4 is for those
     filename_with_extension = os.path.basename(filename)
     filename_without_extension, ext = os.path.splitext(os.path.basename(filename))
 
@@ -236,10 +231,7 @@ def extension_on_filename(filename):
     m = re.search(r".+-(\d+)\.(mp4|m4v|mov|webm|mkv|m2v)\.(bak\d+)$", filename_without_extension)
     if m:
         return m.group(2)
-    # the function is only called if there is no file
-    # if we get here, the filename does not match any correct pattern and the extension
-    # does not match any video file type
-    # this allows the function to work on the development servers
+    # Default if no file exists and the filename is invalid, allows to work on dev servers.
     return '.mp4'
 
 
