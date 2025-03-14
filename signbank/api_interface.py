@@ -1,42 +1,16 @@
-import json
-import urllib.request
-import tempfile
-import shutil
-import os
+
 import stat
-import zipfile
 import sys
 
 from urllib.parse import quote
-from urllib.error import URLError
-from requests.exceptions import InvalidURL
 from guardian.shortcuts import get_objects_for_user, get_user_perms
-from tagging.models import Tag, TaggedItem
-
-from django.shortcuts import get_object_or_404
-from django.contrib.auth.models import Group, User
-from django.contrib.auth.decorators import permission_required
-from django.views.decorators.csrf import csrf_exempt
-from django.utils.translation import override, gettext_lazy as _, activate
-from django.http import HttpResponse, HttpResponseRedirect, HttpResponseForbidden, HttpResponseBadRequest, JsonResponse, StreamingHttpResponse
-from django.urls import reverse, reverse_lazy
-
-from django.core.exceptions import ObjectDoesNotExist
-from django.core.files.base import ContentFile, File
-
-from django.db import DatabaseError, IntegrityError
-from django.db.transaction import TransactionManagementError
-from django.db.models import FileField
 
 import signbank.tools
-from signbank.dictionary.models import *
-from signbank.dictionary.forms import *
-from signbank.settings.server_specific import LANGUAGES, LEFT_DOUBLE_QUOTE_PATTERNS, RIGHT_DOUBLE_QUOTE_PATTERNS, VIDEOS_TO_IMPORT_FOLDER
 from signbank.api_token import put_api_user_in_request
-from signbank.abstract_machine import get_interface_language_api, get_human_readable_value_dict
-from signbank.video.convertvideo import probe_format
-from signbank.video.models import GlossVideo, GlossVideoHistory
+from signbank.abstract_machine import get_interface_language_api
 from signbank.zip_interface import *
+from django.utils.translation import activate, gettext
+import zipfile
 
 
 def check_api_dataset_manager_permissions(request, datasetid):
@@ -266,7 +240,6 @@ def get_gloss_data_json(request, datasetid, glossid):
 @put_api_user_in_request
 def get_annotated_sentences_of_gloss_json(request, datasetid, glossid):
 
-    from django.utils.translation import gettext_lazy as _, activate, gettext
     interface_language_code = request.headers.get('Accept-Language', 'en')
     if interface_language_code not in settings.MODELTRANSLATION_LANGUAGES:
         interface_language_code = 'en'
