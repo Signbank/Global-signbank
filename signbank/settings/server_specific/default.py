@@ -23,6 +23,7 @@ DATASET_EAF_DIRECTORY = 'eafs'
 DATASET_METADATA_DIRECTORY = 'metadata_eafs'
 TEST_DATA_DIRECTORY = 'test_data'
 BACKUP_VIDEOS_FOLDER = 'video_backups'
+DELETED_FILES_FOLDER = 'prullenmand'
 
 #Tmp folder to use
 TMP_DIR = '/tmp'
