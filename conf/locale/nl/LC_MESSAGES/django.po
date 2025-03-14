@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: \n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-03-13 12:47+0100\n"
+"POT-Creation-Date: 2025-03-14 11:15+0100\n"
 "PO-Revision-Date: 2018-03-08 18:54+0100\n"
 "Last-Translator: susanodd\n"
 "Language-Team: Dutch <LL@li.org>\n"
@@ -501,8 +501,8 @@ msgstr "Gebruiker"
 #: signbank/gloss_update.py:815 signbank/gloss_update.py:982
 #: signbank/gloss_update.py:989 signbank/gloss_update.py:1115
 #: signbank/gloss_update.py:1122 signbank/gloss_update.py:1199
-#: signbank/gloss_update.py:1206 signbank/video/admin.py:15
-#: signbank/video/admin.py:186 signbank/video/admin.py:228
+#: signbank/gloss_update.py:1206 signbank/video/admin.py:26
+#: signbank/video/admin.py:553 signbank/video/admin.py:595
 #: signbank/video/admin_update.py:20 signbank/video/admin_update.py:354
 #: signbank/video/admin_update.py:396
 msgid "Dataset"
@@ -606,7 +606,8 @@ msgstr " Hij behoort tot de dataset "
 #: signbank/dictionary/adminviews.py:1772
 #: signbank/dictionary/adminviews.py:3111
 msgid "The gloss you are trying to view is not in a dataset you can view."
-msgstr "De aangevraagde glos bevindt zich niet in een dataset die u kunt bekijken."
+msgstr ""
+"De aangevraagde glos bevindt zich niet in een dataset die u kunt bekijken."
 
 #: signbank/dictionary/adminviews.py:1569
 #: signbank/dictionary/adminviews.py:4752
@@ -882,7 +883,7 @@ msgstr ""
 #: signbank/dictionary/adminviews.py:4962
 #: signbank/dictionary/adminviews.py:5002
 msgid "No dataset with that acronym found."
-msgstr ""
+msgstr "Geen dataset met dat acroniem gevonden."
 
 #: signbank/dictionary/adminviews.py:4931
 msgid "No permission to import speakers for this dataset."
@@ -916,19 +917,19 @@ msgstr "Corpus met succes bijgewerkt."
 
 #: signbank/dictionary/adminviews.py:5107
 msgid "The requested morpheme does not exist."
-msgstr ""
+msgstr "Aangevraagd morfeem bestaat niet."
 
 #: signbank/dictionary/adminviews.py:5111
 msgid "Requested morpheme has no lemma or dataset."
-msgstr ""
+msgstr "Aangevraagd morfeem heeft geen lemma nog dataset."
 
 #: signbank/dictionary/adminviews.py:5125
 msgid "The morpheme you are trying to view is not in your selected datasets."
-msgstr ""
+msgstr "De aangevraagde morfeem bevindt zich niet in de geselecteerde datasets."
 
 #: signbank/dictionary/adminviews.py:5130
 msgid "The morpheme you are trying to view is not in a dataset you can view."
-msgstr ""
+msgstr "De aangevraagde morfeem bevindt zich niet in een dataset die u kunt bekijken."
 
 #: signbank/dictionary/adminviews.py:5770
 #: signbank/dictionary/adminviews.py:5784
@@ -1117,11 +1118,11 @@ msgstr "Type relatie"
 
 #: signbank/dictionary/adminviews.py:6282
 msgid "You have no permission to delete lemmas."
-msgstr ""
+msgstr "Je hebt geen toestemming om lemma's te verwijderen."
 
 #: signbank/dictionary/adminviews.py:6287
 msgid "Incorrect deletion code."
-msgstr ""
+msgstr "Onjuiste verwijderingscode."
 
 #: signbank/dictionary/adminviews.py:6293
 #: signbank/dictionary/adminviews.py:6306
@@ -1133,7 +1134,7 @@ msgstr ""
 #: signbank/dictionary/adminviews.py:6371
 #: signbank/dictionary/adminviews.py:6563
 msgid "Lemma ID Gloss is not unique for that language."
-msgstr ""
+msgstr "Lemma-ID-Glos is niet uniek voor die taal"
 
 #: signbank/dictionary/adminviews.py:6408
 msgid "The specified gloss does not exist."
@@ -1145,7 +1146,7 @@ msgstr "Lemma-ID-Glos is niet uniek."
 
 #: signbank/dictionary/adminviews.py:6440
 msgid "The form contains errors."
-msgstr ""
+msgstr "De invoerformulier bevat fouten."
 
 #: signbank/dictionary/adminviews.py:6588
 msgid "The changes to the lemma have been saved."
@@ -1157,11 +1158,11 @@ msgstr ""
 
 #: signbank/dictionary/adminviews.py:6619
 msgid "The requested lemma does not exist."
-msgstr ""
+msgstr "Aangevraagd lemma bestaat niet."
 
 #: signbank/dictionary/adminviews.py:6623
 msgid "Requested lemma has no dataset."
-msgstr ""
+msgstr "Aangevraagd lemma heeft geen dataset."
 
 #: signbank/dictionary/adminviews.py:6634
 msgid "The lemma you are trying to view is not in your selected datasets."
@@ -1173,7 +1174,7 @@ msgstr ""
 
 #: signbank/dictionary/adminviews.py:6654
 msgid "There are glosses using this lemma."
-msgstr ""
+msgstr "Er zijn glossen die dit lemma gebruiken."
 
 #: signbank/dictionary/adminviews.py:6678
 #: signbank/dictionary/adminviews.py:6716
@@ -2299,7 +2300,7 @@ msgstr "Voeg nieuw lemma toe"
 
 #: signbank/dictionary/templates/dictionary/add_gloss.html:147
 msgid "Type in the initial letters to see if the lemma already exists."
-msgstr "Typ de eerste letters van de lemma om te checken of die al bestaat."
+msgstr "Typ de eerste letters van het lemma om te checken of het al bestaat."
 
 #: signbank/dictionary/templates/dictionary/add_gloss.html:176
 msgid "Copy Annotation Fields to Lemma Translations"
@@ -4256,7 +4257,7 @@ msgstr "Bestandssysteempaden"
 
 #: signbank/dictionary/templates/dictionary/dataset_video_storage.html:127
 msgid "Glosses with Multiple Version 0 Videos"
-msgstr ""
+msgstr "Glossen met meerdere versie 0 videobestanden"
 
 #: signbank/dictionary/templates/dictionary/dataset_video_storage.html:136
 #: signbank/dictionary/templates/dictionary/dataset_video_storage.html:167
@@ -4271,22 +4272,22 @@ msgstr "Glos-ID"
 
 #: signbank/dictionary/templates/dictionary/dataset_video_storage.html:158
 msgid "Glosses with Extra Characters in Video Filename"
-msgstr ""
+msgstr "Glossen met extra tekens in video bestandsnaam"
 
 #: signbank/dictionary/templates/dictionary/dataset_video_storage.html:188
 msgid "Glosses with Wrong Folder for Video"
-msgstr ""
+msgstr "Glossen met verkeerde map voor video"
 
 #: signbank/dictionary/templates/dictionary/dataset_video_storage.html:202
 msgid "Exists"
-msgstr ""
+msgstr "Bestaat"
 
 #: signbank/dictionary/templates/dictionary/dataset_video_storage.html:231
 msgid "Gloss Video Files with non-mp4 Extensions"
-msgstr ""
+msgstr "Glos-video's zonder mp4-extensie"
 
 #: signbank/dictionary/templates/dictionary/dataset_video_storage.html:261
-msgid "Gloss Videos with Non-manual Elements"
+msgid "Gloss NME Videos"
 msgstr "Glos-video's met non-manuele elementen"
 
 #: signbank/dictionary/templates/dictionary/dataset_video_storage.html:299
@@ -4303,7 +4304,7 @@ msgstr "Operaties"
 
 #: signbank/dictionary/templates/dictionary/dataset_video_storage.html:358
 msgid "Renumber backup files; match extension to video type."
-msgstr ""
+msgstr "Back-upbestanden opnieuw nummeren; overeenkomen met de video-extensie"
 
 #: signbank/dictionary/templates/dictionary/dataset_video_storage.html:377
 msgid "Rename"
@@ -5914,7 +5915,7 @@ msgstr ""
 
 #: signbank/dictionary/update.py:942 signbank/dictionary/update.py:2596
 msgid "The specified lemma does not exist."
-msgstr ""
+msgstr "bestaat niet."
 
 #: signbank/dictionary/update.py:1775
 msgid ""
@@ -5972,7 +5973,7 @@ msgstr ""
 
 #: signbank/dictionary/update.py:2594
 msgid "The dataset of the morpheme is not the same as that of the lemma."
-msgstr "De dataset van de morfeem komt niet overeen met die van de lemma."
+msgstr "De dataset van de morfeem komt niet overeen met die van het lemma."
 
 #: signbank/dictionary/update.py:2964
 msgid "You must be in group Dataset Manager to modify dataset details."
@@ -6008,7 +6009,7 @@ msgstr ""
 
 #: signbank/dictionary/update.py:3387
 msgid "Already imported to different folder: "
-msgstr ""
+msgstr "Al geïmporteerd naar een andere map: "
 
 #: signbank/dictionary/update.py:3519
 msgid "You do not have permission to change glosses."
@@ -6016,11 +6017,11 @@ msgstr "Gebruiker heeft geen rechten om gebaren te wijzigen."
 
 #: signbank/dictionary/update.py:3546
 msgid "You do not have change permission for"
-msgstr ""
+msgstr "U hebt geen wijzigingsrechten voor"
 
 #: signbank/dictionary/update.py:3554
 msgid "Error assigning lemma to gloss."
-msgstr ""
+msgstr "Fout bij het toewijzen van lemma aan glos."
 
 #: signbank/dictionary/views.py:102
 msgid "You are not allowed to see this sign."
@@ -6037,12 +6038,12 @@ msgstr ""
 #: signbank/dictionary/views.py:498 signbank/dictionary/views.py:918
 #: signbank/dictionary/views.py:2827
 msgid "Unrecognised format in selected CSV file."
-msgstr ""
+msgstr "Onbekend formaat in geselecteerd CSV-bestand."
 
 #: signbank/dictionary/views.py:524 signbank/dictionary/views.py:981
 #: signbank/dictionary/views.py:1509 signbank/dictionary/views.py:2852
 msgid "The delimiter is not comma, tab, or semicolon."
-msgstr ""
+msgstr "Het scheidingsteken is geen komma, tab of puntkomma."
 
 #: signbank/dictionary/views.py:526 signbank/dictionary/views.py:983
 #: signbank/dictionary/views.py:1511 signbank/dictionary/views.py:2854
@@ -6052,7 +6053,7 @@ msgstr "De koprij van het bestand zou zo eruit moeten zien: "
 #: signbank/dictionary/views.py:528 signbank/dictionary/views.py:985
 #: signbank/dictionary/views.py:1513 signbank/dictionary/views.py:2856
 msgid "Some required column headers are missing: "
-msgstr ""
+msgstr "Sommige vereiste kolomkoppen ontbreken: "
 
 #: signbank/dictionary/views.py:541 signbank/dictionary/views.py:1000
 msgid "Empty Column Header Found."
@@ -6077,15 +6078,15 @@ msgstr "De kolom 'Signbank ID' is verplicht."
 #: signbank/dictionary/views.py:1141
 msgid ""
 "Attempt to update Lemma translations. Use Import CSV Lemma Update instead."
-msgstr ""
+msgstr "Poging om Lemma bij te werken. Gebruik in plaats daarvan: Import CSV Update Lemma."
 
 #: signbank/dictionary/views.py:1208
 msgid "Attempt to update Lemma translations. Use Import CSV Lemma Update."
-msgstr ""
+msgstr "Poging om Lemma bij te werken. Gebruik in plaats daarvan: Import CSV Update Lemma."
 
 #: signbank/dictionary/views.py:1443
 msgid "Please select a single dataset for which you have change permission."
-msgstr ""
+msgstr "Selecteer een enkele dataset waarvoor u wijzigingsrechten hebt."
 
 #: signbank/dictionary/views.py:1461
 msgid "You do not have change permission for the chosen dataset."
@@ -6099,11 +6100,11 @@ msgstr ""
 
 #: signbank/dictionary/views.py:1856 signbank/dictionary/views.py:1983
 msgid "File extension not supported! Please convert to png or jpg"
-msgstr ""
+msgstr "Bestandsextensie niet ondersteund! Converteer het bestand naar png of jpg"
 
 #: signbank/dictionary/views.py:1864 signbank/dictionary/views.py:1990
 msgid "Uploaded file too large!"
-msgstr ""
+msgstr "Geüploade bestand te groot!"
 
 #: signbank/dictionary/views.py:2017
 msgid "Error uploading handshape image. Please consult the administrator."
@@ -6114,7 +6115,8 @@ msgid "NME Video Description"
 msgstr "NME video beschrijving"
 
 #: signbank/dictionary/views.py:2546 signbank/dictionary/views.py:2548
-#: signbank/dictionary/views.py:2550 signbank/video/admin_update.py:99
+#: signbank/dictionary/views.py:2550 signbank/video/admin.py:163
+#: signbank/video/admin_update.py:99
 msgid "NME Video"
 msgstr "NME video"
 
@@ -6140,7 +6142,7 @@ msgstr "Aangevraagd glos bestaat niet in de dataset."
 
 #: signbank/feedback/models.py:114
 msgid "Comment or new keywords"
-msgstr ""
+msgstr "Commentaar of nieuwe trefwoorden"
 
 #: signbank/feedback/models.py:123
 msgid "Sign Meaning"
@@ -6187,11 +6189,11 @@ msgstr ""
 
 #: signbank/feedback/templates/feedback/generalfeedback.html:30
 msgid "General comments, suggestions, or anything you feel like telling us."
-msgstr ""
+msgstr "Algemene opmerkingen, suggesties, alles wat je ons wilt vertellen."
 
 #: signbank/feedback/templates/feedback/generalfeedback.html:36
 msgid " Upload your feedback as a video."
-msgstr ""
+msgstr " Upload uw feedback als video."
 
 #: signbank/feedback/templates/feedback/generalfeedback.html:39
 msgid ""
@@ -6238,7 +6240,7 @@ msgstr ""
 
 #: signbank/feedback/templates/feedback/index.html:34
 msgid "We thank you in advance for your contribution and cooperation."
-msgstr ""
+msgstr "Wij danken u bij voorbaat voor uw bijdrage en medewerking."
 
 #: signbank/feedback/templates/feedback/index.html:39
 #, python-format
@@ -6654,7 +6656,7 @@ msgstr "Voorbeeldzin"
 msgid "Sentence"
 msgstr "Zin"
 
-#: signbank/settings/server_specific/default.py:69
+#: signbank/settings/server_specific/default.py:70
 #: signbank/settings/server_specific/global_sb_local.py:28
 #: signbank/settings/server_specific/global_sb_new_aj.py:14
 #: signbank/settings/server_specific/server_specific.py:28
@@ -6685,35 +6687,43 @@ msgstr "Hebreeuws"
 msgid "Arabic"
 msgstr "Arabisch"
 
-#: signbank/video/admin.py:32 signbank/video/admin_update.py:37
+#: signbank/video/admin.py:48 signbank/video/admin_update.py:37
 msgid "File System Group"
-msgstr ""
+msgstr "Bestandssysteemgroep"
 
-#: signbank/video/admin.py:63 signbank/video/admin_update.py:68
+#: signbank/video/admin.py:82 signbank/video/admin_update.py:68
 msgid "File Exists"
-msgstr ""
+msgstr "Bestand bestaat"
 
-#: signbank/video/admin.py:203 signbank/video/admin_update.py:371
-msgid "Actor"
-msgstr ""
+#: signbank/video/admin.py:118
+msgid "Filename Correct"
+msgstr "Bestandsnaam klopt"
 
-#: signbank/video/admin_update.py:114
+#: signbank/video/admin.py:186 signbank/video/admin_update.py:114
 msgid "Perspective Video"
 msgstr "Video met perspectief"
 
-#: signbank/video/admin_update.py:129
+#: signbank/video/admin.py:209 signbank/video/admin_update.py:129
 msgid "MP4 File"
 msgstr "MP4-bestand"
+
+#: signbank/video/admin.py:244
+msgid "Backup Video"
+msgstr "Back-upvideo"
+
+#: signbank/video/admin.py:570 signbank/video/admin_update.py:371
+msgid "Actor"
+msgstr ""
 
 #: signbank/video/forms.py:32
 msgid "Video Perspective"
 msgstr "Video-perspectief"
 
-#: signbank/video/models.py:890
+#: signbank/video/models.py:929
 msgid "NME Gloss Video"
 msgstr "NME glos-video"
 
-#: signbank/video/models.py:987
+#: signbank/video/models.py:1040
 msgid "Gloss Video Perspective"
 msgstr "Glos-video met perspectief"
 
@@ -6971,6 +6981,9 @@ msgstr "vind alle strings in dit veld"
 #: templates/global-templates/tooltip.html:25
 msgid "use backslash to find <br/>special characters in field"
 msgstr "gebruik backslash om <br/>speciale karakters te zoeken"
+
+#~ msgid "Gloss Videos with Non-manual Elements"
+#~ msgstr "Glos-video's met non-manuele elementen"
 
 #~ msgid ""
 #~ "Please refine your query to retrieve fewer than 100 glosses to use this "
