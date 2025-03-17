@@ -58,6 +58,13 @@ def pretty_print_revisions(gloss):
         name_languagecode = 'name_' + interface_language_code.replace('-', '_')
         if name_languagecode not in language_codes:
             language_codes.append(name_languagecode)
+    simple_translation_dict = {
+        'sequential_morphology': gettext("Sequential Morphology"),
+        'simultaneous_morphology': gettext("Simultaneous Morphology"),
+        'blend_morphology': gettext("Blend Morphology"),
+        'archived': gettext("Deleted"),
+        'restored': gettext("Restored")
+    }
     revisions = []
     for revision in GlossRevision.objects.filter(gloss=gloss):
         if revision.field_name.startswith('sense_'):
@@ -80,12 +87,8 @@ def pretty_print_revisions(gloss):
                 revision_verbose_fieldname = gettext("NME Video") + ' ' + gettext("Update")
         elif revision.field_name in Gloss.get_field_names():
             revision_verbose_fieldname = gettext(Gloss.get_field(revision.field_name).verbose_name)
-        elif revision.field_name == 'sequential_morphology':
-            revision_verbose_fieldname = gettext("Sequential Morphology")
-        elif revision.field_name == 'simultaneous_morphology':
-            revision_verbose_fieldname = gettext("Simultaneous Morphology")
-        elif revision.field_name == 'blend_morphology':
-            revision_verbose_fieldname = gettext("Blend Morphology")
+        elif revision.field_name in simple_translation_dict.keys():
+            revision_verbose_fieldname = simple_translation_dict[revision.field_name]
         elif revision.field_name.startswith('lemma'):
             language_2char = revision.field_name[-2:]
             language = Language.objects.get(language_code_2char=language_2char)
@@ -94,11 +97,8 @@ def pretty_print_revisions(gloss):
             language_2char = revision.field_name[-2:]
             language = Language.objects.get(language_code_2char=language_2char)
             revision_verbose_fieldname = gettext('Annotation ID Gloss') + " (%s)" % language.name
-        elif revision.field_name == 'archived':
-            revision_verbose_fieldname = gettext("Deleted")
-        elif revision.field_name == 'restored':
-            revision_verbose_fieldname = gettext("Restored")
         else:
+            # some legacy data may fall through
             revision_verbose_fieldname = gettext(revision.field_name)
             # print('fall through: ', revision.field_name, revision_verbose_fieldname)
 
