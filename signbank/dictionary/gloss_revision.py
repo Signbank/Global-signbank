@@ -64,6 +64,8 @@ def pretty_print_revisions(gloss):
             prefix, order, language_2char = revision.field_name.split('_')
             language = Language.objects.get(language_code_2char=language_2char)
             revision_verbose_fieldname = gettext('Sense') + ' ' + order + " (%s)" % language.name
+        elif revision.field_name.startswith('Sense'):
+            revision_verbose_fieldname = gettext('Sense')
         elif revision.field_name.startswith('description_'):
             prefix, language_2char = revision.field_name.split('_')
             language = Language.objects.get(language_code_2char=language_2char)
@@ -114,33 +116,9 @@ def pretty_print_revisions(gloss):
             else:
                 # this shouldn't happen
                 field_name_qualification = ''
-        elif revision.field_name in ['Sense', 'Senses', 'senses']:
-            if revision.old_value and not revision.new_value:
-                # this translation exists in the interface of Gloss Edit View
-                delete_command = gettext('Delete')
-                field_name_qualification = ' (' + delete_command + ')'
-            elif revision.new_value and not revision.old_value:
-                # this translation exists in the interface of Gloss Edit View
-                add_command = gettext('Create')
-                field_name_qualification = ' (' + add_command + ')'
-            else:
-                # this translation exists in the interface of Gloss Edit View
-                add_command = gettext('Update')
-                field_name_qualification = ' (' + add_command + ')'
-        elif revision.field_name == 'Sentence':
-            if revision.old_value and not revision.new_value:
-                # this translation exists in the interface of Gloss Edit View
-                delete_command = gettext('Delete')
-                field_name_qualification = ' (' + delete_command + ')'
-            elif revision.new_value and not revision.old_value:
-                # this translation exists in the interface of Gloss Edit View
-                add_command = gettext('Create')
-                field_name_qualification = ' (' + add_command + ')'
-            else:
-                # this translation exists in the interface of Gloss Edit View
-                add_command = gettext('Update')
-                field_name_qualification = ' (' + add_command + ')'
-        elif revision.field_name in ['sequential_morphology', 'simultaneous_morphology', 'blend_morphology']:
+        elif revision.field_name in ['Sense', 'Senses', 'senses',
+                                     'Sentence',
+                                     'sequential_morphology', 'simultaneous_morphology', 'blend_morphology']:
             if revision.old_value and not revision.new_value:
                 # this translation exists in the interface of Gloss Edit View
                 delete_command = gettext('Delete')
