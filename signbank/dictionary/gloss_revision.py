@@ -204,22 +204,24 @@ def cleanup(request, glossid):
     for revision in revisions:
         if revision.old_value in ['', '-'] and revision.new_value in ['', '-']:
             empty_revisions.append(revision)
-        elif revision.old_value == revision.new_value:
+            continue
+        if revision.old_value == revision.new_value:
             if revision.field_name not in duplicate_revisions.keys():
                 # this is the first time the duplicate occurs
                 duplicate_revisions[revision.field_name] = []
             else:
                 # we have already seen this duplicate, schedule to delete
                 duplicate_revisions[revision.field_name].append(revision)
+            continue
+        if not tuple_updates:
+            tuple_updates.append((revision.field_name, revision.old_value, revision.new_value))
+            continue
+        (last_field, last_old_value, last_new_value) = tuple_updates[-1]
+        if last_field == revision.field_name and last_old_value == revision.old_value and last_new_value == revision.new_value:
+            tuple_update_already_seen.append(revision)
         else:
-            if not tuple_updates:
-                tuple_updates.append((revision.field_name, revision.old_value, revision.new_value))
-            else:
-                (last_field, last_old_value, last_new_value) = tuple_updates[-1]
-                if last_field == revision.field_name and last_old_value == revision.old_value and last_new_value == revision.new_value:
-                    tuple_update_already_seen.append(revision)
-                else:
-                    tuple_updates.append((revision.field_name, revision.old_value, revision.new_value))
+            tuple_updates.append((revision.field_name, revision.old_value, revision.new_value))
+
     for empty_revision in empty_revisions:
         empty_revision.delete()
 
