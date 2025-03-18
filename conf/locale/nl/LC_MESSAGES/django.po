@@ -1138,7 +1138,7 @@ msgstr "Lemma-ID-Glos is niet uniek voor die taal"
 
 #: signbank/dictionary/adminviews.py:6408
 msgid "The specified gloss does not exist."
-msgstr ""
+msgstr "De opgegeven glos bestaat niet."
 
 #: signbank/dictionary/adminviews.py:6427
 msgid "Lemma ID Gloss not unique for language."
@@ -1150,11 +1150,11 @@ msgstr "De invoerformulier bevat fouten."
 
 #: signbank/dictionary/adminviews.py:6588
 msgid "The changes to the lemma have been saved."
-msgstr ""
+msgstr "De wijzigingen in het lemma zijn opgeslagen."
 
 #: signbank/dictionary/adminviews.py:6595
 msgid "There must be at least one translation for this lemma."
-msgstr ""
+msgstr "Er moet minstens één vertaling zijn voor het lemma."
 
 #: signbank/dictionary/adminviews.py:6619
 msgid "The requested lemma does not exist."
@@ -1166,11 +1166,11 @@ msgstr "Aangevraagd lemma heeft geen dataset."
 
 #: signbank/dictionary/adminviews.py:6634
 msgid "The lemma you are trying to view is not in your selected datasets."
-msgstr ""
+msgstr "Het lemma dat u probeert te bekijken, bevindt zich niet in uw geselecteerde datasets."
 
 #: signbank/dictionary/adminviews.py:6639
 msgid "The lemma you are trying to view is not in a dataset you can view."
-msgstr ""
+msgstr "Het lemma dat u probeert te bekijken, bevindt zich niet in een dataset die u kunt bekijken.."
 
 #: signbank/dictionary/adminviews.py:6654
 msgid "There are glosses using this lemma."
@@ -1501,11 +1501,11 @@ msgstr "Rol"
 
 #: signbank/dictionary/forms.py:642
 msgid "Please choose a type description when uploading other media."
-msgstr ""
+msgstr "Kies een soort beschrijving bij het uploaden van media."
 
 #: signbank/dictionary/forms.py:649
 msgid "Please choose a video or image file to upload."
-msgstr ""
+msgstr "Kies een video- of beeldbestand te uploaden"
 
 #: signbank/dictionary/forms.py:756
 #: signbank/dictionary/templates/dictionary/admin_handshape_list.html:363
@@ -1599,11 +1599,11 @@ msgstr "Laatste update"
 
 #: signbank/dictionary/forms.py:1220
 msgid "The Field Choice Category is required"
-msgstr ""
+msgstr "De categorie Veldkeuze is verplicht"
 
 #: signbank/dictionary/forms.py:1230
 msgid "The Name fields for all languages are required"
-msgstr ""
+msgstr "De velden Naam zijn voor alle talen verplicht"
 
 #: signbank/dictionary/forms.py:1237 signbank/dictionary/forms.py:1247
 msgid "The combination "
@@ -1630,7 +1630,7 @@ msgstr "Taal"
 #: signbank/dictionary/forms.py:1479 signbank/dictionary/forms.py:1484
 #: signbank/dictionary/templates/dictionary/admin_search_history.html:128
 msgid "Parameters"
-msgstr ""
+msgstr "Parameters"
 
 #: signbank/dictionary/forms.py:1493
 #: signbank/dictionary/templates/dictionary/import_csv_create_sentences.html:143
@@ -1664,7 +1664,7 @@ msgstr "Betekenis index"
 #: signbank/dictionary/models.py:253 signbank/dictionary/models.py:265
 #: signbank/dictionary/models.py:296
 msgid "Machine value"
-msgstr ""
+msgstr "Machinewaarde"
 
 #: signbank/dictionary/models.py:308
 msgid "Finger selection"
@@ -1921,7 +1921,7 @@ msgstr ""
 #: signbank/dictionary/models.py:1064
 #: signbank/dictionary/templates/dictionary/import_csv_create_sentences.html:141
 msgid "Sense Number"
-msgstr ""
+msgstr "Betekenisnummer"
 
 #: signbank/dictionary/models.py:1072
 msgid "Senses in this Gloss"
@@ -2106,7 +2106,7 @@ msgstr "Omschrijving"
 
 #: signbank/dictionary/models.py:2852
 msgid "What order to display this sense within the gloss."
-msgstr ""
+msgstr "In welke volgorde moet deze betekenis in de gloss worden weergegeven?"
 
 #: signbank/dictionary/models.py:2857
 msgid "Gloss sense"
@@ -2150,11 +2150,11 @@ msgstr "Lemma-ID-Glos vertaling"
 
 #: signbank/dictionary/models.py:3710
 msgid "Multiple Select"
-msgstr ""
+msgstr "Meerdere selecteren"
 
 #: signbank/dictionary/models.py:3711
 msgid "Is this a multiselect parameter?"
-msgstr ""
+msgstr "Is dit een multiselect-parameter?"
 
 #: signbank/dictionary/models.py:3853
 #: signbank/dictionary/templates/dictionary/admin_handshape_list.html:355
@@ -2491,7 +2491,7 @@ msgstr "Aantal gebaren"
 #: signbank/dictionary/views.py:2550 signbank/dictionary/views.py:2599
 #: signbank/dictionary/views.py:2612 signbank/dictionary/views.py:2625
 msgid "Update"
-msgstr ""
+msgstr "Werk bij"
 
 #: signbank/dictionary/templates/dictionary/admin_annotatedsentence_list.html:216
 #: signbank/dictionary/templates/dictionary/admin_lemma_list.html:270
@@ -2748,7 +2748,7 @@ msgstr "Vergelijkbare glossen"
 
 #: signbank/dictionary/templates/dictionary/admin_batch_edit_view.html:982
 msgid "QUERY EXACT"
-msgstr ""
+msgstr "EXACTE VRAAG"
 
 #: signbank/dictionary/templates/dictionary/admin_configure_derivationhistory.html:8
 msgid "Configure Derivation History"
@@ -2756,7 +2756,7 @@ msgstr "Derivatieachtergrond"
 
 #: signbank/dictionary/templates/dictionary/admin_configure_derivationhistory.html:17
 msgid "Derivation History is not supported by your Signbank configuration."
-msgstr ""
+msgstr "Derivatieachtergrond wordt niet ondersteund door uw Signbank-configuratie."
 
 #: signbank/dictionary/templates/dictionary/admin_configure_derivationhistory.html:19
 msgid "You do not have permission to configure Derivation Histories."
@@ -2764,7 +2764,7 @@ msgstr ""
 
 #: signbank/dictionary/templates/dictionary/admin_configure_derivationhistory.html:21
 msgid "No choices found for Derivation History in FieldChoice."
-msgstr ""
+msgstr "Geen keuzes gevonden voor Derivatieachtergrond in FieldChoice."
 
 #: signbank/dictionary/templates/dictionary/admin_configure_derivationhistory.html:24
 msgid "Derivation History has already been configured."
@@ -2779,7 +2779,7 @@ msgstr ""
 #: signbank/dictionary/templates/dictionary/admin_configure_derivationhistory.html:31
 #: signbank/dictionary/templates/dictionary/admin_configure_handshapes.html:32
 msgid "Machine Value"
-msgstr ""
+msgstr "Machinewaarde"
 
 #: signbank/dictionary/templates/dictionary/admin_configure_handshapes.html:9
 msgid "Configure Handshapes"
@@ -2787,7 +2787,7 @@ msgstr "Configureer handvormen"
 
 #: signbank/dictionary/templates/dictionary/admin_configure_handshapes.html:18
 msgid "Handshapes are not supported by your Signbank configuration."
-msgstr ""
+msgstr "Handvormen wordt niet ondersteund door uw Signbank-configuratie."
 
 #: signbank/dictionary/templates/dictionary/admin_configure_handshapes.html:20
 msgid "You do not have permission to configure Handshapes."
@@ -2795,11 +2795,11 @@ msgstr ""
 
 #: signbank/dictionary/templates/dictionary/admin_configure_handshapes.html:22
 msgid "No choices found for Handshape in FieldChoice."
-msgstr ""
+msgstr "Geen keuzes gevonden voor Handvorm in FieldChoice."
 
 #: signbank/dictionary/templates/dictionary/admin_configure_handshapes.html:25
 msgid "Handshapes are already configured."
-msgstr ""
+msgstr "Handvormen zijn al geconfigureerd."
 
 #: signbank/dictionary/templates/dictionary/admin_configure_handshapes.html:27
 msgid ""
@@ -3095,7 +3095,7 @@ msgstr "Auteursrechten"
 
 #: signbank/dictionary/templates/dictionary/admin_derivationhistory_list.html:9
 msgid "Signbank: Available Derivation Histories"
-msgstr ""
+msgstr "Signbank: Beschikbare derivatieachtergronden"
 
 #: signbank/dictionary/templates/dictionary/admin_derivationhistory_list.html:15
 msgid "Available Derivation Histories"
@@ -3257,7 +3257,7 @@ msgstr "Handvorm-naam"
 
 #: signbank/dictionary/templates/dictionary/admin_handshape_list.html:157
 msgid "FINGER SELECTION"
-msgstr ""
+msgstr "VINGERSELECTIE"
 
 #: signbank/dictionary/templates/dictionary/admin_handshape_list.html:310
 #: signbank/dictionary/templates/dictionary/admin_handshape_list.html:317
@@ -3369,7 +3369,7 @@ msgstr "Signbank-ID"
 
 #: signbank/dictionary/templates/dictionary/admin_keyword_list.html:345
 msgid "You are in Keywords Mapping View."
-msgstr ""
+msgstr "U bevindt zich in de weergave Trefwoordentoewijzin."
 
 #: signbank/dictionary/templates/dictionary/admin_keyword_list.html:346
 msgid "If you wish to edit the gloss or add example sentences, switch to"
@@ -3393,7 +3393,7 @@ msgstr "voor deze glos"
 #: signbank/dictionary/templates/dictionary/gloss_detail.html:661
 #: signbank/dictionary/templates/dictionary/gloss_detail.html:1116
 msgid "Dismiss"
-msgstr ""
+msgstr "Sluiten"
 
 #: signbank/dictionary/templates/dictionary/admin_keyword_list.html:370
 msgid "Gloss Sense Translations"
@@ -3427,7 +3427,7 @@ msgstr ""
 
 #: signbank/dictionary/templates/dictionary/admin_keyword_list.html:563
 msgid "Regroup Kewords"
-msgstr ""
+msgstr "Hergroepeer trefwoorden"
 
 #: signbank/dictionary/templates/dictionary/admin_lemma_list.html:8
 msgid "Signbank: Lemmas"
@@ -3465,11 +3465,11 @@ msgstr ""
 
 #: signbank/dictionary/templates/dictionary/admin_lemma_list.html:360
 msgid "You have chosen to delete"
-msgstr ""
+msgstr "U hebt ervoor gekozen om"
 
 #: signbank/dictionary/templates/dictionary/admin_lemma_list.html:360
 msgid "lemmas."
-msgstr ""
+msgstr "lemmata te verwijderen."
 
 #: signbank/dictionary/templates/dictionary/admin_lemma_list.html:380
 msgid "No lemmas found. Please enter a query."
@@ -3581,12 +3581,12 @@ msgstr "Zoek-geschiedenis"
 
 #: signbank/dictionary/templates/dictionary/admin_query_list.html:459
 msgid "No active search or query parameters."
-msgstr ""
+msgstr "Geen actieve zoek- of queryparameters."
 
 #: signbank/dictionary/templates/dictionary/admin_query_list.html:462
 #: signbank/dictionary/templates/dictionary/gloss_detail.html:565
 msgid "Query Parameters"
-msgstr ""
+msgstr "Queryparameters"
 
 #: signbank/dictionary/templates/dictionary/admin_query_list.html:467
 #: signbank/dictionary/templates/dictionary/gloss_detail.html:581
@@ -3618,7 +3618,7 @@ msgstr "Bewaar query"
 
 #: signbank/dictionary/templates/dictionary/admin_query_list.html:525
 msgid "Some parameters are not yet available for saving:"
-msgstr ""
+msgstr "Sommige parameters zijn nog niet beschikbaar voor opslag:"
 
 #: signbank/dictionary/templates/dictionary/admin_query_list.html:542
 msgid "Glosses Matching Query"
@@ -3626,7 +3626,7 @@ msgstr "Glossen die overeenkomen met Query"
 
 #: signbank/dictionary/templates/dictionary/admin_query_list.html:544
 msgid "Columns can be hidden to focus on relevant results."
-msgstr ""
+msgstr "Kolommen kunnen worden verborgen om de focus te leggen op relevante resultaten."
 
 #: signbank/dictionary/templates/dictionary/admin_query_list.html:581
 msgid "Gloss List Fields"
@@ -3634,7 +3634,7 @@ msgstr ""
 
 #: signbank/dictionary/templates/dictionary/admin_query_list.html:592
 msgid "Query Parameter Fields"
-msgstr ""
+msgstr "Queryparameter velden"
 
 #: signbank/dictionary/templates/dictionary/admin_query_list.html:603
 msgid "Publication Fields"
@@ -3731,7 +3731,7 @@ msgstr "Bewerk deze query"
 
 #: signbank/dictionary/templates/dictionary/admin_search_history.html:205
 msgid "Update the description of this query."
-msgstr ""
+msgstr "Werk de beschrijving van deze query bij."
 
 #: signbank/dictionary/templates/dictionary/admin_search_history.html:210
 msgid "Query Name"
@@ -3873,7 +3873,7 @@ msgstr "Standaard taal"
 
 #: signbank/dictionary/templates/dictionary/dataset_detail.html:129
 msgid "Conditions for data citation and usage"
-msgstr ""
+msgstr "Voorwaarden voor het citeren en gebruiken van data."
 
 #: signbank/dictionary/templates/dictionary/dataset_detail.html:131
 msgid "Conditions of use by others"
@@ -3891,7 +3891,7 @@ msgstr ""
 
 #: signbank/dictionary/templates/dictionary/dataset_detail.html:150
 msgid "To view this dataset, please create an account or login."
-msgstr ""
+msgstr "Om deze dataset te bekijken, moet u een account aanmaken of inloggen."
 
 #: signbank/dictionary/templates/dictionary/dataset_field_choice_colors.html:271
 msgid "Signbank: Manage Field Choice Colors"
@@ -4231,7 +4231,7 @@ msgstr "Beheer dataset video-opslag"
 
 #: signbank/dictionary/templates/dictionary/dataset_video_storage.html:106
 msgid "Unlinked Gloss Video Files Available in File System"
-msgstr ""
+msgstr "Niet-gekoppelde glos-videobestanden beschikbaar in bestandssysteem"
 
 #: signbank/dictionary/templates/dictionary/dataset_video_storage.html:107
 #: signbank/dictionary/templates/dictionary/dataset_video_storage.html:128
