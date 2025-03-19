@@ -4343,18 +4343,20 @@ msgid ""
 "Slide to a point in the video and click 'Set' to define it as the new start "
 "and/or end point"
 msgstr ""
+"Schuif naar een punt in de video en klik op 'Instellen' om een nieuwe begin- "
+"en/of eindpunt in te stellen"
 
 #: signbank/dictionary/templates/dictionary/edit_annotated_sentence.html:107
 msgid "Download the current .eaf file here:"
-msgstr ""
+msgstr "Download het annotatiebestand (.eaf) hier:"
 
 #: signbank/dictionary/templates/dictionary/edit_annotated_sentence.html:110
 msgid "Choose the updated annotation file (.eaf) here:"
-msgstr ""
+msgstr "Kies het bijgewerkte annotatiebestand (.eaf) hier:"
 
 #: signbank/dictionary/templates/dictionary/edit_annotated_sentence.html:118
 msgid "Edit context for the sentence in the following languages:"
-msgstr ""
+msgstr "Bewerk de context van de voorbeeldzin voor de volgende talen:"
 
 #: signbank/dictionary/templates/dictionary/find_and_save_variants.html:7
 msgid "Find and Save Variants"
@@ -4467,7 +4469,7 @@ msgstr "Bron"
 #: signbank/dictionary/templates/dictionary/gloss.html:695
 #: signbank/dictionary/templates/dictionary/gloss_detail.html:2832
 msgid "Original video"
-msgstr ""
+msgstr "Originele video"
 
 #: signbank/dictionary/templates/dictionary/gloss_detail.html:25
 msgid "Delete This Gloss"
@@ -4480,7 +4482,7 @@ msgstr "Deze idgloss bestaat al"
 
 #: signbank/dictionary/templates/dictionary/gloss_detail.html:538
 msgid "QUERY"
-msgstr ""
+msgstr "ZOEK"
 
 #: signbank/dictionary/templates/dictionary/gloss_detail.html:563
 msgid "Default Query Parameters"
@@ -4491,6 +4493,8 @@ msgid ""
 "No active query parameters were used in the search. Here are the non-empty "
 "fields of this gloss."
 msgstr ""
+"Er zijn geen actieve zoekparameters gebruikt bij het zoeken. Hier zijn de niet-lege "
+"velden van deze glos."
 
 #: signbank/dictionary/templates/dictionary/gloss_detail.html:575
 msgid "No fields are filled in for this gloss."
@@ -4512,7 +4516,7 @@ msgstr ""
 
 #: signbank/dictionary/templates/dictionary/gloss_detail.html:726
 msgid "This will create a new gloss with identical phonology."
-msgstr ""
+msgstr "Dit zal een nieuwe glos creëren met identieke fonologie."
 
 #: signbank/dictionary/templates/dictionary/gloss_detail.html:733
 #: signbank/dictionary/templates/dictionary/gloss_detail.html:815
@@ -4553,6 +4557,19 @@ msgid ""
 "moved to the new dataset.</p>\n"
 "                        "
 msgstr ""
+"\n"
+"                        <p>Met deze opdracht wordt de dataset van de glos gewijzigd "
+"evenals de bijbehorende glossen\n"
+"                            (via relaties of morfologie).</p>\n"
+"                        <p>De doeldataset moet dezelfde vertaaltalen hebben.</p>\n"
+"                        <p>Als een glos niet kan worden verplaatst vanwege een vergelijkbare "
+"glos in de doeldataset,\n"
+"                            van de gebruiker wordt verwacht de lemmavertalingen "
+"of gloss-annotaties aan te passen\n"
+"                            om dubbelzinnigheid weg te nemen.</p>\n"
+"                        <p>De video's en afbeeldingen van de glossen zijn ook "
+"verplaatst naar de nieuwe dataset.</p>\n"
+"                        "
 
 #: signbank/dictionary/templates/dictionary/gloss_detail.html:796
 msgid "This gloss is related to other glosses:"
@@ -4935,15 +4952,15 @@ msgstr "Videos voor %(gloss)s"
 
 #: signbank/dictionary/templates/dictionary/gloss_videos.html:125
 msgid "Citation Form Image"
-msgstr ""
+msgstr "Citaat afbeelding"
 
 #: signbank/dictionary/templates/dictionary/gloss_videos.html:130
 msgid "There is no citation form image for this gloss."
-msgstr "Er is geen citation form image voor deze glos."
+msgstr "Er is geen citaat afbeelding voor deze glos."
 
 #: signbank/dictionary/templates/dictionary/gloss_videos.html:218
 msgid "Your browser does not support this format."
-msgstr ""
+msgstr "Uw browser ondersteunt dit formaat niet."
 
 #: signbank/dictionary/templates/dictionary/glosses_with_no_lemma.html:7
 msgid "Signbank: Glosses Without Lemma"
@@ -4955,7 +4972,7 @@ msgstr "Glossen zonder lemmata"
 
 #: signbank/dictionary/templates/dictionary/glosses_with_no_lemma.html:79
 msgid "The following glosses do not have a lemma or dataset."
-msgstr ""
+msgstr "De volgende glossen hebben geen lemma of dataset."
 
 #: signbank/dictionary/templates/dictionary/glosses_with_no_lemma.html:82
 msgid "Dataset: Translation Languages"
@@ -4990,7 +5007,7 @@ msgstr "Voeg label toe"
 
 #: signbank/dictionary/templates/dictionary/handshape_detail.html:7
 msgid "Signbank: Handshape Details"
-msgstr ""
+msgstr "Signbank: Handvorm details"
 
 #: signbank/dictionary/templates/dictionary/handshape_detail.html:62
 #: signbank/dictionary/templates/dictionary/handshape_detail.html:64
@@ -5255,6 +5272,7 @@ msgstr "Een lege cel zal de bestaande labels wissen."
 msgid ""
 "To update existing glosses, the CSV file must include the first two columns:"
 msgstr ""
+"Om bestaande glossen bij te werken, moet het CSV-bestand de eerste twee kolommen bevatten:"
 
 #: signbank/dictionary/templates/dictionary/import_csv_update.html:277
 msgid ""
@@ -5264,7 +5282,7 @@ msgstr ""
 
 #: signbank/dictionary/templates/dictionary/import_csv_update.html:278
 msgid "Changes cannot be made to the Lemma ID Gloss fields."
-msgstr ""
+msgstr "Er kunnen geen wijzigingen worden aangebracht in de Lemma ID Glos-velden."
 
 #: signbank/dictionary/templates/dictionary/import_csv_update.html:297
 #: signbank/dictionary/templates/dictionary/import_csv_update_lemmas.html:139
@@ -5273,11 +5291,11 @@ msgstr "De volgende wijzigingen zijn vastgesteld:"
 
 #: signbank/dictionary/templates/dictionary/import_csv_update.html:304
 msgid "Old Value"
-msgstr ""
+msgstr "Oude waarde"
 
 #: signbank/dictionary/templates/dictionary/import_csv_update.html:305
 msgid "New Value"
-msgstr ""
+msgstr "Nieuwe waarde"
 
 #: signbank/dictionary/templates/dictionary/import_csv_update.html:311
 #, python-format
@@ -5335,7 +5353,7 @@ msgstr ""
 
 #: signbank/dictionary/templates/dictionary/import_csv_update_lemmas.html:121
 msgid "Changes can be made to the Lemma ID Gloss fields."
-msgstr ""
+msgstr "Er kunnen wijzigingen worden aangebracht in de Lemma ID Glos-velden."
 
 #: signbank/dictionary/templates/dictionary/import_csv_update_lemmas.html:144
 msgid "Lemma ID"
@@ -5821,7 +5839,7 @@ msgstr "Je hebt niet genoeg rechten om de geselecteerde dataset te wijzigen."
 
 #: signbank/dictionary/update.py:97
 msgid "The given Lemma Idgloss is a string, not a Lemma."
-msgstr ""
+msgstr "Het gegeven Lemma Idgloss is een string, geen Lemma."
 
 #: signbank/dictionary/update.py:101 signbank/dictionary/update.py:2357
 msgid "The given Lemma Idgloss ID is unknown."
@@ -5845,7 +5863,7 @@ msgstr ""
 
 #: signbank/dictionary/update.py:133
 msgid "Please select or create a lemma."
-msgstr ""
+msgstr "Selecteer of maak een lemma."
 
 #: signbank/dictionary/update.py:217
 msgid "This example sentence was not changed."
@@ -5893,15 +5911,15 @@ msgstr "Betekenis bijgewerkt"
 
 #: signbank/dictionary/update.py:583
 msgid "Sense Creation Not Allowed"
-msgstr ""
+msgstr "Betekenis creatie niet toegestaan"
 
 #: signbank/dictionary/update.py:603
 msgid "No keywords given for new sense."
-msgstr ""
+msgstr "Geen trefwoorden opgegeven voor nieuwe betekenis."
 
 #: signbank/dictionary/update.py:663
 msgid "Sense Deletion Not Allowed"
-msgstr ""
+msgstr "Betekenis verwijdering niet toegestaan"
 
 #: signbank/dictionary/update.py:765
 msgid ""
@@ -5911,16 +5929,16 @@ msgstr ""
 
 #: signbank/dictionary/update.py:940
 msgid "The dataset of the gloss is not the same as that of the lemma."
-msgstr ""
+msgstr "De dataset van de glos is niet dezelfde als die van het lemma."
 
 #: signbank/dictionary/update.py:942 signbank/dictionary/update.py:2596
 msgid "The specified lemma does not exist."
-msgstr "bestaat niet."
+msgstr "Het opgegeven lemma bestaat niet."
 
 #: signbank/dictionary/update.py:1775
 msgid ""
 "Edit Simultaneuous Morphology: The dataset of this gloss has no morphemes."
-msgstr ""
+msgstr "Bewerk Simultane morfologie: De dataset van deze glos heeft geen morfemen."
 
 #: signbank/dictionary/update.py:1778
 msgid "Edit Simultaneuous Morphology: No morpheme selected."
@@ -5928,7 +5946,7 @@ msgstr "Bewerk Simultane morfologie: Geen morfeem geselecteerd."
 
 #: signbank/dictionary/update.py:1792
 msgid "Simultaneuous morphology: no morpheme found with identifier {}."
-msgstr ""
+msgstr "Simultaan morfologie: geen morfeem gevonden met identificatie {}."
 
 #: signbank/dictionary/update.py:2080
 msgid "Annotated Sentence Deletion Not Allowed"
