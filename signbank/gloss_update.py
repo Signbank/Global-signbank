@@ -1332,7 +1332,7 @@ def api_create_annotated_sentence(request, datasetid):
     from signbank.video.views import get_glosses_from_eaf
     annotations, labels_not_found, sentence_dict = get_glosses_from_eaf(eaf, dataset.acronym)
     if len(annotations) == 0:
-        return JsonResponse({"error": "No annotations found in EAF file."}, status=400)
+        return JsonResponse({"error": gettext("No annotations found in EAF file.")}, status=400)
 
     # pick a random gloss from dataset, this is only used to -in add_annotations- retrieve the right dataset
     gloss = Gloss.objects.filter(lemma__dataset=dataset).first()
@@ -1343,17 +1343,17 @@ def api_create_annotated_sentence(request, datasetid):
     
     source_obj = AnnotatedSentenceSource.objects.filter(name=source).first()
     if source_obj == None and source != '':
-        return JsonResponse({"error": "Annotated sentence source received but not found."}, status=400)
+        return JsonResponse({"error": gettext("Annotated sentence source received but not found.")}, status=400)
     
     # Add the video to the AnnotatedSentence object
     annotated_video = annotated_sentence.add_video(request.user, video_file, eaf_file, source_obj, url)
 
     if not annotated_video:
-        return JsonResponse({"error": "Annotated video not found."}, status=400)
+        return JsonResponse({"error": gettext("Annotated video not found.")}, status=400)
 
     if len(labels_not_found) > 0:
         return JsonResponse({"success": "Sentence was added successfully. However, some labels were not found in Signbank: " + ', '.join(labels_not_found)}, status=201)
-    return JsonResponse({"success": "Sentence was added successfully. "}, status=201)
+    return JsonResponse({"success": gettext("Sentence was added successfully.")}, status=201)
 
 
 @csrf_exempt
@@ -1369,18 +1369,18 @@ def api_update_annotated_sentence(request, datasetid, annotatedsentenceid):
 
     dataset = Dataset.objects.filter(id=int(datasetid)).first()
     if not dataset:
-        return JsonResponse({"error": "Dataset ID does not exist."}, status=400)
+        return JsonResponse({"error": gettext("Dataset with given id does not exist")}, status=400)
 
     change_permit_datasets = get_objects_for_user(request.user, 'change_dataset', Dataset)
     if dataset not in change_permit_datasets:
-        return JsonResponse({"error": "No change permission for dataset."}, status=401)
+        return JsonResponse({"error": gettext("No change permission for dataset.")}, status=401)
 
     annotated_sentence = AnnotatedSentence.objects.filter(
         id=annotatedsentenceid,
         annotated_glosses__gloss__lemma__dataset=dataset
     ).first()
     if not annotated_sentence:
-        return JsonResponse({"error": "Annotated sentence not found."}, status=404)
+        return JsonResponse({"error": gettext("Annotated sentence not found.")}, status=404)
     
     dataset_languages = dataset.translation_languages.all()
     translations, contexts = dict(), dict()
@@ -1400,11 +1400,11 @@ def api_update_annotated_sentence(request, datasetid, annotatedsentenceid):
 
     source_obj = AnnotatedSentenceSource.objects.filter(name=source).first()
     if source_obj == None and source != '':
-        return JsonResponse({"error": "Annotated sentence source received but not found."}, status=400)
+        return JsonResponse({"error": gettext("Annotated sentence source received but not found.")}, status=400)
     
     annotated_sentence_video = annotated_sentence.annotatedvideo
     if not annotated_sentence_video:
-        return JsonResponse({"error": "Annotated video not found."}, status=404)
+        return JsonResponse({"error": gettext("Annotated video not found.")}, status=404)
     else:
         annotated_sentence_video.source = source_obj
         annotated_sentence_video.url = url
@@ -1414,7 +1414,7 @@ def api_update_annotated_sentence(request, datasetid, annotatedsentenceid):
     representative_glosses_ids = post_data['Representative glosses']
     representative_glosses = AnnotatedGloss.objects.filter(gloss__id__in=representative_glosses_ids, annotatedsentence=annotated_sentence)
     if len(representative_glosses) == 0:
-        return JsonResponse({"error": "No valid representative gloss id's given."}, status=404)
+        return JsonResponse({"error": gettext("No valid representative gloss id's given.")}, status=404)
     for annotated_gloss in annotated_sentence.annotated_glosses.all():
         annotated_gloss.isRepresentative = False
         annotated_gloss.save()
@@ -1422,7 +1422,7 @@ def api_update_annotated_sentence(request, datasetid, annotatedsentenceid):
         representative_gloss.isRepresentative = True
         representative_gloss.save()
 
-    return JsonResponse({"success": "Sentence was updated successfully. "}, status=200)
+    return JsonResponse({"success": gettext("Sentence was updated successfully.")}, status=200)
 
 
 @csrf_exempt
@@ -1431,18 +1431,18 @@ def api_delete_annotated_sentence(request, datasetid, annotatedsentenceid):
 
     dataset = Dataset.objects.filter(id=int(datasetid)).first()
     if not dataset:
-        return JsonResponse({"error": "Dataset ID does not exist."}, status=400)
+        return JsonResponse({"error": "Dataset with given id does not exist."}, status=400)
 
     change_permit_datasets = get_objects_for_user(request.user, 'change_dataset', Dataset)
     if dataset not in change_permit_datasets:
-        return JsonResponse({"error": "No change permission for dataset."}, status=401)
+        return JsonResponse({"error": gettext("No change permission for dataset.")}, status=401)
 
     annotated_sentence = AnnotatedSentence.objects.get(id=annotatedsentenceid)
     if not annotated_sentence:
-        return JsonResponse({"error": "Annotated sentence not found."}, status=404)
+        return JsonResponse({"error": gettext("Annotated sentence not found.")}, status=404)
     
     if annotated_sentence.get_dataset() != dataset:
-        return JsonResponse({"error": "Annotated sentence not found in dataset."}, status=404)
+        return JsonResponse({"error": gettext("Annotated sentence not found in dataset.")}, status=404)
     
     from signbank.video.models import AnnotatedVideo
     annotated_videos = AnnotatedVideo.objects.filter(annotatedsentence=annotated_sentence)
@@ -1451,4 +1451,4 @@ def api_delete_annotated_sentence(request, datasetid, annotatedsentenceid):
         annotated_video.delete()
     annotated_sentence.delete()
 
-    return JsonResponse({"success": "Sentence was deleted successfully. "}, status=200)
+    return JsonResponse({"success": gettext("Sentence was deleted successfully.")}, status=200)

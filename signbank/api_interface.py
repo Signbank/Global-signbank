@@ -17,7 +17,7 @@ def check_api_dataset_manager_permissions(request, datasetid):
 
     dataset = Dataset.objects.filter(id=int(datasetid)).first()
     if not dataset:
-        return None, {"error": "Dataset with given id does not exist."}, 400
+        return None, {"error": gettext("Dataset with given id does not exist.")}, 400
 
     group_manager = Group.objects.filter(name='Dataset_Manager').first()
     if not group_manager:
@@ -25,14 +25,14 @@ def check_api_dataset_manager_permissions(request, datasetid):
 
     groups_of_user = request.user.groups.all()
     if group_manager not in groups_of_user:
-        return None, {"error": "You must be in group Dataset Manager to upload a zip video archive."}, 400
+        return None, {"error": gettext("You must be in group Dataset Manager to upload a zip video archive.")}, 400
 
     change_permit_datasets = get_objects_for_user(request.user, 'change_dataset', Dataset)
     if dataset not in change_permit_datasets:
-        return None, {"error": "No change permission for dataset."}, 400
+        return None, {"error": gettext("No change permission for dataset.")}, 400
 
     if not request.user.has_perm('dictionary.change_gloss'):
-        return None, {"error": "No permission."}, 400
+        return None, {"error": gettext("No permission.")}, 400
 
     return dataset, {}, 200
 
@@ -195,35 +195,23 @@ def get_gloss_data_json(request, datasetid, glossid):
     if request.user.is_authenticated:
         interface_language_code = get_interface_language_api(request, request.user)
 
-    sequence_of_digits = True
-    for i in datasetid:
-        if not i.isdigit():
-            sequence_of_digits = False
-            break
-
-    if not sequence_of_digits:
-        return JsonResponse({})
-
     dataset_id = int(datasetid)
     dataset = Dataset.objects.filter(id=dataset_id).first()
-    if not dataset or not request.user.is_authenticated:
-        # ignore the dataset in the url if necessary
-        dataset = Dataset.objects.get(id=settings.DEFAULT_DATASET_PK)
 
-    sequence_of_digits = True
-    for i in glossid:
-        if not i.isdigit():
-            sequence_of_digits = False
-            break
+    if not dataset:
+        return JsonResponse({"error": gettext("Dataset with given id does not exist.")}, status=400)
 
-    if not sequence_of_digits:
-        return JsonResponse({})
+    if not request.user.is_authenticated and not dataset.is_public:
+        return JsonResponse({"error": gettext('You are not authenticated and the requested dataset is not public.')}, status=400)
 
     gloss_id = int(glossid)
     gloss = Gloss.objects.filter(lemma__dataset=dataset, id=gloss_id, archived=False).first()
 
     if not gloss:
-        return JsonResponse({})
+        return JsonResponse({"error": gettext("Gloss not found in dataset.")}, status=400)
+
+    if not request.user.is_authenticated and not gloss.inWeb:
+        return JsonResponse({"error": gettext('The requested gloss is not public.')}, status=400)
 
     if request.user.has_perm('dictionary.change_gloss'):
         api_fields_2023 = api_fields(dataset, interface_language_code, advanced=True)
@@ -250,17 +238,17 @@ def get_annotated_sentences_of_gloss_json(request, datasetid, glossid):
     dataset_id = int(datasetid)
     dataset = Dataset.objects.filter(id=dataset_id).first()
     if not dataset or not request.user.is_authenticated:
-        return JsonResponse({"error": "No dataset found or no permission."}, status=400)
+        return JsonResponse({"error": gettext("No dataset found or no permission.")}, status=400)
     dataset_languages = dataset.translation_languages.all()
 
     gloss_id = int(glossid)
     gloss = Gloss.objects.filter(lemma__dataset=dataset, id=gloss_id, archived=False).first()
 
     if not gloss:
-        return JsonResponse({"error": "No gloss found or no permission."}, status=400)
+        return JsonResponse({"error": gettext("No gloss found or no permission.")}, status=400)
 
     if not request.user.has_perm('dictionary.change_gloss'):
-        return JsonResponse({"error": "No permission to change this gloss."}, status=400)
+        return JsonResponse({"error": gettext("No permission to change this gloss.")}, status=400)
 
     annotated_sentences = []
     related_sentences = AnnotatedSentence.objects.filter(annotated_glosses__gloss = gloss).distinct()
@@ -451,7 +439,7 @@ def upload_zipped_videos_folder_json(request, datasetid):
 
     file_key = gettext("File")
     if file_key not in value_dict.keys():
-        return JsonResponse({"error": "Error processing the zip file."}, status=400)
+        return JsonResponse({"error": gettext("Error processing the zip file.")}, status=400)
 
     zip_file = value_dict[file_key]
     file_name = zip_file.name
@@ -461,18 +449,18 @@ def upload_zipped_videos_folder_json(request, datasetid):
     try:
         shutil.move(zip_file.name, str(goal_zipped_file))
     except (OSError, PermissionError):
-        return JsonResponse({"error": "Could not copy the zip file to the destination folder."}, status=400)
+        return JsonResponse({"error": gettext("Could not copy the zip file to the destination folder.")}, status=400)
 
     if not zipfile.is_zipfile(goal_zipped_file):
         # unrecognised file type has been uploaded
-        return JsonResponse({"error": "Upload zip archive: The file is not a zip file."}, status=400)
+        return JsonResponse({"error": gettext("Upload zip archive: The file is not a zip file.")}, status=400)
 
     norm_filename = os.path.normpath(goal_zipped_file)
     split_norm_filename = norm_filename.split('.')
 
     if len(split_norm_filename) == 1:
         # file has no extension
-        return JsonResponse({"error": "Upload zip archive: The file has no extension."}, status=400)
+        return JsonResponse({"error": gettext("Upload zip archive: The file has no extension.")}, status=400)
 
     lang3charcodes = [language.language_code_3char for language in dataset.translation_languages.all()]
 
@@ -667,34 +655,34 @@ def upload_videos_to_glosses(request, datasetid):
 def verify_conditions_for_file_upload(request, gloss_id):
 
     if not request.user:
-        return JsonResponse({'error': 'User not found'}, status=401)
+        return JsonResponse({'error': gettext('User not found')}, status=401)
 
     gloss = Gloss.objects.filter(id=gloss_id).first()
     if not gloss:
-        return JsonResponse({'error': 'Gloss not found'}, status=404)
+        return JsonResponse({'error': gettext('Gloss not found')}, status=404)
 
     if gloss.archived:
-        return JsonResponse({'error': 'Gloss is archived'}, status=403)
+        return JsonResponse({'error': gettext('Gloss is archived')}, status=403)
 
     if not gloss.lemma:
-        return JsonResponse({'error': 'Gloss has no lemma'}, status=404)
+        return JsonResponse({'error': gettext('Gloss has no lemma')}, status=404)
 
     if not gloss.lemma.dataset:
-        return JsonResponse({'error': 'Gloss has no dataset'}, status=404)
+        return JsonResponse({'error': gettext('Gloss has no dataset')}, status=404)
 
     if not request.user.has_perm('dictionary.change_gloss'):
-        return JsonResponse({'error': 'No change gloss permission'}, status=403)
+        return JsonResponse({'error': gettext('No change gloss permission')}, status=403)
 
     change_permit_datasets = get_objects_for_user(request.user, 'change_dataset', Dataset)
 
     if gloss.lemma.dataset not in change_permit_datasets:
-        return JsonResponse({'error': 'No change permission for dataset'}, status=403)
+        return JsonResponse({'error': gettext('No change permission for dataset')}, status=403)
 
     if len(gloss.idgloss) < 2:
-        return JsonResponse({'error': 'This gloss has no idgloss'}, status=400)
+        return JsonResponse({'error': gettext('This gloss has no idgloss')}, status=400)
 
     if len(request.FILES) == 0:
-        return JsonResponse({'error': 'No file uploaded'}, status=400)
+        return JsonResponse({'error': gettext('No file uploaded')}, status=400)
 
 @csrf_exempt
 @put_api_user_in_request
@@ -766,7 +754,7 @@ def api_add_image(request, gloss_id):
     # Construct a filename for the image, use sn if present, otherwise use idgloss+gloss id
     file_extension = os.path.splitext(image_file.name)[1].lower()
     if file_extension not in settings.SUPPORTED_CITATION_IMAGE_EXTENSIONS:
-        return JsonResponse({'error': 'File extension not supported! Please convert to png or jpg'}, status=400)
+        return JsonResponse({'error': gettext('File extension not supported! Please convert to png or jpg')}, status=400)
 
     image_file.name = f'{gloss.sn}{file_extension}' if gloss.sn is not None else f'{gloss.idgloss}-{gloss.pk}{file_extension}'
 
@@ -791,4 +779,4 @@ def api_add_image(request, gloss_id):
 
     destination.close()
 
-    return JsonResponse({'message': 'Image upload successful.'}, status=200) 
+    return JsonResponse({'message': gettext('Image upload successful.')}, status=200)
