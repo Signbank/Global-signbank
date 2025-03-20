@@ -17,7 +17,7 @@ from django.http import HttpResponse, HttpResponseRedirect
 from django.utils import html
 
 from signbank.dictionary.models import *
-from signbank.video.models import GlossVideo
+from signbank.video.models import GlossVideo, GlossVideoNME
 from django.db.models.functions import Concat
 from signbank.dictionary.forms import *
 from signbank.dictionary.field_choices import fields_to_fieldcategory_dict
@@ -133,40 +133,54 @@ def matching_file_exists(videofile):
         return False
 
 
-def matching_file__does_not_exist(videofile):
-    from pathlib import Path
-    video_file_full_path = Path(WRITABLE_FOLDER, videofile)
-    if video_file_full_path.exists():
-        return False
-    else:
-        return True
-
-
 def apply_video_filters_to_results(model, qs, query_parameters):
+    # The 'hasvideo' form field has these choices: [('0', '-'), ('2', _('Yes')), ('3', _('No'))]
     gloss_prefix = 'gloss__' if model in ['GlossSense', 'AnnotatedGloss'] else ''
     filter_id = gloss_prefix + 'id__in'
     gloss_ids = [gl.id if model == 'Gloss' else gl.gloss.id for gl in qs]
-    if 'hasvideo' not in query_parameters.keys():
+    if 'hasvideo' not in query_parameters.keys() or query_parameters['hasvideo'] not in ['2', '3']:
         return qs
-    elif query_parameters['hasvideo'] == '2':
-        glossvideo_queryset = GlossVideo.objects.filter(gloss__id__in=gloss_ids, glossvideonme=None, glossvideoperspective=None, version=0)
-        queryset_res = glossvideo_queryset.values('id', 'videofile')
+    glossvideo_queryset = GlossVideo.objects.filter(gloss__id__in=gloss_ids, glossvideonme=None, glossvideoperspective=None, version=0)
+    queryset_res = glossvideo_queryset.values('id', 'videofile')
+    if query_parameters['hasvideo'] == '2':
+        # '2' is the True choice
         results = [qv['id'] for qv in queryset_res
                    if matching_file_exists(qv['videofile'])]
-        glosses_with_videofile = GlossVideo.objects.filter(id__in=results)
-        gloss_ids = [gv.gloss.id for gv in glosses_with_videofile]
-        return qs.filter(Q(**{filter_id: gloss_ids}))
+        gloss_video_objects = GlossVideo.objects.filter(id__in=results)
+        gloss_ids = [gv.gloss.id for gv in gloss_video_objects]
     else:
+        # '3' is the False choice
+        results = [qv['id'] for qv in queryset_res
+                   if not matching_file_exists(qv['videofile'])]
+        gloss_video_objects = GlossVideo.objects.filter(id__in=results)
+        gloss_ids = [gv.gloss.id for gv in gloss_video_objects]
+        # add glosses to results if the gloss has no gloss video at all
         null_videos = qs.filter(Q(**{gloss_prefix + 'glossvideo__isnull': True}))
         gloss_ids_without_video = [gl.id if model == 'Gloss' else gl.gloss.id for gl in null_videos]
-        glossvideo_queryset = GlossVideo.objects.filter(gloss__id__in=gloss_ids, glossvideonme=None, glossvideoperspective=None, version=0)
-        queryset_res = glossvideo_queryset.values('id', 'videofile')
+        gloss_ids = list(set(gloss_ids).union(gloss_ids_without_video))
+    return qs.filter(Q(**{filter_id: gloss_ids}))
+
+
+def apply_nmevideo_filters_to_results(model, qs, query_parameters):
+    # The 'hasnmevideo' form field has these choices: [('0', '-'), ('2', _('Yes')), ('3', _('No'))]
+    gloss_prefix = 'gloss__' if model in ['GlossSense', 'AnnotatedGloss'] else ''
+    filter_id = gloss_prefix + 'id__in'
+    gloss_ids = [gl.id if model == 'Gloss' else gl.gloss.id for gl in qs]
+    if 'hasnmevideo' not in query_parameters.keys() or query_parameters['hasnmevideo'] not in ['2', '3']:
+        return qs
+    glossvideo_queryset = GlossVideoNME.objects.filter(gloss__id__in=gloss_ids, version=0)
+    queryset_res = glossvideo_queryset.values('id', 'videofile')
+    if query_parameters['hasnmevideo'] == '2':
+        # '2' is the True choice
         results = [qv['id'] for qv in queryset_res
-                   if matching_file__does_not_exist(qv['videofile'])]
-        glosses_with_missing_videofile = GlossVideo.objects.filter(id__in=results)
-        gloss_ids_missing_videos = [gv.gloss.id for gv in glosses_with_missing_videofile]
-        filter_no_video = Q(**{filter_id: gloss_ids_without_video}) | Q(**{filter_id: gloss_ids_missing_videos})
-        return qs.filter(Q(**{filter_id: filter_no_video}))
+                   if matching_file_exists(qv['videofile'])]
+    else:
+        # '3' is the False choice
+        results = [qv['id'] for qv in queryset_res
+                   if not matching_file_exists(qv['videofile'])]
+    gloss_video_objects = GlossVideoNME.objects.filter(id__in=results)
+    gloss_ids = [gv.gloss.id for gv in gloss_video_objects]
+    return qs.filter(Q(**{filter_id: gloss_ids}))
 
 
 def convert_query_parameters_to_filter(query_parameters):
@@ -215,7 +229,7 @@ def convert_query_parameters_to_filter(query_parameters):
             val = get_value == '2'
             query_list.append(Q(excludeFromEcv__exact=val))
 
-        elif get_key == 'hasvideo' and get_value != '':
+        elif get_key in ['hasvideo', 'hasnmevideo'] and get_value != '':
             # this is done in a separate function
             continue
 
@@ -621,7 +635,7 @@ def pretty_print_query_values(dataset_languages,query_parameters):
                 query_dict[key] = _('Yes')
             elif query_parameters[key] in ['3']:
                 query_dict[key] = _('No')
-        elif key in ['inWeb', 'isNew', 'excludeFromEcv', 'hasvideo', 'hasothermedia']:
+        elif key in ['inWeb', 'isNew', 'excludeFromEcv', 'hasvideo', 'hasnmevideo', 'hasothermedia']:
             query_dict[key] = NULLBOOLEANCHOICES[query_parameters[key]]
         elif key in ['defspublished', 'hasmultiplesenses', 'negative', 'hasannotatedsentences']:
             query_dict[key] = YESNOCHOICES[query_parameters[key]]
@@ -849,7 +863,7 @@ def queryset_from_get(formclass, searchform, GET, qs):
             if get_key in ['inWeb', 'repeat', 'altern', 'isNew']:
                 val = get_value == '2'
                 key = get_key + '__exact'
-            elif get_key in ['hasvideo']:
+            elif get_key in ['hasvideo', 'hasnmevideo']:
                 # this is done in a separate function
                 continue
             elif get_key in ['defspublished']:
@@ -1183,7 +1197,7 @@ def queryset_glosssense_from_get(model, formclass, searchform, GET, qs):
             elif get_key in ['inWeb', 'repeat', 'altern', 'isNew', 'excludeFromEcv']:
                 val = get_value == '2'
                 key = gloss_prefix + get_key + '__exact'
-            elif get_key in ['hasvideo']:
+            elif get_key in ['hasvideo', 'hasnmevideo']:
                 # this is done in a separate function
                 continue
             elif get_key in ['defspublished']:

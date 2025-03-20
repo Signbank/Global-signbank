@@ -41,7 +41,6 @@ from signbank.dictionary.translate_choice_list import machine_value_to_translate
 
 import signbank.settings.server_specific
 from signbank.settings.base import *
-from django.utils.translation import override, gettext_lazy as _
 
 from urllib.parse import urlencode, urlparse
 from wsgiref.util import FileWrapper, request_uri
@@ -50,10 +49,11 @@ from django.views.decorators.csrf import csrf_exempt
 from django.utils.timezone import get_current_timezone
 
 from django.core.exceptions import PermissionDenied, ObjectDoesNotExist, BadRequest
-from django.utils.translation import gettext_lazy as _, activate
+from django.utils.translation import gettext_lazy as _, activate, override
 from signbank.abstract_machine import get_interface_language_api
 
 from signbank.api_token import put_api_user_in_request
+from signbank.dictionary.gloss_revision import pretty_print_revisions
 
 
 def login_required_config(f):
@@ -2529,116 +2529,9 @@ def gloss_revision_history(request,gloss_pk):
     show_query_parameters_as_button = getattr(settings, 'SHOW_QUERY_PARAMETERS_AS_BUTTON', False)
     use_regular_expressions = getattr(settings, 'USE_REGULAR_EXPRESSIONS', False)
 
-    revisions = []
-    for revision in GlossRevision.objects.filter(gloss=gloss):
-        if revision.field_name.startswith('sense_'):
-            prefix, order, language_2char = revision.field_name.split('_')
-            language = Language.objects.get(language_code_2char=language_2char)
-            revision_verbose_fieldname = gettext('Sense') + ' ' + order + " (%s)" % language.name
-        elif revision.field_name.startswith('description_'):
-            prefix, language_2char = revision.field_name.split('_')
-            language = Language.objects.get(language_code_2char=language_2char)
-            revision_verbose_fieldname = gettext('NME Video Description') + " (%s)" % language.name
-        elif revision.field_name.startswith('nmevideo_'):
-            prefix, operation = revision.field_name.split('_')
-            if operation == 'create':
-                revision_verbose_fieldname = gettext("NME Video") + ' ' + gettext("Create")
-            elif operation == 'delete':
-                revision_verbose_fieldname = gettext("NME Video") + ' ' + gettext("Delete")
-            else:
-                revision_verbose_fieldname = gettext("NME Video") + ' ' + gettext("Update")
-        elif revision.field_name in Gloss.get_field_names():
-            revision_verbose_fieldname = gettext(Gloss.get_field(revision.field_name).verbose_name)
-        elif revision.field_name == 'sequential_morphology':
-            revision_verbose_fieldname = gettext("Sequential Morphology")
-        elif revision.field_name == 'simultaneous_morphology':
-            revision_verbose_fieldname = gettext("Simultaneous Morphology")
-        elif revision.field_name == 'blend_morphology':
-            revision_verbose_fieldname = gettext("Blend Morphology")
-        elif revision.field_name.startswith('lemma'):
-            language_2char = revision.field_name[-2:]
-            language = Language.objects.get(language_code_2char=language_2char)
-            revision_verbose_fieldname = gettext('Lemma ID Gloss') + " (%s)" % language.name
-        elif revision.field_name.startswith('annotation'):
-            language_2char = revision.field_name[-2:]
-            language = Language.objects.get(language_code_2char=language_2char)
-            revision_verbose_fieldname = gettext('Annotation ID Gloss') + " (%s)" % language.name
-        elif revision.field_name == 'archived':
-            revision_verbose_fieldname = gettext("Deleted")
-        elif revision.field_name == 'restored':
-            revision_verbose_fieldname = gettext("Restored")
-        else:
-            revision_verbose_fieldname = gettext(revision.field_name)
+    interface_language_code = get_interface_language_api(request, request.user)
 
-        # field name qualification is stored separately here
-        # Django was having a bit of trouble translating it when embeded in the field_name string below
-        if revision.field_name == 'Tags':
-            if revision.old_value:
-                # this translation exists in the interface of Gloss Edit View
-                delete_command = gettext('delete this tag')
-                field_name_qualification = ' (' + delete_command + ')'
-            elif revision.new_value:
-                # this translation exists in the interface of Gloss Edit View
-                add_command = gettext('Add Tag')
-                field_name_qualification = ' (' + add_command + ')'
-            else:
-                # this shouldn't happen
-                field_name_qualification = ''
-        elif revision.field_name in ['Sense', 'Senses', 'senses']:
-            if revision.old_value and not revision.new_value:
-                # this translation exists in the interface of Gloss Edit View
-                delete_command = gettext('Delete')
-                field_name_qualification = ' (' + delete_command + ')'
-            elif revision.new_value and not revision.old_value:
-                # this translation exists in the interface of Gloss Edit View
-                add_command = gettext('Create')
-                field_name_qualification = ' (' + add_command + ')'
-            else:
-                # this translation exists in the interface of Gloss Edit View
-                add_command = gettext('Update')
-                field_name_qualification = ' (' + add_command + ')'
-        elif revision.field_name == 'Sentence':
-            if revision.old_value and not revision.new_value:
-                # this translation exists in the interface of Gloss Edit View
-                delete_command = gettext('Delete')
-                field_name_qualification = ' (' + delete_command + ')'
-            elif revision.new_value and not revision.old_value:
-                # this translation exists in the interface of Gloss Edit View
-                add_command = gettext('Create')
-                field_name_qualification = ' (' + add_command + ')'
-            else:
-                # this translation exists in the interface of Gloss Edit View
-                add_command = gettext('Update')
-                field_name_qualification = ' (' + add_command + ')'
-        elif revision.field_name in ['sequential_morphology', 'simultaneous_morphology', 'blend_morphology']:
-            if revision.old_value and not revision.new_value:
-                # this translation exists in the interface of Gloss Edit View
-                delete_command = gettext('Delete')
-                field_name_qualification = ' (' + delete_command + ')'
-            elif revision.new_value and not revision.old_value:
-                # this translation exists in the interface of Gloss Edit View
-                add_command = gettext('Create')
-                field_name_qualification = ' (' + add_command + ')'
-            else:
-                # this translation exists in the interface of Gloss Edit View
-                add_command = gettext('Update')
-                field_name_qualification = ' (' + add_command + ')'
-        elif revision.field_name.startswith('lemma') or revision.field_name.startswith('annotation'):
-            field_name_qualification = ''
-        elif revision.field_name.startswith('sense'):
-            field_name_qualification = ''
-        else:
-            field_name_qualification = ''
-        revision_dict = {
-            'is_tag': revision.field_name == 'Tags',
-            'gloss': revision.gloss,
-            'user': revision.user,
-            'time': revision.time,
-            'field_name': revision_verbose_fieldname,
-            'field_name_qualification': field_name_qualification,
-            'old_value': check_value_to_translated_human_value(revision.field_name, revision.old_value),
-            'new_value': check_value_to_translated_human_value(revision.field_name, revision.new_value) }
-        revisions.append(revision_dict)
+    revisions = pretty_print_revisions(gloss)
 
     if 'search_type' in request.session.keys():
         if request.session['search_type'] not in ['sign', 'morpheme', 'annotatedsentence',
@@ -2649,7 +2542,7 @@ def gloss_revision_history(request,gloss_pk):
         request.session['search_type'] = 'sign'
 
     return render(request, 'dictionary/gloss_revision_history.html',
-                  {'gloss': gloss, 'revisions':revisions,
+                  {'gloss': gloss, 'revisions': revisions,
                    'dataset_languages': dataset_languages,
                    'selected_datasets': selected_datasets,
                    'active_id': gloss_pk,
