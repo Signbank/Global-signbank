@@ -1586,6 +1586,7 @@ class Gloss(models.Model):
                     nme_info[info_field_name] = description_text
                 nme_path = settings.URL + settings.PREFIX_URL + '/dictionary/protected_media/' + nmevideo.get_video_path()
                 nme_info[gettext("Link")] = nme_path
+                nme_info[gettext("Perspective")] = nmevideo.perspective
 
                 if include_checksums:
                     from signbank.tools import get_checksum_for_path
@@ -2480,7 +2481,7 @@ class Gloss(models.Model):
             offset = new_offset
 
         if isinstance(videofile, File) or videofile.content_type == 'django.core.files.uploadedfile.InMemoryUploadedFile':
-            video = GlossVideoNME(gloss=self, offset=offset, upload_to=get_video_file_path)
+            video = GlossVideoNME(gloss=self, offset=offset, perspective=perspective, upload_to=get_video_file_path)
             # Create a GlossVideoHistory object
             relative_path = get_video_file_path(video, str(videofile), nmevideo=True, perspective='', offset=offset, version=0)
             video_file_full_path = os.path.join(WRITABLE_FOLDER, relative_path)
@@ -2491,7 +2492,7 @@ class Gloss(models.Model):
             # Save the new videofile in the video object
             video.videofile.save(relative_path, videofile)
         else:
-            return GlossVideoNME(gloss=self)
+            return GlossVideoNME(gloss=self, offset=offset, perspective=perspective) 
         video.save()
 
         return video

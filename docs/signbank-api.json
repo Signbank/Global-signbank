@@ -397,7 +397,7 @@
     {
       "post":
       {
-        "description": "Creates a new 'non manual element' video for a gloss",
+        "description": "Creates a new 'non manual element' video for a gloss. For the body fields 'center', 'left' and 'right', only one is allowed, depending on the perspective of the video.",
         "parameters":
         [
           {
@@ -445,11 +445,21 @@
                   {
                     "type": "string"
                   },
-                  "File":
+                  "Center":
                   {
                     "type": "string",
                     "format": "binary"
-                  }
+                  },
+                  "Left":
+                  {
+                    "type": "string",
+                    "format": "binary"
+                  },
+                  "Right":
+                  {
+                    "type": "string",
+                    "format": "binary"
+                  }                               
                 }
               }
             }
@@ -1111,6 +1121,11 @@
                   {
                     "type": "integer",
                     "description": "Display number in sequence."
+                  },
+                  "Perspective":
+                  {
+                    "type": "string",
+                    "description": "Perspective of the video (e.g., 'center', 'left' or 'right)." 
                   }
                 },
                 "required":
