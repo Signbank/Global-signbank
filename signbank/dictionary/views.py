@@ -49,7 +49,6 @@ from django.views.decorators.csrf import csrf_exempt
 from django.utils.timezone import get_current_timezone
 
 from django.core.exceptions import PermissionDenied, ObjectDoesNotExist, BadRequest
-from signbank.gloss_update import api_update_gloss_fields
 from django.utils.translation import gettext_lazy as _, activate, override
 from signbank.abstract_machine import get_interface_language_api
 

@@ -1395,7 +1395,7 @@ class Gloss(models.Model):
                 other_media_paths.append(other_media_filename)
         return ", ".join(other_media_paths)
 
-    def get_fields_dict(self, fieldnames, language_code='en', include_checksums=False):
+    def get_fields_dict(self, fieldnames, language_code, include_checksums=False):
 
         from django.utils import translation
         translation.activate(language_code)
