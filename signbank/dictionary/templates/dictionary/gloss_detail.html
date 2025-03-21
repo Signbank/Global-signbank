@@ -676,9 +676,11 @@ textarea:focus {
 
     <div id="view_tabs" style="margin-right:15px;margin-top:10px;z-index:100;" class='view-tabs view-tabs-light'>
     <ul class='nav nav-tabs nav-tabs-light'>
+        {% if gloss.lemma.dataset.is_public and gloss.inWeb %}
         <li class="nav-item">
             <a class='nav-link' href="{{PREFIX_URL}}/dictionary/gloss/{{gloss.id}}.html">{% trans "Public View" %}</a>
         </li>
+        {% endif %}
         <li class="nav-item">
             <a class='nav-link active' href="{{PREFIX_URL}}/dictionary/gloss/{{gloss.id}}/">{% trans "Details" %}</a>
         </li>
@@ -1362,9 +1364,7 @@ textarea:focus {
             {% endfor %}
 
             <tr>
-                <th>
-                    Senses
-                </th>
+                <th>{% trans "Senses" %}</th>
                 <td>
                     <table class='table table-condensed' style="table-layout: fixed">
                         {% for sense in senses %}
@@ -1466,7 +1466,7 @@ textarea:focus {
                                     {% endif %}
                                     {% with sense_to_similar_senses|get_item:sense.id as similar_senses %}
                                     {% if similar_senses %}
-                                        <span class='glyphicon glyphicon-link sense_link' style="color:black" data-toggle='modal' data-target='#link_sense_modal_{{sense.id}}'></span>
+                                        <span class='glyphicon glyphicon-link sense_link' data-toggle='modal' data-target='#link_sense_modal_{{sense.id}}'></span>
                                         <div class="modal fade modal-sense" id="link_sense_modal_{{sense.id}}" role="dialog" aria-labelledby="#modalTitleSimilarSense" aria-hidden="true">
                                             <div class="modal-dialog modal-lg left-modal">
                                                 <div class="modal-content modal-content-sense" style="width:calc(({{gloss.lemma.dataset.translation_languages.count}}+3)*200px);">
@@ -1745,6 +1745,25 @@ textarea:focus {
                         {% endif %}
                     </table>
                 </td>
+            </tr>
+
+            <tr>
+                <th>
+                    Synsets
+                </th>
+                <td>
+                    {% for synset in synsets %}
+                        <span class="synset">
+                            {% if synset.url %}
+                                <a href='{{ synset.url }}'>{{synset.name}}</a> 
+                            {% else %}
+                                {{synset.name}}
+                            {% endif %}
+                            {% if synset.lemmas %}
+                            {{synset.lemmas}} | {{synset.description}}
+                            {% endif %}
+                        </span><br>
+                    {% endfor %}
             </tr>
 
             {% for value,name,label,kind in main_fields %}

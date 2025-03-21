@@ -26,6 +26,7 @@ import signbank.dictionary.batch_edit
 import signbank.gloss_morphology_update
 import signbank.frequency
 import signbank.dataset_operations
+import signbank.dictionary.gloss_revision
 
 app_name = 'dictionary'
 urlpatterns = [
@@ -33,7 +34,7 @@ urlpatterns = [
     re_path(r'^tag/(?P<tag>[^/]*)/?$', signbank.dictionary.tagviews.taglist),
 
     # an alternate view for direct display of a gloss
-    re_path(r'gloss/(?P<glossid>\d+).html$', signbank.dictionary.views.gloss, name='public_gloss'),
+    re_path(r'gloss/(?P<glossid>\d+).html$', GlossDetailView.as_view(), {'public': True}, name='public_gloss'),
     re_path(r'morpheme/(?P<glossid>\d+).html$', signbank.dictionary.views.morpheme, name='public_morpheme'),
 
     re_path(r'^update/gloss/(?P<glossid>\d+)$', signbank.dictionary.update.update_gloss, name='update_gloss'),
@@ -144,6 +145,10 @@ urlpatterns = [
     re_path(r'^update/toggle_language_fields/(?P<glossid>\d+)$',
             signbank.dictionary.update.toggle_language_fields,
             name='toggle_language_fields'),
+
+    re_path(r'^gloss_revision/cleanup/(?P<glossid>\d+)$',
+            signbank.dictionary.gloss_revision.cleanup,
+            name='gloss_revision_cleanup'),
 
     # The next one does not have a permission check because it should be accessible from a cronjob
     re_path(r'^update_ecv/', GlossListView.as_view(only_export_ecv=True)),
@@ -262,7 +267,8 @@ urlpatterns = [
     re_path(r'^gloss/(?P<gloss_pk>\d+)/history', signbank.dictionary.views.gloss_revision_history, name='gloss_revision_history'),
     re_path(r'^gloss/(?P<pk>\d+)/glossvideos', GlossVideosView.as_view(), name='gloss_videos'),
     re_path(r'^api_update_gloss/(?P<gloss_id>\d+)/video', signbank.api_interface.api_add_video, name='api_add_video'),
-    re_path(r'^gloss/(?P<pk>\d+)', GlossDetailView.as_view(), name='admin_gloss_view'),
+    re_path(r'^api_update_gloss/(?P<gloss_id>\d+)/image', signbank.api_interface.api_add_image, name='api_add_image'),  
+    re_path(r'^gloss/(?P<pk>\d+)', GlossDetailView.as_view(), {'public': False}, name='admin_gloss_view'),
     re_path(r'^gloss_preview/(?P<pk>\d+)', GlossDetailView.as_view(), name='admin_gloss_view_colors'),
     re_path(r'^gloss_frequency/(?P<gloss_id>.*)/$', GlossFrequencyView.as_view(), name='admin_frequency_gloss'),
     re_path(r'^lemma_frequency/(?P<gloss_id>.*)/$', LemmaFrequencyView.as_view(), name='admin_frequency_lemma'),

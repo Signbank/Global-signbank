@@ -19,7 +19,7 @@
     },
     {
       "url": "https://signbank-dev.cls.ru.nl",
-      "description": "Development server (empty database)"
+      "description": "Development server"
     },
     {
       "url": "https://signbank-test.cls.ru.nl",
@@ -475,7 +475,7 @@
     {
       "post":
       {
-        "description": "Change a gloss. Only include those gloss fields you wish to update. Values of fields with choices should match those available in Signbank. Between languages the number of senses given must be the same, but the number of words in a sense can differ.",
+        "description": "Change a gloss. Only include those gloss fields you wish to update. Values of fields with choices should match those available in Signbank. Between languages the number of senses given must be the same, but the number of words in a sense can differ. Use DOUBLE QUOTES.",
         "parameters":
         [
           {
@@ -799,6 +799,81 @@
         },
         "tags": ["Updating Signbank data"],
         "security": 
+        [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/dictionary/api_update_gloss/{glossid}/image":
+    {
+      "post":
+      {
+        "description": "Updates the image of a gloss.",
+        "parameters":
+        [
+          {
+            "name": "glossid",
+            "in": "path",
+            "description": "ID of the gloss to be updated",
+            "required": true,
+            "schema":
+            {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody":
+        {
+          "content":
+          {
+            "multipart/form-data":
+            {
+              "schema":
+              {
+                "type": "object",
+                "properties":
+                {
+                  "FILE":
+                  {
+                    "type": "string",
+                    "format": "binary",
+                    "description": "The image file to upload."
+                  }
+                },
+                "required":
+                [
+                ]
+              }
+            }
+          }
+        },
+        "responses":
+        {
+          "200":
+          {
+            "description": "Update successful"
+          },
+          "400":
+          {
+            "description": "No file uploaded"
+          },
+          "401":
+          {
+            "description": "User not found"
+          },
+          "403":
+          {
+            "description": "No permission"
+          },
+          "404":
+          {
+            "description": "Gloss not found"
+          }
+        },
+        "tags": ["Updating Signbank data"],
+        "security":
         [
           {
             "bearerAuth": []

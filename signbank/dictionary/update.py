@@ -27,7 +27,7 @@ from signbank.video.models import AnnotatedVideo, GlossVideoNME, GlossVideoDescr
 
 from signbank.settings.server_specific import OTHER_MEDIA_DIRECTORY, DATASET_METADATA_DIRECTORY, DATASET_EAF_DIRECTORY, LANGUAGES
 from signbank.dictionary.translate_choice_list import machine_value_to_translated_human_value
-from signbank.tools import get_selected_datasets_for_user, gloss_from_identifier, get_default_annotationidglosstranslation
+from signbank.tools import gloss_from_identifier, get_default_annotationidglosstranslation
 from signbank.frequency import document_identifiers_from_paths, documents_paths_dictionary
 
 from django.utils.translation import gettext_lazy as _
@@ -40,17 +40,19 @@ from signbank.dictionary.consistency_senses import reorder_translations
 from signbank.dictionary.related_objects import gloss_related_objects, morpheme_related_objects
 from signbank.dictionary.update_glosses import *
 from signbank.dictionary.batch_edit import batch_edit_update_gloss, add_gloss_update_to_revision_history
-
+import datetime as DT
 
 def show_error(request, translated_message, form, dataset_languages):
+    from signbank.dictionary.context_data import get_selected_datasets
     # this function is used by the add_gloss function below
     messages.add_message(request, messages.ERROR, translated_message)
     return render(request, 'dictionary/add_gloss.html',
                   {'add_gloss_form': form,
                    'dataset_languages': dataset_languages,
-                   'selected_datasets': get_selected_datasets_for_user(request.user),
+                   'selected_datasets': get_selected_datasets(request),
                    'USE_REGULAR_EXPRESSIONS': settings.USE_REGULAR_EXPRESSIONS,
                    'SHOW_DATASET_INTERFACE_OPTIONS': settings.SHOW_DATASET_INTERFACE_OPTIONS})
+
 
 # this method is called from the GlossListView (Add Gloss button on the page)
 def add_gloss(request):
@@ -63,7 +65,8 @@ def add_gloss(request):
         dataset = Dataset.objects.get(pk=request.POST['dataset'])
         selected_datasets = Dataset.objects.filter(pk=request.POST['dataset'])
     else:
-        selected_datasets = get_selected_datasets_for_user(request.user)
+        from signbank.dictionary.context_data import get_selected_datasets
+        selected_datasets = get_selected_datasets(request)
     dataset_languages = Language.objects.filter(dataset__in=selected_datasets).distinct()
 
     if dataset:
@@ -131,7 +134,7 @@ def add_gloss(request):
 
     try:
         gloss = form.save()
-        gloss.creationDate = datetime.now()
+        gloss.creationDate = DT.datetime.now()
         gloss.excludeFromEcv = False
         gloss.lemma = lemmaidgloss
 
@@ -237,7 +240,7 @@ def update_examplesentence(request, examplesentenceid):
                                      field_name=sentence_label,
                                      gloss=gloss,
                                      user=request.user,
-                                     time=datetime.now(tz=get_current_timezone()))
+                                     time=DT.datetime.now(tz=get_current_timezone()))
             revision.save()
 
     return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': request.POST['glossid']})+'?edit')
@@ -292,7 +295,7 @@ def create_examplesentence(request, senseid):
                                      field_name=sentence_label,
                                      gloss=gloss,
                                      user=request.user,
-                                     time=datetime.now(tz=get_current_timezone()))
+                                     time=DT.datetime.now(tz=get_current_timezone()))
             revision.save()
 
     return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': request.POST['glossid']})+'?edit')
@@ -324,7 +327,7 @@ def delete_examplesentence(request, senseid):
                                  field_name=sentence_label,
                                  gloss=gloss,
                                  user=request.user,
-                                 time=datetime.now(tz=get_current_timezone()))
+                                 time=DT.datetime.now(tz=get_current_timezone()))
         revision.save()
 
     return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': request.POST['glossid']})+'?edit')
@@ -563,7 +566,7 @@ def update_sense(request, senseid):
                              field_name=sense_label,
                              gloss=gloss,
                              user=request.user,
-                             time=datetime.now(tz=get_current_timezone()))
+                             time=DT.datetime.now(tz=get_current_timezone()))
     revision.save()
 
     messages.add_message(request, messages.INFO, _('Given sense was updated.'))
@@ -644,7 +647,7 @@ def create_sense(request, glossid):
                              field_name=sense_label,
                              gloss=gloss,
                              user=request.user,
-                             time=datetime.now(tz=get_current_timezone()))
+                             time=DT.datetime.now(tz=get_current_timezone()))
     revision.save()
 
     return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': glossid})+'?edit')
@@ -702,7 +705,7 @@ def delete_sense(request, glossid):
                              field_name=sense_label,
                              gloss=gloss,
                              user=request.user,
-                             time=datetime.now(tz=get_current_timezone()))
+                             time=DT.datetime.now(tz=get_current_timezone()))
     revision.save()
 
     return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': glossid})+'?edit')
@@ -1094,7 +1097,7 @@ def update_gloss(request, glossid):
                              field_name=field,
                              gloss=gloss,
                              user=request.user,
-                             time=datetime.now(tz=get_current_timezone()))
+                             time=DT.datetime.now(tz=get_current_timezone()))
     revision.save()
     # The machine_value (value) representation is also returned to accommodate Hyperlinks to Handshapes in gloss_edit.js
     return HttpResponse(str(original_value) + '\t' + str(newvalue) + '\t' +  str(value) + '\t' + category_value
@@ -1349,7 +1352,7 @@ def update_semanticfield(request, gloss, field, values):
     new_semanticfield_value = ", ".join([str(sf.name) for sf in gloss.semField.all()])
 
     revision = GlossRevision(old_value=original_semanticfield_value, new_value=new_semanticfield_value, field_name='semField',
-                             gloss=gloss, user=request.user, time=datetime.now(tz=get_current_timezone()))
+                             gloss=gloss, user=request.user, time=DT.datetime.now(tz=get_current_timezone()))
     revision.save()
 
     return HttpResponse(str(new_semanticfield_value), {'content-type': 'text/plain'})
@@ -1387,7 +1390,7 @@ def update_derivationhistory(request, gloss, field, values):
     new_derivationhistory_value = ", ".join([str(sf.name) for sf in gloss.derivHist.all()])
 
     revision = GlossRevision(old_value=original_derivationhistory_value, new_value=new_derivationhistory_value, field_name='derivHist',
-                             gloss=gloss, user=request.user, time=datetime.now(tz=get_current_timezone()))
+                             gloss=gloss, user=request.user, time=DT.datetime.now(tz=get_current_timezone()))
     revision.save()
 
     return HttpResponse(str(new_derivationhistory_value), {'content-type': 'text/plain'})
@@ -2324,7 +2327,8 @@ def add_morpheme(request):
         dataset = Dataset.objects.get(pk=request.POST['dataset'])
         selected_datasets = Dataset.objects.filter(pk=request.POST['dataset'])
     else:
-        selected_datasets = get_selected_datasets_for_user(request.user)
+        from signbank.dictionary.context_data import get_selected_datasets
+        selected_datasets = get_selected_datasets(request)
     dataset_languages = Language.objects.filter(dataset__in=selected_datasets).distinct()
 
     if len(selected_datasets) == 1:
@@ -2386,7 +2390,7 @@ def add_morpheme(request):
     if form.is_valid() and (lemmaidgloss or lemma_form.is_valid()):
         try:
             morpheme = form.save()
-            morpheme.creationDate = datetime.now()
+            morpheme.creationDate = DT.datetime.now()
             morpheme.creator.add(request.user)
             if lemma_form:
                 lemmaidgloss = lemma_form.save()
@@ -2396,7 +2400,7 @@ def add_morpheme(request):
             messages.add_message(request, messages.ERROR, ve.message)
             return render(request, 'dictionary/add_morpheme.html', {'add_morpheme_form': form,
                                                  'dataset_languages': dataset_languages,
-                                                 'selected_datasets': get_selected_datasets_for_user(request.user),
+                                                 'selected_datasets': selected_datasets,
                                                  'USE_REGULAR_EXPRESSIONS': settings.USE_REGULAR_EXPRESSIONS,
                                                  'SHOW_DATASET_INTERFACE_OPTIONS': settings.SHOW_DATASET_INTERFACE_OPTIONS})
 
@@ -2410,7 +2414,7 @@ def add_morpheme(request):
     else:
         return render(request,'dictionary/add_morpheme.html', {'add_morpheme_form': form,
                                                                 'dataset_languages': dataset_languages,
-                                                                'selected_datasets': get_selected_datasets_for_user(request.user),
+                                                                'selected_datasets': selected_datasets,
                                                                 'USE_REGULAR_EXPRESSIONS': settings.USE_REGULAR_EXPRESSIONS,
                                                                'SHOW_DATASET_INTERFACE_OPTIONS': settings.SHOW_DATASET_INTERFACE_OPTIONS})
 
@@ -2747,7 +2751,7 @@ def add_tag(request, glossid):
         new_tags_string = ''
 
         revision = GlossRevision(old_value=old_tags_string, new_value=new_tags_string, field_name=tags_label,
-                                 gloss=thisgloss, user=request.user, time=datetime.now(tz=get_current_timezone()))
+                                 gloss=thisgloss, user=request.user, time=DT.datetime.now(tz=get_current_timezone()))
         revision.save()
         response = HttpResponse('deleted', {'content-type': 'text/plain'})
     else:
@@ -2757,7 +2761,7 @@ def add_tag(request, glossid):
         Tag.objects.add_tag(thisgloss, '"%s"' % tag)
         new_tags_string = tag
         revision = GlossRevision(old_value=old_tags_string, new_value=new_tags_string, field_name=tags_label,
-                                 gloss=thisgloss, user=request.user, time=datetime.now(tz=get_current_timezone()))
+                                 gloss=thisgloss, user=request.user, time=DT.datetime.now(tz=get_current_timezone()))
         revision.save()
         # response is new HTML for the tag list and form
         response = render(request, 'dictionary/glosstags.html',
@@ -3074,8 +3078,10 @@ def update_owner(dataset, field, values):
 
     return HttpResponse(str(new_owners_value) + '\t' + str(owners_value), {'content-type': 'text/plain'})
 
+
 def update_excluded_choices(request):
-    selected_datasets = get_selected_datasets_for_user(request.user)
+    from signbank.dictionary.context_data import get_selected_datasets
+    selected_datasets = get_selected_datasets(request)
 
     managed_datasets = []
     change_dataset_permission = get_objects_for_user(request.user, 'change_dataset', Dataset)
@@ -3530,7 +3536,8 @@ def assign_lemma_dataset_to_gloss(request, glossid):
     dataset_of_dummy = dummy_lemma.dataset
     dummy_dataset_name = str(dataset_of_dummy.name)
 
-    selected_datasets = get_selected_datasets_for_user(request.user)
+    from signbank.dictionary.context_data import get_selected_datasets
+    selected_datasets = get_selected_datasets(request)
 
     if not request.user.is_superuser:
         # check that user can write to the dataset
@@ -3863,7 +3870,7 @@ def add_affiliation(request, glossid):
             new_tags_string = ''
 
             revision = GlossRevision(old_value=old_tags_string, new_value=new_tags_string, field_name=tags_label,
-                                     gloss=thisgloss, user=request.user, time=datetime.now(tz=get_current_timezone()))
+                                     gloss=thisgloss, user=request.user, time=DT.datetime.now(tz=get_current_timezone()))
             revision.save()
         # response = HttpResponse('deleted', {'content-type': 'text/plain'})
         result = {'affiliation': affiliation_id}
@@ -3875,7 +3882,7 @@ def add_affiliation(request, glossid):
         new_affiliation, created = AffiliatedGloss.objects.get_or_create(affiliation=affiliation, gloss=thisgloss)
         new_tags_string = affiliation.name
         revision = GlossRevision(old_value=old_tags_string, new_value=new_tags_string, field_name=tags_label,
-                                 gloss=thisgloss, user=request.user, time=datetime.now(tz=get_current_timezone()))
+                                 gloss=thisgloss, user=request.user, time=DT.datetime.now(tz=get_current_timezone()))
         revision.save()
 
     result = {'affiliation': affiliation_id}

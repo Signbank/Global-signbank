@@ -1,39 +1,16 @@
-import json
-import urllib.request
-import tempfile
-import shutil
-import os
+
 import stat
-import zipfile
+import sys
 
-from urllib.error import URLError
-from requests.exceptions import InvalidURL
+from urllib.parse import quote
 from guardian.shortcuts import get_objects_for_user, get_user_perms
-from tagging.models import Tag, TaggedItem
 
-from django.shortcuts import get_object_or_404
-from django.contrib.auth.models import Group, User
-from django.contrib.auth.decorators import permission_required
-from django.views.decorators.csrf import csrf_exempt
-from django.utils.translation import override, gettext_lazy as _, activate
-from django.http import HttpResponse, HttpResponseRedirect, HttpResponseForbidden, HttpResponseBadRequest, JsonResponse, StreamingHttpResponse
-from django.urls import reverse, reverse_lazy
-
-from django.core.exceptions import ObjectDoesNotExist
-from django.core.files.base import ContentFile, File
-
-from django.db import DatabaseError, IntegrityError
-from django.db.transaction import TransactionManagementError
-from django.db.models import FileField
-
-from signbank.dictionary.models import *
-from signbank.dictionary.forms import *
-from signbank.settings.server_specific import LANGUAGES, LEFT_DOUBLE_QUOTE_PATTERNS, RIGHT_DOUBLE_QUOTE_PATTERNS, VIDEOS_TO_IMPORT_FOLDER
+import signbank.tools
 from signbank.api_token import put_api_user_in_request
-from signbank.abstract_machine import get_interface_language_api, get_human_readable_value_dict
-from signbank.video.convertvideo import probe_format
-from signbank.video.models import GlossVideo, GlossVideoHistory
+from signbank.abstract_machine import get_interface_language_api
 from signbank.zip_interface import *
+from django.utils.translation import activate, gettext
+import zipfile
 
 
 def check_api_dataset_manager_permissions(request, datasetid):
@@ -119,7 +96,7 @@ def check_api_file_storage(dataset):
     return {}, 200
 
 
-def api_fields(dataset, language_code='en', advanced=False):
+def api_fields(dataset, language_code='en', advanced=False):    
     activate(language_code)
     api_fields_2023 = []
     if not dataset:
@@ -145,9 +122,11 @@ def api_fields(dataset, language_code='en', advanced=False):
         api_fields_2023.append(gettext("Named Entity"))
         api_fields_2023.append(gettext("Link"))
         api_fields_2023.append(gettext("Video"))
+        api_fields_2023.append(gettext("Perspective Videos"))
     else:
         api_fields_2023.append(gettext("Link"))
         api_fields_2023.append(gettext("Video"))
+        api_fields_2023.append(gettext("Perspective Videos"))
         api_fields_2023.append(gettext("Tags"))
         api_fields_2023.append(gettext("Notes"))
         api_fields_2023.append(gettext("Affiliation"))
@@ -252,7 +231,7 @@ def get_gloss_data_json(request, datasetid, glossid):
         api_fields_2023 = api_fields(dataset, interface_language_code, advanced=False)
 
     gloss_data = dict()
-    gloss_data[str(gloss.pk)] = gloss.get_fields_dict(api_fields_2023, interface_language_code)
+    gloss_data[str(gloss.pk)] = gloss.get_fields_dict(api_fields_2023, interface_language_code, include_checksums=True) 
 
     return JsonResponse(gloss_data, safe=False)
 
@@ -261,7 +240,6 @@ def get_gloss_data_json(request, datasetid, glossid):
 @put_api_user_in_request
 def get_annotated_sentences_of_gloss_json(request, datasetid, glossid):
 
-    from django.utils.translation import gettext_lazy as _, activate, gettext
     interface_language_code = request.headers.get('Accept-Language', 'en')
     if interface_language_code not in settings.MODELTRANSLATION_LANGUAGES:
         interface_language_code = 'en'
@@ -686,14 +664,7 @@ def upload_videos_to_glosses(request, datasetid):
         headers={"Content-Disposition": 'attachment; filename='+'glosses.json'},
     )
 
-
-@csrf_exempt
-@put_api_user_in_request
-def api_add_video(request, gloss_id):
-
-    CENTER_VIDEO_LABELS = ['center', 'centered', 'mid', 'default', 'file', 'video']
-    LEFT_VIDEO_LABELS = ['left', 'l']
-    RIGHT_VIDEO_LABELS = ['right', 'r']
+def verify_conditions_for_file_upload(request, gloss_id):
 
     if not request.user:
         return JsonResponse({'error': 'User not found'}, status=401)
@@ -724,6 +695,21 @@ def api_add_video(request, gloss_id):
 
     if len(request.FILES) == 0:
         return JsonResponse({'error': 'No file uploaded'}, status=400)
+
+@csrf_exempt
+@put_api_user_in_request
+def api_add_video(request, gloss_id):
+
+    CENTER_VIDEO_LABELS = ['center', 'centered', 'mid', 'default', 'file', 'video']
+    LEFT_VIDEO_LABELS = ['left', 'l']
+    RIGHT_VIDEO_LABELS = ['right', 'r']
+
+    error_response = verify_conditions_for_file_upload(request, gloss_id)
+
+    if error_response:
+        return error_response
+
+    gloss = Gloss.objects.filter(id=gloss_id).first()
 
     for label in request.FILES.keys():
         if label not in CENTER_VIDEO_LABELS and label not in LEFT_VIDEO_LABELS and label not in RIGHT_VIDEO_LABELS:
@@ -760,3 +746,49 @@ def api_add_video(request, gloss_id):
         nr_of_videos += 1
 
     return JsonResponse({'message': f'Uploaded {nr_of_videos} videos to dataset {dataset}.' }, status=200)
+
+
+@csrf_exempt
+@put_api_user_in_request
+def api_add_image(request, gloss_id):
+    """
+    Handles the upload of an image file for a specific gloss via the API, and saves it to the correct location.
+    """
+
+    error_response = verify_conditions_for_file_upload(request, gloss_id)
+
+    if error_response:
+        return error_response
+
+    gloss = Gloss.objects.filter(id=gloss_id).first()
+    image_file = list(request.FILES.values())[0]
+
+    # Construct a filename for the image, use sn if present, otherwise use idgloss+gloss id
+    file_extension = os.path.splitext(image_file.name)[1].lower()
+    if file_extension not in settings.SUPPORTED_CITATION_IMAGE_EXTENSIONS:
+        return JsonResponse({'error': 'File extension not supported! Please convert to png or jpg'}, status=400)
+
+    image_file.name = f'{gloss.sn}{file_extension}' if gloss.sn is not None else f'{gloss.idgloss}-{gloss.pk}{file_extension}'
+
+    # Prepare the file's new path and name
+    goal_path = os.path.join(WRITABLE_FOLDER, settings.GLOSS_IMAGE_DIRECTORY, gloss.lemma.dataset.acronym, signbank.tools.get_two_letter_dir(gloss.idgloss))
+    goal_location = os.path.join(goal_path, quote(image_file.name, safe=''))
+
+    if not os.path.exists(goal_path):
+        try:
+            os.makedirs(goal_path)
+        except OSError as ose:
+            return JsonResponse({'error': f'Failed to create directory {goal_path}: {ose}'}, status=500)
+
+    # Save the file
+    try:
+        destination = File(open(goal_location.encode(sys.getfilesystemencoding()), 'wb+'))
+    except (SystemError, OSError, IOError):
+        return JsonResponse({'error': f'Failed to open file {goal_location} for writing.'}, status=500)
+
+    for chunk in image_file.chunks():
+        destination.write(chunk)
+
+    destination.close()
+
+    return JsonResponse({'message': 'Image upload successful.'}, status=200) 

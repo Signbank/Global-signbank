@@ -20,17 +20,14 @@ class Command(BaseCommand):
             convert_video_collection(source, dest)
      
         else:
-            print "Usage convertvideo", self.args
-            
-            
-            
+            print("Usage convertvideo", self.args)
+
 
 def convert_video_collection(sourcedir, destdir):
     """Convert all video files in this collection"""
     
     for dirpath, dirnames, filenames in os.walk(sourcedir):
-        
-        
+
         destpath = os.path.join(destdir, '/'.join(dirpath.split(os.sep)[1:]))
         
         if not os.path.exists(destpath):
@@ -45,7 +42,7 @@ def convert_video_collection(sourcedir, destdir):
                 
                 destfile = os.path.join(destpath, name+".mp4")
                 if not os.path.exists(destfile):
-                    print sourcefile, destfile  
+                    print(sourcefile, destfile)
                     convert_video(sourcefile, destfile, force=True)
 
                 

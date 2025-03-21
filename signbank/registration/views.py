@@ -330,7 +330,7 @@ def users_without_dataset(request):
 def user_profile(request):
 
     from datetime import date
-    from signbank.tools import get_selected_datasets_for_user
+    from signbank.dictionary.context_data import get_selected_datasets
     from guardian.shortcuts import get_objects_for_user, get_user_perms
 
     user_object = User.objects.get(username=request.user)
@@ -341,7 +341,7 @@ def user_profile(request):
         delta = expiry - today
     else:
         delta = None
-    selected_datasets = get_selected_datasets_for_user(request.user)
+    selected_datasets = get_selected_datasets(request)
     view_permit_datasets = []
     for dataset in Dataset.objects.all():
         permissions_for_dataset = get_user_perms(request.user, dataset)

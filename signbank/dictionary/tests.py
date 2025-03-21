@@ -1,9 +1,8 @@
 from django.db.models import CharField, TextField
-#from django.forms import TextInput, Textarea, CharField
+# from django.forms import TextInput, Textarea, CharField
 from signbank.dictionary.adminviews import *
 from signbank.dictionary.forms import GlossCreateForm, FieldChoiceForm
 from signbank.dictionary.models import *
-from signbank.tools import get_selected_datasets_for_user
 from signbank.settings.base import *
 from django.utils.translation import override, gettext_lazy as _, activate
 
@@ -895,7 +894,7 @@ class VideoTests(TestCase):
         print('User has logged out.')
         print('Attempt to see video. Must log in.')
         response = client.get(video_url)
-        self.assertEqual(response.status_code,200)
+        self.assertEqual(response.status_code,401)
 
         # Remove the video
         client.login(username='test-user',password='test-user')
@@ -1001,7 +1000,7 @@ class VideoTests(TestCase):
         print('User has logged out.')
         print('Attempt to see video. Must log in.')
         response = client.get(video_url)
-        self.assertEqual(response.status_code,200)
+        self.assertEqual(response.status_code,401)
 
         # Remove the video
         client.login(username='test-user',password='test-user')
@@ -1094,6 +1093,7 @@ class FrontEndTests(TestCase):
         #Add a hidden gloss to this dataset
 
         self.hidden_gloss = Gloss(lemma=self.new_lemma)
+        self.hidden_gloss.inWeb = False
         self.hidden_gloss.save()
 
         hidden_annotationidglosstranslation = AnnotationIdglossTranslation(text=NAME + 'hidden', gloss=self.hidden_gloss,
@@ -1123,10 +1123,15 @@ class FrontEndTests(TestCase):
 
         #And we get a 302 for both details
         response = self.client.get('/dictionary/gloss/'+str(self.public_gloss.pk))
-        self.assertEqual(response.status_code,302)
+        redirect_template = 'dictionary/gloss.html'
+        template_name = response.__dict__['template_name'][0]
+        print('Anonymous request redirected to public view template: ', redirect_template)
+        self.assertEqual(redirect_template, template_name)
 
         response = self.client.get('/dictionary/gloss/'+str(self.hidden_gloss.pk))
-        self.assertEqual(response.status_code,302)
+        message_result = list(response.context['messages'])[0]
+        message = message_result.message
+        self.assertTrue('Requested gloss is not available for public viewing.' in message)
 
         #Log in
         self.client = Client()

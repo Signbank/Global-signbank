@@ -123,13 +123,18 @@ def probe_format(file):
     return r['inputvideoformat']
 
 
-def generate_image_sequence(sourcefile):
-    basename, _ = os.path.splitext(sourcefile.path)
+def get_folder_name(gloss):
+    gloss_video_filename = gloss.idgloss + '-' + str(gloss.id)
+    filename = gloss_video_filename.replace(' ', '_')
+    folder_name = filename.replace('.', '-')
+    return folder_name
+
+
+def generate_image_sequence(gloss, sourcefile):
+
     temp_location_frames = os.path.join(settings.WRITABLE_FOLDER,
                                         settings.GLOSS_IMAGE_DIRECTORY, "signbank-thumbnail-frames")
-    filename, ext = os.path.splitext(os.path.basename(sourcefile.name))
-    filename = filename.replace(' ', '_')
-    folder_name, _ = os.path.splitext(filename)
+    folder_name = get_folder_name(gloss)
     temp_video_frames_folder = os.path.join(temp_location_frames, folder_name)
     # Create the necessary subfolder if needed
     if not os.path.isdir(temp_location_frames):
@@ -143,8 +148,8 @@ def generate_image_sequence(sourcefile):
             os.remove(f)
     (
         ffmpeg
-        .input(sourcefile.path, ss=1)
-        .filter('fps', fps=15, round='up')
+        .input(sourcefile.path, ss=0.5)
+        .filter('fps', fps=25, round='up')
         .output("%s/%s-%%04d.png" % (temp_video_frames_folder, folder_name), **{'qscale:v': 2})
         .run(quiet=True)
     )
@@ -156,13 +161,10 @@ def generate_image_sequence(sourcefile):
     return stills
 
 
-def remove_stills(sourcefile):
-    basename, _ = os.path.splitext(sourcefile.path)
+def remove_stills(gloss):
     temp_location_frames = os.path.join(settings.WRITABLE_FOLDER,
                                         settings.GLOSS_IMAGE_DIRECTORY, "signbank-thumbnail-frames")
-    filename, ext = os.path.splitext(os.path.basename(sourcefile.name))
-    filename = filename.replace(' ', '_')
-    folder_name, _ = os.path.splitext(filename)
+    folder_name = get_folder_name(gloss)
     temp_video_frames_folder = os.path.join(temp_location_frames, folder_name)
     # remove the temp files
     stills_pattern = temp_video_frames_folder+"/*.png"
@@ -211,10 +213,36 @@ def make_thumbnail_video(sourcefile, targetfile):
     os.remove(temp_target)
 
 
+# Documentation only: works on Ubuntu and matches older files/code.
+ACCEPTABLE_VIDEO_EXTENSIONS = ['.mp4', '.mov', '.webm', '.m4v', '.mkv', '.m2v']
+
+
+def extension_on_filename(filename):
+    # used to retrieve a video type file extension from a filename where there is no file
+    filename_with_extension = os.path.basename(filename)
+    filename_without_extension, ext = os.path.splitext(os.path.basename(filename))
+
+    if ext in ACCEPTABLE_VIDEO_EXTENSIONS:
+        return ext
+
+    m = re.search(r".+-(\d+)\.(mp4|m4v|mov|webm|mkv|m2v)\.(bak\d+)$", filename_with_extension)
+    if m:
+        return m.group(2)
+    m = re.search(r".+-(\d+)\.(mp4|m4v|mov|webm|mkv|m2v)\.(bak\d+)$", filename_without_extension)
+    if m:
+        return m.group(2)
+    # Default if no file exists and the filename is invalid, allows to work on dev servers.
+    return '.mp4'
+
+
 def video_file_type_extension(video_file_full_path):
+
+    if not video_file_full_path or 'glossvideo' not in video_file_full_path:
+        return ''
+
     if not os.path.exists(video_file_full_path):
-        # the video file does not exist
-        return ".mp4"
+        return extension_on_filename(video_file_full_path)
+
     filetype_output = subprocess.run(["file", video_file_full_path], stdout=subprocess.PIPE)
     filetype = str(filetype_output.stdout)
     if 'MOV' in filetype:
@@ -230,10 +258,10 @@ def video_file_type_extension(video_file_full_path):
     elif 'MPEG-2' in filetype:
         desired_video_extension = '.m2v'
     else:
-        # no match found, print something to the log and just keep using mp4
+        # no match found, print something to the log and just keep using what's on the filename
         if DEBUG_VIDEOS:
             print('video:admin:convertvideo:video_file_type_extension:file:UNKNOWN ', filetype)
-        desired_video_extension = '.mp4'
+        desired_video_extension = extension_on_filename(video_file_full_path)
     return desired_video_extension
 
 

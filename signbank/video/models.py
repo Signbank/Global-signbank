@@ -10,10 +10,11 @@ import time
 import stat
 import shutil
 
-from signbank.video.convertvideo import extract_frame, convert_video, probe_format, make_thumbnail_video, generate_image_sequence, remove_stills
+from signbank.video.convertvideo import extract_frame, convert_video, make_thumbnail_video, generate_image_sequence, remove_stills
 
 from django.core.files.storage import FileSystemStorage
 from django.contrib.auth import models as authmodels
+from django.utils.encoding import escape_uri_path
 from signbank.settings.base import WRITABLE_FOLDER, GLOSS_VIDEO_DIRECTORY, GLOSS_IMAGE_DIRECTORY, FFMPEG_PROGRAM
 # from django.contrib.auth.models import User
 from datetime import datetime
@@ -27,13 +28,40 @@ else:
     from signbank.dictionary.models import Gloss, Language
 
 
-def get_two_letter_dir(idgloss):
-    foldername = idgloss[:2]
+def filename_matches_nme(filename):
+    filename_without_extension, ext = os.path.splitext(os.path.basename(filename))
+    return re.search(r".+-(\d+)_(nme_\d+|nme_\d+_left|nme_\d+_right)$", filename_without_extension)
 
-    if len(foldername) == 1:
-        foldername += '-'
 
-    return foldername
+def filename_matches_perspective(filename):
+    filename_without_extension, ext = os.path.splitext(os.path.basename(filename))
+    return re.search(r".+-(\d+)_(left|right|nme_\d+_left|nme_\d+_right)$", filename_without_extension)
+
+
+def filename_matches_video(filename):
+    filename_without_extension, ext = os.path.splitext(os.path.basename(filename))
+    return re.search(r".+-(\d+)$", filename_without_extension)
+
+
+def filename_matches_backup_video(filename):
+    filename_with_extension = os.path.basename(filename)
+    return re.search(r".+-(\d+)\.(mp4|m4v|mov|webm|mkv|m2v)\.(bak\d+)$", filename_with_extension)
+
+
+def flattened_video_path(relative_path):
+    """
+    This constructs the filename to be used in the DELETED_FILES_FOLDER
+    Take apart the gloss video relative path
+    If this succeeds, prefix the filename with the dataset-specific components
+    Otherwise just return the filename
+    """
+    relative_path_folders, filename = os.path.split(relative_path)
+    m = re.search(r"^glossvideo/(.+)/(..)$", relative_path_folders)
+    if m:
+        dataset_folder = m.group(1)
+        two_char_folder = m.group(2)
+        return f"{dataset_folder}_{two_char_folder}_{filename}"
+    return filename
 
 
 PERSPECTIVE_CHOICES = (('left', 'Left'),
@@ -139,6 +167,7 @@ class GlossVideoHistory(models.Model):
 
 def get_gloss_path_to_video_file_on_disk(gloss):
     idgloss = gloss.idgloss
+    from signbank.tools import get_two_letter_dir
     two_letter_dir = get_two_letter_dir(idgloss)
     dataset_dir = gloss.lemma.dataset.acronym
     filename = idgloss + '-' + str(gloss.id) + '.mp4'
@@ -164,6 +193,7 @@ def get_video_file_path(instance, filename, nmevideo=False, perspective='', offs
     (base, ext) = os.path.splitext(filename)
 
     idgloss = instance.gloss.idgloss
+    from signbank.tools import get_two_letter_dir
     two_letter_dir = get_two_letter_dir(idgloss)
 
     video_dir = settings.GLOSS_VIDEO_DIRECTORY
@@ -276,9 +306,9 @@ def get_annotated_video_file_path(instance, filename, version=0):
     dataset = instance.annotatedsentence.get_dataset().acronym
     dataset_dir = os.path.join(dataset, str(instance.annotatedsentence.id))
     if version > 0:
-        filename = str(instance.examplesentence.id) + ext + '.bak' + str(instance.id)
+        filename = str(instance.annotatedsentence.id) + ext + '.bak' + str(instance.id)
     else:
-        filename = str(instance.examplesentence.id) + ext
+        filename = str(instance.annotatedsentence.id) + ext
 
     path = os.path.join(video_dir, dataset_dir, filename)
     if hasattr(settings, 'ESCAPE_UPLOADED_VIDEO_FILE_PATH') and settings.ESCAPE_UPLOADED_VIDEO_FILE_PATH:
@@ -367,7 +397,7 @@ class ExampleVideo(models.Model):
         from signbank.tools import generate_still_image
         try:
             generate_still_image(self)
-        except OSError:
+        except (OSError, PermissionError):
             import sys
             print('Error generating still image', sys.exc_info())
 
@@ -389,7 +419,7 @@ class ExampleVideo(models.Model):
         small_video_path = self.small_video()
         try:
             os.unlink(self.videofile.path)
-        except OSError:
+        except (OSError, PermissionError):
             pass
 
     def reversion(self, revert=False):
@@ -515,7 +545,7 @@ class AnnotatedVideo(models.Model):
             if not only_eaf:
                 video_path = os.path.join(settings.WRITABLE_FOLDER, settings.ANNOTATEDSENTENCE_VIDEO_DIRECTORY, self.annotatedsentence.get_dataset().acronym, str(self.annotatedsentence.id))
                 shutil.rmtree(video_path)
-        except OSError:
+        except (OSError, PermissionError):
             pass
 
     def get_eaffile_name(self):
@@ -542,6 +572,9 @@ class AnnotatedVideo(models.Model):
 
     def select_annotations(self, eaf, tier_name, start_ms, end_ms):
         """ Select annotations that are within the selected range """
+        
+        if tier_name not in eaf.tiers:
+            return
         
         keys_to_remove = []
         for key in eaf.tiers[tier_name][0]:
@@ -603,6 +636,8 @@ class AnnotatedVideo(models.Model):
         self.select_annotations(eaf, 'Sentences', start_ms, end_ms)
         self.select_annotations(eaf, 'Glosses R', start_ms, end_ms)
         self.select_annotations(eaf, 'Glosses L', start_ms, end_ms)
+        self.select_annotations(eaf, 'Nederlands', start_ms, end_ms)
+        self.select_annotations(eaf, 'Signbank ID glossen', start_ms, end_ms)
         # shift the timeslots to start at 0
         for key in eaf.timeslots:
             eaf.timeslots[key] -= start_ms
@@ -701,6 +736,8 @@ class GlossVideo(models.Model):
         """Return the URL of the small version for this video
         :param use_name: whether videofile.name should be used instead of videofile.path
         """
+        if not self.videofile:
+            return None
         small_video_path = add_small_appendix(self.videofile.path)
         if os.path.exists(small_video_path):
             if use_name:
@@ -711,11 +748,11 @@ class GlossVideo(models.Model):
 
     def make_image_sequence(self):
 
-        generate_image_sequence(self.videofile)
+        generate_image_sequence(self.gloss, self.videofile)
 
     def delete_image_sequence(self):
 
-        remove_stills(self.videofile)
+        remove_stills(self.gloss)
 
     def make_small_video(self):
         # this method is not called (bugs)
@@ -737,7 +774,7 @@ class GlossVideo(models.Model):
         from signbank.tools import generate_still_image
         try:
             generate_still_image(self)
-        except OSError:
+        except (OSError, PermissionError):
             import sys
             print('Error generating still image', sys.exc_info())
 
@@ -758,6 +795,9 @@ class GlossVideo(models.Model):
 
         if settings.DEBUG_VIDEOS:
             print('delete_files GlossVideo: ', str(self.videofile))
+
+        if not self.videofile or not self.videofile.name:
+            return
 
         small_video_path = self.small_video()
         try:
@@ -825,8 +865,6 @@ class GlossVideo(models.Model):
         # this coercion to a string type sometimes causes special characters in the filename to be a problem
         # code has been introduced elsewhere to make sure paths are the correct encoding
         glossvideoname = self.videofile.name
-        if settings.DEBUG_VIDEOS:
-            print('__str__ GlossVideo: ', self.videofile.name)
         return glossvideoname
 
     def is_glossvideonme(self):
@@ -921,7 +959,7 @@ class GlossVideoNME(GlossVideo):
     def get_video_path(self):
         if settings.DEBUG_VIDEOS:
             print('get_video_path GlossVideoNME: ', str(self.videofile))
-        return self.videofile.name
+        return escape_uri_path(self.videofile.name) if self.videofile else ''
 
     def ensure_mp4(self):
         """Ensure that the video file is an h264 format
@@ -949,37 +987,51 @@ class GlossVideoNME(GlossVideo):
         :return:
         """
         old_path = str(self.videofile)
+        if not move_files_on_disk or not old_path:
+            return
         new_path = get_video_file_path(self, old_path, nmevideo=True, perspective='', offset=self.offset, version=0)
-        if old_path != new_path:
-            if move_files_on_disk:
-                source = os.path.join(settings.WRITABLE_FOLDER, old_path)
-                destination = os.path.join(settings.WRITABLE_FOLDER, new_path)
-                if os.path.exists(source):
-                    destination_dir = os.path.dirname(destination)
-                    if not os.path.exists(destination_dir):
-                        os.makedirs(destination_dir)
-                    if os.path.isdir(destination_dir):
-                        shutil.move(source, destination)
+        if old_path == new_path:
+            return
+        source = os.path.join(settings.WRITABLE_FOLDER, old_path)
+        destination = os.path.join(settings.WRITABLE_FOLDER, new_path)
+        if not os.path.exists(source):
+            return
+        destination_dir = os.path.dirname(destination)
+        if not os.path.exists(destination_dir):
+            os.makedirs(destination_dir)
+        if os.path.isdir(destination_dir):
+            shutil.move(source, destination)
 
-                    self.videofile.name = new_path
-                    self.save()
+        self.videofile.name = new_path
+        self.save()
 
     def delete_files(self):
         """Delete the files associated with this object"""
-        if settings.DEBUG_VIDEOS:
-            print('delete_files GlossVideoNME: ', str(self.videofile))
+        old_path = str(self.videofile)
+        if not old_path:
+            return True
+        file_system_path = os.path.join(settings.WRITABLE_FOLDER, old_path)
+        if filename_matches_nme(file_system_path) is None:
+            # this points to the normal video file, just erase the name rather than delete file
+            self.videofile.name = ""
+            self.save()
+            return True
+        if not os.path.exists(file_system_path):
+            return True
         try:
-            os.unlink(self.videofile.path)
-        except (OSError, PermissionError):
-            if settings.DEBUG_VIDEOS:
-                print('delete_files exception GlossVideo OSError, PermissionError: ', str(self.videofile))
-            pass
+            os.unlink(file_system_path)
+            return True
+        except (OSError, PermissionError) as e:
+            print(e)
+            return False
 
     def reversion(self, revert=False):
         """Delete the video file of this object"""
-        print("DELETE NME VIDEO", self.videofile.name)
-        self.delete_files()
-        self.delete()
+        status = self.delete_files()
+        if not status:
+            print("DELETE NME VIDEO FAILED: ", self.videofile.name)
+        else:
+            self.delete()
 
 class GlossVideoPerspective(GlossVideo):
     perspective = models.CharField(max_length=20, choices=PERSPECTIVE_CHOICES)
@@ -989,7 +1041,7 @@ class GlossVideoPerspective(GlossVideo):
         ordering = ['perspective', ]
 
     def get_video_path(self):
-        return self.videofile.name
+        return escape_uri_path(self.videofile.name) if self.videofile else ''
 
     def save(self, *args, **kwargs):
         super(GlossVideoPerspective, self).save(*args, **kwargs)
@@ -1003,6 +1055,8 @@ class GlossVideoPerspective(GlossVideo):
             return
         # other code does this too. It's a dubious way to obtain the path
         old_path = str(self.videofile)
+        if not old_path:
+            return
         new_path = get_video_file_path(self, old_path, nmevideo=False, perspective=str(self.perspective))
         if old_path == new_path:
             return
@@ -1016,36 +1070,50 @@ class GlossVideoPerspective(GlossVideo):
             if os.path.isdir(destination_dir):
                 shutil.move(source, destination)
 
-            self.videofile.name = new_path
-            self.save()
-        else:
-            # on the production server this is a problem
-            msg = "Perspective video file not found: " + source
-            print(msg)
+        self.videofile.name = new_path
+        self.save()
 
     def delete_files(self):
         """Delete the files associated with this object"""
         old_path = str(self.videofile)
+        if not old_path:
+            return True
         file_system_path = os.path.join(settings.WRITABLE_FOLDER, old_path)
-        if settings.DEBUG_VIDEOS:
-            print('perspective video delete files: ', file_system_path)
+        if filename_matches_perspective(file_system_path) is None:
+            # this points to the normal video file, just erase the name rather than delete file
+            self.videofile.name = ""
+            self.save()
+            return True
         if not os.path.exists(file_system_path):
-            # Video file not found on server
-            # on the production server this is a problem
-            msg = "Perspective video file not found: " + file_system_path
-            print(msg)
-            return
+            return True
         try:
             os.unlink(file_system_path)
-        except OSError:
-            msg = "Perspective video file could not be deleted: " + file_system_path
-            print(msg)
+            return True
+        except (PermissionError, OSError) as e:
+            print(e)
+            return False
 
     def reversion(self, revert=False):
         """Delete the video file of this object"""
-        print("DELETE Perspective VIDEO", self.videofile.name)
-        self.delete_files()
-        self.delete()
+        status = self.delete_files()
+        if not status:
+            print("DELETE Perspective VIDEO FAILED: ", self.videofile.name)
+        else:
+            self.delete()
+
+
+def move_videos_for_filter(filter, move_files_on_disk: bool=False) -> None:
+    """
+    Changes GlossVideo.videofile values for a filter dict
+    and moves files on disk if move_file_on_disk is True (default is False).
+    A filter dict is used in the QuerySet.filter method as **filter
+    """
+    for glossvideo in GlossVideo.objects.filter(**filter, glossvideonme=None, glossvideoperspective=None):
+        glossvideo.move_video(move_files_on_disk=move_files_on_disk)
+    for glossvideo_nme in GlossVideoNME.objects.filter(**filter):
+        glossvideo_nme.move_video(move_files_on_disk=move_files_on_disk)
+    for glossvideos_perspective in GlossVideoPerspective.objects.filter(**filter):
+        glossvideos_perspective.move_video(move_files_on_disk=move_files_on_disk)
 
 
 @receiver(models.signals.post_save, sender=Dataset)
@@ -1061,10 +1129,7 @@ def process_dataset_changes(sender, instance, **kwargs):
     # and rename directories.
     dataset = instance
     if dataset._initial['acronym'] and dataset.acronym != dataset._initial['acronym']:
-        # Move all media
-        glossvideos = GlossVideo.objects.filter(gloss__lemma__dataset=dataset)
-        for glossvideo in glossvideos:
-            glossvideo.move_video(move_files_on_disk=False)
+        move_videos_for_filter({'gloss__lemma_dataset': dataset}, move_files_on_disk=False)
 
         # Rename dirs
         glossvideo_path_original = os.path.join(WRITABLE_FOLDER, GLOSS_VIDEO_DIRECTORY, dataset._initial['acronym'])
@@ -1082,14 +1147,11 @@ def process_dataset_changes(sender, instance, **kwargs):
 
     # If the default language has been changed, change all GlossVideos
     # and move all video/poster files accordingly.
-    if dataset._initial['default_language'] and dataset.default_language != dataset._initial['default_language']:
-        # Move all media
-        glossvideos = GlossVideo.objects.filter(gloss__lemma__dataset=dataset)
-        for glossvideo in glossvideos:
-            glossvideo.move_video(move_files_on_disk=True)
+    if dataset._initial['default_language'] and dataset.default_language_id != dataset._initial['default_language']:
+        move_videos_for_filter({'gloss__lemma_dataset': dataset}, move_files_on_disk=True)
 
         # Make sure that _initial reflect the database for the dataset object
-        dataset._initial['default_language'] = dataset.default_language
+        dataset._initial['default_language'] = dataset.default_language_id
 
 
 @receiver(models.signals.post_save, sender=LemmaIdglossTranslation)
@@ -1101,10 +1163,7 @@ def process_lemmaidglosstranslation_changes(sender, instance, **kwargs):
     :param kwargs: 
     :return: 
     """
-    lemmaidglosstranslation = instance
-    glossvideos = GlossVideo.objects.filter(gloss__lemma__lemmaidglosstranslation=lemmaidglosstranslation)
-    for glossvideo in glossvideos:
-        glossvideo.move_video(move_files_on_disk=True)
+    move_videos_for_filter({'gloss__lemma__lemmaidglosstranslation': instance}, move_files_on_disk=True)
 
 
 @receiver(models.signals.post_save, sender=LemmaIdgloss)
@@ -1116,10 +1175,7 @@ def process_lemmaidgloss_changes(sender, instance, **kwargs):
     :param kwargs:
     :return:
     """
-    lemmaidgloss = instance
-    glossvideos = GlossVideo.objects.filter(gloss__lemma=lemmaidgloss)
-    for glossvideo in glossvideos:
-        glossvideo.move_video(move_files_on_disk=True)
+    move_videos_for_filter({'gloss__lemma': instance}, move_files_on_disk=True)
 
 
 @receiver(models.signals.post_save, sender=Gloss)
@@ -1204,13 +1260,8 @@ def delete_files(sender, instance, **kwargs):
         print('delete_files pre_delete: ', str(instance))
         print('delete_files settings.DELETE_FILES_ON_GLOSSVIDEO_DELETE: ', settings.DELETE_FILES_ON_GLOSSVIDEO_DELETE)
     if hasattr(instance, 'glossvideonme'):
-        # before deleting a GlossVideoNME object, delete the files
-        instance.delete_files()
+        status = instance.delete_files()
     elif hasattr(instance, 'glossvideoperspective'):
-        # before deleting a GlossVideoPerspective object, delete the files
-        instance.delete_files()
+        status = instance.delete_files()
     elif settings.DELETE_FILES_ON_GLOSSVIDEO_DELETE:
-        # before a GlossVideo object, only delete the files if the setting is True
-        # default.py has this set to false so primary gloss video files are (never) deleted
-        # check whether this conflicts with reversion. If the file is not deleted, the object cannot be deleted
         instance.delete_files()

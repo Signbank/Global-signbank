@@ -22,11 +22,11 @@ import os
 import json
 from collections import OrderedDict
 from datetime import datetime, date
+from urllib.parse import urlparse, unquote
 
 from signbank.settings.base import FIELDS, DEFAULT_KEYWORDS_LANGUAGE, \
     WRITABLE_FOLDER, DATASET_METADATA_DIRECTORY, ECV_FOLDER
 from signbank.dictionary.translate_choice_list import choicelist_queryset_to_translated_dict
-
 
 # -*- coding: utf-8 -*-
 
@@ -1278,10 +1278,6 @@ class Gloss(models.Model):
                         trans.save()
                     except (DatabaseError, IntegrityError, TransactionManagementError):
                         print('reorder_senses exception saving translation to other sense, removing offender')
-                        print("'gloss': ", str(self.id), ", 'sense': ", str(inx),
-                              ", 'orderIndex': ", str(trans.orderIndex), ", 'language': ", str(trans.language),
-                              ", 'index': ", str(trans.index), ", 'translation_id': ", str(trans.id),
-                              ", 'translation.text': ", trans.translation.text)
                         sensetrans.translations.remove(trans)
                         trans.delete()
 
@@ -1399,7 +1395,7 @@ class Gloss(models.Model):
                 other_media_paths.append(other_media_filename)
         return ", ".join(other_media_paths)
 
-    def get_fields_dict(self, fieldnames, language_code='en'):
+    def get_fields_dict(self, fieldnames, language_code='en', include_checksums=False):
 
         from django.utils import translation
         translation.activate(language_code)
@@ -1494,6 +1490,10 @@ class Gloss(models.Model):
             if video_path:
                 fields[video_fieldname] = settings.URL + settings.PREFIX_URL + '/dictionary/protected_media/' + video_path
 
+                if include_checksums:
+                    from signbank.tools import get_checksum_for_path
+                    fields[video_fieldname + '_checksum'] = get_checksum_for_path(os.path.join(settings.WRITABLE_FOLDER, unquote(self.get_video_path())))  
+
         tags_fieldname = gettext("Tags")
         tags_of_gloss = TaggedItem.objects.filter(object_id=self.id)
         if tags_fieldname in fieldnames and tags_of_gloss:
@@ -1547,6 +1547,27 @@ class Gloss(models.Model):
         if blend_morphology_fieldname in fieldnames and blend_morphology:
             fields[blend_morphology_fieldname] = blend_morphology
 
+        perspective_videos_label = gettext("Perspective Videos") 
+        gloss_perspective_videos = self.get_perspective_videos()
+
+        if perspective_videos_label in fieldnames and gloss_perspective_videos:
+            from signbank.video.models import GlossVideoPerspective
+            perspective_video_list = []
+            for perspectivevideo in gloss_perspective_videos:
+
+                perspective_info = dict()
+                perspective_info["ID"] = str(perspectivevideo.id)
+                perspective_path = settings.URL + settings.PREFIX_URL + '/dictionary/protected_media/' + perspectivevideo.get_video_path()
+                perspective_info[gettext("Link")] = perspective_path
+
+                if include_checksums:
+                    from signbank.tools import get_checksum_for_path
+                    perspective_info['Checksum'] = get_checksum_for_path(os.path.join(settings.WRITABLE_FOLDER, unquote(perspectivevideo.get_video_path())))
+
+                perspective_video_list.append(perspective_info)
+
+            fields[perspective_videos_label] = perspective_video_list
+
         nme_videos = gettext("NME Videos")
         gloss_nme_videos = self.get_nme_videos()
         if nme_videos in fieldnames and gloss_nme_videos:
@@ -1565,6 +1586,11 @@ class Gloss(models.Model):
                     nme_info[info_field_name] = description_text
                 nme_path = settings.URL + settings.PREFIX_URL + '/dictionary/protected_media/' + nmevideo.get_video_path()
                 nme_info[gettext("Link")] = nme_path
+
+                if include_checksums:
+                    from signbank.tools import get_checksum_for_path
+                    nme_info['Checksum'] = get_checksum_for_path(os.path.join(settings.WRITABLE_FOLDER, unquote(nmevideo.get_video_path())))
+                
                 nme_video_list.append(nme_info)
             fields[nme_videos] = nme_video_list
 
@@ -4298,8 +4324,18 @@ class AnnotatedSentenceSource(models.Model):
         return self.source
 
     def get_absolute_url(self):
-        from urllib.parse import urlparse
         parsed_url = urlparse(self.url)
         if not parsed_url.scheme:
             return 'http://' + self.url
         return self.url
+
+class Synset(models.Model):
+    """A synset is a set of glosses that are synonymous"""
+    name = models.CharField(max_length=200, verbose_name=_("Name"))
+    lemmas = models.TextField(blank=True, verbose_name=_("Lemmas"))
+    url = models.TextField(blank=True, verbose_name=_("Url"))
+    description = models.TextField(blank=True, verbose_name=_("Description"))
+    glosses = models.ManyToManyField(Gloss, related_name = 'synsets', verbose_name=_("Glosses"))
+
+    def __str__(self):
+        return self.name

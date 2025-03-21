@@ -213,15 +213,6 @@ def uploaded_zip_archives(dataset):
     return zip_archive
 
 
-def get_two_letter_dir(idgloss):
-    foldername = idgloss[:2]
-
-    if len(foldername) == 1:
-        foldername += '-'
-
-    return foldername
-
-
 def get_gloss_filepath(video_file_path, gloss):
 
     filename = os.path.basename(video_file_path)
@@ -245,6 +236,7 @@ def get_gloss_filepath(video_file_path, gloss):
     if annotation_text != filename_without_extension:
         # gloss annotation does not match zip file name
         return "", "", ""
+    from signbank.tools import get_two_letter_dir
     two_letter_dir = get_two_letter_dir(gloss.idgloss)
     destination_folder = os.path.join(
         settings.WRITABLE_FOLDER,
@@ -284,6 +276,7 @@ def get_gloss_filepath_glossid(video_file_path, gloss):
     if glossid != filename_without_extension:
         # gloss id does not match zip file name
         return "", "", ""
+    from signbank.tools import get_two_letter_dir
     two_letter_dir = get_two_letter_dir(gloss.idgloss)
     destination_folder = os.path.join(
         settings.WRITABLE_FOLDER,

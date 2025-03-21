@@ -25,12 +25,13 @@ from signbank.dictionary.update_csv import (update_simultaneous_morphology, upda
 import signbank.dictionary.forms
 from signbank.video.models import GlossVideo, small_appendix, add_small_appendix
 
+from signbank.dictionary.context_data import get_selected_datasets
 from signbank.tools import save_media, get_two_letter_dir
-from signbank.tools import get_selected_datasets_for_user, get_default_annotationidglosstranslation, \
-    get_dataset_languages, \
-    create_gloss_from_valuedict, compare_valuedict_to_gloss, compare_valuedict_to_lemma, construct_scrollbar, \
-    get_interface_language_and_default_language_codes, detect_delimiter, split_csv_lines_header_body, \
-    split_csv_lines_sentences_header_body, create_sentence_from_valuedict
+from signbank.tools import (get_default_annotationidglosstranslation,
+    get_dataset_languages, get_datasets_with_public_glosses,
+    create_gloss_from_valuedict, compare_valuedict_to_gloss, compare_valuedict_to_lemma, construct_scrollbar,
+    get_interface_language_and_default_language_codes, detect_delimiter, split_csv_lines_header_body,
+    split_csv_lines_sentences_header_body, create_sentence_from_valuedict)
 from signbank.dictionary.field_choices import fields_to_fieldcategory_dict
 
 from signbank.csv_interface import (csv_create_senses, csv_update_sentences, csv_create_sentence, required_csv_columns,
@@ -40,7 +41,6 @@ from signbank.dictionary.translate_choice_list import machine_value_to_translate
 
 import signbank.settings.server_specific
 from signbank.settings.base import *
-from django.utils.translation import override, gettext_lazy as _
 
 from urllib.parse import urlencode, urlparse
 from wsgiref.util import FileWrapper, request_uri
@@ -50,10 +50,11 @@ from django.utils.timezone import get_current_timezone
 
 from django.core.exceptions import PermissionDenied, ObjectDoesNotExist, BadRequest
 from signbank.gloss_update import api_update_gloss_fields
-from django.utils.translation import gettext_lazy as _, activate
+from django.utils.translation import gettext_lazy as _, activate, override
 from signbank.abstract_machine import get_interface_language_api
 
 from signbank.api_token import put_api_user_in_request
+from signbank.dictionary.gloss_revision import pretty_print_revisions
 
 
 def login_required_config(f):
@@ -91,7 +92,7 @@ def gloss(request, glossid):
     else:
         request.session['search_type'] = 'sign'
 
-    selected_datasets = get_selected_datasets_for_user(request.user)
+    selected_datasets = get_selected_datasets(request)
     dataset_languages = Language.objects.filter(dataset__in=selected_datasets).distinct()
 
     show_dataset_interface = getattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS', False)
@@ -173,7 +174,7 @@ def gloss(request, glossid):
 def morpheme(request, glossid):
     # this is public view of a morpheme
 
-    selected_datasets = get_selected_datasets_for_user(request.user)
+    selected_datasets = get_selected_datasets(request)
     dataset_languages = Language.objects.filter(dataset__in=selected_datasets).distinct()
 
     show_dataset_interface = getattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS', False)
@@ -294,7 +295,7 @@ def missing_video_list(selected_datasets):
     glosses = Gloss.objects.filter(archived=False, morpheme=None, lemma__dataset__in=selected_datasets)
     for gloss in glosses:
         gloss_video_path = video_file_path(gloss)
-        gloss_video = GlossVideo.objects.filter(gloss=gloss, version=0, glossvideonme=None)
+        gloss_video = GlossVideo.objects.filter(gloss=gloss, version=0, glossvideonme=None, glossvideoperspective=None)
         if not gloss_video.count():
             # does not have GlossVideo object
             file_path = os.path.join(settings.WRITABLE_FOLDER, gloss_video_path)
@@ -308,10 +309,10 @@ def missing_video_view(request):
 
     # check that the user is logged in
     if not request.user.is_authenticated:
-        messages.add_message(self.request, messages.ERROR, _('Please login to use this functionality.'))
+        messages.add_message(request, messages.ERROR, _('Please login to use this functionality.'))
         return HttpResponseRedirect(settings.PREFIX_URL + '/datasets/available')
 
-    selected_datasets = get_selected_datasets_for_user(request.user)
+    selected_datasets = get_selected_datasets(request)
 
     glosses = missing_video_list(selected_datasets)
 
@@ -323,7 +324,7 @@ def try_code(request, pk):
     """A view for the developer to try out senses for a particular gloss"""
     context = {}
 
-    selected_datasets = get_selected_datasets_for_user(request.user)
+    selected_datasets = get_selected_datasets(request)
 
     dataset_languages = Language.objects.filter(dataset__in=selected_datasets).distinct()
 
@@ -379,7 +380,7 @@ def try_code(request, pk):
 def add_new_sign(request):
     context = {}
 
-    selected_datasets = get_selected_datasets_for_user(request.user)
+    selected_datasets = get_selected_datasets(request)
 
     default_dataset_acronym = settings.DEFAULT_DATASET_ACRONYM
     default_dataset = Dataset.objects.get(acronym=default_dataset_acronym)
@@ -413,7 +414,7 @@ def add_new_morpheme(request):
 
     context = {}
 
-    selected_datasets = get_selected_datasets_for_user(request.user)
+    selected_datasets = get_selected_datasets(request)
     dataset_languages = Language.objects.filter(dataset__in=selected_datasets).distinct()
     context['dataset_languages'] = dataset_languages
     context['default_dataset_lang'] = dataset_languages.first().language_code_2char if dataset_languages else LANGUAGE_CODE
@@ -446,7 +447,7 @@ def import_csv_create(request):
     user_datasets = guardian.shortcuts.get_objects_for_user(user, 'change_dataset', Dataset)
     user_datasets_names = [dataset.acronym for dataset in user_datasets]
 
-    selected_datasets = get_selected_datasets_for_user(user)
+    selected_datasets = get_selected_datasets(request)
     dataset_languages = get_dataset_languages(selected_datasets)
     selected_dataset_acronyms = [dataset.acronym for dataset in selected_datasets]
 
@@ -853,7 +854,7 @@ def import_csv_update(request):
     user_datasets = guardian.shortcuts.get_objects_for_user(user, 'change_dataset', Dataset)
     user_datasets_names = [dataset.acronym for dataset in user_datasets]
 
-    selected_datasets = get_selected_datasets_for_user(user)
+    selected_datasets = get_selected_datasets(request)
     dataset_languages = get_dataset_languages(selected_datasets)
 
     required_columns, language_fields, optional_columns = required_csv_columns(dataset_languages, 'update_gloss')
@@ -1410,7 +1411,7 @@ def import_csv_lemmas(request):
     user_datasets = guardian.shortcuts.get_objects_for_user(user, 'change_dataset', Dataset)
     user_datasets_names = [dataset.acronym for dataset in user_datasets]
 
-    selected_datasets = get_selected_datasets_for_user(user)
+    selected_datasets = get_selected_datasets(request)
     dataset_languages = Language.objects.filter(dataset__in=selected_datasets).distinct()
     translation_languages_dict = {}
     # this dictionary is used in the template
@@ -1715,8 +1716,9 @@ def switch_to_language(request,language):
 
     return HttpResponse('OK')
 
+
 def recently_added_glosses(request):
-    selected_datasets = get_selected_datasets_for_user(request.user)
+    selected_datasets = get_selected_datasets(request)
     dataset_languages = Language.objects.filter(dataset__in=selected_datasets).distinct()
     from signbank.settings.server_specific import RECENTLY_ADDED_SIGNS_PERIOD
 
@@ -1752,7 +1754,7 @@ def recently_added_glosses(request):
 
 
 def proposed_new_signs(request):
-    selected_datasets = get_selected_datasets_for_user(request.user)
+    selected_datasets = get_selected_datasets(request)
     dataset_languages = Language.objects.filter(dataset__in=selected_datasets).distinct()
     proposed_or_new_signs = (Gloss.objects.filter(isNew=True, archived=False) |
                              TaggedItem.objects.get_intersection_by_model(Gloss, "sign:_proposed")).order_by('creationDate').reverse()
@@ -2048,7 +2050,7 @@ def gloss_annotations(this_gloss):
 
 def find_and_save_variants(request):
 
-    selected_datasets = get_selected_datasets_for_user(request.user)
+    selected_datasets = get_selected_datasets(request)
     dataset_languages = Language.objects.filter(dataset__in=selected_datasets).distinct()
 
     show_dataset_interface = getattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS', False)
@@ -2141,7 +2143,7 @@ def find_and_save_variants(request):
 
 def get_unused_videos(request):
 
-    selected_datasets = get_selected_datasets_for_user(request.user)
+    selected_datasets = get_selected_datasets(request)
     dataset_languages = Language.objects.filter(dataset__in=selected_datasets).distinct()
     selected_dataset_acronyms = [ds.acronym for ds in selected_datasets]
 
@@ -2175,15 +2177,18 @@ def get_unused_videos(request):
 
 def package(request):
 
+    if 'dataset_name' not in request.GET:
+        return HttpResponseBadRequest('No dataset name provided.')
+    dataset_acronym = request.GET['dataset_name']
+    if not dataset_acronym:
+        return HttpResponseBadRequest('Dataset name empty.')
+    dataset = Dataset.objects.filter(acronym=dataset_acronym).first()
+    if not dataset:
+        return HttpResponseBadRequest('Dataset not found.')
     if request.user.is_authenticated:
-        if 'dataset_name' in request.GET:
-            dataset = Dataset.objects.get(acronym=request.GET['dataset_name'])
-        else:
-            dataset = Dataset.objects.get(id=settings.DEFAULT_DATASET_PK)
         available_glosses = Gloss.objects.filter(lemma__dataset=dataset, archived=False)
         inWebSet = False  # not necessary
     else:
-        dataset = Dataset.objects.get(id=settings.DEFAULT_DATASET_PK)
         available_glosses = Gloss.objects.filter(lemma__dataset=dataset, inWeb=True, archived=False)
         inWebSet = True
 
@@ -2217,13 +2222,13 @@ def package(request):
     video_urls = {os.path.splitext(os.path.basename(gv.videofile.name))[0]:
                       reverse('dictionary:protected_media', args=[gv.small_video(use_name=True) or gv.videofile.name])
                   for gv in GlossVideo.objects.filter(gloss__in=available_glosses, glossvideonme=None, glossvideoperspective=None, version=0)
-                  if os.path.exists(str(gv.videofile.path))
+                  if gv.videofile and gv.videofile.name and os.path.exists(str(gv.videofile.path))
                   and os.path.getmtime(str(gv.videofile.path)) > since_timestamp}
     image_urls = {os.path.splitext(os.path.basename(gv.videofile.name))[0]:
                        reverse('dictionary:protected_media', args=[gv.poster_file()])
                   for gv in GlossVideo.objects.filter(gloss__in=available_glosses, glossvideonme=None, glossvideoperspective=None, version=0)
-                  if os.path.exists(str(gv.videofile.path))
-                     and os.path.getmtime(str(gv.videofile.path)) > since_timestamp}
+                  if gv.videofile and gv.videofile.name and os.path.exists(str(gv.videofile.path))
+                  and os.path.getmtime(str(gv.videofile.path)) > since_timestamp}
 
     interface_language_code = get_interface_language_api(request, request.user)
 
@@ -2247,18 +2252,25 @@ def package(request):
 @put_api_user_in_request
 def info(request):
     import guardian
-    user_datasets = guardian.shortcuts.get_objects_for_user(request.user, 'change_dataset', Dataset)
-    user_datasets_names = [dataset.acronym for dataset in user_datasets]
-
-    # Put the default dataset in first position
-    if settings.DEFAULT_DATASET_ACRONYM in user_datasets_names:
-        user_datasets_names.insert(0, user_datasets_names.pop(user_datasets_names.index(settings.DEFAULT_DATASET_ACRONYM)))
+    user_datasets = guardian.shortcuts.get_objects_for_user(request.user, 'view_dataset', Dataset)
+    viewable_datasets = get_datasets_with_public_glosses()
 
     if not request.user.is_authenticated:
-        # anonymous users are allowed to read the default dataset
-        user_datasets_names = [settings.DEFAULT_DATASET_ACRONYM]
+        user_datasets_names = [dataset.acronym for dataset in viewable_datasets]
+    else:
+        user_datasets_names = [dataset.acronym for dataset in user_datasets]
 
     return HttpResponse(json.dumps(user_datasets_names), content_type='application/json')
+
+
+def extract_glossid_from_filename(filename):
+    filename_without_extension, ext = os.path.splitext(os.path.basename(filename))
+    try:
+        if m := re.search(r".+-(\d+)_(small|left|right|nme_\d+|nme_\d+_left|nme_\d+_right)$", filename_without_extension):
+            return int(m.group(1))
+        return int(filename.split('.')[-2].split('-')[-1])
+    except (IndexError, ValueError) as e:
+        return None
 
 
 def protected_media(request, filename, document_root=WRITABLE_FOLDER, show_indexes=False):
@@ -2267,20 +2279,27 @@ def protected_media(request, filename, document_root=WRITABLE_FOLDER, show_index
 
         # If we are not logged in, try to find if this maybe belongs to a gloss that is free to see for everbody?
         (name, ext) = os.path.splitext(os.path.basename(filename))
-        if 'handshape' in name:
-            # handshape images are allowed to be seen in Show All Handshapes
-            pass
-        else:
+        if 'annotatedvideo' in filename:
+            # check that the sentence exists
             try:
-                gloss_pk = int(filename.split('.')[-2].split('-')[-1])
+                file = os.path.basename(filename)
+                sentence_pk = int(file.split('.')[0])
             except IndexError:
                 return HttpResponse(status=401)
 
-            lookup_gloss = Gloss.objects.filter(pk=gloss_pk, archived=False, inWeb=True)
-            if not lookup_gloss.count() == 1:
-                HttpResponse(status=401)
+            lookup_sentence = AnnotatedSentence.objects.filter(pk=sentence_pk).first()
+            if not lookup_sentence:
+                return HttpResponse(status=401)
+            pass
+        elif 'handshape' in name:
+            # handshape images are allowed to be seen in Show All Handshapes
+            pass
+        else:
+            glosspk = extract_glossid_from_filename(filename)
+            if glosspk is None or not Gloss.objects.filter(pk=glosspk, archived=False, inWeb=True).count() == 1:
+                return HttpResponse(status=401)
 
-        #If we got here, the gloss was found and in the web dictionary, so we can continue
+        # If we got here, the gloss was found and in the web dictionary, so we can continue
 
     filename = os.path.normpath(filename)
 
@@ -2322,9 +2341,10 @@ def protected_media(request, filename, document_root=WRITABLE_FOLDER, show_index
         from django.views.static import serve
         return serve(request, filename, document_root, show_indexes)
 
+
 def show_glosses_with_no_lemma(request):
 
-    selected_datasets = get_selected_datasets_for_user(request.user)
+    selected_datasets = get_selected_datasets(request)
     dataset_languages = Language.objects.filter(dataset__in=selected_datasets).distinct()
 
     show_dataset_interface = getattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS', False)
@@ -2442,7 +2462,7 @@ from django.db import models
 
 def choice_lists(request):
 
-    selected_datasets = get_selected_datasets_for_user(request.user)
+    selected_datasets = get_selected_datasets(request)
     all_choice_lists = {}
 
     fields_with_choices = fields_to_fieldcategory_dict()
@@ -2503,123 +2523,16 @@ def gloss_revision_history(request,gloss_pk):
 
     gloss = get_object_or_404(Gloss, pk=gloss_pk, archived=False)
 
-    selected_datasets = get_selected_datasets_for_user(request.user)
+    selected_datasets = get_selected_datasets(request)
     dataset_languages = Language.objects.filter(dataset__in=selected_datasets).distinct()
 
     show_dataset_interface = getattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS', False)
     show_query_parameters_as_button = getattr(settings, 'SHOW_QUERY_PARAMETERS_AS_BUTTON', False)
     use_regular_expressions = getattr(settings, 'USE_REGULAR_EXPRESSIONS', False)
 
-    revisions = []
-    for revision in GlossRevision.objects.filter(gloss=gloss):
-        if revision.field_name.startswith('sense_'):
-            prefix, order, language_2char = revision.field_name.split('_')
-            language = Language.objects.get(language_code_2char=language_2char)
-            revision_verbose_fieldname = gettext('Sense') + ' ' + order + " (%s)" % language.name
-        elif revision.field_name.startswith('description_'):
-            prefix, language_2char = revision.field_name.split('_')
-            language = Language.objects.get(language_code_2char=language_2char)
-            revision_verbose_fieldname = gettext('NME Video Description') + " (%s)" % language.name
-        elif revision.field_name.startswith('nmevideo_'):
-            prefix, operation = revision.field_name.split('_')
-            if operation == 'create':
-                revision_verbose_fieldname = gettext("NME Video") + ' ' + gettext("Create")
-            elif operation == 'delete':
-                revision_verbose_fieldname = gettext("NME Video") + ' ' + gettext("Delete")
-            else:
-                revision_verbose_fieldname = gettext("NME Video") + ' ' + gettext("Update")
-        elif revision.field_name in Gloss.get_field_names():
-            revision_verbose_fieldname = gettext(Gloss.get_field(revision.field_name).verbose_name)
-        elif revision.field_name == 'sequential_morphology':
-            revision_verbose_fieldname = gettext("Sequential Morphology")
-        elif revision.field_name == 'simultaneous_morphology':
-            revision_verbose_fieldname = gettext("Simultaneous Morphology")
-        elif revision.field_name == 'blend_morphology':
-            revision_verbose_fieldname = gettext("Blend Morphology")
-        elif revision.field_name.startswith('lemma'):
-            language_2char = revision.field_name[-2:]
-            language = Language.objects.get(language_code_2char=language_2char)
-            revision_verbose_fieldname = gettext('Lemma ID Gloss') + " (%s)" % language.name
-        elif revision.field_name.startswith('annotation'):
-            language_2char = revision.field_name[-2:]
-            language = Language.objects.get(language_code_2char=language_2char)
-            revision_verbose_fieldname = gettext('Annotation ID Gloss') + " (%s)" % language.name
-        elif revision.field_name == 'archived':
-            revision_verbose_fieldname = gettext("Deleted")
-        elif revision.field_name == 'restored':
-            revision_verbose_fieldname = gettext("Restored")
-        else:
-            revision_verbose_fieldname = gettext(revision.field_name)
+    interface_language_code = get_interface_language_api(request, request.user)
 
-        # field name qualification is stored separately here
-        # Django was having a bit of trouble translating it when embeded in the field_name string below
-        if revision.field_name == 'Tags':
-            if revision.old_value:
-                # this translation exists in the interface of Gloss Edit View
-                delete_command = gettext('delete this tag')
-                field_name_qualification = ' (' + delete_command + ')'
-            elif revision.new_value:
-                # this translation exists in the interface of Gloss Edit View
-                add_command = gettext('Add Tag')
-                field_name_qualification = ' (' + add_command + ')'
-            else:
-                # this shouldn't happen
-                field_name_qualification = ''
-        elif revision.field_name in ['Sense', 'Senses', 'senses']:
-            if revision.old_value and not revision.new_value:
-                # this translation exists in the interface of Gloss Edit View
-                delete_command = gettext('Delete')
-                field_name_qualification = ' (' + delete_command + ')'
-            elif revision.new_value and not revision.old_value:
-                # this translation exists in the interface of Gloss Edit View
-                add_command = gettext('Create')
-                field_name_qualification = ' (' + add_command + ')'
-            else:
-                # this translation exists in the interface of Gloss Edit View
-                add_command = gettext('Update')
-                field_name_qualification = ' (' + add_command + ')'
-        elif revision.field_name == 'Sentence':
-            if revision.old_value and not revision.new_value:
-                # this translation exists in the interface of Gloss Edit View
-                delete_command = gettext('Delete')
-                field_name_qualification = ' (' + delete_command + ')'
-            elif revision.new_value and not revision.old_value:
-                # this translation exists in the interface of Gloss Edit View
-                add_command = gettext('Create')
-                field_name_qualification = ' (' + add_command + ')'
-            else:
-                # this translation exists in the interface of Gloss Edit View
-                add_command = gettext('Update')
-                field_name_qualification = ' (' + add_command + ')'
-        elif revision.field_name in ['sequential_morphology', 'simultaneous_morphology', 'blend_morphology']:
-            if revision.old_value and not revision.new_value:
-                # this translation exists in the interface of Gloss Edit View
-                delete_command = gettext('Delete')
-                field_name_qualification = ' (' + delete_command + ')'
-            elif revision.new_value and not revision.old_value:
-                # this translation exists in the interface of Gloss Edit View
-                add_command = gettext('Create')
-                field_name_qualification = ' (' + add_command + ')'
-            else:
-                # this translation exists in the interface of Gloss Edit View
-                add_command = gettext('Update')
-                field_name_qualification = ' (' + add_command + ')'
-        elif revision.field_name.startswith('lemma') or revision.field_name.startswith('annotation'):
-            field_name_qualification = ''
-        elif revision.field_name.startswith('sense'):
-            field_name_qualification = ''
-        else:
-            field_name_qualification = ''
-        revision_dict = {
-            'is_tag': revision.field_name == 'Tags',
-            'gloss': revision.gloss,
-            'user': revision.user,
-            'time': revision.time,
-            'field_name': revision_verbose_fieldname,
-            'field_name_qualification': field_name_qualification,
-            'old_value': check_value_to_translated_human_value(revision.field_name, revision.old_value),
-            'new_value': check_value_to_translated_human_value(revision.field_name, revision.new_value) }
-        revisions.append(revision_dict)
+    revisions = pretty_print_revisions(gloss)
 
     if 'search_type' in request.session.keys():
         if request.session['search_type'] not in ['sign', 'morpheme', 'annotatedsentence',
@@ -2630,7 +2543,7 @@ def gloss_revision_history(request,gloss_pk):
         request.session['search_type'] = 'sign'
 
     return render(request, 'dictionary/gloss_revision_history.html',
-                  {'gloss': gloss, 'revisions':revisions,
+                  {'gloss': gloss, 'revisions': revisions,
                    'dataset_languages': dataset_languages,
                    'selected_datasets': selected_datasets,
                    'active_id': gloss_pk,
@@ -2767,7 +2680,7 @@ def import_csv_create_sentences(request):
     user_datasets = guardian.shortcuts.get_objects_for_user(user, 'change_dataset', Dataset)
     user_datasets_names = [dataset.acronym for dataset in user_datasets]
 
-    selected_datasets = get_selected_datasets_for_user(user)
+    selected_datasets = get_selected_datasets(request)
     dataset_languages = get_dataset_languages(selected_datasets)
 
     translation_languages_dict = {}
@@ -3033,7 +2946,7 @@ def test_abstract_machine(request, datasetid):
     # used to test api method since PyCharm runserver does not support CORS
     dataset_id = int(datasetid)
     dataset = Dataset.objects.filter(id=dataset_id).first()
-    selected_datasets = get_selected_datasets_for_user(request.user)
+    selected_datasets = get_selected_datasets(request)
     dataset_languages = get_dataset_languages(selected_datasets)
     if not dataset or not (request.user.is_staff or request.user.is_superuser):
         translated_message = _('You do not have permission to use the test command.')
@@ -3059,7 +2972,7 @@ def test_am_update_gloss(request, datasetid, glossid):
     # used to test api method since PyCharm runserver does not support CORS
     dataset_id = int(datasetid)
     dataset = Dataset.objects.filter(id=dataset_id).first()
-    selected_datasets = get_selected_datasets_for_user(request.user)
+    selected_datasets = get_selected_datasets(request)
     dataset_languages = get_dataset_languages(selected_datasets)
     if not dataset or not (request.user.is_staff or request.user.is_superuser):
         translated_message = _('You do not have permission to use the test command.')

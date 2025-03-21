@@ -14,10 +14,10 @@ from django.http import QueryDict
 from django.utils.translation import override, gettext_lazy as _
 
 from django.http import HttpResponse, HttpResponseRedirect
-from django.utils.html import escape
+from django.utils import html
 
 from signbank.dictionary.models import *
-from signbank.video.models import GlossVideo
+from signbank.video.models import GlossVideo, GlossVideoNME
 from django.db.models.functions import Concat
 from signbank.dictionary.forms import *
 from signbank.dictionary.field_choices import fields_to_fieldcategory_dict
@@ -31,7 +31,7 @@ from django.urls import reverse
 from tagging.models import TaggedItem, Tag
 from django.shortcuts import render, get_object_or_404, redirect
 from guardian.shortcuts import get_objects_for_user
-from signbank.tools import get_selected_datasets_for_user, get_dataset_languages
+from signbank.tools import get_dataset_languages
 
 
 def list_to_query(query_list):
@@ -72,7 +72,7 @@ def query_parameters_this_gloss(phonology_focus, phonology_matrix):
             # these mappings match the choices in the Gloss Search Form
             NEUTRALBOOLEANCHOICES = {'None': '1', 'True': '2', 'False': '3'}
             query_parameters[field_key] = NEUTRALBOOLEANCHOICES[field_value]
-        elif field_key in ['defspublished', 'hasmultiplesenses']:
+        elif field_key in ['defspublished', 'hasmultiplesenses', 'hasannotatedsentences']:
             # these mappings match the choices in the Gloss Search Form and get_queryset
             # some of these are legacy mappings
             YESNOCHOICES = {'None': '-', 'True': _('Yes'), 'False': _('No')}
@@ -133,40 +133,54 @@ def matching_file_exists(videofile):
         return False
 
 
-def matching_file__does_not_exist(videofile):
-    from pathlib import Path
-    video_file_full_path = Path(WRITABLE_FOLDER, videofile)
-    if video_file_full_path.exists():
-        return False
-    else:
-        return True
-
-
 def apply_video_filters_to_results(model, qs, query_parameters):
+    # The 'hasvideo' form field has these choices: [('0', '-'), ('2', _('Yes')), ('3', _('No'))]
     gloss_prefix = 'gloss__' if model in ['GlossSense', 'AnnotatedGloss'] else ''
     filter_id = gloss_prefix + 'id__in'
     gloss_ids = [gl.id if model == 'Gloss' else gl.gloss.id for gl in qs]
-    if 'hasvideo' not in query_parameters.keys():
+    if 'hasvideo' not in query_parameters.keys() or query_parameters['hasvideo'] not in ['2', '3']:
         return qs
-    elif query_parameters['hasvideo'] == '2':
-        glossvideo_queryset = GlossVideo.objects.filter(gloss__id__in=gloss_ids, glossvideonme=None, glossvideoperspective=None, version=0)
-        queryset_res = glossvideo_queryset.values('id', 'videofile')
+    glossvideo_queryset = GlossVideo.objects.filter(gloss__id__in=gloss_ids, glossvideonme=None, glossvideoperspective=None, version=0)
+    queryset_res = glossvideo_queryset.values('id', 'videofile')
+    if query_parameters['hasvideo'] == '2':
+        # '2' is the True choice
         results = [qv['id'] for qv in queryset_res
                    if matching_file_exists(qv['videofile'])]
-        glosses_with_videofile = GlossVideo.objects.filter(id__in=results)
-        gloss_ids = [gv.gloss.id for gv in glosses_with_videofile]
-        return qs.filter(Q(**{filter_id: gloss_ids}))
+        gloss_video_objects = GlossVideo.objects.filter(id__in=results)
+        gloss_ids = [gv.gloss.id for gv in gloss_video_objects]
     else:
+        # '3' is the False choice
+        results = [qv['id'] for qv in queryset_res
+                   if not matching_file_exists(qv['videofile'])]
+        gloss_video_objects = GlossVideo.objects.filter(id__in=results)
+        gloss_ids = [gv.gloss.id for gv in gloss_video_objects]
+        # add glosses to results if the gloss has no gloss video at all
         null_videos = qs.filter(Q(**{gloss_prefix + 'glossvideo__isnull': True}))
         gloss_ids_without_video = [gl.id if model == 'Gloss' else gl.gloss.id for gl in null_videos]
-        glossvideo_queryset = GlossVideo.objects.filter(gloss__id__in=gloss_ids, glossvideonme=None, glossvideoperspective=None, version=0)
-        queryset_res = glossvideo_queryset.values('id', 'videofile')
+        gloss_ids = list(set(gloss_ids).union(gloss_ids_without_video))
+    return qs.filter(Q(**{filter_id: gloss_ids}))
+
+
+def apply_nmevideo_filters_to_results(model, qs, query_parameters):
+    # The 'hasnmevideo' form field has these choices: [('0', '-'), ('2', _('Yes')), ('3', _('No'))]
+    gloss_prefix = 'gloss__' if model in ['GlossSense', 'AnnotatedGloss'] else ''
+    filter_id = gloss_prefix + 'id__in'
+    gloss_ids = [gl.id if model == 'Gloss' else gl.gloss.id for gl in qs]
+    if 'hasnmevideo' not in query_parameters.keys() or query_parameters['hasnmevideo'] not in ['2', '3']:
+        return qs
+    glossvideo_queryset = GlossVideoNME.objects.filter(gloss__id__in=gloss_ids, version=0)
+    queryset_res = glossvideo_queryset.values('id', 'videofile')
+    if query_parameters['hasnmevideo'] == '2':
+        # '2' is the True choice
         results = [qv['id'] for qv in queryset_res
-                   if matching_file__does_not_exist(qv['videofile'])]
-        glosses_with_missing_videofile = GlossVideo.objects.filter(id__in=results)
-        gloss_ids_missing_videos = [gv.gloss.id for gv in glosses_with_missing_videofile]
-        filter_no_video = Q(**{filter_id: gloss_ids_without_video}) | Q(**{filter_id: gloss_ids_missing_videos})
-        return qs.filter(Q(**{filter_id: filter_no_video}))
+                   if matching_file_exists(qv['videofile'])]
+    else:
+        # '3' is the False choice
+        results = [qv['id'] for qv in queryset_res
+                   if not matching_file_exists(qv['videofile'])]
+    gloss_video_objects = GlossVideoNME.objects.filter(id__in=results)
+    gloss_ids = [gv.gloss.id for gv in gloss_video_objects]
+    return qs.filter(Q(**{filter_id: gloss_ids}))
 
 
 def convert_query_parameters_to_filter(query_parameters):
@@ -215,7 +229,7 @@ def convert_query_parameters_to_filter(query_parameters):
             val = get_value == '2'
             query_list.append(Q(excludeFromEcv__exact=val))
 
-        elif get_key == 'hasvideo' and get_value != '':
+        elif get_key in ['hasvideo', 'hasnmevideo'] and get_value != '':
             # this is done in a separate function
             continue
 
@@ -282,6 +296,14 @@ def convert_query_parameters_to_filter(query_parameters):
                 multiple_senses = [gsv['gloss'] for gsv in GlossSense.objects.values(
                     'gloss').annotate(Count('id')).filter(id__count=1)]
             query_list.append(Q(id__in=multiple_senses))
+
+        elif get_key == 'hasannotatedsentences' and get_value:
+            glosses_with_annotated_sentences = [gsv['gloss'] for gsv in AnnotatedGloss.objects.values('gloss')]
+            val = get_value == 'yes'
+            if val:
+                query_list.append(Q(pk__in=glosses_with_annotated_sentences))
+            else:
+                query_list.append(~Q(pk__in=glosses_with_annotated_sentences))
 
         elif get_key == 'negative' and get_value:
             sentences_with_negative_type = ExampleSentence.objects.filter(negative__exact=True)
@@ -613,9 +635,9 @@ def pretty_print_query_values(dataset_languages,query_parameters):
                 query_dict[key] = _('Yes')
             elif query_parameters[key] in ['3']:
                 query_dict[key] = _('No')
-        elif key in ['inWeb', 'isNew', 'excludeFromEcv', 'hasvideo', 'hasothermedia']:
+        elif key in ['inWeb', 'isNew', 'excludeFromEcv', 'hasvideo', 'hasnmevideo', 'hasothermedia']:
             query_dict[key] = NULLBOOLEANCHOICES[query_parameters[key]]
-        elif key in ['defspublished', 'hasmultiplesenses', 'negative']:
+        elif key in ['defspublished', 'hasmultiplesenses', 'negative', 'hasannotatedsentences']:
             query_dict[key] = YESNOCHOICES[query_parameters[key]]
         elif key in ['hasRelation']:
             choices_for_category = [RELATION_ROLE_CHOICES[val] for val in query_parameters[key]]
@@ -741,6 +763,9 @@ def search_fields_from_get(searchform, GET):
             vals = GET.getlist(get_key)
             search_fields_to_populate[get_key] = vals
             search_keys.append(get_key)
+        elif get_key in ['translation', 'search']:
+            print(get_key, html.escape(get_value))
+            search_fields_to_populate[get_key] = html.escape(get_value)
         elif get_key not in search_form_fields:
             # skip csrf_token and page
             continue
@@ -838,7 +863,7 @@ def queryset_from_get(formclass, searchform, GET, qs):
             if get_key in ['inWeb', 'repeat', 'altern', 'isNew']:
                 val = get_value == '2'
                 key = get_key + '__exact'
-            elif get_key in ['hasvideo']:
+            elif get_key in ['hasvideo', 'hasnmevideo']:
                 # this is done in a separate function
                 continue
             elif get_key in ['defspublished']:
@@ -903,7 +928,8 @@ def set_up_language_fields(model, view, form):
     :form: GlossSearchForm, MorphemeSearchForm, FocusGlossSearchForm, LemmaSearchForm, AnnotatedSentenceForm
     :view: GlossListView, MorphemeListView, SenseListView, MinimalPairsListView, LemmaListView, AnnotatedSentenceListView
     """
-    selected_datasets = get_selected_datasets_for_user(view.request.user)
+    from signbank.dictionary.context_data import get_selected_datasets
+    selected_datasets = get_selected_datasets(view.request)
     dataset_languages = get_dataset_languages(selected_datasets)
     interface_language = [view.request.LANGUAGE_CODE]
     count_languages = len(dataset_languages)
@@ -952,7 +978,8 @@ def set_up_signlanguage_dialects_fields(view, form):
     :form: GlossSearchForm
     :view: GlossListView, SenseListView
     """
-    selected_datasets = get_selected_datasets_for_user(view.request.user)
+    from signbank.dictionary.context_data import get_selected_datasets
+    selected_datasets = get_selected_datasets(view.request)
     field_label_signlanguage = gettext("Sign Language")
     field_label_dialects = gettext("Dialect")
     form.fields['signLanguage'] = forms.ModelMultipleChoiceField(label=field_label_signlanguage,
@@ -964,6 +991,17 @@ def set_up_signlanguage_dialects_fields(view, form):
                                                              widget=Select2,
                                                              queryset=Dialect.objects.filter(
                                                                  signlanguage__dataset__in=selected_datasets))
+
+
+def legitimate_search_form_url_parameter(searchform, get_key):
+
+    if not searchform:
+        return False
+
+    if get_key in searchform.fields.keys():
+        return True
+
+    return False
 
 
 def queryset_glosssense_from_get(model, formclass, searchform, GET, qs):
@@ -980,6 +1018,8 @@ def queryset_glosssense_from_get(model, formclass, searchform, GET, qs):
     gloss_prefix = 'gloss__' if model in ['GlossSense', 'AnnotatedGloss'] else ''
     text_filter = 'iregex' if USE_REGULAR_EXPRESSIONS else 'icontains'
     for get_key, get_value in GET.items():
+        if get_value in ['', '0']:
+            continue
         if get_key.endswith('[]'):
             if not get_value:
                 continue
@@ -1021,8 +1061,32 @@ def queryset_glosssense_from_get(model, formclass, searchform, GET, qs):
             else:
                 query_filter = gloss_prefix + field + '__machine_value__in'
                 qs = qs.filter(**{query_filter: vals})
-        elif get_key not in searchform.fields.keys() \
-                or get_value in ['', '0']:
+        elif not legitimate_search_form_url_parameter(searchform, get_key):
+            continue
+        elif get_key.startswith(formclass.gloss_search_field_prefix):
+            language_code_2char = get_key[len(formclass.gloss_search_field_prefix):]
+            language = Language.objects.filter(language_code_2char=language_code_2char).first()
+            query_filter_annotation_text = gloss_prefix + 'annotationidglosstranslation__text__' + text_filter
+            query_filter_language = gloss_prefix + 'annotationidglosstranslation__language'
+            qs = qs.filter(**{query_filter_annotation_text: get_value,
+                              query_filter_language: language})
+            continue
+        elif get_key.startswith(formclass.lemma_search_field_prefix):
+            language_code_2char = get_key[len(formclass.lemma_search_field_prefix):]
+            language = Language.objects.filter(language_code_2char=language_code_2char).first()
+            query_filter_lemma_text = gloss_prefix + 'lemma__lemmaidglosstranslation__text__' + text_filter
+            query_filter_language = gloss_prefix + 'lemma__lemmaidglosstranslation__language'
+            qs = qs.filter(**{query_filter_lemma_text: get_value,
+                              query_filter_language: language})
+            continue
+        elif get_key.startswith(formclass.keyword_search_field_prefix):
+            language_code_2char = get_key[len(formclass.keyword_search_field_prefix):]
+            language = Language.objects.filter(language_code_2char=language_code_2char).first()
+            query_filter_sense_text = gloss_prefix + 'translation__translation__text__' + text_filter
+            query_filter_language = gloss_prefix + 'translation__language'
+            # for some reason, distinct is needed here
+            qs = qs.filter(**{query_filter_sense_text: get_value,
+                              query_filter_language: language}).distinct()
             continue
         elif searchform.fields[get_key].widget.input_type in ['text']:
             if get_key in ['search', 'sortOrder', 'translation']:
@@ -1060,31 +1124,6 @@ def queryset_glosssense_from_get(model, formclass, searchform, GET, qs):
                 first_name = gloss_prefix + 'creator__first_name__icontains'
                 last_name = gloss_prefix + 'creator__last_name__icontains'
                 qs = qs.filter(Q(**{first_name:get_value}) | Q(**{last_name:get_value}))
-            elif hasattr(searchform, 'gloss_search_field_prefix') and \
-                    get_key.startswith(formclass.gloss_search_field_prefix):
-                language_code_2char = get_key[len(formclass.gloss_search_field_prefix):]
-                language = Language.objects.filter(language_code_2char=language_code_2char).first()
-                query_filter_annotation_text = gloss_prefix + 'annotationidglosstranslation__text__' + text_filter
-                query_filter_language = gloss_prefix + 'annotationidglosstranslation__language'
-                qs = qs.filter(**{query_filter_annotation_text: get_value,
-                                  query_filter_language: language})
-            elif hasattr(searchform, 'lemma_search_field_prefix') and \
-                    get_key.startswith(formclass.lemma_search_field_prefix):
-                language_code_2char = get_key[len(formclass.lemma_search_field_prefix):]
-                language = Language.objects.filter(language_code_2char=language_code_2char).first()
-                query_filter_lemma_text = gloss_prefix + 'lemma__lemmaidglosstranslation__text__' + text_filter
-                query_filter_language = gloss_prefix + 'lemma__lemmaidglosstranslation__language'
-                qs = qs.filter(**{query_filter_lemma_text: get_value,
-                                  query_filter_language: language})
-            elif hasattr(searchform, 'keyword_search_field_prefix') and \
-                    get_key.startswith(formclass.keyword_search_field_prefix):
-                language_code_2char = get_key[len(formclass.keyword_search_field_prefix):]
-                language = Language.objects.filter(language_code_2char=language_code_2char).first()
-                query_filter_sense_text = gloss_prefix + 'translation__translation__text__' + text_filter
-                query_filter_language = gloss_prefix + 'translation__language'
-                # for some reason, distinct is needed here
-                qs = qs.filter(**{query_filter_sense_text: get_value,
-                                  query_filter_language: language}).distinct()
             else:
                 # normal text field
                 query_filter = gloss_prefix + get_key + '__icontains'
@@ -1109,6 +1148,14 @@ def queryset_glosssense_from_get(model, formclass, searchform, GET, qs):
                         'gloss').annotate(Count('id')).filter(id__count=1)]
                 query_filter = gloss_prefix + 'id__in'
                 qs = qs.filter(**{query_filter: multiple_senses})
+                continue
+            elif get_key in ['hasannotatedsentences']:
+                glosses_with_annotated_sentences = [gsv['gloss'] for gsv in AnnotatedGloss.objects.values('gloss')]
+                query_filter = gloss_prefix + 'id__in'
+                if get_value == '2':
+                    qs = qs.filter(**{query_filter: glosses_with_annotated_sentences})
+                else:
+                    qs = qs.exclude(**{query_filter: glosses_with_annotated_sentences})
                 continue
             elif get_key in ['hasothermedia']:
                 pks_for_glosses_with_othermedia = [om.parent_gloss.pk for om in OtherMedia.objects.all()]
@@ -1150,7 +1197,7 @@ def queryset_glosssense_from_get(model, formclass, searchform, GET, qs):
             elif get_key in ['inWeb', 'repeat', 'altern', 'isNew', 'excludeFromEcv']:
                 val = get_value == '2'
                 key = gloss_prefix + get_key + '__exact'
-            elif get_key in ['hasvideo']:
+            elif get_key in ['hasvideo', 'hasnmevideo']:
                 # this is done in a separate function
                 continue
             elif get_key in ['defspublished']:
