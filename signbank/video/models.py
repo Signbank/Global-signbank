@@ -64,6 +64,12 @@ def flattened_video_path(relative_path):
     return filename
 
 
+PERSPECTIVE_CHOICES = (('left', 'Left'),
+                       ('right', 'Right')
+                       )
+
+NME_PERSPECTIVE_CHOICES = (('left','Left'),('right','Right'),('center', 'Center'))
+
 class GlossVideoStorage(FileSystemStorage):
     """Implement our shadowing video storage system"""
 
@@ -921,9 +927,9 @@ class GlossVideoDescription(models.Model):
     def __str__(self):
         return self.text
 
-
 class GlossVideoNME(GlossVideo):
     offset = models.IntegerField(default=1)
+    perspective = models.CharField(max_length=20, choices=NME_PERSPECTIVE_CHOICES, default='center')       
 
     class Meta:
         verbose_name = gettext("NME Gloss Video")
@@ -1026,12 +1032,6 @@ class GlossVideoNME(GlossVideo):
             print("DELETE NME VIDEO FAILED: ", self.videofile.name)
         else:
             self.delete()
-
-
-PERSPECTIVE_CHOICES = (('left', 'Left'),
-                       ('right', 'Right')
-                       )
-
 
 class GlossVideoPerspective(GlossVideo):
     perspective = models.CharField(max_length=20, choices=PERSPECTIVE_CHOICES)
