@@ -1,6 +1,5 @@
 from signbank.settings.server_specific.default import *
 
-DEBUG = True
 ADMINS = [('Wessel Stoop', 'w.stoop@let.ru.nl')]
 LANGUAGE_NAME = 'Global'
 COUNTRY_NAME = 'Netherlands'
