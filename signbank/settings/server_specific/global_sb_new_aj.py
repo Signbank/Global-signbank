@@ -1,11 +1,12 @@
 from signbank.settings.server_specific.default import *
 
+DEBUG = True
 ADMINS = [('Wessel Stoop', 'w.stoop@let.ru.nl')]
 LANGUAGE_NAME = 'Global'
 COUNTRY_NAME = 'Netherlands'
 SIGNBANK_VERSION_CODE = 'global'
 URL = 'https://signbank.cls.ru.nl/'
-ALLOWED_HOSTS=["*"]
+ALLOWED_HOSTS = ['signbank.science.ru.nl','signbank.cls.ru.nl','new.signbank.science.ru.nl']
 
 EAF_FILES_LOCATION = 'corpus-ngt/eaf/'
 METADATA_LOCATION = 'CNGT_MetadataEnglish_OtherResearchers.csv'
@@ -81,5 +82,3 @@ if SWITCH_TO_MYSQL:
         'OPTIONS': 'mysql.conf',
         'TEST': {'NAME':'sigbank_test'}
     }}
-SECRET_KEY="vu43ra23e3w4"
-CSRF_TRUSTED_ORIGINS = ["https://signbank.cls.ru.nl","https://signbank-dev.cls.ru.nl"]
