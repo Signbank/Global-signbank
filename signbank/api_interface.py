@@ -10,6 +10,7 @@ from signbank.api_token import put_api_user_in_request
 from signbank.abstract_machine import get_interface_language_api
 from signbank.zip_interface import *
 from django.utils.translation import activate, gettext
+from django.utils.translation.trans_real import parse_accept_lang_header
 import zipfile
 
 
@@ -190,8 +191,9 @@ def get_fields_data_json(request, datasetid):
 def get_gloss_data_json(request, datasetid, glossid, language_code='en'):
     interface_language_code = request.headers.get('Accept-Language', '')
     if interface_language_code not in settings.MODELTRANSLATION_LANGUAGES:
-        # language code not provided in request header or not available
-        interface_language_code = 'en'
+        # language code not provided in request header or not available, get it from the browser
+        parsed_language_codes = parse_accept_lang_header(request.META.get('HTTP_ACCEPT_LANGUAGE', None))
+        interface_language_code = parsed_language_codes[0][0] if parsed_language_codes else 'en'
     if language_code != interface_language_code:
         # the provided or default language code does not match that explicitly of the url
         interface_language_code = language_code
