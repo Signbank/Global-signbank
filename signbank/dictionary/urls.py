@@ -203,6 +203,8 @@ urlpatterns = [
             signbank.api_interface.get_gloss_data_json, name='get_gloss_data_json'),
     re_path(r'get_fields_data/(?P<datasetid>\d+)/$',
             signbank.api_interface.get_fields_data_json, name='get_fields_data_json'),
+    re_path(r'get_fields_data/(?P<datasetid>\d+)/(?P<language_code>en|nl|zh-hans)/$',
+            signbank.api_interface.get_fields_data_json, name='get_fields_data_json'),
     re_path(r'get_unzipped_video_files_json/(?P<datasetid>\d+)/$',
             signbank.api_interface.get_unzipped_video_files_json, name='get_unzipped_video_files_json'),
     re_path(r'upload_zipped_videos_folder_json/(?P<datasetid>\d+)/$',
