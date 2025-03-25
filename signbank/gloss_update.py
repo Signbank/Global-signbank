@@ -14,6 +14,7 @@ from guardian.shortcuts import get_objects_for_user
 from signbank.tools import get_interface_language_and_default_language_codes
 from signbank.csv_interface import normalize_field_choice, normalize_boolean
 from signbank.api_token import put_api_user_in_request
+from signbank.abstract_machine import get_interface_language_api, retrieve_language_code_from_header
 import datetime as DT
 from signbank.tools import get_default_annotationidglosstranslation
 from signbank.dictionary.batch_edit import add_gloss_update_to_revision_history
@@ -624,13 +625,14 @@ def gloss_pre_update(gloss, input_fields_dict, language_code):
 
 @csrf_exempt
 @put_api_user_in_request
-def api_update_gloss(request, datasetid, glossid):
+def api_update_gloss(request, datasetid, glossid, language_code='en'):
+
+    interface_language_code = retrieve_language_code_from_header(language_code,
+                                                                 request.headers.get('Accept-Language', ''),
+                                                                 request.META.get('HTTP_ACCEPT_LANGUAGE', None))
+    activate(interface_language_code)
 
     results = dict()
-    interface_language_code = request.headers.get('Accept-Language', 'en')
-    if interface_language_code not in settings.MODELTRANSLATION_LANGUAGES:
-        interface_language_code = 'en'
-    activate(interface_language_code)
 
     results['glossid'] = glossid
 
