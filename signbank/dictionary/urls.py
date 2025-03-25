@@ -222,6 +222,8 @@ urlpatterns = [
 
     re_path(r'api_create_gloss/(?P<datasetid>\d+)/$',
             signbank.abstract_machine.api_create_gloss, name='api_create_gloss'),
+    re_path(r'api_create_gloss/(?P<datasetid>\d+)/(?P<language_code>en|nl|zh-hans)/$',
+            signbank.abstract_machine.api_create_gloss, name='api_create_gloss'),
     re_path(r'test_abstract_machine/(?P<datasetid>\d+)/$',
             signbank.dictionary.views.test_abstract_machine, name='test_abstract_machine'),
     re_path(r'api_update_gloss/(?P<datasetid>\d+)/(?P<glossid>\d+)/$',

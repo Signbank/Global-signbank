@@ -13,6 +13,7 @@ from signbank.dictionary.update_senses_mapping import add_sense_to_revision_hist
 from django.http import HttpResponse, HttpResponseRedirect, HttpResponseForbidden, HttpResponseBadRequest, JsonResponse
 from guardian.shortcuts import get_objects_for_user
 from signbank.api_token import put_api_user_in_request
+from signbank.api_interface import retrieve_language_code_from_header
 
 
 def get_interface_language_api(request, user):
@@ -361,13 +362,14 @@ def csv_create_gloss(request, datasetid):
 
 @csrf_exempt
 @put_api_user_in_request
-def api_create_gloss(request, datasetid):
+def api_create_gloss(request, datasetid, language_code='en'):
+
+    interface_language_code = retrieve_language_code_from_header(language_code,
+                                                                 request.headers.get('Accept-Language', ''),
+                                                                 request.META.get('HTTP_ACCEPT_LANGUAGE', None))
+    activate(interface_language_code)
 
     results = dict()
-    interface_language_code = request.headers.get('Accept-Language', 'en')
-    if interface_language_code not in settings.MODELTRANSLATION_LANGUAGES:
-        interface_language_code = 'en'
-    activate(interface_language_code)
 
     dataset = Dataset.objects.filter(id=int(datasetid)).first()
     if not dataset:
@@ -382,8 +384,6 @@ def api_create_gloss(request, datasetid):
     if not request.user.has_perm('dictionary.change_gloss'):
         results['errors'] = [gettext("No change gloss permission.")]
         return JsonResponse(results)
-
-    activate(interface_language_code)
 
     human_readable_value_dict = get_human_readable_value_dict(request, dataset, interface_language_code)
     value_dict = translate_human_readable_value_dict_to_keys(dataset, interface_language_code, human_readable_value_dict)
