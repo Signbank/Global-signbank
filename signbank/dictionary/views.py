@@ -2176,14 +2176,17 @@ def get_unused_videos(request):
 
 def package(request):
 
+    interface_language_code = get_interface_language_api(request, request.user)
+    activate(interface_language_code)
+
     if 'dataset_name' not in request.GET:
-        return HttpResponseBadRequest('No dataset name provided.')
+        return HttpResponseBadRequest(gettext('No dataset name provided.'))
     dataset_acronym = request.GET['dataset_name']
     if not dataset_acronym:
-        return HttpResponseBadRequest('Dataset name empty.')
+        return HttpResponseBadRequest(gettext('Dataset name empty.'))
     dataset = Dataset.objects.filter(acronym=dataset_acronym).first()
     if not dataset:
-        return HttpResponseBadRequest('Dataset not found.')
+        return HttpResponseBadRequest(gettext('Dataset not found.'))
     if request.user.is_authenticated:
         available_glosses = Gloss.objects.filter(lemma__dataset=dataset, archived=False)
         inWebSet = False  # not necessary
@@ -2228,8 +2231,6 @@ def package(request):
                   for gv in GlossVideo.objects.filter(gloss__in=available_glosses, glossvideonme=None, glossvideoperspective=None, version=0)
                   if gv.videofile and gv.videofile.name and os.path.exists(str(gv.videofile.path))
                   and os.path.getmtime(str(gv.videofile.path)) > since_timestamp}
-
-    interface_language_code = get_interface_language_api(request, request.user)
 
     collected_data = {'video_urls': video_urls,
                       'image_urls': image_urls,
