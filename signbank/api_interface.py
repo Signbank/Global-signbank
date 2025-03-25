@@ -7,28 +7,10 @@ from guardian.shortcuts import get_objects_for_user, get_user_perms
 
 import signbank.tools
 from signbank.api_token import put_api_user_in_request
-from signbank.abstract_machine import get_interface_language_api
+from signbank.abstract_machine import get_interface_language_api, retrieve_language_code_from_header
 from signbank.zip_interface import *
 from django.utils.translation import activate, gettext
-from django.utils.translation.trans_real import parse_accept_lang_header
 import zipfile
-
-
-def retrieve_language_code_from_header(url_language_code, api_accept_language_header, http_accept_language_header):
-    # the url_language_code is a pattern in the API url, it is used as a default
-    if url_language_code == api_accept_language_header:
-        # the url language code matches the one in the Accept-Language request
-        return url_language_code
-    # parse the language codes to get the first one
-    parsed_language_codes = parse_accept_lang_header(http_accept_language_header)
-    interface_language_code = parsed_language_codes[0][0] if parsed_language_codes else 'en'
-    if interface_language_code not in settings.MODELTRANSLATION_LANGUAGES:
-        # requested language code is not available
-        return url_language_code
-    if interface_language_code == url_language_code:
-        return url_language_code
-    # if we get here, the user has used a totally different language code in the header, just return that of the url
-    return url_language_code
 
 
 def check_api_dataset_manager_permissions(request, datasetid):
