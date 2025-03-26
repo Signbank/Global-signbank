@@ -167,7 +167,7 @@ def get_fields_data_json(request, datasetid):
             break
 
     if not sequence_of_digits:
-        return JsonResponse({})
+        return JsonResponse({}, status=400)
 
     dataset_id = int(datasetid)
     dataset = Dataset.objects.filter(id=dataset_id).first()
@@ -182,7 +182,7 @@ def get_fields_data_json(request, datasetid):
 
     result = {'fields': api_fields_2023}
 
-    return JsonResponse(result)
+    return JsonResponse(result, status=200)
 
 
 @csrf_exempt
@@ -221,7 +221,7 @@ def get_gloss_data_json(request, datasetid, glossid):
     gloss_data = dict()
     gloss_data[str(gloss.pk)] = gloss.get_fields_dict(api_fields_2023, interface_language_code, include_checksums=True) 
 
-    return JsonResponse(gloss_data, safe=False)
+    return JsonResponse(gloss_data, safe=False, status=200)
 
 
 @csrf_exempt
@@ -286,7 +286,7 @@ def get_annotated_sentences_of_gloss_json(request, datasetid, glossid):
         sentence_dict["Representative glosses"] = repr_gloss_list
         sentence_dict["Unrepresentative glosses"] = unrepr_gloss_list
         annotated_sentences.append(sentence_dict)
-    return JsonResponse(annotated_sentences, safe=False)
+    return JsonResponse(annotated_sentences, safe=False, status=200)
 
 
 def check_gloss_existence_for_uploaded_video(dataset):
@@ -375,17 +375,17 @@ def get_unzipped_video_files_json(request, datasetid):
             break
 
     if not sequence_of_digits:
-        return JsonResponse({})
+        return JsonResponse({}, status=400)
 
     dataset_id = int(datasetid)
     dataset = Dataset.objects.filter(id=dataset_id).first()
     if not dataset or not request.user.is_authenticated:
-        return JsonResponse({})
+        return JsonResponse({}, status=400)
 
     videos_data = dict()
     videos_data[API_VIDEO_ARCHIVES+dataset.acronym] = uploaded_video_files(dataset, useid=True)
 
-    return JsonResponse(videos_data, safe=False)
+    return JsonResponse(videos_data, safe=False, status=200)
 
 
 def get_dataset_zipfile_value_dict(request):

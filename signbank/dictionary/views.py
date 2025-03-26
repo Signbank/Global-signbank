@@ -2260,7 +2260,7 @@ def info(request):
     else:
         user_datasets_names = [dataset.acronym for dataset in user_datasets]
 
-    return HttpResponse(json.dumps(user_datasets_names), content_type='application/json')
+    return HttpResponse(json.dumps(user_datasets_names), content_type='application/json', status=200)
 
 
 def extract_glossid_from_filename(filename):

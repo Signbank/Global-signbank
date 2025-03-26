@@ -340,16 +340,16 @@ def api_create_gloss(request, datasetid):
     dataset = Dataset.objects.filter(id=int(datasetid)).first()
     if not dataset:
         results['errors'] = [gettext("Dataset ID does not exist.")]
-        return JsonResponse(results)
+        return JsonResponse(results, status=400)
 
     change_permit_datasets = get_objects_for_user(request.user, 'change_dataset', Dataset)
     if dataset not in change_permit_datasets:
         results['errors'] = [gettext("No permission to change dataset for user ") + str(request.user)]
-        return JsonResponse(results)
+        return JsonResponse(results, status=400)
 
     if not request.user.has_perm('dictionary.change_gloss'):
         results['errors'] = [gettext("No permission to change glosses.")]
-        return JsonResponse(results)
+        return JsonResponse(results, status=400)
 
     activate(interface_language_code)
 
@@ -361,8 +361,8 @@ def api_create_gloss(request, datasetid):
         results['errors'] = errors
         results['createstatus'] = "Failed"
         results['glossid'] = ""
-        return JsonResponse(results)
+        return JsonResponse(results, status=400)
 
     creation_results = create_gloss(request.user, dataset, value_dict)
 
-    return JsonResponse(creation_results)
+    return JsonResponse(creation_results, status=200)
