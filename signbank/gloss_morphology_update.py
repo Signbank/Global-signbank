@@ -174,7 +174,7 @@ def api_update_gloss_morphology(request, datasetid, glossid):
 
     change_permit_datasets = get_objects_for_user(request.user, 'change_dataset', Dataset)
     if dataset not in change_permit_datasets:
-        errors[gettext("Dataset")] = gettext("No change permission for dataset.")
+        errors[gettext("Dataset")] = gettext("No permission to change dataset.")
         results['errors'] = errors
         results['updatestatus'] = "Failed"
         return JsonResponse(results, safe=False)
@@ -210,7 +210,7 @@ def api_update_gloss_morphology(request, datasetid, glossid):
         return JsonResponse(results, safe=False)
 
     if not request.user.has_perm('dictionary.change_gloss'):
-        errors[gettext("Gloss")] = gettext("No change gloss permission.")
+        errors[gettext("Gloss")] = gettext("No permission to change glosses.")
         results['errors'] = errors
         results['updatestatus'] = "Failed"
         return JsonResponse(results, safe=False)

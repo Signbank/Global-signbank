@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: \n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-03-25 10:53+0100\n"
+"POT-Creation-Date: 2025-03-26 12:06+0100\n"
 "PO-Revision-Date: 2018-03-08 18:54+0100\n"
 "Last-Translator: susanodd\n"
 "Language-Team: Dutch <LL@li.org>\n"
@@ -187,14 +187,15 @@ msgid "Dataset ID does not exist."
 msgstr "Dataset ID bestaat niet."
 
 #: signbank/abstract_machine.py:347
-msgid "No change permission for dataset for user "
-msgstr "Geen toestemming om dataset te bewerken."
+msgid "No permission to change dataset for user "
+msgstr "Geen toestemming om dataset te wijzigen voor gebruiker "
 
-#: signbank/abstract_machine.py:351 signbank/gloss_morphology_update.py:213
-#: signbank/gloss_update.py:684 signbank/gloss_update.py:829
-#: signbank/gloss_update.py:909 signbank/gloss_update.py:1083
-#: signbank/gloss_update.py:1216 signbank/gloss_update.py:1300
-msgid "No change gloss permission."
+#: signbank/abstract_machine.py:351 signbank/api_interface.py:674
+#: signbank/gloss_morphology_update.py:213 signbank/gloss_update.py:684
+#: signbank/gloss_update.py:829 signbank/gloss_update.py:909
+#: signbank/gloss_update.py:1083 signbank/gloss_update.py:1216
+#: signbank/gloss_update.py:1300
+msgid "No permission to change glosses."
 msgstr "Geen toestemming om glossen te wijzigen."
 
 #: signbank/api_interface.py:20 signbank/api_interface.py:202
@@ -205,13 +206,14 @@ msgstr "Dataset met opgegeven id bestaat niet."
 msgid "You must be in group Dataset Manager to upload a zip video archive."
 msgstr "Je moet in groep Dataset Manager zijn om een zip-archief te uploaden."
 
-#: signbank/api_interface.py:32 signbank/gloss_morphology_update.py:177
-#: signbank/gloss_update.py:648 signbank/gloss_update.py:793
-#: signbank/gloss_update.py:873 signbank/gloss_update.py:1047
-#: signbank/gloss_update.py:1180 signbank/gloss_update.py:1264
-#: signbank/gloss_update.py:1434 signbank/gloss_update.py:1496
-msgid "No change permission for dataset."
-msgstr "Geen toestemming om dataset te bewerken."
+#: signbank/api_interface.py:32 signbank/api_interface.py:679
+#: signbank/gloss_morphology_update.py:177 signbank/gloss_update.py:648
+#: signbank/gloss_update.py:793 signbank/gloss_update.py:873
+#: signbank/gloss_update.py:1047 signbank/gloss_update.py:1180
+#: signbank/gloss_update.py:1264 signbank/gloss_update.py:1434
+#: signbank/gloss_update.py:1496
+msgid "No permission to change dataset."
+msgstr "Geen toestemming om dataset te wijzigen."
 
 #: signbank/api_interface.py:35
 msgid "No permission."
@@ -492,14 +494,6 @@ msgstr "Glos heeft geen lemma"
 #: signbank/api_interface.py:671
 msgid "Gloss has no dataset"
 msgstr "Glos heeft geen dataset"
-
-#: signbank/api_interface.py:674
-msgid "No change gloss permission"
-msgstr "Geen toestemming om glossen te wijzigen"
-
-#: signbank/api_interface.py:679
-msgid "No change permission for dataset"
-msgstr "Geen toestemming om dataset te wijzigen"
 
 #: signbank/api_interface.py:682
 msgid "This gloss has no idgloss"
@@ -1828,8 +1822,8 @@ msgstr "Werk bij"
 #: signbank/dictionary/gloss_revision.py:110
 #: signbank/dictionary/templates/dictionary/glosstags.html:22
 #: signbank/dictionary/templates/dictionary/morphemetags.html:22
-msgid "delete this tag"
-msgstr "verwijder dit label"
+msgid "Delete this tag"
+msgstr "Verwijder dit label"
 
 #: signbank/dictionary/gloss_revision.py:114
 #: signbank/dictionary/templates/dictionary/glosstags.html:39
@@ -7173,6 +7167,21 @@ msgstr "vind alle strings in dit veld"
 #: templates/global-templates/tooltip.html:25
 msgid "use backslash to find <br/>special characters in field"
 msgstr "gebruik backslash om <br/>speciale karakters te zoeken"
+
+#~ msgid "No change permission for dataset for user "
+#~ msgstr "Geen toestemming om dataset te bewerken."
+
+#~ msgid "No change gloss permission."
+#~ msgstr "Geen toestemming om glossen te wijzigen."
+
+#~ msgid "No change permission for dataset."
+#~ msgstr "Geen toestemming om dataset te bewerken."
+
+#~ msgid "No change gloss permission"
+#~ msgstr "Geen toestemming om glossen te wijzigen"
+
+#~ msgid "No change permission for dataset"
+#~ msgstr "Geen toestemming om dataset te wijzigen"
 
 #~ msgid ""
 #~ "Please refine your query to retrieve fewer than 100 glosses to use this "

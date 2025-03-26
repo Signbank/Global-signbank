@@ -344,11 +344,11 @@ def api_create_gloss(request, datasetid):
 
     change_permit_datasets = get_objects_for_user(request.user, 'change_dataset', Dataset)
     if dataset not in change_permit_datasets:
-        results['errors'] = [gettext("No change permission for dataset for user ") + str(request.user)]
+        results['errors'] = [gettext("No permission to change dataset for user ") + str(request.user)]
         return JsonResponse(results)
 
     if not request.user.has_perm('dictionary.change_gloss'):
-        results['errors'] = [gettext("No change gloss permission.")]
+        results['errors'] = [gettext("No permission to change glosses.")]
         return JsonResponse(results)
 
     activate(interface_language_code)

@@ -645,7 +645,7 @@ def api_update_gloss(request, datasetid, glossid):
 
     change_permit_datasets = get_objects_for_user(request.user, 'change_dataset', Dataset)
     if dataset not in change_permit_datasets:
-        errors[gettext("Dataset")] = gettext("No change permission for dataset.")
+        errors[gettext("Dataset")] = gettext("No permission to change dataset.")
         results['errors'] = errors
         results['updatestatus'] = "Failed"
         return JsonResponse(results, status=400)
@@ -681,7 +681,7 @@ def api_update_gloss(request, datasetid, glossid):
         return JsonResponse(results, status=400)
 
     if not request.user.has_perm('dictionary.change_gloss'):
-        errors[gettext("Gloss")] = gettext("No change gloss permission.")
+        errors[gettext("Gloss")] = gettext("No permission to change glosses.")
         results['errors'] = errors
         results['updatestatus'] = "Failed"
         return JsonResponse(results, status=400)
@@ -790,7 +790,7 @@ def api_delete_gloss(request, datasetid, glossid):
 
     change_permit_datasets = get_objects_for_user(request.user, 'change_dataset', Dataset)
     if dataset not in change_permit_datasets:
-        errors[gettext("Dataset")] = gettext("No change permission for dataset.")
+        errors[gettext("Dataset")] = gettext("No permission to change dataset.")
         results['errors'] = errors
         results['updatestatus'] = "Failed"
         return JsonResponse(results, safe=False)
@@ -826,7 +826,7 @@ def api_delete_gloss(request, datasetid, glossid):
         return JsonResponse(results, safe=False)
 
     if not request.user.has_perm('dictionary.change_gloss'):
-        errors[gettext("Gloss")] = gettext("No change gloss permission.")
+        errors[gettext("Gloss")] = gettext("No permission to change glosses.")
         results['errors'] = errors
         results['updatestatus'] = "Failed"
         return JsonResponse(results, safe=False)
@@ -870,7 +870,7 @@ def api_restore_gloss(request, datasetid, glossid):
 
     change_permit_datasets = get_objects_for_user(request.user, 'change_dataset', Dataset)
     if dataset not in change_permit_datasets:
-        errors[gettext("Dataset")] = gettext("No change permission for dataset.")
+        errors[gettext("Dataset")] = gettext("No permission to change dataset.")
         results['errors'] = errors
         results['updatestatus'] = "Failed"
         return JsonResponse(results, safe=False)
@@ -906,7 +906,7 @@ def api_restore_gloss(request, datasetid, glossid):
         return JsonResponse(results, safe=False)
 
     if not request.user.has_perm('dictionary.change_gloss'):
-        errors[gettext("Gloss")] = gettext("No change gloss permission.")
+        errors[gettext("Gloss")] = gettext("No permission to change glosses.")
         results['errors'] = errors
         results['updatestatus'] = "Failed"
         return JsonResponse(results, safe=False)
@@ -1044,7 +1044,7 @@ def api_update_gloss_nmevideo(request, datasetid, glossid, videoid):
 
     change_permit_datasets = get_objects_for_user(request.user, 'change_dataset', Dataset)
     if dataset not in change_permit_datasets:
-        errors[gettext("Dataset")] = gettext("No change permission for dataset.")
+        errors[gettext("Dataset")] = gettext("No permission to change dataset.")
         results['errors'] = errors
         results['updatestatus'] = "Failed"
         return JsonResponse(results, safe=False)
@@ -1080,7 +1080,7 @@ def api_update_gloss_nmevideo(request, datasetid, glossid, videoid):
         return JsonResponse(results, safe=False)
 
     if not request.user.has_perm('dictionary.change_gloss'):
-        errors[gettext("Gloss")] = gettext("No change gloss permission.")
+        errors[gettext("Gloss")] = gettext("No permission to change glosses.")
         results['errors'] = errors
         results['updatestatus'] = "Failed"
         return JsonResponse(results, safe=False)
@@ -1177,7 +1177,7 @@ def api_create_gloss_nmevideo(request, datasetid, glossid):
 
     change_permit_datasets = get_objects_for_user(request.user, 'change_dataset', Dataset)
     if dataset not in change_permit_datasets:
-        errors[gettext("Dataset")] = gettext("No change permission for dataset.")
+        errors[gettext("Dataset")] = gettext("No permission to change dataset.")
         results['errors'] = errors
         results['updatestatus'] = "Failed"
         return JsonResponse(results, safe=False)
@@ -1213,7 +1213,7 @@ def api_create_gloss_nmevideo(request, datasetid, glossid):
         return JsonResponse(results, safe=False)
 
     if not request.user.has_perm('dictionary.change_gloss'):
-        errors[gettext("Gloss")] = gettext("No change gloss permission.")
+        errors[gettext("Gloss")] = gettext("No permission to change glosses.")
         results['errors'] = errors
         results['updatestatus'] = "Failed"
         return JsonResponse(results, safe=False)
@@ -1261,7 +1261,7 @@ def api_delete_gloss_nmevideo(request, datasetid, glossid, videoid):
 
     change_permit_datasets = get_objects_for_user(request.user, 'change_dataset', Dataset)
     if dataset not in change_permit_datasets:
-        errors[gettext("Dataset")] = gettext("No change permission for dataset.")
+        errors[gettext("Dataset")] = gettext("No permission to change dataset.")
         results['errors'] = errors
         results['updatestatus'] = "Failed"
         return JsonResponse(results, safe=False)
@@ -1297,7 +1297,7 @@ def api_delete_gloss_nmevideo(request, datasetid, glossid, videoid):
         return JsonResponse(results, safe=False)
 
     if not request.user.has_perm('dictionary.change_gloss'):
-        errors[gettext("Gloss")] = gettext("No change gloss permission.")
+        errors[gettext("Gloss")] = gettext("No permission to change glosses.")
         results['errors'] = errors
         results['updatestatus'] = "Failed"
         return JsonResponse(results, safe=False)
@@ -1351,7 +1351,7 @@ def api_create_annotated_sentence(request, datasetid):
 
     change_permit_datasets = get_objects_for_user(request.user, 'change_dataset', Dataset)
     if dataset not in change_permit_datasets:
-        return JsonResponse({"error": "No change permission for dataset."}, status=400)
+        return JsonResponse({"error": "No permission to change dataset."}, status=400)
 
     if not request.user.has_perm('dictionary.change_gloss'):
         return JsonResponse({"error": "No permission."}, status=400)
@@ -1431,7 +1431,7 @@ def api_update_annotated_sentence(request, datasetid, annotatedsentenceid):
 
     change_permit_datasets = get_objects_for_user(request.user, 'change_dataset', Dataset)
     if dataset not in change_permit_datasets:
-        return JsonResponse({"error": gettext("No change permission for dataset.")}, status=401)
+        return JsonResponse({"error": gettext("No permission to change dataset.")}, status=401)
 
     annotated_sentence = AnnotatedSentence.objects.filter(
         id=annotatedsentenceid,
@@ -1493,7 +1493,7 @@ def api_delete_annotated_sentence(request, datasetid, annotatedsentenceid):
 
     change_permit_datasets = get_objects_for_user(request.user, 'change_dataset', Dataset)
     if dataset not in change_permit_datasets:
-        return JsonResponse({"error": gettext("No change permission for dataset.")}, status=401)
+        return JsonResponse({"error": gettext("No permission to change dataset.")}, status=401)
 
     annotated_sentence = AnnotatedSentence.objects.get(id=annotatedsentenceid)
     if not annotated_sentence:

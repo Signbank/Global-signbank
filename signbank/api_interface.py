@@ -29,7 +29,7 @@ def check_api_dataset_manager_permissions(request, datasetid):
 
     change_permit_datasets = get_objects_for_user(request.user, 'change_dataset', Dataset)
     if dataset not in change_permit_datasets:
-        return None, {"error": gettext("No change permission for dataset.")}, 400
+        return None, {"error": gettext("No permission to change dataset.")}, 400
 
     if not request.user.has_perm('dictionary.change_gloss'):
         return None, {"error": gettext("No permission.")}, 400
@@ -671,12 +671,12 @@ def verify_conditions_for_file_upload(request, gloss_id):
         return JsonResponse({'error': gettext('Gloss has no dataset')}, status=404)
 
     if not request.user.has_perm('dictionary.change_gloss'):
-        return JsonResponse({'error': gettext('No change gloss permission')}, status=403)
+        return JsonResponse({'error': gettext('No permission to change glosses.')}, status=403)
 
     change_permit_datasets = get_objects_for_user(request.user, 'change_dataset', Dataset)
 
     if gloss.lemma.dataset not in change_permit_datasets:
-        return JsonResponse({'error': gettext('No change permission for dataset')}, status=403)
+        return JsonResponse({'error': gettext('No permission to change dataset.')}, status=403)
 
     if len(gloss.idgloss) < 2:
         return JsonResponse({'error': gettext('This gloss has no idgloss')}, status=400)
