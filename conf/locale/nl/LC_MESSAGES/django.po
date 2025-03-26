@@ -195,7 +195,7 @@ msgstr "Geen toestemming om dataset te bewerken."
 #: signbank/gloss_update.py:909 signbank/gloss_update.py:1083
 #: signbank/gloss_update.py:1216 signbank/gloss_update.py:1300
 msgid "No change gloss permission."
-msgstr "Geen verander-glos toestemming."
+msgstr "Geen toestemming om glossen te wijzigen."
 
 #: signbank/api_interface.py:20 signbank/api_interface.py:202
 msgid "Dataset with given id does not exist."
@@ -467,7 +467,7 @@ msgstr "Dataset niet gevonden."
 
 #: signbank/api_interface.py:637
 msgid "No permission to change dataset"
-msgstr "Geen toestemming om dataset te veranderen"
+msgstr "Geen toestemming om dataset te wijzigen"
 
 #: signbank/api_interface.py:643
 msgid "You must be in group Dataset Manager to import gloss videos."
@@ -495,11 +495,11 @@ msgstr "Glos heeft geen dataset"
 
 #: signbank/api_interface.py:674
 msgid "No change gloss permission"
-msgstr "Geen verander-glos toestemming"
+msgstr "Geen toestemming om glossen te wijzigen"
 
 #: signbank/api_interface.py:679
 msgid "No change permission for dataset"
-msgstr "Geen toestemming om dataset te bewerken"
+msgstr "Geen toestemming om dataset te wijzigen"
 
 #: signbank/api_interface.py:682
 msgid "This gloss has no idgloss"
@@ -1285,7 +1285,7 @@ msgstr ""
 msgid "The lemma you are trying to view is not in a dataset you can view."
 msgstr ""
 "Het lemma dat u probeert te bekijken, bevindt zich niet in een dataset die u "
-"kunt bekijken.."
+"kunt bekijken."
 
 #: signbank/dictionary/adminviews.py:6662
 msgid "There are glosses using this lemma."
@@ -5073,7 +5073,7 @@ msgstr "Leeftijd"
 #: signbank/dictionary/templates/dictionary/gloss_frequency.html:1492
 msgid "There is no frequency data available for this gloss in dataset"
 msgstr ""
-"Er zijn geen frequentiegegevens beschikbaar voor deze glans in de dataset"
+"Er zijn geen frequentiegegevens beschikbaar voor deze glos in de dataset"
 
 #: signbank/dictionary/templates/dictionary/gloss_list.html:43
 #: signbank/dictionary/templates/dictionary/search_result.html:94
@@ -6675,7 +6675,7 @@ msgstr "Geen annotaties gevonden in EAF-bestand"
 
 #: signbank/gloss_update.py:1404 signbank/gloss_update.py:1461
 msgid "Annotated sentence source received but not found."
-msgstr "Voorbeeldzin bron ontvangen maar niet gevonden."
+msgstr "Bron van voorbeeldzin ontvangen maar niet gevonden."
 
 #: signbank/gloss_update.py:1410 signbank/gloss_update.py:1465
 msgid "Annotated video not found."
@@ -7173,12 +7173,6 @@ msgstr "vind alle strings in dit veld"
 #: templates/global-templates/tooltip.html:25
 msgid "use backslash to find <br/>special characters in field"
 msgstr "gebruik backslash om <br/>speciale karakters te zoeken"
-
-#~ msgid "NOT FOUND: "
-#~ msgstr "NIET GEVONDEN: "
-
-#~ msgid "Gloss Videos with Non-manual Elements"
-#~ msgstr "Glos-video's met non-manuele elementen"
 
 #~ msgid ""
 #~ "Please refine your query to retrieve fewer than 100 glosses to use this "
