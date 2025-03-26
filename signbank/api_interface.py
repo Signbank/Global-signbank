@@ -195,7 +195,11 @@ def get_gloss_data_json(request, datasetid, glossid):
     if request.user.is_authenticated:
         interface_language_code = get_interface_language_api(request, request.user)
 
-    dataset_id = int(datasetid)
+    try:
+        dataset_id = int(datasetid)
+    except TypeError:
+        return JsonResponse({"error": gettext("Dataset ID must be a number.")}, safe=False, status=400)
+
     dataset = Dataset.objects.filter(id=dataset_id).first()
 
     if not dataset:
@@ -235,7 +239,11 @@ def get_annotated_sentences_of_gloss_json(request, datasetid, glossid):
     if request.user.is_authenticated:
         interface_language_code = get_interface_language_api(request, request.user)
 
-    dataset_id = int(datasetid)
+    try:
+        dataset_id = int(datasetid)
+    except TypeError:
+        return JsonResponse({"error": gettext("Dataset ID must be a number.")}, safe=False, status=400)
+
     dataset = Dataset.objects.filter(id=dataset_id).first()
     if not dataset or not request.user.is_authenticated:
         return JsonResponse({"error": gettext("No dataset found or no permission.")}, status=400)
@@ -629,7 +637,12 @@ def upload_videos_to_glosses(request, datasetid):
         interface_language_code = 'en'
     activate(interface_language_code)
 
-    dataset = Dataset.objects.filter(id=int(datasetid)).first()
+    try:
+        dataset_id = int(datasetid)
+    except TypeError:
+        return JsonResponse({"error": gettext("Dataset ID must be a number.")}, safe=False, status=400)
+
+    dataset = Dataset.objects.filter(id=dataset_id).first()
     if not dataset:
         return JsonResponse({"error": gettext("Dataset not found.")}, status=400)
 

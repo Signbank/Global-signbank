@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: \n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-03-26 12:06+0100\n"
+"POT-Creation-Date: 2025-03-26 15:14+0100\n"
 "PO-Revision-Date: 2018-03-08 18:54+0100\n"
 "Last-Translator: susanodd\n"
 "Language-Team: Dutch <LL@li.org>\n"
@@ -179,26 +179,37 @@ msgid "Sense arrays are not the same length."
 msgstr ""
 "Bij de verschillende talen staat een verschillend aantal betekennissen."
 
-#: signbank/abstract_machine.py:342 signbank/gloss_morphology_update.py:170
-#: signbank/gloss_update.py:641 signbank/gloss_update.py:786
-#: signbank/gloss_update.py:866 signbank/gloss_update.py:1040
-#: signbank/gloss_update.py:1173 signbank/gloss_update.py:1257
+#: signbank/abstract_machine.py:343 signbank/api_interface.py:201
+#: signbank/api_interface.py:245 signbank/api_interface.py:643
+#: signbank/gloss_morphology_update.py:171 signbank/gloss_update.py:642
+#: signbank/gloss_update.py:795 signbank/gloss_update.py:883
+#: signbank/gloss_update.py:1065 signbank/gloss_update.py:1206
+#: signbank/gloss_update.py:1298 signbank/gloss_update.py:1392
+#: signbank/gloss_update.py:1485 signbank/gloss_update.py:1552
+msgid "Dataset ID must be a number."
+msgstr "Dataset-ID moet een getal zijn."
+
+#: signbank/abstract_machine.py:349 signbank/gloss_morphology_update.py:178
+#: signbank/gloss_update.py:649 signbank/gloss_update.py:802
+#: signbank/gloss_update.py:890 signbank/gloss_update.py:1072
+#: signbank/gloss_update.py:1213 signbank/gloss_update.py:1305
 msgid "Dataset ID does not exist."
 msgstr "Dataset ID bestaat niet."
 
-#: signbank/abstract_machine.py:347
+#: signbank/abstract_machine.py:354
 msgid "No permission to change dataset for user "
 msgstr "Geen toestemming om dataset te wijzigen voor gebruiker "
 
-#: signbank/abstract_machine.py:351 signbank/api_interface.py:674
-#: signbank/gloss_morphology_update.py:213 signbank/gloss_update.py:684
-#: signbank/gloss_update.py:829 signbank/gloss_update.py:909
-#: signbank/gloss_update.py:1083 signbank/gloss_update.py:1216
-#: signbank/gloss_update.py:1300
+#: signbank/abstract_machine.py:358 signbank/api_interface.py:687
+#: signbank/gloss_morphology_update.py:221 signbank/gloss_update.py:692
+#: signbank/gloss_update.py:845 signbank/gloss_update.py:933
+#: signbank/gloss_update.py:1115 signbank/gloss_update.py:1256
+#: signbank/gloss_update.py:1348 signbank/gloss_update.py:1411
 msgid "No permission to change glosses."
 msgstr "Geen toestemming om glossen te wijzigen."
 
-#: signbank/api_interface.py:20 signbank/api_interface.py:202
+#: signbank/api_interface.py:20 signbank/api_interface.py:206
+#: signbank/gloss_update.py:1396
 msgid "Dataset with given id does not exist."
 msgstr "Dataset met opgegeven id bestaat niet."
 
@@ -206,12 +217,12 @@ msgstr "Dataset met opgegeven id bestaat niet."
 msgid "You must be in group Dataset Manager to upload a zip video archive."
 msgstr "Je moet in groep Dataset Manager zijn om een zip-archief te uploaden."
 
-#: signbank/api_interface.py:32 signbank/api_interface.py:679
-#: signbank/gloss_morphology_update.py:177 signbank/gloss_update.py:648
-#: signbank/gloss_update.py:793 signbank/gloss_update.py:873
-#: signbank/gloss_update.py:1047 signbank/gloss_update.py:1180
-#: signbank/gloss_update.py:1264 signbank/gloss_update.py:1434
-#: signbank/gloss_update.py:1496
+#: signbank/api_interface.py:32 signbank/api_interface.py:692
+#: signbank/gloss_morphology_update.py:185 signbank/gloss_update.py:656
+#: signbank/gloss_update.py:809 signbank/gloss_update.py:897
+#: signbank/gloss_update.py:1079 signbank/gloss_update.py:1220
+#: signbank/gloss_update.py:1312 signbank/gloss_update.py:1408
+#: signbank/gloss_update.py:1493 signbank/gloss_update.py:1560
 msgid "No permission to change dataset."
 msgstr "Geen toestemming om dataset te wijzigen."
 
@@ -403,113 +414,113 @@ msgid "Blend Morphology"
 msgstr "Blend-morfologie"
 
 #: signbank/api_interface.py:148 signbank/dictionary/models.py:1571
-#: signbank/gloss_update.py:950
+#: signbank/gloss_update.py:974
 msgid "NME Videos"
 msgstr "NME Video's"
 
-#: signbank/api_interface.py:205
+#: signbank/api_interface.py:209
 msgid "You are not authenticated and the requested dataset is not public."
 msgstr "U bent niet geauthenticeerd en de gevraagde dataset is niet openbaar."
 
-#: signbank/api_interface.py:211
+#: signbank/api_interface.py:215
 msgid "Gloss not found in dataset."
 msgstr "Glos niet gevonden in dataset."
 
-#: signbank/api_interface.py:214
+#: signbank/api_interface.py:218
 msgid "The requested gloss is not public."
 msgstr "Aangevraagd glos is niet openbaar."
 
-#: signbank/api_interface.py:241
+#: signbank/api_interface.py:249
 msgid "No dataset found or no permission."
 msgstr "Geen dataset gevonden of geen toestemming."
 
-#: signbank/api_interface.py:248
+#: signbank/api_interface.py:256
 msgid "No gloss found or no permission."
 msgstr "Geen glos gevonden of geen toestemming."
 
-#: signbank/api_interface.py:251
+#: signbank/api_interface.py:259
 msgid "No permission to change this gloss."
 msgstr "Geen toestemming om deze glos te wijzigen."
 
-#: signbank/api_interface.py:259
+#: signbank/api_interface.py:267
 #: signbank/dictionary/templates/dictionary/admin_annotatedsentence_list.html:208
-#: signbank/gloss_update.py:1446
+#: signbank/gloss_update.py:1505
 msgid "Translation"
 msgstr "Vertaling"
 
-#: signbank/api_interface.py:260 signbank/gloss_update.py:1447
+#: signbank/api_interface.py:268 signbank/gloss_update.py:1506
 msgid "Context"
 msgstr "Contekst"
 
-#: signbank/api_interface.py:440 signbank/api_interface.py:502
+#: signbank/api_interface.py:448 signbank/api_interface.py:510
 #: signbank/dictionary/templates/dictionary/dataset_frequency.html:186
-#: signbank/gloss_update.py:1137 signbank/gloss_update.py:1223
+#: signbank/gloss_update.py:1169 signbank/gloss_update.py:1263
 msgid "File"
 msgstr "Bestand"
 
-#: signbank/api_interface.py:442
+#: signbank/api_interface.py:450
 msgid "Error processing the zip file."
 msgstr "Fout bij het verwerken van het zip-bestand."
 
-#: signbank/api_interface.py:452
+#: signbank/api_interface.py:460
 msgid "Could not copy the zip file to the destination folder."
 msgstr "Kon het zipbestand niet naar de doelmap kopiëren."
 
-#: signbank/api_interface.py:456 signbank/manage_videos.py:97
+#: signbank/api_interface.py:464 signbank/manage_videos.py:97
 msgid "Upload zip archive: The file is not a zip file."
 msgstr "Zip-archief uploaden: Het bestand heeft geen zip-formaat."
 
-#: signbank/api_interface.py:463 signbank/manage_videos.py:105
+#: signbank/api_interface.py:471 signbank/manage_videos.py:105
 msgid "Upload zip archive: The file has no extension."
 msgstr "Zip-archief uploaden: Het bestand heeft geen bestandsextensie."
 
-#: signbank/api_interface.py:634 signbank/dictionary/views.py:2189
+#: signbank/api_interface.py:647 signbank/dictionary/views.py:2189
 msgid "Dataset not found."
 msgstr "Dataset niet gevonden."
 
-#: signbank/api_interface.py:637
+#: signbank/api_interface.py:650
 msgid "No permission to change dataset"
 msgstr "Geen toestemming om dataset te wijzigen"
 
-#: signbank/api_interface.py:643
+#: signbank/api_interface.py:656
 msgid "You must be in group Dataset Manager to import gloss videos."
 msgstr "Je moet in groep Dataset Manager zijn om glos-video's te importeren."
 
-#: signbank/api_interface.py:658
+#: signbank/api_interface.py:671
 msgid "User not found"
 msgstr "Gebruiker niet gevonden"
 
-#: signbank/api_interface.py:662
+#: signbank/api_interface.py:675
 msgid "Gloss not found"
 msgstr "Glos niet gevonden"
 
-#: signbank/api_interface.py:665
+#: signbank/api_interface.py:678
 msgid "Gloss is archived"
 msgstr "Glos is gearchiveerd"
 
-#: signbank/api_interface.py:668
+#: signbank/api_interface.py:681
 msgid "Gloss has no lemma"
 msgstr "Glos heeft geen lemma"
 
-#: signbank/api_interface.py:671
+#: signbank/api_interface.py:684
 msgid "Gloss has no dataset"
 msgstr "Glos heeft geen dataset"
 
-#: signbank/api_interface.py:682
+#: signbank/api_interface.py:695
 msgid "This gloss has no idgloss"
 msgstr "Deze glos heeft geen idgloss"
 
-#: signbank/api_interface.py:685
+#: signbank/api_interface.py:698
 msgid "No file uploaded"
 msgstr "Geen bestand geüpload"
 
-#: signbank/api_interface.py:757 signbank/dictionary/views.py:1855
+#: signbank/api_interface.py:770 signbank/dictionary/views.py:1855
 #: signbank/dictionary/views.py:1982
 msgid "File extension not supported! Please convert to png or jpg"
 msgstr ""
 "Bestandsextensie niet ondersteund! Converteer het bestand naar png of jpg"
 
-#: signbank/api_interface.py:782
+#: signbank/api_interface.py:795
 msgid "Image upload successful."
 msgstr "Het uploaden van de afbeelding is gelukt."
 
@@ -597,14 +608,18 @@ msgstr "Gebruiker"
 #: signbank/feedback/templates/feedback/recent_feedback.html:63
 #: signbank/feedback/templates/feedback/show_feedback_morphemes.html:94
 #: signbank/feedback/templates/feedback/show_feedback_signs.html:94
-#: signbank/gloss_morphology_update.py:170
-#: signbank/gloss_morphology_update.py:177 signbank/gloss_update.py:641
-#: signbank/gloss_update.py:648 signbank/gloss_update.py:786
-#: signbank/gloss_update.py:793 signbank/gloss_update.py:866
-#: signbank/gloss_update.py:873 signbank/gloss_update.py:1040
-#: signbank/gloss_update.py:1047 signbank/gloss_update.py:1173
-#: signbank/gloss_update.py:1180 signbank/gloss_update.py:1257
-#: signbank/gloss_update.py:1264 signbank/video/admin.py:26
+#: signbank/gloss_morphology_update.py:171
+#: signbank/gloss_morphology_update.py:178
+#: signbank/gloss_morphology_update.py:185 signbank/gloss_update.py:642
+#: signbank/gloss_update.py:649 signbank/gloss_update.py:656
+#: signbank/gloss_update.py:795 signbank/gloss_update.py:802
+#: signbank/gloss_update.py:809 signbank/gloss_update.py:883
+#: signbank/gloss_update.py:890 signbank/gloss_update.py:897
+#: signbank/gloss_update.py:1065 signbank/gloss_update.py:1072
+#: signbank/gloss_update.py:1079 signbank/gloss_update.py:1206
+#: signbank/gloss_update.py:1213 signbank/gloss_update.py:1220
+#: signbank/gloss_update.py:1298 signbank/gloss_update.py:1305
+#: signbank/gloss_update.py:1312 signbank/video/admin.py:26
 #: signbank/video/admin.py:553 signbank/video/admin.py:595
 #: signbank/video/admin_update.py:20 signbank/video/admin_update.py:354
 #: signbank/video/admin_update.py:396
@@ -1377,26 +1392,26 @@ msgstr "Gebaar opgeslagen"
 #: signbank/dictionary/templates/dictionary/admin_toggle_view.html:252
 #: signbank/dictionary/templates/dictionary/gloss.html:478
 #: signbank/dictionary/templates/dictionary/morpheme_detail.html:551
-#: signbank/gloss_morphology_update.py:187
 #: signbank/gloss_morphology_update.py:195
-#: signbank/gloss_morphology_update.py:201
-#: signbank/gloss_morphology_update.py:207
-#: signbank/gloss_morphology_update.py:213 signbank/gloss_update.py:658
-#: signbank/gloss_update.py:666 signbank/gloss_update.py:672
-#: signbank/gloss_update.py:678 signbank/gloss_update.py:684
-#: signbank/gloss_update.py:803 signbank/gloss_update.py:811
-#: signbank/gloss_update.py:817 signbank/gloss_update.py:823
-#: signbank/gloss_update.py:829 signbank/gloss_update.py:883
-#: signbank/gloss_update.py:891 signbank/gloss_update.py:897
-#: signbank/gloss_update.py:903 signbank/gloss_update.py:909
-#: signbank/gloss_update.py:1057 signbank/gloss_update.py:1065
-#: signbank/gloss_update.py:1071 signbank/gloss_update.py:1077
-#: signbank/gloss_update.py:1083 signbank/gloss_update.py:1190
-#: signbank/gloss_update.py:1198 signbank/gloss_update.py:1204
-#: signbank/gloss_update.py:1210 signbank/gloss_update.py:1216
-#: signbank/gloss_update.py:1274 signbank/gloss_update.py:1282
-#: signbank/gloss_update.py:1288 signbank/gloss_update.py:1294
-#: signbank/gloss_update.py:1300 signbank/query_parameters.py:942
+#: signbank/gloss_morphology_update.py:203
+#: signbank/gloss_morphology_update.py:209
+#: signbank/gloss_morphology_update.py:215
+#: signbank/gloss_morphology_update.py:221 signbank/gloss_update.py:666
+#: signbank/gloss_update.py:674 signbank/gloss_update.py:680
+#: signbank/gloss_update.py:686 signbank/gloss_update.py:692
+#: signbank/gloss_update.py:819 signbank/gloss_update.py:827
+#: signbank/gloss_update.py:833 signbank/gloss_update.py:839
+#: signbank/gloss_update.py:845 signbank/gloss_update.py:907
+#: signbank/gloss_update.py:915 signbank/gloss_update.py:921
+#: signbank/gloss_update.py:927 signbank/gloss_update.py:933
+#: signbank/gloss_update.py:1089 signbank/gloss_update.py:1097
+#: signbank/gloss_update.py:1103 signbank/gloss_update.py:1109
+#: signbank/gloss_update.py:1115 signbank/gloss_update.py:1230
+#: signbank/gloss_update.py:1238 signbank/gloss_update.py:1244
+#: signbank/gloss_update.py:1250 signbank/gloss_update.py:1256
+#: signbank/gloss_update.py:1322 signbank/gloss_update.py:1330
+#: signbank/gloss_update.py:1336 signbank/gloss_update.py:1342
+#: signbank/gloss_update.py:1348 signbank/query_parameters.py:942
 msgid "Gloss"
 msgstr "Glos"
 
@@ -2261,7 +2276,7 @@ msgstr "Gepubliceerd"
 #: signbank/dictionary/templates/dictionary/gloss_detail.html:1888
 #: signbank/dictionary/templates/dictionary/gloss_detail.html:2657
 #: signbank/dictionary/templates/dictionary/morpheme_detail.html:682
-#: signbank/gloss_update.py:935 signbank/gloss_update.py:1128
+#: signbank/gloss_update.py:959 signbank/gloss_update.py:1160
 msgid "Index"
 msgstr "Volgorde"
 
@@ -2271,8 +2286,8 @@ msgstr "Volgorde"
 #: signbank/dictionary/templates/dictionary/dataset_detail.html:117
 #: signbank/dictionary/templates/dictionary/derivationhistory_detail.html:49
 #: signbank/dictionary/templates/dictionary/semanticfield_detail.html:73
-#: signbank/gloss_update.py:938 signbank/gloss_update.py:943
-#: signbank/gloss_update.py:945 signbank/gloss_update.py:1146
+#: signbank/gloss_update.py:962 signbank/gloss_update.py:967
+#: signbank/gloss_update.py:969 signbank/gloss_update.py:1178
 #: signbank/video/forms.py:51 signbank/video/forms.py:52
 msgid "Description"
 msgstr "Omschrijving"
@@ -6587,31 +6602,31 @@ msgstr "Veldupdate niet beschikbaar"
 msgid "You must be logged in to use this functionality."
 msgstr "Je moet ingelogd zijn om deze functionaliteit te gebruiken."
 
-#: signbank/gloss_morphology_update.py:187 signbank/gloss_update.py:658
-#: signbank/gloss_update.py:803 signbank/gloss_update.py:883
-#: signbank/gloss_update.py:1057 signbank/gloss_update.py:1190
-#: signbank/gloss_update.py:1274
-msgid "Gloss ID must be a number."
-msgstr "'%(value)s' waarde moet een getal zijn."
-
 #: signbank/gloss_morphology_update.py:195 signbank/gloss_update.py:666
-#: signbank/gloss_update.py:811 signbank/gloss_update.py:1065
-#: signbank/gloss_update.py:1198 signbank/gloss_update.py:1282
+#: signbank/gloss_update.py:819 signbank/gloss_update.py:907
+#: signbank/gloss_update.py:1089 signbank/gloss_update.py:1230
+#: signbank/gloss_update.py:1322
+msgid "Gloss ID must be a number."
+msgstr "Glos-ID moet een getal zijn."
+
+#: signbank/gloss_morphology_update.py:203 signbank/gloss_update.py:674
+#: signbank/gloss_update.py:827 signbank/gloss_update.py:1097
+#: signbank/gloss_update.py:1238 signbank/gloss_update.py:1330
 #: signbank/manage_videos.py:181
 msgid "Gloss not found."
 msgstr "Glos niet gevonden."
 
-#: signbank/gloss_morphology_update.py:201 signbank/gloss_update.py:672
-#: signbank/gloss_update.py:817 signbank/gloss_update.py:897
-#: signbank/gloss_update.py:1071 signbank/gloss_update.py:1204
-#: signbank/gloss_update.py:1288
+#: signbank/gloss_morphology_update.py:209 signbank/gloss_update.py:680
+#: signbank/gloss_update.py:833 signbank/gloss_update.py:921
+#: signbank/gloss_update.py:1103 signbank/gloss_update.py:1244
+#: signbank/gloss_update.py:1336
 msgid "Gloss does not have a lemma."
 msgstr "Glos heeft geen lemma."
 
-#: signbank/gloss_morphology_update.py:207 signbank/gloss_update.py:678
-#: signbank/gloss_update.py:823 signbank/gloss_update.py:903
-#: signbank/gloss_update.py:1077 signbank/gloss_update.py:1210
-#: signbank/gloss_update.py:1294
+#: signbank/gloss_morphology_update.py:215 signbank/gloss_update.py:686
+#: signbank/gloss_update.py:839 signbank/gloss_update.py:927
+#: signbank/gloss_update.py:1109 signbank/gloss_update.py:1250
+#: signbank/gloss_update.py:1342
 msgid "Gloss not found in the dataset."
 msgstr "Glos niet gevonden in de dataset."
 
@@ -6630,76 +6645,96 @@ msgstr "Veldnaam niet gevonden in velden die kunnen worden bijgewerkt."
 msgid "Incorrect value"
 msgstr "Onjuiste waarde"
 
-#: signbank/gloss_update.py:722
+#: signbank/gloss_update.py:730
 msgid "Exception"
 msgstr "Uitzonderingsfout"
 
-#: signbank/gloss_update.py:722
+#: signbank/gloss_update.py:730
 msgid "Transaction management error."
 msgstr "Fout bij transactiebeheer."
 
-#: signbank/gloss_update.py:738
+#: signbank/gloss_update.py:746
 msgid "Gloss operation not confirmed"
 msgstr "Glosbewerking niet bevestigd"
 
-#: signbank/gloss_update.py:891
+#: signbank/gloss_update.py:915
 msgid "Gloss not found in archive."
 msgstr "Glos niet gevonden in het archief."
 
-#: signbank/gloss_update.py:1093 signbank/gloss_update.py:1101
-#: signbank/gloss_update.py:1310 signbank/gloss_update.py:1318
+#: signbank/gloss_update.py:1125 signbank/gloss_update.py:1133
+#: signbank/gloss_update.py:1358 signbank/gloss_update.py:1366
 msgid "NME Video ID"
 msgstr "NME video ID"
 
-#: signbank/gloss_update.py:1093 signbank/gloss_update.py:1310
+#: signbank/gloss_update.py:1125 signbank/gloss_update.py:1358
 msgid "Video ID must be a number."
 msgstr "Video ID moet een getal zijn."
 
-#: signbank/gloss_update.py:1101 signbank/gloss_update.py:1318
+#: signbank/gloss_update.py:1133 signbank/gloss_update.py:1366
 msgid "NME Video not found."
 msgstr "NME video niet gevonden."
 
-#: signbank/gloss_update.py:1225
+#: signbank/gloss_update.py:1265
 msgid "Missing File argument."
 msgstr "Bestand ontbreekt."
 
-#: signbank/gloss_update.py:1393
+#: signbank/gloss_update.py:1401
+msgid "Dataset with given acronym does not exist."
+msgstr "Dataset met opgegeven afkorting bestaat niet."
+
+#: signbank/gloss_update.py:1404
+msgid "Dataset acronym does not match."
+msgstr "Dataset afkorting komt niet overeen met dataset."
+
+#: signbank/gloss_update.py:1419
+msgid "Eaf file must be in .eaf format."
+msgstr ""
+
+#: signbank/gloss_update.py:1421
+msgid "Video file must be in .mp4, .webm, or .mov format."
+msgstr ""
+
+#: signbank/gloss_update.py:1425
+msgid "Missing a required field."
+msgstr ""
+
+#: signbank/gloss_update.py:1447
 msgid "No annotations found in EAF file."
 msgstr "Geen annotaties gevonden in EAF-bestand"
 
-#: signbank/gloss_update.py:1404 signbank/gloss_update.py:1461
+#: signbank/gloss_update.py:1458 signbank/gloss_update.py:1520
 msgid "Annotated sentence source received but not found."
 msgstr "Bron van voorbeeldzin ontvangen maar niet gevonden."
 
-#: signbank/gloss_update.py:1410 signbank/gloss_update.py:1465
+#: signbank/gloss_update.py:1464 signbank/gloss_update.py:1524
 msgid "Annotated video not found."
 msgstr "Geannoteerde video niet gevonden."
 
-#: signbank/gloss_update.py:1414
+#: signbank/gloss_update.py:1468
 msgid "Sentence was added successfully."
 msgstr "Voorbeeldzin is succesvol toegevoegd."
 
-#: signbank/gloss_update.py:1430
+#: signbank/gloss_update.py:1489
 msgid "Dataset with given id does not exist"
 msgstr "Dataset met opgegeven id bestaat niet"
 
-#: signbank/gloss_update.py:1441 signbank/gloss_update.py:1500
+#: signbank/gloss_update.py:1500 signbank/gloss_update.py:1564
 msgid "Annotated sentence not found."
 msgstr "Voorbeeldzin niet gevonden."
 
-#: signbank/gloss_update.py:1475
+#: signbank/gloss_update.py:1534
 msgid "No valid representative gloss id's given."
 msgstr "Er zijn geen geldige representatieve glos-ID's opgegeven."
 
-#: signbank/gloss_update.py:1483
+#: signbank/gloss_update.py:1542
 msgid "Sentence was updated successfully."
 msgstr "Voorbeeldzin is succesvol bijgewerkt."
 
-#: signbank/gloss_update.py:1503
+#: signbank/gloss_update.py:1567
 msgid "Annotated sentence not found in dataset."
 msgstr "Voorbeeldzin niet gevonden in dataset."
 
-#: signbank/gloss_update.py:1512
+#: signbank/gloss_update.py:1576
 msgid "Sentence was deleted successfully."
 msgstr "Voorbeeldzin is succesvol verwijderd."
 
@@ -7167,4 +7202,3 @@ msgstr "vind alle strings in dit veld"
 #: templates/global-templates/tooltip.html:25
 msgid "use backslash to find <br/>special characters in field"
 msgstr "gebruik backslash om <br/>speciale karakters te zoeken"
-

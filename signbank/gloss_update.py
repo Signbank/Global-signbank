@@ -636,7 +636,15 @@ def api_update_gloss(request, datasetid, glossid):
 
     errors = dict()
 
-    dataset = Dataset.objects.filter(id=int(datasetid)).first()
+    try:
+        dataset_id = int(datasetid)
+    except TypeError:
+        errors[gettext("Dataset")] = gettext("Dataset ID must be a number.")
+        results['errors'] = errors
+        results['updatestatus'] = "Failed"
+        return JsonResponse(results, safe=False, status=400)
+
+    dataset = Dataset.objects.filter(id=dataset_id).first()
     if not dataset:
         errors[gettext("Dataset")] = gettext("Dataset ID does not exist.")
         results['errors'] = errors
@@ -781,7 +789,15 @@ def api_delete_gloss(request, datasetid, glossid):
 
     errors = dict()
 
-    dataset = Dataset.objects.filter(id=int(datasetid)).first()
+    try:
+        dataset_id = int(datasetid)
+    except TypeError:
+        errors[gettext("Dataset")] = gettext("Dataset ID must be a number.")
+        results['errors'] = errors
+        results['updatestatus'] = "Failed"
+        return JsonResponse(results, safe=False, status=400)
+
+    dataset = Dataset.objects.filter(id=dataset_id).first()
     if not dataset:
         errors[gettext("Dataset")] = gettext("Dataset ID does not exist.")
         results['errors'] = errors
@@ -861,7 +877,15 @@ def api_restore_gloss(request, datasetid, glossid):
 
     errors = dict()
 
-    dataset = Dataset.objects.filter(id=int(datasetid)).first()
+    try:
+        dataset_id = int(datasetid)
+    except TypeError:
+        errors[gettext("Dataset")] = gettext("Dataset ID must be a number.")
+        results['errors'] = errors
+        results['updatestatus'] = "Failed"
+        return JsonResponse(results, safe=False, status=400)
+
+    dataset = Dataset.objects.filter(id=dataset_id).first()
     if not dataset:
         errors[gettext("Dataset")] = gettext("Dataset ID does not exist.")
         results['errors'] = errors
@@ -1035,7 +1059,15 @@ def api_update_gloss_nmevideo(request, datasetid, glossid, videoid):
 
     errors = dict()
 
-    dataset = Dataset.objects.filter(id=int(datasetid)).first()
+    try:
+        dataset_id = int(datasetid)
+    except TypeError:
+        errors[gettext("Dataset")] = gettext("Dataset ID must be a number.")
+        results['errors'] = errors
+        results['updatestatus'] = "Failed"
+        return JsonResponse(results, safe=False, status=400)
+
+    dataset = Dataset.objects.filter(id=dataset_id).first()
     if not dataset:
         errors[gettext("Dataset")] = gettext("Dataset ID does not exist.")
         results['errors'] = errors
@@ -1168,7 +1200,15 @@ def api_create_gloss_nmevideo(request, datasetid, glossid):
 
     errors = dict()
 
-    dataset = Dataset.objects.filter(id=int(datasetid)).first()
+    try:
+        dataset_id = int(datasetid)
+    except TypeError:
+        errors[gettext("Dataset")] = gettext("Dataset ID must be a number.")
+        results['errors'] = errors
+        results['updatestatus'] = "Failed"
+        return JsonResponse(results, safe=False, status=400)
+
+    dataset = Dataset.objects.filter(id=dataset_id).first()
     if not dataset:
         errors[gettext("Dataset")] = gettext("Dataset ID does not exist.")
         results['errors'] = errors
@@ -1252,7 +1292,15 @@ def api_delete_gloss_nmevideo(request, datasetid, glossid, videoid):
 
     errors = dict()
 
-    dataset = Dataset.objects.filter(id=int(datasetid)).first()
+    try:
+        dataset_id = int(datasetid)
+    except TypeError:
+        errors[gettext("Dataset")] = gettext("Dataset ID must be a number.")
+        results['errors'] = errors
+        results['updatestatus'] = "Failed"
+        return JsonResponse(results, safe=False, status=400)
+
+    dataset = Dataset.objects.filter(id=dataset_id).first()
     if not dataset:
         errors[gettext("Dataset")] = gettext("Dataset ID does not exist.")
         results['errors'] = errors
@@ -1338,24 +1386,29 @@ def api_create_annotated_sentence(request, datasetid):
     if not request.method == 'POST': 
         return JsonResponse({"error": "POST method required."}, status=400)
 
-    dataset = Dataset.objects.filter(id=int(datasetid)).first()
+    try:
+        dataset_id = int(datasetid)
+    except TypeError:
+        return JsonResponse({"error": gettext("Dataset ID must be a number.")}, safe=False, status=400)
+
+    dataset = Dataset.objects.filter(id=dataset_id).first()
     if not dataset:
-        return JsonResponse({"error": "Dataset with given id does not exist."}, status=400)
+        return JsonResponse({"error": gettext("Dataset with given id does not exist.")}, status=400)
 
     dataset_acronym = request.POST.get('Dataset')
     dataset_by_acronym = Dataset.objects.filter(acronym=dataset_acronym).first()
     if not dataset_by_acronym:
-        return JsonResponse({"error": "Dataset with given acronym does not exist."}, status=400)
+        return JsonResponse({"error": gettext("Dataset with given acronym does not exist.")}, status=400)
 
     if dataset.acronym != dataset_by_acronym.acronym:
-        return JsonResponse({"error": "Dataset acronym does not match."}, status=400)
+        return JsonResponse({"error": gettext("Dataset acronym does not match.")}, status=400)
 
     change_permit_datasets = get_objects_for_user(request.user, 'change_dataset', Dataset)
     if dataset not in change_permit_datasets:
-        return JsonResponse({"error": "No permission to change dataset."}, status=400)
+        return JsonResponse({"error": gettext("No permission to change dataset.")}, status=400)
 
     if not request.user.has_perm('dictionary.change_gloss'):
-        return JsonResponse({"error": "No permission."}, status=400)
+        return JsonResponse({"error": gettext("No permission to change glosses.")}, status=400)
     
     source = request.POST.get('Source')
     url = request.POST.get('Url')
@@ -1363,13 +1416,13 @@ def api_create_annotated_sentence(request, datasetid):
     eaf_file = request.FILES.get('Eaf_file')
 
     if eaf_file.name.split('.')[-1] != 'eaf':
-        return JsonResponse({"error": "Eaf file must be in .eaf format."}, status=400)
+        return JsonResponse({"error": gettext("Eaf file must be in .eaf format.")}, status=400)
     if video_file.name.split('.')[-1] not in ['mp4', 'webm', 'mov']:
-        return JsonResponse({"error": "Video file must be in .mp4, .webm, or .mov format."}, status=400)
+        return JsonResponse({"error": gettext("Video file must be in .mp4, .webm, or .mov format.")}, status=400)
 
     # Process the files and fields as needed
     if not (video_file and eaf_file):
-        return JsonResponse({"error": "Missing a required field."}, status=400)
+        return JsonResponse({"error": gettext("Missing a required field.")}, status=400)
 
     from pympi.Elan import Eaf
     from tempfile import NamedTemporaryFile
@@ -1426,7 +1479,12 @@ def api_update_annotated_sentence(request, datasetid, annotatedsentenceid):
         interface_language_code = 'en'
     activate(interface_language_code)
 
-    dataset = Dataset.objects.filter(id=int(datasetid)).first()
+    try:
+        dataset_id = int(datasetid)
+    except TypeError:
+        return JsonResponse({"error": gettext("Dataset ID must be a number.")}, safe=False, status=400)
+
+    dataset = Dataset.objects.filter(id=dataset_id).first()
     if not dataset:
         return JsonResponse({"error": gettext("Dataset with given id does not exist")}, status=400)
 
@@ -1488,7 +1546,12 @@ def api_update_annotated_sentence(request, datasetid, annotatedsentenceid):
 @put_api_user_in_request
 def api_delete_annotated_sentence(request, datasetid, annotatedsentenceid):
 
-    dataset = Dataset.objects.filter(id=int(datasetid)).first()
+    try:
+        dataset_id = int(datasetid)
+    except TypeError:
+        return JsonResponse({"error": gettext("Dataset ID must be a number.")}, safe=False, status=400)
+
+    dataset = Dataset.objects.filter(id=dataset_id).first()
     if not dataset:
         return JsonResponse({"error": "Dataset with given id does not exist."}, status=400)
 

@@ -165,7 +165,15 @@ def api_update_gloss_morphology(request, datasetid, glossid):
         results['updatestatus'] = "Failed"
         return JsonResponse(results, safe=False, status=400)
 
-    dataset = Dataset.objects.filter(id=int(datasetid)).first()
+    try:
+        dataset_id = int(datasetid)
+    except TypeError:
+        errors[gettext("Dataset")] = gettext("Dataset ID must be a number.")
+        results['errors'] = errors
+        results['updatestatus'] = "Failed"
+        return JsonResponse(results, safe=False, status=400)
+
+    dataset = Dataset.objects.filter(id=dataset_id).first()
     if not dataset:
         errors[gettext("Dataset")] = gettext("Dataset ID does not exist.")
         results['errors'] = errors
