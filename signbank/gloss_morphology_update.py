@@ -1,22 +1,20 @@
+import json
+import datetime as DT
+
 from django.utils.translation import gettext_lazy as _, activate, gettext
-from signbank.dictionary.models import *
-from django.db.transaction import atomic
 from django.utils.timezone import get_current_timezone
 from django.views.decorators.csrf import csrf_exempt
 from django.http import JsonResponse
 from guardian.shortcuts import get_objects_for_user
-from signbank.tools import get_interface_language_and_default_language_codes
-from signbank.csv_interface import normalize_field_choice
+
+from signbank.settings.server_specific import MODELTRANSLATION_LANGUAGES
+from signbank.dictionary.models import (Dataset, Gloss, GlossRevision)
 from signbank.api_token import put_api_user_in_request
-from signbank.tools import (gloss_from_identifier, get_default_annotationidglosstranslation,
-                            check_existence_sequential_morphology,
+from signbank.tools import (check_existence_sequential_morphology,
                             check_existence_simultaneous_morphology,
                             check_existence_blend_morphology)
 from signbank.dictionary.update_csv import (update_simultaneous_morphology, update_blend_morphology,
-                                            update_sequential_morphology, subst_relations, subst_foreignrelations,
-                                            update_tags, subst_notes, subst_semanticfield)
-import datetime as DT
-import ast
+                                            update_sequential_morphology)
 
 
 @csrf_exempt
@@ -118,6 +116,7 @@ def detect_type_related_problems_for_gloss_update(gloss, changes, language_code)
 
 
 def gloss_update_do_changes(user, gloss, fields_to_update, language_code):
+    activate(language_code)
     changes_done = []
     for field, (original_value, new_value) in fields_to_update.items():
         if field == 'sequential_morphology':
@@ -139,7 +138,7 @@ def gloss_update_do_changes(user, gloss, fields_to_update, language_code):
                                  field_name=field,
                                  gloss=gloss,
                                  user=user,
-                                 time=datetime.now(tz=get_current_timezone()))
+                                 time=DT.datetime.now(tz=get_current_timezone()))
         revision.save()
     gloss.lastUpdated = DT.datetime.now(tz=get_current_timezone())
     gloss.save()
@@ -151,7 +150,7 @@ def api_update_gloss_morphology(request, datasetid, glossid):
 
     results = dict()
     interface_language_code = request.headers.get('Accept-Language', 'en')
-    if interface_language_code not in settings.MODELTRANSLATION_LANGUAGES:
+    if interface_language_code not in MODELTRANSLATION_LANGUAGES:
         interface_language_code = 'en'
     activate(interface_language_code)
 
