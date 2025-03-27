@@ -11,7 +11,8 @@ class Command(BaseCommand):
     def add_arguments(self, parser):
         parser.add_argument('release_label', nargs=1, type=str, help="The text to insert as release label")
         parser.add_argument('date_range', nargs=1, type=str,
-                            help="Comma separated start and end data")
+                            help="Creation date range; format: YYYY-MM-DD,YYYY-MM-DD (use one date WITH comma for open "
+                            "ended range")
         parser.add_argument('dataset_acronyms', nargs="+", type=str, help="One or more dataset acronyms")
         parser.add_argument(
             "--replace",
@@ -22,13 +23,14 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         errors = []
 
-        start, end = self.check_date_range(options, errors)
+        from_creation_date, until_creation_date = self.check_date_range(options, errors)
         dataset_acronyms = self.check_dataset_acronyms(options, errors)
 
         if errors:
             raise CommandError("\n" + "\n".join(errors))
 
-        self.update_glosses(options['release_label'][0], dataset_acronyms, start, end, options['replace'])
+        self.update_glosses(options['release_label'][0], dataset_acronyms, from_creation_date, until_creation_date,
+                            options['replace'])
 
     def check_date_range(self, options, errors):
         date_range = options['date_range'][0].split(',')
@@ -49,12 +51,12 @@ class Command(BaseCommand):
             errors.append(f"The following datasets do not exist: {', '.join(non_existing_datasets)}")
         return dataset_acronyms
 
-    def update_glosses(self, release_label, dataset_acronyms, start, end, replace):
+    def update_glosses(self, release_label, dataset_acronyms, from_creation_date, until_creation_date, replace):
         glosses = Gloss.objects.filter(lemma__dataset__acronym__in=dataset_acronyms)
-        if start:
-            glosses = glosses.filter(creationDate__gte=start)
-        if end:
-            glosses = glosses.filter(creationDate__lte=end)
+        if from_creation_date:
+            glosses = glosses.filter(creationDate__gte=from_creation_date)
+        if until_creation_date:
+            glosses = glosses.filter(creationDate__lte=until_creation_date)
         print(f'Updating {glosses.count()} glosses... ', end='')
         for gloss in glosses:
             gloss.release_label = release_label if replace or not gloss.release_label \
