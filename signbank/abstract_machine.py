@@ -327,38 +327,6 @@ def create_gloss(user, dataset, value_dict):
         return results
 
 
-def csv_create_gloss(request, datasetid):
-    if not request.user.is_authenticated:
-        return JsonResponse({})
-
-    dataset = Dataset.objects.filter(id=int(datasetid)).first()
-    if not dataset or not request.user.is_authenticated:
-        return JsonResponse({})
-
-    change_permit_datasets = get_objects_for_user(request.user, 'change_dataset', Dataset)
-    if dataset not in change_permit_datasets:
-        return JsonResponse({})
-
-    if not request.user.has_perm('dictionary.change_gloss'):
-        return JsonResponse({})
-
-    value_dict = get_value_dict(request, dataset)
-    errors = check_value_dict_create_gloss(dataset, language_code, value_dict)
-    if errors:
-        results = dict()
-        results['errors'] = errors
-        results['createstatus'] = "Failed"
-        results['glossid'] = ""
-        return JsonResponse(results)
-
-    creation_results = create_gloss(request.user, dataset, value_dict)
-
-    results = dict()
-    for key in creation_results:
-        results[key] = creation_results[key]
-    return JsonResponse(results)
-
-
 @csrf_exempt
 @put_api_user_in_request
 def api_create_gloss(request, datasetid):
@@ -369,19 +337,26 @@ def api_create_gloss(request, datasetid):
         interface_language_code = 'en'
     activate(interface_language_code)
 
-    dataset = Dataset.objects.filter(id=int(datasetid)).first()
+    try:
+        dataset_id = int(datasetid)
+    except TypeError:
+        results['errors'] = [gettext("Dataset ID must be a number.")]
+        results['updatestatus'] = "Failed"
+        return JsonResponse(results, safe=False, status=400)
+
+    dataset = Dataset.objects.filter(id=dataset_id).first()
     if not dataset:
         results['errors'] = [gettext("Dataset ID does not exist.")]
-        return JsonResponse(results)
+        return JsonResponse(results, safe=False, status=400)
 
     change_permit_datasets = get_objects_for_user(request.user, 'change_dataset', Dataset)
     if dataset not in change_permit_datasets:
-        results['errors'] = [gettext("No change permission for dataset for user ") + str(request.user)]
-        return JsonResponse(results)
+        results['errors'] = [gettext("No permission to change dataset for user ") + str(request.user)]
+        return JsonResponse(results, safe=False, status=400)
 
     if not request.user.has_perm('dictionary.change_gloss'):
-        results['errors'] = [gettext("No change gloss permission.")]
-        return JsonResponse(results)
+        results['errors'] = [gettext("No permission to change glosses.")]
+        return JsonResponse(results, safe=False, status=400)
 
     activate(interface_language_code)
 
@@ -393,8 +368,8 @@ def api_create_gloss(request, datasetid):
         results['errors'] = errors
         results['createstatus'] = "Failed"
         results['glossid'] = ""
-        return JsonResponse(results)
+        return JsonResponse(results, safe=False, status=400)
 
     creation_results = create_gloss(request.user, dataset, value_dict)
 
-    return JsonResponse(creation_results)
+    return JsonResponse(creation_results, safe=False, status=200)
