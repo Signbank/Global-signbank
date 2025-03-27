@@ -1,15 +1,32 @@
-
+import os
 import stat
 import sys
+import json
+import shutil
+
+from django.contrib.auth.models import Group
+from django.core.files import File
+from django.utils.translation import activate, gettext
+from django.http import JsonResponse, StreamingHttpResponse
+from django.views.decorators.csrf import csrf_exempt
+from django.db.transaction import atomic
 
 from urllib.parse import quote
 from guardian.shortcuts import get_objects_for_user, get_user_perms
 
-import signbank.tools
+from signbank.settings.server_specific import (WRITABLE_FOLDER, API_VIDEO_ARCHIVES, VIDEOS_TO_IMPORT_FOLDER, TMP_DIR,
+                                               GLOSS_IMAGE_DIRECTORY,
+                                               DEBUG_VIDEOS, PREFIX_URL, URL, FIELDS,
+                                               DEFAULT_DATASET_ACRONYM, DEFAULT_DATASET_PK, MODELTRANSLATION_LANGUAGES)
+from signbank.settings.base import SUPPORTED_CITATION_IMAGE_EXTENSIONS
+
+from signbank.dictionary.models import (Dataset, Gloss, AnnotatedSentence)
+from signbank.tools import get_two_letter_dir
 from signbank.api_token import put_api_user_in_request
 from signbank.abstract_machine import get_interface_language_api
-from signbank.zip_interface import *
-from django.utils.translation import activate, gettext
+from signbank.zip_interface import (check_subfolders_for_unzipping_ids, get_filenames, check_subfolders_for_unzipping,
+                                    import_video_file, remove_video_file_from_import_videos, unzip_video_files_ids,
+                                    unzip_video_files)
 import zipfile
 
 
@@ -100,7 +117,7 @@ def api_fields(dataset, language_code='en', advanced=False):
     activate(language_code)
     api_fields_2023 = []
     if not dataset:
-        dataset = Dataset.objects.get(acronym=settings.DEFAULT_DATASET_ACRONYM)
+        dataset = Dataset.objects.get(acronym=DEFAULT_DATASET_ACRONYM)
     if advanced:
         for language in dataset.translation_languages.all():
             language_field = gettext("Lemma ID Gloss") + ": %s" % language.name
@@ -154,7 +171,7 @@ def api_fields(dataset, language_code='en', advanced=False):
 @put_api_user_in_request
 def get_fields_data_json(request, datasetid):
     interface_language_code = request.headers.get('Accept-Language', 'en')
-    if interface_language_code not in settings.MODELTRANSLATION_LANGUAGES:
+    if interface_language_code not in MODELTRANSLATION_LANGUAGES:
         interface_language_code = 'en'
     activate(interface_language_code)
     if request.user.is_authenticated:
@@ -173,7 +190,7 @@ def get_fields_data_json(request, datasetid):
     dataset = Dataset.objects.filter(id=dataset_id).first()
     if not dataset or not request.user.is_authenticated:
         # ignore the database in the url if necessary
-        dataset = Dataset.objects.get(id=settings.DEFAULT_DATASET_PK)
+        dataset = Dataset.objects.get(id=DEFAULT_DATASET_PK)
 
     if request.user.has_perm('dictionary.change_gloss'):
         api_fields_2023 = api_fields(dataset, interface_language_code, advanced=True)
@@ -189,7 +206,7 @@ def get_fields_data_json(request, datasetid):
 @put_api_user_in_request
 def get_gloss_data_json(request, datasetid, glossid):
     interface_language_code = request.headers.get('Accept-Language', 'en')
-    if interface_language_code not in settings.MODELTRANSLATION_LANGUAGES:
+    if interface_language_code not in MODELTRANSLATION_LANGUAGES:
         interface_language_code = 'en'
     activate(interface_language_code)
     if request.user.is_authenticated:
@@ -233,7 +250,7 @@ def get_gloss_data_json(request, datasetid, glossid):
 def get_annotated_sentences_of_gloss_json(request, datasetid, glossid):
 
     interface_language_code = request.headers.get('Accept-Language', 'en')
-    if interface_language_code not in settings.MODELTRANSLATION_LANGUAGES:
+    if interface_language_code not in MODELTRANSLATION_LANGUAGES:
         interface_language_code = 'en'
     activate(interface_language_code)
     if request.user.is_authenticated:
@@ -406,7 +423,7 @@ def get_dataset_zipfile_value_dict(request):
 
     try:
         filename = uploaded_file.name
-        goal_path = os.path.join(settings.TMP_DIR, filename)
+        goal_path = os.path.join(TMP_DIR, filename)
         f = open(goal_path, 'wb+')
         for chunk in uploaded_file.chunks():
             if not chunk:
@@ -430,7 +447,7 @@ def get_dataset_zipfile_value_dict(request):
 def upload_zipped_videos_folder_json(request, datasetid):
 
     interface_language_code = request.headers.get('Accept-Language', 'en')
-    if interface_language_code not in settings.MODELTRANSLATION_LANGUAGES:
+    if interface_language_code not in MODELTRANSLATION_LANGUAGES:
         interface_language_code = 'en'
     activate(interface_language_code)
 
@@ -492,7 +509,7 @@ def upload_zipped_videos_folder_json(request, datasetid):
 def upload_zipped_videos_archive(request, datasetid):
 
     interface_language_code = request.headers.get('Accept-Language', 'en')
-    if interface_language_code not in settings.MODELTRANSLATION_LANGUAGES:
+    if interface_language_code not in MODELTRANSLATION_LANGUAGES:
         interface_language_code = 'en'
     activate(interface_language_code)
 
@@ -573,7 +590,7 @@ def import_video_to_gloss(request, video_file_path):
 
     if not gloss:
         errors_deleting = remove_video_file_from_import_videos(video_file_path)
-        if errors_deleting and settings.DEBUG_VIDEOS:
+        if errors_deleting and DEBUG_VIDEOS:
             print('import_video_to_gloss: ', errors_deleting)
         import_video_data[json_path_key]["gloss"] = ''
         import_video_data[json_path_key]["videofile"] = filename
@@ -585,7 +602,7 @@ def import_video_to_gloss(request, video_file_path):
     status, errors = import_video_file(request, gloss, video_file_path, useid=useid)
     if status == 'Success':
         video_path = gloss.get_video_url()
-        import_video_data[json_path_key]["Video"] = settings.URL + settings.PREFIX_URL + '/dictionary/protected_media/' + video_path
+        import_video_data[json_path_key]["Video"] = URL + PREFIX_URL + '/dictionary/protected_media/' + video_path
     else:
         import_video_data[json_path_key]["Video"] = ''
     import_video_data[json_path_key]["gloss"] = str(gloss.id)
@@ -633,7 +650,7 @@ def upload_videos_to_glosses(request, datasetid):
     # Do this AFTER uploading a zip archive using: /dictionary/upload_videos_to_glosses/5
 
     interface_language_code = request.headers.get('Accept-Language', 'en')
-    if interface_language_code not in settings.MODELTRANSLATION_LANGUAGES:
+    if interface_language_code not in MODELTRANSLATION_LANGUAGES:
         interface_language_code = 'en'
     activate(interface_language_code)
 
@@ -664,6 +681,7 @@ def upload_videos_to_glosses(request, datasetid):
         content_type="application/json",
         headers={"Content-Disposition": 'attachment; filename='+'glosses.json'},
     )
+
 
 def verify_conditions_for_file_upload(request, gloss_id):
 
@@ -696,6 +714,7 @@ def verify_conditions_for_file_upload(request, gloss_id):
 
     if len(request.FILES) == 0:
         return JsonResponse({'error': gettext('No file uploaded')}, status=400)
+
 
 @csrf_exempt
 @put_api_user_in_request
@@ -746,7 +765,7 @@ def api_add_video(request, gloss_id):
         gloss.add_perspective_video(request.user, vfile, 'right', False)
         nr_of_videos += 1
 
-    return JsonResponse({'message': f'Uploaded {nr_of_videos} videos to dataset {dataset}.' }, status=200)
+    return JsonResponse({'message': f'Uploaded {nr_of_videos} videos to dataset {dataset}.'}, status=200)
 
 
 @csrf_exempt
@@ -766,13 +785,13 @@ def api_add_image(request, gloss_id):
 
     # Construct a filename for the image, use sn if present, otherwise use idgloss+gloss id
     file_extension = os.path.splitext(image_file.name)[1].lower()
-    if file_extension not in settings.SUPPORTED_CITATION_IMAGE_EXTENSIONS:
+    if file_extension not in SUPPORTED_CITATION_IMAGE_EXTENSIONS:
         return JsonResponse({'error': gettext('File extension not supported! Please convert to png or jpg')}, status=400)
 
     image_file.name = f'{gloss.sn}{file_extension}' if gloss.sn is not None else f'{gloss.idgloss}-{gloss.pk}{file_extension}'
 
     # Prepare the file's new path and name
-    goal_path = os.path.join(WRITABLE_FOLDER, settings.GLOSS_IMAGE_DIRECTORY, gloss.lemma.dataset.acronym, signbank.tools.get_two_letter_dir(gloss.idgloss))
+    goal_path = os.path.join(WRITABLE_FOLDER, GLOSS_IMAGE_DIRECTORY, gloss.lemma.dataset.acronym, get_two_letter_dir(gloss.idgloss))
     goal_location = os.path.join(goal_path, quote(image_file.name, safe=''))
 
     if not os.path.exists(goal_path):
