@@ -3,8 +3,8 @@ from django.utils.translation import gettext_lazy as _, activate, gettext
 
 from signbank.attachments.views import upload_file
 from signbank.dictionary.models import *
+from signbank.video.models import GlossVideoDescription, GlossVideoNME, NME_PERSPECTIVE_CHOICES
 from django.db.models.fields import BooleanField
-from signbank.video.models import GlossVideoDescription, GlossVideoNME
 from signbank.tools import get_default_annotationidglosstranslation
 from django.db.transaction import atomic
 from django.utils.timezone import get_current_timezone
@@ -21,6 +21,10 @@ from signbank.dictionary.batch_edit import add_gloss_update_to_revision_history
 import ast
 import base64
 
+PERSPECTIVE_VIDEO_LABELS = {}
+PERSPECTIVE_VIDEO_LABELS['center'] = ['center', 'centered', 'mid', 'default', 'file', 'video']
+PERSPECTIVE_VIDEO_LABELS['left'] = ['left', 'l']
+PERSPECTIVE_VIDEO_LABELS['right'] = ['right', 'r']
 
 def names_of_update_gloss_fields(dataset, language_code):
     activate(language_code)
@@ -957,32 +961,43 @@ def gloss_update_nmevideo(gloss, update_fields_dict, nmevideo, language_code, cr
 
     activate(language_code)
     offset = gettext("Index")
-
+    perspective = gettext("Perspective")
     dataset_languages = dataset.translation_languages.all()
     description_fields = [gettext("Description") + " (%s)" % language.name
-                          for language in dataset_languages] + [offset]
+                          for language in dataset_languages] + [offset, perspective]
     description_field_to_internal = dict()
     json_field_to_human_readable = dict()
+
     for language in dataset_languages:
         human_readable = gettext("Description") + " (%s)" % language.name
         description_field_to_internal[human_readable] = ('description_' + language.language_code_2char)
         description_api_field_name = gettext("Description") + ": %s" % language.name
         json_field_to_human_readable[description_api_field_name] = human_readable
+
     description_field_to_internal[offset] = 'offset'
     json_field_to_human_readable[offset] = offset
+
+    description_field_to_internal[perspective] = 'perspective'
+    json_field_to_human_readable[perspective] = perspective
 
     nme_videos_key = gettext("NME Videos")
     nme_videos_field = [nme_videos_key]
     gloss_data_dict = dict()
+
     if not create:
         gloss_data_nme_videos = gloss.get_fields_dict(nme_videos_field, language_code)
         gloss_data_nme_videos_list = gloss_data_nme_videos[nme_videos_key]
+
         for nme_dict in gloss_data_nme_videos_list:
-            if nme_dict['ID'] == str(nmevideo.id):
-                for gloss_json_field in nme_dict.keys():
-                    if gloss_json_field in json_field_to_human_readable.keys():
-                        human_readable = json_field_to_human_readable[gloss_json_field]
-                        gloss_data_dict[human_readable] = nme_dict[gloss_json_field]
+            if nme_dict['ID'] != str(nmevideo.id):
+                continue
+
+            for gloss_json_field in nme_dict.keys():
+                if gloss_json_field not in json_field_to_human_readable.keys():
+                    continue
+
+                human_readable = json_field_to_human_readable[gloss_json_field]
+                gloss_data_dict[human_readable] = nme_dict[gloss_json_field]
     else:
         gloss_data_dict['ID'] = str(nmevideo.id)
         gloss_data_dict[offset] = str(nmevideo.offset)
@@ -991,27 +1006,33 @@ def gloss_update_nmevideo(gloss, update_fields_dict, nmevideo, language_code, cr
     for human_readable_field, new_field_value in update_fields_dict.items():
         if not new_field_value:
             continue
+
         if human_readable_field not in gloss_data_dict.keys():
             if human_readable_field not in description_fields:
                 continue
+
             internal_field = description_field_to_internal[human_readable_field]
             fields_to_update[internal_field] = '', new_field_value
             continue
+
         if human_readable_field in description_fields:
             original_value = gloss_data_dict[human_readable_field]
             internal_field = description_field_to_internal[human_readable_field]
-            if internal_field == 'offset' and gloss_data_dict[human_readable_field] == new_field_value:
+
+            if internal_field in ['offset','perspective'] and gloss_data_dict[human_readable_field] == new_field_value:
                 continue
+
             fields_to_update[internal_field] = original_value, new_field_value
-
+    
     return fields_to_update
-
 
 def gloss_nmevideo_do_changes(user, gloss, nmevideo, changes, language_code, create=True):
     changes_done = []
     activate(language_code)
     original_filename = '' if create else os.path.basename(nmevideo.videofile.name)
+
     for field, (original_value, new_value) in changes.items():
+
         if field.startswith('description_'):
             language_code_2char = field[len('description_'):]
             language = Language.objects.filter(language_code_2char=language_code_2char).first()
@@ -1020,10 +1041,15 @@ def gloss_nmevideo_do_changes(user, gloss, nmevideo, changes, language_code, cre
             description.text = value
             description.save()
             changes_done.append((field, original_value, value))
+
         elif field == 'offset':
             # this changes the filename and moves the file
             nmevideo.offset = int(new_value)
-            nmevideo.save(update_fields=['offset'])
+            nmevideo.save(update_fields=['offset']) 
+
+        elif field == 'perspective':
+            nmevideo.perspective = new_value
+            nmevideo.save(update_fields=['perspective'])
 
     operation = 'nmevideo_create' if create else 'nmevideo_update'
     filename = os.path.basename(nmevideo.videofile.name)
@@ -1150,12 +1176,6 @@ def api_update_gloss_nmevideo(request, datasetid, glossid, videoid):
 def get_gloss_nmevideo_value_dict(request, gloss, language_code, create=True):
 
     value_dict = dict()
-    uploaded_file = None
-    if create:
-        try:
-            uploaded_file = request.FILES.get('File')
-        except (AttributeError, KeyError):
-            return value_dict
 
     index_key = gettext("Index")
     if index_key in request.POST.keys():
@@ -1165,16 +1185,24 @@ def get_gloss_nmevideo_value_dict(request, gloss, language_code, create=True):
         index = 1
     value_dict[index_key] = index
 
-    if create and uploaded_file:
-        file_key = gettext("File")
-        nmevideo = gloss.add_nme_video(request.user, uploaded_file, index, 'False')
-        value_dict[file_key] = nmevideo
+    if create:
+        #Figure out the perspective from the file label
+        for request_key in request.FILES.keys():
+            for perspective, _ in NME_PERSPECTIVE_CHOICES:
+                if request_key.lower() not in PERSPECTIVE_VIDEO_LABELS[perspective]:
+                    continue
+
+                value_dict['File'] = gloss.add_nme_video(request.user, request.FILES.get(request_key, None), index, 'False', perspective=perspective)
+                value_dict['perspective'] = perspective
+                break           
+    else:
+        perspective_key = gettext("Perspective")
+        if perspective_key in request.POST.keys():
+            value_dict[perspective_key] = request.POST.get(perspective_key)
 
     dataset = gloss.lemma.dataset
-
     activate(language_code)
     dataset_languages = dataset.translation_languages.all()
-
     description_fields = [gettext("Description") + " (%s)" % language.name
                           for language in dataset_languages]
 
@@ -1260,15 +1288,14 @@ def api_create_gloss_nmevideo(request, datasetid, glossid):
 
     value_dict = get_gloss_nmevideo_value_dict(request, gloss, interface_language_code)
 
-    file_key = gettext("File")
-    if file_key not in value_dict.keys():
-        errors[file_key] = gettext("Missing File argument.")
+    if 'File' not in value_dict.keys():
+        errors['File'] = gettext("Missing video file, using label center, left or right.")
         results['errors'] = errors
         results['updatestatus'] = "Failed"
         return JsonResponse(results, safe=False, status=400)
 
-    new_nme_video = value_dict[file_key]
-    fields_to_update = gloss_update_nmevideo(gloss, value_dict, new_nme_video,interface_language_code, create=True)
+    new_nme_video = value_dict['File']
+    fields_to_update = gloss_update_nmevideo(gloss, value_dict, new_nme_video, interface_language_code, create=True)
     gloss_nmevideo_do_changes(request.user, gloss, new_nme_video, fields_to_update, interface_language_code)
 
     results['errors'] = errors
