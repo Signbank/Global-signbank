@@ -1,4 +1,5 @@
 from colorfield.fields import ColorWidget
+from datetime import timedelta
 import datetime as DT
 
 from django import forms
@@ -661,6 +662,7 @@ class CSVUploadForm(forms.Form):
 
     file = forms.FileField()
 
+
 class ImageUploadForGlossForm(forms.Form):
     """Form for image upload for a particular gloss"""
 
@@ -1007,7 +1009,7 @@ class LemmaUpdateForm(forms.ModelForm):
                 if lemma_idgloss_text == '':
                     # delete existing translation if there is already a translation for a different language
                     if instance_has_translations > 1:
-                        translation_to_delete = LemmaIdglossTranslation.objects.get(pk = lemmaidglosstranslation.pk, language = language)
+                        translation_to_delete = LemmaIdglossTranslation.objects.get(pk=lemmaidglosstranslation.pk, language=language)
                         translation_to_delete.delete()
                         # one of the translations has been deleted, update the total
                         instance_has_translations -= 1
@@ -1020,7 +1022,7 @@ class LemmaUpdateForm(forms.ModelForm):
                     lemmaidglosstranslation.text = lemma_idgloss_text
                     lemmaidglosstranslation.save()
             else:
-                raise Exception("Lemma with id %s has more than one lemma idgloss translation for language %s"% (self.instance.pk, language.name))
+                raise Exception("Lemma with id %s has more than one lemma idgloss translation for language %s" % (self.instance.pk, language.name))
         return
 
 
@@ -1083,7 +1085,7 @@ class FocusGlossSearchForm(forms.ModelForm):
             self.fields[boolean_field].choices = [('0', '-'), ('2', _('Yes')), ('3', _('No'))]
 
 
-RECENTLY_ADDED_TIME_DELTAS = {days: DT.datetime.timedelta(days=days).days for days in [90, 60, 30, 14, 7]}
+RECENTLY_ADDED_TIME_DELTAS = {days: timedelta(days=days).days for days in [90, 60, 30, 14, 7]}
 
 
 class RecentGlossSearchForm(forms.ModelForm):
