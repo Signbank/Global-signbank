@@ -8,6 +8,8 @@ from tagging.models import Tag, TaggedItem
 from signbank.dictionary.forms import *
 from signbank.dictionary.consistency_senses import check_consistency_senses
 from django.utils.translation import override, gettext_lazy as _, activate
+from django.utils.translation.trans_real import parse_accept_lang_header
+
 from signbank.settings.server_specific import LANGUAGES, LEFT_DOUBLE_QUOTE_PATTERNS, RIGHT_DOUBLE_QUOTE_PATTERNS
 from signbank.dictionary.update_senses_mapping import add_sense_to_revision_history
 from django.http import HttpResponse, HttpResponseRedirect, HttpResponseForbidden, HttpResponseBadRequest, JsonResponse
@@ -31,6 +33,23 @@ def get_interface_language_api(request, user):
     interface_language_code = interface_language.language_code_2char
 
     return interface_language_code
+
+
+def retrieve_language_code_from_header(url_language_code, api_accept_language_header, http_accept_language_header):
+    # the url_language_code is a pattern in the API url, it is used as a default
+    if url_language_code == api_accept_language_header:
+        # the url language code matches the one in the Accept-Language request
+        return url_language_code
+    # parse the language codes to get the first one
+    parsed_language_codes = parse_accept_lang_header(http_accept_language_header)
+    interface_language_code = parsed_language_codes[0][0] if parsed_language_codes else 'en'
+    if interface_language_code not in settings.MODELTRANSLATION_LANGUAGES:
+        # requested language code is not available
+        return url_language_code
+    if interface_language_code == url_language_code:
+        return url_language_code
+    # if we get here, the user has used a totally different language code in the header, just return that of the url
+    return url_language_code
 
 
 def convert_string_to_list_of_lists(input_string):
@@ -329,13 +348,14 @@ def create_gloss(user, dataset, value_dict):
 
 @csrf_exempt
 @put_api_user_in_request
-def api_create_gloss(request, datasetid):
+def api_create_gloss(request, datasetid, language_code='en'):
+
+    interface_language_code = retrieve_language_code_from_header(language_code,
+                                                                 request.headers.get('Accept-Language', ''),
+                                                                 request.META.get('HTTP_ACCEPT_LANGUAGE', None))
+    activate(interface_language_code)
 
     results = dict()
-    interface_language_code = request.headers.get('Accept-Language', 'en')
-    if interface_language_code not in settings.MODELTRANSLATION_LANGUAGES:
-        interface_language_code = 'en'
-    activate(interface_language_code)
 
     try:
         dataset_id = int(datasetid)
@@ -357,8 +377,6 @@ def api_create_gloss(request, datasetid):
     if not request.user.has_perm('dictionary.change_gloss'):
         results['errors'] = [gettext("No permission to change glosses.")]
         return JsonResponse(results, safe=False, status=400)
-
-    activate(interface_language_code)
 
     human_readable_value_dict = get_human_readable_value_dict(request, dataset, interface_language_code)
     value_dict = translate_human_readable_value_dict_to_keys(dataset, interface_language_code, human_readable_value_dict)
