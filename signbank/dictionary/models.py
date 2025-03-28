@@ -2483,9 +2483,9 @@ class Gloss(models.Model):
         if isinstance(videofile, File) or videofile.content_type == 'django.core.files.uploadedfile.InMemoryUploadedFile':
             video = GlossVideoNME(gloss=self, offset=offset, perspective=perspective, upload_to=get_video_file_path)
             # Create a GlossVideoHistory object
-            relative_path = get_video_file_path(video, str(videofile), nmevideo=True, perspective='', offset=offset, version=0)
+            relative_path = get_video_file_path(video, str(videofile), nmevideo=True, perspective=perspective, offset=offset, version=0)
             video_file_full_path = os.path.join(WRITABLE_FOLDER, relative_path)
-            glossvideohistory = GlossVideoHistory(action="upload", gloss=self, actor=user,
+            glossvideohistory = GlossVideoHistory(action="upload", gloss=self, actor=user, 
                                                   uploadfile=videofile, goal_location=video_file_full_path)
             glossvideohistory.save()
 
