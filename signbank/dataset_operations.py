@@ -1,11 +1,13 @@
+import re
 import os.path
 from django.contrib.auth.decorators import permission_required
-from signbank.dictionary.models import *
+from django.http import JsonResponse
+
+from signbank.settings.server_specific import (WRITABLE_FOLDER, GLOSS_VIDEO_DIRECTORY, DEBUG_VIDEOS)
+from signbank.dictionary.models import (Gloss, AnnotationIdglossTranslation)
 from signbank.video.models import GlossVideo, GlossVideoNME, GlossVideoPerspective
 from signbank.video.convertvideo import video_file_type_extension
 from signbank.tools import get_two_letter_dir
-import re
-from django.http import JsonResponse
 
 
 def video_type(glossvideo):
@@ -55,7 +57,7 @@ def renumber_backup_videos(gloss):
         if inx == current_version:
             continue
 
-        if settings.DEBUG_VIDEOS:
+        if DEBUG_VIDEOS:
             print('dataset_operations:renumber_backup_videos: change version ', current_version, inx)
 
         gloss_video.version = inx
@@ -75,14 +77,14 @@ def rename_backup_videos(gloss):
         _, bak = os.path.splitext(glossvideo.videofile.name)
         desired_extension = '.bak' + str(glossvideo.id)
         desired_filename = desired_filename_without_extension + desired_extension
-        desired_relative_path = os.path.join(settings.GLOSS_VIDEO_DIRECTORY,
+        desired_relative_path = os.path.join(GLOSS_VIDEO_DIRECTORY,
                                              dataset_dir, two_letter_dir, desired_filename)
         current_relative_path = str(glossvideo.videofile)
         if current_relative_path == desired_relative_path:
             continue
-        source = os.path.join(settings.WRITABLE_FOLDER, current_relative_path)
+        source = os.path.join(WRITABLE_FOLDER, current_relative_path)
         destination = os.path.join(WRITABLE_FOLDER, desired_relative_path)
-        if settings.DEBUG_VIDEOS:
+        if DEBUG_VIDEOS:
             print('dataset_operations:rename_backup_videos:rename: ', source, destination)
             print('desired_relative_path: ', desired_relative_path)
         # if the file exists, rename it, otherwise only modify the filename of the object
@@ -119,7 +121,7 @@ def weed_out_duplicate_version_0_videos(gloss):
         return
 
     # first delete the objects that do not have a video
-    if settings.DEBUG_VIDEOS:
+    if DEBUG_VIDEOS:
         print('dataset_operations:weed_out_duplicate_version_0_videos:more than one version 0 ', glossvideos)
     for gv in glossvideos:
         # delete the objects with no video
@@ -147,10 +149,10 @@ def weed_out_duplicate_version_0_videos(gloss):
             os.unlink(gv.videofile.path)
             os.remove(gv_full_path)
             gv.delete()
-            if settings.DEBUG_VIDEOS:
+            if DEBUG_VIDEOS:
                 print('dataset_operations:weed_out_duplicate_version_0_videos:remove: ', gv_full_path)
         except (OSError, PermissionError):
-            if settings.DEBUG_VIDEOS:
+            if DEBUG_VIDEOS:
                 print('Exception dataset_operations:weed_out_duplicate_version_0_videos:remove: ', gv_full_path)
 
 
@@ -174,14 +176,14 @@ def rename_gloss_video(gloss):
     video_file_full_path = os.path.join(WRITABLE_FOLDER, str(glossvideo.videofile))
     video_extension = video_file_type_extension(video_file_full_path)
     desired_filename = f'{idgloss}-{glossid}{video_extension}'
-    desired_relative_path = os.path.join(settings.GLOSS_VIDEO_DIRECTORY,
+    desired_relative_path = os.path.join(GLOSS_VIDEO_DIRECTORY,
                                          dataset_dir, two_letter_dir, desired_filename)
     current_relative_path = str(glossvideo.videofile)
     if current_relative_path == desired_relative_path:
         return
-    source = os.path.join(settings.WRITABLE_FOLDER, current_relative_path)
+    source = os.path.join(WRITABLE_FOLDER, current_relative_path)
     destination = os.path.join(WRITABLE_FOLDER, desired_relative_path)
-    if settings.DEBUG_VIDEOS:
+    if DEBUG_VIDEOS:
         print('dataset_operations:rename_backup_videos:rename: ', source, destination)
         print('desired_relative_path: ', desired_relative_path)
     # if the file exists, rename it, otherwise only modify the filename of the object
@@ -280,7 +282,7 @@ def gloss_video_filename_check(dataset):
             non_mp4_videos.append((gloss, list_videos))
         idgloss = gloss.idgloss
         two_letter_dir = get_two_letter_dir(idgloss)
-        folder_pattern = settings.GLOSS_VIDEO_DIRECTORY + os.sep + dataset.acronym + os.sep + two_letter_dir
+        folder_pattern = GLOSS_VIDEO_DIRECTORY + os.sep + dataset.acronym + os.sep + two_letter_dir
         folder_not_in_filename = [gv for gv in glossvideos if folder_pattern not in str(gv.videofile)]
         if folder_not_in_filename:
             list_videos = [(gv.version, str(gv.videofile), path_exists(str(gv.videofile))) for gv in folder_not_in_filename]
@@ -296,7 +298,7 @@ def gloss_video_filename_check(dataset):
 def find_unlinked_video_files(dataset, linked_file_names):
     """Return list of file_names that are not found in file list of db"""
 
-    dataset_folder = os.path.join(settings.WRITABLE_FOLDER, settings.GLOSS_VIDEO_DIRECTORY, dataset.acronym)
+    dataset_folder = os.path.join(WRITABLE_FOLDER, GLOSS_VIDEO_DIRECTORY, dataset.acronym)
 
     unlinked_video_filenames = []
 
@@ -316,11 +318,11 @@ def find_unlinked_video_files(dataset, linked_file_names):
             if (filename_without_extension.endswith('_small')
                     or filename_without_extension.endswith('_left')
                     or filename_without_extension.endswith('_right')
-                    or re.search(r"\_nme_\d+$", filename_without_extension)):
+                    or re.search(r"_nme_\d+$", filename_without_extension)):
                 continue
             two_char_folder = os.path.basename(subdir)
             # obtain a relative path using os.path.join
-            relative_path = str(os.path.join(settings.GLOSS_VIDEO_DIRECTORY, dataset.acronym, two_char_folder, file))
+            relative_path = str(os.path.join(GLOSS_VIDEO_DIRECTORY, dataset.acronym, two_char_folder, file))
             if relative_path not in linked_file_names:
                 unlinked_video_filenames.append(relative_path)
 
