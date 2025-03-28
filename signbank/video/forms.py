@@ -1,5 +1,5 @@
 from django import forms
-from signbank.video.models import GlossVideo, Gloss
+from signbank.video.models import GlossVideo, Gloss, NME_PERSPECTIVE_CHOICES
 from signbank.dictionary.models import AnnotatedSentenceSource
 import json
 from django.utils.translation import gettext_lazy as _
@@ -17,9 +17,7 @@ ATTRS_FOR_FORMS = {'class': 'form-control'}
 
 PERSPECTIVE_CHOICES = (('left', 'Left'),
                        ('right', 'Right')
-                       )
-
-NME_PERSPECTIVE_CHOICES = (('left','Left'),('right','Right'),('center', 'Center'))
+                       ) 
 
 class VideoUploadForObjectForm(forms.Form):
     """Form for video upload for all video types"""
