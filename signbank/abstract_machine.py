@@ -1,17 +1,22 @@
 import json
 import ast
-
+import datetime as DT
+from django.utils.timezone import get_current_timezone
+from django.utils.translation import activate, gettext
+from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
+from django.db.transaction import atomic, TransactionManagementError, DatabaseError
 
-from signbank.dictionary.models import *
-from tagging.models import Tag, TaggedItem
-from signbank.dictionary.forms import *
-from signbank.dictionary.consistency_senses import check_consistency_senses
-from django.utils.translation import override, gettext_lazy as _, activate
-from signbank.settings.server_specific import LANGUAGES, LEFT_DOUBLE_QUOTE_PATTERNS, RIGHT_DOUBLE_QUOTE_PATTERNS
-from signbank.dictionary.update_senses_mapping import add_sense_to_revision_history
-from django.http import HttpResponse, HttpResponseRedirect, HttpResponseForbidden, HttpResponseBadRequest, JsonResponse
 from guardian.shortcuts import get_objects_for_user
+
+from signbank.settings.server_specific import LANGUAGE_CODE, LANGUAGES_LANGUAGE_CODE_3CHAR, MODELTRANSLATION_LANGUAGES
+
+from signbank.dictionary.models import (UserProfile, Dataset, Language, AffiliatedUser,
+                                        Gloss, AffiliatedGloss,
+                                        LemmaIdgloss, LemmaIdglossTranslation, AnnotationIdglossTranslation,
+                                        Keyword, Translation, Sense, SenseTranslation,
+                                        GlossRevision)
+
 from signbank.api_token import put_api_user_in_request
 
 
@@ -20,12 +25,12 @@ def get_interface_language_api(request, user):
     user_profile = UserProfile.objects.get(user=user)
     last_used_language = getattr(user_profile, 'last_used_language')
 
-    if 'LANGUAGE_CODE' in request and request.LANGUAGE_CODE in dict(settings.LANGUAGES_LANGUAGE_CODE_3CHAR).keys():
-        interface_language_3char = dict(settings.LANGUAGES_LANGUAGE_CODE_3CHAR)[request.LANGUAGE_CODE]
+    if 'LANGUAGE_CODE' in request and request.LANGUAGE_CODE in dict(LANGUAGES_LANGUAGE_CODE_3CHAR).keys():
+        interface_language_3char = dict(LANGUAGES_LANGUAGE_CODE_3CHAR)[request.LANGUAGE_CODE]
     elif last_used_language:
-        interface_language_3char = dict(settings.LANGUAGES_LANGUAGE_CODE_3CHAR)[last_used_language]
+        interface_language_3char = dict(LANGUAGES_LANGUAGE_CODE_3CHAR)[last_used_language]
     else:
-        interface_language_3char = dict(settings.LANGUAGES_LANGUAGE_CODE_3CHAR)[settings.LANGUAGE_CODE]
+        interface_language_3char = dict(LANGUAGES_LANGUAGE_CODE_3CHAR)[LANGUAGE_CODE]
 
     interface_language = Language.objects.get(language_code_3char=interface_language_3char)
     interface_language_code = interface_language.language_code_2char
@@ -282,7 +287,7 @@ def create_gloss(user, dataset, value_dict):
                 # Make new sense objects and add them to the new gloss
                 for sense_n in range(nr_senses):
                     new_sense = Sense.objects.create()
-                    new_gloss.senses.add(new_sense, through_defaults={'order':sense_n+1})
+                    new_gloss.senses.add(new_sense, through_defaults={'order': sense_n+1})
                     for language in dataset_languages:
                         if value_dict['sense_' + language.language_code_2char] == '':
                             continue
@@ -298,10 +303,10 @@ def create_gloss(user, dataset, value_dict):
                                     continue
                                 keyword = Keyword.objects.get_or_create(text=kw)[0]
                                 translation = Translation(translation=keyword,
-                                                        language=language,
-                                                        gloss=new_gloss,
-                                                        orderIndex=sense_n+1,
-                                                        index=inx)
+                                                          language=language,
+                                                          gloss=new_gloss,
+                                                          orderIndex=sense_n+1,
+                                                          index=inx)
                                 translation.save()
                                 sensetranslation.translations.add(translation)
 
@@ -313,7 +318,7 @@ def create_gloss(user, dataset, value_dict):
                                          field_name=sense_label,
                                          gloss=new_gloss,
                                          user=user,
-                                         time=datetime.now(tz=get_current_timezone()))
+                                         time=DT.datetime.now(tz=get_current_timezone()))
                 revision.save()
 
             results['glossid'] = str(new_gloss.pk)
@@ -333,7 +338,7 @@ def api_create_gloss(request, datasetid):
 
     results = dict()
     interface_language_code = request.headers.get('Accept-Language', 'en')
-    if interface_language_code not in settings.MODELTRANSLATION_LANGUAGES:
+    if interface_language_code not in MODELTRANSLATION_LANGUAGES:
         interface_language_code = 'en'
     activate(interface_language_code)
 
