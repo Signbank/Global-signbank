@@ -107,7 +107,7 @@ def pretty_print_revisions(gloss):
         if revision.field_name == 'Tags':
             if revision.old_value:
                 # this translation exists in the interface of Gloss Edit View
-                delete_command = gettext('delete this tag')
+                delete_command = gettext('Delete this tag')
                 field_name_qualification = ' (' + delete_command + ')'
             elif revision.new_value:
                 # this translation exists in the interface of Gloss Edit View

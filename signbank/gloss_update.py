@@ -4,6 +4,7 @@ from django.utils.translation import gettext_lazy as _, activate, gettext
 from signbank.attachments.views import upload_file
 from signbank.dictionary.models import *
 from signbank.video.models import GlossVideoDescription, GlossVideoNME, NME_PERSPECTIVE_CHOICES
+from django.db.models.fields import BooleanField
 from signbank.tools import get_default_annotationidglosstranslation
 from django.db.transaction import atomic
 from django.utils.timezone import get_current_timezone
@@ -11,7 +12,7 @@ from django.views.decorators.csrf import csrf_exempt
 from django.http import JsonResponse
 from guardian.shortcuts import get_objects_for_user
 from signbank.tools import get_interface_language_and_default_language_codes
-from signbank.csv_interface import normalize_field_choice
+from signbank.csv_interface import normalize_field_choice, normalize_boolean
 from signbank.api_token import put_api_user_in_request
 import datetime as DT
 from signbank.tools import get_default_annotationidglosstranslation
@@ -25,7 +26,7 @@ PERSPECTIVE_VIDEO_LABELS['center'] = ['center', 'centered', 'mid', 'default', 'f
 PERSPECTIVE_VIDEO_LABELS['left'] = ['left', 'l']
 PERSPECTIVE_VIDEO_LABELS['right'] = ['right', 'r']
 
-def api_update_gloss_fields(dataset, language_code='en'):
+def names_of_update_gloss_fields(dataset, language_code):
     activate(language_code)
 
     dataset_languages = dataset.translation_languages.all()
@@ -36,18 +37,15 @@ def api_update_gloss_fields(dataset, language_code='en'):
 
     language_fields = annotationidglosstranslation_fields + lemmaidglosstranslation_fields
 
-    api_fields_2024 = []
-    fieldnames = FIELDS['main'] + FIELDS['phonology'] + FIELDS['semantics'] + ['inWeb', 'isNew', 'excludeFromEcv', 'senses']
+    verbose_field_names = []
+    fieldnames = FIELDS['main'] + FIELDS['phonology'] + FIELDS['semantics'] + ['inWeb', 'isNew', 'excludeFromEcv']
     gloss_fields = [Gloss.get_field(fname) for fname in fieldnames if fname in Gloss.get_field_names()]
 
-    # TO DO
-    extra_columns = ['Sign Languages', 'Dialects',
-                     'Relations to other signs', 'Relations to foreign signs', 'Tags', 'Notes']
-
+    activate(language_code)
     for field in gloss_fields:
-        api_fields_2024.append(field.verbose_name.title())
+        verbose_field_names.append(field.verbose_name.title())
 
-    return language_fields, api_fields_2024
+    return language_fields, verbose_field_names
 
 
 def internal_language_fields(dataset, language_code):
@@ -67,7 +65,7 @@ def internal_language_fields(dataset, language_code):
 def update_gloss_columns_to_value_dict_keys(dataset, language_code):
     """
     Function to create mapping dictionaries for the different label representations
-    Called from gloss_update
+    Called from gloss_pre_update
     Representations:
     1. Human readable labels (multilingual, with language name in parentheses)
     2. JSON keys (multilingual, with colon before language name)
@@ -105,7 +103,7 @@ def update_gloss_columns_to_value_dict_keys(dataset, language_code):
         human_readable_to_json[human_readable_lemma] = lemma_api_field_name
         human_readable_to_json[human_readable_annotation] = annotation_api_field_name
 
-    fieldnames = FIELDS['main'] + FIELDS['phonology'] + FIELDS['semantics'] + ['inWeb', 'isNew', 'excludeFromEcv', 'senses']
+    fieldnames = FIELDS['main'] + FIELDS['phonology'] + FIELDS['semantics'] + ['inWeb', 'isNew', 'excludeFromEcv']
     gloss_fields = [Gloss.get_field(fname) for fname in fieldnames if fname in Gloss.get_field_names()]
 
     for field in gloss_fields:
@@ -124,17 +122,26 @@ def get_gloss_update_human_readable_value_dict(request):
     return value_dict
 
 
-def check_fields_can_be_updated(value_dict, dataset, language_code):
-    language_fields, api_fields_2024 = api_update_gloss_fields(dataset, language_code)
+def check_fields_can_be_updated(gloss, value_dict, dataset, language_code):
+    activate(language_code)
+    language_fields, gloss_fields = names_of_update_gloss_fields(dataset, language_code)
+    available_fields = language_fields + gloss_fields
     errors = dict()
     for field in value_dict.keys():
-        if field not in api_fields_2024 and field not in language_fields:
-            errors[field] = _("Field update not available")
-        if field == "Senses" and isinstance(value_dict[field], str):
-            new_senses, formatting_error_senses = convert_string_to_dict_of_list_of_lists(value_dict[field])
-            if formatting_error_senses:
-                errors[field] = formatting_error_senses
-
+        if field in ["Senses", "Betekenissen"]:
+            if ExampleSentence.objects.filter(senses__glosses=gloss).exists():
+                errors[field] = gettext(
+                    'API UPDATE NOT AVAILABLE: The gloss has senses with example sentences.')
+            elif isinstance(value_dict[field], str):
+                new_senses, formatting_error_senses = convert_string_to_dict_of_list_of_lists(value_dict[field])
+                if formatting_error_senses:
+                    errors[field] = formatting_error_senses
+            continue
+        elif field in gloss_fields or field in language_fields:
+            continue
+        errors[field] = _("Field name not found in fields that can be updated.")
+    if errors:
+        errors["Available Fields"] = ", ".join(available_fields)
     return errors
 
 
@@ -322,41 +329,48 @@ def detect_type_related_problems_for_gloss_update(gloss, changes, dataset, langu
 
     language_fields = internal_language_fields(dataset, language_code)
     errors = dict()
+    # in the following loop, field is either a language field as described above
+    # or a field of model Gloss, not a string
     for field, (original_value, new_value) in changes.items():
         if not new_value:
             continue
         if field in language_fields:
             continue
-        if field in ['Senses', 'senses']:
-            if ExampleSentence.objects.filter(senses__glosses=gloss).exists():
-                errors[field] = gettext('API UPDATE NOT AVAILABLE: The gloss has senses with example sentences.')
-            continue
         if isinstance(field, FieldChoiceForeignKey):
             field_choice_category = field.field_choice_category
             try:
                 fieldchoice = FieldChoice.objects.get(field=field_choice_category, name__iexact=new_value)
+                continue
             except (ObjectDoesNotExist, MultipleObjectsReturned):
                 normalised_choice = normalize_field_choice(new_value)
                 try:
                     fieldchoice = FieldChoice.objects.get(field=field_choice_category, name__iexact=normalised_choice)
+                    continue
                 except (ObjectDoesNotExist, MultipleObjectsReturned):
-                    errors[field.verbose_name.title()] = gettext('NOT FOUND: ') + new_value
-        elif isinstance(field, models.ForeignKey) and field.related_model == Handshape:
+                    errors[field.verbose_name.title()] = gettext('Incorrect value')
+                    continue
+        if isinstance(field, models.ForeignKey) and field.related_model == Handshape:
             try:
                 handshape = Handshape.objects.get(name__iexact=new_value)
+                continue
             except (ObjectDoesNotExist, MultipleObjectsReturned):
-                errors[field.verbose_name.title()] = gettext('NOT FOUND: ') + new_value
-        elif field.__class__.__name__ == 'BooleanField':
-            if new_value not in ['true', 'True', 'TRUE', 'false', 'False', 'FALSE', 'Neutral', 'None']:
-                errors[field.verbose_name.title()] = gettext('NOT FOUND: ') + new_value
+                errors[field.verbose_name.title()] = gettext('Incorrect value')
+                continue
+        if field.__class__.__name__ == 'BooleanField':
+            if field.name in ['weakdrop', 'weakprop']:
+                if new_value not in ['True', 'False', 'None']:
+                    errors[field.verbose_name.title()] = gettext('Incorrect value')
+            else:
+                if new_value not in ['True', 'False']:
+                    errors[field.verbose_name.title()] = gettext('Incorrect value')
         elif field.name == 'semField':
             type_check = type_check_multiselect('SemField', new_value, language_code)
             if not type_check:
-                errors[field.verbose_name.title()] = gettext('NOT FOUND: ') + new_value
+                errors[field.verbose_name.title()] = gettext('Incorrect value')
         elif field.name == 'derivHist':
             type_check = type_check_multiselect('derivHist', new_value, language_code)
             if not type_check:
-                errors[field.verbose_name.title()] = gettext('NOT FOUND: ') + new_value
+                errors[field.verbose_name.title()] = gettext('Incorrect value')
     return errors
 
 
@@ -478,21 +492,23 @@ def gloss_update_do_changes(user, gloss, changes, language_code):
                 setattr(gloss, field.name, fieldchoice)
                 changes_done.append((field.name, original_value, new_value))
             elif field.__class__.__name__ == 'BooleanField':
+                # the new value is a string, do not use a coercion because we want
+                # to store None as a value
                 if new_value in ['true', 'True', 'TRUE']:
-                    new_value = True
+                    boolean_value = True
                 elif new_value in ['false', 'False', 'FALSE']:
-                    new_value = False
+                    boolean_value = False
                 elif new_value == 'None' or new_value == 'Neutral':
-                    new_value = None
+                    boolean_value = None
                 else:
-                    new_value = False
-                setattr(gloss, field.name, new_value)
+                    boolean_value = False
+                setattr(gloss, field.name, boolean_value)
                 changes_done.append((field.name, original_value, new_value))
             elif isinstance(field, models.ForeignKey) and field.related_model == Handshape:
                 handshape = Handshape.objects.get(name__iexact=new_value)
                 setattr(gloss, field.name, handshape)
                 changes_done.append((field.name, original_value, new_value))
-            elif field in ["senses", "Senses"]:
+            elif field.name in ["senses"]:
                 original_senses = collect_revision_history_for_senses(gloss)
                 update_senses(gloss, new_value)
                 new_senses = collect_revision_history_for_senses(gloss)
@@ -535,27 +551,35 @@ def get_original_senses_value(gloss):
     return senses_dict
 
 
-def gloss_update(gloss, update_fields_dict, language_code):
+def gloss_pre_update(gloss, input_fields_dict, language_code):
 
+    # this returns a dictionary mapping internal Gloss fields to tuples of original and new values
+    # for fields of Gloss, this is the internal model field
+    # for language fields, which are relations, this is an encoding of the field used in many interfaces
+    # of the templates and the methods
     dataset = gloss.lemma.dataset
-    language_fields, api_fields_2024 = api_update_gloss_fields(dataset, language_code)
+    language_fields, gloss_fields = names_of_update_gloss_fields(dataset, language_code)
     human_readable_to_internal, human_readable_to_json = update_gloss_columns_to_value_dict_keys(dataset, language_code)
-    combined_fields = api_fields_2024
+    # initial value of fields is put in combined_fields variable
+    combined_fields = gloss_fields
     for language_field in language_fields:
-        gloss_dict_language_field = human_readable_to_json[language_field]
-        combined_fields.append(gloss_dict_language_field)
-    gloss_data_dict = gloss.get_fields_dict(combined_fields, language_code)
+        package_gloss_language_field = human_readable_to_json[language_field]
+        combined_fields.append(package_gloss_language_field)
+    # retrieve what the current values for the fields, using the same string representation as package uses
+    gloss_package_data_dict = gloss.get_fields_dict(combined_fields, language_code)
     fields_to_update = dict()
-    for human_readable_field, new_field_value in update_fields_dict.items():
+    for human_readable_field, new_field_value in input_fields_dict.items():
         if not new_field_value:
             continue
         if human_readable_field in language_fields:
-            gloss_language_field = human_readable_to_json[human_readable_field]
-            original_value = gloss_data_dict[gloss_language_field]
+            package_gloss_language_field = human_readable_to_json[human_readable_field]
+            original_value = gloss_package_data_dict[package_gloss_language_field]
+            if original_value == new_field_value:
+                continue
             gloss_field = human_readable_to_internal[human_readable_field]
             fields_to_update[gloss_field] = (original_value, new_field_value)
             continue
-        if human_readable_field == 'Senses':
+        if human_readable_field in ["Senses", "Betekenissen"]:
             original_value = get_original_senses_value(gloss)
             new_senses = new_field_value
             if isinstance(new_senses, str):
@@ -563,24 +587,42 @@ def gloss_update(gloss, update_fields_dict, language_code):
                 if errors:
                     # already checked at a previous step
                     continue
+            if settings.DEBUG_API:
+                print('gloss_pre_update: ', human_readable_field, original_value, new_senses)
             if original_value != new_senses:
-                fields_to_update[human_readable_field] = (original_value, new_senses)
+                internal_field = Gloss.get_field('senses')
+                fields_to_update[internal_field] = (original_value, new_senses)
             continue
-        elif human_readable_field not in gloss_data_dict.keys():
-            # new value
-            original_value = ''
-            gloss_field = human_readable_to_internal[human_readable_field]
-            fields_to_update[gloss_field] = (original_value, new_field_value)
+        if human_readable_field not in human_readable_to_internal.keys():
+            if settings.DEBUG_API:
+                print('gloss_pre_update: json field not found in Gloss fields: ', human_readable_field)
             continue
-        if human_readable_field in human_readable_to_internal.keys():
-            original_value = gloss_data_dict[human_readable_field]
-            if original_value in ['False'] and new_field_value in ['', 'False']:
-                # treat empty as False
+        internal_field = human_readable_to_internal[human_readable_field]
+        original_internal_value = getattr(gloss, internal_field.name)
+        if original_internal_value is None and internal_field.name in ['weakdrop', 'weakprop']:
+            original_value = 'Neutral'
+        elif isinstance(original_internal_value, bool):
+            original_value = str(original_internal_value)
+        elif isinstance(internal_field, FieldChoiceForeignKey):
+            original_value = original_internal_value.name if original_internal_value else '-'
+        elif internal_field.name in ['domhndsh', 'subhndsh',
+                                     'semField', 'derivHist', 'dialect', 'signlanguage']:
+            display_method = 'get_'+internal_field.name+'_display'
+            original_value = getattr(gloss, display_method)()
+        else:
+            # value is a string
+            original_value = original_internal_value
+        if new_field_value == original_value:
+            continue
+        if internal_field.__class__.__name__ == 'BooleanField':
+            # normalise if this is a Boolean and compare again
+            normalised_new_boolean = normalize_boolean(internal_field, new_field_value, original_value)
+            if original_value == normalised_new_boolean:
                 continue
-            if new_field_value == original_value:
-                continue
-            gloss_field = human_readable_to_internal[human_readable_field]
-            fields_to_update[gloss_field] = (original_value, new_field_value)
+            fields_to_update[internal_field] = (original_value, normalised_new_boolean)
+        else:
+            fields_to_update[internal_field] = (original_value, new_field_value)
+    # return the dictionary of input fields that differ from stored values
     return fields_to_update
 
 
@@ -598,19 +640,27 @@ def api_update_gloss(request, datasetid, glossid):
 
     errors = dict()
 
-    dataset = Dataset.objects.filter(id=int(datasetid)).first()
+    try:
+        dataset_id = int(datasetid)
+    except TypeError:
+        errors[gettext("Dataset")] = gettext("Dataset ID must be a number.")
+        results['errors'] = errors
+        results['updatestatus'] = "Failed"
+        return JsonResponse(results, safe=False, status=400)
+
+    dataset = Dataset.objects.filter(id=dataset_id).first()
     if not dataset:
         errors[gettext("Dataset")] = gettext("Dataset ID does not exist.")
         results['errors'] = errors
         results['updatestatus'] = "Failed"
-        return JsonResponse(results, safe=False)
+        return JsonResponse(results, status=400)
 
     change_permit_datasets = get_objects_for_user(request.user, 'change_dataset', Dataset)
     if dataset not in change_permit_datasets:
-        errors[gettext("Dataset")] = gettext("No change permission for dataset.")
+        errors[gettext("Dataset")] = gettext("No permission to change dataset.")
         results['errors'] = errors
         results['updatestatus'] = "Failed"
-        return JsonResponse(results, safe=False)
+        return JsonResponse(results, status=400)
 
     try:
         gloss_id = int(glossid)
@@ -620,7 +670,7 @@ def api_update_gloss(request, datasetid, glossid):
         errors[gettext("Gloss")] = gettext("Gloss ID must be a number.")
         results['errors'] = errors
         results['updatestatus'] = "Failed"
-        return JsonResponse(results, safe=False)
+        return JsonResponse(results, status=400)
 
     gloss = Gloss.objects.filter(id=gloss_id, archived=False).first()
 
@@ -628,52 +678,68 @@ def api_update_gloss(request, datasetid, glossid):
         errors[gettext("Gloss")] = gettext("Gloss not found.")
         results['errors'] = errors
         results['updatestatus'] = "Failed"
-        return JsonResponse(results, safe=False)
+        return JsonResponse(results, status=400)
 
     if not gloss.lemma:
         errors[gettext("Gloss")] = gettext("Gloss does not have a lemma.")
         results['errors'] = errors
         results['updatestatus'] = "Failed"
-        return JsonResponse(results, safe=False)
+        return JsonResponse(results, status=400)
 
     if gloss.lemma.dataset != dataset:
         errors[gettext("Gloss")] = gettext("Gloss not found in the dataset.")
         results['errors'] = errors
         results['updatestatus'] = "Failed"
-        return JsonResponse(results, safe=False)
+        return JsonResponse(results, status=400)
 
     if not request.user.has_perm('dictionary.change_gloss'):
-        errors[gettext("Gloss")] = gettext("No change gloss permission.")
+        errors[gettext("Gloss")] = gettext("No permission to change glosses.")
         results['errors'] = errors
         results['updatestatus'] = "Failed"
-        return JsonResponse(results, safe=False)
+        return JsonResponse(results, status=400)
 
     value_dict = get_gloss_update_human_readable_value_dict(request)
-    errors = check_fields_can_be_updated(value_dict, dataset, interface_language_code)
+    if settings.DEBUG_API:
+        print('api_update_gloss ', glossid, ' input value_dict: ', value_dict)
+    errors = check_fields_can_be_updated(gloss, value_dict, dataset, interface_language_code)
     if errors:
+        # "Field name not found in fields that can be updated."
         results['errors'] = errors
         results['updatestatus'] = "Failed"
-        return JsonResponse(results, safe=False)
+        return JsonResponse(errors, status=400)
 
-    fields_to_update = gloss_update(gloss, value_dict, interface_language_code)
+    fields_to_update = gloss_pre_update(gloss, value_dict, interface_language_code)
     errors = detect_type_related_problems_for_gloss_update(gloss, fields_to_update, dataset, interface_language_code)
     if errors:
+        # "New value has wrong type."
         results['errors'] = errors
         results['updatestatus'] = "Failed"
-        return JsonResponse(results, safe=False)
+        return JsonResponse(results, status=400)
 
     errors = check_constraints_on_gloss_language_fields(gloss, interface_language_code, fields_to_update)
     if errors:
+        # "Constraint violation on language fields."
         results['errors'] = errors
         results['updatestatus'] = "Failed"
-        return JsonResponse(results, safe=False)
+        return JsonResponse(results, status=400)
 
-    gloss_update_do_changes(request.user, gloss, fields_to_update, interface_language_code)
+    if settings.DEBUG_API:
+        # now we are ready to do the update, save the intended update fields to the log
+        print('api_update_gloss ', glossid, ' fields_to_update: ', fields_to_update)
+
+    try:
+        gloss_update_do_changes(request.user, gloss, fields_to_update, interface_language_code)
+    except (TransactionManagementError, ValueError, IntegrityError):
+        errors = dict()
+        errors[gettext('Exception')] = gettext("Transaction management error.")
+        results['errors'] = errors
+        results['updatestatus'] = "Failed"
+        return JsonResponse(results, status=400)
 
     results['errors'] = {}
-    results['updatestatus'] = "Success"
+    results['updatestatus'] = "Gloss successfully updated."
 
-    return JsonResponse(results, safe=False)
+    return JsonResponse(results, status=201)
 
 
 def check_confirmed(value_dict):
@@ -727,19 +793,27 @@ def api_delete_gloss(request, datasetid, glossid):
 
     errors = dict()
 
-    dataset = Dataset.objects.filter(id=int(datasetid)).first()
+    try:
+        dataset_id = int(datasetid)
+    except TypeError:
+        errors[gettext("Dataset")] = gettext("Dataset ID must be a number.")
+        results['errors'] = errors
+        results['updatestatus'] = "Failed"
+        return JsonResponse(results, safe=False, status=400)
+
+    dataset = Dataset.objects.filter(id=dataset_id).first()
     if not dataset:
         errors[gettext("Dataset")] = gettext("Dataset ID does not exist.")
         results['errors'] = errors
         results['updatestatus'] = "Failed"
-        return JsonResponse(results, safe=False)
+        return JsonResponse(results, safe=False, status=400)
 
     change_permit_datasets = get_objects_for_user(request.user, 'change_dataset', Dataset)
     if dataset not in change_permit_datasets:
-        errors[gettext("Dataset")] = gettext("No change permission for dataset.")
+        errors[gettext("Dataset")] = gettext("No permission to change dataset.")
         results['errors'] = errors
         results['updatestatus'] = "Failed"
-        return JsonResponse(results, safe=False)
+        return JsonResponse(results, safe=False, status=400)
 
     try:
         gloss_id = int(glossid)
@@ -749,7 +823,7 @@ def api_delete_gloss(request, datasetid, glossid):
         errors[gettext("Gloss")] = gettext("Gloss ID must be a number.")
         results['errors'] = errors
         results['updatestatus'] = "Failed"
-        return JsonResponse(results, safe=False)
+        return JsonResponse(results, safe=False, status=400)
 
     gloss = Gloss.objects.filter(id=gloss_id, archived=False).first()
 
@@ -757,32 +831,32 @@ def api_delete_gloss(request, datasetid, glossid):
         errors[gettext("Gloss")] = gettext("Gloss not found.")
         results['errors'] = errors
         results['updatestatus'] = "Failed"
-        return JsonResponse(results, safe=False)
+        return JsonResponse(results, safe=False, status=400)
 
     if not gloss.lemma:
         errors[gettext("Gloss")] = gettext("Gloss does not have a lemma.")
         results['errors'] = errors
         results['updatestatus'] = "Failed"
-        return JsonResponse(results, safe=False)
+        return JsonResponse(results, safe=False, status=400)
 
     if gloss.lemma.dataset != dataset:
         errors[gettext("Gloss")] = gettext("Gloss not found in the dataset.")
         results['errors'] = errors
         results['updatestatus'] = "Failed"
-        return JsonResponse(results, safe=False)
+        return JsonResponse(results, safe=False, status=400)
 
     if not request.user.has_perm('dictionary.change_gloss'):
-        errors[gettext("Gloss")] = gettext("No change gloss permission.")
+        errors[gettext("Gloss")] = gettext("No permission to change glosses.")
         results['errors'] = errors
         results['updatestatus'] = "Failed"
-        return JsonResponse(results, safe=False)
+        return JsonResponse(results, safe=False, status=400)
 
     value_dict = get_gloss_update_human_readable_value_dict(request)
     errors = check_confirmed(value_dict)
     if errors:
         results['errors'] = errors
         results['updatestatus'] = "Failed"
-        return JsonResponse(results, safe=False)
+        return JsonResponse(results, safe=False, status=400)
 
     annotation = get_default_annotationidglosstranslation(gloss)
     gloss_archival_delete(request.user, gloss, annotation)
@@ -790,7 +864,7 @@ def api_delete_gloss(request, datasetid, glossid):
     results['errors'] = {}
     results['updatestatus'] = "Success"
 
-    return JsonResponse(results, safe=False)
+    return JsonResponse(results, safe=False, status=200)
 
 
 @csrf_exempt
@@ -807,19 +881,27 @@ def api_restore_gloss(request, datasetid, glossid):
 
     errors = dict()
 
-    dataset = Dataset.objects.filter(id=int(datasetid)).first()
+    try:
+        dataset_id = int(datasetid)
+    except TypeError:
+        errors[gettext("Dataset")] = gettext("Dataset ID must be a number.")
+        results['errors'] = errors
+        results['updatestatus'] = "Failed"
+        return JsonResponse(results, safe=False, status=400)
+
+    dataset = Dataset.objects.filter(id=dataset_id).first()
     if not dataset:
         errors[gettext("Dataset")] = gettext("Dataset ID does not exist.")
         results['errors'] = errors
         results['updatestatus'] = "Failed"
-        return JsonResponse(results, safe=False)
+        return JsonResponse(results, safe=False, status=400)
 
     change_permit_datasets = get_objects_for_user(request.user, 'change_dataset', Dataset)
     if dataset not in change_permit_datasets:
-        errors[gettext("Dataset")] = gettext("No change permission for dataset.")
+        errors[gettext("Dataset")] = gettext("No permission to change dataset.")
         results['errors'] = errors
         results['updatestatus'] = "Failed"
-        return JsonResponse(results, safe=False)
+        return JsonResponse(results, safe=False, status=400)
 
     try:
         gloss_id = int(glossid)
@@ -829,7 +911,7 @@ def api_restore_gloss(request, datasetid, glossid):
         errors[gettext("Gloss")] = gettext("Gloss ID must be a number.")
         results['errors'] = errors
         results['updatestatus'] = "Failed"
-        return JsonResponse(results, safe=False)
+        return JsonResponse(results, safe=False, status=400)
 
     gloss = Gloss.objects.filter(id=gloss_id, archived=True).first()
 
@@ -837,32 +919,32 @@ def api_restore_gloss(request, datasetid, glossid):
         errors[gettext("Gloss")] = gettext("Gloss not found in archive.")
         results['errors'] = errors
         results['updatestatus'] = "Failed"
-        return JsonResponse(results, safe=False)
+        return JsonResponse(results, safe=False, status=400)
 
     if not gloss.lemma:
         errors[gettext("Gloss")] = gettext("Gloss does not have a lemma.")
         results['errors'] = errors
         results['updatestatus'] = "Failed"
-        return JsonResponse(results)
+        return JsonResponse(results, status=400)
 
     if gloss.lemma.dataset != dataset:
         errors[gettext("Gloss")] = gettext("Gloss not found in the dataset.")
         results['errors'] = errors
         results['updatestatus'] = "Failed"
-        return JsonResponse(results, safe=False)
+        return JsonResponse(results, safe=False, status=400)
 
     if not request.user.has_perm('dictionary.change_gloss'):
-        errors[gettext("Gloss")] = gettext("No change gloss permission.")
+        errors[gettext("Gloss")] = gettext("No permission to change glosses.")
         results['errors'] = errors
         results['updatestatus'] = "Failed"
-        return JsonResponse(results, safe=False)
+        return JsonResponse(results, safe=False, status=400)
 
     value_dict = get_gloss_update_human_readable_value_dict(request)
     errors = check_confirmed(value_dict)
     if errors:
         results['errors'] = errors
         results['updatestatus'] = "Failed"
-        return JsonResponse(results, safe=False)
+        return JsonResponse(results, safe=False, status=400)
 
     annotation = get_default_annotationidglosstranslation(gloss)
     gloss_archival_restore(request.user, gloss, annotation)
@@ -870,7 +952,7 @@ def api_restore_gloss(request, datasetid, glossid):
     results['errors'] = {}
     results['updatestatus'] = "Success"
 
-    return JsonResponse(results, safe=False)
+    return JsonResponse(results, safe=False, status=200)
 
 
 def gloss_update_nmevideo(gloss, update_fields_dict, nmevideo, language_code, create=False):
@@ -1003,19 +1085,27 @@ def api_update_gloss_nmevideo(request, datasetid, glossid, videoid):
 
     errors = dict()
 
-    dataset = Dataset.objects.filter(id=int(datasetid)).first()
+    try:
+        dataset_id = int(datasetid)
+    except TypeError:
+        errors[gettext("Dataset")] = gettext("Dataset ID must be a number.")
+        results['errors'] = errors
+        results['updatestatus'] = "Failed"
+        return JsonResponse(results, safe=False, status=400)
+
+    dataset = Dataset.objects.filter(id=dataset_id).first()
     if not dataset:
         errors[gettext("Dataset")] = gettext("Dataset ID does not exist.")
         results['errors'] = errors
         results['updatestatus'] = "Failed"
-        return JsonResponse(results, safe=False)
+        return JsonResponse(results, safe=False, status=400)
 
     change_permit_datasets = get_objects_for_user(request.user, 'change_dataset', Dataset)
     if dataset not in change_permit_datasets:
-        errors[gettext("Dataset")] = gettext("No change permission for dataset.")
+        errors[gettext("Dataset")] = gettext("No permission to change dataset.")
         results['errors'] = errors
         results['updatestatus'] = "Failed"
-        return JsonResponse(results, safe=False)
+        return JsonResponse(results, safe=False, status=400)
 
     try:
         gloss_id = int(glossid)
@@ -1025,7 +1115,7 @@ def api_update_gloss_nmevideo(request, datasetid, glossid, videoid):
         errors[gettext("Gloss")] = gettext("Gloss ID must be a number.")
         results['errors'] = errors
         results['updatestatus'] = "Failed"
-        return JsonResponse(results, safe=False)
+        return JsonResponse(results, safe=False, status=400)
 
     gloss = Gloss.objects.filter(id=gloss_id, archived=False).first()
 
@@ -1033,25 +1123,25 @@ def api_update_gloss_nmevideo(request, datasetid, glossid, videoid):
         errors[gettext("Gloss")] = gettext("Gloss not found.")
         results['errors'] = errors
         results['updatestatus'] = "Failed"
-        return JsonResponse(results, safe=False)
+        return JsonResponse(results, safe=False, status=400)
 
     if not gloss.lemma:
         errors[gettext("Gloss")] = gettext("Gloss does not have a lemma.")
         results['errors'] = errors
         results['updatestatus'] = "Failed"
-        return JsonResponse(results, safe=False)
+        return JsonResponse(results, safe=False, status=400)
 
     if gloss.lemma.dataset != dataset:
         errors[gettext("Gloss")] = gettext("Gloss not found in the dataset.")
         results['errors'] = errors
         results['updatestatus'] = "Failed"
-        return JsonResponse(results, safe=False)
+        return JsonResponse(results, safe=False, status=400)
 
     if not request.user.has_perm('dictionary.change_gloss'):
-        errors[gettext("Gloss")] = gettext("No change gloss permission.")
+        errors[gettext("Gloss")] = gettext("No permission to change glosses.")
         results['errors'] = errors
         results['updatestatus'] = "Failed"
-        return JsonResponse(results, safe=False)
+        return JsonResponse(results, safe=False, status=400)
 
     try:
         video_id = int(videoid)
@@ -1061,7 +1151,7 @@ def api_update_gloss_nmevideo(request, datasetid, glossid, videoid):
         errors[gettext("NME Video ID")] = gettext("Video ID must be a number.")
         results['errors'] = errors
         results['updatestatus'] = "Failed"
-        return JsonResponse(results, safe=False)
+        return JsonResponse(results, safe=False, status=400)
 
     nmevideo = GlossVideoNME.objects.filter(id=video_id, gloss=gloss).first()
 
@@ -1069,7 +1159,7 @@ def api_update_gloss_nmevideo(request, datasetid, glossid, videoid):
         errors[gettext("NME Video ID")] = gettext("NME Video not found.")
         results['errors'] = errors
         results['updatestatus'] = "Failed"
-        return JsonResponse(results, safe=False)
+        return JsonResponse(results, safe=False, status=400)
 
     # pass create=False: ignore the File field if present, this is an update
     # we already have an nme video object
@@ -1080,7 +1170,7 @@ def api_update_gloss_nmevideo(request, datasetid, glossid, videoid):
     results['errors'] = errors
     results['updatestatus'] = "Success"
 
-    return JsonResponse(results, safe=False)
+    return JsonResponse(results, safe=False, status=200)
 
 
 def get_gloss_nmevideo_value_dict(request, gloss, language_code, create=True):
@@ -1138,19 +1228,27 @@ def api_create_gloss_nmevideo(request, datasetid, glossid):
 
     errors = dict()
 
-    dataset = Dataset.objects.filter(id=int(datasetid)).first()
+    try:
+        dataset_id = int(datasetid)
+    except TypeError:
+        errors[gettext("Dataset")] = gettext("Dataset ID must be a number.")
+        results['errors'] = errors
+        results['updatestatus'] = "Failed"
+        return JsonResponse(results, safe=False, status=400)
+
+    dataset = Dataset.objects.filter(id=dataset_id).first()
     if not dataset:
         errors[gettext("Dataset")] = gettext("Dataset ID does not exist.")
         results['errors'] = errors
         results['updatestatus'] = "Failed"
-        return JsonResponse(results, safe=False)
+        return JsonResponse(results, safe=False, status=400)
 
     change_permit_datasets = get_objects_for_user(request.user, 'change_dataset', Dataset)
     if dataset not in change_permit_datasets:
-        errors[gettext("Dataset")] = gettext("No change permission for dataset.")
+        errors[gettext("Dataset")] = gettext("No permission to change dataset.")
         results['errors'] = errors
         results['updatestatus'] = "Failed"
-        return JsonResponse(results, safe=False)
+        return JsonResponse(results, safe=False, status=400)
 
     try:
         gloss_id = int(glossid)
@@ -1160,7 +1258,7 @@ def api_create_gloss_nmevideo(request, datasetid, glossid):
         errors[gettext("Gloss")] = gettext("Gloss ID must be a number.")
         results['errors'] = errors
         results['updatestatus'] = "Failed"
-        return JsonResponse(results, safe=False)
+        return JsonResponse(results, safe=False, status=400)
 
     gloss = Gloss.objects.filter(id=gloss_id, archived=False).first()
 
@@ -1168,25 +1266,25 @@ def api_create_gloss_nmevideo(request, datasetid, glossid):
         errors[gettext("Gloss")] = gettext("Gloss not found.")
         results['errors'] = errors
         results['updatestatus'] = "Failed"
-        return JsonResponse(results, safe=False)
+        return JsonResponse(results, safe=False, status=400)
 
     if not gloss.lemma:
         errors[gettext("Gloss")] = gettext("Gloss does not have a lemma.")
         results['errors'] = errors
         results['updatestatus'] = "Failed"
-        return JsonResponse(results, safe=False)
+        return JsonResponse(results, safe=False, status=400)
 
     if gloss.lemma.dataset != dataset:
         errors[gettext("Gloss")] = gettext("Gloss not found in the dataset.")
         results['errors'] = errors
         results['updatestatus'] = "Failed"
-        return JsonResponse(results, safe=False)
+        return JsonResponse(results, safe=False, status=400)
 
     if not request.user.has_perm('dictionary.change_gloss'):
-        errors[gettext("Gloss")] = gettext("No change gloss permission.")
+        errors[gettext("Gloss")] = gettext("No permission to change glosses.")
         results['errors'] = errors
         results['updatestatus'] = "Failed"
-        return JsonResponse(results, safe=False)
+        return JsonResponse(results, safe=False, status=400)
 
     value_dict = get_gloss_nmevideo_value_dict(request, gloss, interface_language_code)
 
@@ -1194,7 +1292,7 @@ def api_create_gloss_nmevideo(request, datasetid, glossid):
         errors['File'] = gettext("Missing video file, using label center, left or right.")
         results['errors'] = errors
         results['updatestatus'] = "Failed"
-        return JsonResponse(results, safe=False)
+        return JsonResponse(results, safe=False, status=400)
 
     new_nme_video = value_dict['File']
     fields_to_update = gloss_update_nmevideo(gloss, value_dict, new_nme_video, interface_language_code, create=True)
@@ -1204,7 +1302,7 @@ def api_create_gloss_nmevideo(request, datasetid, glossid):
     results['updatestatus'] = "Success"
     results['videoid'] = str(new_nme_video.id)
 
-    return JsonResponse(results, safe=False)
+    return JsonResponse(results, safe=False, status=200)
 
 
 @csrf_exempt
@@ -1221,19 +1319,27 @@ def api_delete_gloss_nmevideo(request, datasetid, glossid, videoid):
 
     errors = dict()
 
-    dataset = Dataset.objects.filter(id=int(datasetid)).first()
+    try:
+        dataset_id = int(datasetid)
+    except TypeError:
+        errors[gettext("Dataset")] = gettext("Dataset ID must be a number.")
+        results['errors'] = errors
+        results['updatestatus'] = "Failed"
+        return JsonResponse(results, safe=False, status=400)
+
+    dataset = Dataset.objects.filter(id=dataset_id).first()
     if not dataset:
         errors[gettext("Dataset")] = gettext("Dataset ID does not exist.")
         results['errors'] = errors
         results['updatestatus'] = "Failed"
-        return JsonResponse(results, safe=False)
+        return JsonResponse(results, safe=False, status=400)
 
     change_permit_datasets = get_objects_for_user(request.user, 'change_dataset', Dataset)
     if dataset not in change_permit_datasets:
-        errors[gettext("Dataset")] = gettext("No change permission for dataset.")
+        errors[gettext("Dataset")] = gettext("No permission to change dataset.")
         results['errors'] = errors
         results['updatestatus'] = "Failed"
-        return JsonResponse(results, safe=False)
+        return JsonResponse(results, safe=False, status=400)
 
     try:
         gloss_id = int(glossid)
@@ -1243,7 +1349,7 @@ def api_delete_gloss_nmevideo(request, datasetid, glossid, videoid):
         errors[gettext("Gloss")] = gettext("Gloss ID must be a number.")
         results['errors'] = errors
         results['updatestatus'] = "Failed"
-        return JsonResponse(results, safe=False)
+        return JsonResponse(results, safe=False, status=400)
 
     gloss = Gloss.objects.filter(id=gloss_id, archived=False).first()
 
@@ -1251,25 +1357,25 @@ def api_delete_gloss_nmevideo(request, datasetid, glossid, videoid):
         errors[gettext("Gloss")] = gettext("Gloss not found.")
         results['errors'] = errors
         results['updatestatus'] = "Failed"
-        return JsonResponse(results, safe=False)
+        return JsonResponse(results, safe=False, status=400)
 
     if not gloss.lemma:
         errors[gettext("Gloss")] = gettext("Gloss does not have a lemma.")
         results['errors'] = errors
         results['updatestatus'] = "Failed"
-        return JsonResponse(results, safe=False)
+        return JsonResponse(results, safe=False, status=400)
 
     if gloss.lemma.dataset != dataset:
         errors[gettext("Gloss")] = gettext("Gloss not found in the dataset.")
         results['errors'] = errors
         results['updatestatus'] = "Failed"
-        return JsonResponse(results, safe=False)
+        return JsonResponse(results, safe=False, status=400)
 
     if not request.user.has_perm('dictionary.change_gloss'):
-        errors[gettext("Gloss")] = gettext("No change gloss permission.")
+        errors[gettext("Gloss")] = gettext("No permission to change glosses.")
         results['errors'] = errors
         results['updatestatus'] = "Failed"
-        return JsonResponse(results, safe=False)
+        return JsonResponse(results, safe=False, status=400)
 
     try:
         video_id = int(videoid)
@@ -1279,7 +1385,7 @@ def api_delete_gloss_nmevideo(request, datasetid, glossid, videoid):
         errors[gettext("NME Video ID")] = gettext("Video ID must be a number.")
         results['errors'] = errors
         results['updatestatus'] = "Failed"
-        return JsonResponse(results, safe=False)
+        return JsonResponse(results, safe=False, status=400)
 
     nmevideo = GlossVideoNME.objects.filter(id=video_id, gloss=gloss).first()
 
@@ -1287,7 +1393,7 @@ def api_delete_gloss_nmevideo(request, datasetid, glossid, videoid):
         errors[gettext("NME Video ID")] = gettext("NME Video not found.")
         results['errors'] = errors
         results['updatestatus'] = "Failed"
-        return JsonResponse(results, safe=False)
+        return JsonResponse(results, safe=False, status=400)
 
     original_nme_file = os.path.basename(nmevideo.videofile.name)
     nmevideo.delete()
@@ -1297,7 +1403,8 @@ def api_delete_gloss_nmevideo(request, datasetid, glossid, videoid):
     results['errors'] = errors
     results['updatestatus'] = "Success"
 
-    return JsonResponse(results, safe=False)
+    return JsonResponse(results, safe=False, status=200)
+
 
 @csrf_exempt
 @put_api_user_in_request
@@ -1306,24 +1413,29 @@ def api_create_annotated_sentence(request, datasetid):
     if not request.method == 'POST': 
         return JsonResponse({"error": "POST method required."}, status=400)
 
-    dataset = Dataset.objects.filter(id=int(datasetid)).first()
+    try:
+        dataset_id = int(datasetid)
+    except TypeError:
+        return JsonResponse({"error": gettext("Dataset ID must be a number.")}, safe=False, status=400)
+
+    dataset = Dataset.objects.filter(id=dataset_id).first()
     if not dataset:
-        return JsonResponse({"error": "Dataset with given id does not exist."}, status=400)
+        return JsonResponse({"error": gettext("Dataset with given id does not exist.")}, status=400)
 
     dataset_acronym = request.POST.get('Dataset')
     dataset_by_acronym = Dataset.objects.filter(acronym=dataset_acronym).first()
     if not dataset_by_acronym:
-        return JsonResponse({"error": "Dataset with given acronym does not exist."}, status=400)
+        return JsonResponse({"error": gettext("Dataset with given acronym does not exist.")}, status=400)
 
     if dataset.acronym != dataset_by_acronym.acronym:
-        return JsonResponse({"error": "Dataset acronym does not match."}, status=400)
+        return JsonResponse({"error": gettext("Dataset acronym does not match.")}, status=400)
 
     change_permit_datasets = get_objects_for_user(request.user, 'change_dataset', Dataset)
     if dataset not in change_permit_datasets:
-        return JsonResponse({"error": "No change permission for dataset."}, status=400)
+        return JsonResponse({"error": gettext("No permission to change dataset.")}, status=400)
 
     if not request.user.has_perm('dictionary.change_gloss'):
-        return JsonResponse({"error": "No permission."}, status=400)
+        return JsonResponse({"error": gettext("No permission to change glosses.")}, status=400)
     
     source = request.POST.get('Source')
     url = request.POST.get('Url')
@@ -1331,13 +1443,13 @@ def api_create_annotated_sentence(request, datasetid):
     eaf_file = request.FILES.get('Eaf_file')
 
     if eaf_file.name.split('.')[-1] != 'eaf':
-        return JsonResponse({"error": "Eaf file must be in .eaf format."}, status=400)
+        return JsonResponse({"error": gettext("Eaf file must be in .eaf format.")}, status=400)
     if video_file.name.split('.')[-1] not in ['mp4', 'webm', 'mov']:
-        return JsonResponse({"error": "Video file must be in .mp4, .webm, or .mov format."}, status=400)
+        return JsonResponse({"error": gettext("Video file must be in .mp4, .webm, or .mov format.")}, status=400)
 
     # Process the files and fields as needed
     if not (video_file and eaf_file):
-        return JsonResponse({"error": "Missing a required field."}, status=400)
+        return JsonResponse({"error": gettext("Missing a required field.")}, status=400)
 
     from pympi.Elan import Eaf
     from tempfile import NamedTemporaryFile
@@ -1359,7 +1471,7 @@ def api_create_annotated_sentence(request, datasetid):
     from signbank.video.views import get_glosses_from_eaf
     annotations, labels_not_found, sentence_dict = get_glosses_from_eaf(eaf, dataset.acronym)
     if len(annotations) == 0:
-        return JsonResponse({"error": "No annotations found in EAF file."}, status=400)
+        return JsonResponse({"error": gettext("No annotations found in EAF file.")}, status=400)
 
     # pick a random gloss from dataset, this is only used to -in add_annotations- retrieve the right dataset
     gloss = Gloss.objects.filter(lemma__dataset=dataset).first()
@@ -1370,17 +1482,17 @@ def api_create_annotated_sentence(request, datasetid):
     
     source_obj = AnnotatedSentenceSource.objects.filter(name=source).first()
     if source_obj == None and source != '':
-        return JsonResponse({"error": "Annotated sentence source received but not found."}, status=400)
+        return JsonResponse({"error": gettext("Annotated sentence source received but not found.")}, status=400)
     
     # Add the video to the AnnotatedSentence object
     annotated_video = annotated_sentence.add_video(request.user, video_file, eaf_file, source_obj, url)
 
     if not annotated_video:
-        return JsonResponse({"error": "Annotated video not found."}, status=400)
+        return JsonResponse({"error": gettext("Annotated video not found.")}, status=400)
 
     if len(labels_not_found) > 0:
         return JsonResponse({"success": "Sentence was added successfully. However, some labels were not found in Signbank: " + ', '.join(labels_not_found)}, status=201)
-    return JsonResponse({"success": "Sentence was added successfully. "}, status=201)
+    return JsonResponse({"success": gettext("Sentence was added successfully.")}, status=201)
 
 
 @csrf_exempt
@@ -1394,20 +1506,25 @@ def api_update_annotated_sentence(request, datasetid, annotatedsentenceid):
         interface_language_code = 'en'
     activate(interface_language_code)
 
-    dataset = Dataset.objects.filter(id=int(datasetid)).first()
+    try:
+        dataset_id = int(datasetid)
+    except TypeError:
+        return JsonResponse({"error": gettext("Dataset ID must be a number.")}, safe=False, status=400)
+
+    dataset = Dataset.objects.filter(id=dataset_id).first()
     if not dataset:
-        return JsonResponse({"error": "Dataset ID does not exist."}, status=400)
+        return JsonResponse({"error": gettext("Dataset with given id does not exist")}, status=400)
 
     change_permit_datasets = get_objects_for_user(request.user, 'change_dataset', Dataset)
     if dataset not in change_permit_datasets:
-        return JsonResponse({"error": "No change permission for dataset."}, status=401)
+        return JsonResponse({"error": gettext("No permission to change dataset.")}, status=401)
 
     annotated_sentence = AnnotatedSentence.objects.filter(
         id=annotatedsentenceid,
         annotated_glosses__gloss__lemma__dataset=dataset
     ).first()
     if not annotated_sentence:
-        return JsonResponse({"error": "Annotated sentence not found."}, status=404)
+        return JsonResponse({"error": gettext("Annotated sentence not found.")}, status=404)
     
     dataset_languages = dataset.translation_languages.all()
     translations, contexts = dict(), dict()
@@ -1427,11 +1544,11 @@ def api_update_annotated_sentence(request, datasetid, annotatedsentenceid):
 
     source_obj = AnnotatedSentenceSource.objects.filter(name=source).first()
     if source_obj == None and source != '':
-        return JsonResponse({"error": "Annotated sentence source received but not found."}, status=400)
+        return JsonResponse({"error": gettext("Annotated sentence source received but not found.")}, status=400)
     
     annotated_sentence_video = annotated_sentence.annotatedvideo
     if not annotated_sentence_video:
-        return JsonResponse({"error": "Annotated video not found."}, status=404)
+        return JsonResponse({"error": gettext("Annotated video not found.")}, status=404)
     else:
         annotated_sentence_video.source = source_obj
         annotated_sentence_video.url = url
@@ -1441,7 +1558,7 @@ def api_update_annotated_sentence(request, datasetid, annotatedsentenceid):
     representative_glosses_ids = post_data['Representative glosses']
     representative_glosses = AnnotatedGloss.objects.filter(gloss__id__in=representative_glosses_ids, annotatedsentence=annotated_sentence)
     if len(representative_glosses) == 0:
-        return JsonResponse({"error": "No valid representative gloss id's given."}, status=404)
+        return JsonResponse({"error": gettext("No valid representative gloss id's given.")}, status=404)
     for annotated_gloss in annotated_sentence.annotated_glosses.all():
         annotated_gloss.isRepresentative = False
         annotated_gloss.save()
@@ -1449,27 +1566,32 @@ def api_update_annotated_sentence(request, datasetid, annotatedsentenceid):
         representative_gloss.isRepresentative = True
         representative_gloss.save()
 
-    return JsonResponse({"success": "Sentence was updated successfully. "}, status=200)
+    return JsonResponse({"success": gettext("Sentence was updated successfully.")}, status=200)
 
 
 @csrf_exempt
 @put_api_user_in_request
 def api_delete_annotated_sentence(request, datasetid, annotatedsentenceid):
 
-    dataset = Dataset.objects.filter(id=int(datasetid)).first()
+    try:
+        dataset_id = int(datasetid)
+    except TypeError:
+        return JsonResponse({"error": gettext("Dataset ID must be a number.")}, safe=False, status=400)
+
+    dataset = Dataset.objects.filter(id=dataset_id).first()
     if not dataset:
-        return JsonResponse({"error": "Dataset ID does not exist."}, status=400)
+        return JsonResponse({"error": "Dataset with given id does not exist."}, status=400)
 
     change_permit_datasets = get_objects_for_user(request.user, 'change_dataset', Dataset)
     if dataset not in change_permit_datasets:
-        return JsonResponse({"error": "No change permission for dataset."}, status=401)
+        return JsonResponse({"error": gettext("No permission to change dataset.")}, status=401)
 
     annotated_sentence = AnnotatedSentence.objects.get(id=annotatedsentenceid)
     if not annotated_sentence:
-        return JsonResponse({"error": "Annotated sentence not found."}, status=404)
+        return JsonResponse({"error": gettext("Annotated sentence not found.")}, status=404)
     
     if annotated_sentence.get_dataset() != dataset:
-        return JsonResponse({"error": "Annotated sentence not found in dataset."}, status=404)
+        return JsonResponse({"error": gettext("Annotated sentence not found in dataset.")}, status=404)
     
     from signbank.video.models import AnnotatedVideo
     annotated_videos = AnnotatedVideo.objects.filter(annotatedsentence=annotated_sentence)
@@ -1478,4 +1600,4 @@ def api_delete_annotated_sentence(request, datasetid, annotatedsentenceid):
         annotated_video.delete()
     annotated_sentence.delete()
 
-    return JsonResponse({"success": "Sentence was deleted successfully. "}, status=200)
+    return JsonResponse({"success": gettext("Sentence was deleted successfully.")}, status=200)
