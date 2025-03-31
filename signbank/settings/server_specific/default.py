@@ -110,6 +110,13 @@ RIGHT_DOUBLE_QUOTE_PATTERNS = '[\"\u201d]'
 REGEX_SPECIAL_CHARACTERS = '[+]'
 USE_REGULAR_EXPRESSIONS = False
 
+# which definition fields do we show and in what order?
+DEFINITION_FIELDS = ['general', 'noun', 'verb', 'interact', 'deictic', 'modifier', 'question', 'augment', 'note']
+
+HANDSHAPE_RESULT_FIELDS = ['name',
+                           'hsFingSel', 'hsFingConf', 'hsFingSel2', 'hsFingConf2', 'hsNumSel',
+                           'hsFingUnsel', 'hsSpread', 'hsAperture']
+
 # From all possible gloss fields available, display these
 FIELDS = {}
 
@@ -238,6 +245,9 @@ ECV_SETTINGS = {
     ]
 }
 
+MINIMUM_OVERLAP_BETWEEN_SIGNING_HANDS = 40
+DISABLE_MOVING_THUMBNAILS_ABOVE_NR_OF_GLOSSES = 200
+
 #Make a smaller version of uploaded images, for storage reasons?
 CROP_GLOSS_IMAGES = True
 
@@ -300,6 +310,7 @@ USE_X_SENDFILE = False
 MAX_SCROLL_BAR = 500
 
 #Print to debug registration / access emails
+DEFAULT_FROM_EMAIL = 'w.stoop@let.ru.nl'
 DEBUG_EMAILS_ON = False
 
 # default url to admin page, specify a hidden one in server_specific to override this

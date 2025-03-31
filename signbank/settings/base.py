@@ -195,13 +195,6 @@ ANON_TAG_SEARCH = False
 # do we display the previous/next links to signs, requires gloss.sn to be used consistently
 SIGN_NAVIGATION = False
 
-# which definition fields do we show and in what order?
-DEFINITION_FIELDS = ['general', 'noun', 'verb', 'interact', 'deictic', 'modifier', 'question', 'augment', 'note']
-
-HANDSHAPE_RESULT_FIELDS = ['name',
-                           'hsFingSel', 'hsFingConf', 'hsFingSel2', 'hsFingConf2', 'hsNumSel',
-                           'hsFingUnsel', 'hsSpread', 'hsAperture']
-
 # location and URL for uploaded files
 UPLOAD_ROOT = MEDIA_ROOT + "upload/"
 UPLOAD_URL = MEDIA_URL + "upload/"
@@ -281,9 +274,6 @@ TEST_RUNNER = 'django.test.runner.DiscoverRunner'
 EARLIEST_GLOSS_CREATION_DATE = datetime(2015,1,1)
 SUPPORTED_CITATION_IMAGE_EXTENSIONS = ['.jpg','.jpeg','.png']
 MAXIMUM_UPLOAD_SIZE = 5000000
-
-MINIMUM_OVERLAP_BETWEEN_SIGNING_HANDS = 40
-DISABLE_MOVING_THUMBNAILS_ABOVE_NR_OF_GLOSSES = 200
 
 DATA_UPLOAD_MAX_NUMBER_FIELDS = None
 DATA_UPLOAD_MAX_MEMORY_SIZE = None

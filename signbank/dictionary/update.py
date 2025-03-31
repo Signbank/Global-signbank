@@ -1,46 +1,68 @@
-from django.core.exceptions import ObjectDoesNotExist
+import os
+import json
+import re
+import datetime as DT
 
-from django.http import HttpResponse, HttpResponseRedirect, HttpResponseForbidden, HttpResponseBadRequest, JsonResponse
-from django.template import Context, RequestContext, loader
-from django.shortcuts import render, get_object_or_404
+from django.http import (HttpResponse, HttpResponseRedirect, HttpResponseForbidden, HttpResponseBadRequest,
+                         JsonResponse, Http404)
+from django.shortcuts import render, get_object_or_404, redirect
 from django.urls import reverse
-
+from django.core.exceptions import ObjectDoesNotExist, MultipleObjectsReturned, ValidationError
+from django.core.files import File
 from django.contrib.auth.decorators import permission_required
-import guardian
-
 from django.db.models.fields import BooleanField, IntegerField
 from django.db import DatabaseError, IntegrityError
-from django.db.transaction import TransactionManagementError
-
-from tagging.models import TaggedItem, Tag
-import os, shutil, re
-from datetime import datetime
 from django.utils.timezone import get_current_timezone
 from django.contrib import messages
+from django.utils.translation import gettext_lazy as _
+from django.db.transaction import atomic, TransactionManagementError
+from django.contrib.auth.models import User
 
-from signbank.dictionary.models import *
-from signbank.dictionary.forms import *
-from django.conf import settings
+from guardian.shortcuts import get_user_perms, get_group_perms, get_objects_for_user
+from tagging.models import TaggedItem, Tag
 
 from signbank.video.forms import VideoUploadForObjectForm
 from signbank.video.models import AnnotatedVideo, GlossVideoNME, GlossVideoDescription, GlossVideoHistory, GlossVideoPerspective
 
-from signbank.settings.server_specific import OTHER_MEDIA_DIRECTORY, DATASET_METADATA_DIRECTORY, DATASET_EAF_DIRECTORY, LANGUAGES
+from signbank.settings.server_specific import (WRITABLE_FOLDER, PREFIX_URL, USE_REGULAR_EXPRESSIONS, SHOW_DATASET_INTERFACE_OPTIONS,
+                                               OTHER_MEDIA_DIRECTORY, MORPHEME_DISPLAY_FIELDS,
+                                               DATASET_METADATA_DIRECTORY, DATASET_EAF_DIRECTORY,
+                                               GUARDED_GLOSS_DELETE, GUARDED_MORPHEME_DELETE,
+                                               FIELDS, HANDSHAPE_ETYMOLOGY_FIELDS, HANDEDNESS_ARTICULATION_FIELDS)
+from signbank.dictionary.models import (Dataset, SignLanguage, Dialect, Gloss, Morpheme, Handshape,
+                                        GlossSense, Sense, SenseTranslation, Translation, Keyword,
+                                        Relation, RelationToForeignSign, BlendMorphology, MorphologyDefinition,
+                                        Language, LemmaIdgloss, AnnotationIdglossTranslation, Definition,
+                                        FieldChoice, FieldChoiceForeignKey, OtherMedia,
+                                        SemanticField, SemanticFieldTranslation,
+                                        DerivationHistory, AnnotatedSentence, AnnotatedSentenceTranslation,
+                                        ExampleSentence, ExampleSentenceTranslation,
+                                        Affiliation, AffiliatedUser, AffiliatedGloss, SearchHistory,
+                                        GlossRevision, SenseExamplesentence, SimultaneousMorphologyDefinition,
+                                        AnnotatedSentenceSource, AnnotatedSentenceContext, UserProfile, QueryParameter,
+                                        get_default_language_id)
+from signbank.dictionary.forms import (RelationForm, VariantsForm, RelationToForeignSignForm, GlossBlendForm,
+                                       GlossCreateForm, DefinitionForm, GlossMorphemeForm, GlossMorphologyForm,
+                                       MorphemeCreateForm, LemmaCreateForm, AffiliationUpdateForm, OtherMediaForm,
+                                       CSVMetadataForm, EAFFilesForm, FieldChoiceColorForm,
+                                       SemanticFieldColorForm, HandshapeColorForm, DerivationHistoryColorForm,
+                                       TagUpdateForm)
 from signbank.dictionary.translate_choice_list import machine_value_to_translated_human_value
 from signbank.tools import gloss_from_identifier, get_default_annotationidglosstranslation
 from signbank.frequency import document_identifiers_from_paths, documents_paths_dictionary
-
-from django.utils.translation import gettext_lazy as _
-
-from guardian.shortcuts import get_user_perms, get_group_perms, get_objects_for_user
-from django.shortcuts import redirect
-from signbank.dictionary.update_senses_mapping import mapping_edit_keywords, mapping_group_keywords, mapping_add_keyword, \
-    mapping_edit_senses_matrix, mapping_toggle_sense_tag
+from signbank.dictionary.update_senses_mapping import (mapping_edit_keywords, mapping_group_keywords, mapping_add_keyword,
+    mapping_edit_senses_matrix, mapping_toggle_sense_tag)
 from signbank.dictionary.consistency_senses import reorder_translations
 from signbank.dictionary.related_objects import gloss_related_objects, morpheme_related_objects
-from signbank.dictionary.update_glosses import *
+from signbank.dictionary.update_glosses import (mapping_toggle_relOriLoc, mapping_toggle_locprim, mapping_toggle_handCh,
+                                                mapping_toggle_altern, mapping_toggle_repeat, mapping_toggle_relatArtic,
+                                                mapping_toggle_subhndsh, mapping_toggle_domhndsh, mapping_toggle_relOriMov,
+                                                mapping_toggle_semanticfield, mapping_toggle_namedentity, mapping_toggle_oriCh,
+                                                mapping_toggle_handedness, mapping_toggle_tag, mapping_toggle_wordclass,
+                                                mapping_toggle_contType, mapping_toggle_movDir, mapping_toggle_movSh,
+                                                batch_edit_create_sense)
 from signbank.dictionary.batch_edit import batch_edit_update_gloss, add_gloss_update_to_revision_history
-import datetime as DT
+
 
 def show_error(request, translated_message, form, dataset_languages):
     from signbank.dictionary.context_data import get_selected_datasets
@@ -50,8 +72,8 @@ def show_error(request, translated_message, form, dataset_languages):
                   {'add_gloss_form': form,
                    'dataset_languages': dataset_languages,
                    'selected_datasets': get_selected_datasets(request),
-                   'USE_REGULAR_EXPRESSIONS': settings.USE_REGULAR_EXPRESSIONS,
-                   'SHOW_DATASET_INTERFACE_OPTIONS': settings.SHOW_DATASET_INTERFACE_OPTIONS})
+                   'USE_REGULAR_EXPRESSIONS': USE_REGULAR_EXPRESSIONS,
+                   'SHOW_DATASET_INTERFACE_OPTIONS': SHOW_DATASET_INTERFACE_OPTIONS})
 
 
 # this method is called from the GlossListView (Add Gloss button on the page)
@@ -759,7 +781,7 @@ def update_gloss(request, glossid):
 
             related_objects = gloss_related_objects(gloss)
 
-            if settings.GUARDED_GLOSS_DELETE and related_objects:
+            if GUARDED_GLOSS_DELETE and related_objects:
                 reverse_url = 'dictionary:admin_gloss_view'
                 messages.add_message(request, messages.INFO,
                                      _("GUARDED_GLOSS_DELETE is set to True. The gloss has relations to other glosses and was not deleted."))
@@ -842,8 +864,7 @@ def update_gloss(request, glossid):
 
             return HttpResponse(str(newvalue), {'content-type': 'text/plain'})
 
-        import guardian
-        if ds in guardian.shortcuts.get_objects_for_user(request.user, ['view_dataset'],
+        if ds in get_objects_for_user(request.user, ['view_dataset'],
                                                          Dataset, any_perm=True):
             newvalue = value
             setattr(gloss, field, ds)
@@ -1081,7 +1102,7 @@ def update_gloss(request, glossid):
     # if choice_list is empty, the original_value is returned by the called function
     # Remember this change for the history books
     original_human_value = original_value.name if isinstance(original_value, FieldChoice) else original_value
-    if isinstance(value, bool) and field in settings.HANDSHAPE_ETYMOLOGY_FIELDS + settings.HANDEDNESS_ARTICULATION_FIELDS:
+    if isinstance(value, bool) and field in HANDSHAPE_ETYMOLOGY_FIELDS + HANDEDNESS_ARTICULATION_FIELDS:
     # store a boolean in the Revision History rather than a human value
     # as for the template (e.g., 'letter' or 'number')
         glossrevision_newvalue = value
@@ -1153,8 +1174,9 @@ def update_annotation_idgloss(request, gloss, field, value):
         language_code_2char = field[len('annotation_idgloss_'):]
         language = Language.objects.filter(language_code_2char=language_code_2char).first()
     except ObjectDoesNotExist:
-        # do nothing
-        return HttpResponse(str(original_value), {'content-type': 'text/plain'})
+        # the language does not exist
+        feedback_message = getattr("The translation language does not exist.")
+        return HttpResponseBadRequest(feedback_message, {'content-type': 'text/plain'})
 
     # value might be empty string
     whitespace = tuple(' \n\r\t')
@@ -1163,7 +1185,8 @@ def update_annotation_idgloss(request, gloss, field, value):
 
     if not value:
         # don't allow user to set Annotation ID Gloss to empty
-        return HttpResponse(str(original_value), {'content-type': 'text/plain'})
+        feedback_message = getattr("The annotation for the translation language cannot be empty.")
+        return HttpResponseBadRequest(feedback_message, {'content-type': 'text/plain'})
 
     try:
         annotation_idgloss_translation = AnnotationIdglossTranslation.objects.get(gloss=gloss, language=language)
@@ -2338,8 +2361,8 @@ def add_morpheme(request):
     else:
         last_used_dataset = None
 
-    show_dataset_interface = getattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS', False)
-    use_regular_expressions = getattr(settings, 'USE_REGULAR_EXPRESSIONS', False)
+    show_dataset_interface = SHOW_DATASET_INTERFACE_OPTIONS
+    use_regular_expressions = USE_REGULAR_EXPRESSIONS
 
     form = MorphemeCreateForm(request.POST, languages=dataset_languages, user=request.user, last_used_dataset=last_used_dataset)
 
@@ -2401,8 +2424,8 @@ def add_morpheme(request):
             return render(request, 'dictionary/add_morpheme.html', {'add_morpheme_form': form,
                                                  'dataset_languages': dataset_languages,
                                                  'selected_datasets': selected_datasets,
-                                                 'USE_REGULAR_EXPRESSIONS': settings.USE_REGULAR_EXPRESSIONS,
-                                                 'SHOW_DATASET_INTERFACE_OPTIONS': settings.SHOW_DATASET_INTERFACE_OPTIONS})
+                                                 'USE_REGULAR_EXPRESSIONS': USE_REGULAR_EXPRESSIONS,
+                                                 'SHOW_DATASET_INTERFACE_OPTIONS': SHOW_DATASET_INTERFACE_OPTIONS})
 
         if 'search_results' not in request.session.keys():
             request.session['search_results'] = []
@@ -2415,8 +2438,8 @@ def add_morpheme(request):
         return render(request,'dictionary/add_morpheme.html', {'add_morpheme_form': form,
                                                                 'dataset_languages': dataset_languages,
                                                                 'selected_datasets': selected_datasets,
-                                                                'USE_REGULAR_EXPRESSIONS': settings.USE_REGULAR_EXPRESSIONS,
-                                                               'SHOW_DATASET_INTERFACE_OPTIONS': settings.SHOW_DATASET_INTERFACE_OPTIONS})
+                                                                'USE_REGULAR_EXPRESSIONS': USE_REGULAR_EXPRESSIONS,
+                                                               'SHOW_DATASET_INTERFACE_OPTIONS': SHOW_DATASET_INTERFACE_OPTIONS})
 
 
 def update_morpheme(request, morphemeid):
@@ -2456,7 +2479,7 @@ def update_morpheme(request, morphemeid):
             # delete the morpheme and redirect back to morpheme list
             related_objects = morpheme_related_objects(morpheme)
 
-            if settings.GUARDED_MORPHEME_DELETE or related_objects:
+            if GUARDED_MORPHEME_DELETE or related_objects:
                 reverse_url = 'dictionary:admin_morpheme_view'
                 messages.add_message(request, messages.INFO,
                                      _("GUARDED_MORPHEME_DELETE is set to True or the morpheme has relations to other glosses and was not deleted."))
@@ -2527,8 +2550,7 @@ def update_morpheme(request, morphemeid):
 
             return HttpResponse(str(newvalue), {'content-type': 'text/plain'})
 
-        import guardian
-        if ds in guardian.shortcuts.get_objects_for_user(request.user, ['view_dataset'],
+        if ds in get_objects_for_user(request.user, ['view_dataset'],
                                                          Dataset, any_perm=True):
             newvalue = value
             setattr(morpheme, field, ds)
@@ -2622,7 +2644,7 @@ def update_morpheme(request, morphemeid):
                 newvalue = _('No')
 
         # special value of 'notset' or -1 means remove the value
-        fieldnames = FIELDS['main'] + settings.MORPHEME_DISPLAY_FIELDS + FIELDS['semantics'] + ['inWeb', 'isNew', 'mrpType']
+        fieldnames = FIELDS['main'] + MORPHEME_DISPLAY_FIELDS + FIELDS['semantics'] + ['inWeb', 'isNew', 'mrpType']
 
         if field in FIELDS['phonology']:
             # this is used as part of the feedback to the interface, to alert the user to refresh the display
@@ -2937,7 +2959,7 @@ def change_dataset_selection(request):
     else:
         # set the last_used_dataset?
         pass
-    return redirect(settings.PREFIX_URL + '/datasets/select')
+    return redirect(PREFIX_URL + '/datasets/select')
 
 
 def update_dataset(request, datasetid):
@@ -2964,7 +2986,7 @@ def update_dataset(request, datasetid):
                                  _('You must be in group Dataset Manager to modify dataset details.'))
             return HttpResponseForbidden("Dataset Update Not Allowed")
 
-        user_change_datasets = guardian.shortcuts.get_objects_for_user(request.user, 'change_dataset', Dataset, accept_global_perms=False)
+        user_change_datasets = get_objects_for_user(request.user, 'change_dataset', Dataset, accept_global_perms=False)
         if dataset not in user_change_datasets:
             return HttpResponseForbidden("Dataset Update Not Allowed")
 
@@ -3396,7 +3418,7 @@ def update_expiry(request):
 
     # Check for request type
     if request.method != "POST":
-        return HttpResponseRedirect(settings.PREFIX_URL + '/')
+        return HttpResponseRedirect(PREFIX_URL + '/')
 
     # Check if we have a username
     if 'username' in request.POST.keys():
@@ -3566,8 +3588,7 @@ def okay_to_update_gloss(request, gloss):
     if not gloss or not gloss.lemma:
         return False
 
-    if gloss.lemma.dataset not in guardian.shortcuts.get_objects_for_user(request.user, ['change_dataset'],
-                                                                          Dataset, any_perm=True):
+    if gloss.lemma.dataset not in get_objects_for_user(request.user, ['change_dataset'], Dataset, any_perm=True):
         return False
     
     return True
