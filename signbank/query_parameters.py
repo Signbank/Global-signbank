@@ -1,37 +1,31 @@
-import signbank.settings
-from signbank.settings.base import WSGI_FILE, WRITABLE_FOLDER, GLOSS_VIDEO_DIRECTORY, LANGUAGE_CODE, EARLIEST_GLOSS_CREATION_DATE
-import os
-import shutil
-from html.parser import HTMLParser
-from zipfile import ZipFile
-import json
 import re
-from urllib.parse import quote
-import csv
-from django.db.models import Q
-from django.http import QueryDict
+import datetime as DT
 
-from django.utils.translation import override, gettext_lazy as _
-
-from django.http import HttpResponse, HttpResponseRedirect
 from django.utils import html
-
-from signbank.dictionary.models import *
-from signbank.video.models import GlossVideo, GlossVideoNME
+from django import forms
 from django.db.models.functions import Concat
-from signbank.dictionary.forms import *
-from signbank.dictionary.field_choices import fields_to_fieldcategory_dict
-from django.utils.dateformat import format
-from django.core.exceptions import ObjectDoesNotExist, EmptyResultSet
-from django.db import OperationalError, ProgrammingError
+from django.core.exceptions import ObjectDoesNotExist, MultipleObjectsReturned
 from django.db.models import Q, Count, CharField, TextField, Value as V
 from django.db.models.fields import BooleanField
+from django.utils.translation import gettext, gettext_lazy as _
 
-from django.urls import reverse
 from tagging.models import TaggedItem, Tag
-from django.shortcuts import render, get_object_or_404, redirect
-from guardian.shortcuts import get_objects_for_user
+
+from signbank.settings.base import EARLIEST_GLOSS_CREATION_DATE, DATE_FORMAT
+from signbank.settings.server_specific import (USE_REGULAR_EXPRESSIONS, WRITABLE_FOLDER,
+                                               GLOSS_LIST_DISPLAY_FIELDS, SEARCH_BY)
+from signbank.video.models import GlossVideo, GlossVideoNME
+from signbank.dictionary.models import (Language, SignLanguage, Dialect, Gloss, Morpheme, GlossSense, ExampleSentence,
+                                        Definition, FieldChoice, Handshape, SemanticField, DerivationHistory,
+                                        AnnotatedGloss, OtherMedia, RelationToForeignSign, Relation,
+                                        AnnotatedSentenceTranslation, ExampleSentenceTranslation,
+                                        BlendMorphology, MorphologyDefinition, SimultaneousMorphologyDefinition)
+from signbank.dictionary.forms import GlossSearchForm, SentenceForm
+from signbank.dictionary.field_choices import fields_to_fieldcategory_dict
+from signbank.dictionary.translate_choice_list import choicelist_queryset_to_translated_dict
 from signbank.tools import get_dataset_languages
+
+from easy_select2.widgets import Select2
 
 
 def list_to_query(query_list):
@@ -47,6 +41,7 @@ def list_to_query(query_list):
     q_exp = list_to_query(rest_of_query_list)
     or_query = query_list[0] & q_exp
     return or_query
+
 
 def query_parameters_this_gloss(phonology_focus, phonology_matrix):
     # this is used to determine a default query for the case the user showed all glosses and there are no parameters
@@ -360,10 +355,10 @@ def convert_query_parameters_to_filter(query_parameters):
         elif get_key == 'useInstr':
             query_list.append(Q(useInstr__icontains=get_value))
         elif get_key == 'createdBefore':
-            created_before_date = DT.datetime.strptime(get_value, settings.DATE_FORMAT).date()
+            created_before_date = DT.datetime.strptime(get_value, DATE_FORMAT).date()
             query_list.append(Q(creationDate__range=(EARLIEST_GLOSS_CREATION_DATE, created_before_date)))
         elif get_key == 'createdAfter':
-            created_after_date = DT.datetime.strptime(get_value, settings.DATE_FORMAT).date()
+            created_after_date = DT.datetime.strptime(get_value, DATE_FORMAT).date()
             query_list.append(Q(creationDate__range=(created_after_date, DT.datetime.now())))
         elif get_key == 'createdBy':
             query_list.append(Q(**{'creator__first_name__icontains': get_value}) |
@@ -410,7 +405,7 @@ def convert_query_parameters_to_filter(query_parameters):
             # it could happen that a ForeignKey field falls through which is not included in multiselect
             field_obj = Gloss.get_field(get_key)
 
-            if type(field_obj) in [CharField,TextField]:
+            if type(field_obj) in [CharField, TextField]:
                 q_filter = get_key + '__icontains'
             elif hasattr(field_obj, 'field_choice_category'):
                 # just in case, field choice field that is not multi-select
@@ -418,11 +413,11 @@ def convert_query_parameters_to_filter(query_parameters):
             else:
                 q_filter = get_key + '__exact'
 
-            if isinstance(field_obj,BooleanField):
-                q_value = {'0':'','1': None, '2': True, '3': False}[get_value]
+            if isinstance(field_obj, BooleanField):
+                q_value = {'0': '', '1': None, '2': True, '3': False}[get_value]
             else:
                 q_value = get_value
-            kwargs = {q_filter:q_value}
+            kwargs = {q_filter: q_value}
             query_list.append(Q(**kwargs))
         else:
             print('convert_query_parameters_to_filter: not implemented for ', get_key)
@@ -477,7 +472,7 @@ def convert_query_parameters_to_annotatedgloss_filter(query_parameters):
     return query
 
 
-def pretty_print_query_fields(dataset_languages,query_parameters):
+def pretty_print_query_fields(dataset_languages, query_parameters):
     # this function determines what to show when a Query Parameters table is shown
     # some of the fields do not match those in the Gloss Search Form
     # the code checks whether the field exists in the Gloss model or in the Gloss Search Form
@@ -545,7 +540,7 @@ def pretty_print_query_fields(dataset_languages,query_parameters):
     return query_dict
 
 
-def pretty_print_query_values(dataset_languages,query_parameters):
+def pretty_print_query_values(dataset_languages, query_parameters):
     # this function maps the Gloss Search Form field values back to a human readable value
     # for display in Query Parameters
 
@@ -655,8 +650,8 @@ def pretty_print_query_values(dataset_languages,query_parameters):
             except (ObjectDoesNotExist, MultipleObjectsReturned):
                 query_dict[key] = query_parameters[key]
         elif key in ['createdBefore', 'createdAfter']:
-            created_date = DT.datetime.strptime(query_parameters[key], settings.DATE_FORMAT).date()
-            query_dict[key] = created_date.strftime(settings.DATE_FORMAT)
+            created_date = DT.datetime.strptime(query_parameters[key], DATE_FORMAT).date()
+            query_dict[key] = created_date.strftime(DATE_FORMAT)
         else:
             # key can be keyword, just print the value
             # includes relationToForeignSign, relation
@@ -686,7 +681,7 @@ def query_parameters_toggle_fields(query_parameters):
                 qp_key.startswith(GlossSearchForm.lemma_search_field_prefix) or \
                 qp_key.startswith(GlossSearchForm.keyword_search_field_prefix):
             continue
-        if qp_key[:-2] in settings.GLOSS_LIST_DISPLAY_FIELDS:
+        if qp_key[:-2] in GLOSS_LIST_DISPLAY_FIELDS:
             continue
         if qp_key == 'hasRelation[]':
             query_fields_parameters.append(query_parameters[qp_key])
@@ -700,7 +695,7 @@ def query_parameters_toggle_fields(query_parameters):
             # If hasRelationToForeignSign is True, show the relations in the result table
             query_fields_focus.append('relationToForeignSign')
 
-    gloss_list_display_fields = getattr(settings, 'GLOSS_LIST_DISPLAY_FIELDS', [])
+    gloss_list_display_fields = GLOSS_LIST_DISPLAY_FIELDS
     toggle_gloss_list_display_fields = [(gloss_list_field,
                                          GlossSearchForm.get_field(gloss_list_field).label.encode(
                                              'utf-8').decode()) for gloss_list_field in gloss_list_display_fields]
@@ -731,8 +726,8 @@ def query_parameters_toggle_fields(query_parameters):
         toggle_query_parameter_fields.append(toggle_query_parameter)
 
     toggle_publication_fields = []
-    if hasattr(settings, 'SEARCH_BY') and 'publication' in settings.SEARCH_BY.keys():
-        for publication_field in settings.SEARCH_BY['publication']:
+    if 'publication' in SEARCH_BY.keys():
+        for publication_field in SEARCH_BY['publication']:
             toggle_publication_fields.append((publication_field,
                                               GlossSearchForm.get_field(publication_field).label.encode(
                                                   'utf-8').decode()))
@@ -854,10 +849,10 @@ def queryset_from_get(formclass, searchform, GET, qs):
 
         elif searchform.fields[get_key].widget.input_type in ['date']:
             if get_key == 'createdBefore':
-                created_before_date = DT.datetime.strptime(get_value, settings.DATE_FORMAT).date()
+                created_before_date = DT.datetime.strptime(get_value, DATE_FORMAT).date()
                 qs = qs.filter(creationDate__range=(EARLIEST_GLOSS_CREATION_DATE, created_before_date))
             elif get_key == 'createdAfter':
-                created_after_date = DT.datetime.strptime(get_value, settings.DATE_FORMAT).date()
+                created_after_date = DT.datetime.strptime(get_value, DATE_FORMAT).date()
                 qs = qs.filter(creationDate__range=(created_after_date, DT.datetime.now()))
         elif searchform.fields[get_key].widget.input_type in ['select']:
             if get_key in ['inWeb', 'repeat', 'altern', 'isNew']:
@@ -1123,7 +1118,7 @@ def queryset_glosssense_from_get(model, formclass, searchform, GET, qs):
             elif get_key in ['createdBy']:
                 first_name = gloss_prefix + 'creator__first_name__icontains'
                 last_name = gloss_prefix + 'creator__last_name__icontains'
-                qs = qs.filter(Q(**{first_name:get_value}) | Q(**{last_name:get_value}))
+                qs = qs.filter(Q(**{first_name: get_value}) | Q(**{last_name: get_value}))
             else:
                 # normal text field
                 query_filter = gloss_prefix + get_key + '__icontains'
@@ -1133,10 +1128,10 @@ def queryset_glosssense_from_get(model, formclass, searchform, GET, qs):
         elif searchform.fields[get_key].widget.input_type in ['date']:
             query_filter = gloss_prefix + 'creationDate__range'
             if get_key == 'createdBefore':
-                created_before_date = DT.datetime.strptime(get_value, settings.DATE_FORMAT).date()
+                created_before_date = DT.datetime.strptime(get_value, DATE_FORMAT).date()
                 qs = qs.filter(**{query_filter: (EARLIEST_GLOSS_CREATION_DATE, created_before_date)})
             elif get_key == 'createdAfter':
-                created_after_date = DT.datetime.strptime(get_value, settings.DATE_FORMAT).date()
+                created_after_date = DT.datetime.strptime(get_value, DATE_FORMAT).date()
                 qs = qs.filter(**{query_filter: (created_after_date, DT.datetime.now())})
         elif searchform.fields[get_key].widget.input_type in ['select']:
             if get_key in ['hasmultiplesenses']:
