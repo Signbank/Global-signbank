@@ -9,7 +9,7 @@ class Command(BaseCommand):
     help = 'Add a release label text to glosses'
 
     def add_arguments(self, parser):
-        parser.add_argument('release_label', nargs=1, type=str, help="The text to insert as release label")
+        parser.add_argument('release_information', nargs=1, type=str, help="The text to insert as release label")
         parser.add_argument('date_range', nargs=1, type=str,
                             help="Creation date range; format: YYYY-MM-DD,YYYY-MM-DD (use one date WITH comma for open "
                             "ended range")
@@ -29,7 +29,7 @@ class Command(BaseCommand):
         if errors:
             raise CommandError("\n" + "\n".join(errors))
 
-        self.update_glosses(options['release_label'][0], dataset_acronyms, from_creation_date, until_creation_date,
+        self.update_glosses(options['release_information'][0], dataset_acronyms, from_creation_date, until_creation_date,
                             options['replace'])
 
     def check_date_range(self, options, errors):
@@ -51,7 +51,7 @@ class Command(BaseCommand):
             errors.append(f"The following datasets do not exist: {', '.join(non_existing_datasets)}")
         return dataset_acronyms
 
-    def update_glosses(self, release_label, dataset_acronyms, from_creation_date, until_creation_date, replace):
+    def update_glosses(self, release_information, dataset_acronyms, from_creation_date, until_creation_date, replace):
         glosses = Gloss.objects.filter(lemma__dataset__acronym__in=dataset_acronyms)
         if from_creation_date:
             glosses = glosses.filter(creationDate__gte=from_creation_date)
@@ -59,7 +59,7 @@ class Command(BaseCommand):
             glosses = glosses.filter(creationDate__lte=until_creation_date)
         print(f'Updating {glosses.count()} glosses... ', end='')
         for gloss in glosses:
-            gloss.release_label = release_label if replace or not gloss.release_label \
-                else f'{gloss.release_label} {release_label}'
-        Gloss.objects.bulk_update(glosses, ['release_label'])
+            gloss.release_information = release_information if replace or not gloss.release_information \
+                else f'{gloss.release_information} {release_information}'
+        Gloss.objects.bulk_update(glosses, ['release_information'])
         print('Done')

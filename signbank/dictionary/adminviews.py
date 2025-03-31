@@ -1346,7 +1346,7 @@ class GlossDetailView(DetailView):
         # field excludeFromEcv is added here in order to show it in Gloss Edit
         for p_field in FIELDS['publication'] + ['excludeFromEcv']:
             context['publication_fields'].append([getattr(gl,p_field), p_field, labels[p_field], 'check'])
-        context['release_label'] = [getattr(gl,'release_label'), 'release_label', labels['release_label']]
+        context['release_information'] = [getattr(gl,'release_information'), 'release_information', labels['release_information']]
 
         # do not lazy evaluate these; evaluate before putting in context variables
         static_choice_lists, static_choice_list_colors = get_static_choice_lists_per_field()
