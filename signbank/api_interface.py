@@ -16,12 +16,12 @@ from guardian.shortcuts import get_objects_for_user, get_user_perms
 
 from signbank.settings.server_specific import (WRITABLE_FOLDER, API_VIDEO_ARCHIVES, VIDEOS_TO_IMPORT_FOLDER, TMP_DIR,
                                                GLOSS_IMAGE_DIRECTORY,
-                                               DEBUG_VIDEOS, PREFIX_URL, URL, FIELDS,
-                                               DEFAULT_DATASET_ACRONYM, DEFAULT_DATASET_PK, MODELTRANSLATION_LANGUAGES)
+                                               DEBUG_VIDEOS, PREFIX_URL, URL,
+                                               DEFAULT_DATASET_PK, MODELTRANSLATION_LANGUAGES)
 from signbank.settings.base import SUPPORTED_CITATION_IMAGE_EXTENSIONS
 
 from signbank.dictionary.models import (Dataset, Gloss, AnnotatedSentence)
-from signbank.tools import get_two_letter_dir
+from signbank.tools import get_two_letter_dir, api_fields
 from signbank.api_token import put_api_user_in_request
 from signbank.abstract_machine import get_interface_language_api
 from signbank.zip_interface import (check_subfolders_for_unzipping_ids, get_filenames, check_subfolders_for_unzipping,
@@ -111,60 +111,6 @@ def check_api_file_storage(dataset):
                     "error": f"Upload zip archive: The folder VIDEOS_TO_IMPORT_FOLDER/{dataset.acronym}/{lang3char} cannot be created."}, 400
 
     return {}, 200
-
-
-def api_fields(dataset, language_code='en', advanced=False):    
-    activate(language_code)
-    api_fields_2023 = []
-    if not dataset:
-        dataset = Dataset.objects.get(acronym=DEFAULT_DATASET_ACRONYM)
-    if advanced:
-        for language in dataset.translation_languages.all():
-            language_field = gettext("Lemma ID Gloss") + ": %s" % language.name
-            api_fields_2023.append(language_field)
-    for language in dataset.translation_languages.all():
-        language_field = gettext("Annotation ID Gloss") + ": %s" % language.name
-        api_fields_2023.append(language_field)
-    for language in dataset.translation_languages.all():
-        language_field = gettext("Senses") + ": %s" % language.name
-        api_fields_2023.append(language_field)
-
-    if not advanced:
-        api_fields_2023.append(gettext("Handedness"))
-        api_fields_2023.append(gettext("Strong Hand"))
-        api_fields_2023.append(gettext("Weak Hand"))
-        api_fields_2023.append(gettext("Location"))
-        api_fields_2023.append(gettext("Semantic Field"))
-        api_fields_2023.append(gettext("Word Class"))
-        api_fields_2023.append(gettext("Named Entity"))
-        api_fields_2023.append(gettext("Link"))
-        api_fields_2023.append(gettext("Video"))
-        api_fields_2023.append(gettext("Perspective Videos"))
-    else:
-        api_fields_2023.append(gettext("Link"))
-        api_fields_2023.append(gettext("Video"))
-        api_fields_2023.append(gettext("Perspective Videos"))
-        api_fields_2023.append(gettext("Tags"))
-        api_fields_2023.append(gettext("Notes"))
-        api_fields_2023.append(gettext("Affiliation"))
-        api_fields_2023.append(gettext("Sequential Morphology"))
-        api_fields_2023.append(gettext("Simultaneous Morphology"))
-        api_fields_2023.append(gettext("Blend Morphology"))
-
-        fieldnames = FIELDS['main'] + FIELDS['phonology'] + FIELDS['semantics'] + ['inWeb', 'isNew', 'excludeFromEcv']
-        gloss_fields = [Gloss.get_field(fname) for fname in fieldnames if fname in Gloss.get_field_names()]
-
-        # TO DO
-        extra_columns = ['Sign Languages', 'Dialects',
-                         'Relations to other signs', 'Relations to foreign signs', 'Notes']
-
-        # show advanced properties
-        for field in gloss_fields:
-            api_fields_2023.append(field.verbose_name.title())
-
-        api_fields_2023.append(gettext("NME Videos"))
-
-    return api_fields_2023
 
 
 @csrf_exempt

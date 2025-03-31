@@ -9,7 +9,7 @@ import datetime as DT
 from datetime import date
 
 from django.db import models
-from django.utils.translation import override, activate
+from django.utils.translation import override, activate, gettext
 from django.views.decorators.csrf import csrf_exempt
 from django.utils.dateformat import format
 from django.core.exceptions import ObjectDoesNotExist, EmptyResultSet
@@ -32,7 +32,6 @@ from signbank.csv_interface import (sense_translations_for_language, update_sens
                                     parse_sentence_row, get_senses_to_sentences, csv_sentence_tuples_list_compare,
                                     required_csv_columns, trim_columns_in_row,
                                     normalize_field_choice)
-from signbank.api_interface import api_fields
 
 from tagging.models import TaggedItem, Tag
 from CNGT_scripts.python.extractMiddleFrame import MiddleFrameExtracter
@@ -45,6 +44,60 @@ def get_two_letter_dir(idgloss):
         foldername += '-'
 
     return foldername
+
+
+def api_fields(dataset, language_code='en', advanced=False):
+    activate(language_code)
+    api_fields_2023 = []
+    if not dataset:
+        dataset = Dataset.objects.get(acronym=DEFAULT_DATASET_ACRONYM)
+    if advanced:
+        for language in dataset.translation_languages.all():
+            language_field = gettext("Lemma ID Gloss") + ": %s" % language.name
+            api_fields_2023.append(language_field)
+    for language in dataset.translation_languages.all():
+        language_field = gettext("Annotation ID Gloss") + ": %s" % language.name
+        api_fields_2023.append(language_field)
+    for language in dataset.translation_languages.all():
+        language_field = gettext("Senses") + ": %s" % language.name
+        api_fields_2023.append(language_field)
+
+    if not advanced:
+        api_fields_2023.append(gettext("Handedness"))
+        api_fields_2023.append(gettext("Strong Hand"))
+        api_fields_2023.append(gettext("Weak Hand"))
+        api_fields_2023.append(gettext("Location"))
+        api_fields_2023.append(gettext("Semantic Field"))
+        api_fields_2023.append(gettext("Word Class"))
+        api_fields_2023.append(gettext("Named Entity"))
+        api_fields_2023.append(gettext("Link"))
+        api_fields_2023.append(gettext("Video"))
+        api_fields_2023.append(gettext("Perspective Videos"))
+    else:
+        api_fields_2023.append(gettext("Link"))
+        api_fields_2023.append(gettext("Video"))
+        api_fields_2023.append(gettext("Perspective Videos"))
+        api_fields_2023.append(gettext("Tags"))
+        api_fields_2023.append(gettext("Notes"))
+        api_fields_2023.append(gettext("Affiliation"))
+        api_fields_2023.append(gettext("Sequential Morphology"))
+        api_fields_2023.append(gettext("Simultaneous Morphology"))
+        api_fields_2023.append(gettext("Blend Morphology"))
+
+        fieldnames = FIELDS['main'] + FIELDS['phonology'] + FIELDS['semantics'] + ['inWeb', 'isNew', 'excludeFromEcv']
+        gloss_fields = [Gloss.get_field(fname) for fname in fieldnames if fname in Gloss.get_field_names()]
+
+        # TO DO
+        extra_columns = ['Sign Languages', 'Dialects',
+                         'Relations to other signs', 'Relations to foreign signs', 'Notes']
+
+        # show advanced properties
+        for field in gloss_fields:
+            api_fields_2023.append(field.verbose_name.title())
+
+        api_fields_2023.append(gettext("NME Videos"))
+
+    return api_fields_2023
 
 
 def save_media(source_folder, language_code_3char, goal_folder, gloss, extension):
