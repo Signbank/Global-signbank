@@ -1,9 +1,7 @@
 
 from django.core.exceptions import ObjectDoesNotExist
 
-# Code seems to be missing some object retrieval statements (see code above ObjectDoesNotExist)
-# Function parameter "variants" may be ids or it may be objects, check invoker
-from signbank.dictionary.models import Dataset, Gloss, AnnotationIdglossTranslation
+from signbank.dictionary.models import Gloss
 
 # these are the categories that are displayed in chartjs in the GlossFrequencyView template
 SEX_CATEGORIES = ['Female', 'Male']
@@ -36,6 +34,7 @@ def collect_variants_data(variants):
     # returns a tuple
     #   variants data quick access: dictionary mapping variant annotation to speaker data for variant
     #   sorted variants with keys: sorted list of pairs ( variant annotation, variant object )
+    assert all(isinstance(v, Gloss) for v in variants), TypeError("Not a List of Gloss objects")
     if not variants:
         return {}, []
     variants_with_keys = []
