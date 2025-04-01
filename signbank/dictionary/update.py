@@ -2,6 +2,8 @@ import os
 import json
 import re
 import datetime as DT
+import urllib.parse
+import magic
 
 from django.http import (HttpResponse, HttpResponseRedirect, HttpResponseForbidden, HttpResponseBadRequest,
                          JsonResponse, Http404)
@@ -14,17 +16,22 @@ from django.db.models.fields import BooleanField, IntegerField
 from django.db import DatabaseError, IntegrityError
 from django.utils.timezone import get_current_timezone
 from django.contrib import messages
+from django.contrib.auth.models import Group
 from django.utils.translation import gettext_lazy as _
 from django.db.transaction import atomic, TransactionManagementError
 from django.contrib.auth.models import User
 
 from guardian.shortcuts import get_user_perms, get_group_perms, get_objects_for_user
 from tagging.models import TaggedItem, Tag
+from dateutil.relativedelta import relativedelta
 
 from signbank.video.forms import VideoUploadForObjectForm
-from signbank.video.models import AnnotatedVideo, GlossVideoNME, GlossVideoDescription, GlossVideoHistory, GlossVideoPerspective
+from signbank.video.models import (AnnotatedVideo, GlossVideoNME, GlossVideoDescription, GlossVideoHistory,
+                                   GlossVideoPerspective, get_annotated_video_file_path)
+from signbank.video.convertvideo import convert_video
 
-from signbank.settings.server_specific import (WRITABLE_FOLDER, PREFIX_URL, USE_REGULAR_EXPRESSIONS, SHOW_DATASET_INTERFACE_OPTIONS,
+from signbank.settings.server_specific import (WRITABLE_FOLDER, PREFIX_URL, USE_REGULAR_EXPRESSIONS,
+                                               SHOW_DATASET_INTERFACE_OPTIONS,
                                                OTHER_MEDIA_DIRECTORY, MORPHEME_DISPLAY_FIELDS,
                                                DATASET_METADATA_DIRECTORY, DATASET_EAF_DIRECTORY,
                                                GUARDED_GLOSS_DELETE, GUARDED_MORPHEME_DELETE,
@@ -48,10 +55,12 @@ from signbank.dictionary.forms import (RelationForm, VariantsForm, RelationToFor
                                        SemanticFieldColorForm, HandshapeColorForm, DerivationHistoryColorForm,
                                        TagUpdateForm)
 from signbank.dictionary.translate_choice_list import machine_value_to_translated_human_value
+from signbank.dictionary.context_data import get_selected_datasets
+
 from signbank.tools import gloss_from_identifier, get_default_annotationidglosstranslation
 from signbank.frequency import document_identifiers_from_paths, documents_paths_dictionary
 from signbank.dictionary.update_senses_mapping import (mapping_edit_keywords, mapping_group_keywords, mapping_add_keyword,
-    mapping_edit_senses_matrix, mapping_toggle_sense_tag)
+                                                       mapping_edit_senses_matrix, mapping_toggle_sense_tag)
 from signbank.dictionary.consistency_senses import reorder_translations
 from signbank.dictionary.related_objects import gloss_related_objects, morpheme_related_objects
 from signbank.dictionary.update_glosses import (mapping_toggle_relOriLoc, mapping_toggle_locprim, mapping_toggle_handCh,
@@ -65,7 +74,6 @@ from signbank.dictionary.batch_edit import batch_edit_update_gloss, add_gloss_up
 
 
 def show_error(request, translated_message, form, dataset_languages):
-    from signbank.dictionary.context_data import get_selected_datasets
     # this function is used by the add_gloss function below
     messages.add_message(request, messages.ERROR, translated_message)
     return render(request, 'dictionary/add_gloss.html',
@@ -87,7 +95,6 @@ def add_gloss(request):
         dataset = Dataset.objects.get(pk=request.POST['dataset'])
         selected_datasets = Dataset.objects.filter(pk=request.POST['dataset'])
     else:
-        from signbank.dictionary.context_data import get_selected_datasets
         selected_datasets = get_selected_datasets(request)
     dataset_languages = Language.objects.filter(dataset__in=selected_datasets).distinct()
 
@@ -851,7 +858,7 @@ def update_gloss(request, glossid):
         # in case somebody tries an empty or non-existent dataset name
         try:
             ds = Dataset.objects.get(name=value)
-        except:
+        except ObjectDoesNotExist:
             return HttpResponse(str(original_value), {'content-type': 'text/plain'})
 
         if ds.is_public:
@@ -889,7 +896,7 @@ def update_gloss(request, glossid):
         else:
             try:
                 value = int(value)
-            except:
+            except ValueError:
                 return HttpResponseBadRequest("SN value must be integer", {'content-type': 'text/plain'})
 
             existing_gloss = Gloss.objects.filter(sn__exact=value)
@@ -1300,7 +1307,7 @@ def update_signlanguage(gloss, field, values):
                 dialects_value = ''
         gloss.save()
         new_signlanguage_value = ", ".join([str(g) for g in gloss.signlanguage.all()])
-    except:
+    except ObjectDoesNotExist:
         return HttpResponseBadRequest("Unknown Language %s" % values, {'content-type': 'text/plain'})
 
     return HttpResponse(str(new_signlanguage_value) + '\t' + str(dialects_value), {'content-type': 'text/plain'})
@@ -1336,7 +1343,7 @@ def update_dialect(gloss, field, values):
         # The signlanguage value is set to the currect sign languages value
         signlanguage_value = ", ".join([str(g) for g in gloss.signlanguage.all()])
         new_dialects_value = ", ".join([str(d.signlanguage.name)+'/'+str(d.name) for d in gloss.dialect.all()])
-    except:
+    except ObjectDoesNotExist:
         return HttpResponseBadRequest("Dialect %s does not match Sign Language of Gloss" % error_string_values,
                                       {'content-type': 'text/plain'})
 
@@ -2085,7 +2092,6 @@ def save_edit_annotated_sentence(request):
         if 'eaffile' in request.FILES:
             annotated_sentence.annotatedvideo.delete_files(only_eaf=True)
             eaffile = request.FILES['eaffile']
-            from signbank.video.models import get_annotated_video_file_path
             eaf_file_path = get_annotated_video_file_path(instance=annotated_sentence.annotatedvideo, filename=eaffile.name)
             annotated_sentence.annotatedvideo.eaffile.save(eaf_file_path, eaffile)
 
@@ -2131,8 +2137,6 @@ def add_othermedia(request):
     else:
         gloss_or_morpheme = morpheme_or_gloss
         reverse_url = 'dictionary:admin_gloss_view'
-
-    import os
 
     othermedia_exists = os.path.exists(OTHER_MEDIA_DIRECTORY)
     if not othermedia_exists:
@@ -2202,7 +2206,6 @@ def add_othermedia(request):
         f = open(goal_path, 'wb+')
         filename_plus_extension = destination_filename
     except (UnicodeEncodeError, IOError, OSError):
-        import urllib.parse
         quoted_filename = urllib.parse.quote(filename_base, safe='')
         filename_plus_extension = quoted_filename + '.' + extension
         goal_location_str = os.path.join(goal_directory, filename_plus_extension)
@@ -2229,7 +2232,6 @@ def add_othermedia(request):
 
     destination_location = os.path.join(goal_directory, filename_plus_extension)
 
-    import magic
     magic_file_type = magic.from_buffer(open(destination_location, "rb").read(2040), mime=True)
 
     if not magic_file_type:
@@ -2246,7 +2248,6 @@ def add_othermedia(request):
         other_media_path = str(gloss_or_morpheme.pk) + '/' + new_destination_location
         target_destination_location = os.path.join(goal_directory, new_destination_location)
 
-        from signbank.video.convertvideo import convert_video
         # convert the quicktime video to mp4
         success = convert_video(destination_location, target_destination_location)
         if not success:
@@ -2268,7 +2269,6 @@ def add_othermedia(request):
         temp_destination_location = destination_location + ".mov"
         os.rename(destination_location, temp_destination_location)
 
-        from signbank.video.convertvideo import convert_video
         # convert the video to h264
         success = convert_video(temp_destination_location, destination_location)
 
@@ -2350,7 +2350,6 @@ def add_morpheme(request):
         dataset = Dataset.objects.get(pk=request.POST['dataset'])
         selected_datasets = Dataset.objects.filter(pk=request.POST['dataset'])
     else:
-        from signbank.dictionary.context_data import get_selected_datasets
         selected_datasets = get_selected_datasets(request)
     dataset_languages = Language.objects.filter(dataset__in=selected_datasets).distinct()
 
@@ -2375,7 +2374,7 @@ def add_morpheme(request):
         try:
             lemmaidgloss_id = request.POST['idgloss']
             lemmaidgloss = LemmaIdgloss.objects.get(id=lemmaidgloss_id)
-        except:
+        except ObjectDoesNotExist:
             messages.add_message(request, messages.ERROR,
                                  _("The given Lemma Idgloss ID is unknown."))
             return render(request, 'dictionary/add_morpheme.html', {'add_morpheme_form': form})
@@ -2538,7 +2537,7 @@ def update_morpheme(request, morphemeid):
         # in case somebody tries an empty or non-existent dataset name
         try:
             ds = Dataset.objects.get(name=value)
-        except:
+        except ObjectDoesNotExist:
             return HttpResponse(str(original_value), {'content-type': 'text/plain'})
 
         if ds.is_public:
@@ -2698,10 +2697,9 @@ def update_morpheme_definition(gloss, field, value):
     """Update the morpheme definition for this gloss"""
 
     newvalue = value
-    original_value = ''
     category_value = 'simultaneous_morphology'
     (what, morph_def_id) = field.split('_')
-    what = what.replace('-','_')
+    what = what.replace('-', '_')
 
     gloss.lastUpdated = DT.datetime.now(tz=get_current_timezone())
     gloss.save()
@@ -2715,7 +2713,7 @@ def update_morpheme_definition(gloss, field, value):
         original_value = getattr(definition, 'role')
         definition.__setattr__('role', value)
         definition.save()
-        return HttpResponse(str(original_value) + '\t' + str(newvalue) + '\t' +  str(value) + str('\t') + str(category_value), {'content-type': 'text/plain'})
+        return HttpResponse(str(original_value) + '\t' + str(newvalue) + '\t' + str(value) + str('\t') + str(category_value), {'content-type': 'text/plain'})
     else:
         return HttpResponseBadRequest("Unknown form field '%s'" % field, {'content-type': 'text/plain'})
 
@@ -2724,10 +2722,9 @@ def update_blend_definition(gloss, field, value):
     """Update the morpheme definition for this gloss"""
 
     newvalue = value
-    original_value = ''
     category_value = 'blend_morphology'
     (what, blend_id) = field.split('_')
-    what = what.replace('-','_')
+    what = what.replace('-', '_')
 
     gloss.lastUpdated = DT.datetime.now(tz=get_current_timezone())
     gloss.save()
@@ -2972,11 +2969,9 @@ def update_dataset(request, datasetid):
         dataset = get_object_or_404(Dataset, id=datasetid)
         dataset.save() # This updates the lastUpdated field
 
-        from django.contrib.auth.models import Group
-
         try:
             group_manager = Group.objects.get(name='Dataset_Manager')
-        except:
+        except ObjectDoesNotExist:
             messages.add_message(request, messages.ERROR, _('No group Dataset_Manager found.'))
             return HttpResponseForbidden("Dataset Update Not Allowed")
 
@@ -3047,7 +3042,7 @@ def update_dataset(request, datasetid):
                     new_default_language = Language.objects.get(name=value)
                     setattr(dataset, field, new_default_language)
                     dataset.save()
-                except:
+                except ObjectDoesNotExist:
                     value = original_value
             return HttpResponse(str(original_value) + str('\t') + str(value), {'content-type': 'text/plain'})
         else:
@@ -3095,14 +3090,13 @@ def update_owner(dataset, field, values):
         # dataset.save()
         print('save dataset')
         new_owners_value = ", ".join([str(o.username) for o in dataset.owners.all()])
-    except:
+    except ObjectDoesNotExist:
         return HttpResponseBadRequest("Unknown Language %s" % values, {'content-type': 'text/plain'})
 
     return HttpResponse(str(new_owners_value) + '\t' + str(owners_value), {'content-type': 'text/plain'})
 
 
 def update_excluded_choices(request):
-    from signbank.dictionary.context_data import get_selected_datasets
     selected_datasets = get_selected_datasets(request)
 
     managed_datasets = []
@@ -3123,7 +3117,7 @@ def update_excluded_choices(request):
         try:
             dataset, choice_pk = key.split('|')
             category = None
-        except:
+        except KeyError:
             category, choice_pk = key.split('_color_')
             dataset = None
 
@@ -3131,7 +3125,7 @@ def update_excluded_choices(request):
             try:
                 choice_pk = int(choice_pk)
                 excluded_choices[dataset].append(choice_pk)
-            except:
+            except ValueError:
                 print('dataset, field choice not possible: ', key, dataset, choice_pk)
         else:
             # category
@@ -3147,7 +3141,7 @@ def update_excluded_choices(request):
         for fcpk in choice_pks:
             try:
                 fco = FieldChoice.objects.get(pk=fcpk)
-            except:
+            except ObjectDoesNotExist:
                 # something went wrong
                 print('Field choice pk not found: ', fcpk)
                 continue
@@ -3158,6 +3152,7 @@ def update_excluded_choices(request):
         #     dataset.exclude_choices.add(eo)
 
     return HttpResponseRedirect(reverse('admin_dataset_field_choices'))
+
 
 def update_field_choice_color(request, category, fieldchoiceid):
 
@@ -3346,8 +3341,6 @@ def upload_eaf_files(request):
             for chunk in f.chunks():
                 f_handle.write(chunk)
 
-        # this import has limited usage, reduce its scope
-        import magic
         # check whether anything should not have been uploaded
         # check the type of the first chunk of the uploaded files
         # check that the files do not already exist
@@ -3410,6 +3403,7 @@ def upload_eaf_files(request):
 
         return HttpResponseRedirect(reverse('admin_dataset_manager'))
 
+
 def update_expiry(request):
 
     # if something is wrong with the call, proceed to Signbank Welcome Page
@@ -3435,7 +3429,6 @@ def update_expiry(request):
     except ObjectDoesNotExist:
         HttpResponseRedirect(request.META.get('HTTP_REFERER'))
 
-    from dateutil.relativedelta import relativedelta
     expiry = getattr(user_profile, 'expiry_date')
 
     # Check if we have an expiry date
@@ -3558,7 +3551,6 @@ def assign_lemma_dataset_to_gloss(request, glossid):
     dataset_of_dummy = dummy_lemma.dataset
     dummy_dataset_name = str(dataset_of_dummy.name)
 
-    from signbank.dictionary.context_data import get_selected_datasets
     selected_datasets = get_selected_datasets(request)
 
     if not request.user.is_superuser:
@@ -3942,7 +3934,6 @@ def trash_gloss(request, glossid):
     if not request.user.has_perm('dictionary.change_gloss'):
         return HttpResponseForbidden("Gloss update not allowed")
 
-    from django.contrib.auth.models import Group
     group_manager = Group.objects.filter(name='Dataset_Manager').first()
     groups_of_user = request.user.groups.all()
     if group_manager not in groups_of_user:

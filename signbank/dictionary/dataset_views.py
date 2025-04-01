@@ -1,21 +1,19 @@
-
-from signbank.dictionary.context_data import get_selected_datasets
-from django.views.generic.list import ListView
-from django.views.generic.detail import DetailView
-from django.core.paginator import Paginator
-from django.views.generic.edit import CreateView, DeleteView, UpdateView
-from signbank.dictionary.models import Dataset, Gloss, AnnotationIdglossTranslation
-
-from signbank.dataset_operations import (find_unlinked_video_files_for_dataset, gloss_annotations_check, gloss_videos_check, gloss_video_filename_check, gloss_subclass_videos_check)
-from signbank.tools import get_dataset_languages
-from signbank.settings.server_specific import *
-from guardian.shortcuts import get_objects_for_user
-from django.core.exceptions import PermissionDenied, ObjectDoesNotExist
-from signbank.dictionary.adminviews import show_warning
 from django.contrib import messages
 from django.shortcuts import *
 from django.conf import settings
-from django.utils.translation import override, gettext, gettext_lazy as _, activate
+from django.utils.translation import gettext_lazy as _
+from django.core.exceptions import ObjectDoesNotExist
+from django.views.generic.detail import DetailView
+
+from signbank.settings.server_specific import *
+
+from signbank.dictionary.models import Dataset, Gloss
+
+from signbank.dataset_operations import (find_unlinked_video_files_for_dataset, gloss_annotations_check,
+                                         gloss_videos_check, gloss_video_filename_check, gloss_subclass_videos_check)
+from signbank.tools import get_dataset_languages
+from signbank.dictionary.adminviews import show_warning
+from signbank.dictionary.context_data import get_selected_datasets
 
 
 class DatasetConstraintsView(DetailView):
@@ -81,4 +79,3 @@ class DatasetConstraintsView(DetailView):
         context['messages'] = messages.get_messages(self.request)
 
         return context
-

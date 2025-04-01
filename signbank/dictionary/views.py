@@ -1,57 +1,68 @@
 import os.path
+import datetime as DT
+import csv
+import time
+import sys
+import re
+import json
 
-from django.conf import empty
-from django.http import HttpResponse, HttpResponseRedirect, HttpResponseBadRequest, HttpResponseNotAllowed, Http404, JsonResponse
+from django.http import (HttpResponse, HttpResponseRedirect, HttpResponseBadRequest, HttpResponseNotAllowed,
+                         Http404, JsonResponse)
 from django.shortcuts import render, get_object_or_404, redirect
 from django.urls import reverse
 from django.contrib.auth.decorators import login_required
 from django.utils.datastructures import MultiValueDictKeyError
-from tagging.models import Tag, TaggedItem
 from urllib.parse import quote
 from django.contrib import messages
-from pathlib import Path
+from django.core.exceptions import ValidationError, ObjectDoesNotExist, MultipleObjectsReturned
+from django.utils.translation import gettext_lazy as _, activate, override, gettext
+from django.views.decorators.csrf import csrf_exempt
+from django.utils.timezone import get_current_timezone
+from django.views.static import serve
+from django.db.transaction import atomic
+from django.db.models import Q
+from django.core.files import File
 
-import csv
-import time
-import sys
+from guardian.shortcuts import get_user_perms, get_objects_for_user
+from tagging.models import TaggedItem
+from wsgiref.util import FileWrapper
 
-from signbank.dictionary.forms import *
-from signbank.dictionary.models import Gloss
-from signbank.feedback.models import *
+from signbank.video.models import (GlossVideo, small_appendix, add_small_appendix)
+from signbank.settings.server_specific import (PREFIX_URL, WRITABLE_FOLDER, GLOSS_VIDEO_DIRECTORY, GLOSS_IMAGE_DIRECTORY,
+                                               SHOW_DATASET_INTERFACE_OPTIONS, SIGNBANK_PACKAGES_FOLDER,
+                                               LANGUAGE_CODE, USE_HANDSHAPE, HANDSHAPE_IMAGE_DIRECTORY,
+                                               RECENTLY_ADDED_SIGNS_PERIOD, USE_REGULAR_EXPRESSIONS,
+                                               FIELDS, DEFINITION_FIELDS, SHOW_QUERY_PARAMETERS_AS_BUTTON,
+                                               DEFAULT_LANGUAGE_HEADER_COLUMN, DEFAULT_DATASET_ACRONYM)
+from signbank.settings.base import (MAXIMUM_UPLOAD_SIZE, SUPPORTED_CITATION_IMAGE_EXTENSIONS, USE_X_SENDFILE,
+                                    ALWAYS_REQUIRE_LOGIN, MEDIA_ROOT, ESCAPE_UPLOADED_VIDEO_FILE_PATH)
+
+from signbank.dictionary.models import (Dataset, Language, Gloss, Morpheme, LemmaIdgloss, LemmaIdglossTranslation,
+                                        Handshape, SignLanguage, AnnotatedSentence,
+                                        AnnotationIdglossTranslation, FieldChoice, AffiliatedUser, AffiliatedGloss,
+                                        DeletedGlossOrMedia,
+                                        get_default_language_id, CATEGORY_MODELS_MAPPING)
+from signbank.dictionary.forms import (LemmaCreateForm, GlossCreateForm, MorphemeCreateForm, ImageUploadForHandshapeForm,
+                                       ImageUploadForGlossForm, CSVUploadForm)
 from signbank.dictionary.update import (update_signlanguage, update_dialect)
 from signbank.dictionary.update_csv import (update_simultaneous_morphology, update_blend_morphology,
                                             update_sequential_morphology, subst_relations, subst_foreignrelations,
                                             update_tags, subst_notes, subst_semanticfield)
-import signbank.dictionary.forms
-from signbank.video.models import GlossVideo, small_appendix, add_small_appendix
-
 from signbank.dictionary.context_data import get_selected_datasets
-from signbank.tools import save_media, get_two_letter_dir
-from signbank.tools import (get_default_annotationidglosstranslation,
-    get_dataset_languages, get_datasets_with_public_glosses,
-    create_gloss_from_valuedict, compare_valuedict_to_gloss, compare_valuedict_to_lemma, construct_scrollbar,
-    get_interface_language_and_default_language_codes, detect_delimiter, split_csv_lines_header_body,
-    split_csv_lines_sentences_header_body, create_sentence_from_valuedict)
+from signbank.tools import (get_two_letter_dir, get_default_annotationidglosstranslation,
+                            get_dataset_languages, get_datasets_with_public_glosses,
+                            create_gloss_from_valuedict, compare_valuedict_to_gloss, compare_valuedict_to_lemma,
+                            construct_scrollbar, create_zip_with_json_files,
+                            get_interface_language_and_default_language_codes, detect_delimiter,
+                            split_csv_lines_header_body,
+                            split_csv_lines_sentences_header_body, create_sentence_from_valuedict,
+                            get_deleted_gloss_or_media_data, get_gloss_data)
 from signbank.dictionary.field_choices import fields_to_fieldcategory_dict
-
 from signbank.csv_interface import (csv_create_senses, csv_update_sentences, csv_create_sentence, required_csv_columns,
                                     choice_fields_choices)
-from signbank.dictionary.translate_choice_list import machine_value_to_translated_human_value, \
-    check_value_to_translated_human_value
-
-import signbank.settings.server_specific
-from signbank.settings.base import *
-
-from urllib.parse import urlencode, urlparse
-from wsgiref.util import FileWrapper, request_uri
-import datetime as DT
-from django.views.decorators.csrf import csrf_exempt
-from django.utils.timezone import get_current_timezone
-
-from django.core.exceptions import PermissionDenied, ObjectDoesNotExist, BadRequest
-from django.utils.translation import gettext_lazy as _, activate, override
+from signbank.dictionary.translate_choice_list import (machine_value_to_translated_human_value,
+                                                       choicelist_queryset_to_translated_dict)
 from signbank.abstract_machine import get_interface_language_api
-
 from signbank.api_token import put_api_user_in_request
 from signbank.dictionary.gloss_revision import pretty_print_revisions
 
@@ -59,7 +70,7 @@ from signbank.dictionary.gloss_revision import pretty_print_revisions
 def login_required_config(f):
     """like @login_required if the ALWAYS_REQUIRE_LOGIN setting is True"""
 
-    if settings.ALWAYS_REQUIRE_LOGIN:
+    if ALWAYS_REQUIRE_LOGIN:
         return login_required(f)
     else:
         return f
@@ -94,8 +105,8 @@ def gloss(request, glossid):
     selected_datasets = get_selected_datasets(request)
     dataset_languages = Language.objects.filter(dataset__in=selected_datasets).distinct()
 
-    show_dataset_interface = getattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS', False)
-    use_regular_expressions = getattr(settings, 'USE_REGULAR_EXPRESSIONS', False)
+    show_dataset_interface = SHOW_DATASET_INTERFACE_OPTIONS
+    use_regular_expressions = USE_REGULAR_EXPRESSIONS
 
     if not(request.user.has_perm('dictionary.search_gloss') or gloss.inWeb):
         feedbackmessage = _('You are not allowed to see this sign.')
@@ -104,18 +115,18 @@ def gloss(request, glossid):
 
         return render(request, "dictionary/word.html",
                       {'sensetranslations_per_language': {},
-                              'public_title': '',
-                              'gloss_or_morpheme': 'gloss',
-                              'notes_groupedby_role': {},
-                              'translations_per_language': {},
-                              'gloss': gloss,
-                              'active_id': glossid,  # used by search_result_bar.html
-                              'search_type': request.session['search_type'],
-                              'annotation_idgloss': {},
-                              'dataset_languages': dataset_languages,
-                              'selected_datasets': selected_datasets,
-                              'USE_REGULAR_EXPRESSIONS': use_regular_expressions,
-                              'SHOW_DATASET_INTERFACE_OPTIONS': show_dataset_interface })
+                       'public_title': '',
+                       'gloss_or_morpheme': 'gloss',
+                       'notes_groupedby_role': {},
+                       'translations_per_language': {},
+                       'gloss': gloss,
+                       'active_id': glossid,  # used by search_result_bar.html
+                       'search_type': request.session['search_type'],
+                       'annotation_idgloss': {},
+                       'dataset_languages': dataset_languages,
+                       'selected_datasets': selected_datasets,
+                       'USE_REGULAR_EXPRESSIONS': use_regular_expressions,
+                       'SHOW_DATASET_INTERFACE_OPTIONS': show_dataset_interface })
 
     # Put translations (senses) per language in the context
     sensetranslations_per_language = dict()
@@ -141,7 +152,7 @@ def gloss(request, glossid):
         annotation_idgloss[language] = gloss.annotationidglosstranslation_set.filter(language=language)
 
     default_language = Language.objects.get(id=get_default_language_id())
-    public_title = gloss.annotation_idgloss(settings.LANGUAGE_CODE)
+    public_title = gloss.annotation_idgloss(LANGUAGE_CODE)
 
     # Regroup notes
     note_role_choices = FieldChoice.objects.filter(field__iexact='NoteType')
@@ -176,8 +187,8 @@ def morpheme(request, glossid):
     selected_datasets = get_selected_datasets(request)
     dataset_languages = Language.objects.filter(dataset__in=selected_datasets).distinct()
 
-    show_dataset_interface = getattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS', False)
-    use_regular_expressions = getattr(settings, 'USE_REGULAR_EXPRESSIONS', False)
+    show_dataset_interface = SHOW_DATASET_INTERFACE_OPTIONS
+    use_regular_expressions = USE_REGULAR_EXPRESSIONS
 
     # we should only be able to get a single gloss, but since the URL
     # pattern could be spoofed, we might get zero or many
@@ -227,10 +238,10 @@ def morpheme(request, glossid):
             'translation__index')
 
     videourl = morpheme.get_video_url()
-    if not os.path.exists(os.path.join(settings.MEDIA_ROOT, videourl)):
+    if not os.path.exists(os.path.join(MEDIA_ROOT, videourl)):
         videourl = None
 
-    public_title = morpheme.annotation_idgloss(settings.LANGUAGE_CODE)
+    public_title = morpheme.annotation_idgloss(LANGUAGE_CODE)
 
     annotation_idgloss = {}
     if morpheme.dataset:
@@ -263,14 +274,14 @@ def morpheme(request, glossid):
                                'annotation_idgloss': annotation_idgloss,
                                'active_id': glossid,  # used by search_result_bar.html
                                'search_type': request.session['search_type'],
-                               'DEFINITION_FIELDS' : settings.DEFINITION_FIELDS})
+                               'DEFINITION_FIELDS' : DEFINITION_FIELDS})
 
 
 def video_file_path(gloss):
     # returns the file system path of the video file without looking in GlossVideo
     idgloss = gloss.idgloss
 
-    video_dir = settings.GLOSS_VIDEO_DIRECTORY
+    video_dir = GLOSS_VIDEO_DIRECTORY
     try:
         dataset_dir = gloss.lemma.dataset.acronym
     except KeyError:
@@ -281,7 +292,7 @@ def video_file_path(gloss):
         two_letter_dir += '-'
     filename = idgloss + '-' + str(gloss.id) + ".mp4"
     path = os.path.join(video_dir, dataset_dir, two_letter_dir, filename)
-    if hasattr(settings, 'ESCAPE_UPLOADED_VIDEO_FILE_PATH') and settings.ESCAPE_UPLOADED_VIDEO_FILE_PATH:
+    if ESCAPE_UPLOADED_VIDEO_FILE_PATH:
         from django.utils.encoding import escape_uri_path
         path = escape_uri_path(path)
     return path
@@ -297,7 +308,7 @@ def missing_video_list(selected_datasets):
         gloss_video = GlossVideo.objects.filter(gloss=gloss, version=0, glossvideonme=None, glossvideoperspective=None)
         if not gloss_video.count():
             # does not have GlossVideo object
-            file_path = os.path.join(settings.WRITABLE_FOLDER, gloss_video_path)
+            file_path = os.path.join(WRITABLE_FOLDER, gloss_video_path)
             if os.path.exists(file_path.encode('utf-8')):
                 # there is a video file but no GlossVideo object
                 yield gloss, gloss_video_path
@@ -309,7 +320,7 @@ def missing_video_view(request):
     # check that the user is logged in
     if not request.user.is_authenticated:
         messages.add_message(request, messages.ERROR, _('Please login to use this functionality.'))
-        return HttpResponseRedirect(settings.PREFIX_URL + '/datasets/available')
+        return HttpResponseRedirect(PREFIX_URL + '/datasets/available')
 
     selected_datasets = get_selected_datasets(request)
 
@@ -331,8 +342,8 @@ def try_code(request, pk):
 
     context['selected_datasets'] = selected_datasets
 
-    context['SHOW_DATASET_INTERFACE_OPTIONS'] = getattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS', False)
-    context['USE_REGULAR_EXPRESSIONS'] = getattr(settings, 'USE_REGULAR_EXPRESSIONS', False)
+    context['SHOW_DATASET_INTERFACE_OPTIONS'] = SHOW_DATASET_INTERFACE_OPTIONS
+    context['USE_REGULAR_EXPRESSIONS'] = USE_REGULAR_EXPRESSIONS
 
     try:
         gloss = get_object_or_404(Gloss, pk=pk, archived=False)
@@ -381,7 +392,7 @@ def add_new_sign(request):
 
     selected_datasets = get_selected_datasets(request)
 
-    default_dataset_acronym = settings.DEFAULT_DATASET_ACRONYM
+    default_dataset_acronym = DEFAULT_DATASET_ACRONYM
     default_dataset = Dataset.objects.get(acronym=default_dataset_acronym)
 
     if len(selected_datasets) == 1:
@@ -400,8 +411,8 @@ def add_new_sign(request):
     context['selected_datasets'] = selected_datasets
     context['lemma_create_field_prefix'] = LemmaCreateForm.lemma_create_field_prefix
 
-    context['SHOW_DATASET_INTERFACE_OPTIONS'] = getattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS', False)
-    context['USE_REGULAR_EXPRESSIONS'] = getattr(settings, 'USE_REGULAR_EXPRESSIONS', False)
+    context['SHOW_DATASET_INTERFACE_OPTIONS'] = SHOW_DATASET_INTERFACE_OPTIONS
+    context['USE_REGULAR_EXPRESSIONS'] = USE_REGULAR_EXPRESSIONS
 
     context['add_gloss_form'] = GlossCreateForm(request.GET, languages=dataset_languages, user=request.user,
                                                 last_used_dataset=last_used_dataset)
@@ -418,7 +429,7 @@ def add_new_morpheme(request):
     context['dataset_languages'] = dataset_languages
     context['default_dataset_lang'] = dataset_languages.first().language_code_2char if dataset_languages else LANGUAGE_CODE
 
-    default_dataset_acronym = settings.DEFAULT_DATASET_ACRONYM
+    default_dataset_acronym = DEFAULT_DATASET_ACRONYM
     default_dataset = Dataset.objects.get(acronym=default_dataset_acronym)
 
     if len(selected_datasets) == 1:
@@ -429,8 +440,8 @@ def add_new_morpheme(request):
         last_used_dataset = None
     context['last_used_dataset'] = last_used_dataset
 
-    context['SHOW_DATASET_INTERFACE_OPTIONS'] = getattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS', False)
-    context['USE_REGULAR_EXPRESSIONS'] = getattr(settings, 'USE_REGULAR_EXPRESSIONS', False)
+    context['SHOW_DATASET_INTERFACE_OPTIONS'] = SHOW_DATASET_INTERFACE_OPTIONS
+    context['USE_REGULAR_EXPRESSIONS'] = USE_REGULAR_EXPRESSIONS
 
     form = MorphemeCreateForm(request.GET, languages=dataset_languages, user=request.user, last_used_dataset=last_used_dataset)
     context['add_morpheme_form'] = form
@@ -457,7 +468,7 @@ def import_csv_create(request):
         translation_languages_dict[dataset_object] = []
 
         for language in dataset_object.translation_languages.all():
-            language_name = getattr(language, settings.DEFAULT_LANGUAGE_HEADER_COLUMN['English'])
+            language_name = getattr(language, DEFAULT_LANGUAGE_HEADER_COLUMN['English'])
             language_tuple = (language_name, language.language_code_2char)
             translation_languages_dict[dataset_object].append(language_tuple)
 
@@ -476,7 +487,7 @@ def import_csv_create(request):
 
     encoding_error = False
 
-    uploadform = signbank.dictionary.forms.CSVUploadForm
+    uploadform = CSVUploadForm()
     changes = []
     error = []
     creation = []
@@ -506,8 +517,8 @@ def import_csv_create(request):
                            'selected_datasets': selected_datasets,
                            'translation_languages_dict': translation_languages_dict,
                            'seen_datasets': seen_datasets,
-                           'USE_REGULAR_EXPRESSIONS': settings.USE_REGULAR_EXPRESSIONS,
-                           'SHOW_DATASET_INTERFACE_OPTIONS': settings.SHOW_DATASET_INTERFACE_OPTIONS})
+                           'USE_REGULAR_EXPRESSIONS': USE_REGULAR_EXPRESSIONS,
+                           'SHOW_DATASET_INTERFACE_OPTIONS': SHOW_DATASET_INTERFACE_OPTIONS})
 
         fatal_error = False
         csv_lines = re.compile('[\r\n]+').split(csv_text)  # split csv text on any combination of new line characters
@@ -533,8 +544,8 @@ def import_csv_create(request):
                            'selected_datasets': selected_datasets,
                            'translation_languages_dict': translation_languages_dict,
                            'seen_datasets': seen_datasets,
-                           'USE_REGULAR_EXPRESSIONS': settings.USE_REGULAR_EXPRESSIONS,
-                           'SHOW_DATASET_INTERFACE_OPTIONS': settings.SHOW_DATASET_INTERFACE_OPTIONS})
+                           'USE_REGULAR_EXPRESSIONS': USE_REGULAR_EXPRESSIONS,
+                           'SHOW_DATASET_INTERFACE_OPTIONS': SHOW_DATASET_INTERFACE_OPTIONS})
 
         if '' in csv_header:
             feedback_message = _('Empty Column Header Found.')
@@ -562,8 +573,8 @@ def import_csv_create(request):
                            'selected_datasets': selected_datasets,
                            'translation_languages_dict': translation_languages_dict,
                            'seen_datasets': seen_datasets,
-                           'USE_REGULAR_EXPRESSIONS': settings.USE_REGULAR_EXPRESSIONS,
-                           'SHOW_DATASET_INTERFACE_OPTIONS': settings.SHOW_DATASET_INTERFACE_OPTIONS})
+                           'USE_REGULAR_EXPRESSIONS': USE_REGULAR_EXPRESSIONS,
+                           'SHOW_DATASET_INTERFACE_OPTIONS': SHOW_DATASET_INTERFACE_OPTIONS})
 
         # create a template for an empty row with the desired number of columns
         empty_row = [''] * len(csv_header)
@@ -652,7 +663,7 @@ def import_csv_create(request):
 
             # check annotation translations
             for language in translation_languages:
-                language_name = getattr(language, settings.DEFAULT_LANGUAGE_HEADER_COLUMN['English'])
+                language_name = getattr(language, DEFAULT_LANGUAGE_HEADER_COLUMN['English'])
                 annotationidglosstranslation_text = value_dict["Annotation ID Gloss (%s)" % language_name]
                 annotationidglosstranslations[language] = annotationidglosstranslation_text
 
@@ -666,7 +677,7 @@ def import_csv_create(request):
 
             # check lemma translations
             for language in translation_languages:
-                language_name = getattr(language, settings.DEFAULT_LANGUAGE_HEADER_COLUMN['English'])
+                language_name = getattr(language, DEFAULT_LANGUAGE_HEADER_COLUMN['English'])
                 column_name = "Lemma ID Gloss (%s)" % language_name
                 lemmaidglosstranslation_text = value_dict[column_name].strip()
                 # also stores empty values
@@ -843,8 +854,8 @@ def import_csv_create(request):
                    'selected_datasets': selected_datasets,
                    'translation_languages_dict': translation_languages_dict,
                    'seen_datasets': seen_datasets,
-                   'USE_REGULAR_EXPRESSIONS': settings.USE_REGULAR_EXPRESSIONS,
-                   'SHOW_DATASET_INTERFACE_OPTIONS': settings.SHOW_DATASET_INTERFACE_OPTIONS})
+                   'USE_REGULAR_EXPRESSIONS': USE_REGULAR_EXPRESSIONS,
+                   'SHOW_DATASET_INTERFACE_OPTIONS': SHOW_DATASET_INTERFACE_OPTIONS})
 
 
 def import_csv_update(request):
@@ -867,7 +878,7 @@ def import_csv_update(request):
         translation_languages_dict[dataset_object] = []
 
         for language in dataset_object.translation_languages.all():
-            language_name = getattr(language, settings.DEFAULT_LANGUAGE_HEADER_COLUMN['English'])
+            language_name = getattr(language, DEFAULT_LANGUAGE_HEADER_COLUMN['English'])
             language_tuple = (language_name, language.language_code_2char)
             translation_languages_dict[dataset_object].append(language_tuple)
 
@@ -884,7 +895,7 @@ def import_csv_update(request):
     # extra columns during creation:
     # (although these are ignored, it is advised to remove them to make it clear the data is not being stored)
 
-    uploadform = signbank.dictionary.forms.CSVUploadForm
+    uploadform = CSVUploadForm()
     changes = []
     error = []
     creation = []
@@ -928,8 +939,8 @@ def import_csv_update(request):
                            'choice_fields_choices': list_choice_fields_choices,
                            'translation_languages_dict': translation_languages_dict,
                            'seen_datasets': seen_datasets,
-                           'USE_REGULAR_EXPRESSIONS': settings.USE_REGULAR_EXPRESSIONS,
-                           'SHOW_DATASET_INTERFACE_OPTIONS': settings.SHOW_DATASET_INTERFACE_OPTIONS})
+                           'USE_REGULAR_EXPRESSIONS': USE_REGULAR_EXPRESSIONS,
+                           'SHOW_DATASET_INTERFACE_OPTIONS': SHOW_DATASET_INTERFACE_OPTIONS})
 
         fatal_error = False
         csv_lines = re.compile('[\r\n]+').split(csv_text) # split the csv text on any combination of new line characters
@@ -992,8 +1003,8 @@ def import_csv_update(request):
                            'choice_fields_choices': list_choice_fields_choices,
                            'translation_languages_dict': translation_languages_dict,
                            'seen_datasets': seen_datasets,
-                           'USE_REGULAR_EXPRESSIONS': settings.USE_REGULAR_EXPRESSIONS,
-                           'SHOW_DATASET_INTERFACE_OPTIONS': settings.SHOW_DATASET_INTERFACE_OPTIONS})
+                           'USE_REGULAR_EXPRESSIONS': USE_REGULAR_EXPRESSIONS,
+                           'SHOW_DATASET_INTERFACE_OPTIONS': SHOW_DATASET_INTERFACE_OPTIONS})
 
         if '' in csv_header:
             feedback_message = _('Empty Column Header Found.')
@@ -1023,8 +1034,8 @@ def import_csv_update(request):
                            'choice_fields_choices': list_choice_fields_choices,
                            'translation_languages_dict': translation_languages_dict,
                            'seen_datasets': seen_datasets,
-                           'USE_REGULAR_EXPRESSIONS': settings.USE_REGULAR_EXPRESSIONS,
-                           'SHOW_DATASET_INTERFACE_OPTIONS': settings.SHOW_DATASET_INTERFACE_OPTIONS})
+                           'USE_REGULAR_EXPRESSIONS': USE_REGULAR_EXPRESSIONS,
+                           'SHOW_DATASET_INTERFACE_OPTIONS': SHOW_DATASET_INTERFACE_OPTIONS})
 
         # create a template for an empty row with the desired number of columns
         empty_row = [''] * len(csv_header)
@@ -1104,7 +1115,7 @@ def import_csv_update(request):
             lemmaidglosstranslations = {}
             contextual_error_messages_lemmaidglosstranslations = []
             for language in dataset.translation_languages.all():
-                language_name = getattr(language, settings.DEFAULT_LANGUAGE_HEADER_COLUMN['English'])
+                language_name = getattr(language, DEFAULT_LANGUAGE_HEADER_COLUMN['English'])
                 column_name = "Lemma ID Gloss (%s)" % language_name
                 if column_name in value_dict:
                     lemma_idgloss_value = value_dict[column_name].strip()
@@ -1187,7 +1198,7 @@ def import_csv_update(request):
                 lemmaidglosstranslations_per_gloss[gloss][language_name] = new_value
 
                 # compare new value to existing value
-                language_name_column = settings.DEFAULT_LANGUAGE_HEADER_COLUMN['English']
+                language_name_column = DEFAULT_LANGUAGE_HEADER_COLUMN['English']
                 languages = Language.objects.filter(**{language_name_column:language_name})
                 if languages:
                     language = languages.first()
@@ -1212,7 +1223,7 @@ def import_csv_update(request):
             # database
             annotation_idgloss_key_prefix = "Annotation ID Gloss ("
             if fieldname.startswith(annotation_idgloss_key_prefix):
-                language_name_column = settings.DEFAULT_LANGUAGE_HEADER_COLUMN['English']
+                language_name_column = DEFAULT_LANGUAGE_HEADER_COLUMN['English']
                 language_name = fieldname[len(annotation_idgloss_key_prefix):-1]
                 languages = Language.objects.filter(**{language_name_column:language_name})
                 if languages:
@@ -1227,7 +1238,7 @@ def import_csv_update(request):
             keywords_key_prefix = "Senses ("
             # Updating the keywords is a special procedure, because it has relations to other parts of the database
             if fieldname.startswith(keywords_key_prefix):
-                language_name_column = settings.DEFAULT_LANGUAGE_HEADER_COLUMN['English']
+                language_name_column = DEFAULT_LANGUAGE_HEADER_COLUMN['English']
                 language_name = fieldname[len(keywords_key_prefix):-1]
                 language = Language.objects.filter(**{language_name_column: language_name}).first()
                 if language:
@@ -1236,7 +1247,7 @@ def import_csv_update(request):
 
             example_sentences_key_prefix = "Example Sentences ("
             if fieldname.startswith(example_sentences_key_prefix):
-                language_name_column = settings.DEFAULT_LANGUAGE_HEADER_COLUMN['English']
+                language_name_column = DEFAULT_LANGUAGE_HEADER_COLUMN['English']
                 language_name = fieldname[len(example_sentences_key_prefix):-1]
                 language = Language.objects.filter(**{language_name_column: language_name}).first()
                 if language:
@@ -1341,7 +1352,7 @@ def import_csv_update(request):
                 subst_notes(gloss,new_value)
                 continue
 
-            with override(settings.LANGUAGE_CODE):
+            with override(LANGUAGE_CODE):
                 if fieldname not in gloss_fields:
                     continue
                 field = Gloss.get_field(fieldname)
@@ -1361,7 +1372,7 @@ def import_csv_update(request):
                                                         field=Gloss.get_field(fieldname).field_choice_category)
                 # Remember this for renaming the video later
                 if fieldname == 'idgloss':
-                    video_path_before = settings.WRITABLE_FOLDER+gloss.get_video_path()
+                    video_path_before = WRITABLE_FOLDER+gloss.get_video_path()
 
                 # The normal change and save procedure
                 # the new value machine value of Handshape or FieldChoice has been replaced with an object reference above
@@ -1370,7 +1381,7 @@ def import_csv_update(request):
 
                 #Also update the video if needed
                 if fieldname == 'idgloss':
-                    video_path_after = settings.WRITABLE_FOLDER+gloss.get_video_path()
+                    video_path_after = WRITABLE_FOLDER+gloss.get_video_path()
                     if os.path.isfile(video_path_before):
                         os.rename(video_path_before,video_path_after)
 
@@ -1400,8 +1411,8 @@ def import_csv_update(request):
                    'choice_fields_choices': list_choice_fields_choices,
                    'translation_languages_dict': translation_languages_dict,
                    'seen_datasets': seen_datasets,
-                   'USE_REGULAR_EXPRESSIONS': settings.USE_REGULAR_EXPRESSIONS,
-                   'SHOW_DATASET_INTERFACE_OPTIONS': settings.SHOW_DATASET_INTERFACE_OPTIONS})
+                   'USE_REGULAR_EXPRESSIONS': USE_REGULAR_EXPRESSIONS,
+                   'SHOW_DATASET_INTERFACE_OPTIONS': SHOW_DATASET_INTERFACE_OPTIONS})
 
 
 def import_csv_lemmas(request):
@@ -1419,7 +1430,7 @@ def import_csv_lemmas(request):
         translation_languages_dict[dataset_object] = []
 
         for language in dataset_object.translation_languages.all():
-            language_name = getattr(language, settings.DEFAULT_LANGUAGE_HEADER_COLUMN['English'])
+            language_name = getattr(language, DEFAULT_LANGUAGE_HEADER_COLUMN['English'])
             language_tuple = (language_name, language.language_code_2char)
             translation_languages_dict[dataset_object].append(language_tuple)
 
@@ -1431,7 +1442,7 @@ def import_csv_lemmas(request):
     # missing Dataset column
     # missing Lemma required for the dataset
 
-    uploadform = signbank.dictionary.forms.CSVUploadForm
+    uploadform = CSVUploadForm()
     seen_datasets = []
     changes = []
     error = []
@@ -1449,8 +1460,8 @@ def import_csv_lemmas(request):
                        'selected_datasets': selected_datasets,
                        'translation_languages_dict': translation_languages_dict,
                        'seen_datasets': seen_datasets,
-                       'USE_REGULAR_EXPRESSIONS': settings.USE_REGULAR_EXPRESSIONS,
-                       'SHOW_DATASET_INTERFACE_OPTIONS': settings.SHOW_DATASET_INTERFACE_OPTIONS})
+                       'USE_REGULAR_EXPRESSIONS': USE_REGULAR_EXPRESSIONS,
+                       'SHOW_DATASET_INTERFACE_OPTIONS': SHOW_DATASET_INTERFACE_OPTIONS})
 
     # set the allowed dataset names to selected dataset, which must have change permission (checked below)
     dataset = selected_datasets.first()
@@ -1467,8 +1478,8 @@ def import_csv_lemmas(request):
                        'selected_datasets': selected_datasets,
                        'translation_languages_dict': translation_languages_dict,
                        'seen_datasets': seen_datasets,
-                       'USE_REGULAR_EXPRESSIONS': settings.USE_REGULAR_EXPRESSIONS,
-                       'SHOW_DATASET_INTERFACE_OPTIONS': settings.SHOW_DATASET_INTERFACE_OPTIONS})
+                       'USE_REGULAR_EXPRESSIONS': USE_REGULAR_EXPRESSIONS,
+                       'SHOW_DATASET_INTERFACE_OPTIONS': SHOW_DATASET_INTERFACE_OPTIONS})
 
     # Process Input File
     if len(request.FILES) > 0:
@@ -1491,8 +1502,8 @@ def import_csv_lemmas(request):
                            'selected_datasets': selected_datasets,
                            'translation_languages_dict': translation_languages_dict,
                            'seen_datasets': seen_datasets,
-                           'USE_REGULAR_EXPRESSIONS': settings.USE_REGULAR_EXPRESSIONS,
-                           'SHOW_DATASET_INTERFACE_OPTIONS': settings.SHOW_DATASET_INTERFACE_OPTIONS})
+                           'USE_REGULAR_EXPRESSIONS': USE_REGULAR_EXPRESSIONS,
+                           'SHOW_DATASET_INTERFACE_OPTIONS': SHOW_DATASET_INTERFACE_OPTIONS})
 
         fatal_error = False
         csv_lines = re.compile('[\r\n]+').split(csv_text)  # split the csv text on new line characters
@@ -1518,8 +1529,8 @@ def import_csv_lemmas(request):
                            'selected_datasets': selected_datasets,
                            'translation_languages_dict': translation_languages_dict,
                            'seen_datasets': seen_datasets,
-                           'USE_REGULAR_EXPRESSIONS': settings.USE_REGULAR_EXPRESSIONS,
-                           'SHOW_DATASET_INTERFACE_OPTIONS': settings.SHOW_DATASET_INTERFACE_OPTIONS})
+                           'USE_REGULAR_EXPRESSIONS': USE_REGULAR_EXPRESSIONS,
+                           'SHOW_DATASET_INTERFACE_OPTIONS': SHOW_DATASET_INTERFACE_OPTIONS})
 
         # create a template for an empty row with the desired number of columns
         empty_row = [''] * len(csv_header)
@@ -1577,7 +1588,7 @@ def import_csv_lemmas(request):
             # The Lemma ID Gloss may already exist.
             lemmaidglosstranslations = {}
             for language in dataset.translation_languages.all():
-                language_name = getattr(language, settings.DEFAULT_LANGUAGE_HEADER_COLUMN['English'])
+                language_name = getattr(language, DEFAULT_LANGUAGE_HEADER_COLUMN['English'])
                 column_name = "Lemma ID Gloss (%s)" % language_name
                 if column_name in value_dict:
                     lemma_idgloss_value = value_dict[column_name]
@@ -1657,7 +1668,7 @@ def import_csv_lemmas(request):
 
             lemma = LemmaIdgloss.objects.select_related().get(pk=pk)
 
-            with override(settings.LANGUAGE_CODE):
+            with override(LANGUAGE_CODE):
 
                 # when we do the changes, it has already been confirmed
                 # that changes to the translations ensure that there is at least one translation
@@ -1666,7 +1677,7 @@ def import_csv_lemmas(request):
                     language_name = fieldname[len(lemma_idgloss_key_prefix):-1]
 
                     # compare new value to existing value
-                    language_name_column = settings.DEFAULT_LANGUAGE_HEADER_COLUMN['English']
+                    language_name_column = DEFAULT_LANGUAGE_HEADER_COLUMN['English']
                     languages = Language.objects.filter(**{language_name_column: language_name})
                     if languages:
                         language = languages[0]
@@ -1703,8 +1714,8 @@ def import_csv_lemmas(request):
                    'selected_datasets': selected_datasets,
                    'translation_languages_dict': translation_languages_dict,
                    'seen_datasets': seen_datasets,
-                   'USE_REGULAR_EXPRESSIONS': settings.USE_REGULAR_EXPRESSIONS,
-                   'SHOW_DATASET_INTERFACE_OPTIONS': settings.SHOW_DATASET_INTERFACE_OPTIONS})
+                   'USE_REGULAR_EXPRESSIONS': USE_REGULAR_EXPRESSIONS,
+                   'SHOW_DATASET_INTERFACE_OPTIONS': SHOW_DATASET_INTERFACE_OPTIONS})
 
 
 def switch_to_language(request,language):
@@ -1719,7 +1730,6 @@ def switch_to_language(request,language):
 def recently_added_glosses(request):
     selected_datasets = get_selected_datasets(request)
     dataset_languages = Language.objects.filter(dataset__in=selected_datasets).distinct()
-    from signbank.settings.server_specific import RECENTLY_ADDED_SIGNS_PERIOD
 
     (interface_language, interface_language_code,
      default_language, default_language_code) = get_interface_language_and_default_language_codes(request)
@@ -1748,8 +1758,8 @@ def recently_added_glosses(request):
                    'selected_datasets': selected_datasets,
                    'language': interface_language,
                    'number_of_days': RECENTLY_ADDED_SIGNS_PERIOD.days,
-                   'USE_REGULAR_EXPRESSIONS': settings.USE_REGULAR_EXPRESSIONS,
-                   'SHOW_DATASET_INTERFACE_OPTIONS': settings.SHOW_DATASET_INTERFACE_OPTIONS})
+                   'USE_REGULAR_EXPRESSIONS': USE_REGULAR_EXPRESSIONS,
+                   'SHOW_DATASET_INTERFACE_OPTIONS': SHOW_DATASET_INTERFACE_OPTIONS})
 
 
 def proposed_new_signs(request):
@@ -1762,8 +1772,8 @@ def proposed_new_signs(request):
                    'dataset_languages': dataset_languages,
                    'selected_datasets': selected_datasets,
                    'number_of_days': RECENTLY_ADDED_SIGNS_PERIOD.days,
-                   'USE_REGULAR_EXPRESSIONS': settings.USE_REGULAR_EXPRESSIONS,
-                   'SHOW_DATASET_INTERFACE_OPTIONS': settings.SHOW_DATASET_INTERFACE_OPTIONS})
+                   'USE_REGULAR_EXPRESSIONS': USE_REGULAR_EXPRESSIONS,
+                   'SHOW_DATASET_INTERFACE_OPTIONS': SHOW_DATASET_INTERFACE_OPTIONS})
 
 
 def create_citation_image(request, pk):
@@ -1850,7 +1860,7 @@ def add_image(request):
             imagefile = form.cleaned_data['imagefile']
             extension = '.'+imagefile.name.split('.')[-1]
 
-            if extension not in settings.SUPPORTED_CITATION_IMAGE_EXTENSIONS:
+            if extension not in SUPPORTED_CITATION_IMAGE_EXTENSIONS:
 
                 feedback_message = _('File extension not supported! Please convert to png or jpg')
 
@@ -1858,7 +1868,7 @@ def add_image(request):
 
                 return redirect(url)
 
-            elif imagefile.size > settings.MAXIMUM_UPLOAD_SIZE:
+            elif imagefile.size > MAXIMUM_UPLOAD_SIZE:
 
                 feedback_message = _('Uploaded file too large!')
                 messages.add_message(request, messages.ERROR, feedback_message)
@@ -1879,7 +1889,7 @@ def add_image(request):
                 WRITABLE_FOLDER,
                 GLOSS_IMAGE_DIRECTORY,
                 gloss.lemma.dataset.acronym,
-                signbank.tools.get_two_letter_dir(gloss.idgloss)
+                get_two_letter_dir(gloss.idgloss)
             )
             goal_location_str = os.path.join(goal_path, gloss.idgloss + '-' + str(gloss.pk) + extension)
 
@@ -1894,7 +1904,7 @@ def add_image(request):
 
             #Remove previous video
             if gloss.get_image_path():
-                os.remove(settings.WRITABLE_FOLDER+gloss.get_image_path())
+                os.remove(WRITABLE_FOLDER+gloss.get_image_path())
 
             try:
                 f = open(goal_location_str.encode(sys.getfilesystemencoding()), 'wb+')
@@ -1938,7 +1948,7 @@ def delete_image(request, pk):
     image_path = gloss.get_image_path()
     if not image_path:
         return redirect(url)
-    full_image_path = settings.WRITABLE_FOLDER + image_path
+    full_image_path = WRITABLE_FOLDER + image_path
     default_annotationidglosstranslation = get_default_annotationidglosstranslation(gloss)
     if os.path.exists(full_image_path.encode('utf-8')):
         os.remove(full_image_path.encode('utf-8'))
@@ -1962,7 +1972,7 @@ def add_handshape_image(request):
     else:
         url = '/'
 
-    if not settings.USE_HANDSHAPE:
+    if not USE_HANDSHAPE:
         return redirect(url)
 
     if request.method == 'POST':
@@ -1977,14 +1987,14 @@ def add_handshape_image(request):
             imagefile = form.cleaned_data['imagefile']
             extension = '.'+imagefile.name.split('.')[-1]
 
-            if extension not in settings.SUPPORTED_CITATION_IMAGE_EXTENSIONS:
+            if extension not in SUPPORTED_CITATION_IMAGE_EXTENSIONS:
 
                 feedback_message = _('File extension not supported! Please convert to png or jpg')
                 messages.add_message(request, messages.ERROR, feedback_message)
 
                 return redirect(url)
 
-            elif imagefile.size > settings.MAXIMUM_UPLOAD_SIZE:
+            elif imagefile.size > MAXIMUM_UPLOAD_SIZE:
 
                 feedback_message = _('Uploaded file too large!')
                 messages.add_message(request, messages.ERROR, feedback_message)
@@ -1997,7 +2007,7 @@ def add_handshape_image(request):
             redirect_url = form.cleaned_data['redirect']
 
             # deal with any existing image for this sign
-            goal_path = settings.WRITABLE_FOLDER+settings.HANDSHAPE_IMAGE_DIRECTORY + '/' + str(handshape.machine_value) + '/'
+            goal_path = WRITABLE_FOLDER+HANDSHAPE_IMAGE_DIRECTORY + '/' + str(handshape.machine_value) + '/'
             goal_location = goal_path + 'handshape_' + str(handshape.machine_value) + extension
             # First make the dir if needed
             try:
@@ -2007,7 +2017,7 @@ def add_handshape_image(request):
 
             # Remove previous video
             if handshape.get_image_path():
-                os.remove(settings.WRITABLE_FOLDER+handshape.get_image_path())
+                os.remove(WRITABLE_FOLDER+handshape.get_image_path())
 
             # create the destination file
             try:
@@ -2040,7 +2050,7 @@ def gloss_annotations(this_gloss):
     count_dataset_languages = this_gloss.lemma.dataset.translation_languages.all().count() \
         if this_gloss.lemma and this_gloss.lemma.dataset else 0
     for translation in this_gloss.annotationidglosstranslation_set.all():
-        if settings.SHOW_DATASET_INTERFACE_OPTIONS and count_dataset_languages > 1:
+        if SHOW_DATASET_INTERFACE_OPTIONS and count_dataset_languages > 1:
             translations.append("{}: {}".format(translation.language, translation.text))
         else:
             translations.append("{}".format(translation.text))
@@ -2052,8 +2062,8 @@ def find_and_save_variants(request):
     selected_datasets = get_selected_datasets(request)
     dataset_languages = Language.objects.filter(dataset__in=selected_datasets).distinct()
 
-    show_dataset_interface = getattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS', False)
-    use_regular_expressions = getattr(settings, 'USE_REGULAR_EXPRESSIONS', False)
+    show_dataset_interface = SHOW_DATASET_INTERFACE_OPTIONS
+    use_regular_expressions = USE_REGULAR_EXPRESSIONS
 
     gloss_pattern_table = dict()
 
@@ -2146,11 +2156,11 @@ def get_unused_videos(request):
     dataset_languages = Language.objects.filter(dataset__in=selected_datasets).distinct()
     selected_dataset_acronyms = [ds.acronym for ds in selected_datasets]
 
-    show_dataset_interface = getattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS', False)
-    use_regular_expressions = getattr(settings, 'USE_REGULAR_EXPRESSIONS', False)
+    show_dataset_interface = SHOW_DATASET_INTERFACE_OPTIONS
+    use_regular_expressions = USE_REGULAR_EXPRESSIONS
 
     file_not_in_glossvideo_object = []
-    gloss_video_dir = os.path.join(settings.WRITABLE_FOLDER, settings.GLOSS_VIDEO_DIRECTORY)
+    gloss_video_dir = os.path.join(WRITABLE_FOLDER, GLOSS_VIDEO_DIRECTORY)
     for acronym in os.listdir(gloss_video_dir):
         if acronym not in selected_dataset_acronyms:
             continue
@@ -2160,7 +2170,7 @@ def get_unused_videos(request):
                     for filename in os.listdir(os.path.join(gloss_video_dir, acronym, folder)):
                         if small_appendix in filename:
                             filename = add_small_appendix(filename, reverse=True)
-                        gloss_video_path = os.path.join(settings.GLOSS_VIDEO_DIRECTORY, acronym, folder, filename)
+                        gloss_video_path = os.path.join(GLOSS_VIDEO_DIRECTORY, acronym, folder, filename)
                         gloss_videos = GlossVideo.objects.filter(videofile=gloss_video_path, version=0)
                         if not gloss_videos:
                             file_not_in_glossvideo_object.append((acronym, folder, filename))
@@ -2219,7 +2229,7 @@ def package(request):
         video_folder_name += '_small'
 
     archive_file_name = '.'.join([first_part_of_file_name, timestamp_part_of_file_name, 'zip'])
-    archive_file_path = settings.SIGNBANK_PACKAGES_FOLDER + archive_file_name
+    archive_file_path = SIGNBANK_PACKAGES_FOLDER + archive_file_name
 
     video_urls = {os.path.splitext(os.path.basename(gv.videofile.name))[0]:
                       reverse('dictionary:protected_media', args=[gv.small_video(use_name=True) or gv.videofile.name])
@@ -2234,15 +2244,15 @@ def package(request):
 
     collected_data = {'video_urls': video_urls,
                       'image_urls': image_urls,
-                      'glosses': signbank.tools.get_gloss_data(since_timestamp, interface_language_code,
+                      'glosses': get_gloss_data(since_timestamp, interface_language_code,
                                                                dataset, inWebSet, extended_fields)}
 
     if since_timestamp != 0:
-        collected_data['deleted_glosses'] = signbank.tools.get_deleted_gloss_or_media_data('gloss', since_timestamp)
-        collected_data['deleted_videos'] = signbank.tools.get_deleted_gloss_or_media_data('video', since_timestamp)
-        collected_data['deleted_images'] = signbank.tools.get_deleted_gloss_or_media_data('image', since_timestamp)
+        collected_data['deleted_glosses'] = get_deleted_gloss_or_media_data('gloss', since_timestamp)
+        collected_data['deleted_videos'] = get_deleted_gloss_or_media_data('video', since_timestamp)
+        collected_data['deleted_images'] = get_deleted_gloss_or_media_data('image', since_timestamp)
 
-    signbank.tools.create_zip_with_json_files(collected_data, archive_file_path)
+    create_zip_with_json_files(collected_data, archive_file_path)
 
     response = HttpResponse(FileWrapper(open(archive_file_path, 'rb')), content_type='application/zip')
     response['Content-Disposition'] = 'attachment; filename='+archive_file_name
@@ -2322,7 +2332,7 @@ def protected_media(request, filename, document_root=WRITABLE_FOLDER, show_index
             filename = quoted_filename
             path = quoted_path
 
-    if not hasattr(settings, 'USE_X_SENDFILE') or settings.USE_X_SENDFILE:
+    if not USE_X_SENDFILE:
         if filename.split('.')[-1] == 'mp4':
             response = HttpResponse(content_type='video/mp4')
         elif filename.split('.')[-1] == 'png':
@@ -2338,7 +2348,6 @@ def protected_media(request, filename, document_root=WRITABLE_FOLDER, show_index
         return response
 
     else:
-        from django.views.static import serve
         return serve(request, filename, document_root, show_indexes)
 
 
@@ -2347,8 +2356,8 @@ def show_glosses_with_no_lemma(request):
     selected_datasets = get_selected_datasets(request)
     dataset_languages = Language.objects.filter(dataset__in=selected_datasets).distinct()
 
-    show_dataset_interface = getattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS', False)
-    use_regular_expressions = getattr(settings, 'USE_REGULAR_EXPRESSIONS', False)
+    show_dataset_interface = SHOW_DATASET_INTERFACE_OPTIONS
+    use_regular_expressions = USE_REGULAR_EXPRESSIONS
 
     glosses_without_lemma = Gloss.objects.filter(lemma=None, archived=False)
     gloss_tuples = []
@@ -2458,7 +2467,6 @@ def show_unassigned_glosses(request):
                         "all_datasets":all_datasets
                       })
 
-from django.db import models
 
 def choice_lists(request):
 
@@ -2526,9 +2534,9 @@ def gloss_revision_history(request,gloss_pk):
     selected_datasets = get_selected_datasets(request)
     dataset_languages = Language.objects.filter(dataset__in=selected_datasets).distinct()
 
-    show_dataset_interface = getattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS', False)
-    show_query_parameters_as_button = getattr(settings, 'SHOW_QUERY_PARAMETERS_AS_BUTTON', False)
-    use_regular_expressions = getattr(settings, 'USE_REGULAR_EXPRESSIONS', False)
+    show_dataset_interface = SHOW_DATASET_INTERFACE_OPTIONS
+    show_query_parameters_as_button = SHOW_QUERY_PARAMETERS_AS_BUTTON
+    use_regular_expressions = USE_REGULAR_EXPRESSIONS
 
     interface_language_code = get_interface_language_api(request, request.user)
 
@@ -2606,6 +2614,7 @@ def find_interesting_frequency_examples(request):
 
     return HttpResponse(' '.join(['<a href="/dictionary/gloss/'+str(i)+'">'+str(i)+'</a>' for i in interesting_gloss_pks]))
 
+
 def gif_prototype(request):
 
     return render(request,'dictionary/gif_prototype.html')
@@ -2676,8 +2685,7 @@ def gloss_api_get_sign_name_and_media_info(request):
 
 def import_csv_create_sentences(request):
     user = request.user
-    import guardian
-    user_datasets = guardian.shortcuts.get_objects_for_user(user, 'change_dataset', Dataset)
+    user_datasets = get_objects_for_user(user, 'change_dataset', Dataset)
     user_datasets_names = [dataset.acronym for dataset in user_datasets]
 
     selected_datasets = get_selected_datasets(request)
@@ -2689,7 +2697,7 @@ def import_csv_create_sentences(request):
         translation_languages_dict[dataset_object] = []
 
         for language in dataset_object.translation_languages.all():
-            language_name = getattr(language, settings.DEFAULT_LANGUAGE_HEADER_COLUMN['English'])
+            language_name = getattr(language, DEFAULT_LANGUAGE_HEADER_COLUMN['English'])
             language_tuple = (language_name, language.language_code_2char)
             translation_languages_dict[dataset_object].append(language_tuple)
 
@@ -2698,7 +2706,7 @@ def import_csv_create_sentences(request):
 
     encoding_error = False
 
-    uploadform = signbank.dictionary.forms.CSVUploadForm
+    uploadform = CSVUploadForm()
     changes = []
     error = []
     creation = []
@@ -2729,8 +2737,8 @@ def import_csv_create_sentences(request):
                            'selected_datasets': selected_datasets,
                            'translation_languages_dict': translation_languages_dict,
                            'seen_datasets': seen_datasets,
-                           'USE_REGULAR_EXPRESSIONS': settings.USE_REGULAR_EXPRESSIONS,
-                           'SHOW_DATASET_INTERFACE_OPTIONS': settings.SHOW_DATASET_INTERFACE_OPTIONS})
+                           'USE_REGULAR_EXPRESSIONS': USE_REGULAR_EXPRESSIONS,
+                           'SHOW_DATASET_INTERFACE_OPTIONS': SHOW_DATASET_INTERFACE_OPTIONS})
 
         fatal_error = False
         csv_lines = re.compile('[\r\n]+').split(csv_text)  # split the csv text on any combination of newline characters
@@ -2755,8 +2763,8 @@ def import_csv_create_sentences(request):
                            'selected_datasets': selected_datasets,
                            'translation_languages_dict': translation_languages_dict,
                            'seen_datasets': seen_datasets,
-                           'USE_REGULAR_EXPRESSIONS': settings.USE_REGULAR_EXPRESSIONS,
-                           'SHOW_DATASET_INTERFACE_OPTIONS': settings.SHOW_DATASET_INTERFACE_OPTIONS})
+                           'USE_REGULAR_EXPRESSIONS': USE_REGULAR_EXPRESSIONS,
+                           'SHOW_DATASET_INTERFACE_OPTIONS': SHOW_DATASET_INTERFACE_OPTIONS})
 
         if extra_keys:
             # this is intended to assist the user in the case that a wrong file was selected
@@ -2769,8 +2777,8 @@ def import_csv_create_sentences(request):
                            'selected_datasets': selected_datasets,
                            'translation_languages_dict': translation_languages_dict,
                            'seen_datasets': seen_datasets,
-                           'USE_REGULAR_EXPRESSIONS': settings.USE_REGULAR_EXPRESSIONS,
-                           'SHOW_DATASET_INTERFACE_OPTIONS': settings.SHOW_DATASET_INTERFACE_OPTIONS})
+                           'USE_REGULAR_EXPRESSIONS': USE_REGULAR_EXPRESSIONS,
+                           'SHOW_DATASET_INTERFACE_OPTIONS': SHOW_DATASET_INTERFACE_OPTIONS})
 
         # create a template for an empty row with the desired number of columns
         empty_row = [''] * len(csv_header)
@@ -2850,7 +2858,7 @@ def import_csv_create_sentences(request):
             sentence_translations = dict()
             # check sentence translations
             for language in translation_languages:
-                language_name = getattr(language, settings.DEFAULT_LANGUAGE_HEADER_COLUMN['English'])
+                language_name = getattr(language, DEFAULT_LANGUAGE_HEADER_COLUMN['English'])
                 column_name = "Example Sentences (%s)" % language_name
                 sentence_text = value_dict[column_name].strip()
                 # also stores empty values
@@ -2938,8 +2946,8 @@ def import_csv_create_sentences(request):
                           'sentence_types': [fc.name for fc in FieldChoice.objects.filter(field__iexact='SentenceType')],
                           'translation_languages_dict': translation_languages_dict,
                           'seen_datasets': seen_datasets,
-                          'USE_REGULAR_EXPRESSIONS': settings.USE_REGULAR_EXPRESSIONS,
-                          'SHOW_DATASET_INTERFACE_OPTIONS': settings.SHOW_DATASET_INTERFACE_OPTIONS})
+                          'USE_REGULAR_EXPRESSIONS': USE_REGULAR_EXPRESSIONS,
+                          'SHOW_DATASET_INTERFACE_OPTIONS': SHOW_DATASET_INTERFACE_OPTIONS})
 
 
 def test_abstract_machine(request, datasetid):
@@ -2962,8 +2970,8 @@ def test_abstract_machine(request, datasetid):
                    'dataset': dataset,
                    'language_2chars': language_2chars,
                    'dataset_languages': dataset_languages,
-                   'USE_REGULAR_EXPRESSIONS': settings.USE_REGULAR_EXPRESSIONS,
-                   'SHOW_DATASET_INTERFACE_OPTIONS': settings.SHOW_DATASET_INTERFACE_OPTIONS
+                   'USE_REGULAR_EXPRESSIONS': USE_REGULAR_EXPRESSIONS,
+                   'SHOW_DATASET_INTERFACE_OPTIONS': SHOW_DATASET_INTERFACE_OPTIONS
                    })
 
 
@@ -3008,6 +3016,6 @@ def test_am_update_gloss(request, datasetid, glossid):
                    'gloss': gloss,
                    'gloss_fields': gloss_fields,
                    'dataset_languages': dataset_languages,
-                   'USE_REGULAR_EXPRESSIONS': settings.USE_REGULAR_EXPRESSIONS,
-                   'SHOW_DATASET_INTERFACE_OPTIONS': settings.SHOW_DATASET_INTERFACE_OPTIONS
+                   'USE_REGULAR_EXPRESSIONS': USE_REGULAR_EXPRESSIONS,
+                   'SHOW_DATASET_INTERFACE_OPTIONS': SHOW_DATASET_INTERFACE_OPTIONS
                    })

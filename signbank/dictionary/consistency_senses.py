@@ -1,10 +1,9 @@
-from django.shortcuts import get_object_or_404
-
-from django.contrib.auth.decorators import permission_required
 from django.db import DatabaseError, IntegrityError
 from django.db.transaction import TransactionManagementError
 
-from signbank.dictionary.models import *
+from signbank.settings.server_specific import DEBUG_SENSES
+
+from signbank.dictionary.models import GlossSense
 
 
 def consistent_senses(gloss, include_translations=False, allow_empty_language=False):
@@ -33,7 +32,7 @@ def consistent_senses(gloss, include_translations=False, allow_empty_language=Fa
             if allow_empty_language and not sense_translation:
                 continue
             translations = sense_translation.translations.all()
-            if settings.DEBUG_SENSES:
+            if DEBUG_SENSES:
                 for t in translations:
                     print("'gloss': ", str(gloss.id), ", 'sense': ", str(order),
                           ", 'orderIndex': ", str(t.orderIndex), ", 'language': ", str(t.language),
