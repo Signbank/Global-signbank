@@ -1,32 +1,20 @@
-import signbank.settings
-from signbank.settings.base import WSGI_FILE, WRITABLE_FOLDER, GLOSS_VIDEO_DIRECTORY, LANGUAGE_CODE
 import os
-import shutil
-from html.parser import HTMLParser
-from zipfile import ZipFile
 import json
-import re
-from urllib.parse import quote
 import csv
-from django.utils.translation import override, gettext_lazy as _
-from django.contrib.auth.decorators import permission_required
 
-from django.utils.translation import override
-
-from signbank.dictionary.models import *
-from signbank.tools import get_default_annotationidglosstranslation
-from django.utils.dateformat import format
-from django.core.exceptions import ObjectDoesNotExist, EmptyResultSet
-from django.http import HttpResponse, HttpResponseRedirect
-from django.shortcuts import *
+from django.core.exceptions import ObjectDoesNotExist, MultipleObjectsReturned
+from django.shortcuts import get_object_or_404, HttpResponseRedirect, HttpResponse
 from django.contrib import messages
-from django.db import OperationalError, ProgrammingError
-from django.urls import reverse
-from tagging.models import TaggedItem, Tag
+from django.db.models import Q
 
-from signbank.settings.base import ECV_FILE,EARLIEST_GLOSS_CREATION_DATE, FIELDS, SEPARATE_ENGLISH_IDGLOSS_FIELD, LANGUAGE_CODE, ECV_SETTINGS, URL, LANGUAGE_CODE_MAP
-from signbank.settings.server_specific import *
-from guardian.shortcuts import get_objects_for_user
+from django.utils.translation import gettext_lazy as _
+
+from signbank.settings.server_specific import (PREFIX_URL, WRITABLE_FOLDER, TEST_DATA_DIRECTORY, DATASET_EAF_DIRECTORY,
+                                               DATASET_METADATA_DIRECTORY, METADATA_LOCATION,
+                                               MINIMUM_OVERLAP_BETWEEN_SIGNING_HANDS)
+
+from signbank.dictionary.models import Dataset, Gloss, Corpus, Document, Speaker, GlossFrequency
+from signbank.tools import get_default_annotationidglosstranslation
 
 
 def get_gloss_from_frequency_dict(dataset_acronym, gloss_id_or_value):
@@ -82,6 +70,7 @@ def get_gloss_tokNoSgnr(dataset_acronym, gloss_id):
     total_speakers = len(speakers)
     return total_speakers
 
+
 def remove_document_from_corpus(dataset_acronym, document_identifier):
     print('Remove deleted document from corpus ', dataset_acronym, ': ', document_identifier)
     glosses_to_update = {}
@@ -100,6 +89,7 @@ def remove_document_from_corpus(dataset_acronym, document_identifier):
         glosses_to_update[gid].save()
     return
 
+
 def speaker_to_glosses(dataset_acronym, speaker_id):
     # maps a speaker id to glosses that occur in frequency data
     # the corpus name is also a parameter because the speaker identifiers are suffixed with it
@@ -109,6 +99,7 @@ def speaker_to_glosses(dataset_acronym, speaker_id):
     glosses = [ fg.gloss.id for fg in glosses_frequencies_filtered_per_speaker_id ]
     glosses = sorted(list(set(glosses)))
     return glosses
+
 
 def dictionary_speakers_to_glosses(dataset_acronym):
 
@@ -129,6 +120,7 @@ def dictionary_speakers_to_glosses(dataset_acronym):
             speakers_sign_glosses[speaker_id] = glosses_signed
     return speakers_sign_glosses
 
+
 def speaker_to_documents(dataset_acronym, speaker_id):
     # maps a speaker id to corpus documents that occur in frequency data
     # the corpus name is also a parameter because the speaker identifiers are suffixed with it
@@ -138,6 +130,7 @@ def speaker_to_documents(dataset_acronym, speaker_id):
     documents = [ fg.document.identifier for fg in glosses_frequencies_filtered_per_speaker_id ]
     documents = sorted(list(set(documents)))
     return documents
+
 
 def dictionary_speakers_to_documents(dataset_acronym):
 
@@ -158,12 +151,14 @@ def dictionary_speakers_to_documents(dataset_acronym):
             speakers_sign_in_documents[speaker_id] = documents
     return speakers_sign_in_documents
 
+
 def gloss_to_speakers(gloss_id):
     # maps a gloss id to speakers that occur in frequency data for the gloss
     glosses_frequencies = GlossFrequency.objects.filter(gloss__id=gloss_id)
     speakers = [ fg.speaker.participant() for fg in glosses_frequencies]
     speakers = sorted(list(set(speakers)))
     return speakers
+
 
 def dictionary_glosses_to_speakers(dataset_acronym):
     # maps a corpus name to a dictionary that maps gloss ids to speakers that occur in frequency data for that gloss
@@ -186,12 +181,14 @@ def dictionary_glosses_to_speakers(dataset_acronym):
             glosses_signed_by_speakers[gid] = speakers
     return glosses_signed_by_speakers
 
+
 def gloss_to_documents(gloss_id):
     # maps a gloss id to documents that occur in frequency data for the gloss
     glosses_frequencies = GlossFrequency.objects.filter(gloss__id=gloss_id)
     documents = [ fg.document.identifier for fg in glosses_frequencies]
     documents = sorted(list(set(documents)))
     return documents
+
 
 def dictionary_glosses_to_documents(dataset_acronym):
 
@@ -212,17 +209,20 @@ def dictionary_glosses_to_documents(dataset_acronym):
             glosses_appear_in_documents[gloss_id] = documents
     return glosses_appear_in_documents
 
+
 def document_to_number_of_glosses(dataset_acronym, document_id):
     glosses_frequencies = GlossFrequency.objects.filter(document__corpus__name=dataset_acronym,
                                                         document__identifier=document_id).values('speaker__identifier', 'gloss__id', 'frequency')
     glosses = [gf['gloss__id'] for gf in glosses_frequencies]
     return len(sorted(list(set(glosses))))
 
+
 def document_to_glosses(dataset_acronym, document_id):
     glosses_frequencies = GlossFrequency.objects.filter(document__corpus__name=dataset_acronym, document__identifier=document_id)
     glosses = [ fg.gloss.id for fg in glosses_frequencies]
     glosses = sorted(list(set(glosses)))
     return glosses
+
 
 def dictionary_documents_to_glosses(dataset_acronym):
 
@@ -250,6 +250,7 @@ def document_to_speakers(dataset_acronym, document_id):
     speakers = sorted(list(set(speakers)))
     return speakers
 
+
 def dictionary_documents_to_speakers(dataset_acronym):
 
     glosses_frequencies = GlossFrequency.objects.filter(document__corpus__name=dataset_acronym)
@@ -270,14 +271,15 @@ def dictionary_documents_to_speakers(dataset_acronym):
             documents_contain_speakers[document_id] = speakers
     return documents_contain_speakers
 
+
 def uploaded_eaf_paths(dataset_acronym, **kwargs):
 
     # This function retrieves the paths of eaf files for the dataset from the file system
     # It's purpose is to keep code less cumbersome elsewhere
     if 'testing' in kwargs.keys():
-        dataset_eaf_folder = os.path.join(settings.WRITABLE_FOLDER,settings.TEST_DATA_DIRECTORY,settings.DATASET_EAF_DIRECTORY, dataset_acronym)
+        dataset_eaf_folder = os.path.join(WRITABLE_FOLDER, TEST_DATA_DIRECTORY, DATASET_EAF_DIRECTORY, dataset_acronym)
     else:
-        dataset_eaf_folder = os.path.join(settings.WRITABLE_FOLDER,settings.DATASET_EAF_DIRECTORY,dataset_acronym)
+        dataset_eaf_folder = os.path.join(WRITABLE_FOLDER, DATASET_EAF_DIRECTORY,dataset_acronym)
 
     uploaded_eafs = []
     if os.path.isdir(dataset_eaf_folder):
@@ -304,9 +306,9 @@ def documents_paths_dictionary(dataset_acronym, **kwargs):
     # It also keeps track of whether duplicate files are found
 
     if 'testing' in kwargs.keys():
-        dataset_eaf_folder = os.path.join(settings.WRITABLE_FOLDER,settings.TEST_DATA_DIRECTORY,settings.DATASET_EAF_DIRECTORY, dataset_acronym)
+        dataset_eaf_folder = os.path.join(WRITABLE_FOLDER, TEST_DATA_DIRECTORY, DATASET_EAF_DIRECTORY, dataset_acronym)
     else:
-        dataset_eaf_folder = os.path.join(settings.WRITABLE_FOLDER,settings.DATASET_EAF_DIRECTORY,dataset_acronym)
+        dataset_eaf_folder = os.path.join(WRITABLE_FOLDER, DATASET_EAF_DIRECTORY, dataset_acronym)
 
     # Set up initial data structures
     #  -- uploaded_eafs_dict
@@ -389,9 +391,9 @@ def get_names_of_updated_eaf_files(dataset_acronym, **kwargs):
     # if glosses have been added the eaf files should be processed again in case the glosses were not found the previous time
 
     if 'testing' in kwargs.keys():
-        dataset_eaf_folder = os.path.join(settings.WRITABLE_FOLDER,settings.TEST_DATA_DIRECTORY,settings.DATASET_EAF_DIRECTORY, dataset_acronym)
+        dataset_eaf_folder = os.path.join(WRITABLE_FOLDER, TEST_DATA_DIRECTORY, DATASET_EAF_DIRECTORY, dataset_acronym)
     else:
-        dataset_eaf_folder = os.path.join(settings.WRITABLE_FOLDER,settings.DATASET_EAF_DIRECTORY,dataset_acronym)
+        dataset_eaf_folder = os.path.join(WRITABLE_FOLDER, DATASET_EAF_DIRECTORY, dataset_acronym)
 
     try:
         dataset = Dataset.objects.get(acronym=dataset_acronym)
@@ -511,9 +513,9 @@ def eaf_file_from_paths(eaf_paths):
 def document_has_been_updated(dataset_acronym, document_identifier, **kwargs):
 
     if 'testing' in kwargs.keys():
-        dataset_eaf_folder = os.path.join(settings.WRITABLE_FOLDER,settings.TEST_DATA_DIRECTORY,settings.DATASET_EAF_DIRECTORY, dataset_acronym)
+        dataset_eaf_folder = os.path.join(WRITABLE_FOLDER, TEST_DATA_DIRECTORY, DATASET_EAF_DIRECTORY, dataset_acronym)
     else:
-        dataset_eaf_folder = os.path.join(settings.WRITABLE_FOLDER,settings.DATASET_EAF_DIRECTORY,dataset_acronym)
+        dataset_eaf_folder = os.path.join(WRITABLE_FOLDER, DATASET_EAF_DIRECTORY, dataset_acronym)
 
     try:
         from CNGT_scripts.python.cngt_calculated_metadata import get_creation_time
@@ -537,7 +539,7 @@ def import_corpus_speakers(dataset_acronym):
     errors = []
 
     original_speaker_identifiers = [ s.identifier for s in Speaker.objects.filter(identifier__endswith='_'+dataset_acronym) ]
-    metadata_location = settings.WRITABLE_FOLDER + settings.DATASET_METADATA_DIRECTORY + os.sep + dataset_acronym + '_metadata.csv'
+    metadata_location = WRITABLE_FOLDER + DATASET_METADATA_DIRECTORY + os.sep + dataset_acronym + '_metadata.csv'
     #First do some checks
     if not os.path.isfile(metadata_location):
         errors.append('The required metadata file ' + metadata_location + ' is not present')
@@ -557,7 +559,7 @@ def import_corpus_speakers(dataset_acronym):
             elif row == ['Participant','Region','Age','Gender','Handedness']:
                 continue
             else:
-                errors.append('The header of '+ settings.METADATA_LOCATION + ' is not Participant,Metadata region,Age at time of recording,Gender,Preference hand')
+                errors.append('The header of ' + METADATA_LOCATION + ' is not Participant,Metadata region,Age at time of recording,Gender,Preference hand')
                 continue
 
         try:
@@ -652,6 +654,7 @@ def dictionary_speakerIdentifiers_to_speakerObjects(dataset_acronym):
         speaker_identifiers += [speaker_identifier]
     return speaker_identifiers, dictionary_speakerIds_to_speakerObjs
 
+
 def dictionary_documentIdentifiers_to_documentObjects(corpus, document_identifiers_of_eaf_files, document_creation_dates_of_eaf_files):
     dictionary_documentIds_to_documentObjs = {}
     for document_id in document_identifiers_of_eaf_files:
@@ -666,6 +669,7 @@ def dictionary_documentIdentifiers_to_documentObjects(corpus, document_identifie
         # to speed up processing later, document objects are already looked up
         dictionary_documentIds_to_documentObjs[document_id] = document
     return dictionary_documentIds_to_documentObjs
+
 
 def process_frequencies_per_speaker(dataset_acronym, speaker_objects, document_objects, frequencies_per_speaker):
 
@@ -737,11 +741,11 @@ def configure_corpus_documents_for_dataset(dataset_acronym, **kwargs):
         return
 
     if 'testing' in kwargs.keys():
-        dataset_eaf_folder = os.path.join(settings.WRITABLE_FOLDER, settings.TEST_DATA_DIRECTORY, settings.DATASET_EAF_DIRECTORY,dataset_acronym)
-        metadata_location = os.path.join(settings.WRITABLE_FOLDER, settings.TEST_DATA_DIRECTORY, settings.DATASET_METADATA_DIRECTORY, dataset_acronym + '_metadata.csv')
+        dataset_eaf_folder = os.path.join(WRITABLE_FOLDER, TEST_DATA_DIRECTORY, DATASET_EAF_DIRECTORY,dataset_acronym)
+        metadata_location = os.path.join(WRITABLE_FOLDER, TEST_DATA_DIRECTORY, DATASET_METADATA_DIRECTORY, dataset_acronym + '_metadata.csv')
     else:
-        dataset_eaf_folder = os.path.join(settings.WRITABLE_FOLDER, settings.DATASET_EAF_DIRECTORY, dataset_acronym)
-        metadata_location = os.path.join(settings.WRITABLE_FOLDER, settings.DATASET_METADATA_DIRECTORY, dataset_acronym + '_metadata.csv')
+        dataset_eaf_folder = os.path.join(WRITABLE_FOLDER, DATASET_EAF_DIRECTORY, dataset_acronym)
+        metadata_location = os.path.join(WRITABLE_FOLDER, DATASET_METADATA_DIRECTORY, dataset_acronym + '_metadata.csv')
 
     # create a Corpus object if it does not exist
     try:
@@ -799,7 +803,7 @@ def configure_corpus_documents_for_dataset(dataset_acronym, **kwargs):
     if eaf_file_paths_small_files:
         sign_counter = SignCounter(metadata_location,
                                    eaf_file_paths_small_files,
-                                   settings.MINIMUM_OVERLAP_BETWEEN_SIGNING_HANDS)
+                                   MINIMUM_OVERLAP_BETWEEN_SIGNING_HANDS)
 
         try:
             sign_counter.run()
@@ -824,7 +828,7 @@ def configure_corpus_documents_for_dataset(dataset_acronym, **kwargs):
     for large_eaf_file in eaf_file_paths_large_files:
         sign_counter = SignCounter(metadata_location,
                                    [large_eaf_file],
-                                   settings.MINIMUM_OVERLAP_BETWEEN_SIGNING_HANDS)
+                                   MINIMUM_OVERLAP_BETWEEN_SIGNING_HANDS)
 
         try:
             sign_counter.run()
@@ -892,11 +896,11 @@ def update_corpus_counts(dataset_acronym, **kwargs):
         return
 
     if 'testing' in kwargs.keys():
-        dataset_eaf_folder = os.path.join(settings.WRITABLE_FOLDER,settings.TEST_DATA_DIRECTORY,settings.DATASET_EAF_DIRECTORY, dataset_acronym)
-        metadata_location = os.path.join(settings.WRITABLE_FOLDER,settings.TEST_DATA_DIRECTORY, settings.DATASET_METADATA_DIRECTORY,dataset_acronym + '_metadata.csv')
+        dataset_eaf_folder = os.path.join(WRITABLE_FOLDER, TEST_DATA_DIRECTORY, DATASET_EAF_DIRECTORY, dataset_acronym)
+        metadata_location = os.path.join(WRITABLE_FOLDER, TEST_DATA_DIRECTORY, DATASET_METADATA_DIRECTORY, dataset_acronym + '_metadata.csv')
     else:
-        dataset_eaf_folder = os.path.join(settings.WRITABLE_FOLDER,settings.DATASET_EAF_DIRECTORY,dataset_acronym)
-        metadata_location = os.path.join(settings.WRITABLE_FOLDER,settings.DATASET_METADATA_DIRECTORY,dataset_acronym + '_metadata.csv')
+        dataset_eaf_folder = os.path.join(WRITABLE_FOLDER, DATASET_EAF_DIRECTORY, dataset_acronym)
+        metadata_location = os.path.join(WRITABLE_FOLDER, DATASET_METADATA_DIRECTORY,dataset_acronym + '_metadata.csv')
 
     try:
         corpus = Corpus.objects.get(name=dataset_acronym)
@@ -966,7 +970,7 @@ def update_corpus_counts(dataset_acronym, **kwargs):
     if update_small_eaf_files:
         sign_counter = SignCounter(metadata_location,
                                    update_small_eaf_files,
-                                   settings.MINIMUM_OVERLAP_BETWEEN_SIGNING_HANDS)
+                                   MINIMUM_OVERLAP_BETWEEN_SIGNING_HANDS)
         try:
             sign_counter.run()
         except KeyError:
@@ -994,7 +998,7 @@ def update_corpus_counts(dataset_acronym, **kwargs):
     for large_eaf_file in update_large_eaf_files:
         sign_counter = SignCounter(metadata_location,
                                    [large_eaf_file],
-                                   settings.MINIMUM_OVERLAP_BETWEEN_SIGNING_HANDS)
+                                   MINIMUM_OVERLAP_BETWEEN_SIGNING_HANDS)
         try:
             sign_counter.run()
         except KeyError:
@@ -1058,11 +1062,11 @@ def update_corpus_document_counts(dataset_acronym, document_id, **kwargs):
         return []
 
     if 'testing' in kwargs.keys():
-        dataset_eaf_folder = os.path.join(settings.WRITABLE_FOLDER,settings.TEST_DATA_DIRECTORY,settings.DATASET_EAF_DIRECTORY, dataset_acronym)
-        metadata_location = os.path.join(settings.WRITABLE_FOLDER,settings.TEST_DATA_DIRECTORY, settings.DATASET_METADATA_DIRECTORY,dataset_acronym + '_metadata.csv')
+        dataset_eaf_folder = os.path.join(WRITABLE_FOLDER, TEST_DATA_DIRECTORY, DATASET_EAF_DIRECTORY, dataset_acronym)
+        metadata_location = os.path.join(WRITABLE_FOLDER, TEST_DATA_DIRECTORY, DATASET_METADATA_DIRECTORY, dataset_acronym + '_metadata.csv')
     else:
-        dataset_eaf_folder = os.path.join(settings.WRITABLE_FOLDER,settings.DATASET_EAF_DIRECTORY,dataset_acronym)
-        metadata_location = os.path.join(settings.WRITABLE_FOLDER,settings.DATASET_METADATA_DIRECTORY,dataset_acronym + '_metadata.csv')
+        dataset_eaf_folder = os.path.join(WRITABLE_FOLDER, DATASET_EAF_DIRECTORY, dataset_acronym)
+        metadata_location = os.path.join(WRITABLE_FOLDER, DATASET_METADATA_DIRECTORY, dataset_acronym + '_metadata.csv')
 
     try:
         corpus = Corpus.objects.get(name=dataset_acronym)
@@ -1088,7 +1092,7 @@ def update_corpus_document_counts(dataset_acronym, document_id, **kwargs):
                                                                                                document_creation_dates_of_eaf_files)
     sign_counter = SignCounter(metadata_location,
                                [ eaf_path ],
-                               settings.MINIMUM_OVERLAP_BETWEEN_SIGNING_HANDS)
+                               MINIMUM_OVERLAP_BETWEEN_SIGNING_HANDS)
     try:
         sign_counter.run()
     except KeyError:
@@ -1122,29 +1126,30 @@ def update_corpus_document_counts(dataset_acronym, document_id, **kwargs):
     # print('update_corpus_document_counts: glosses in other dataset: ', glosses_in_other_dataset)
     return updated_glosses.keys()
 
+
 def update_document_counts(request, dataset_id, document_id):
 
     try:
         dataset = get_object_or_404(Dataset, pk=dataset_id)
     except ObjectDoesNotExist:
-        return HttpResponseRedirect(settings.PREFIX_URL + '/datasets/available/')
+        return HttpResponseRedirect(PREFIX_URL + '/datasets/available/')
 
     if not request.user.is_authenticated:
         messages.add_message(request, messages.ERROR, _('Please login to use this functionality.'))
-        return HttpResponseRedirect(settings.PREFIX_URL + '/datasets/frequency/' + dataset_id)
+        return HttpResponseRedirect(PREFIX_URL + '/datasets/frequency/' + dataset_id)
     if not request.user.has_perm('dictionary.change_gloss'):
         messages.add_message(request, messages.ERROR, _('No permission to update corpus.'))
-        return HttpResponseRedirect(settings.PREFIX_URL + '/datasets/frequency/' + dataset_id)
+        return HttpResponseRedirect(PREFIX_URL + '/datasets/frequency/' + dataset_id)
 
     if not request.method == "POST":
         print('update_document_counts: not POST')
-        return HttpResponseRedirect(settings.PREFIX_URL + '/datasets/frequency/' + dataset_id)
+        return HttpResponseRedirect(PREFIX_URL + '/datasets/frequency/' + dataset_id)
 
     try:
         document = Document.objects.get(corpus__name=dataset.acronym, identifier=document_id)
     except ObjectDoesNotExist:
         messages.add_message(request, messages.ERROR, _('Document does not exist: ') + document_id)
-        return HttpResponseRedirect(settings.PREFIX_URL + '/datasets/frequency/' + dataset_id)
+        return HttpResponseRedirect(PREFIX_URL + '/datasets/frequency/' + dataset_id)
 
     try:
         updated_glosses = update_corpus_document_counts(dataset.acronym, document_id)
@@ -1189,8 +1194,8 @@ def update_corpora(folder_index=None):
 
     corpora_folders = []
     for corpora in Corpus.objects.all():
-        corpora_folder = os.path.join(settings.WRITABLE_FOLDER, settings.DATASET_EAF_DIRECTORY,corpora.name)
-        metadata_location = os.path.join(settings.WRITABLE_FOLDER, settings.DATASET_METADATA_DIRECTORY,
+        corpora_folder = os.path.join(WRITABLE_FOLDER, DATASET_EAF_DIRECTORY, corpora.name)
+        metadata_location = os.path.join(WRITABLE_FOLDER, DATASET_METADATA_DIRECTORY,
                                          corpora.name + '_metadata.csv')
         if os.path.isdir(corpora_folder) and os.path.isfile(metadata_location):
             corpora_folders.append(corpora.name)
