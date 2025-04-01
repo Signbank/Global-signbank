@@ -942,6 +942,10 @@ def update_gloss(request, glossid):
             messages.add_message(request, messages.ERROR, _("The specified lemma does not exist."))
         return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
 
+    elif field == Gloss.release_information.field.name:
+        gloss.release_information = newvalue = value
+        gloss.save()
+
     else:
 
         if field not in Gloss.get_field_names():
