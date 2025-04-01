@@ -1,11 +1,11 @@
 from django.contrib import messages
-from django.shortcuts import *
-from django.conf import settings
 from django.utils.translation import gettext_lazy as _
 from django.core.exceptions import ObjectDoesNotExist
 from django.views.generic.detail import DetailView
+from django.http import Http404
 
-from signbank.settings.server_specific import *
+from signbank.settings.server_specific import (DEFAULT_DATASET_ACRONYM, SHOW_DATASET_INTERFACE_OPTIONS,
+                                               USE_REGULAR_EXPRESSIONS)
 
 from signbank.dictionary.models import Dataset, Gloss
 
@@ -48,8 +48,8 @@ class DatasetConstraintsView(DetailView):
         context['dataset_languages'] = dataset_languages
         context['default_language'] = dataset.default_language
 
-        context['SHOW_DATASET_INTERFACE_OPTIONS'] = getattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS', False)
-        context['USE_REGULAR_EXPRESSIONS'] = getattr(settings, 'USE_REGULAR_EXPRESSIONS', False)
+        context['SHOW_DATASET_INTERFACE_OPTIONS'] = SHOW_DATASET_INTERFACE_OPTIONS
+        context['USE_REGULAR_EXPRESSIONS'] = USE_REGULAR_EXPRESSIONS
 
         glosses = Gloss.objects.filter(lemma__dataset=dataset, morpheme=None)
         nr_of_glosses = glosses.count()

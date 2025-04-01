@@ -6,6 +6,7 @@ import sys
 import re
 import json
 
+from django.db import models
 from django.http import (HttpResponse, HttpResponseRedirect, HttpResponseBadRequest, HttpResponseNotAllowed,
                          Http404, JsonResponse)
 from django.shortcuts import render, get_object_or_404, redirect

@@ -1,9 +1,6 @@
-
 from django.shortcuts import render, get_object_or_404
-from django.http import HttpResponse, JsonResponse
-from django.template import RequestContext
+from django.http import JsonResponse
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
-import json
 
 from tagging.models import Tag, TaggedItem
 from signbank.dictionary.models import Gloss
@@ -23,7 +20,7 @@ def taglist_json(request):
     return JsonResponse(tags, safe=False)
 
 
-def taglist(request, tag=None):
+def taglist(request, tag):
     """View of a list of tags or a list of signs with a given tag"""
 
     if tag:
