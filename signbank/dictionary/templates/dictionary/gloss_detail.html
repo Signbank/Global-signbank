@@ -1254,6 +1254,10 @@ textarea:focus {
         {% include "dictionary/affiliationtags.html" %}
 
         <table class='table table-condensed table-condensed-light' style="width:100%;">
+            <tr>
+                <th>Release information:</th>
+                <td><div class="edit edit_area" id='{{ release_information.1 }}' value='{{ release_information.2 }}'>{% value release_information.0 %}</div></td>
+            </tr>
             <tr {% if gloss_dialects|length == 0 %} class="empty_row" {% endif %}>
                 <th>{% trans "Dialect" %}</th>
                 <td class='edit edit_dialect' id='dialect'>{% for dia in gloss_dialects %}{{dia}}{% if not forloop.last %}, {% endif %}{% endfor %}</td>
@@ -1845,10 +1849,13 @@ textarea:focus {
                                     </tr>
                                    {% endfor %}
                                    {% endwith %}
+                                   <tr>Perspective {{videonme.perspective}}</tr>
                                    <tr class="editform">
                                        <td>{% trans "Index" %}</td>
                                        <td class='edit edit_int' id='nmevideo_offset_{{videonme.id}}'>{{videonme.offset}}</td>
                                    </tr>
+                                   <tr>
+                                </tr>
                                </table>
                            </td>
                          </tr>
@@ -1901,6 +1908,12 @@ textarea:focus {
                                     </td>
                                 </tr>
                                 {% endfor %}
+
+                                <th>{% trans "Perspective" %}</th>
+                                <td>
+                                    {{nmevideoform.nme_perspective}}
+                                </td>
+
                             </table>
                       <br><br>
                     </form>
