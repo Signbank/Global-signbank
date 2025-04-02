@@ -30,7 +30,7 @@ else:
 
 def filename_matches_nme(filename):
     filename_without_extension, ext = os.path.splitext(os.path.basename(filename))
-    return re.search(r".+-(\d+)_(nme_\d+|nme_\d+_left|nme_\d+_right)$", filename_without_extension)
+    return re.search(r".+-(\d+)_(nme_\d+|nme_\d+_left|nme_\d+_right|nme_\d+_center)$", filename_without_extension)
 
 
 def filename_matches_perspective(filename):
@@ -63,6 +63,12 @@ def flattened_video_path(relative_path):
         return f"{dataset_folder}_{two_char_folder}_{filename}"
     return filename
 
+
+PERSPECTIVE_CHOICES = (('left', 'Left'),
+                       ('right', 'Right')
+                       )
+
+NME_PERSPECTIVE_CHOICES = (('left','Left'),('right','Right'),('center', 'Center'))
 
 class GlossVideoStorage(FileSystemStorage):
     """Implement our shadowing video storage system"""
@@ -198,15 +204,13 @@ def get_video_file_path(instance, filename, nmevideo=False, perspective='', offs
         if settings.DEBUG_VIDEOS:
             print('get_video_file_path: dataset_dir is empty for gloss ', str(instance.gloss.pk))
     if nmevideo:
-        nme_video_offset = '_nme_' + str(offset)
-        filename = idgloss + '-' + str(instance.gloss.id) + nme_video_offset + ext
+        filename = f'{idgloss}-{instance.gloss.id}_nme_{perspective}_{offset}{ext}'
     elif perspective:
-        video_perpsective = '_' + perspective
-        filename = idgloss + '-' + str(instance.gloss.id) + video_perpsective + ext
+        filename = f'{idgloss}-{instance.gloss.id}_{perspective}{ext}'
     elif version > 0:
-        filename = idgloss + '-' + str(instance.gloss.id) + ext + '.bak' + str(instance.id)
+        filename = f'{idgloss}-{instance.gloss.id}{ext}.bak{instance.id}'
     else:
-        filename = idgloss + '-' + str(instance.gloss.id) + ext
+        filename = f'{idgloss}-{instance.gloss.id}{ext}' 
 
     path = os.path.join(video_dir, dataset_dir, two_letter_dir, filename)
     if hasattr(settings, 'ESCAPE_UPLOADED_VIDEO_FILE_PATH') and settings.ESCAPE_UPLOADED_VIDEO_FILE_PATH:
@@ -921,9 +925,9 @@ class GlossVideoDescription(models.Model):
     def __str__(self):
         return self.text
 
-
 class GlossVideoNME(GlossVideo):
     offset = models.IntegerField(default=1)
+    perspective = models.CharField(max_length=20, choices=NME_PERSPECTIVE_CHOICES, default='center')       
 
     class Meta:
         verbose_name = gettext("NME Gloss Video")
@@ -1026,12 +1030,6 @@ class GlossVideoNME(GlossVideo):
             print("DELETE NME VIDEO FAILED: ", self.videofile.name)
         else:
             self.delete()
-
-
-PERSPECTIVE_CHOICES = (('left', 'Left'),
-                       ('right', 'Right')
-                       )
-
 
 class GlossVideoPerspective(GlossVideo):
     perspective = models.CharField(max_length=20, choices=PERSPECTIVE_CHOICES)

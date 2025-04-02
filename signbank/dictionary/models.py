@@ -1049,6 +1049,7 @@ class Gloss(models.Model):
     inWeb = models.BooleanField(_("In the Web dictionary"), default=False)
     isNew = models.BooleanField(_("Is this a proposed new sign?"), null=True, default=False)
     excludeFromEcv = models.BooleanField(_("Exclude from ECV"), default=False)
+    release_information = models.CharField(max_length=128, blank=True, default='')
 
     inittext = models.CharField(max_length=50, blank=True)
 
@@ -1586,6 +1587,7 @@ class Gloss(models.Model):
                     nme_info[info_field_name] = description_text
                 nme_path = settings.URL + settings.PREFIX_URL + '/dictionary/protected_media/' + nmevideo.get_video_path()
                 nme_info[gettext("Link")] = nme_path
+                nme_info[gettext("Perspective")] = nmevideo.perspective
 
                 if include_checksums:
                     from signbank.tools import get_checksum_for_path
@@ -2468,31 +2470,30 @@ class Gloss(models.Model):
         nmevideos = GlossVideoNME.objects.filter(gloss=self)
         return nmevideos
 
-    def add_nme_video(self, user, videofile, new_offset, recorded):
+    def add_nme_video(self, user, videofile, new_offset, recorded, perspective='center'):
         # Preventing circular import
         from signbank.video.models import GlossVideoNME, GlossVideoHistory, get_video_file_path
-        # Create a new GlossVideo object
-        existing_nmevideos = GlossVideoNME.objects.filter(gloss=self)
-        existing_offsets = [nmev.offset for nmev in existing_nmevideos]
-        if new_offset in existing_offsets:
+
+        existing_offsets_for_this_perspective = [nmev.offset for nmev in GlossVideoNME.objects.filter(gloss=self,perspective=perspective)]
+        if new_offset in existing_offsets_for_this_perspective:
             # override given offset to avoid duplicate usage
-            offset = max(existing_offsets)+1
+            offset = max(existing_offsets_for_this_perspective)+1
         else:
             offset = new_offset
 
         if isinstance(videofile, File) or videofile.content_type == 'django.core.files.uploadedfile.InMemoryUploadedFile':
-            video = GlossVideoNME(gloss=self, offset=offset, upload_to=get_video_file_path)
+            video = GlossVideoNME(gloss=self, offset=offset, perspective=perspective, upload_to=get_video_file_path)
             # Create a GlossVideoHistory object
-            relative_path = get_video_file_path(video, str(videofile), nmevideo=True, perspective='', offset=offset, version=0)
+            relative_path = get_video_file_path(video, str(videofile), nmevideo=True, perspective=perspective, offset=offset, version=0)
             video_file_full_path = os.path.join(WRITABLE_FOLDER, relative_path)
-            glossvideohistory = GlossVideoHistory(action="upload", gloss=self, actor=user,
+            glossvideohistory = GlossVideoHistory(action="upload", gloss=self, actor=user, 
                                                   uploadfile=videofile, goal_location=video_file_full_path)
             glossvideohistory.save()
 
             # Save the new videofile in the video object
             video.videofile.save(relative_path, videofile)
         else:
-            return GlossVideoNME(gloss=self)
+            return GlossVideoNME(gloss=self, offset=offset, perspective=perspective) 
         video.save()
 
         return video
