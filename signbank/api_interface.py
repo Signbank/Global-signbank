@@ -23,7 +23,7 @@ from signbank.settings.base import SUPPORTED_CITATION_IMAGE_EXTENSIONS
 from signbank.dictionary.models import (Dataset, Gloss, AnnotatedSentence)
 from signbank.tools import get_two_letter_dir, api_fields
 from signbank.api_token import put_api_user_in_request
-from signbank.abstract_machine import get_interface_language_api
+from signbank.abstract_machine import get_interface_language_api, retrieve_language_code_from_header
 from signbank.zip_interface import (check_subfolders_for_unzipping_ids, get_filenames, check_subfolders_for_unzipping,
                                     import_video_file, remove_video_file_from_import_videos, unzip_video_files_ids,
                                     unzip_video_files)
@@ -115,13 +115,12 @@ def check_api_file_storage(dataset):
 
 @csrf_exempt
 @put_api_user_in_request
-def get_fields_data_json(request, datasetid):
-    interface_language_code = request.headers.get('Accept-Language', 'en')
-    if interface_language_code not in MODELTRANSLATION_LANGUAGES:
-        interface_language_code = 'en'
+def get_fields_data_json(request, datasetid, language_code='en'):
+
+    interface_language_code = retrieve_language_code_from_header(language_code,
+                                                                 request.headers.get('Accept-Language', ''),
+                                                                 request.META.get('HTTP_ACCEPT_LANGUAGE', None))
     activate(interface_language_code)
-    if request.user.is_authenticated:
-        interface_language_code = get_interface_language_api(request, request.user)
 
     sequence_of_digits = True
     for i in datasetid:
@@ -150,13 +149,11 @@ def get_fields_data_json(request, datasetid):
 
 @csrf_exempt
 @put_api_user_in_request
-def get_gloss_data_json(request, datasetid, glossid):
-    interface_language_code = request.headers.get('Accept-Language', 'en')
-    if interface_language_code not in MODELTRANSLATION_LANGUAGES:
-        interface_language_code = 'en'
+def get_gloss_data_json(request, datasetid, glossid, language_code='en'):
+    interface_language_code = retrieve_language_code_from_header(language_code,
+                                                                 request.headers.get('Accept-Language', ''),
+                                                                 request.META.get('HTTP_ACCEPT_LANGUAGE', None))
     activate(interface_language_code)
-    if request.user.is_authenticated:
-        interface_language_code = get_interface_language_api(request, request.user)
 
     try:
         dataset_id = int(datasetid)

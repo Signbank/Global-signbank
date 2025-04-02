@@ -181,6 +181,51 @@
         ]
       }
     },
+    "/dictionary/get_gloss_data/{datasetid}/{glossid}/nl/":
+    {
+      "get":
+      {
+        "description": "Geeft u gedetailleerde informatie over een specifieke glos. Het retourneert de niet-lege velden voor de beschikbare velden zoals hierboven beschreven. Als de gebruiker niet is ingelogd, of de gevraagde glos staat niet op het web, worden er minder velden geretourneerd.",
+        "parameters":
+        [
+          {
+            "name": "datasetid",
+            "in": "path",
+            "description": "De dataset-ID.",
+            "required": true,
+            "schema":
+            {
+              "type": "string",
+              "default": "5"
+            }
+          },
+          {
+            "name": "glossid",
+            "in": "path",
+            "description": "De glos-ID.",
+            "required": true,
+            "schema":
+            {
+              "type": "string"
+            }
+          }
+        ],
+        "responses":
+        {
+          "200":
+          {
+            "description": "Gedetailleerde informatie over de glos."
+          }
+        },
+        "tags": ["Informatie aan het verzamelen"],
+        "security":
+        [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
     "/dictionary/get_annotated_sentences_of_gloss/{datasetid}/{glossid}":
     {
       "get":

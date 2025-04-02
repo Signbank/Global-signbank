@@ -10,6 +10,7 @@ from guardian.shortcuts import get_objects_for_user
 from signbank.settings.server_specific import MODELTRANSLATION_LANGUAGES
 from signbank.dictionary.models import (Dataset, Gloss, GlossRevision)
 from signbank.api_token import put_api_user_in_request
+from signbank.abstract_machine import retrieve_language_code_from_header
 from signbank.tools import (check_existence_sequential_morphology,
                             check_existence_simultaneous_morphology,
                             check_existence_blend_morphology)
@@ -146,13 +147,14 @@ def gloss_update_do_changes(user, gloss, fields_to_update, language_code):
 
 @csrf_exempt
 @put_api_user_in_request
-def api_update_gloss_morphology(request, datasetid, glossid):
+def api_update_gloss_morphology(request, datasetid, glossid, language_code='en'):
+
+    interface_language_code = retrieve_language_code_from_header(language_code,
+                                                                 request.headers.get('Accept-Language', ''),
+                                                                 request.META.get('HTTP_ACCEPT_LANGUAGE', None))
+    activate(interface_language_code)
 
     results = dict()
-    interface_language_code = request.headers.get('Accept-Language', 'en')
-    if interface_language_code not in MODELTRANSLATION_LANGUAGES:
-        interface_language_code = 'en'
-    activate(interface_language_code)
 
     results['glossid'] = glossid
 
