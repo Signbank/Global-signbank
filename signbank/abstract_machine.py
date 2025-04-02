@@ -3,6 +3,7 @@ import ast
 import datetime as DT
 from django.utils.timezone import get_current_timezone
 from django.utils.translation import activate, gettext
+from django.utils.translation.trans_real import parse_accept_lang_header
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.db.transaction import atomic, TransactionManagementError, DatabaseError
@@ -46,7 +47,7 @@ def retrieve_language_code_from_header(url_language_code, api_accept_language_he
     # parse the language codes to get the first one
     parsed_language_codes = parse_accept_lang_header(http_accept_language_header)
     interface_language_code = parsed_language_codes[0][0] if parsed_language_codes else 'en'
-    if interface_language_code not in settings.MODELTRANSLATION_LANGUAGES:
+    if interface_language_code not in MODELTRANSLATION_LANGUAGES:
         # requested language code is not available
         return url_language_code
     if interface_language_code == url_language_code:
