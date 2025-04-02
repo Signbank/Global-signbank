@@ -1,12 +1,12 @@
 
-import json
-from signbank.dictionary.models import *
+from django.core.exceptions import ObjectDoesNotExist
 
-from signbank.settings.server_specific import *
+from signbank.dictionary.models import Gloss
 
 # these are the categories that are displayed in chartjs in the GlossFrequencyView template
 SEX_CATEGORIES = ['Female', 'Male']
 AGE_CATEGORIES = ['< 25', '25 - 35', '36 - 65', '> 65']
+
 
 def collect_speaker_age_data(speakers_summary, age_range):
     # the following collects the speakers distributed over a range of ages to display on the x axis
@@ -34,6 +34,7 @@ def collect_variants_data(variants):
     # returns a tuple
     #   variants data quick access: dictionary mapping variant annotation to speaker data for variant
     #   sorted variants with keys: sorted list of pairs ( variant annotation, variant object )
+    assert all(isinstance(v, Gloss) for v in variants), TypeError("Not a List of Gloss objects")
     if not variants:
         return {}, []
     variants_with_keys = []
@@ -123,4 +124,3 @@ def collect_variants_age_sex_raw_percentage(sorted_variants_with_keys, variants_
 
     return (variants_sex_distribution_data_raw, variants_sex_distribution_data_percentage,
             variants_age_distribution_data_raw, variants_age_distribution_data_percentage)
-

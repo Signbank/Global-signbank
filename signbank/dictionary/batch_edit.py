@@ -1,20 +1,20 @@
-from django.core.exceptions import ObjectDoesNotExist
+import datetime as DT
 
 from django.shortcuts import get_object_or_404
 from django.http import JsonResponse
 
-from django.contrib.auth.decorators import permission_required
-from django.db import DatabaseError, IntegrityError
-from django.db.transaction import TransactionManagementError
+from django.db import DatabaseError
+from django.db.models import BooleanField
+from django.core.exceptions import ObjectDoesNotExist, ValidationError
+from django.utils.timezone import get_current_timezone
+from django.utils.translation import gettext
 
-from tagging.models import TaggedItem, Tag
-
-from django.db.models import When, Case, BooleanField, IntegerField
-from signbank.dictionary.models import *
-from signbank.dictionary.forms import *
+from signbank.settings.base import STATIC_URL
+from signbank.dictionary.models import (Gloss, Language, LemmaIdglossTranslation, AnnotationIdglossTranslation,
+                                        GlossSense, Sense, SenseTranslation, GlossRevision, Keyword, Translation)
+from signbank.dictionary.forms import BatchEditForm
 from signbank.tools import get_default_annotationidglosstranslation
 
-import datetime as hotfix_datetime
 
 def internal_batch_update_fields_for_gloss(gloss):
 
@@ -134,7 +134,7 @@ def add_gloss_update_to_revision_history(user, gloss, field, oldvalue, newvalue)
                              field_name=field,
                              gloss=gloss,
                              user=user,
-                             time=hotfix_datetime.datetime.now(tz=get_current_timezone()))
+                             time=DT.datetime.now(tz=get_current_timezone()))
     revision.save()
 
 
@@ -429,7 +429,7 @@ def similarglosses(request, gloss_id):
                                 'videolink': '/dictionary/protected_media/' + videolink
                                 if videolink else '',
                                 'imagelink': '/dictionary/protected_media/' + imagelink
-                                if imagelink else settings.STATIC_URL + 'images/no-video-ngt.png',
+                                if imagelink else STATIC_URL + 'images/no-video-ngt.png',
                                 'pk': "%s" % g.id})
 
     result['glossid'] = str(gloss.id)

@@ -1,15 +1,17 @@
+import json
+import datetime as DT
+
+from django.utils.timezone import get_current_timezone
 from django.core.exceptions import ObjectDoesNotExist
-
 from django.shortcuts import get_object_or_404
-
 from django.contrib.auth.decorators import permission_required
 from django.db import DatabaseError, IntegrityError
 from django.db.transaction import TransactionManagementError
 
 from tagging.models import TaggedItem, Tag
 
-from signbank.dictionary.models import *
-from signbank.dictionary.forms import *
+from signbank.dictionary.models import (Language, Gloss, Sense, GlossSense, GlossRevision,
+                                        SenseTranslation, Translation, Keyword)
 
 
 def add_sense_to_revision_history(request, gloss, sense_old_value, sense_new_value):
@@ -20,7 +22,7 @@ def add_sense_to_revision_history(request, gloss, sense_old_value, sense_new_val
                              field_name=sense_label,
                              gloss=gloss,
                              user=request.user,
-                             time=datetime.now(tz=get_current_timezone()))
+                             time=DT.datetime.now(tz=get_current_timezone()))
     revision.save()
 
 
@@ -682,21 +684,21 @@ def mapping_edit_senses_matrix(request, glossid):
             original_sense_translations = original_sense.senseTranslations.get(language=language_obj)
             original_sense_translations.translations.remove(trans)
             trans.delete()
-            deleted_translations.append({ 'inputEltIndex': inx,
-                                          'orderIndex': str(target_sense_number),
-                                          'trans_id': str(transid),
-                                          'language': str(target_language)})
+            deleted_translations.append({'inputEltIndex': inx,
+                                         'orderIndex': str(target_sense_number),
+                                         'trans_id': str(transid),
+                                         'language': str(target_language)})
         else:
             (keyword_object, created) = Keyword.objects.get_or_create(text=target_text)
             # the sense number should already be the same
             trans.orderIndex = target_sense_number
             trans.translation = keyword_object
             trans.save()
-            updated_translations.append({ 'inputEltIndex': inx,
-                                          'orderIndex': str(target_sense_number),
-                                          'trans_id': str(trans.id),
-                                          'language': str(target_language),
-                                          'text': target_text })
+            updated_translations.append({'inputEltIndex': inx,
+                                         'orderIndex': str(target_sense_number),
+                                         'trans_id': str(trans.id),
+                                         'language': str(target_language),
+                                         'text': target_text})
 
     new_translations = []
     for inx, new_trans in enumerate(new_translation):
@@ -730,11 +732,11 @@ def mapping_edit_senses_matrix(request, glossid):
             continue
 
         new_index = new_index + 1
-        new_translations.append({ 'inputEltIndex': inx,
-                                  'orderIndex': str(target_sense_number),
-                                  'trans_id': str(trans.id),
-                                  'language': str(target_language),
-                                  'text': new_trans })
+        new_translations.append({'inputEltIndex': inx,
+                                 'orderIndex': str(target_sense_number),
+                                 'trans_id': str(trans.id),
+                                 'language': str(target_language),
+                                 'text': new_trans})
 
     deleted_sense_numbers = delete_empty_senses(gloss)
 
@@ -763,7 +765,7 @@ def mapping_toggle_sense_tag(request, glossid):
 
     gloss = get_object_or_404(Gloss, id=glossid, archived=False)
 
-    current_tags = [ tagged_item.tag_id for tagged_item in TaggedItem.objects.filter(object_id=gloss.id)]
+    current_tags = [tagged_item.tag_id for tagged_item in TaggedItem.objects.filter(object_id=gloss.id)]
 
     change_sense_tag = Tag.objects.get_or_create(name='check_senses')
     (sense_tag, created) = change_sense_tag
@@ -772,14 +774,14 @@ def mapping_toggle_sense_tag(request, glossid):
         Tag.objects.add_tag(gloss, 'check_senses')
     else:
         # delete tag from object
-        tagged_obj = TaggedItem.objects.get(object_id=gloss.id,tag_id=sense_tag.id)
+        tagged_obj = TaggedItem.objects.get(object_id=gloss.id, tag_id=sense_tag.id)
         tagged_obj.delete()
 
     new_tag_ids = [tagged_item.tag_id for tagged_item in TaggedItem.objects.filter(object_id=gloss.id)]
 
     result = dict()
     result['glossid'] = str(gloss.id)
-    newvalue = [tag.name.replace('_',' ') for tag in Tag.objects.filter(id__in=new_tag_ids)]
+    newvalue = [tag.name.replace('_', ' ') for tag in Tag.objects.filter(id__in=new_tag_ids)]
     result['tags_list'] = newvalue
 
     return result

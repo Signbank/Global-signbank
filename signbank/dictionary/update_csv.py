@@ -1,10 +1,14 @@
+import re
+import datetime as DT
+
+from django.utils.timezone import get_current_timezone
 
 from tagging.models import TaggedItem, Tag
 
-from signbank.dictionary.models import *
-from signbank.dictionary.forms import *
-
-from signbank.tools import gloss_from_identifier, get_default_annotationidglosstranslation
+from signbank.settings.server_specific import MODELTRANSLATION_LANGUAGES
+from signbank.dictionary.models import (Gloss, Morpheme, FieldChoice, Relation, RelationToForeignSign, Definition,
+                                        SemanticField,
+                                        MorphologyDefinition, SimultaneousMorphologyDefinition, BlendMorphology)
 
 
 def update_sequential_morphology(gloss, values):
