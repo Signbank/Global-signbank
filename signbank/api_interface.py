@@ -7,7 +7,7 @@ from guardian.shortcuts import get_objects_for_user, get_user_perms
 
 import signbank.tools
 from signbank.api_token import put_api_user_in_request
-from signbank.abstract_machine import get_interface_language_api
+from signbank.abstract_machine import get_interface_language_api, retrieve_language_code_from_header
 from signbank.zip_interface import *
 from django.utils.translation import activate, gettext
 import zipfile
@@ -152,13 +152,12 @@ def api_fields(dataset, language_code='en', advanced=False):
 
 @csrf_exempt
 @put_api_user_in_request
-def get_fields_data_json(request, datasetid):
-    interface_language_code = request.headers.get('Accept-Language', 'en')
-    if interface_language_code not in settings.MODELTRANSLATION_LANGUAGES:
-        interface_language_code = 'en'
+def get_fields_data_json(request, datasetid, language_code='en'):
+
+    interface_language_code = retrieve_language_code_from_header(language_code,
+                                                                 request.headers.get('Accept-Language', ''),
+                                                                 request.META.get('HTTP_ACCEPT_LANGUAGE', None))
     activate(interface_language_code)
-    if request.user.is_authenticated:
-        interface_language_code = get_interface_language_api(request, request.user)
 
     sequence_of_digits = True
     for i in datasetid:
@@ -187,13 +186,11 @@ def get_fields_data_json(request, datasetid):
 
 @csrf_exempt
 @put_api_user_in_request
-def get_gloss_data_json(request, datasetid, glossid):
-    interface_language_code = request.headers.get('Accept-Language', 'en')
-    if interface_language_code not in settings.MODELTRANSLATION_LANGUAGES:
-        interface_language_code = 'en'
+def get_gloss_data_json(request, datasetid, glossid, language_code='en'):
+    interface_language_code = retrieve_language_code_from_header(language_code,
+                                                                 request.headers.get('Accept-Language', ''),
+                                                                 request.META.get('HTTP_ACCEPT_LANGUAGE', None))
     activate(interface_language_code)
-    if request.user.is_authenticated:
-        interface_language_code = get_interface_language_api(request, request.user)
 
     try:
         dataset_id = int(datasetid)
