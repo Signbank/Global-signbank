@@ -204,7 +204,7 @@ def get_video_file_path(instance, filename, nmevideo=False, perspective='', offs
         if settings.DEBUG_VIDEOS:
             print('get_video_file_path: dataset_dir is empty for gloss ', str(instance.gloss.pk))
     if nmevideo:
-        filename = f'{idgloss}-{instance.gloss.id}_nme_{perspective}_{offset}{ext}'
+        filename = f'{idgloss}-{instance.gloss.id}_nme_{offset}_{perspective}{ext}'
     elif perspective:
         filename = f'{idgloss}-{instance.gloss.id}_{perspective}{ext}'
     elif version > 0:
