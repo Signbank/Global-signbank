@@ -96,17 +96,12 @@ dd {
 <div>
 <h3>{% trans "Manage Dataset Video Storage" %}</h3>
 <div id='searchform_outer' class='well well-light'>
-<form name='adminsearch' class="search-form search-form-light" id='adminsearch' method='get' action='{{PREFIX_URL}}/analysis/minimalpairs/'>
+<form name='adminsearch' class="search-form search-form-light" id='adminsearch' method='get' action='{{PREFIX_URL}}/datasets/glossvideos/{{datasetid}}'>
 <div class="panel panel-default panel-light">
     <div class="panel-heading panel-light" data-toggle="collapse" data-target="#query-area">{% trans "Construct Filter" %}
     </div>
         <div id='query-area' class='collapse {% if request.GET|length == 0 and not show_all %} in {% endif %}'>
         <div id='searchformwell' class='well well-light search-results-collapsable'>
-
-        <div class="hidden">
-            <input name='sortOrder' class='form-control' value='' >
-            <input name='search_type' class='form-control' value='filter'>
-        </div>
 
         <div class="panel panel-default panel-light">
               <div class="panel-heading panel-light" data-toggle="collapse" data-target="#ann_search">{% trans "Filter Gloss Video by Annotation" %}
@@ -156,8 +151,31 @@ dd {
         </table>
         </div>
         </div>
+        <div>
+        <table class='table table-condensed table-condensed-light' style="width:33%;">
+            <tr id='video_isNormalVideo'>
+                <td class='td td-light' style="width:200px;"><label>{{searchform.isNormalVideo.label}}</label></td>
+                <td class='td td-light' style="width:100px;">{{ searchform.isNormalVideo }}</td>
+            </tr>
+            <tr id='video_isPerspectiveVideo'>
+                <td class='td td-light' style="width:200px;"><label>{{searchform.isPerspectiveVideo.label}}</label></td>
+                <td class='td td-light' style="width:100px;">{{ searchform.isPerspectiveVideo }}</td>
+            </tr>
+            <tr id='video_isNMEVideo'>
+                <td class='td td-light' style="width:200px;"><label>{{searchform.isNMEVideo.label}}</label></td>
+                <td class='td td-light' style="width:100px;">{{ searchform.isNMEVideo }}</td>
+            </tr>
+            <tr id='video_isBackup'>
+                <td class='td td-light' style="width:200px;"><label>{{searchform.isBackup.label}}</label></td>
+                <td class='td td-light' style="width:100px;">{{ searchform.isBackup }}</td>
+            </tr>
+            <tr id='video_icorrectFilename'>
+                <td class='td td-light' style="width:200px;"><label>{{searchform.correctFilename.label}}</label></td>
+                <td class='td td-light' style="width:100px;">{{ searchform.correctFilename }}</td>
+            </tr>
+        </table>
         </div>
-
+        </div>
        </div>
     </div>
 <div class='btn-group' style="margin-bottom: 20px">
@@ -165,17 +183,14 @@ dd {
        id='minimal_pairs_search_button'
        onclick="do_adminsearch(this);"
        value='minimal_pairs'>{% trans "Apply Filter and Show Results" %}</button>
-<input type='hidden' id='do_minimal_pairs_search' name='search_minimal_pairs' value="">
 <button class='btn btn-primary' type='submit'
        id='show_all_minimal_pairs_button'
        onclick="do_show_all(this);"
        value='minimal_pairs'>{% trans "Show All Gloss Videos" %}</button>
-<input type='hidden' id='show_all_minimal_pairs' name='show_all_minimal_pairs' value="">
 
 <input class='btn btn-primary' type='submit' onclick="clearForm();"
        value='{% trans "Reset" %}'>
 <input type='hidden' id="reset" name="reset" value="">
-</div>
 </div>
 </form>
 </div>
@@ -189,8 +204,48 @@ dd {
 <br>
 
 <div class='panel-heading panel-light' data-toggle='collapse' data-parent='#video_storage_toggles'
-     data-target='#toggle_gloss_videos'>{% trans "Gloss Videos" %}
-    <span>({{gloss_videos|length}} {% trans "results found" %})</span>
+     data-target='#toggle_persp_videos'>{% trans "Gloss Perspective Videos" %}
+<!--    <span>({{gloss_perspective_videos|length}} {% trans "results found" %})</span>-->
+</div>
+<div id='toggle_persp_videos' class="panel-collapse collapse">
+<div class="panel-body" style="display:inline-block;border-color:transparent;">
+    {% if gloss_videos %}
+    <table class='table table-condensed table-condensed-light' style="width:100%;">
+
+    <tr>
+        <td class="list-group-hover" style="padding: 0;">
+        <dl class="row list-group-item active"  style="padding: 0;">
+            <dt class="col-sm-2" style="width:300px;">{% trans "Lemma" %} ({{default_language.name}})</dt>
+            <dt class="col-sm-2" style="width:150px;">{% trans "Gloss ID" %}</dt>
+            {% for language in dataset_languages %}
+            <dt class="col-sm-2" style="width:300px;">{% trans "Annotation" %} ({{language.name}})</dt>
+            {% endfor %}
+            <dt class="col-sm-2" style="width:600px;">{% trans "Video Paths" %}</dt>
+        </dl>
+        <list id="document_tuples" style="height:280px; display:block;">
+              {% for gloss, num_videos, videos, glossbackupvideos, perspvideos, nmevideos in gloss_videos %}
+                  {% if perspvideos %}
+                  <dl id="gloss_persp_videos_{{gloss.id}}" class="row list-group-item list-group-item-contents" style="padding: 0;">
+                      <dd class="col-sm-2" style="width:300px;">{{gloss.idgloss}}</dd>
+                      <dd class="col-sm-2" style="width:150px;">{{gloss.id}}</dd>
+                      {% for language in dataset_languages %}
+                        <dd class="col-sm-2" style="width:300px;">{{gloss|get_annotation_idgloss_translation_no_default:language}}</dd>
+                      {% endfor %}
+                      <dd class="col-sm-2" style="width:600px;" id='persp_videos_{{gloss.id}}'>{{perspvideos}}</dd>
+                  </dl>
+                  {% endif %}
+             {% endfor %}
+        </list>
+        </td>
+        </tr>
+    </table>
+    {% endif %}
+</div>
+</div>
+<br>
+<div class='panel-heading panel-light' data-toggle='collapse' data-parent='#video_storage_toggles'
+     data-target='#toggle_gloss_videos'>{% trans "Gloss Backup Videos" %}
+<!--    <span>({{gloss_videos|length}} {% trans "results found" %})</span>-->
 </div>
 <div id='toggle_gloss_videos' class="panel-collapse collapse" style="width:auto;">
 <div class="panel-body" style="display:inline-block;border-color:transparent;">
@@ -214,14 +269,15 @@ dd {
             </dt>
         </dl>
         <list id="document_tuples" style="height:280px; display:block;">
-              {% for gloss, num_videos, videos in gloss_videos %}
+              {% for gloss, num_videos, videos, glossbackupvideos, perspvideos, nmevideos in gloss_videos %}
+                  {% if glossbackupvideos %}
                   <dl id="gloss_videos_{{gloss.id}}" class="row list-group-item list-group-item-contents" style="padding: 0;">
                       <dd class="col-sm-2" style="width:300px;">{{gloss.idgloss}}</dd>
                       <dd class="col-sm-2" style="width:150px;">{{gloss.id}}</dd>
                       {% for language in dataset_languages %}
                         <dd class="col-sm-2" style="width:300px;">{{gloss|get_annotation_idgloss_translation_no_default:language}}</dd>
                       {% endfor %}
-                      <dd class="col-sm-2" style="width:400px;" id='videos_{{gloss.id}}'>{{videos}}</dd>
+                      <dd class="col-sm-2" style="width:400px;" id='videos_{{gloss.id}}'>{{glossbackupvideos}}</dd>
                       <dd class="col-sm-2" style="width:300px;">
                             <div class='btn-group' >
                                 {% if num_videos > 1 %}
@@ -233,6 +289,7 @@ dd {
                             </div>
                       </dd>
                   </dl>
+                  {% endif %}
              {% endfor %}
         </list>
         </td>
@@ -243,5 +300,44 @@ dd {
 </div>
 </div>
 <br>
-
+<div class='panel-heading panel-light' data-toggle='collapse' data-parent='#video_storage_toggles'
+     data-target='#toggle_normal_gloss_videos'>{% trans "Normal Gloss Videos" %}
+<!--    <span>({{gloss_videos|length}} {% trans "results found" %})</span>-->
+</div>
+<div id='toggle_normal_gloss_videos' class="panel-collapse collapse" style="width:auto;">
+<div class="panel-body" style="display:inline-block;border-color:transparent;">
+    {% if gloss_videos %}
+    <table class='table table-condensed table-condensed-light'>
+    <tr>
+        <td class="list-group-hover" style="padding: 0;">
+        <dl class="row list-group-item active"  style="padding: 0;">
+            <dt class="col-sm-2" style="width:300px;">{% trans "Lemma" %} ({{default_language.name}})</dt>
+            <dt class="col-sm-2" style="width:150px;">{% trans "Gloss ID" %}</dt>
+            {% for language in dataset_languages %}
+            <dt class="col-sm-2" style="width:300px;">{% trans "Annotation" %} ({{language.name}})</dt>
+            {% endfor %}
+            <dt class="col-sm-2" style="width:400px;">{% trans "Video Paths" %}</dt>
+        </dl>
+        <list id="document_tuples" style="height:280px; display:block;">
+              {% for gloss, num_videos, videos, glossbackupvideos, perspvideos, nmevideos in gloss_videos %}
+                  {% if videos %}
+                  <dl id="normal_gloss_videos_{{gloss.id}}" class="row list-group-item list-group-item-contents" style="padding: 0;">
+                      <dd class="col-sm-2" style="width:300px;">{{gloss.idgloss}}</dd>
+                      <dd class="col-sm-2" style="width:150px;">{{gloss.id}}</dd>
+                      {% for language in dataset_languages %}
+                        <dd class="col-sm-2" style="width:300px;">{{gloss|get_annotation_idgloss_translation_no_default:language}}</dd>
+                      {% endfor %}
+                      <dd class="col-sm-2" style="width:400px;" id='normal_videos_{{gloss.id}}'>{{videos}}</dd>
+                  </dl>
+                  {% endif %}
+             {% endfor %}
+        </list>
+        </td>
+        </tr>
+    </table>
+    {% endif %}
+</div>
+</div>
+</div>
+<br>
 {% endblock %}

@@ -1,7 +1,7 @@
 import os.path
 from django.contrib.auth.decorators import permission_required
 from signbank.dictionary.models import *
-from signbank.video.models import GlossVideo, GlossVideoNME, GlossVideoPerspective
+from signbank.video.models import GlossVideo, GlossVideoNME, GlossVideoPerspective, filename_matches_backup_video
 from signbank.video.convertvideo import video_file_type_extension
 from signbank.tools import get_two_letter_dir
 import re
@@ -71,14 +71,15 @@ def rename_backup_videos(gloss):
     for inx, glossvideo in enumerate(glossvideos, 1):
         video_file_full_path = os.path.join(WRITABLE_FOLDER, str(glossvideo.videofile))
         video_extension = video_file_type_extension(video_file_full_path)
-        desired_filename_without_extension = f'{idgloss}-{glossid}{video_extension}'
+        # keep this a normal string concatenation, not an f-string
+        desired_filename_without_extension = idgloss + '-' + glossid + video_extension
         _, bak = os.path.splitext(glossvideo.videofile.name)
         desired_extension = '.bak' + str(glossvideo.id)
         desired_filename = desired_filename_without_extension + desired_extension
         desired_relative_path = os.path.join(settings.GLOSS_VIDEO_DIRECTORY,
                                              dataset_dir, two_letter_dir, desired_filename)
         current_relative_path = str(glossvideo.videofile)
-        if current_relative_path == desired_relative_path:
+        if filename_matches_backup_video(current_relative_path):
             continue
         source = os.path.join(settings.WRITABLE_FOLDER, current_relative_path)
         destination = os.path.join(WRITABLE_FOLDER, desired_relative_path)
@@ -173,7 +174,8 @@ def rename_gloss_video(gloss):
     dataset_dir = gloss.lemma.dataset.acronym
     video_file_full_path = os.path.join(WRITABLE_FOLDER, str(glossvideo.videofile))
     video_extension = video_file_type_extension(video_file_full_path)
-    desired_filename = f'{idgloss}-{glossid}{video_extension}'
+    # keep this a normal string concatenation, not an f-string
+    desired_filename = idgloss + '-' + glossid + video_extension
     desired_relative_path = os.path.join(settings.GLOSS_VIDEO_DIRECTORY,
                                          dataset_dir, two_letter_dir, desired_filename)
     current_relative_path = str(glossvideo.videofile)

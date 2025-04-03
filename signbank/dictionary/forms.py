@@ -1629,12 +1629,18 @@ class AnnotatedGlossForm(forms.ModelForm):
 
 class GlossVideoSearchForm(forms.ModelForm):
 
+    isNormalVideo = forms.ChoiceField(label=_('Is Normal Video'),
+                                      choices=[(0, '-')],
+                                      widget=forms.Select(attrs=ATTRS_FOR_FORMS))
     isPerspectiveVideo = forms.ChoiceField(label=_('Is Perspective Video'),
                                            choices=[(0, '-')],
                                            widget=forms.Select(attrs=ATTRS_FOR_FORMS))
-    isNMEVideo = forms.ChoiceField(label=_('Is NME Video'),
-                                    choices=[(0, '-')],
-                                    widget=forms.Select(attrs=ATTRS_FOR_FORMS))
+    isNMEVideo = forms.ChoiceField(label=_('Is NME or Perspective NME Video'),
+                                   choices=[(0, '-')],
+                                   widget=forms.Select(attrs=ATTRS_FOR_FORMS))
+    isBackup = forms.ChoiceField(label=_('Is Backup Video'),
+                                 choices=[(0, '-')],
+                                 widget=forms.Select(attrs=ATTRS_FOR_FORMS))
     correctFilename = forms.ChoiceField(label=_('Correct Filename'),
                                         choices=[(0, '-')],
                                         widget=forms.Select(attrs=ATTRS_FOR_FORMS))
@@ -1655,7 +1661,6 @@ class GlossVideoSearchForm(forms.ModelForm):
         super(GlossVideoSearchForm, self).__init__(*args, **kwargs)
 
         # language fields will be set up elsewhere
-        # field choice choices will be set up elsewhere
 
-        for boolean_field in ['isPerspectiveVideo', 'isNMEVideo', 'correctFilename']:
+        for boolean_field in ['isNormalVideo', 'isPerspectiveVideo', 'isNMEVideo', 'isBackup', 'correctFilename']:
             self.fields[boolean_field].choices = [('0', '-'), ('2', _('Yes')), ('3', _('No'))]

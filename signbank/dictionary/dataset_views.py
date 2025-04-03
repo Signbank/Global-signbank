@@ -4,7 +4,7 @@ from django.views.generic.list import ListView
 from django.views.generic.detail import DetailView
 from django.core.paginator import Paginator
 from django.views.generic.edit import CreateView, DeleteView, UpdateView
-from signbank.video.models import GlossVideo
+from signbank.video.models import GlossVideo, GlossVideoNME, GlossVideoPerspective
 from signbank.dictionary.models import Dataset, Gloss, AnnotationIdglossTranslation
 from signbank.dictionary.forms import GlossVideoSearchForm
 from signbank.dataset_operations import (find_unlinked_video_files_for_dataset, gloss_annotations_check, gloss_videos_check, gloss_video_filename_check, gloss_subclass_videos_check)
@@ -12,12 +12,14 @@ from signbank.tools import get_dataset_languages
 from signbank.settings.server_specific import *
 from guardian.shortcuts import get_objects_for_user
 from django.core.exceptions import PermissionDenied, ObjectDoesNotExist
-from signbank.dictionary.adminviews import show_warning
+from signbank.dictionary.adminviews import show_warning, error_message_regular_expression
 from django.contrib import messages
 from django.shortcuts import *
 from django.conf import settings
 from django.utils.translation import override, gettext, gettext_lazy as _, activate
-from signbank.query_parameters import set_up_language_fields
+from signbank.query_parameters import (set_up_language_fields, check_language_fields, query_parameters_from_get,
+                                       apply_language_filters_to_results, apply_video_filters_to_results,
+                                       apply_nmevideo_filters_to_results)
 
 
 class DatasetConstraintsView(DetailView):
@@ -90,16 +92,15 @@ class GlossVideoListView(ListView):
     template_name = 'dictionary/admin_dataset_videos_list.html'
     dataset = None
     search_form = GlossVideoSearchForm()
-
+    query_parameters = dict()
 
     def get_context_data(self, **kwargs):
-        # Call the base implementation first to get a context
 
-        if 'pk' in kwargs:
-            self.dataset = get_object_or_404(Dataset, pk=kwargs['pk'])
+        if 'pk' in self.kwargs:
+            self.dataset = get_object_or_404(Dataset, pk=self.kwargs['pk'])
         context = super(GlossVideoListView, self).get_context_data(**kwargs)
 
-        context['dataset'] = self.dataset
+        context['datasetid'] = self.dataset.id
         selected_datasets = get_selected_datasets(self.request)
         dataset_languages = get_dataset_languages(selected_datasets)
         context['dataset_languages'] = dataset_languages
@@ -112,18 +113,28 @@ class GlossVideoListView(ListView):
         nr_of_glosses = glosses.count()
         context['nr_of_glosses'] = nr_of_glosses
 
-        context['gloss_videos'] = self.get_query_set()
+        # context['gloss_videos'] = self.get_query_set()
+        if not self.search_form.is_bound:
+            # if the search_form is not bound, then
+            # this is the first time the get_queryset function is called for this view
+            # it has already been initialised with the __init__ method, but
+            # the language fields are dynamic and are not inside the form yet
+            # they depend on the selected datasets which are inside the request, which
+            # is not available to the __init__ method
+            set_up_language_fields(GlossVideo, self, self.search_form)
+
         context['searchform'] = self.search_form
+
+        context['gloss_videos'] = self.get_query_set()
 
         return context
 
     def get_query_set(self):
-        get = self.request.GET
-
         selected_datasets = get_selected_datasets(self.request)
         if not self.dataset:
             self.dataset = selected_datasets.first()
         default_language = self.dataset.default_language
+        dataset_languages = get_dataset_languages(selected_datasets)
 
         if not self.search_form.is_bound:
             # if the search_form is not bound, then
@@ -136,19 +147,81 @@ class GlossVideoListView(ListView):
 
         gloss_videos = []
 
-        all_glosses = Gloss.objects.filter(lemma__dataset=self.dataset,
-                                           lemma__lemmaidglosstranslation__language=default_language).order_by(
+        if not self.request.user.is_authenticated or not self.request.user.has_perm('dictionary.change_gloss'):
+            translated_message = _('You do not have permission to manage the dataset videos.')
+            return show_warning(self.request, translated_message, selected_datasets)
+
+        get = self.request.GET
+        if not get:
+            # don't show anything on initial visit
+            self.request.session['search_results'] = []
+            self.request.session.modified = True
+            return gloss_videos
+
+        valid_regex, search_fields, field_values = check_language_fields(self.search_form, GlossVideoSearchForm, get, dataset_languages)
+
+        if USE_REGULAR_EXPRESSIONS and not valid_regex:
+            error_message_regular_expression(self.request, search_fields, field_values)
+            self.request.session['search_results'] = []
+            self.request.session.modified = True
+            return gloss_videos
+
+        # this is a temporary query_parameters variable
+        # it is saved to self.query_parameters after the parameters are processed
+        query_parameters = dict()
+
+        qs = Gloss.objects.filter(lemma__dataset=self.dataset, archived=False,
+                                  lemma__lemmaidglosstranslation__language=default_language).distinct().order_by(
             'lemma__lemmaidglosstranslation__text').distinct()
 
-        for gloss in all_glosses:
+        query_parameters = query_parameters_from_get(self.search_form, get, query_parameters)
+        qs = apply_language_filters_to_results('Gloss', qs, query_parameters)
+        qs = qs.distinct()
 
-            glossvideos = GlossVideo.objects.filter(gloss=gloss,
-                gloss__lemma__dataset__in=selected_datasets).order_by('gloss__annotationidglosstranslation__text', 'version')
+        # a data structure is created that includes the various kinds of videos in a way suited to the display
+        for gloss in qs:
 
-            num_videos = glossvideos.count()
-
-            if num_videos > 0:
-                list_videos = ', '.join([str(gv.version)+': '+str(gv.videofile) for gv in glossvideos])
-                gloss_videos.append((gloss, num_videos, list_videos))
+            if 'isNormalVideo' in query_parameters.keys() and query_parameters['isNormalVideo'] == '2':
+                glossvideos = GlossVideo.objects.filter(gloss=gloss,
+                                                        version=0,
+                                                        glossvideonme=None,
+                                                        glossvideoperspective=None).order_by('version')
+                num_normal_videos = glossvideos.count()
+                if num_normal_videos:
+                    list_glossvideos = ', '.join([str(gv.version)+': '+str(gv.videofile) for gv in glossvideos])
+                else:
+                    list_glossvideos = ''
+            else:
+                list_glossvideos = ''
+            if 'isBackup' in query_parameters.keys() and query_parameters['isBackup'] == '2':
+                backupglossvideos = GlossVideo.objects.filter(gloss=gloss, version__gt=0).order_by('version')
+                num_backup_videos = backupglossvideos.count()
+                if num_backup_videos:
+                    list_glossbackupvideos = ', '.join([str(gv.version) + ': ' + str(gv.videofile) for gv in backupglossvideos])
+                else:
+                    list_glossbackupvideos = ''
+            else:
+                num_backup_videos = 0
+                list_glossbackupvideos = ''
+            if 'isNMEVideo' in query_parameters.keys() and query_parameters['isNMEVideo'] == '2':
+                glossnmevideos = GlossVideoNME.objects.filter(gloss=gloss).order_by('offset')
+                num_nme_videos = glossnmevideos.count()
+                if num_nme_videos > 0:
+                    list_nmevideos = ', '.join([str(gv.offset) + ': ' + str(gv.videofile) for gv in glossnmevideos])
+                else:
+                    list_nmevideos = ''
+            else:
+                list_nmevideos = ''
+            if 'isPerspectiveVideo' in query_parameters.keys() and query_parameters['isPerspectiveVideo'] == '2':
+                glossperspvideos = GlossVideoPerspective.objects.filter(gloss=gloss)
+                num_persp = glossperspvideos.count()
+                if num_persp > 0:
+                    list_perspvideos = ', '.join([str(gv.perspective) + ': ' + str(gv.videofile) for gv in glossperspvideos])
+                else:
+                    list_perspvideos = ''
+            else:
+                list_perspvideos = ''
+            if list_glossvideos or list_glossbackupvideos or list_nmevideos or list_glossvideos:
+                gloss_videos.append((gloss, num_backup_videos, list_glossvideos, list_glossbackupvideos, list_perspvideos, list_nmevideos))
 
         return gloss_videos
