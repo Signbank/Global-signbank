@@ -1,3 +1,4 @@
+import json
 
 from signbank.dictionary.context_data import get_selected_datasets
 from django.views.generic.list import ListView
@@ -125,13 +126,32 @@ class GlossVideoListView(ListView):
 
         context['searchform'] = self.search_form
 
-        context['gloss_videos'] = self.get_query_set()
+        context['language_query_keys'] = [language.language_code_2char for language in dataset_languages]
+
+        # data structures to store the query parameters in order to keep them in the form
+        context['query_parameters'] = json.dumps(self.query_parameters)
+        query_parameters_keys = list(self.query_parameters.keys())
+        context['query_parameters_keys'] = json.dumps(query_parameters_keys)
+
+        (gloss_videos, count_glossvideos,
+         count_glossbackupvideos, count_glossperspvideos, count_glossnmevideos) = self.get_query_set()
+        context['gloss_videos'] = gloss_videos
+        context['count_glossvideos'] = count_glossvideos
+        context['count_glossbackupvideos'] = count_glossbackupvideos
+        context['count_glossperspvideos'] = count_glossperspvideos
+        context['count_glossnmevideos'] = count_glossnmevideos
 
         return context
 
     def get_query_set(self):
         selected_datasets = get_selected_datasets(self.request)
+        if not selected_datasets or selected_datasets.count() > 1:
+            feedback_message = _('Please select a single dataset to view minimal pairs.')
+            return show_warning(self.request, feedback_message, selected_datasets)
+
         if not self.dataset:
+            # this depends on the evaluation order of get_context_data and get_queryset
+            # sometimes this seems arbitrary
             self.dataset = selected_datasets.first()
         default_language = self.dataset.default_language
         dataset_languages = get_dataset_languages(selected_datasets)
@@ -145,7 +165,8 @@ class GlossVideoListView(ListView):
             # is not available to the __init__ method
             set_up_language_fields(GlossVideo, self, self.search_form)
 
-        gloss_videos = []
+        (gloss_videos, count_glossvideos,
+         count_glossbackupvideos, count_glossperspvideos, count_glossnmevideos) = [], 0, 0, 0, 0
 
         if not self.request.user.is_authenticated or not self.request.user.has_perm('dictionary.change_gloss'):
             translated_message = _('You do not have permission to manage the dataset videos.')
@@ -156,7 +177,7 @@ class GlossVideoListView(ListView):
             # don't show anything on initial visit
             self.request.session['search_results'] = []
             self.request.session.modified = True
-            return gloss_videos
+            return gloss_videos, count_glossvideos, count_glossbackupvideos, count_glossperspvideos, count_glossnmevideos
 
         valid_regex, search_fields, field_values = check_language_fields(self.search_form, GlossVideoSearchForm, get, dataset_languages)
 
@@ -164,7 +185,7 @@ class GlossVideoListView(ListView):
             error_message_regular_expression(self.request, search_fields, field_values)
             self.request.session['search_results'] = []
             self.request.session.modified = True
-            return gloss_videos
+            return gloss_videos, count_glossvideos, count_glossbackupvideos, count_glossperspvideos, count_glossnmevideos
 
         # this is a temporary query_parameters variable
         # it is saved to self.query_parameters after the parameters are processed
@@ -178,7 +199,17 @@ class GlossVideoListView(ListView):
         qs = apply_language_filters_to_results('Gloss', qs, query_parameters)
         qs = qs.distinct()
 
-        # a data structure is created that includes the various kinds of videos in a way suited to the display
+        if 'isNormalVideo' in query_parameters.keys() and query_parameters['isNormalVideo'] == '2':
+            count_glossvideos = GlossVideo.objects.filter(gloss__in=qs, version=0,
+                                                          glossvideonme=None, glossvideoperspective=None).count()
+        if 'isBackup' in query_parameters.keys() and query_parameters['isBackup'] == '2':
+            count_glossbackupvideos = GlossVideo.objects.filter(gloss__in=qs, version__gt=0).count()
+        if 'isNMEVideo' in query_parameters.keys() and query_parameters['isNMEVideo'] == '2':
+            count_glossnmevideos = GlossVideoNME.objects.filter(gloss__in=qs).count()
+        if 'isPerspectiveVideo' in query_parameters.keys() and query_parameters['isPerspectiveVideo'] == '2':
+            count_glossperspvideos = GlossVideoPerspective.objects.filter(gloss__in=qs).count()
+
+        # a single data structure is created that includes the various kinds of videos in a way suited to the display
         for gloss in qs:
 
             if 'isNormalVideo' in query_parameters.keys() and query_parameters['isNormalVideo'] == '2':
@@ -221,7 +252,12 @@ class GlossVideoListView(ListView):
                     list_perspvideos = ''
             else:
                 list_perspvideos = ''
-            if list_glossvideos or list_glossbackupvideos or list_nmevideos or list_glossvideos:
+            if list_glossvideos or list_glossbackupvideos or list_perspvideos or list_nmevideos:
                 gloss_videos.append((gloss, num_backup_videos, list_glossvideos, list_glossbackupvideos, list_perspvideos, list_nmevideos))
 
-        return gloss_videos
+        # save the query parameters to a session variable
+        self.request.session['query_parameters'] = json.dumps(query_parameters)
+        self.request.session.modified = True
+        self.query_parameters = query_parameters
+
+        return gloss_videos, count_glossvideos, count_glossbackupvideos, count_glossperspvideos, count_glossnmevideos

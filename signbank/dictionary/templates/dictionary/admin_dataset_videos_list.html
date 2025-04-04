@@ -19,6 +19,8 @@
 <script type='text/javascript'>
 var url = '{{PREFIX_URL}}';
 var csrf_token = '{{csrf_token}}';
+var query_parameters_keys = {{query_parameters_keys|safe}};
+var query_parameters_dict = {{query_parameters|safe}};
 
 function update_gloss_video_backups(el) {
     var glossid = $(el).attr('data-glossid');
@@ -42,8 +44,54 @@ function update_gloss_video_backups(el) {
         }
     });
 };
-</script>
 
+$(document).ready(function() {
+
+    $('[data-toggle="tooltip"]').tooltip();
+
+     // initialize language-based query fields
+     for (var i = 0; i < language_query_keys.length; i++) {
+        var this_var = language_query_keys[i];
+        if (query_parameters_keys.includes(this_var)) {
+            var $language_search = $("input[name='"+this_var+"']");
+            var query_initial = query_parameters_dict[this_var];
+            $language_search.val(query_initial);
+        };
+    }
+
+});
+</script>
+<script type='text/javascript'>
+function clearForm() {
+
+      $('input').each(function() {
+        var this_field = $(this).attr('name');
+        if (this_field == undefined) { return; };
+        if (this_field == 'morpheme') { $(this).attr('value', ""); return; };
+        var this_type = $(this).attr('type');
+        if (this_type == 'hidden' || this_type == 'submit' || this_type == 'radio' || this_type == 'button') { return; };
+        if (this_type == 'date') {
+            $(this).attr('value', "");
+        } else {
+            $(this).val('');
+        };
+      });
+      $('select').each(function() {
+        var this_field = $(this).attr('name');
+        if (this_field == undefined) { return; };
+        var this_type = $(this).attr('type');
+        if (this_type == 'hidden') { return; };
+        if (this_field.endsWith('[]')) {
+            return;
+        } else {
+            $(this).find('option').each(function () {
+                $(this).removeAttr("selected");
+            });;
+        };
+      });
+}
+</script>
+</script>
 <style>
 list {
     overflow-y: scroll;
@@ -205,13 +253,12 @@ dd {
 
 <div class='panel-heading panel-light' data-toggle='collapse' data-parent='#video_storage_toggles'
      data-target='#toggle_persp_videos'>{% trans "Gloss Perspective Videos" %}
-<!--    <span>({{gloss_perspective_videos|length}} {% trans "results found" %})</span>-->
+    <span>({{count_glossperspvideos}} {% trans "results found" %})</span>
 </div>
 <div id='toggle_persp_videos' class="panel-collapse collapse">
 <div class="panel-body" style="display:inline-block;border-color:transparent;">
-    {% if gloss_videos %}
+    {% if count_glossperspvideos %}
     <table class='table table-condensed table-condensed-light' style="width:100%;">
-
     <tr>
         <td class="list-group-hover" style="padding: 0;">
         <dl class="row list-group-item active"  style="padding: 0;">
@@ -243,13 +290,52 @@ dd {
 </div>
 </div>
 <br>
+
+<div class='panel-heading panel-light' data-toggle='collapse' data-parent='#video_storage_toggles'
+     data-target='#toggle_nme_videos'>{% trans "Gloss NME Videos" %}
+    <span>({{count_glossnmevideos}} {% trans "results found" %})</span>
+</div>
+<div id='toggle_nme_videos' class="panel-collapse collapse">
+<div class="panel-body" style="display:inline-block;border-color:transparent;">
+    {% if count_glossnmevideos %}
+    <table class='table table-condensed table-condensed-light' style="width:100%;">
+    <tr>
+        <td class="list-group-hover" style="padding: 0;">
+        <dl class="row list-group-item active"  style="padding: 0;">
+            <dt class="col-sm-2" style="width:300px;">{% trans "Lemma" %} ({{default_language.name}})</dt>
+            <dt class="col-sm-2" style="width:150px;">{% trans "Gloss ID" %}</dt>
+            {% for language in dataset_languages %}
+            <dt class="col-sm-2" style="width:300px;">{% trans "Annotation" %} ({{language.name}})</dt>
+            {% endfor %}
+            <dt class="col-sm-2" style="width:600px;">{% trans "Video Paths" %}</dt>
+        </dl>
+        <list id="document_tuples" style="height:280px; display:block;">
+              {% for gloss, num_videos, videos, glossbackupvideos, perspvideos, nmevideos in gloss_videos %}
+                  <dl id="gloss_nme_videos_{{gloss.id}}" class="row list-group-item list-group-item-contents" style="padding: 0;">
+                      <dd class="col-sm-2" style="width:300px;">{{gloss.idgloss}}</dd>
+                      <dd class="col-sm-2" style="width:150px;">{{gloss.id}}</dd>
+                      {% for language in dataset_languages %}
+                        <dd class="col-sm-2" style="width:300px;">{{gloss|get_annotation_idgloss_translation_no_default:language}}</dd>
+                      {% endfor %}
+                      <dd class="col-sm-2" style="width:600px;" id='nme_videos_{{gloss.id}}'>{{nmevideos}}</dd>
+                  </dl>
+             {% endfor %}
+        </list>
+        </td>
+        </tr>
+    </table>
+    {% endif %}
+</div>
+</div>
+<br>
+
 <div class='panel-heading panel-light' data-toggle='collapse' data-parent='#video_storage_toggles'
      data-target='#toggle_gloss_videos'>{% trans "Gloss Backup Videos" %}
-<!--    <span>({{gloss_videos|length}} {% trans "results found" %})</span>-->
+    <span>({{count_glossbackupvideos}} {% trans "results found" %})</span>
 </div>
 <div id='toggle_gloss_videos' class="panel-collapse collapse" style="width:auto;">
 <div class="panel-body" style="display:inline-block;border-color:transparent;">
-    {% if gloss_videos %}
+    {% if count_glossbackupvideos %}
     <table class='table table-condensed table-condensed-light'>
     <tr>
         <td class="list-group-hover" style="padding: 0;">
@@ -298,15 +384,14 @@ dd {
     {% endif %}
 </div>
 </div>
-</div>
 <br>
 <div class='panel-heading panel-light' data-toggle='collapse' data-parent='#video_storage_toggles'
-     data-target='#toggle_normal_gloss_videos'>{% trans "Normal Gloss Videos" %}
-<!--    <span>({{gloss_videos|length}} {% trans "results found" %})</span>-->
+     data-target='#toggle_normal_gloss_videos'>{% trans "Gloss Videos" %}
+    <span>({{count_glossvideos}} {% trans "results found" %})</span>
 </div>
 <div id='toggle_normal_gloss_videos' class="panel-collapse collapse" style="width:auto;">
 <div class="panel-body" style="display:inline-block;border-color:transparent;">
-    {% if gloss_videos %}
+    {% if count_glossvideos %}
     <table class='table table-condensed table-condensed-light'>
     <tr>
         <td class="list-group-hover" style="padding: 0;">
