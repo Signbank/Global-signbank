@@ -126,13 +126,6 @@ class GlossVideoListView(ListView):
 
         context['searchform'] = self.search_form
 
-        context['language_query_keys'] = [language.language_code_2char for language in dataset_languages]
-
-        # data structures to store the query parameters in order to keep them in the form
-        context['query_parameters'] = json.dumps(self.query_parameters)
-        query_parameters_keys = list(self.query_parameters.keys())
-        context['query_parameters_keys'] = json.dumps(query_parameters_keys)
-
         (gloss_videos, count_glossvideos,
          count_glossbackupvideos, count_glossperspvideos, count_glossnmevideos) = self.get_query_set()
         context['gloss_videos'] = gloss_videos
@@ -140,6 +133,16 @@ class GlossVideoListView(ListView):
         context['count_glossbackupvideos'] = count_glossbackupvideos
         context['count_glossperspvideos'] = count_glossperspvideos
         context['count_glossnmevideos'] = count_glossnmevideos
+
+        # data structures to store the query parameters in order to keep them in the form
+        prefixes = [GlossVideoSearchForm.gloss_search_field_prefix, GlossVideoSearchForm.lemma_search_field_prefix,
+                    GlossVideoSearchForm.keyword_search_field_prefix]
+        context['language_query_keys'] = json.dumps([prefix + language.language_code_2char
+                                                     for language in dataset_languages for prefix in prefixes])
+        context['select_query_keys'] = json.dumps(['isNormalVideo', 'isNMEVideo', 'isPerspectiveVideo', 'isBackup'])
+        context['query_parameters'] = json.dumps(self.query_parameters)
+        query_parameters_keys = list(self.query_parameters.keys())
+        context['query_parameters_keys'] = json.dumps(query_parameters_keys)
 
         return context
 
@@ -255,6 +258,7 @@ class GlossVideoListView(ListView):
             if list_glossvideos or list_glossbackupvideos or list_perspvideos or list_nmevideos:
                 gloss_videos.append((gloss, num_backup_videos, list_glossvideos, list_glossbackupvideos, list_perspvideos, list_nmevideos))
 
+        # the active query parameters are passed to the context via self
         self.query_parameters = query_parameters
 
         return gloss_videos, count_glossvideos, count_glossbackupvideos, count_glossperspvideos, count_glossnmevideos
