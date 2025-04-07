@@ -255,9 +255,6 @@ class GlossVideoListView(ListView):
             if list_glossvideos or list_glossbackupvideos or list_perspvideos or list_nmevideos:
                 gloss_videos.append((gloss, num_backup_videos, list_glossvideos, list_glossbackupvideos, list_perspvideos, list_nmevideos))
 
-        # save the query parameters to a session variable
-        self.request.session['query_parameters'] = json.dumps(query_parameters)
-        self.request.session.modified = True
         self.query_parameters = query_parameters
 
         return gloss_videos, count_glossvideos, count_glossbackupvideos, count_glossperspvideos, count_glossnmevideos
