@@ -356,7 +356,7 @@ def update_gloss_video_backups(request, glossid):
 
     glossvideos = GlossVideo.objects.filter(gloss=gloss,
                                             glossvideonme=None,
-                                            glossvideoperspective=None).order_by('version')
+                                            glossvideoperspective=None, version__gt=0).order_by('version')
     list_videos = ', '.join([str(gv.version) + ': ' + str(gv.videofile) for gv in glossvideos])
 
     return JsonResponse({'videos': list_videos})

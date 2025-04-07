@@ -266,12 +266,13 @@ dd {
 <table class='table table-condensed table-condensed-light'>
 <tr><th style="width:300px;">{% trans "Dataset name" %}</th><td style="width:1200px;">{{dataset.name}}</td></tr>
 <tr><th>{% trans "Acronym" %}</th><td>{{dataset.acronym}}</td></tr>
-<tr><th>{% trans "Number of glosses" %}</th><td>{{nr_of_glosses}} total</td></tr>
+<tr><th>{% trans "Number of glosses" %}</th><td>{{nr_of_glosses}}</td></tr>
+<tr><th>{% trans "Number of video objects matching query" %}</th><td>{{count_glosses}}</td></tr>
 </table>
 <br>
 
 <div class='panel-heading panel-light' data-toggle='collapse' data-parent='#video_storage_toggles'
-     data-target='#toggle_persp_videos'>{% trans "Gloss Perspective Videos" %}
+     data-target='#toggle_persp_videos'>{% trans "Gloss Perspective Video Objects" %}
     <span>({{count_glossperspvideos}} {% trans "results found" %})</span>
 </div>
 <div id='toggle_persp_videos' class="panel-collapse collapse">
@@ -311,7 +312,7 @@ dd {
 <br>
 
 <div class='panel-heading panel-light' data-toggle='collapse' data-parent='#video_storage_toggles'
-     data-target='#toggle_nme_videos'>{% trans "Gloss NME Videos" %}
+     data-target='#toggle_nme_videos'>{% trans "Gloss NME Video Objects" %}
     <span>({{count_glossnmevideos}} {% trans "results found" %})</span>
 </div>
 <div id='toggle_nme_videos' class="panel-collapse collapse">
@@ -349,7 +350,7 @@ dd {
 <br>
 
 <div class='panel-heading panel-light' data-toggle='collapse' data-parent='#video_storage_toggles'
-     data-target='#toggle_gloss_videos'>{% trans "Gloss Backup Videos" %}
+     data-target='#toggle_gloss_videos'>{% trans "Gloss Backup Video Objects" %}
     <span>({{count_glossbackupvideos}} {% trans "results found" %})</span>
 </div>
 <div id='toggle_gloss_videos' class="panel-collapse collapse" style="width:auto;">
@@ -405,7 +406,7 @@ dd {
 </div>
 <br>
 <div class='panel-heading panel-light' data-toggle='collapse' data-parent='#video_storage_toggles'
-     data-target='#toggle_normal_gloss_videos'>{% trans "Gloss Videos" %}
+     data-target='#toggle_normal_gloss_videos'>{% trans "Gloss Primary Video Objects" %}
     <span>({{count_glossvideos}} {% trans "results found" %})</span>
 </div>
 <div id='toggle_normal_gloss_videos' class="panel-collapse collapse" style="width:auto;">

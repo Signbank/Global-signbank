@@ -1629,7 +1629,7 @@ class AnnotatedGlossForm(forms.ModelForm):
 
 class GlossVideoSearchForm(forms.ModelForm):
 
-    isNormalVideo = forms.ChoiceField(label=_('Is Normal Video'),
+    isNormalVideo = forms.ChoiceField(label=_('Is Primary Video'),
                                       choices=[(0, '-')],
                                       widget=forms.Select(attrs=ATTRS_FOR_FORMS))
     isPerspectiveVideo = forms.ChoiceField(label=_('Is Perspective Video'),
