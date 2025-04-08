@@ -78,7 +78,6 @@ function clearForm() {
       $('input').each(function() {
         var this_field = $(this).attr('name');
         if (this_field == undefined) { return; };
-        if (this_field == 'morpheme') { $(this).attr('value', ""); return; };
         var this_type = $(this).attr('type');
         if (this_type == 'hidden' || this_type == 'submit' || this_type == 'radio' || this_type == 'button') { return; };
         if (this_type == 'date') {
@@ -95,9 +94,11 @@ function clearForm() {
         if (this_field.endsWith('[]')) {
             return;
         } else {
+            console.log('options');
+            $(this).val('');
             $(this).find('option').each(function () {
                 $(this).removeAttr("selected");
-            });;
+            });
         };
       });
 }
@@ -224,9 +225,9 @@ dd {
         </div>
         <div>
         <table class='table table-condensed table-condensed-light' style="width:33%;">
-            <tr id='video_isNormalVideo'>
-                <td class='td td-light' style="width:200px;"><label>{{searchform.isNormalVideo.label}}</label></td>
-                <td class='td td-light' style="width:100px;">{{ searchform.isNormalVideo }}</td>
+            <tr id='video_isPrimaryVideo'>
+                <td class='td td-light' style="width:200px;"><label>{{searchform.isPrimaryVideo.label}}</label></td>
+                <td class='td td-light' style="width:100px;">{{ searchform.isPrimaryVideo }}</td>
             </tr>
             <tr id='video_isPerspectiveVideo'>
                 <td class='td td-light' style="width:200px;"><label>{{searchform.isPerspectiveVideo.label}}</label></td>
@@ -267,7 +268,7 @@ dd {
 <tr><th style="width:300px;">{% trans "Dataset name" %}</th><td style="width:1200px;">{{dataset.name}}</td></tr>
 <tr><th>{% trans "Acronym" %}</th><td>{{dataset.acronym}}</td></tr>
 <tr><th>{% trans "Number of glosses" %}</th><td>{{nr_of_glosses}}</td></tr>
-<tr><th>{% trans "Number of video objects matching query" %}</th><td>{{count_glosses}}</td></tr>
+<tr><th>{% trans "Number of video objects matching query" %}</th><td>{{count_video_objects}}</td></tr>
 </table>
 <br>
 
@@ -290,7 +291,7 @@ dd {
             <dt class="col-sm-2" style="width:600px;">{% trans "Video Paths" %}</dt>
         </dl>
         <list id="document_tuples" style="height:280px; display:block;">
-              {% for gloss, num_videos, videos, glossbackupvideos, perspvideos, nmevideos in gloss_videos %}
+              {% for gloss, num_backup_videos, videos, glossbackupvideos, perspvideos, nmevideos in gloss_videos %}
                   {% if perspvideos %}
                   <dl id="gloss_persp_videos_{{gloss.id}}" class="row list-group-item list-group-item-contents" style="padding: 0;">
                       <dd class="col-sm-2" style="width:300px;">{{gloss.idgloss}}</dd>
@@ -330,7 +331,7 @@ dd {
             <dt class="col-sm-2" style="width:600px;">{% trans "Video Paths" %}</dt>
         </dl>
         <list id="document_tuples" style="height:280px; display:block;">
-              {% for gloss, num_videos, videos, glossbackupvideos, perspvideos, nmevideos in gloss_videos %}
+              {% for gloss, num_backup_videos, videos, glossbackupvideos, perspvideos, nmevideos in gloss_videos %}
                   <dl id="gloss_nme_videos_{{gloss.id}}" class="row list-group-item list-group-item-contents" style="padding: 0;">
                       <dd class="col-sm-2" style="width:300px;">{{gloss.idgloss}}</dd>
                       <dd class="col-sm-2" style="width:150px;">{{gloss.id}}</dd>
@@ -365,6 +366,7 @@ dd {
             {% for language in dataset_languages %}
             <dt class="col-sm-2" style="width:300px;">{% trans "Annotation" %} ({{language.name}})</dt>
             {% endfor %}
+            <dt class="col-sm-2" style="width:150px;">{% trans "# Backups" %}</dt>
             <dt class="col-sm-2" style="width:400px;">{% trans "Video Paths" %}</dt>
             <dt class="col-sm-2" style="width:300px;">
                 <span class="hasTooltip">{% trans "Operations" %}
@@ -375,7 +377,7 @@ dd {
             </dt>
         </dl>
         <list id="document_tuples" style="height:280px; display:block;">
-              {% for gloss, num_videos, videos, glossbackupvideos, perspvideos, nmevideos in gloss_videos %}
+              {% for gloss, num_backup_videos, videos, glossbackupvideos, perspvideos, nmevideos in gloss_videos %}
                   {% if glossbackupvideos %}
                   <dl id="gloss_videos_{{gloss.id}}" class="row list-group-item list-group-item-contents" style="padding: 0;">
                       <dd class="col-sm-2" style="width:300px;">{{gloss.idgloss}}</dd>
@@ -383,10 +385,11 @@ dd {
                       {% for language in dataset_languages %}
                         <dd class="col-sm-2" style="width:300px;">{{gloss|get_annotation_idgloss_translation_no_default:language}}</dd>
                       {% endfor %}
+                      <dd class="col-sm-2" style="width:150px;">{{num_backup_videos}}</dd>
                       <dd class="col-sm-2" style="width:400px;" id='videos_{{gloss.id}}'>{{glossbackupvideos}}</dd>
                       <dd class="col-sm-2" style="width:300px;">
                             <div class='btn-group' >
-                                {% if num_videos > 1 %}
+                                {% if num_backup_videos > 0 %}
                                 <button id="update_gloss_video_backups_{{gloss.id}}" class="btn btn-success"
                                         onclick='update_gloss_video_backups(this)'
                                         style="padding-top: 0; padding-bottom: 0; margin-top: 0;"
@@ -424,7 +427,7 @@ dd {
             <dt class="col-sm-2" style="width:400px;">{% trans "Video Paths" %}</dt>
         </dl>
         <list id="document_tuples" style="height:280px; display:block;">
-              {% for gloss, num_videos, videos, glossbackupvideos, perspvideos, nmevideos in gloss_videos %}
+              {% for gloss, num_backup_videos, videos, glossbackupvideos, perspvideos, nmevideos in gloss_videos %}
                   {% if videos %}
                   <dl id="normal_gloss_videos_{{gloss.id}}" class="row list-group-item list-group-item-contents" style="padding: 0;">
                       <dd class="col-sm-2" style="width:300px;">{{gloss.idgloss}}</dd>

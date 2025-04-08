@@ -1629,7 +1629,7 @@ class AnnotatedGlossForm(forms.ModelForm):
 
 class GlossVideoSearchForm(forms.ModelForm):
 
-    isNormalVideo = forms.ChoiceField(label=_('Is Primary Video'),
+    isPrimaryVideo = forms.ChoiceField(label=_('Is Primary Video'),
                                       choices=[(0, '-')],
                                       widget=forms.Select(attrs=ATTRS_FOR_FORMS))
     isPerspectiveVideo = forms.ChoiceField(label=_('Is Perspective Video'),
@@ -1662,5 +1662,5 @@ class GlossVideoSearchForm(forms.ModelForm):
 
         # language fields will be set up elsewhere
 
-        for boolean_field in ['isNormalVideo', 'isPerspectiveVideo', 'isNMEVideo', 'isBackup', 'correctFilename']:
+        for boolean_field in ['isPrimaryVideo', 'isPerspectiveVideo', 'isNMEVideo', 'isBackup', 'correctFilename']:
             self.fields[boolean_field].choices = [('0', '-'), ('2', _('Yes')), ('3', _('No'))]
