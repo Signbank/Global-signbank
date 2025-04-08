@@ -97,6 +97,9 @@ class GlossVideoListView(ListView):
 
     def get_context_data(self, **kwargs):
 
+        # this is a ListView, but the url takes the dataset ID
+        # the dataset is stored in the class self to allow sharing
+        # Depending on control flow, it should be retrieved either here or in get_queryset
         if 'pk' in self.kwargs:
             self.dataset = get_object_or_404(Dataset, pk=self.kwargs['pk'])
         context = super(GlossVideoListView, self).get_context_data(**kwargs)
@@ -115,14 +118,8 @@ class GlossVideoListView(ListView):
         nr_of_glosses = glosses.count()
         context['nr_of_glosses'] = nr_of_glosses
 
-        # context['gloss_videos'] = self.get_query_set()
         if not self.search_form.is_bound:
-            # if the search_form is not bound, then
-            # this is the first time the get_queryset function is called for this view
-            # it has already been initialised with the __init__ method, but
-            # the language fields are dynamic and are not inside the form yet
-            # they depend on the selected datasets which are inside the request, which
-            # is not available to the __init__ method
+            # if the search_form is not bound, then initialise the dynamic language fields for the dataset
             set_up_language_fields(GlossVideo, self, self.search_form)
 
         context['searchform'] = self.search_form
@@ -201,7 +198,7 @@ class GlossVideoListView(ListView):
 
         # the active query parameters are passed to the context via self
         self.query_parameters = query_parameters
-        
+
         if 'isPrimaryVideo' in query_parameters.keys() and query_parameters['isPrimaryVideo'] == '2':
             count_glossvideos = GlossVideo.objects.filter(gloss__in=qs, version=0,
                                                           glossvideonme=None, glossvideoperspective=None).count()
@@ -213,8 +210,8 @@ class GlossVideoListView(ListView):
             count_glossnmevideos = GlossVideoNME.objects.filter(gloss__in=qs).count()
         count_video_objects = count_glossvideos + count_glossbackupvideos + count_glossperspvideos + count_glossnmevideos
 
-        # # This is prevent the interface from choking on backup videos
-        # # For NGT there are over 100,000 video objects
+        # This is prevent the interface from choking on backup videos
+        # For NGT there are over 100,000 backup video objects
         if count_video_objects > 500:
             translated_message = str(count_video_objects) + _(' results. Please refine your query to retrieve fewer results.')
             messages.add_message(self.request, messages.ERROR, translated_message)
