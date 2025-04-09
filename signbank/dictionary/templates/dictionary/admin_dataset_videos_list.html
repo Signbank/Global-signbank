@@ -295,6 +295,47 @@ dd {
 <br>
 
 <div class='panel-heading panel-light' data-toggle='collapse' data-parent='#video_storage_toggles'
+     data-target='#toggle_normal_gloss_videos'>{% trans "Gloss Primary Video Objects" %}
+    <span>({{count_glossvideos}} {% trans "results found" %})</span>
+</div>
+<div id='toggle_normal_gloss_videos' class="panel-collapse collapse" style="width:auto;">
+<div class="panel-body" style="display:inline-block;border-color:transparent;">
+    {% if count_glossvideos %}
+    <table class='table table-condensed table-condensed-light'>
+    <tr>
+        <td class="list-group-hover" style="padding: 0;">
+        <dl class="row list-group-item active"  style="padding: 0;">
+            <dt class="col-sm-2" style="width:300px;">{% trans "Lemma" %} ({{default_language.name}})</dt>
+            <dt class="col-sm-2" style="width:150px;">{% trans "Gloss ID" %}</dt>
+            {% for language in dataset_languages %}
+            <dt class="col-sm-2" style="width:300px;">{% trans "Annotation" %} ({{language.name}})</dt>
+            {% endfor %}
+            <dt class="col-sm-2" style="width:400px;">{% trans "Video Paths" %}</dt>
+        </dl>
+        <list id="document_tuples" style="height:280px; display:block;">
+              {% for gloss, num_backup_videos, videos, glossbackupvideos, perspvideos, nmevideos, wrongvideos in gloss_videos %}
+                  {% if videos %}
+                  <dl id="primary_gloss_videos_{{gloss.id}}" class="row list-group-item list-group-item-contents" style="padding: 0;">
+                      <dd class="col-sm-2" style="width:300px;">{{gloss.idgloss}}</dd>
+                      <dd class="col-sm-2" style="width:150px;">{{gloss.id}}</dd>
+                      {% for language in dataset_languages %}
+                        <dd class="col-sm-2" style="width:300px;">{{gloss|get_annotation_idgloss_translation_no_default:language}}</dd>
+                      {% endfor %}
+                      <dd class="col-sm-2" style="width:400px;" id='normal_videos_{{gloss.id}}'>{{videos}}</dd>
+                  </dl>
+                  {% endif %}
+             {% endfor %}
+        </list>
+        </td>
+        </tr>
+    </table>
+    {% endif %}
+</div>
+</div>
+</div>
+<br>
+
+<div class='panel-heading panel-light' data-toggle='collapse' data-parent='#video_storage_toggles'
      data-target='#toggle_persp_videos'>{% trans "Gloss Perspective Video Objects" %}
     <span>({{count_glossperspvideos}} {% trans "results found" %})</span>
 </div>
@@ -433,46 +474,6 @@ dd {
         </tr>
     </table>
     {% endif %}
-</div>
-</div>
-<br>
-<div class='panel-heading panel-light' data-toggle='collapse' data-parent='#video_storage_toggles'
-     data-target='#toggle_normal_gloss_videos'>{% trans "Gloss Primary Video Objects" %}
-    <span>({{count_glossvideos}} {% trans "results found" %})</span>
-</div>
-<div id='toggle_normal_gloss_videos' class="panel-collapse collapse" style="width:auto;">
-<div class="panel-body" style="display:inline-block;border-color:transparent;">
-    {% if count_glossvideos %}
-    <table class='table table-condensed table-condensed-light'>
-    <tr>
-        <td class="list-group-hover" style="padding: 0;">
-        <dl class="row list-group-item active"  style="padding: 0;">
-            <dt class="col-sm-2" style="width:300px;">{% trans "Lemma" %} ({{default_language.name}})</dt>
-            <dt class="col-sm-2" style="width:150px;">{% trans "Gloss ID" %}</dt>
-            {% for language in dataset_languages %}
-            <dt class="col-sm-2" style="width:300px;">{% trans "Annotation" %} ({{language.name}})</dt>
-            {% endfor %}
-            <dt class="col-sm-2" style="width:400px;">{% trans "Video Paths" %}</dt>
-        </dl>
-        <list id="document_tuples" style="height:280px; display:block;">
-              {% for gloss, num_backup_videos, videos, glossbackupvideos, perspvideos, nmevideos, wrongvideos in gloss_videos %}
-                  {% if videos %}
-                  <dl id="primary_gloss_videos_{{gloss.id}}" class="row list-group-item list-group-item-contents" style="padding: 0;">
-                      <dd class="col-sm-2" style="width:300px;">{{gloss.idgloss}}</dd>
-                      <dd class="col-sm-2" style="width:150px;">{{gloss.id}}</dd>
-                      {% for language in dataset_languages %}
-                        <dd class="col-sm-2" style="width:300px;">{{gloss|get_annotation_idgloss_translation_no_default:language}}</dd>
-                      {% endfor %}
-                      <dd class="col-sm-2" style="width:400px;" id='normal_videos_{{gloss.id}}'>{{videos}}</dd>
-                  </dl>
-                  {% endif %}
-             {% endfor %}
-        </list>
-        </td>
-        </tr>
-    </table>
-    {% endif %}
-</div>
 </div>
 </div>
 <br>
