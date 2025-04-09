@@ -244,6 +244,5 @@ class GlossVideoListView(ListView):
             if display_glossvideos or display_glossbackupvideos or display_perspvideos or display_nmevideos or display_wrong_videos:
                 gloss_videos.append((gloss, num_backup_videos, display_glossvideos,
                                      display_glossbackupvideos, display_perspvideos, display_nmevideos, display_wrong_videos))
-
         return (gloss_videos, count_video_objects,
                 count_glossvideos, count_glossbackupvideos, count_glossperspvideos, count_glossnmevideos, count_wrong_filename)

@@ -47,6 +47,28 @@ function update_gloss_video_backups(el) {
     });
 };
 
+function move_gloss_video_backups_to_trash(el) {
+    var glossid = $(el).attr('data-glossid');
+    var lookup = "#gloss_videos_"+glossid;
+    $.ajax({
+        url : url + "/dictionary/move_gloss_video_backups_to_trash/"+glossid+ "/",
+        datatype: "json",
+        data: {
+            'csrfmiddlewaretoken': csrf_token
+        },
+        type: "POST",
+        async: true,
+        success : function(result) {
+            console.log(result);
+            if ($.isEmptyObject(result)) {
+                return;
+            };
+            var videos = result.videos;
+            $(lookup).html('');
+        }
+    });
+};
+
 $(document).ready(function() {
 
     $('[data-toggle="tooltip"]').tooltip();
@@ -185,7 +207,7 @@ dd {
                 </span>
                 {% endif %}
               </div>
-        <div id='ann_search' class='collapse'>
+        <div id='ann_search' class='collapse in'>
         <table class='table' id='searchfields'>
             {% for dataset_lang in dataset_languages %}
             <tr>
@@ -241,9 +263,9 @@ dd {
                 <td class='td td-light' style="width:200px;"><label>{{searchform.isBackup.label}}</label></td>
                 <td class='td td-light' style="width:100px;">{{ searchform.isBackup }}</td>
             </tr>
-            <tr id='video_icorrectFilename'>
-                <td class='td td-light' style="width:200px;"><label>{{searchform.correctFilename.label}}</label></td>
-                <td class='td td-light' style="width:100px;">{{ searchform.correctFilename }}</td>
+            <tr id='video_wrongFilename'>
+                <td class='td td-light' style="width:200px;"><label>{{searchform.wrongFilename.label}}</label></td>
+                <td class='td td-light' style="width:100px;">{{ searchform.wrongFilename }}</td>
             </tr>
         </table>
         </div>
@@ -291,7 +313,7 @@ dd {
             <dt class="col-sm-2" style="width:600px;">{% trans "Video Paths" %}</dt>
         </dl>
         <list id="document_tuples" style="height:280px; display:block;">
-              {% for gloss, num_backup_videos, videos, glossbackupvideos, perspvideos, nmevideos in gloss_videos %}
+              {% for gloss, num_backup_videos, videos, glossbackupvideos, perspvideos, nmevideos, wrongvideos in gloss_videos %}
                   {% if perspvideos %}
                   <dl id="gloss_persp_videos_{{gloss.id}}" class="row list-group-item list-group-item-contents" style="padding: 0;">
                       <dd class="col-sm-2" style="width:300px;">{{gloss.idgloss}}</dd>
@@ -331,7 +353,8 @@ dd {
             <dt class="col-sm-2" style="width:600px;">{% trans "Video Paths" %}</dt>
         </dl>
         <list id="document_tuples" style="height:280px; display:block;">
-              {% for gloss, num_backup_videos, videos, glossbackupvideos, perspvideos, nmevideos in gloss_videos %}
+              {% for gloss, num_backup_videos, videos, glossbackupvideos, perspvideos, nmevideos, wrongvideos in gloss_videos %}
+                  {% if nmevideos %}
                   <dl id="gloss_nme_videos_{{gloss.id}}" class="row list-group-item list-group-item-contents" style="padding: 0;">
                       <dd class="col-sm-2" style="width:300px;">{{gloss.idgloss}}</dd>
                       <dd class="col-sm-2" style="width:150px;">{{gloss.id}}</dd>
@@ -340,6 +363,7 @@ dd {
                       {% endfor %}
                       <dd class="col-sm-2" style="width:600px;" id='nme_videos_{{gloss.id}}'>{{nmevideos}}</dd>
                   </dl>
+                  {% endif %}
              {% endfor %}
         </list>
         </td>
@@ -377,7 +401,7 @@ dd {
             </dt>
         </dl>
         <list id="document_tuples" style="height:280px; display:block;">
-              {% for gloss, num_backup_videos, videos, glossbackupvideos, perspvideos, nmevideos in gloss_videos %}
+              {% for gloss, num_backup_videos, videos, glossbackupvideos, perspvideos, nmevideos, wrongvideos in gloss_videos %}
                   {% if glossbackupvideos %}
                   <dl id="gloss_videos_{{gloss.id}}" class="row list-group-item list-group-item-contents" style="padding: 0;">
                       <dd class="col-sm-2" style="width:300px;">{{gloss.idgloss}}</dd>
@@ -394,6 +418,10 @@ dd {
                                         onclick='update_gloss_video_backups(this)'
                                         style="padding-top: 0; padding-bottom: 0; margin-top: 0;"
                                         data-glossid='{{gloss.id}}'>{% trans "Rename" %}</button>
+                                <button id="move_gloss_video_backups_to_trash_{{gloss.id}}" class="btn btn-success"
+                                        onclick='move_gloss_video_backups_to_trash(this)'
+                                        style="padding-top: 0; padding-bottom: 0; margin-top: 0;"
+                                        data-glossid='{{gloss.id}}'>{% trans "Move to Trash" %}</button>
                                 {% endif %}
                             </div>
                       </dd>
@@ -427,9 +455,9 @@ dd {
             <dt class="col-sm-2" style="width:400px;">{% trans "Video Paths" %}</dt>
         </dl>
         <list id="document_tuples" style="height:280px; display:block;">
-              {% for gloss, num_backup_videos, videos, glossbackupvideos, perspvideos, nmevideos in gloss_videos %}
+              {% for gloss, num_backup_videos, videos, glossbackupvideos, perspvideos, nmevideos, wrongvideos in gloss_videos %}
                   {% if videos %}
-                  <dl id="normal_gloss_videos_{{gloss.id}}" class="row list-group-item list-group-item-contents" style="padding: 0;">
+                  <dl id="primary_gloss_videos_{{gloss.id}}" class="row list-group-item list-group-item-contents" style="padding: 0;">
                       <dd class="col-sm-2" style="width:300px;">{{gloss.idgloss}}</dd>
                       <dd class="col-sm-2" style="width:150px;">{{gloss.id}}</dd>
                       {% for language in dataset_languages %}
@@ -445,6 +473,45 @@ dd {
     </table>
     {% endif %}
 </div>
+</div>
+</div>
+<br>
+<div class='panel-heading panel-light' data-toggle='collapse' data-parent='#video_storage_toggles'
+     data-target='#toggle_wrong_videos'>{% trans "Gloss Video Objects with Wrong Filename" %}
+    <span>({{count_wrong_filename}} {% trans "results found" %})</span>
+</div>
+<div id='toggle_wrong_videos' class="panel-collapse collapse">
+<div class="panel-body" style="display:inline-block;border-color:transparent;">
+    {% if count_wrong_filename %}
+    <table class='table table-condensed table-condensed-light' style="width:100%;">
+    <tr>
+        <td class="list-group-hover" style="padding: 0;">
+        <dl class="row list-group-item active"  style="padding: 0;">
+            <dt class="col-sm-2" style="width:300px;">{% trans "Lemma" %} ({{default_language.name}})</dt>
+            <dt class="col-sm-2" style="width:150px;">{% trans "Gloss ID" %}</dt>
+            {% for language in dataset_languages %}
+            <dt class="col-sm-2" style="width:300px;">{% trans "Annotation" %} ({{language.name}})</dt>
+            {% endfor %}
+            <dt class="col-sm-2" style="width:600px;">{% trans "Video Paths" %}</dt>
+        </dl>
+        <list id="document_tuples" style="height:280px; display:block;">
+              {% for gloss, num_backup_videos, videos, glossbackupvideos, perspvideos, nmevideos, wrongvideos in gloss_videos %}
+                  {% if wrongvideos %}
+                  <dl id="gloss_wrong_videos_{{gloss.id}}" class="row list-group-item list-group-item-contents" style="padding: 0;">
+                      <dd class="col-sm-2" style="width:300px;">{{gloss.idgloss}}</dd>
+                      <dd class="col-sm-2" style="width:150px;">{{gloss.id}}</dd>
+                      {% for language in dataset_languages %}
+                        <dd class="col-sm-2" style="width:300px;">{{gloss|get_annotation_idgloss_translation_no_default:language}}</dd>
+                      {% endfor %}
+                      <dd class="col-sm-2" style="width:600px;" id='wrong_videos_{{gloss.id}}'>{{wrongvideos}}</dd>
+                  </dl>
+                  {% endif %}
+             {% endfor %}
+        </list>
+        </td>
+        </tr>
+    </table>
+    {% endif %}
 </div>
 </div>
 <br>
