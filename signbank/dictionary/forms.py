@@ -1641,7 +1641,7 @@ class GlossVideoSearchForm(forms.ModelForm):
     isBackup = forms.ChoiceField(label=_('Is Backup Video'),
                                  choices=[(0, '-')],
                                  widget=forms.Select(attrs=ATTRS_FOR_FORMS))
-    correctFilename = forms.ChoiceField(label=_('Correct Filename'),
+    wrongFilename = forms.ChoiceField(label=_('Wrong Filename'),
                                         choices=[(0, '-')],
                                         widget=forms.Select(attrs=ATTRS_FOR_FORMS))
 
@@ -1662,5 +1662,5 @@ class GlossVideoSearchForm(forms.ModelForm):
 
         # language fields will be set up elsewhere
 
-        for boolean_field in ['isPrimaryVideo', 'isPerspectiveVideo', 'isNMEVideo', 'isBackup', 'correctFilename']:
+        for boolean_field in ['isPrimaryVideo', 'isPerspectiveVideo', 'isNMEVideo', 'isBackup', 'wrongFilename']:
             self.fields[boolean_field].choices = [('0', '-'), ('2', _('Yes')), ('3', _('No'))]

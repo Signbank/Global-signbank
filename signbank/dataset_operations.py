@@ -1,11 +1,12 @@
 import os.path
 from django.contrib.auth.decorators import permission_required
 from signbank.dictionary.models import *
-from signbank.video.models import GlossVideo, GlossVideoNME, GlossVideoPerspective, filename_matches_backup_video
+from signbank.video.models import GlossVideo, GlossVideoNME, GlossVideoPerspective, filename_matches_backup_video, filename_matches_perspective, filename_matches_nme, filename_matches_video
 from signbank.video.convertvideo import video_file_type_extension
 from signbank.tools import get_two_letter_dir
 import re
 from django.http import JsonResponse
+from pathlib import Path
 
 
 def video_type(glossvideo):
@@ -360,3 +361,79 @@ def update_gloss_video_backups(request, glossid):
     list_videos = ', '.join([str(gv.version) + ': ' + str(gv.videofile) for gv in glossvideos])
 
     return JsonResponse({'videos': list_videos})
+
+
+def wrong_filename(videofile, nmevideo, perspective, version):
+    if not videofile:
+        return False
+    video_file_full_path = Path(WRITABLE_FOLDER, videofile)
+    if nmevideo is not None:
+        filename_is_correct = filename_matches_nme(video_file_full_path) is not None
+        return not filename_is_correct
+    elif perspective is not None:
+        filename_is_correct = filename_matches_perspective(video_file_full_path) is not None
+        return not filename_is_correct
+    elif version > 0:
+        filename_is_correct = filename_matches_backup_video(video_file_full_path) is not None
+        return not filename_is_correct
+    else:
+        filename_is_correct = filename_matches_video(video_file_full_path) is not None
+        return not filename_is_correct
+
+
+def wrong_filename_filter(glossvideos):
+    filenames = []
+    queryset_tuples = glossvideos.values('id', 'videofile', 'glossvideonme', 'glossvideoperspective', 'version')
+    for qv in queryset_tuples:
+       if wrong_filename(qv['videofile'],
+                            qv['glossvideonme'],
+                            qv['glossvideoperspective'], qv['version']):
+           filenames.append(qv['id'])
+    return filenames
+
+
+def gv_preface(glossvideo):
+    if hasattr(glossvideo, 'glossvideonme'):
+        nme_video = glossvideo.glossvideonme
+        nme_perspective = nme_video.perspective if nme_video.perspective else 'center'
+        return str(nme_video.offset)+'_'+nme_perspective
+    if hasattr(glossvideo, 'glossvideoperspective'):
+        perspective_video = glossvideo.glossvideoperspective
+        return str(perspective_video.perspective)
+    return str(glossvideo.version)
+
+
+def get_primary_videos_for_gloss(gloss):
+    glossvideos = GlossVideo.objects.filter(gloss=gloss,
+                                            version=0,
+                                            glossvideonme=None,
+                                            glossvideoperspective=None).distinct().order_by('version')
+    display_glossvideos = ', '.join([str(gv.version) + ': ' + str(gv.videofile) for gv in glossvideos])
+    return display_glossvideos
+
+
+def get_backup_videos_for_gloss(gloss):
+    backupglossvideos = GlossVideo.objects.filter(gloss=gloss, version__gt=0).distinct().order_by('version')
+    num_backup_videos = backupglossvideos.count()
+    display_glossbackupvideos = ', '.join([str(gv.version) + ': ' + str(gv.videofile) for gv in backupglossvideos])
+    return num_backup_videos, display_glossbackupvideos
+
+
+def get_perspective_videos_for_gloss(gloss):
+    glossperspvideos = GlossVideoPerspective.objects.filter(gloss=gloss).distinct()
+    display_perspective_videos = ', '.join([str(gv.perspective) + ': ' + str(gv.videofile) for gv in glossperspvideos])
+    return display_perspective_videos
+
+
+def get_nme_videos_for_gloss(gloss):
+    glossnmevideos = GlossVideoNME.objects.filter(gloss=gloss).distinct().order_by('offset')
+    display_nme_videos = ', '.join([gv_preface(gv) + ': ' + str(gv.videofile) for gv in glossnmevideos])
+    return display_nme_videos
+
+
+def get_wrong_videos_for_gloss(gloss):
+    all_gloss_video_objects = GlossVideo.objects.filter(gloss=gloss).distinct()
+    gloss_video_ids = wrong_filename_filter(all_gloss_video_objects)
+    gloss_video_objects = GlossVideo.objects.filter(id__in=gloss_video_ids)
+    display_wrong_videos = ', '.join([gv_preface(gv) + ': ' + str(gv.videofile) for gv in gloss_video_objects])
+    return display_wrong_videos

@@ -8,7 +8,10 @@ from django.views.generic.edit import CreateView, DeleteView, UpdateView
 from signbank.video.models import GlossVideo, GlossVideoNME, GlossVideoPerspective
 from signbank.dictionary.models import Dataset, Gloss, AnnotationIdglossTranslation
 from signbank.dictionary.forms import GlossVideoSearchForm
-from signbank.dataset_operations import (find_unlinked_video_files_for_dataset, gloss_annotations_check, gloss_videos_check, gloss_video_filename_check, gloss_subclass_videos_check)
+from signbank.dataset_operations import (find_unlinked_video_files_for_dataset, gloss_annotations_check,
+                                         gloss_videos_check, gloss_video_filename_check, gloss_subclass_videos_check,
+                                         wrong_filename_filter, get_primary_videos_for_gloss, get_backup_videos_for_gloss,
+                                         get_perspective_videos_for_gloss, get_nme_videos_for_gloss, get_wrong_videos_for_gloss)
 from signbank.tools import get_dataset_languages
 from signbank.settings.server_specific import *
 from guardian.shortcuts import get_objects_for_user
@@ -125,20 +128,21 @@ class GlossVideoListView(ListView):
         context['searchform'] = self.search_form
 
         (gloss_videos, count_video_objects,
-         count_glossvideos, count_glossbackupvideos, count_glossperspvideos, count_glossnmevideos) = self.get_query_set()
+         count_glossvideos, count_glossbackupvideos, count_glossperspvideos, count_glossnmevideos, count_wrong_filename) = self.get_query_set()
         context['gloss_videos'] = gloss_videos
         context['count_video_objects'] = count_video_objects
         context['count_glossvideos'] = count_glossvideos
         context['count_glossbackupvideos'] = count_glossbackupvideos
         context['count_glossperspvideos'] = count_glossperspvideos
         context['count_glossnmevideos'] = count_glossnmevideos
+        context['count_wrong_filename'] = count_wrong_filename
 
         # data structures to store the query parameters in order to keep them in the form
         prefixes = [GlossVideoSearchForm.gloss_search_field_prefix, GlossVideoSearchForm.lemma_search_field_prefix,
                     GlossVideoSearchForm.keyword_search_field_prefix]
         context['language_query_keys'] = json.dumps([prefix + language.language_code_2char
                                                      for language in dataset_languages for prefix in prefixes])
-        context['select_query_keys'] = json.dumps(['isPrimaryVideo', 'isNMEVideo', 'isPerspectiveVideo', 'isBackup'])
+        context['select_query_keys'] = json.dumps(['isPrimaryVideo', 'isNMEVideo', 'isPerspectiveVideo', 'isBackup', 'wrongFilename'])
         context['query_parameters'] = json.dumps(self.query_parameters)
         query_parameters_keys = list(self.query_parameters.keys())
         context['query_parameters_keys'] = json.dumps(query_parameters_keys)
@@ -162,7 +166,7 @@ class GlossVideoListView(ListView):
             set_up_language_fields(GlossVideo, self, self.search_form)
 
         # initialise all template summaries to empty
-        gloss_videos, count_video_objects, count_glossvideos, count_glossbackupvideos, count_glossperspvideos, count_glossnmevideos = [], 0, 0, 0, 0, 0
+        gloss_videos, count_video_objects, count_glossvideos, count_glossbackupvideos, count_glossperspvideos, count_glossnmevideos, count_wrong_filename = [], 0, 0, 0, 0, 0, 0
 
         if not self.request.user.is_authenticated or not self.request.user.has_perm('dictionary.change_gloss'):
             translated_message = _('You do not have permission to manage the dataset videos.')
@@ -174,7 +178,7 @@ class GlossVideoListView(ListView):
             self.request.session['search_results'] = []
             self.request.session.modified = True
             return (gloss_videos, count_video_objects,
-                    count_glossvideos, count_glossbackupvideos, count_glossperspvideos, count_glossnmevideos)
+                    count_glossvideos, count_glossbackupvideos, count_glossperspvideos, count_glossnmevideos, count_wrong_filename)
 
         valid_regex, search_fields, field_values = check_language_fields(self.search_form, GlossVideoSearchForm, get, dataset_languages)
 
@@ -183,7 +187,7 @@ class GlossVideoListView(ListView):
             self.request.session['search_results'] = []
             self.request.session.modified = True
             return (gloss_videos, count_video_objects,
-                    count_glossvideos, count_glossbackupvideos, count_glossperspvideos, count_glossnmevideos)
+                    count_glossvideos, count_glossbackupvideos, count_glossperspvideos, count_glossnmevideos, count_wrong_filename)
 
         qs = Gloss.objects.filter(lemma__dataset=self.dataset, archived=False, morpheme=None).distinct()
 
@@ -207,7 +211,11 @@ class GlossVideoListView(ListView):
             count_glossperspvideos = GlossVideoPerspective.objects.filter(gloss__in=qs).distinct().count()
         if 'isNMEVideo' in query_parameters.keys() and query_parameters['isNMEVideo'] == '2':
             count_glossnmevideos = GlossVideoNME.objects.filter(gloss__in=qs).distinct().count()
-        count_video_objects = count_glossvideos + count_glossbackupvideos + count_glossperspvideos + count_glossnmevideos
+        if 'wrongFilename' in query_parameters.keys() and query_parameters['wrongFilename'] == '2':
+            all_gloss_video_objects = GlossVideo.objects.filter(gloss__in=qs).distinct()
+            gloss_video_ids = wrong_filename_filter(all_gloss_video_objects)
+            count_wrong_filename = len(gloss_video_ids)
+        count_video_objects = count_glossvideos + count_glossbackupvideos + count_glossperspvideos + count_glossnmevideos + count_wrong_filename
 
         # This is prevent the interface from choking on backup videos
         # For NGT there are over 100,000 backup video objects
@@ -215,32 +223,27 @@ class GlossVideoListView(ListView):
             translated_message = str(count_video_objects) + _(' results. Please refine your query to retrieve fewer results.')
             messages.add_message(self.request, messages.ERROR, translated_message)
             # reset the counts of the individual objects for the template, since the query has not been done yet
-            count_glossvideos, count_glossbackupvideos, count_glossperspvideos, count_glossnmevideos = 0, 0, 0, 0
+            count_glossvideos, count_glossbackupvideos, count_glossperspvideos, count_glossnmevideos, count_wrong_filename = 0, 0, 0, 0, 0
             return (gloss_videos, count_video_objects,
-                    count_glossvideos, count_glossbackupvideos, count_glossperspvideos, count_glossnmevideos)
+                    count_glossvideos, count_glossbackupvideos, count_glossperspvideos, count_glossnmevideos, count_wrong_filename)
 
         # a single data structure is created that includes the various kinds of videos in a way suited to the display
         for gloss in qs:
-            display_glossvideos, num_backup_videos, display_glossbackupvideos, display_perspvideos, display_nmevideos = '', 0, '', '', ''
+            display_glossvideos, num_backup_videos, display_glossbackupvideos, display_perspvideos, display_nmevideos, display_wrong_videos = '', 0, '', '', '', ''
             if 'isPrimaryVideo' in query_parameters.keys() and query_parameters['isPrimaryVideo'] == '2':
-                glossvideos = GlossVideo.objects.filter(gloss=gloss,
-                                                        version=0,
-                                                        glossvideonme=None,
-                                                        glossvideoperspective=None).distinct().order_by('version')
-                display_glossvideos = ', '.join([str(gv.version)+': '+str(gv.videofile) for gv in glossvideos])
+                display_glossvideos = get_primary_videos_for_gloss(gloss)
             if 'isBackup' in query_parameters.keys() and query_parameters['isBackup'] == '2':
-                backupglossvideos = GlossVideo.objects.filter(gloss=gloss, version__gt=0).distinct().order_by('version')
-                num_backup_videos = backupglossvideos.count()
-                display_glossbackupvideos = ', '.join([str(gv.version) + ': ' + str(gv.videofile) for gv in backupglossvideos])
+                # the number of backups for the gloss is displayed in the template
+                num_backup_videos, display_glossbackupvideos = get_backup_videos_for_gloss(gloss)
             if 'isPerspectiveVideo' in query_parameters.keys() and query_parameters['isPerspectiveVideo'] == '2':
-                glossperspvideos = GlossVideoPerspective.objects.filter(gloss=gloss).distinct()
-                display_perspvideos = ', '.join([str(gv.perspective) + ': ' + str(gv.videofile) for gv in glossperspvideos])
+                display_perspvideos = get_perspective_videos_for_gloss(gloss)
             if 'isNMEVideo' in query_parameters.keys() and query_parameters['isNMEVideo'] == '2':
-                glossnmevideos = GlossVideoNME.objects.filter(gloss=gloss).distinct().order_by('offset')
-                display_nmevideos = ', '.join([str(gv.offset) + ': ' + str(gv.videofile) for gv in glossnmevideos])
-            if display_glossvideos or display_glossbackupvideos or display_perspvideos or display_nmevideos:
+                display_nmevideos = get_nme_videos_for_gloss(gloss)
+            if 'wrongFilename' in query_parameters.keys() and query_parameters['wrongFilename'] == '2':
+                display_wrong_videos = get_wrong_videos_for_gloss(gloss)
+            if display_glossvideos or display_glossbackupvideos or display_perspvideos or display_nmevideos or display_wrong_videos:
                 gloss_videos.append((gloss, num_backup_videos, display_glossvideos,
-                                     display_glossbackupvideos, display_perspvideos, display_nmevideos))
+                                     display_glossbackupvideos, display_perspvideos, display_nmevideos, display_wrong_videos))
 
         return (gloss_videos, count_video_objects,
-                count_glossvideos, count_glossbackupvideos, count_glossperspvideos, count_glossnmevideos)
+                count_glossvideos, count_glossbackupvideos, count_glossperspvideos, count_glossnmevideos, count_wrong_filename)
