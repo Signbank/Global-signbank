@@ -1,5 +1,6 @@
 import re
 import datetime as DT
+from pathlib import Path
 
 from django.utils import html
 from django import forms
@@ -120,7 +121,6 @@ def apply_language_filters_to_results(model, qs, query_parameters):
 
 
 def matching_file_exists(videofile):
-    from pathlib import Path
     video_file_full_path = Path(WRITABLE_FOLDER, videofile)
     if video_file_full_path.exists():
         return True

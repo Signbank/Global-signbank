@@ -5,6 +5,7 @@ from zipfile import ZipFile
 import json
 import hashlib
 import re
+import codecs
 import datetime as DT
 from datetime import date
 
@@ -14,6 +15,9 @@ from django.views.decorators.csrf import csrf_exempt
 from django.utils.dateformat import format
 from django.core.exceptions import ObjectDoesNotExist, EmptyResultSet
 from django.contrib.auth.models import User
+from django.http import JsonResponse
+from django.shortcuts import render
+from django.template.loader import get_template
 
 from guardian.shortcuts import get_objects_for_user
 
@@ -25,8 +29,9 @@ from signbank.settings.server_specific import (FIELDS, DEFAULT_LANGUAGE_HEADER_C
                                                LANGUAGES_LANGUAGE_CODE_3CHAR)
 from signbank.dictionary.models import (Dataset, Gloss, Morpheme, Dialect, SignLanguage, Language, FieldChoice,
                                         SemanticField, DeletedGlossOrMedia, UserProfile, get_default_language_id,
-                                        Handshape, LemmaIdgloss, FieldChoiceForeignKey,
-                                        LemmaIdglossTranslation, MorphologyDefinition, AnnotatedSentenceTranslation)
+                                        Handshape, LemmaIdgloss, FieldChoiceForeignKey, Definition,
+                                        LemmaIdglossTranslation, MorphologyDefinition, AnnotatedSentenceTranslation,
+                                        ExampleSentence, OtherMedia)
 from signbank.csv_interface import (sense_translations_for_language, update_senses_parse,
                                     update_sentences_parse, sense_examplesentences_for_language, get_sense_numbers,
                                     parse_sentence_row, get_senses_to_sentences, csv_sentence_tuples_list_compare,
@@ -1041,7 +1046,7 @@ def compare_valuedict_to_lemma(valuedict, lemma_id, my_datasets, nl,
         return differences, errors_found, earlier_updates_same_csv, earlier_updates_lemmaidgloss
 
     if not count_new_nonempty_translations:
-        # somebody has modified the lemma translations so as to delete alll of them:
+        # somebody has modified the lemma translations to delete all of them:
         e = 'Row ' + str(nl + 1) + ': Lemma ID ' + str(lemma_id) + ' must have at least one translation.'
         errors_found.append(e)
         return differences, errors_found, earlier_updates_same_csv, earlier_updates_lemmaidgloss
@@ -1260,7 +1265,6 @@ def map_values_to_notes_id(values):
     for nrc in note_role_choices:
         note_reverse_translation[nrc.name] = str(nrc.machine_value)
 
-    import re
     sorted_note_names = note_reverse_translation.keys()
     pattern_mapped_sorted_note_names = []
     escaped_note_reverse_translation = {}
@@ -1563,7 +1567,7 @@ def check_existence_foreign_relations(gloss, relations, values):
     sorted_values = []
 
     if not values:
-        # this is a delete
+        # this is a delete operation
         return checked, errors
 
     for new_value_tuple in values:
@@ -1609,7 +1613,6 @@ def check_existence_foreign_relations(gloss, relations, values):
 @csrf_exempt
 def set_dark_mode(request):
     # this is the toggle button in the menu bar
-    from django.http import JsonResponse
     if 'dark_mode' not in request.session.keys():
         # first time button is used
         request.session['dark_mode'] = "True"
@@ -1642,7 +1645,6 @@ def reload_signbank(request=None):
     # If this is an HTTP request, give an HTTP response
     if request is not None:
 
-        from django.shortcuts import render
         return render(request, 'reload_signbank.html')
 
 
@@ -1819,7 +1821,6 @@ def gloss_handshape_fields():
     # returns a list of fields that are Handshape ForeignKeys
     fields_list = []
 
-    from signbank.dictionary.models import Gloss
     for gloss_fieldname in Gloss.get_field_names():
         gloss_field = Gloss.get_field(gloss_fieldname)
         if isinstance(gloss_field, models.ForeignKey) and gloss_field.related_model == Handshape:
@@ -1832,7 +1833,6 @@ def fields_with_choices_glosses():
 
     fields_dict = {}
 
-    from signbank.dictionary.models import Gloss
     for fieldname in Gloss.get_field_names():
         field = Gloss.get_field(fieldname)
         if hasattr(field, 'field_choice_category') and isinstance(field, FieldChoiceForeignKey):
@@ -1849,7 +1849,6 @@ def fields_with_choices_handshapes():
 
     fields_dict = {}
 
-    from signbank.dictionary.models import Handshape
     for fieldname in Handshape.get_field_names():
         field = Handshape.get_field(fieldname)
         if hasattr(field, 'field_choice_category') and isinstance(field, FieldChoiceForeignKey):
@@ -1866,7 +1865,6 @@ def fields_with_choices_examplesentences():
 
     fields_dict = {}
 
-    from signbank.dictionary.models import ExampleSentence
     for fieldname in ExampleSentence.get_field_names():
         field = ExampleSentence.get_field(fieldname)
         if hasattr(field, 'field_choice_category') and isinstance(field, FieldChoiceForeignKey):
@@ -1883,7 +1881,6 @@ def fields_with_choices_definition():
 
     fields_dict = {}
 
-    from signbank.dictionary.models import Definition
     for fieldname in Definition.get_field_names():
         field = Definition.get_field(fieldname)
         if hasattr(field, 'field_choice_category') and isinstance(field, FieldChoiceForeignKey):
@@ -1900,7 +1897,6 @@ def fields_with_choices_morphology_definition():
 
     fields_dict = {}
 
-    from signbank.dictionary.models import MorphologyDefinition
     for fieldname in MorphologyDefinition.get_field_names():
         field = MorphologyDefinition.get_field(fieldname)
         if hasattr(field, 'field_choice_category') and isinstance(field, FieldChoiceForeignKey):
@@ -1917,7 +1913,6 @@ def fields_with_choices_other_media_type():
 
     fields_dict = {}
 
-    from signbank.dictionary.models import OtherMedia
     for fieldname in OtherMedia.get_field_names():
         field = OtherMedia.get_field(fieldname)
         if hasattr(field, 'field_choice_category') and isinstance(field, FieldChoiceForeignKey):
@@ -1934,7 +1929,6 @@ def fields_with_choices_morpheme_type():
 
     fields_dict = {}
 
-    from signbank.dictionary.models import Morpheme
     for fieldname in Morpheme.get_field_names():
         if fieldname in Gloss.get_field_names():
             # skip fields that are also in superclass Gloss
@@ -1993,11 +1987,9 @@ def write_ecv_file_for_dataset(dataset_name):
         'languages': dataset_id.translation_languages.all(),
         'resource_url': URL + PREFIX_URL + '/dictionary/gloss/'
     }
-    from django.template.loader import get_template
     ecv_template = get_template('dictionary/ecv.xml')
     xmlstr = ecv_template.render(context)
     ecv_file = os.path.join(ECV_FOLDER_ABSOLUTE_PATH, dataset_name.lower().replace(" ", "_") + ".ecv")
-    import codecs
     try:
         f = codecs.open(ecv_file, "w", "utf-8")
         f.write(xmlstr)

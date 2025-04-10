@@ -12,6 +12,8 @@ from django.core.exceptions import ObjectDoesNotExist, MultipleObjectsReturned, 
 from django.db.transaction import atomic, TransactionManagementError
 
 from guardian.shortcuts import get_objects_for_user
+from pympi.Elan import Eaf
+from tempfile import NamedTemporaryFile
 
 from signbank.settings.server_specific import (FIELDS, MODELTRANSLATION_LANGUAGES, DEBUG_API)
 from signbank.dictionary.models import (Dataset, Gloss, Language, AnnotationIdglossTranslation, LemmaIdglossTranslation,
@@ -20,12 +22,12 @@ from signbank.dictionary.models import (Dataset, Gloss, Language, AnnotationIdgl
                                         AnnotatedSentence, AnnotatedSentenceSource, AnnotatedSentenceTranslation,
                                         AnnotatedSentenceContext, FieldChoice, FieldChoiceForeignKey,
                                         CATEGORY_MODELS_MAPPING)
-from signbank.video.models import GlossVideoDescription, GlossVideoNME
+from signbank.video.models import GlossVideoDescription, GlossVideoNME, AnnotatedVideo
+from signbank.video.views import get_glosses_from_eaf
 from signbank.tools import get_default_annotationidglosstranslation
 from signbank.csv_interface import normalize_field_choice, normalize_boolean
 from signbank.api_token import put_api_user_in_request
 from signbank.abstract_machine import retrieve_language_code_from_header
-
 from signbank.dictionary.batch_edit import add_gloss_update_to_revision_history
 
 PERSPECTIVE_VIDEO_LABELS = {}
@@ -1460,9 +1462,6 @@ def api_create_annotated_sentence(request, datasetid):
     if not (video_file and eaf_file):
         return JsonResponse({"error": gettext("Missing a required field.")}, status=400)
 
-    from pympi.Elan import Eaf
-    from tempfile import NamedTemporaryFile
-
     # Create a temporary file
     with NamedTemporaryFile(delete=False, suffix='.eaf') as tmp_eaf_file:
         for chunk in eaf_file.chunks():
@@ -1477,7 +1476,6 @@ def api_create_annotated_sentence(request, datasetid):
     annotated_sentence = AnnotatedSentence.objects.create()
 
     # Get glosses and sentences from the eaf file
-    from signbank.video.views import get_glosses_from_eaf
     annotations, labels_not_found, sentence_dict = get_glosses_from_eaf(eaf, dataset.acronym)
     if len(annotations) == 0:
         return JsonResponse({"error": gettext("No annotations found in EAF file.")}, status=400)
@@ -1602,7 +1600,6 @@ def api_delete_annotated_sentence(request, datasetid, annotatedsentenceid):
     if annotated_sentence.get_dataset() != dataset:
         return JsonResponse({"error": gettext("Annotated sentence not found in dataset.")}, status=404)
     
-    from signbank.video.models import AnnotatedVideo
     annotated_videos = AnnotatedVideo.objects.filter(annotatedsentence=annotated_sentence)
     for annotated_video in annotated_videos:
         annotated_video.delete_files()

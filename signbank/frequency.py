@@ -1,6 +1,7 @@
 import os
 import json
 import csv
+import locale
 
 from django.core.exceptions import ObjectDoesNotExist, MultipleObjectsReturned
 from django.shortcuts import get_object_or_404, HttpResponseRedirect, HttpResponse
@@ -1158,7 +1159,6 @@ def update_document_counts(request, dataset_id, document_id):
         exception_value = [ _('Failed') ]
         return HttpResponse(json.dumps(exception_value), {'content-type': 'application/json'})
 
-    import locale
     locale.setlocale(locale.LC_ALL, '')
     document_date_stamp = document.creation_time.strftime('%d %B %Y')
 
