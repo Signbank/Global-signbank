@@ -1,8 +1,11 @@
 from django.contrib import admin 
-from signbank.feedback.models import *
-from django.utils.translation import override, gettext_lazy as _
+from django.utils.translation import gettext_lazy as _
 from django.contrib.admin import SimpleListFilter
 
+from django.conf import settings
+
+from signbank.feedback.models import GeneralFeedback, SignFeedback, MissingSignFeedback, MorphemeFeedback
+from signbank.dictionary.models import Dataset
 
 class GeneralFeedbackAdmin(admin.ModelAdmin):
     readonly_fields = ['user', 'date', 'comment', 'video']

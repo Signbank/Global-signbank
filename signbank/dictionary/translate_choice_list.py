@@ -1,10 +1,6 @@
 from collections import OrderedDict
-# from signbank.dictionary.models import Gloss, GlossRevision, Morpheme, Handshape
-import signbank.settings.base as settings
 from django.utils.translation import gettext_lazy as _
-from django.db.models import When, Case, BooleanField, IntegerField
-from django.db.utils import OperationalError
-from django.utils.translation import gettext
+import signbank.settings.base as settings
 
 
 def choicelist_queryset_to_translated_dict(queryset,ordered=True, id_prefix='_',

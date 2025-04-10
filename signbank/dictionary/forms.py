@@ -1,13 +1,23 @@
 from colorfield.fields import ColorWidget
 from datetime import timedelta
 import datetime as DT
+import re
 
 from django import forms
 from django.core.exceptions import ObjectDoesNotExist
-
 from django.utils.translation import override, gettext_lazy as _, gettext
 from django.db.transaction import atomic
+from django.utils.timezone import get_current_timezone
 
+from urllib.parse import parse_qsl
+from tagging.models import Tag
+
+from signbank.settings.base import (GLOSS_CHOICE_FIELDS, MORPHEME_CHOICE_FIELDS)
+from signbank.settings.server_specific import (LANGUAGES, LANGUAGE_CODE, USE_REGULAR_EXPRESSIONS,
+                                               MODELTRANSLATION_LANGUAGES, FIELDS, DATE_FORMAT,
+                                               MORPHEME_DISPLAY_FIELDS, SHOW_FIELD_CHOICE_COLORS,
+                                               MINIMAL_PAIRS_SEARCH_FIELDS, MINIMAL_PAIRS_CHOICE_FIELDS,
+                                               RECENTLY_ADDED_SIGNS_PERIOD)
 from signbank.dictionary.models import (Gloss, Morpheme, Definition, Relation, RelationToForeignSign,
                                         OtherMedia, Handshape, SemanticField, DerivationHistory,
                                         AnnotationIdglossTranslation, Dataset, FieldChoice, LemmaIdgloss,
@@ -16,17 +26,8 @@ from signbank.dictionary.models import (Gloss, Morpheme, Definition, Relation, R
                                         QueryParameterMultilingual, QueryParameterHandshape, SemanticFieldTranslation,
                                         ExampleSentence, Affiliation, AffiliatedUser, AffiliatedGloss, GlossSense,
                                         SenseTranslation, AnnotatedGloss)
-from django.utils.timezone import get_current_timezone
-
-from tagging.models import Tag
-
-from signbank.settings.server_specific import (LANGUAGES, LANGUAGE_CODE, USE_REGULAR_EXPRESSIONS,
-                                               MODELTRANSLATION_LANGUAGES, FIELDS, DATE_FORMAT,
-                                               MORPHEME_DISPLAY_FIELDS, SHOW_FIELD_CHOICE_COLORS,
-                                               MINIMAL_PAIRS_SEARCH_FIELDS, MINIMAL_PAIRS_CHOICE_FIELDS,
-                                               RECENTLY_ADDED_SIGNS_PERIOD)
-from signbank.settings.base import (GLOSS_CHOICE_FIELDS, MORPHEME_CHOICE_FIELDS)
 from signbank.dictionary.translate_choice_list import choicelist_queryset_to_translated_dict
+from signbank.tools import get_selected_datasets_for_user
 
 from easy_select2.widgets import Select2
 
@@ -386,7 +387,6 @@ def check_language_fields(searchform, formclass, queryDict, languages):
             menu_bar_field_label = GlossSearchForm.get_field(menu_bar_field).label
             language_field_labels[menu_bar_field] = gettext(menu_bar_field_label)
 
-    import re
     # check for matches starting with: + * [ ( ) ?
     # or ending with a +
     regexp = re.compile(r'^[+*\[()?]|([^+]+\+$)')
@@ -423,7 +423,6 @@ def check_language_fields_annotatedsentence(searchform, formclass, queryDict, la
             if annotatedsentence_field_name in queryDict.keys():
                 language_field_values[annotatedsentence_field_name] = queryDict[annotatedsentence_field_name]
 
-    import re
     # check for matches starting with: + * [ ( ) ?
     # or ending with a +
     regexp = re.compile(r'^[+*\[()?]|([^+]+\+$)')
@@ -826,7 +825,6 @@ def check_multilingual_fields(ClassModel, queryDict, languages):
                 language_field_labels[search_field_name] = ClassModel.get_field(search_field_name).verbose_name+(
                         " (%s)" % language.name)
 
-    import re
     # check for matches starting with: + * [ ( ) ?
     # or ending with a +
     regexp = re.compile(r'^[+*\[()?]|([^+]+\+$)')
@@ -919,7 +917,6 @@ class LemmaCreateForm(forms.ModelForm):
 
         super(LemmaCreateForm, self).__init__(queryDict, *args, **kwargs)
 
-        from signbank.tools import get_selected_datasets_for_user
         if not self.languages:
             selected_datasets = get_selected_datasets_for_user(self.user)
             self.languages = Language.objects.filter(dataset__in=selected_datasets).distinct()
@@ -1156,7 +1153,6 @@ class FieldChoiceForm(forms.ModelForm):
         except KeyError:
             changelist_filters = ''
 
-        from urllib.parse import parse_qsl
         if changelist_filters:
             query_params = dict(parse_qsl(changelist_filters))
         else:

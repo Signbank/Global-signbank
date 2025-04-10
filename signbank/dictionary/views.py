@@ -7,12 +7,14 @@ import re
 import json
 
 from django.db import models
+from django.db.models import OuterRef, Subquery, Count, Prefetch
 from django.http import (HttpResponse, HttpResponseRedirect, HttpResponseBadRequest, HttpResponseNotAllowed,
                          Http404, JsonResponse)
 from django.shortcuts import render, get_object_or_404, redirect
 from django.urls import reverse
 from django.contrib.auth.decorators import login_required
 from django.utils.datastructures import MultiValueDictKeyError
+from django.utils.encoding import escape_uri_path
 from urllib.parse import quote
 from django.contrib import messages
 from django.core.exceptions import ValidationError, ObjectDoesNotExist, MultipleObjectsReturned
@@ -24,11 +26,11 @@ from django.db.transaction import atomic
 from django.db.models import Q
 from django.core.files import File
 
+import guardian
 from guardian.shortcuts import get_user_perms, get_objects_for_user
 from tagging.models import TaggedItem
 from wsgiref.util import FileWrapper
 
-from signbank.video.models import (GlossVideo, small_appendix, add_small_appendix)
 from signbank.settings.server_specific import (PREFIX_URL, WRITABLE_FOLDER, GLOSS_VIDEO_DIRECTORY, GLOSS_IMAGE_DIRECTORY,
                                                SHOW_DATASET_INTERFACE_OPTIONS, SIGNBANK_PACKAGES_FOLDER,
                                                LANGUAGE_CODE, USE_HANDSHAPE, HANDSHAPE_IMAGE_DIRECTORY,
@@ -37,7 +39,7 @@ from signbank.settings.server_specific import (PREFIX_URL, WRITABLE_FOLDER, GLOS
                                                DEFAULT_LANGUAGE_HEADER_COLUMN, DEFAULT_DATASET_ACRONYM)
 from signbank.settings.base import (MAXIMUM_UPLOAD_SIZE, SUPPORTED_CITATION_IMAGE_EXTENSIONS, USE_X_SENDFILE,
                                     ALWAYS_REQUIRE_LOGIN, MEDIA_ROOT, ESCAPE_UPLOADED_VIDEO_FILE_PATH)
-
+from signbank.video.models import (GlossVideo, small_appendix, add_small_appendix)
 from signbank.dictionary.models import (Dataset, Language, Gloss, Morpheme, LemmaIdgloss, LemmaIdglossTranslation,
                                         Handshape, SignLanguage, AnnotatedSentence,
                                         AnnotationIdglossTranslation, FieldChoice, AffiliatedUser, AffiliatedGloss,
@@ -294,7 +296,6 @@ def video_file_path(gloss):
     filename = idgloss + '-' + str(gloss.id) + ".mp4"
     path = os.path.join(video_dir, dataset_dir, two_letter_dir, filename)
     if ESCAPE_UPLOADED_VIDEO_FILE_PATH:
-        from django.utils.encoding import escape_uri_path
         path = escape_uri_path(path)
     return path
 
@@ -454,7 +455,6 @@ def add_new_morpheme(request):
 
 def import_csv_create(request):
     user = request.user
-    import guardian
     user_datasets = guardian.shortcuts.get_objects_for_user(user, 'change_dataset', Dataset)
     user_datasets_names = [dataset.acronym for dataset in user_datasets]
 
@@ -861,7 +861,6 @@ def import_csv_create(request):
 
 def import_csv_update(request):
     user = request.user
-    import guardian
     user_datasets = guardian.shortcuts.get_objects_for_user(user, 'change_dataset', Dataset)
     user_datasets_names = [dataset.acronym for dataset in user_datasets]
 
@@ -1418,7 +1417,6 @@ def import_csv_update(request):
 
 def import_csv_lemmas(request):
     user = request.user
-    import guardian
     user_datasets = guardian.shortcuts.get_objects_for_user(user, 'change_dataset', Dataset)
     user_datasets_names = [dataset.acronym for dataset in user_datasets]
 
@@ -1834,7 +1832,6 @@ def save_chosen_still_for_gloss(request, pk):
         messages.add_message(request, messages.ERROR, feedback_message)
 
     # clean up the unused image files
-    from signbank.video.models import GlossVideo
     glossvideo = GlossVideo.objects.filter(gloss=gloss, glossvideonme=None, glossvideoperspective=None, version=0).first()
     if glossvideo:
         glossvideo.delete_image_sequence()
@@ -2262,7 +2259,6 @@ def package(request):
 
 @put_api_user_in_request
 def info(request):
-    import guardian
     user_datasets = guardian.shortcuts.get_objects_for_user(request.user, 'view_dataset', Dataset)
     viewable_datasets = get_datasets_with_public_glosses()
 
@@ -2436,7 +2432,6 @@ def show_unassigned_glosses(request):
 
         return HttpResponseRedirect(reverse('show_unassigned_glosses'))
     else:
-        from django.db.models import OuterRef, Subquery, Count, Prefetch
         unassigned_glosses = Gloss.objects.filter(
                     lemma__dataset=None,
                     signlanguage=OuterRef('pk')
