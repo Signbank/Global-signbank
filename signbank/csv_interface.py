@@ -1,9 +1,12 @@
+import re
+import csv
 import datetime as DT
 
 from django.db import models
 from django.utils.timezone import get_current_timezone
 from django.utils.translation import override, activate
 from django.core.exceptions import ObjectDoesNotExist, MultipleObjectsReturned
+from django.http import StreamingHttpResponse
 
 from signbank.settings.server_specific import (LANGUAGES, LEFT_DOUBLE_QUOTE_PATTERNS, RIGHT_DOUBLE_QUOTE_PATTERNS,
                                                FIELDS, DEFAULT_KEYWORDS_LANGUAGE, DEFAULT_LANGUAGE_HEADER_COLUMN,
@@ -129,7 +132,6 @@ def map_values_to_sentence_type(values, include_sentences=True):
     activate(LANGUAGES[0][0])
     sentencetype_role_choices = [st.name for st in FieldChoice.objects.filter(field__iexact='SentenceType',
                                                                               machine_value__gt=1)]
-    import re
     pattern_mapped_sorted_note_names = []
     for note_name in sentencetype_role_choices:
         escaped_note_name = re.sub(r'([()])', r'\\\1', note_name)
@@ -1032,8 +1034,7 @@ def csv_lemma_to_row(lemma, dataset_languages):
 
 def minimalpairs_focusgloss(gloss_id, language_code):
 
-    from django.utils import translation
-    translation.activate(language_code)
+    activate(language_code)
 
     this_gloss = Gloss.objects.get(id=gloss_id)
 
@@ -1248,8 +1249,6 @@ def export_csv_template(request):
     csv_rows = [header_row, empty_row]
     # this is based on an example in the Django 4.2 documentation
     from signbank.dictionary.adminviews import Echo
-    from django.http import StreamingHttpResponse
-    import csv
 
     pseudo_buffer = Echo()
     new_writer = csv.writer(pseudo_buffer)

@@ -2,6 +2,7 @@ import os.path
 import csv
 import json
 import re
+import mimetypes
 import datetime as DT
 
 from django.views.generic.list import ListView
@@ -35,6 +36,8 @@ from guardian.core import ObjectPermissionChecker
 from guardian.shortcuts import get_objects_for_user, assign_perm, remove_perm
 
 from tagging.models import Tag, TaggedItem
+from urllib.parse import urlencode
+
 from signbank.settings.server_specific import (URL, PREFIX_URL, LANGUAGE_CODE, LANGUAGES_LANGUAGE_CODE_3CHAR,
                                                DEFAULT_KEYWORDS_LANGUAGE, SPEED_UP_RETRIEVING_ALL_SIGNS,
                                                RECENTLY_ADDED_SIGNS_PERIOD, DEFAULT_FROM_EMAIL,
@@ -50,6 +53,7 @@ from signbank.settings.server_specific import (URL, PREFIX_URL, LANGUAGE_CODE, L
                                                PUBLIC_PHONOLOGY_FIELDS, PUBLIC_SEMANTICS_FIELDS, PUBLIC_MAIN_FIELDS,
                                                DEBUG_SENSES, DEBUG_EMAILS_ON, SEPARATE_ENGLISH_IDGLOSS_FIELD)
 from signbank.video.forms import VideoUploadForObjectForm
+from signbank.video.convertvideo import get_folder_name
 from signbank.dictionary.models import (Dataset, UserProfile, AffiliatedUser, AffiliatedGloss,
                                         Language, Dialect, Gloss, Morpheme, GlossSense, Sense,
                                         Corpus, Speaker, Document, GlossFrequency,
@@ -67,7 +71,6 @@ from signbank.dictionary.translate_choice_list import (machine_value_to_translat
 from signbank.dictionary.field_choices import (get_static_choice_lists, get_frequencies_for_category, category_to_fields,
                                                fields_to_categories, fields_to_fieldcategory_dict,
                                                get_static_choice_lists_per_field)
-
 from signbank.dictionary.forms import (AnnotatedSentenceSearchForm, GlossSearchForm, MorphemeSearchForm, LemmaSearchForm,
                                        FocusGlossSearchForm, HandshapeSearchForm, KeyMappingSearchForm, RecentGlossSearchForm,
                                        AnnotatedGlossForm, TagUpdateForm, AffiliationUpdateForm, DatasetUpdateForm,
@@ -113,6 +116,11 @@ from signbank.dictionary.senses_display import (senses_per_language, senses_per_
                                                 senses_sentences_per_language_list)
 from signbank.dictionary.context_data import (get_context_data_for_list_view, get_context_data_for_gloss_search_form,
                                               get_web_search, get_selected_datasets)
+from signbank.dictionary.context_data_gloss import (get_other_relations, get_annotated_sentences,
+                                                    get_nme_video_descriptions, get_simultaneous_morphology,
+                                                    get_sequential_morphology,
+                                                    get_annotation_idgloss_per_language_dict, get_notes_groupedby_role,
+                                                    get_phonology_list_kinds, get_human_value_for_field_value)
 from signbank.dictionary.related_objects import (morpheme_is_related_to, gloss_is_related_to,
                                                  okay_to_move_gloss, same_translation_languages, okay_to_move_glosses,
                                                  transitive_related_objects)
@@ -1207,10 +1215,6 @@ class GlossDetailView(DetailView):
         gloss = self.object
         context['active_id'] = gloss.id
 
-        from signbank.dictionary.context_data_gloss import (get_other_relations, get_annotated_sentences,
-                                                            get_nme_video_descriptions, get_simultaneous_morphology, get_sequential_morphology,
-                                                            get_annotation_idgloss_per_language_dict, get_notes_groupedby_role, get_phonology_list_kinds, get_human_value_for_field_value)
-
         context['otherrelations'] = get_other_relations(gloss)
 
         context['annotated_sentences'] = get_annotated_sentences(gloss)
@@ -1226,7 +1230,6 @@ class GlossDetailView(DetailView):
             for lemmaidglosstranslation in gloss.lemma.lemmaidglosstranslation_set.prefetch_related('language'):
                 lang_code_2char = lemmaidglosstranslation.language.language_code_2char
                 lemma_group_url_params['lemma_'+lang_code_2char] = '^' + lemmaidglosstranslation.text + '$'
-            from urllib.parse import urlencode
             url_query = urlencode(lemma_group_url_params)
             url_query = ("?" + url_query) if url_query else ''
             context['lemma_group_url'] = PREFIX_URL + '/signs/search/' + url_query
@@ -1468,7 +1471,6 @@ class GlossDetailView(DetailView):
 
             human_value_media_type = other_media.type.name
 
-            import mimetypes
             file_type = mimetypes.guess_type(path, strict=True)[0]
 
             context['other_media'].append([media_okay, other_media.pk, path, file_type, human_value_media_type, other_media.alternative_gloss, other_media_filename])
@@ -1739,7 +1741,6 @@ class GlossVideosView(DetailView):
             other_media_type_machine_value = other_media.type.machine_value if other_media.type else 0
             human_value_media_type = machine_value_to_translated_human_value(other_media_type_machine_value, other_media_type_choice_list)
 
-            import mimetypes
             file_type = mimetypes.guess_type(path, strict=True)[0]
             context['other_media'].append([media_okay, other_media.pk, path, file_type, human_value_media_type, other_media.alternative_gloss, other_media_filename])
 
@@ -1847,7 +1848,6 @@ class GlossRelationsDetailView(DetailView):
             for lemmaidglosstranslation in gl.lemma.lemmaidglosstranslation_set.prefetch_related('language'):
                 lang_code_2char = lemmaidglosstranslation.language.language_code_2char
                 lemma_group_url_params['lemma_'+lang_code_2char] = '^' + lemmaidglosstranslation.text + '$'
-            from urllib.parse import urlencode
             url_query = urlencode(lemma_group_url_params)
             url_query = ("?" + url_query) if url_query else ''
             context['lemma_group_url'] = reverse_lazy('signs_search') + url_query
@@ -3385,7 +3385,6 @@ class LemmaFrequencyView(DetailView):
             for lemmaidglosstranslation in gl.lemma.lemmaidglosstranslation_set.prefetch_related('language'):
                 lang_code_2char = lemmaidglosstranslation.language.language_code_2char
                 lemma_group_url_params['lemma_'+lang_code_2char] = '^' + lemmaidglosstranslation.text + '$'
-            from urllib.parse import urlencode
             url_query = urlencode(lemma_group_url_params)
             url_query = ("?" + url_query) if url_query else ''
             context['lemma_group_url'] = reverse_lazy('signs_search') + url_query
@@ -3788,7 +3787,6 @@ class DatasetListView(ListView):
             motivation = get['motivation_for_use']  # motivation is a required field in the form
 
         # notify the dataset owner(s) about the access request
-        from django.contrib.auth.models import Group
         group_manager = Group.objects.get(name='Dataset_Manager')
 
         for owner in owners_of_dataset:
@@ -4133,7 +4131,6 @@ class DatasetManagerView(ListView):
                     user_object.save()
 
                 # send email to user
-                from django.core.mail import send_mail
                 current_site = Site.objects.get_current()
 
                 subject = render_to_string('registration/dataset_to_user_existing_user_given_access_subject.txt',
@@ -4350,7 +4347,6 @@ class DatasetManagerView(ListView):
         if user.is_authenticated:
 
             # determine if user is a dataset manager
-            from django.contrib.auth.models import Group, User
             try:
                 group_manager = Group.objects.get(name='Dataset_Manager')
             except ObjectDoesNotExist:
@@ -4464,8 +4460,6 @@ class DatasetDetailView(DetailView):
             return HttpResponseRedirect(PREFIX_URL + '/datasets/available')
 
         # check if the user can manage this dataset
-        from django.contrib.auth.models import Group, User
-
         try:
             group_manager = Group.objects.get(name='Dataset_Manager')
         except ObjectDoesNotExist:
@@ -4679,7 +4673,6 @@ class DatasetFieldChoiceView(ListView):
         if user.is_authenticated:
 
             # determine if user is a dataset manager
-            from django.contrib.auth.models import Group, User
             try:
                 group_manager = Group.objects.get(name='Dataset_Manager')
             except ObjectDoesNotExist:
@@ -5290,7 +5283,6 @@ class MorphemeDetailView(DetailView):
 
             human_value_media_type = other_media.type.name
 
-            import mimetypes
             file_type = mimetypes.guess_type(path, strict=True)[0]
 
             context['other_media'].append([media_okay, other_media.pk, path, file_type, human_value_media_type, other_media.alternative_gloss, other_media_filename])
@@ -6498,7 +6490,6 @@ class LemmaUpdateView(UpdateView):
                 self.gloss_found = True
                 context['caller'] = 'gloss_detail_view'
                 # caller was Gloss Details
-                import re
                 try:
                     m = re.search(r'/dictionary/gloss/(\d+)(/|$|\?)', path_parms[0])
                     gloss_id_pattern = m.group(1)
@@ -7592,7 +7583,6 @@ def fetch_video_stills_for_gloss(request, gloss_id):
 
     gloss = Gloss.objects.get(id=gloss_id, archived=False)
 
-    from signbank.video.convertvideo import get_folder_name
     folder = get_folder_name(gloss)
     temp_location_frames = os.path.join(GLOSS_IMAGE_DIRECTORY, "signbank-thumbnail-frames", folder)
     temp_video_frames_folder = os.path.join(WRITABLE_FOLDER,
