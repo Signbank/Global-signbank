@@ -2266,7 +2266,8 @@ def info(request):
 def extract_glossid_from_filename(filename):
     filename_without_extension, ext = os.path.splitext(os.path.basename(filename))
     try:
-        if m := re.search(r".+-(\d+)_(small|left|right|nme_\d+|nme_\d+_left|nme_\d+_right)$", filename_without_extension):
+        if m := re.search(r".+-(\d+)_(small|left|right|nme_\d+|nme_\d+_left|nme_\d+_right|nme_\d+_center)$",
+                          filename_without_extension):
             return int(m.group(1))
         return int(filename.split('.')[-2].split('-')[-1])
     except (IndexError, ValueError) as e:
