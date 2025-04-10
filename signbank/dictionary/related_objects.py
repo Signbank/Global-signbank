@@ -1,6 +1,8 @@
-from signbank.dictionary.models import *
+from django.utils.translation import gettext_lazy as _
+
+from signbank.dictionary.models import (Dataset, Gloss, Morpheme, Relation, SimultaneousMorphologyDefinition,
+                                        MorphologyDefinition, BlendMorphology)
 from signbank.tools import get_default_annotationidglosstranslation
-from django.utils.translation import override, gettext_lazy as _, activate
 
 
 def morpheme_is_related_to(morpheme, interface_language_code, default_language_code):
@@ -9,11 +11,12 @@ def morpheme_is_related_to(morpheme, interface_language_code, default_language_c
     It yields a dictionary of different kinds of related objects to the morpheme.
     Because it is used in the template, it computes display appropriate data
     """
+    assert isinstance(morpheme, Morpheme), TypeError("Not a Morpheme object")
     related_objects = dict()
 
     # Get the set of all the Gloss signs that point to morpheme
     other_glosses_that_point_to_morpheme = SimultaneousMorphologyDefinition.objects.filter(
-        morpheme_id__exact=morpheme.id)
+        morpheme_id__exact=morpheme.pk)
     appears_in = []
     for sim_morph in other_glosses_that_point_to_morpheme:
         parent_gloss = sim_morph.parent_gloss
@@ -38,11 +41,12 @@ def morpheme_is_related_to(morpheme, interface_language_code, default_language_c
 
 
 def morpheme_related_objects(morpheme):
+    assert isinstance(morpheme, Morpheme), TypeError("Not a Morpheme object")
 
     related_objects = []
     # Make a list of all the glosses that point to this morpheme
     other_glosses_that_point_to_morpheme = SimultaneousMorphologyDefinition.objects.filter(
-        morpheme_id__exact=morpheme.id)
+        morpheme_id__exact=morpheme.pk)
     for sim_morph in other_glosses_that_point_to_morpheme:
         related_objects.append(sim_morph.parent_gloss)
 
@@ -55,6 +59,7 @@ def gloss_is_related_to(gloss, interface_language_code, default_language_code):
     It yields a dictionary of different kinds of related objects to the gloss.
     Because it is used in the template, it computes display appropriate data
     """
+    assert isinstance(gloss, Gloss), TypeError("Not a Gloss object")
     related_objects = dict()
     related_glosses = [(relation.role, relation.target)
                        for relation in Relation.objects.filter(source=gloss).exclude(target=gloss)]
@@ -161,6 +166,7 @@ def gloss_is_related_to(gloss, interface_language_code, default_language_code):
 
 
 def glosses_in_lemma_group(gloss):
+    assert isinstance(gloss, Gloss), TypeError("Not a Gloss object")
 
     lemma_group = [gl for gl in Gloss.objects.filter(lemma=gloss.lemma, archived=False).exclude(id=gloss.id)]
 
@@ -168,6 +174,7 @@ def glosses_in_lemma_group(gloss):
 
 
 def gloss_related_objects(gloss):
+    assert isinstance(gloss, Gloss), TypeError("Not a Gloss object")
 
     related_glosses_target = [relation.target
                               for relation in Relation.objects.filter(source=gloss,
@@ -225,6 +232,8 @@ def gloss_related_objects(gloss):
 
 
 def transitive_related_objects(gloss):
+    assert isinstance(gloss, Gloss), TypeError("Not a Gloss object")
+
     related_objects = gloss_related_objects(gloss)
     # transitive related objects for other glosses in lemma group
     lemma_group = glosses_in_lemma_group(gloss)
@@ -250,6 +259,8 @@ def transitive_related_objects(gloss):
 
 
 def same_translation_languages(dataset1, dataset2):
+    assert isinstance(dataset1, Dataset), TypeError("Not a Dataset object")
+    assert isinstance(dataset2, Dataset), TypeError("Not a Dataset object")
     if dataset1 == dataset2:
         return True
     source_translation_languages = [ds.id for ds in dataset1.translation_languages.all()]
@@ -258,6 +269,8 @@ def same_translation_languages(dataset1, dataset2):
 
 
 def gloss_exists_in_dataset(gloss, dataset):
+    assert isinstance(gloss, Gloss), TypeError("Not a Gloss object")
+    assert isinstance(dataset, Dataset), TypeError("Not a Dataset object")
 
     if gloss.lemma.dataset == dataset:
         # this method should not be called in this case
@@ -290,6 +303,8 @@ def gloss_exists_in_dataset(gloss, dataset):
 
 
 def okay_to_move_gloss(gloss, dataset_target):
+    assert isinstance(gloss, Gloss), TypeError("Not a Gloss object")
+    assert isinstance(dataset_target, Dataset), TypeError("Not a Dataset object")
 
     if not same_translation_languages(gloss.lemma.dataset, dataset_target):
         return False, []
@@ -300,6 +315,8 @@ def okay_to_move_gloss(gloss, dataset_target):
 
 
 def okay_to_move_glosses(glosses, dataset_target):
+    assert all(isinstance(v, Gloss) for v in glosses), TypeError("Not a List of Gloss objects")
+    assert isinstance(dataset_target, Dataset), TypeError("Not a Dataset object")
 
     okay_to_move = True
     text_overlap = []

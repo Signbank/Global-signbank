@@ -1,21 +1,17 @@
-from django.conf.urls import *
 from django.contrib.auth.decorators import login_required, permission_required
-from django.urls import re_path, path, include
+from django.urls import re_path
 
-from signbank.dictionary.models import *
-from signbank.dictionary.forms import *
+from signbank.dictionary.adminviews import (GlossListView, GlossDetailView, GlossFrequencyView,
+                                            GlossRelationsDetailView, MorphemeDetailView, MorphemeListView,
+                                            HandshapeDetailView, HandshapeListView, LemmaListView, LemmaCreateView,
+                                            LemmaDeleteView, LemmaFrequencyView, LemmaUpdateView,
+                                            SemanticFieldDetailView, SemanticFieldListView, DerivationHistoryDetailView,
+                                            DerivationHistoryListView, GlossVideosView, KeywordListView,
+                                            AnnotatedSentenceDetailView, AnnotatedSentenceListView)
 
-from signbank.dictionary.adminviews import (GlossListView, GlossDetailView, GlossFrequencyView, GlossRelationsDetailView, MorphemeDetailView,
-    MorphemeListView, HandshapeDetailView, HandshapeListView, LemmaListView, LemmaCreateView, LemmaDeleteView, LemmaFrequencyView,
-    create_lemma_for_gloss, LemmaUpdateView, SemanticFieldDetailView, SemanticFieldListView, DerivationHistoryDetailView,
-    DerivationHistoryListView, GlossVideosView, KeywordListView, AnnotatedSentenceDetailView, AnnotatedSentenceListView)
-
-from signbank.dictionary.views import create_citation_image, generate_video_stills_for_gloss
+from signbank.dictionary.views import create_citation_image
 
 # These are needed for the urls below
-import signbank.dictionary.views
-import signbank.dictionary.tagviews
-import signbank.dictionary.adminviews
 import signbank.dictionary.update
 import signbank.api_interface
 import signbank.manage_videos
@@ -27,11 +23,13 @@ import signbank.gloss_morphology_update
 import signbank.frequency
 import signbank.dataset_operations
 import signbank.dictionary.gloss_revision
+import signbank.dictionary.tagviews
+
 
 app_name = 'dictionary'
 urlpatterns = [
 
-    re_path(r'^tag/(?P<tag>[^/]*)/?$', signbank.dictionary.tagviews.taglist),
+    re_path(r'^tag/(?P<tag>[^/]+)/?$', signbank.dictionary.tagviews.taglist),
 
     # an alternate view for direct display of a gloss
     re_path(r'gloss/(?P<glossid>\d+).html$', GlossDetailView.as_view(), {'public': True}, name='public_gloss'),

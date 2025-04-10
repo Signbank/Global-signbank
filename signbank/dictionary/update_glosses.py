@@ -1,17 +1,12 @@
-from django.core.exceptions import ObjectDoesNotExist
-
-from django.shortcuts import get_object_or_404
-
+from django.core.exceptions import ObjectDoesNotExist, MultipleObjectsReturned
 from django.contrib.auth.decorators import permission_required
-from django.db import DatabaseError, IntegrityError
-from django.db.transaction import TransactionManagementError
+from django.db.transaction import atomic
+from django.utils.translation import gettext
 
 from tagging.models import TaggedItem, Tag
 
-from signbank.dictionary.models import *
-from signbank.dictionary.forms import *
+from signbank.dictionary.models import (GlossSense, Handshape, SemanticField, FieldChoice)
 from signbank.dictionary.batch_edit import add_gloss_update_to_revision_history, create_empty_sense
-from django.http import HttpResponse, HttpResponseRedirect, HttpResponseForbidden, HttpResponseBadRequest, JsonResponse
 
 
 @permission_required('dictionary.change_gloss')

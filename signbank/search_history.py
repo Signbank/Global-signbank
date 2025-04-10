@@ -1,6 +1,11 @@
-from signbank.dictionary.models import *
-from signbank.dictionary.forms import *
 from django.shortcuts import get_object_or_404
+
+from signbank.settings.server_specific import LANGUAGE_CODE
+from signbank.dictionary.models import (Gloss, Language, Handshape, MorphologyDefinition, Definition,
+                                        SemanticField, DerivationHistory, FieldChoice,
+                                        QueryParameter, QueryParameterSemanticField, QueryParameterBoolean,
+                                        QueryParameterFieldChoice, QueryParameterHandshape,
+                                        QueryParameterDerivationHistory, QueryParameterMultilingual, SearchHistory, Tag)
 from signbank.dictionary.field_choices import fields_to_fieldcategory_dict
 
 
@@ -329,4 +334,3 @@ def save_query_parameters(request, query_name, query_parameters):
         else:
             continue
     search_history.save()
-

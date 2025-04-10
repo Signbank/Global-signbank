@@ -1,26 +1,57 @@
-from django.db.models import CharField, TextField
-# from django.forms import TextInput, Textarea, CharField
-from signbank.dictionary.adminviews import *
-from signbank.dictionary.forms import GlossCreateForm, FieldChoiceForm
-from signbank.dictionary.models import *
-from signbank.settings.base import *
-from django.utils.translation import override, gettext_lazy as _, activate
-
-from django.contrib.auth.models import User, Permission, Group
-from django.test import TestCase, RequestFactory
-from django.contrib.admin.sites import AdminSite
-from django.test.client import RequestFactory, encode_multipart
 import json
-from django.core.serializers.json import DjangoJSONEncoder
-from django.test import Client
-
+import os
+import re
 from pathlib import Path
 from os import path
+from os.path import isfile, join
+import subprocess
+from datetime import datetime
+
+from django.utils.timezone import get_current_timezone
+from django.db.models import CharField, TextField
+from django.db.models.fields import BooleanField
+from django.db import models
+from django.db.models import Q
+from django.contrib.auth.models import User, Permission, Group
+from django.test import TestCase
+from django.contrib.admin.sites import AdminSite
+from django.test.client import RequestFactory
+from django.core.serializers.json import DjangoJSONEncoder
+from django.test import Client
+from django.utils.encoding import escape_uri_path
+from django.utils import translation
+from django.core.exceptions import ObjectDoesNotExist
+from django.urls import reverse_lazy, reverse
 
 from guardian.shortcuts import assign_perm
+from collections import OrderedDict
+from django.conf import settings
 
+from signbank.settings.server_specific import MODELTRANSLATION_LANGUAGES, ECV_FOLDER_ABSOLUTE_PATH, FIELDS
 from signbank.video.models import GlossVideo
+from signbank.dictionary.models import (Dataset, Language, Gloss, Morpheme, Handshape, Keyword, SignLanguage,
+                                        GlossSense, MorphologyDefinition,
+                                        FieldChoice, FieldChoiceForeignKey, SemanticField, DerivationHistory,
+                                        SemanticFieldTranslation, Definition, Translation, AnnotationIdglossTranslation,
+                                        OtherMedia, GlossRevision, fieldname_to_kind_table,
+                                        GlossFrequency, Document, Speaker, Corpus,
+                                        UserProfile, LemmaIdgloss, LemmaIdglossTranslation, get_default_language_id)
+from signbank.dictionary.forms import GlossCreateForm, FieldChoiceForm, LemmaCreateForm
 from signbank.dictionary.views import gloss_api_get_sign_name_and_media_info
+from signbank.frequency import (import_corpus_speakers, configure_corpus_documents_for_dataset,
+                                dictionary_glosses_to_speakers, gloss_to_speakers,
+                                dictionary_documents_to_glosses, dictionary_documents_to_speakers,
+                                dictionary_glosses_to_documents, document_to_speakers, document_to_glosses,
+                                gloss_to_documents, speaker_to_glosses, dictionary_speakers_to_glosses,
+                                dictionary_speakers_to_documents, speaker_to_documents, get_corpus_speakers,
+                                get_gloss_tokNo, get_gloss_tokNoSgnr, update_corpus_document_counts)
+from signbank.dictionary.admin import HandshapeAdmin, FieldChoiceAdmin
+
+from signbank.tools import (gloss_handshape_fields, fields_with_choices_glosses, fields_with_choices_handshapes,
+                            fields_with_choices_definition, fields_with_choices_morphology_definition,
+                            fields_with_choices_other_media_type, fields_with_choices_morpheme_type)
+
+from xml.etree import ElementTree
 
 
 class BasicCRUDTests(TestCase):
@@ -437,8 +468,6 @@ class ECVsNonEmptyTests(TestCase):
 
         found_errors = False
 
-        from xml.etree import ElementTree
-
         for filename in os.listdir(location_ecv_files):
             fname, ext = os.path.splitext(os.path.basename(filename))
             filetree = ElementTree.parse(location_ecv_files + os.sep + filename)
@@ -461,6 +490,7 @@ class ECVsNonEmptyTests(TestCase):
                 found_errors = True
 
         self.assertEqual(found_errors, False)
+
 
 class ImportExportTests(TestCase):
 
@@ -954,7 +984,6 @@ class VideoTests(TestCase):
             # If the file name is escaped, the url should be escaped twice:
             # the file may contain percent encodings,
             # so in the path the percent should be encoded
-            from django.utils.encoding import escape_uri_path
             video_url = escape_uri_path(video_url)
         video_url = video_url.replace('%', '%25')
 
@@ -1231,7 +1260,6 @@ class ManageDatasetTests(TestCase):
 
         # The next bit is to solve the problem that a redirect url to the login page contains PREFIX_URL
         # while in tests a redirect url without PREFIX_URL is expected. See also issue #505
-        from django.conf import settings
         settings.LOGIN_URL = settings.LOGIN_URL[len(settings.PREFIX_URL):]
 
         # Grant view permission
@@ -1592,8 +1620,6 @@ class HandshapeTests(TestCase):
         print('New handshape ', self.test_handshape1.machine_value, ' created: ', self.test_handshape1.name)
         print('New handshape ', self.test_handshape2.machine_value, ' created: ', self.test_handshape2.name)
 
-        from signbank.dictionary.admin import HandshapeAdmin
-
         self.factory = RequestFactory()
 
         self.handshape_admin = HandshapeAdmin(model=Handshape, admin_site=AdminSite())
@@ -1700,8 +1726,7 @@ class HandshapeTests(TestCase):
 
     def test_delete_handshape(self):
 
-        from signbank.tools import gloss_handshape_fields
-        gloss_handshape_fields = gloss_handshape_fields()
+        handshape_fields = gloss_handshape_fields()
         # create a gloss with and without handshape choices
 
         # set the test dataset
@@ -1735,7 +1760,7 @@ class HandshapeTests(TestCase):
             assign_perm('delete_handshape', self.user, fc)
         self.user.save()
 
-        for handshape_field in gloss_handshape_fields:
+        for handshape_field in handshape_fields:
             # get the first choice for the field
             if handshape_options:
                 handshape_in_use = handshape_options.first()
@@ -1873,8 +1898,6 @@ class MultipleSelectTests(TestCase):
 
 class FieldChoiceTests(TestCase):
 
-    from reversion.admin import VersionAdmin
-
     def setUp(self):
 
         # a new test user is created for use during the tests
@@ -1899,14 +1922,11 @@ class FieldChoiceTests(TestCase):
         self.client = Client()
         self.client.login(username=self.user.username, password=self.user_password)
 
-        from signbank.dictionary.admin import FieldChoiceAdmin
-
         self.factory = RequestFactory()
 
         self.fieldchoice_admin = FieldChoiceAdmin(model=FieldChoice, admin_site=AdminSite())
 
     def test_update_field_choice(self):
-        from signbank.tools import fields_with_choices_glosses
         fields_with_choices = fields_with_choices_glosses()
 
         client = Client(enforce_csrf_checks=False)
@@ -1996,12 +2016,8 @@ class FieldChoiceTests(TestCase):
             # the following is true if the override language is en, then name has also been updated
             # self.assertEqual(first_field_choice_option.name, update_data['name'])
 
-
-
-
     def test_delete_fieldchoice_gloss(self):
 
-        from signbank.tools import fields_with_choices_glosses
         fields_with_choices = fields_with_choices_glosses()
         # create a gloss with and without field choices
 
@@ -2065,10 +2081,9 @@ class FieldChoiceTests(TestCase):
 
     def test_delete_fieldchoice_handshape(self):
 
-        from signbank.tools import fields_with_choices_handshapes
-        fields_with_choices_handshapes = fields_with_choices_handshapes()
+        field_choices_handshapes = fields_with_choices_handshapes()
 
-        #Create the handshape
+        # Create the handshape
         new_handshape = Handshape(name="thisisatemporarytesthandshape")
         new_handshape.save()
 
@@ -2082,18 +2097,18 @@ class FieldChoiceTests(TestCase):
         request.user = self.user
 
         # give the test user permission to delete field choices
-        for fieldchoice in fields_with_choices_handshapes.keys():
+        for fieldchoice in field_choices_handshapes.keys():
             field_options = FieldChoice.objects.filter(field=fieldchoice, machine_value__gt=1)
             for fc in field_options:
                 assign_perm('delete_fieldchoice', self.user, fc)
         self.user.save()
 
-        for fieldchoice in fields_with_choices_handshapes.keys():
+        for fieldchoice in field_choices_handshapes.keys():
             # get the first choice for the field
             field_options = FieldChoice.objects.filter(field=fieldchoice, machine_value__gt=1)
             if field_options:
                 field_choice_in_use = field_options.first()
-                for fieldname in fields_with_choices_handshapes[fieldchoice]:
+                for fieldname in field_choices_handshapes[fieldchoice]:
                     setattr(new_handshape, fieldname, field_choice_in_use)
                 # for FingerSelection, set the Boolean fields of the fingers
                 if fieldchoice == 'FingerSelection':
@@ -2104,7 +2119,7 @@ class FieldChoiceTests(TestCase):
 
         print('TEST: new handshape created: ', new_handshape.__dict__)
         # make sure the field choice can't be deleted in admin
-        for fieldchoice in fields_with_choices_handshapes.keys():
+        for fieldchoice in field_choices_handshapes.keys():
             field_options = FieldChoice.objects.filter(field=fieldchoice, machine_value__gt=1)
             if field_options:
                 field_choice_in_use = field_options.first()
@@ -2113,7 +2128,7 @@ class FieldChoiceTests(TestCase):
         # now do the same with the second choice
         # this time, there are no glosses with that choice
         # the test makes sure it can be deleted in admin
-        for field_value in fields_with_choices_handshapes.keys():
+        for field_value in field_choices_handshapes.keys():
 
             field_options = FieldChoice.objects.filter(field=field_value, machine_value__gt=1)
             for opt in field_options:
@@ -2121,7 +2136,7 @@ class FieldChoiceTests(TestCase):
                     print('TEST: test whether has_change_permission is False for FingerSelection choice ', opt.name)
                     self.assertEqual(self.fieldchoice_admin.has_change_permission(request=request, obj=opt), False)
                 queries_h = [Q(**{ field_name + '__machine_value' : opt.machine_value })
-                             for field_name in fields_with_choices_handshapes[field_value]]
+                             for field_name in field_choices_handshapes[field_value]]
                 query_h = queries_h.pop()
                 for item in queries_h:
                     query_h |= item
@@ -2137,7 +2152,6 @@ class FieldChoiceTests(TestCase):
 
         # delete fieldchoice for NoteType
 
-        from signbank.tools import fields_with_choices_definition
         fields_with_choices = fields_with_choices_definition()
         # create a gloss with and without field choices
 
@@ -2217,7 +2231,6 @@ class FieldChoiceTests(TestCase):
 
         # delete fieldchoice for morphology definition
 
-        from signbank.tools import fields_with_choices_morphology_definition
         fields_with_choices = fields_with_choices_morphology_definition()
 
         # create a gloss with and without field choices
@@ -2304,7 +2317,6 @@ class FieldChoiceTests(TestCase):
 
         # delete fieldchoice for OtherMediaType
 
-        from signbank.tools import fields_with_choices_other_media_type
         fields_with_choices = fields_with_choices_other_media_type()
 
         # create a gloss with and without field choices
@@ -2380,7 +2392,6 @@ class FieldChoiceTests(TestCase):
 
         # delete fieldchoice for morpheme type
 
-        from signbank.tools import fields_with_choices_morpheme_type
         fields_with_choices = fields_with_choices_morpheme_type()
         # create a gloss with and without field choices
 
@@ -2584,7 +2595,6 @@ class testFrequencyAnalysis(TestCase):
         dataset_name = settings.DEFAULT_DATASET
         test_dataset = Dataset.objects.get(name=dataset_name)
 
-        from django.utils import translation
         for language_code in settings.MODELTRANSLATION_LANGUAGES:
             translation.activate(language_code)
 
@@ -2664,7 +2674,6 @@ class testSettings(TestCase):
 
     def test_Settings(self):
 
-        from os.path import isfile, join
         full_root_path = settings.BASE_DIR + 'signbank' + os.sep + 'settings' + os.sep + 'server_specific'
         all_settings = [ f for f in os.listdir(full_root_path) if isfile(join(full_root_path, f))
                                     and f.endswith('.py') and f != '__init__.py' and f != 'server_specific.py']
@@ -3074,8 +3083,6 @@ class Corpus_Tests(TestCase):
 
     def test_metadata_file(self):
         # this imports the Speaker data to the test database
-        from signbank.frequency import import_corpus_speakers
-
         dataset_acronym = self.test_dataset.acronym
 
         metadata_location = settings.WRITABLE_FOLDER + settings.DATASET_METADATA_DIRECTORY + os.sep + dataset_acronym + '_metadata.csv'
@@ -3097,7 +3104,6 @@ class Corpus_Tests(TestCase):
         # find out how many entries are in the meta data file
         get_wc = "wc " + metadata_location
 
-        import subprocess
         wc_output = subprocess.check_output(get_wc, shell=True)
         wc_output_string = wc_output.decode("utf-8").strip()
         wc_output_values = wc_output_string.split()
@@ -3115,15 +3121,8 @@ class Corpus_Tests(TestCase):
         #After importing the metadata file a second time, the same number of speakers exist
         self.assertEqual(count_known_speakers2, count_known_speakers1)
 
-
     def test_corpus_creation(self):
         # this imports the Speaker data to the test database
-        from signbank.frequency import import_corpus_speakers, configure_corpus_documents_for_dataset, dictionary_glosses_to_speakers, gloss_to_speakers, \
-            dictionary_documents_to_glosses, dictionary_documents_to_speakers, dictionary_glosses_to_documents, \
-            document_to_speakers, document_to_glosses, \
-            gloss_to_documents, speaker_to_glosses, dictionary_speakers_to_glosses, dictionary_speakers_to_documents, speaker_to_documents, \
-            get_corpus_speakers, get_gloss_tokNo, get_gloss_tokNoSgnr
-
         dataset_acronym = self.test_dataset.acronym
 
         metadata_location = settings.WRITABLE_FOLDER + settings.DATASET_METADATA_DIRECTORY + os.sep + dataset_acronym + '_metadata.csv'
@@ -3259,8 +3258,6 @@ class Corpus_Tests(TestCase):
         try:
             document_to_update = Document.objects.get(corpus__name=self.test_dataset.acronym, identifier='CNGT1008')
             print('document to update: ', document_to_update.identifier)
-            from datetime import datetime
-            from django.utils.timezone import get_current_timezone
             document_to_update.creation_time = datetime(2000, 8, 23, tzinfo=get_current_timezone())
             document_to_update.save()
         except ObjectDoesNotExist:

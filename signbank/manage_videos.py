@@ -1,35 +1,20 @@
-import json
-
-from signbank.dictionary.models import *
-from django.db.models import FileField
-from django.core.files.base import ContentFile, File
-from tagging.models import Tag, TaggedItem
-from signbank.dictionary.forms import *
-from django.utils.translation import override, gettext_lazy as _, activate
-from signbank.settings.server_specific import LANGUAGES, LEFT_DOUBLE_QUOTE_PATTERNS, RIGHT_DOUBLE_QUOTE_PATTERNS
-
-from django.contrib import messages
-
-from django.core.exceptions import ObjectDoesNotExist
-
-from django.shortcuts import get_object_or_404
-
-from django.contrib.auth.decorators import permission_required
-from django.db import DatabaseError, IntegrityError
-from django.db.transaction import TransactionManagementError
-
-from django.http import HttpResponse, HttpResponseRedirect, HttpResponseForbidden, HttpResponseBadRequest, JsonResponse
-from signbank.settings.server_specific import VIDEOS_TO_IMPORT_FOLDER
-import zipfile
-from django.urls import reverse, reverse_lazy
-import urllib.request
-import tempfile
-import shutil
 import os
-from signbank.video.models import GlossVideo, GlossVideoHistory
-from django.http import StreamingHttpResponse
-from django.contrib.auth.models import Group, User
-from signbank.zip_interface import *
+
+from django.contrib.auth.models import Group
+from django.utils.translation import gettext_lazy as _
+from django.contrib import messages
+from django.core.exceptions import ObjectDoesNotExist
+from django.http import HttpResponseRedirect, JsonResponse
+from django.urls import reverse
+from django.db.transaction import atomic
+
+from guardian.shortcuts import get_objects_for_user
+
+from signbank.settings.server_specific import VIDEOS_TO_IMPORT_FOLDER, DEFAULT_DATASET_PK
+from signbank.dictionary.models import (Dataset, Gloss)
+from signbank.zip_interface import (get_filenames, check_subfolders_for_unzipping, remove_zip_file_from_archive,
+                                    unzip_video_files, remove_video_file_from_import_videos, import_video_file)
+import zipfile
 
 
 def upload_zipped_videos_folder(request):
@@ -39,8 +24,6 @@ def upload_zipped_videos_folder(request):
         return HttpResponseRedirect('/')
 
     # check if the user can manage this dataset
-    from django.contrib.auth.models import Group, User
-
     try:
         group_manager = Group.objects.get(name='Dataset_Manager')
     except ObjectDoesNotExist:
@@ -56,7 +39,7 @@ def upload_zipped_videos_folder(request):
     if 'dataset' in request.POST and request.POST['dataset'] is not None:
         datasetid = request.POST['dataset']
     else:
-        datasetid = settings.DEFAULT_DATASET_PK
+        datasetid = DEFAULT_DATASET_PK
 
     try:
         dataset_id = int(datasetid)
@@ -70,7 +53,6 @@ def upload_zipped_videos_folder(request):
     lang3charcodes = [language.language_code_3char for language in dataset.translation_languages.all()]
 
     # make sure the user can write to this dataset
-    from guardian.shortcuts import get_objects_for_user
     user_change_datasets = get_objects_for_user(request.user, 'change_dataset', Dataset,
                                                 accept_global_perms=False)
     if not user_change_datasets or dataset not in user_change_datasets:
@@ -211,7 +193,6 @@ def import_video_to_gloss_json(request):
     if not request.user.is_authenticated:
         return JsonResponse({})
 
-    from django.contrib.auth.models import Group
     try:
         group_manager = Group.objects.get(name='Dataset_Manager')
     except ObjectDoesNotExist:
@@ -239,7 +220,6 @@ def import_video_to_gloss_json(request):
         return JsonResponse({})
 
     # make sure the user can write to this dataset
-    from guardian.shortcuts import get_objects_for_user
     user_change_datasets = get_objects_for_user(request.user, 'change_dataset', Dataset,
                                                 accept_global_perms=False)
     if not user_change_datasets or dataset not in user_change_datasets:

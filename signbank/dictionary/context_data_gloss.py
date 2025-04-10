@@ -1,10 +1,9 @@
-from django.db.models import F, ExpressionWrapper, Count
-from django.db.models import OuterRef, Subquery
-from django.db.models.query import QuerySet
-from django.db.models.functions import Concat
-from django.db.models import Q, IntegerField, CharField, TextField, Value as V
-from signbank.dictionary.models import *
-from signbank.video.models import GlossVideoDescription, GlossVideo, GlossVideoNME
+from django.core.exceptions import ObjectDoesNotExist
+from django.db.models import IntegerField, Value as V
+
+from signbank.settings.server_specific import FIELDS, HANDSHAPE_ETYMOLOGY_FIELDS, HANDEDNESS_ARTICULATION_FIELDS
+from signbank.video.models import GlossVideoDescription, GlossVideoNME
+from signbank.dictionary.models import AnnotatedSentence, fieldname_to_kind
 
 
 def get_annotation_idgloss_per_language_dict(gloss):
@@ -126,7 +125,7 @@ def get_notes_groupedby_role(gloss):
 def get_phonology_list_kinds():
     phonology_list_kinds = []
     for field in FIELDS['phonology']:
-        if field in settings.HANDSHAPE_ETYMOLOGY_FIELDS + settings.HANDEDNESS_ARTICULATION_FIELDS:
+        if field in HANDSHAPE_ETYMOLOGY_FIELDS + HANDEDNESS_ARTICULATION_FIELDS:
             continue
         kind = fieldname_to_kind(field)
         if kind == 'list':

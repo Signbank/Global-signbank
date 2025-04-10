@@ -1,8 +1,9 @@
-from signbank.dictionary.models import *
+from signbank.dictionary.models import Gloss, Sense, SenseExamplesentence, ExampleSentenceTranslation
 
 
 def senses_per_language(gloss):
     # Put senses per language in a dictionary that maps dataset languages to list of strings
+    assert isinstance(gloss, Gloss), TypeError("Not a Gloss object")
     sensetranslations_per_language = dict()
     if not gloss:
         return sensetranslations_per_language
@@ -25,6 +26,7 @@ def senses_per_language(gloss):
 
 def senses_per_language_list(gloss):
     # Put senses per language in a list of pairs, language plus dictionary of sense number to list of strings
+    assert isinstance(gloss, Gloss), TypeError("Not a Gloss object")
     sensetranslations_per_language = []
     if not gloss:
         return sensetranslations_per_language
@@ -43,6 +45,7 @@ def senses_per_language_list(gloss):
 
 def sensetranslations_per_language_dict(gloss):
     # Put senses per language in a dict of dicts, language plus dictionary of sense number to list of strings
+    assert isinstance(gloss, Gloss), TypeError("Not a Gloss object")
     sensetranslations_per_language = dict()
     if not gloss:
         return sensetranslations_per_language
@@ -61,6 +64,7 @@ def sensetranslations_per_language_dict(gloss):
 
 def senses_translations_per_language_list(sense):
     # Put senses per language in a dictionary mapping language to a dictionary of sense number to list of strings
+    assert isinstance(sense, Sense), TypeError("Not a Sense object")
     sensetranslations_per_language = dict()
     if not sense:
         return sensetranslations_per_language
@@ -80,6 +84,7 @@ def senses_translations_per_language_list(sense):
 def senses_sentences_per_language_list(sense):
     # Put sense sentences in a list of dictionaries for each sentences with translations
     # per language in a dictionary mapping language to a list of sentence texts
+    assert isinstance(sense, Sense), TypeError("Not a Sense object")
     sense_sentences = []
     if not sense:
         return sense_sentences

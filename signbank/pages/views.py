@@ -1,12 +1,13 @@
 from signbank.pages.models import *
 from signbank.tools import get_dataset_languages
-from django.template import loader, RequestContext
-from django.shortcuts import get_object_or_404
+from django.template import loader
 from django.http import HttpResponse, HttpResponseRedirect, HttpResponseNotFound
 from django.conf import settings
 from django.utils.safestring import mark_safe
 from django.views.decorators.csrf import csrf_protect
-from signbank.dictionary.models import Language, Dataset
+
+from signbank.dictionary.context_data import get_selected_datasets
+
 
 DEFAULT_TEMPLATE = 'pages/default.html'
 
@@ -62,8 +63,6 @@ def page(request, url='/'):
     # content in the first place).
     f.title = mark_safe(f.title)
     f.content = mark_safe(f.content)
-
-    from signbank.dictionary.context_data import get_selected_datasets
 
     selected_datasets = get_selected_datasets(request)
     dataset_languages = get_dataset_languages(selected_datasets)

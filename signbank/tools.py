@@ -1,43 +1,45 @@
-import guardian.shortcuts
-
-import signbank.settings
-from signbank.settings.base import WSGI_FILE, WRITABLE_FOLDER, GLOSS_VIDEO_DIRECTORY, LANGUAGE_CODE
 import os
 import shutil
 import html
 from zipfile import ZipFile
 import json
-import re
-from urllib.parse import quote
-import csv
 import hashlib
+import re
+import codecs
+import datetime as DT
+from datetime import date
 
-from django.db.models import Q
-from django.http import QueryDict
+from django.db import models
+from django.utils.translation import override, activate, gettext
+from django.views.decorators.csrf import csrf_exempt
+from django.utils.dateformat import format
+from django.core.exceptions import ObjectDoesNotExist, EmptyResultSet
+from django.contrib.auth.models import User
+from django.http import JsonResponse
+from django.shortcuts import render
+from django.template.loader import get_template
 
-from django.utils.translation import override, gettext_lazy as _, activate
+from guardian.shortcuts import get_objects_for_user
 
-from django.http import HttpResponse, HttpResponseRedirect
-
+from signbank.settings.server_specific import (FIELDS, DEFAULT_LANGUAGE_HEADER_COLUMN, WRITABLE_FOLDER, LANGUAGE_CODE,
+                                               DEBUG_CSV, HANDEDNESS_ARTICULATION_FIELDS, LANGUAGES, WSGI_FILE,
+                                               DEFAULT_DATASET_PK, TMP_DIR, FFMPEG_PROGRAM, GLOSS_VIDEO_DIRECTORY,
+                                               GLOSS_IMAGE_DIRECTORY, DEFAULT_DATASET_ACRONYM, DEFAULT_KEYWORDS_LANGUAGE,
+                                               ECV_SETTINGS, ECV_FOLDER_ABSOLUTE_PATH, URL, PREFIX_URL,
+                                               LANGUAGES_LANGUAGE_CODE_3CHAR)
+from signbank.dictionary.models import (Dataset, Gloss, Morpheme, Dialect, SignLanguage, Language, FieldChoice,
+                                        SemanticField, DeletedGlossOrMedia, UserProfile, get_default_language_id,
+                                        Handshape, LemmaIdgloss, FieldChoiceForeignKey, Definition,
+                                        LemmaIdglossTranslation, MorphologyDefinition, AnnotatedSentenceTranslation,
+                                        ExampleSentence, OtherMedia)
 from signbank.csv_interface import (sense_translations_for_language, update_senses_parse,
                                     update_sentences_parse, sense_examplesentences_for_language, get_sense_numbers,
                                     parse_sentence_row, get_senses_to_sentences, csv_sentence_tuples_list_compare,
-                                    csv_header_row_glosslist, required_csv_columns, trim_columns_in_row,
+                                    required_csv_columns, trim_columns_in_row,
                                     normalize_field_choice)
-from signbank.dictionary.models import *
-from signbank.dictionary.forms import *
-from django.utils.dateformat import format
-from django.core.exceptions import ObjectDoesNotExist, EmptyResultSet
-from django.db import OperationalError, ProgrammingError
-from django.db.models import CharField, TextField, Value as V
-from django.db.models.fields import BooleanField, BooleanField
 
-from django.urls import reverse
 from tagging.models import TaggedItem, Tag
-
-from guardian.shortcuts import get_objects_for_user
-from signbank.api_interface import api_fields
-from django.views.decorators.csrf import csrf_exempt
+from CNGT_scripts.python.extractMiddleFrame import MiddleFrameExtracter
 
 
 def get_two_letter_dir(idgloss):
@@ -47,6 +49,60 @@ def get_two_letter_dir(idgloss):
         foldername += '-'
 
     return foldername
+
+
+def api_fields(dataset, language_code='en', advanced=False):
+    activate(language_code)
+    api_fields_2023 = []
+    if not dataset:
+        dataset = Dataset.objects.get(acronym=DEFAULT_DATASET_ACRONYM)
+    if advanced:
+        for language in dataset.translation_languages.all():
+            language_field = gettext("Lemma ID Gloss") + ": %s" % language.name
+            api_fields_2023.append(language_field)
+    for language in dataset.translation_languages.all():
+        language_field = gettext("Annotation ID Gloss") + ": %s" % language.name
+        api_fields_2023.append(language_field)
+    for language in dataset.translation_languages.all():
+        language_field = gettext("Senses") + ": %s" % language.name
+        api_fields_2023.append(language_field)
+
+    if not advanced:
+        api_fields_2023.append(gettext("Handedness"))
+        api_fields_2023.append(gettext("Strong Hand"))
+        api_fields_2023.append(gettext("Weak Hand"))
+        api_fields_2023.append(gettext("Location"))
+        api_fields_2023.append(gettext("Semantic Field"))
+        api_fields_2023.append(gettext("Word Class"))
+        api_fields_2023.append(gettext("Named Entity"))
+        api_fields_2023.append(gettext("Link"))
+        api_fields_2023.append(gettext("Video"))
+        api_fields_2023.append(gettext("Perspective Videos"))
+    else:
+        api_fields_2023.append(gettext("Link"))
+        api_fields_2023.append(gettext("Video"))
+        api_fields_2023.append(gettext("Perspective Videos"))
+        api_fields_2023.append(gettext("Tags"))
+        api_fields_2023.append(gettext("Notes"))
+        api_fields_2023.append(gettext("Affiliation"))
+        api_fields_2023.append(gettext("Sequential Morphology"))
+        api_fields_2023.append(gettext("Simultaneous Morphology"))
+        api_fields_2023.append(gettext("Blend Morphology"))
+
+        fieldnames = FIELDS['main'] + FIELDS['phonology'] + FIELDS['semantics'] + ['inWeb', 'isNew', 'excludeFromEcv']
+        gloss_fields = [Gloss.get_field(fname) for fname in fieldnames if fname in Gloss.get_field_names()]
+
+        # TO DO
+        extra_columns = ['Sign Languages', 'Dialects',
+                         'Relations to other signs', 'Relations to foreign signs', 'Notes']
+
+        # show advanced properties
+        for field in gloss_fields:
+            api_fields_2023.append(field.verbose_name.title())
+
+        api_fields_2023.append(gettext("NME Videos"))
+
+    return api_fields_2023
 
 
 def save_media(source_folder, language_code_3char, goal_folder, gloss, extension):
@@ -87,7 +143,7 @@ def save_media(source_folder, language_code_3char, goal_folder, gloss, extension
         overwritten = False
 
     try:
-        shutil.copyfile(source,goal)
+        shutil.copyfile(source, goal)
         was_allowed = True
     except IOError:
         was_allowed = False
@@ -124,7 +180,7 @@ def create_gloss_from_valuedict(valuedict, dataset, row_nr, earlier_creation_sam
         translation_languages = dataset.translation_languages.all()
         for language in translation_languages:
 
-            lemmaidgloss_comumn_name = "Lemma ID Gloss (%s)" % (getattr(language,settings.DEFAULT_LANGUAGE_HEADER_COLUMN['English']))
+            lemmaidgloss_comumn_name = "Lemma ID Gloss (%s)" % (getattr(language, DEFAULT_LANGUAGE_HEADER_COLUMN['English']))
 
             if lemmaidgloss_comumn_name in valuedict:
                 lemmaidglosstranslation_text = valuedict[lemmaidgloss_comumn_name].strip()
@@ -142,7 +198,7 @@ def create_gloss_from_valuedict(valuedict, dataset, row_nr, earlier_creation_sam
                 else:
                     new_lemmas[language.language_code_2char] = lemmaidglosstranslation_text
 
-            column_name = "Annotation ID Gloss (%s)" % (getattr(language,settings.DEFAULT_LANGUAGE_HEADER_COLUMN['English']))
+            column_name = "Annotation ID Gloss (%s)" % (getattr(language, DEFAULT_LANGUAGE_HEADER_COLUMN['English']))
             if column_name in valuedict:
                 annotationidglosstranslation_text = valuedict[column_name].strip()
                 if annotationidglosstranslation_text:
@@ -162,7 +218,7 @@ def create_gloss_from_valuedict(valuedict, dataset, row_nr, earlier_creation_sam
 
         if existing_glosses:
             existing_gloss_set = set()
-            for language_code_2char,glosses in existing_glosses.items():
+            for language_code_2char, glosses in existing_glosses.items():
                 for gloss in glosses:
                     if gloss not in existing_gloss_set:
                         gloss_dict = {
@@ -171,25 +227,25 @@ def create_gloss_from_valuedict(valuedict, dataset, row_nr, earlier_creation_sam
                         }
                         annotationidglosstranslation_dict = {}
                         for lang in gloss.lemma.dataset.translation_languages.all():
-                            language_name = getattr(language,settings.DEFAULT_LANGUAGE_HEADER_COLUMN['English'])
+                            language_name = getattr(language, DEFAULT_LANGUAGE_HEADER_COLUMN['English'])
                             annotationidglosstranslation_text = valuedict["Annotation ID Gloss (%s)" % language_name]
                             annotationidglosstranslation_dict[lang.language_code_2char] = annotationidglosstranslation_text
                         gloss_dict['annotationidglosstranslations'] = annotationidglosstranslation_dict
 
                         lemmaidglosstranslation_dict = {}
                         for lang in gloss.lemma.dataset.translation_languages.all():
-                            language_name = getattr(language,settings.DEFAULT_LANGUAGE_HEADER_COLUMN['English'])
+                            language_name = getattr(language, DEFAULT_LANGUAGE_HEADER_COLUMN['English'])
                             lemmaidglosstranslation_text = valuedict["Lemma ID Gloss (%s)" % language_name]
                             lemmaidglosstranslation_dict[lang.language_code_2char] = lemmaidglosstranslation_text
                         gloss_dict['lemmaidglosstranslations'] = lemmaidglosstranslation_dict
                         already_exists.append(gloss_dict)
                         existing_gloss_set.add(gloss)
         else:
-            gloss_dict = {'gloss_pk' : str(row_nr + 1), 'dataset': dataset }
-            trans_languages = [ l for l in dataset.translation_languages.all() ]
+            gloss_dict = {'gloss_pk': str(row_nr + 1), 'dataset': dataset}
+            trans_languages = [l for l in dataset.translation_languages.all()]
             annotationidglosstranslation_dict = dict()
             for language in trans_languages:
-                language_name = getattr(language, settings.DEFAULT_LANGUAGE_HEADER_COLUMN['English'])
+                language_name = getattr(language, DEFAULT_LANGUAGE_HEADER_COLUMN['English'])
                 annotationidglosstranslation_text = valuedict["Annotation ID Gloss (%s)" % language_name]
                 annotationidglosstranslation_dict[language.language_code_2char] = annotationidglosstranslation_text
                 if language.language_code_2char in earlier_creation_annotationidgloss.keys() and \
@@ -206,7 +262,7 @@ def create_gloss_from_valuedict(valuedict, dataset, row_nr, earlier_creation_sam
 
             lemmaidglosstranslation_dict = {}
             for language in trans_languages:
-                language_name = getattr(language, settings.DEFAULT_LANGUAGE_HEADER_COLUMN['English'])
+                language_name = getattr(language, DEFAULT_LANGUAGE_HEADER_COLUMN['English'])
                 lemmaidglosstranslation_text = valuedict["Lemma ID Gloss (%s)" % language_name]
                 lemmaidglosstranslation_dict[language.language_code_2char] = lemmaidglosstranslation_text
 
@@ -222,7 +278,7 @@ def create_gloss_from_valuedict(valuedict, dataset, row_nr, earlier_creation_sam
             if len(new_lemmas.keys()) and len(existing_lemmas.keys()):
                 print('TOOLS existing and new lemmas in row ', str(row_nr+1))
 
-        range_of_earlier_creation = [ v for (i,v) in earlier_creation_same_csv.items() ]
+        range_of_earlier_creation = [v for (i, v) in earlier_creation_same_csv.items()]
         if earlier_creation_same_csv and new_gloss in range_of_earlier_creation:
             error_string = 'Row ' + str(row_nr + 1) + ' is a duplicate gloss creation.'
             errors_found += [error_string]
@@ -300,7 +356,7 @@ def compare_valuedict_to_gloss(valuedict, gloss_id, my_datasets, nl,
 
             annotation_idgloss_key_prefix = "Annotation ID Gloss ("
             if human_key.startswith(annotation_idgloss_key_prefix):
-                language_name_column = settings.DEFAULT_LANGUAGE_HEADER_COLUMN['English']
+                language_name_column = DEFAULT_LANGUAGE_HEADER_COLUMN['English']
                 language_name = human_key[len(annotation_idgloss_key_prefix):-1]
                 languages = Language.objects.filter(**{language_name_column: language_name})
                 if languages:
@@ -334,9 +390,9 @@ def compare_valuedict_to_gloss(valuedict, gloss_id, my_datasets, nl,
 
             lemma_idgloss_key_prefix = "Lemma ID Gloss ("
             if human_key.startswith(lemma_idgloss_key_prefix):
-                language_name_column = settings.DEFAULT_LANGUAGE_HEADER_COLUMN['English']
+                language_name_column = DEFAULT_LANGUAGE_HEADER_COLUMN['English']
                 language_name = human_key[len(lemma_idgloss_key_prefix):-1]
-                languages = Language.objects.filter(**{language_name_column:language_name})
+                languages = Language.objects.filter(**{language_name_column: language_name})
                 if languages:
                     language = languages[0]
                     lemma_idglosses = gloss.lemma.lemmaidglosstranslation_set.filter(language=language)
@@ -352,9 +408,9 @@ def compare_valuedict_to_gloss(valuedict, gloss_id, my_datasets, nl,
 
             keywords_key_prefix = "Senses ("
             if human_key.startswith(keywords_key_prefix):
-                language_name_column = settings.DEFAULT_LANGUAGE_HEADER_COLUMN['English']
+                language_name_column = DEFAULT_LANGUAGE_HEADER_COLUMN['English']
                 language_name = human_key[len(keywords_key_prefix):-1]
-                language = Language.objects.filter(**{language_name_column:language_name}).first()
+                language = Language.objects.filter(**{language_name_column: language_name}).first()
                 if not language:
                     current_keyword_string = ""
                     error_string = 'ERROR: Non-existent language specified for Senses column: ' + human_key
@@ -387,9 +443,9 @@ def compare_valuedict_to_gloss(valuedict, gloss_id, my_datasets, nl,
 
             example_sentences_key_prefix = "Example Sentences ("
             if human_key.startswith(example_sentences_key_prefix):
-                language_name_column = settings.DEFAULT_LANGUAGE_HEADER_COLUMN['English']
+                language_name_column = DEFAULT_LANGUAGE_HEADER_COLUMN['English']
                 language_name = human_key[len(example_sentences_key_prefix):-1]
-                language = Language.objects.filter(**{language_name_column:language_name}).first()
+                language = Language.objects.filter(**{language_name_column: language_name}).first()
                 sense_numbers = get_sense_numbers(gloss)
                 sense_numbers_to_sentences = get_senses_to_sentences(gloss)
                 if not language:
@@ -398,7 +454,7 @@ def compare_valuedict_to_gloss(valuedict, gloss_id, my_datasets, nl,
                     errors_found += [error_string]
                 else:
                     current_sentences_string = sense_examplesentences_for_language(gloss, language)
-                    if current_sentences_string and settings.DEBUG_CSV:
+                    if current_sentences_string and DEBUG_CSV:
                         print('Current sentences: ', current_sentences_string)
                     okay = update_sentences_parse(sense_numbers, sense_numbers_to_sentences, new_human_value)
                     if not okay:
@@ -843,7 +899,7 @@ def compare_valuedict_to_gloss(valuedict, gloss_id, my_datasets, nl,
             elif field.__class__.__name__ == 'BooleanField':
 
                 new_human_value_lower = new_human_value.lower()
-                if new_human_value_lower == 'neutral' and (field.name in settings.HANDEDNESS_ARTICULATION_FIELDS):
+                if new_human_value_lower == 'neutral' and (field.name in HANDEDNESS_ARTICULATION_FIELDS):
                     new_machine_value = None
                 elif new_human_value_lower in ['true', 'yes', '1']:
                     new_machine_value = True
@@ -857,7 +913,7 @@ def compare_valuedict_to_gloss(valuedict, gloss_id, my_datasets, nl,
                     # Boolean expected
                     error_string = ''
                     # If the new value is empty, don't count this as a type error, error_string is generated conditionally
-                    if field.name in settings.HANDEDNESS_ARTICULATION_FIELDS:
+                    if field.name in HANDEDNESS_ARTICULATION_FIELDS:
                         if new_human_value is not None and new_human_value not in ['None', '']:
                             error_string = 'For ' + default_annotationidglosstranslation + ' (' + str(gloss_id) + '), value ' + str(new_human_value) + ' for ' + human_key + ' should be a Boolean or Neutral.'
                     else:
@@ -897,7 +953,7 @@ def compare_valuedict_to_gloss(valuedict, gloss_id, my_datasets, nl,
                 original_human_value = original_field_value.name if original_field_value else '-'
 
             elif field.__class__.__name__ == 'BooleanField':
-                if original_machine_value is None and (field.name in settings.HANDEDNESS_ARTICULATION_FIELDS):
+                if original_machine_value is None and (field.name in HANDEDNESS_ARTICULATION_FIELDS):
                     original_human_value = 'Neutral'
                 elif original_machine_value:
                     original_machine_value = True
@@ -990,7 +1046,7 @@ def compare_valuedict_to_lemma(valuedict, lemma_id, my_datasets, nl,
         return differences, errors_found, earlier_updates_same_csv, earlier_updates_lemmaidgloss
 
     if not count_new_nonempty_translations:
-        # somebody has modified the lemma translations so as to delete alll of them:
+        # somebody has modified the lemma translations to delete all of them:
         e = 'Row ' + str(nl + 1) + ': Lemma ID ' + str(lemma_id) + ' must have at least one translation.'
         errors_found.append(e)
         return differences, errors_found, earlier_updates_same_csv, earlier_updates_lemmaidgloss
@@ -1016,9 +1072,9 @@ def compare_valuedict_to_lemma(valuedict, lemma_id, my_datasets, nl,
 
             lemma_idgloss_key_prefix = "Lemma ID Gloss ("
             if human_key.startswith(lemma_idgloss_key_prefix):
-                language_name_column = settings.DEFAULT_LANGUAGE_HEADER_COLUMN['English']
+                language_name_column = DEFAULT_LANGUAGE_HEADER_COLUMN['English']
                 language_name = human_key[len(lemma_idgloss_key_prefix):-1]
-                languages = Language.objects.filter(**{language_name_column:language_name})
+                languages = Language.objects.filter(**{language_name_column: language_name})
                 if languages:
                     language = languages[0]
                     lemma_idglosses = lemma.lemmaidglosstranslation_set.filter(language=language)
@@ -1209,7 +1265,6 @@ def map_values_to_notes_id(values):
     for nrc in note_role_choices:
         note_reverse_translation[nrc.name] = str(nrc.machine_value)
 
-    import re
     sorted_note_names = note_reverse_translation.keys()
     pattern_mapped_sorted_note_names = []
     escaped_note_reverse_translation = {}
@@ -1281,7 +1336,7 @@ def check_existence_tags(gloss_id, new_human_value_list, tag_name_error, default
         refreshed_tags.append(tag)
     all_tags = [t.name for t in refreshed_tags]
 
-    all_tags_display = ', '.join([t.replace('_',' ') for t in all_tags])
+    all_tags_display = ', '.join([t.replace('_', ' ') for t in all_tags])
 
     new_tag_errors = []
 
@@ -1455,7 +1510,7 @@ def check_existence_relations(gloss, relations, values):
             role = role.replace(' ', '')
             role = role.lower()
             other_gloss = other_gloss.strip()
-            sorted_values.append((role,other_gloss))
+            sorted_values.append((role, other_gloss))
         except ValueError:
             error_string = 'ERROR: For gloss ' + default_annotationidglosstranslation + ' (' + str(gloss.pk) \
                            + '), formatting error in Relations to other signs: ' + str(new_value_tuple) + '. Tuple role:gloss expected.'
@@ -1512,13 +1567,13 @@ def check_existence_foreign_relations(gloss, relations, values):
     sorted_values = []
 
     if not values:
-        # this is a delete
+        # this is a delete operation
         return checked, errors
 
     for new_value_tuple in values:
         try:
             (loan_word, other_lang, other_lang_gloss) = new_value_tuple.split(':')
-            sorted_values.append((loan_word,other_lang,other_lang_gloss))
+            sorted_values.append((loan_word, other_lang, other_lang_gloss))
         except ValueError:
             error_string = 'ERROR: For gloss ' + default_annotationidglosstranslation + ' (' + str(gloss.pk) \
                            + '), formatting error in Relations to foreign signs: ' + str(new_value_tuple) \
@@ -1542,7 +1597,7 @@ def check_existence_foreign_relations(gloss, relations, values):
             if checked:
                 checked += ',' + ':'.join([loan_word, other_lang, other_lang_gloss])
             else:
-                checked = ':'.join([loan_word,other_lang,other_lang_gloss])
+                checked = ':'.join([loan_word, other_lang, other_lang_gloss])
         except ValueError:
             error_string = 'ERROR: For gloss ' + default_annotationidglosstranslation + ' (' + str(gloss.pk) \
                            + '), formatting error in Relations to foreign signs: ' \
@@ -1558,7 +1613,6 @@ def check_existence_foreign_relations(gloss, relations, values):
 @csrf_exempt
 def set_dark_mode(request):
     # this is the toggle button in the menu bar
-    from django.http import JsonResponse
     if 'dark_mode' not in request.session.keys():
         # first time button is used
         request.session['dark_mode'] = "True"
@@ -1591,21 +1645,19 @@ def reload_signbank(request=None):
     # If this is an HTTP request, give an HTTP response
     if request is not None:
 
-        from django.shortcuts import render
         return render(request, 'reload_signbank.html')
 
 
 def get_gloss_data(since_timestamp=0, language_code='en', dataset=None, inWebSet=False, extended_fields=False):
 
     if not dataset:
-        dataset = Dataset.objects.get(id=settings.DEFAULT_DATASET_PK)
+        dataset = Dataset.objects.get(id=DEFAULT_DATASET_PK)
 
     if inWebSet:
         glosses = Gloss.objects.filter(lemma__dataset=dataset, inWeb=True, archived=False)
     else:
         glosses = Gloss.objects.filter(lemma__dataset=dataset, archived=False)
 
-    # settings.API_FIELDS
     api_fields_2023 = api_fields(dataset, language_code, extended_fields)
 
     gloss_data = {}
@@ -1641,8 +1693,7 @@ def create_zip_with_json_files(data_per_file, output_path):
 def get_deleted_gloss_or_media_data(item_type, since_timestamp):
 
     result = []
-    from datetime import datetime, date
-    deletion_date_range = [datetime.fromtimestamp(since_timestamp), date.today()]
+    deletion_date_range = [DT.datetime.fromtimestamp(since_timestamp), date.today()]
 
     for deleted_gloss_or_media in DeletedGlossOrMedia.objects.filter(deletion_date__range=deletion_date_range,
                                                                      item_type=item_type):
@@ -1656,12 +1707,6 @@ def get_deleted_gloss_or_media_data(item_type, since_timestamp):
 
 def generate_still_image(video):
     try:
-        from CNGT_scripts.python.extractMiddleFrame import MiddleFrameExtracter
-        # local copy for debugging purposes
-        # from signbank.video.extractMiddleFrame import MiddleFrameExtracter
-        from signbank.settings.server_specific import FFMPEG_PROGRAM, TMP_DIR
-        from signbank.settings.base import GLOSS_IMAGE_DIRECTORY
-
         # Extract frames (incl. middle)
         extracter = MiddleFrameExtracter([os.path.join(WRITABLE_FOLDER, str(video.videofile))],
                                          os.path.join(TMP_DIR, "signbank-ExtractMiddleFrame"), FFMPEG_PROGRAM, True)
@@ -1702,7 +1747,7 @@ def get_selected_datasets_for_user(user):
         return selected_datasets
     else:
         # Make sure a non-empty set is returned, for anonymous users when no datasets are public
-        selected_datasets = Dataset.objects.filter(acronym=settings.DEFAULT_DATASET_ACRONYM)
+        selected_datasets = Dataset.objects.filter(acronym=DEFAULT_DATASET_ACRONYM)
         return selected_datasets
 
 
@@ -1772,18 +1817,10 @@ def get_default_annotationidglosstranslation(gloss):
     return annotationidglosstranslations.first().text
 
 
-from signbank.settings.base import ECV_FILE,EARLIEST_GLOSS_CREATION_DATE, FIELDS, SEPARATE_ENGLISH_IDGLOSS_FIELD, LANGUAGE_CODE, ECV_SETTINGS, URL, LANGUAGE_CODE_MAP
-from signbank.settings import server_specific
-from signbank.settings.server_specific import *
-import re
-import datetime as DT
-
-
 def gloss_handshape_fields():
     # returns a list of fields that are Handshape ForeignKeys
     fields_list = []
 
-    from signbank.dictionary.models import Gloss
     for gloss_fieldname in Gloss.get_field_names():
         gloss_field = Gloss.get_field(gloss_fieldname)
         if isinstance(gloss_field, models.ForeignKey) and gloss_field.related_model == Handshape:
@@ -1796,7 +1833,6 @@ def fields_with_choices_glosses():
 
     fields_dict = {}
 
-    from signbank.dictionary.models import Gloss
     for fieldname in Gloss.get_field_names():
         field = Gloss.get_field(fieldname)
         if hasattr(field, 'field_choice_category') and isinstance(field, FieldChoiceForeignKey):
@@ -1813,7 +1849,6 @@ def fields_with_choices_handshapes():
 
     fields_dict = {}
 
-    from signbank.dictionary.models import Handshape
     for fieldname in Handshape.get_field_names():
         field = Handshape.get_field(fieldname)
         if hasattr(field, 'field_choice_category') and isinstance(field, FieldChoiceForeignKey):
@@ -1830,7 +1865,6 @@ def fields_with_choices_examplesentences():
 
     fields_dict = {}
 
-    from signbank.dictionary.models import ExampleSentence
     for fieldname in ExampleSentence.get_field_names():
         field = ExampleSentence.get_field(fieldname)
         if hasattr(field, 'field_choice_category') and isinstance(field, FieldChoiceForeignKey):
@@ -1847,7 +1881,6 @@ def fields_with_choices_definition():
 
     fields_dict = {}
 
-    from signbank.dictionary.models import Definition
     for fieldname in Definition.get_field_names():
         field = Definition.get_field(fieldname)
         if hasattr(field, 'field_choice_category') and isinstance(field, FieldChoiceForeignKey):
@@ -1864,7 +1897,6 @@ def fields_with_choices_morphology_definition():
 
     fields_dict = {}
 
-    from signbank.dictionary.models import MorphologyDefinition
     for fieldname in MorphologyDefinition.get_field_names():
         field = MorphologyDefinition.get_field(fieldname)
         if hasattr(field, 'field_choice_category') and isinstance(field, FieldChoiceForeignKey):
@@ -1881,7 +1913,6 @@ def fields_with_choices_other_media_type():
 
     fields_dict = {}
 
-    from signbank.dictionary.models import OtherMedia
     for fieldname in OtherMedia.get_field_names():
         field = OtherMedia.get_field(fieldname)
         if hasattr(field, 'field_choice_category') and isinstance(field, FieldChoiceForeignKey):
@@ -1898,7 +1929,6 @@ def fields_with_choices_morpheme_type():
 
     fields_dict = {}
 
-    from signbank.dictionary.models import Morpheme
     for fieldname in Morpheme.get_field_names():
         if fieldname in Gloss.get_field_names():
             # skip fields that are also in superclass Gloss
@@ -1939,7 +1969,7 @@ def write_ecv_file_for_dataset(dataset_name):
     if dataset_id.default_language:
         lang_attr_name = dataset_id.default_language.language_code_2char
     else:
-        lang_attr_name = settings.DEFAULT_KEYWORDS_LANGUAGE['language_code_2char']
+        lang_attr_name = DEFAULT_KEYWORDS_LANGUAGE['language_code_2char']
     sort_language = 'annotationidglosstranslation__language__language_code_2char'
     qs_empty = query_dataset.filter(**{sOrder + '__isnull': True})
     qs_letters = query_dataset.filter(**{sOrder + '__regex': r'^[a-zA-Z]', sort_language: lang_attr_name})
@@ -1957,11 +1987,9 @@ def write_ecv_file_for_dataset(dataset_name):
         'languages': dataset_id.translation_languages.all(),
         'resource_url': URL + PREFIX_URL + '/dictionary/gloss/'
     }
-    from django.template.loader import get_template
     ecv_template = get_template('dictionary/ecv.xml')
     xmlstr = ecv_template.render(context)
-    ecv_file = os.path.join(ECV_FOLDER_ABSOLUTE_PATH, dataset_name.lower().replace(" ","_") + ".ecv")
-    import codecs
+    ecv_file = os.path.join(ECV_FOLDER_ABSOLUTE_PATH, dataset_name.lower().replace(" ", "_") + ".ecv")
     try:
         f = codecs.open(ecv_file, "w", "utf-8")
         f.write(xmlstr)
@@ -2113,7 +2141,7 @@ def construct_scrollbar(qs, search_type, language_code):
 def searchform_panels(searchform, searchfields):
     search_by_fields = []
     for field in searchfields:
-        form_field_parameters = (field,searchform.fields[field].label,searchform[field])
+        form_field_parameters = (field, searchform.fields[field].label, searchform[field])
         search_by_fields.append(form_field_parameters)
     return search_by_fields
 
@@ -2134,10 +2162,10 @@ def map_search_results_to_gloss_list(search_results):
 def get_interface_language_and_default_language_codes(request):
     default_language = Language.objects.get(id=get_default_language_id())
     default_language_code = default_language.language_code_2char
-    if request.LANGUAGE_CODE in dict(settings.LANGUAGES_LANGUAGE_CODE_3CHAR).keys():
-        interface_language_3char = dict(settings.LANGUAGES_LANGUAGE_CODE_3CHAR)[request.LANGUAGE_CODE]
+    if request.LANGUAGE_CODE in dict(LANGUAGES_LANGUAGE_CODE_3CHAR).keys():
+        interface_language_3char = dict(LANGUAGES_LANGUAGE_CODE_3CHAR)[request.LANGUAGE_CODE]
     else:
-        interface_language_3char = dict(settings.LANGUAGES_LANGUAGE_CODE_3CHAR)[default_language_code]
+        interface_language_3char = dict(LANGUAGES_LANGUAGE_CODE_3CHAR)[default_language_code]
     interface_language = Language.objects.get(language_code_3char=interface_language_3char)
     interface_language_code = interface_language.language_code_2char
 
@@ -2292,7 +2320,7 @@ def create_sentence_from_valuedict(valuedict, dataset, row_nr, earlier_creation_
         sentence_translations = dict()
         # check sentence translations
         for language in translation_languages:
-            language_name = getattr(language, settings.DEFAULT_LANGUAGE_HEADER_COLUMN['English'])
+            language_name = getattr(language, DEFAULT_LANGUAGE_HEADER_COLUMN['English'])
             column_name = "Example Sentences (%s)" % language_name
             sentence_text = valuedict[column_name].strip()
             # also stores empty values
@@ -2306,6 +2334,7 @@ def create_sentence_from_valuedict(valuedict, dataset, row_nr, earlier_creation_
     return new_sentence, already_exists, errors_found, earlier_creation_same_csv, earlier_creation_annotationidgloss, \
         earlier_creation_lemmaidgloss
 
+
 def get_checksum_for_path(file_path):
 
     BYTES_PER_CHUNK = 8192 #"8 KB is a common practice to efficiently handle large files without consuming too much memory"
@@ -2317,4 +2346,4 @@ def get_checksum_for_path(file_path):
                 file_hash.update(chunk)
             return file_hash.hexdigest()
     except FileNotFoundError:
-        return None   
+        return None

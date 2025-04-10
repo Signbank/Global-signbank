@@ -1,28 +1,25 @@
+import datetime as DT
 
-from signbank.settings.server_specific import PREFIX_URL
-import os
-from signbank.feedback.models import *
-from django import forms
-from django.shortcuts import render, get_object_or_404, redirect
-from django.template import Context, RequestContext, loader
-from django.http import HttpResponse, HttpResponseRedirect, HttpResponseForbidden, HttpResponseBadRequest
-from django.conf import settings 
-from django.core.mail import send_mail
+import django
+from django.utils.timezone import get_current_timezone
+from django.conf import settings
 from django.contrib.auth.decorators import login_required, permission_required
-from django.http import HttpResponse, HttpResponseRedirect
+from django.http import HttpResponseRedirect
 from django.urls import reverse
 from django.contrib import messages
 from django.utils.safestring import mark_safe
-from signbank.dictionary.context_data import get_selected_datasets
-from django.utils.translation import override, gettext_lazy as _, activate, gettext
+from django.utils.translation import gettext_lazy as _, gettext
+from django.contrib.auth.models import Group
+from django.db.models import Q
+
 from signbank.settings.server_specific import RECENTLY_ADDED_SIGNS_PERIOD
-import datetime as DT
-from django.utils.timezone import get_current_timezone
 
-from django.db.transaction import atomic
+from django.shortcuts import render, get_object_or_404, redirect
 
-
-import time
+from signbank.dictionary.models import Gloss, Morpheme
+from signbank.dictionary.context_data import get_selected_datasets
+from signbank.feedback.models import (GeneralFeedback, MissingSignFeedback, SignFeedback, SignFeedbackForm,
+                                      GeneralFeedbackForm, MissingSignFeedbackForm, MorphemeFeedback, MorphemeFeedbackForm)
 
 
 def index(request):
@@ -148,7 +145,6 @@ def showfeedback(request):
         messages.add_message(request, messages.ERROR, _('Please login to view feedback.'))
         return HttpResponseRedirect(reverse('registration:auth_login'))
 
-    from django.contrib.auth.models import Group
     group_editor = Group.objects.get(name='Editor')
     groups_of_user = request.user.groups.all()
     if group_editor not in groups_of_user:
@@ -174,7 +170,6 @@ def showfeedback_signs(request):
         messages.add_message(request, messages.ERROR, _('Please login to view feedback.'))
         return HttpResponseRedirect(reverse('registration:auth_login'))
 
-    from django.contrib.auth.models import Group
     group_editor = Group.objects.get(name='Editor')
     groups_of_user = request.user.groups.all()
     if group_editor not in groups_of_user:
@@ -202,7 +197,6 @@ def showfeedback_morphemes(request):
         messages.add_message(request, messages.ERROR, _('Please login to view feedback.'))
         return HttpResponseRedirect(reverse('registration:auth_login'))
 
-    from django.contrib.auth.models import Group
     group_editor = Group.objects.get(name='Editor')
     groups_of_user = request.user.groups.all()
     if group_editor not in groups_of_user:
@@ -231,7 +225,6 @@ def showfeedback_missing(request):
         messages.add_message(request, messages.ERROR, _('Please login to view feedback.'))
         return HttpResponseRedirect(reverse('registration:auth_login'))
 
-    from django.contrib.auth.models import Group
     group_editor = Group.objects.get(name='Editor')
     groups_of_user = request.user.groups.all()
     if group_editor not in groups_of_user:
@@ -334,11 +327,6 @@ def recordsignfeedback(request, glossid):
 #
 #  deleting feedback
 #
-
-
-import django
-
-
 @permission_required('feedback.delete_generalfeedback')
 def delete(request, kind, id):
     """Mark a feedback item as deleted, kind 'signfeedback', 'generalfeedback' or 'missingsign'"""
@@ -381,7 +369,6 @@ def recent_feedback(request):
         messages.add_message(request, messages.ERROR, _('Please login to view feedback.'))
         return HttpResponseRedirect(reverse('registration:auth_login'))
 
-    from django.contrib.auth.models import Group
     group_editor = Group.objects.get(name='Editor')
     groups_of_user = request.user.groups.all()
     if group_editor not in groups_of_user:

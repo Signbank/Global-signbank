@@ -1,18 +1,14 @@
+from django.db.models import Q
+from django.utils.translation import gettext
+from django.contrib.auth.decorators import permission_required
+from django.http import JsonResponse
+
+from django.conf import settings
 
 from signbank.dictionary.models import Gloss, GlossRevision, Language, FieldChoice, Handshape
-import datetime as DT
-from django.shortcuts import render, get_object_or_404, redirect
-from django.contrib.auth.decorators import permission_required
-from django.http import HttpResponseRedirect, JsonResponse
-from signbank.dictionary.update import okay_to_update_gloss
-from django.urls import reverse
-from django.conf import settings
 from signbank.dictionary.translate_choice_list import check_value_to_translated_human_value
-from django.utils.translation import gettext_lazy as _, activate, gettext
-from signbank.dictionary.context_data import get_selected_datasets
-from django.core.exceptions import PermissionDenied, ObjectDoesNotExist, MultipleObjectsReturned
+from signbank.dictionary.update import okay_to_update_gloss
 from signbank.csv_interface import normalize_field_choice
-from django.db.models import Q, Count, CharField, TextField, Value as V
 
 
 def get_field_choice_from_name(fieldname, value, language_codes):

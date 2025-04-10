@@ -1,8 +1,17 @@
-from signbank.dictionary.models import *
-from signbank.dictionary.forms import GlossSearchForm, SentenceForm, GlossCreateForm, LemmaCreateForm
-from signbank.tools import get_selected_datasets_for_user, get_dataset_languages, searchform_panels
-from django.http import QueryDict
+import json
 from django.utils import html
+from django.core.exceptions import ObjectDoesNotExist
+
+from signbank.settings.base import DISABLE_MOVING_THUMBNAILS_ABOVE_NR_OF_GLOSSES
+from signbank.settings.server_specific import (FIELDS, HANDSHAPE_ETYMOLOGY_FIELDS, HANDEDNESS_ARTICULATION_FIELDS,
+                                               SEARCH_BY, USE_DERIVATIONHISTORY, LANGUAGE_CODE, DEFAULT_DATASET_ACRONYM,
+                                               SHOW_DATASET_INTERFACE_OPTIONS, USE_REGULAR_EXPRESSIONS,
+                                               SHOW_MORPHEME_SEARCH, GLOSS_LIST_DISPLAY_FIELDS)
+from signbank.dictionary.models import (Dataset, Gloss, Morpheme, SignLanguage, Dialect,
+                                        FieldChoice, CATEGORY_MODELS_MAPPING)
+from signbank.dictionary.forms import GlossSearchForm, GlossCreateForm, LemmaCreateForm
+from signbank.tools import get_selected_datasets_for_user, get_dataset_languages, searchform_panels
+
 from signbank.dictionary.field_choices import fields_to_fieldcategory_dict
 from signbank.dictionary.translate_choice_list import choicelist_queryset_to_field_colors, choicelist_choicelist_to_field_colors
 from signbank.query_parameters import search_fields_from_get
@@ -60,7 +69,7 @@ def get_context_data_for_list_view(request, listview, kwargs, context={}):
     context['js_dataset_languages'] = ','.join(dataset_languages_abbreviations)
 
     if not dataset_languages_abbreviations:
-        default_dataset = Dataset.objects.get(acronym=settings.DEFAULT_DATASET_ACRONYM)
+        default_dataset = Dataset.objects.get(acronym=DEFAULT_DATASET_ACRONYM)
         dataset_languages_abbreviations = [default_dataset.default_language.language_code_2char]
     context['queryset_language_codes'] = dataset_languages_abbreviations
 
@@ -87,8 +96,8 @@ def get_context_data_for_list_view(request, listview, kwargs, context={}):
 def get_other_parameter_keys():
     # other parameters are in the GlossSearchForm in the template that are not initialised
     # via multiselect or language fields, plus semantics and phonology fields with text types
-    other_parameters = ['sortOrder'] + settings.SEARCH_BY['publication'] + settings.FIELDS['phonology'] + \
-                       settings.FIELDS['semantics'] + settings.FIELDS['morpheme']
+    other_parameters = ['sortOrder'] + SEARCH_BY['publication'] + FIELDS['phonology'] + \
+                       FIELDS['semantics'] + FIELDS['morpheme']
     fieldnames = FIELDS['main'] + FIELDS['phonology'] + FIELDS['semantics'] + ['inWeb', 'isNew']
     fields_with_choices = fields_to_fieldcategory_dict()
     multiple_select_gloss_fields = [fieldname for fieldname in fieldnames if fieldname in fields_with_choices.keys()]
@@ -120,12 +129,12 @@ def get_input_names_fields_and_labels(search_form):
     input_names_fields_and_labels = {}
     for topic in ['main', 'phonology', 'semantics']:
         input_names_fields_and_labels[topic] = []
-        for fieldname in settings.FIELDS[topic]:
-            if fieldname == 'derivHist' and not settings.USE_DERIVATIONHISTORY:
+        for fieldname in FIELDS[topic]:
+            if fieldname == 'derivHist' and not USE_DERIVATIONHISTORY:
                 continue
             # exclude the dependent fields for Handedness, Strong Hand, and Weak Hand
             # for purposes of nested dependencies in Search form
-            if fieldname not in settings.HANDSHAPE_ETYMOLOGY_FIELDS + settings.HANDEDNESS_ARTICULATION_FIELDS:
+            if fieldname not in HANDSHAPE_ETYMOLOGY_FIELDS + HANDEDNESS_ARTICULATION_FIELDS:
                 field = search_form[fieldname]
                 input_names_fields_and_labels[topic].append((fieldname, field, field.label))
     return input_names_fields_and_labels
@@ -156,16 +165,15 @@ def get_context_data_for_gloss_search_form(request, listview, search_form, kwarg
     context['gloss_fields_to_populate'] = json.dumps(populate_fields)
     context['gloss_fields_to_populate_keys'] = json.dumps(populate_keys)
 
-    context['SHOW_DATASET_INTERFACE_OPTIONS'] = getattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS', False)
-    context['USE_REGULAR_EXPRESSIONS'] = getattr(settings, 'USE_REGULAR_EXPRESSIONS', False)
+    context['SHOW_DATASET_INTERFACE_OPTIONS'] = SHOW_DATASET_INTERFACE_OPTIONS
+    context['USE_REGULAR_EXPRESSIONS'] = USE_REGULAR_EXPRESSIONS
 
-    if hasattr(settings, 'SEARCH_BY') and 'publication' in settings.SEARCH_BY.keys() and request.user.is_authenticated:
-        context['search_by_publication_fields'] = searchform_panels(search_form, settings.SEARCH_BY['publication'])
+    if 'publication' in SEARCH_BY.keys() and request.user.is_authenticated:
+        context['search_by_publication_fields'] = searchform_panels(search_form, SEARCH_BY['publication'])
     else:
         context['search_by_publication_fields'] = []
 
-    context['DISABLE_MOVING_THUMBNAILS_ABOVE_NR_OF_GLOSSES'] = \
-        getattr(settings, 'DISABLE_MOVING_THUMBNAILS_ABOVE_NR_OF_GLOSSES', 0)
+    context['DISABLE_MOVING_THUMBNAILS_ABOVE_NR_OF_GLOSSES'] = DISABLE_MOVING_THUMBNAILS_ABOVE_NR_OF_GLOSSES
 
     context['input_names_fields_and_labels'] = get_input_names_fields_and_labels(search_form)
 
@@ -177,19 +185,17 @@ def get_context_data_for_gloss_search_form(request, listview, search_form, kwarg
                                                                                  search_form)
 
     if listview.model == Gloss:
-        context['SHOW_MORPHEME_SEARCH'] = getattr(settings, 'SHOW_MORPHEME_SEARCH', False) \
-            if request.user.is_authenticated else False
-        context['GLOSS_LIST_DISPLAY_HEADER'] = getattr(settings, 'GLOSS_LIST_DISPLAY_HEADER', []) \
-            if request.user.is_authenticated else []
+        context['SHOW_MORPHEME_SEARCH'] = SHOW_MORPHEME_SEARCH if request.user.is_authenticated else False
+        context['GLOSS_LIST_DISPLAY_HEADER'] = GLOSS_LIST_DISPLAY_FIELDS if request.user.is_authenticated else []
 
-        if hasattr(settings, 'SEARCH_BY') and 'relations' in settings.SEARCH_BY.keys() and request.user.is_authenticated:
-            context['search_by_relation_fields'] = searchform_panels(search_form, settings.SEARCH_BY['relations'])
+        if 'relations' in SEARCH_BY.keys() and request.user.is_authenticated:
+            context['search_by_relation_fields'] = searchform_panels(search_form, SEARCH_BY['relations'])
         else:
             context['search_by_relation_fields'] = []
 
         context['morpheme_idgloss'] = get_morpheme_idgloss(query_parameters)
         context['default_dataset_lang'] = context['dataset_languages'].first().language_code_2char \
-            if context['dataset_languages'] else settings.LANGUAGE_CODE
+            if context['dataset_languages'] else LANGUAGE_CODE
         context['add_gloss_form'] = GlossCreateForm(request.GET, languages=context['dataset_languages'],
                                                     user=request.user, last_used_dataset=context['last_used_dataset'])
         context['lemma_create_field_prefix'] = LemmaCreateForm.lemma_create_field_prefix
