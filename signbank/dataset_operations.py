@@ -367,36 +367,42 @@ def update_gloss_video_backups(request, glossid):
     return JsonResponse({'videos': list_videos})
 
 
-def wrong_filename(videofile, nmevideo, perspective, version):
+def has_correct_filename(videofile, nmevideo, perspective, version):
     if not videofile:
         return False
     video_file_full_path = Path(settings.WRITABLE_FOLDER, videofile)
     if nmevideo is not None:
         filename_is_correct = filename_matches_nme(video_file_full_path) is not None
-        return not filename_is_correct
+        return filename_is_correct
     elif perspective is not None:
         filename_is_correct = filename_matches_perspective(video_file_full_path) is not None
-        return not filename_is_correct
+        return filename_is_correct
     elif version > 0:
         filename_is_correct = filename_matches_backup_video(video_file_full_path) is not None
-        return not filename_is_correct
+        return filename_is_correct
     else:
         filename_is_correct = filename_matches_video(video_file_full_path) is not None
-        return not filename_is_correct
+        return filename_is_correct
 
 
 def wrong_filename_filter(glossvideos):
     filenames = []
     queryset_tuples = glossvideos.values('id', 'videofile', 'glossvideonme', 'glossvideoperspective', 'version')
     for qv in queryset_tuples:
-       if wrong_filename(qv['videofile'],
-                            qv['glossvideonme'],
-                            qv['glossvideoperspective'], qv['version']):
+       if not has_correct_filename(qv['videofile'],
+                                   qv['glossvideonme'],
+                                   qv['glossvideoperspective'], qv['version']):
            filenames.append(qv['id'])
     return filenames
 
 
-def gv_preface(glossvideo):
+def file_display_preface(glossvideo):
+    """
+    This function yields extra information to be displayed in front of the video filename
+    For primary videos: version; for perspective videos: left or right; for NME videos order_(left|center|right)
+    :param glossvideo: GlossVideo
+    :return: string pattern
+    """
     if hasattr(glossvideo, 'glossvideonme'):
         nme_video = glossvideo.glossvideonme
         nme_perspective = nme_video.perspective if nme_video.perspective else 'center'
@@ -431,7 +437,7 @@ def get_perspective_videos_for_gloss(gloss):
 
 def get_nme_videos_for_gloss(gloss):
     glossnmevideos = GlossVideoNME.objects.filter(gloss=gloss).distinct().order_by('offset')
-    display_nme_videos = ', '.join([gv_preface(gv) + ': ' + str(gv.videofile) for gv in glossnmevideos])
+    display_nme_videos = ', '.join([file_display_preface(gv) + ': ' + str(gv.videofile) for gv in glossnmevideos])
     return display_nme_videos
 
 
@@ -439,7 +445,7 @@ def get_wrong_videos_for_gloss(gloss):
     all_gloss_video_objects = GlossVideo.objects.filter(gloss=gloss).distinct()
     gloss_video_ids = wrong_filename_filter(all_gloss_video_objects)
     gloss_video_objects = GlossVideo.objects.filter(id__in=gloss_video_ids)
-    display_wrong_videos = ', '.join([gv_preface(gv) + ': ' + str(gv.videofile) for gv in gloss_video_objects])
+    display_wrong_videos = ', '.join([file_display_preface(gv) + ': ' + str(gv.videofile) for gv in gloss_video_objects])
     return display_wrong_videos
 
 
