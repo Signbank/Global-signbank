@@ -8,7 +8,8 @@ from signbank.dictionary.forms import *
 from signbank.dictionary.adminviews import (GlossListView, GlossDetailView, GlossFrequencyView, GlossRelationsDetailView, MorphemeDetailView,
     MorphemeListView, HandshapeDetailView, HandshapeListView, LemmaListView, LemmaCreateView, LemmaDeleteView, LemmaFrequencyView,
     create_lemma_for_gloss, LemmaUpdateView, SemanticFieldDetailView, SemanticFieldListView, DerivationHistoryDetailView,
-    DerivationHistoryListView, GlossVideosView, KeywordListView, AnnotatedSentenceDetailView, AnnotatedSentenceListView)
+    DerivationHistoryListView, GlossVideosView, KeywordListView, AnnotatedSentenceDetailView, AnnotatedSentenceListView,
+                                            AnimationCreateView, AnimationDetailView, GlossAnimationsView)
 
 from signbank.dictionary.views import create_citation_image, generate_video_stills_for_gloss
 
@@ -276,6 +277,9 @@ urlpatterns = [
     re_path(r'^handshapes/$', permission_required('dictionary.search_gloss')(HandshapeListView.as_view()), name='admin_handshape_list'),
     re_path(r'^gloss/(?P<gloss_pk>\d+)/history', signbank.dictionary.views.gloss_revision_history, name='gloss_revision_history'),
     re_path(r'^gloss/(?P<pk>\d+)/glossvideos', GlossVideosView.as_view(), name='gloss_videos'),
+
+    re_path(r'^gloss/(?P<pk>\d+)/glossanimations', GlossAnimationsView.as_view(), name='gloss_animations'),
+
     re_path(r'^api_update_gloss/(?P<gloss_id>\d+)/video', signbank.api_interface.api_add_video, name='api_add_video'),
     re_path(r'^api_update_gloss/(?P<gloss_id>\d+)/image', signbank.api_interface.api_add_image, name='api_add_image'),  
     re_path(r'^gloss/(?P<pk>\d+)', GlossDetailView.as_view(), {'public': False}, name='admin_gloss_view'),
@@ -298,6 +302,8 @@ urlpatterns = [
     re_path(r'lemma/add/(?P<glossid>\d+)$', signbank.dictionary.adminviews.create_lemma_for_gloss, name='create_lemma_gloss'),
     re_path(r'lemma/update/(?P<pk>\d+)$', permission_required('dictionary.change_lemmaidgloss')(LemmaUpdateView.as_view()), name='change_lemma'),
     re_path(r'^annotatedsentence/(?P<pk>\d+)', AnnotatedSentenceDetailView.as_view(), name='admin_annotated_sentence_view'),
+    re_path(r'animation/add/$', permission_required('dictionary.change_glosss')(AnimationCreateView.as_view()), name='create_animation'),
+    re_path(r'^animation/(?P<pk>\d+)', AnimationDetailView.as_view(), name='admin_animation_view'),
 
     re_path(r'^keywords/$', KeywordListView.as_view(), name='admin_keyword_list'),
 

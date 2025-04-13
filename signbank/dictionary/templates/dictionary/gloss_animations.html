@@ -1,0 +1,109 @@
+{% extends 'baselayout.html' %}
+{% load i18n %}
+{% load stylesheet %}
+{% load bootstrap3 %}
+{% load guardian_tags %}
+{% block bootstrap3_title %}
+{% blocktrans %}Signbank: Gloss Animation{% endblocktrans %}
+{% endblock %}
+
+{% block extrajs %}
+<script src="https://cdn.babylonjs.com/babylon.js"></script>
+<script src="https://cdn.babylonjs.com/loaders/babylonjs.loaders.min.js"></script>
+<script src="https://preview.babylonjs.com/gui/babylon.gui.min.js"></script>
+
+<script src="https://cdn.babylonjs.com/viewer/babylon.viewer.max.js"></script>
+
+
+<script type="text/javascript">
+var url = '{{PREFIX_URL}}';
+var csrf_token = '{{csrf_token}}';
+var images = '{{STATIC_URL}}images';
+var protected_media_url = '{% url 'dictionary:protected_media' '' %}';
+var MeshesAndAnims = protected_media_url + '/MeshesAndAnims/';
+
+var this_gloss_id = {{gloss.id}};
+
+var search_type = '{{search_type}}';
+var model_view = 'gloss';
+var active_id = '{{active_id}}';
+var search_results_url = '{% url 'dictionary:ajax_search_results' %}';
+
+{% include "dictionary/search_result_bar.html" %}
+</script>
+
+{% endblock %}
+
+
+<style>
+#renderCanvas {
+  width: 100%;
+  height: 100%;
+  touch-action: none;
+}
+</style>
+
+<script type='text/javascript'>
+    $('#searchresults').css({'padding-top': 10});
+    $('#definitionblock').css({'padding-top': Math.round($('#searchresults').height() + $('#signinfo').height() + 30)});
+</script>
+
+
+{% block content %}
+{% url 'dictionary:protected_media' '' as protected_media_url %}
+
+<div id="searchresults" class='navbar navbar-light' style="overflow-y:hidden;border:0;box-sizing:content-box; z-index: 50;">
+    {% if request.session.search_results %}{# See if search_results in sessions is empty #}
+        <div id="results-inline" class="btn-group" role="group" aria-label="search results" style="white-space:nowrap;">
+
+        </div>
+    {% endif %}
+</div>
+
+{% if request.GET.warning %}
+    <div class="alert alert-warning">{{ request.GET.warning }}</div>
+{% endif %}
+
+<div id="signinfo" class='navbar navbar-collapse' style="border:0;">
+    <div id="view_tabs" style="margin-right:15px;margin-top:10px;z-index:500;" class='view-tabs view-tabs-light'>
+    <ul class='nav nav-tabs nav-tabs-light'>
+        <li class="nav-item">
+            <a class='nav-link' href="{{PREFIX_URL}}/dictionary/gloss/{{gloss.id}}.html">{% trans "Public View" %}</a>
+        </li>
+        <li class="nav-item">
+            <a class='nav-link' href="{{PREFIX_URL}}/dictionary/gloss/{{gloss.id}}">{% trans "Details" %}</a>
+        </li>
+        <li class="nav-item">
+            <a class='nav-link' href="{{PREFIX_URL}}/dictionary/gloss_relations/{{gloss.id}}">{% trans "Relations" %}</a>
+        </li>
+        {% if gloss.has_frequency_data %}
+            <li class="nav-item">
+                <a class='nav-link' href="{{PREFIX_URL}}/dictionary/gloss_frequency/{{gloss.id}}/">{% trans "Frequencies" %}</a>
+            </li>
+        {% endif %}
+        <li class="nav-item">
+            <a class='nav-link' href="{{PREFIX_URL}}/dictionary/gloss/{{gloss.id}}/history">{% trans "Revision History" %}</a>
+        </li>
+        <li class="nav-item">
+            <a class='nav-link' href="{{PREFIX_URL}}/dictionary/gloss/{{gloss.id}}/glossvideos">{% trans "Videos" %}</a>
+        </li>
+        <li class="nav-item">
+            <a class='nav-link active' href="{{PREFIX_URL}}/dictionary/gloss/{{gloss.id}}/glossanimations">{% trans "Animations" %}</a>
+        </li>
+    </ul>
+    </div>
+</div>
+
+<div id="definitionblock" style="width:100%;">
+  {% for animation in gloss.get_animations %}
+  <br>
+  <br>
+  <div id="glossCanvas" style="width:400px;height:300px;">
+  <babylon model="{{protected_media_url}}/MeshesAndAnims/pineapple.glb"></babylon>
+  </div>
+  {% endfor %}
+  <br>
+  <br>
+</div>
+
+{% endblock %}
