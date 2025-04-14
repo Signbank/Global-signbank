@@ -318,7 +318,8 @@ def find_unlinked_video_files(dataset, linked_file_names):
             if (filename_without_extension.endswith('_small')
                     or filename_without_extension.endswith('_left')
                     or filename_without_extension.endswith('_right')
-                    or re.search(r"_nme_\d+$", filename_without_extension)):
+                    or filename_without_extension.endswith('_center')
+                    or re.search(r"\_nme_\d+$", filename_without_extension)):
                 continue
             two_char_folder = os.path.basename(subdir)
             # obtain a relative path using os.path.join

@@ -23,7 +23,7 @@ Primary video: {gloss.idgloss}-{gloss.id}.(mp4|m4v|mov|webm|mkv|m2v)
 Perspective video: {gloss.idgloss}-{gloss.id}_(left|right|nme_\d+_left|nme_\d+_right).(mp4|m4v|mov|webm|mkv|m2v)
 The perspective video pattern also matches perspective NME video filenames.
 
-Non-manual elements video: {gloss.idgloss}-{gloss.id}_(nme_\d+|nme_\d+_left|nme_\d+_right).(mp4|m4v|mov|webm|mkv|m2v)
+Non-manual elements video: {gloss.idgloss}-{gloss.id}_(nme_\d+|nme_\d+_left|nme_\d+_right|nme_\d+_center).(mp4|m4v|mov|webm|mkv|m2v)
 The ciphers string after the "nme_" in the pattern is the ordering index of the video, for identification and display.
 
 Backup video: {gloss.idgloss}-{gloss.id}.(mp4|m4v|mov|webm|mkv|m2v).(bak\d+)
