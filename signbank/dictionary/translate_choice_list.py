@@ -1,9 +1,7 @@
 from collections import OrderedDict
-from django.utils.translation import gettext_lazy as _
-import signbank.settings.base as settings
 
 
-def choicelist_queryset_to_translated_dict(queryset,ordered=True, id_prefix='_',
+def choicelist_queryset_to_translated_dict(queryset, ordered=True, id_prefix='_',
                                            shortlist=False):
     # When this method is called, the queryset is a set of either FieldChoice objects, all of which have the same field;
     # Or the queryset is a set of Handshape objects
@@ -105,7 +103,8 @@ def choicelist_choicelist_to_field_colors(choices):
         temp_mapping_dict[key] = mapping_default
     return temp_mapping_dict
 
-def machine_value_to_translated_human_value(machine_value,choice_list):
+
+def machine_value_to_translated_human_value(machine_value, choice_list):
 
     if not choice_list or len(choice_list) == 0:
         # this function has been called with an inappropriate choice_list
@@ -133,55 +132,17 @@ def machine_value_to_translated_human_value(machine_value,choice_list):
     return human_value
 
 
-def check_value_to_translated_human_value(field_name, check_value):
-    # check_value has type CharField
-    # translates to a human value dynamically
-    # used to translate the values stored in GlossRevision when booleans
-    # the Gloss model needs to be imported here, at runtime
-    from signbank.dictionary.models import Gloss
-    gloss_fields = Gloss.get_field_names()
-    if field_name not in gloss_fields or Gloss.get_field(field_name).__class__.__name__ != 'BooleanField':
-        # don't do anything to value
-        return check_value
-
-    # the value is a Boolean or it might not be set
-    # if it's weakdrop or weakprop, it has a value Neutral when it's not set
-    # look for aliases for empty to account for legacy data
-    if field_name not in settings.HANDEDNESS_ARTICULATION_FIELDS:
-        # This accounts for legacy values stored in the revision history
-        if check_value == '' or check_value in ['False', 'No', 'Nee', '&nbsp;']:
-            translated_value = _('No')
-            return translated_value
-        elif check_value in ['True', 'Yes', 'Ja', '1', 'letter', 'number']:
-            translated_value = _('Yes')
-            return translated_value
-        else:
-            return check_value
-    else:
-        # field is in settings.HANDEDNESS_ARTICULATION_FIELDS
-        # use the abbreviation that appears in the template
-        value_abbreviation = 'WD' if field_name == 'weakdrop' else 'WP'
-        if check_value in ['True', '+WD', '+WP', '1']:
-            translated_value = '+' + value_abbreviation
-        elif check_value in ['None', '', 'Neutral', 'notset']:
-            translated_value = _('Neutral')
-        else:
-            # here, the value is False
-            translated_value = '-' + value_abbreviation
-        return translated_value
-
-def choicelist_queryset_to_machine_value_dict(queryset,id_prefix='_',ordered=False):
+def choicelist_queryset_to_machine_value_dict(queryset, id_prefix='_', ordered=False):
     # When this method is called, the queryset is a set of either FieldChoice objects, all of which have the same field;
     # Or the queryset is a set of Handshape objects
     # Other functions that call this function expect either a list or an OrderedDict that maps machine values to machine values
     # Make sure the machine values are unique by only using the first human value
 
-    raw_choice_list = [(id_prefix+str(choice.machine_value),choice.machine_value) for choice in queryset]
+    raw_choice_list = [(id_prefix+str(choice.machine_value), choice.machine_value) for choice in queryset]
 
-    sorted_choice_list = sorted(raw_choice_list,key = lambda x: x[1])
+    sorted_choice_list = sorted(raw_choice_list, key=lambda x: x[1])
 
     if ordered:
         return OrderedDict(sorted_choice_list)
     else:
         return sorted_choice_list
-
