@@ -5,8 +5,6 @@ from django.utils.encoding import smart_str
 from signbank.settings.server_specific import *
 from datetime import datetime
 
-DEBUG = False 
-
 PROJECT_DIR = os.path.dirname(BASE_DIR)
 
 MANAGERS = ADMINS
