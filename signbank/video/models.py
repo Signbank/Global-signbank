@@ -939,12 +939,13 @@ class GlossVideoNME(GlossVideo):
         lemma = gloss.lemma
         count_dataset_languages = lemma.dataset.translation_languages.all().count() if lemma else 0
         glossvideodescriptions = GlossVideoDescription.objects.filter(nmevideo=self)
+        display_preface = str(self.offset) + "_" + self.perspective if self.perspective else str(self.offset)
         for description in glossvideodescriptions:
             if count_dataset_languages > 1:
                 translations.append("{}: {}".format(description.language, description.text))
             else:
                 translations.append("{}".format(description.text))
-        return ", ".join(translations)
+        return display_preface + ": " + ", ".join(translations)
 
     def add_descriptions(self, descriptions):
         """Add descriptions to the nme video"""

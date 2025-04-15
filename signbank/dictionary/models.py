@@ -2470,6 +2470,17 @@ class Gloss(models.Model):
         nmevideos = GlossVideoNME.objects.filter(gloss=self)
         return nmevideos
 
+    def get_nme_videos_lookup(self):
+        # Group the NME video objects together by their offset
+        from signbank.video.models import GlossVideoNME
+        nmevideos = GlossVideoNME.objects.filter(gloss=self)
+        nme_videos_dict = dict()
+        for nmevideo in nmevideos:
+            if str(nmevideo.offset) not in nme_videos_dict.keys():
+                nme_videos_dict[str(nmevideo.offset)] = []
+            nme_videos_dict[str(nmevideo.offset)].append(nmevideo)
+        return nme_videos_dict
+
     def add_nme_video(self, user, videofile, new_offset, recorded, perspective='center'):
         # Preventing circular import
         from signbank.video.models import GlossVideoNME, GlossVideoHistory, get_video_file_path
