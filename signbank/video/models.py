@@ -925,6 +925,7 @@ class GlossVideoDescription(models.Model):
     def __str__(self):
         return self.text
 
+
 class GlossVideoNME(GlossVideo):
     offset = models.IntegerField(default=1)
     perspective = models.CharField(max_length=20, choices=NME_PERSPECTIVE_CHOICES, default='center')       
@@ -939,7 +940,7 @@ class GlossVideoNME(GlossVideo):
         lemma = gloss.lemma
         count_dataset_languages = lemma.dataset.translation_languages.all().count() if lemma else 0
         glossvideodescriptions = GlossVideoDescription.objects.filter(nmevideo=self)
-        display_preface = str(self.offset) + "_" + self.perspective if self.perspective else str(self.offset)
+        display_preface = str(self.offset) + "_" + str(self.perspective) if self.perspective else str(self.offset)
         for description in glossvideodescriptions:
             if count_dataset_languages > 1:
                 translations.append("{}: {}".format(description.language, description.text))
@@ -947,8 +948,18 @@ class GlossVideoNME(GlossVideo):
                 translations.append("{}".format(description.text))
         return display_preface + ": " + ", ".join(translations)
 
+    def has_left_perspective(self):
+        nmevideos = GlossVideoNME.objects.filter(gloss=self.gloss, offset=self.offset, perspective='left')
+        return nmevideos.count() > 0
+
+    def has_right_perspective(self):
+        nmevideos = GlossVideoNME.objects.filter(gloss=self.gloss, offset=self.offset, perspective='right')
+        return nmevideos.count() > 0
+
     def add_descriptions(self, descriptions):
         """Add descriptions to the nme video"""
+        if self.perspective not in ['', 'center']:
+            return
         for language in self.gloss.lemma.dataset.translation_languages.all():
             if language.language_code_2char in descriptions.keys():
                 text = descriptions[language.language_code_2char]
