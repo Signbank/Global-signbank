@@ -1193,6 +1193,9 @@ def update_nmevideo(user, gloss, field, value):
         nmevideoid_language_code_2char = field[len('nmevideo_description_'):]
         nmevideoid, language_code_2char = nmevideoid_language_code_2char.split('_')
         nmevideo = GlossVideoNME.objects.get(id=int(nmevideoid))
+        if nmevideo.perspective not in ['', 'center']:
+            # only use descriptions on primary NME video
+            return HttpResponse(value, {'content-type': 'text/plain'})
         language = Language.objects.filter(language_code_2char=language_code_2char).first()
         whitespace = tuple(' \n\r\t')
         if value.startswith(whitespace) or value.endswith(whitespace):
@@ -1212,19 +1215,24 @@ def update_nmevideo(user, gloss, field, value):
         existing_offsets = [nmev.offset for nmev in existing_nmevideos]
         if new_offset in existing_offsets or new_offset == nmevideo.offset:
             return HttpResponse(value, {'content-type': 'text/plain'})
-        nmevideo.offset = new_offset
-        nmevideo.save(update_fields=['offset'])
+        nme_objects_with_same_offset = GlossVideoNME.objects.filter(gloss=gloss, offset=nmevideo.offset)
+        for nmev in nme_objects_with_same_offset:
+            nmev.offset = new_offset
+            # the save will move the file on disk
+            nmev.save(update_fields=['offset'])
     elif field.startswith('nmevideo_delete_'):
         nmevideoid = field[len('nmevideo_delete_'):]
         nmevideo = GlossVideoNME.objects.get(id=int(nmevideoid))
-        filename = os.path.basename(nmevideo.videofile.name)
-        filepath = nmevideo.videofile.path
-        nmevideo.reversion(revert=False)
-        log_entry = GlossVideoHistory(action="delete", gloss=gloss,
-                                      actor=user,
-                                      uploadfile=filename,
-                                      goal_location=filepath)
-        log_entry.save()
+        nme_objects_with_same_offset = GlossVideoNME.objects.filter(gloss=gloss, offset=nmevideo.offset)
+        for nmev in nme_objects_with_same_offset:
+            filename = os.path.basename(nmev.videofile.name)
+            filepath = nmev.videofile.path
+            nmev.reversion(revert=False)
+            log_entry = GlossVideoHistory(action="delete", gloss=gloss,
+                                          actor=user,
+                                          uploadfile=filename,
+                                          goal_location=filepath)
+            log_entry.save()
         return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': gloss.id}))
 
     else:
