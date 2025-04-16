@@ -1185,6 +1185,8 @@ class GlossDetailView(DetailView):
 
         context['nme_video_descriptions'] = get_nme_video_descriptions(gloss)
 
+        context['nme_videos_lookup'] = gloss.get_nme_videos_lookup
+
         # it does not work to put this in a separate function
         # the url parameter encoding is erased by Django of it's not constructed here
         lemma_group = gloss.lemma.gloss_set.all()

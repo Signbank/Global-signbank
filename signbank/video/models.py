@@ -948,6 +948,12 @@ class GlossVideoNME(GlossVideo):
                 translations.append("{}".format(description.text))
         return display_preface + ": " + ", ".join(translations)
 
+    def has_perspective_videos(self):
+        if self.perspective not in ['', 'center']:
+            return False
+        perspectivevideos = GlossVideoNME.objects.filter(gloss=self.gloss, offset=self.offset, perspective__in=['left', 'right'])
+        return perspectivevideos.count() > 0
+
     def has_left_perspective(self):
         nmevideos = GlossVideoNME.objects.filter(gloss=self.gloss, offset=self.offset, perspective='left')
         return nmevideos.count() > 0

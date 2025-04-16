@@ -1798,6 +1798,7 @@ textarea:focus {
                <table class='table table-responsive' style="text-align: left;width:100%;">
                 <tr style="overflow-y:auto;">
                     <td style="display:inline-block;">
+                        <div>
                     {% for videonme in gloss.get_nme_videos %}
                         <div class="table-responsive" style="display:inline-block;">
                          <table class="table table-condensed" style="text-align: left;">
@@ -1831,9 +1832,57 @@ textarea:focus {
                                <table>
                                    <tr>
                                        <td colspan="2">
-                                           <div id="nmeplayer">
-                                            <video id='videonmeplayer' src="{{protected_media_url}}{{videonme.get_video_path}}?v={% now 'YmdHis' %}"
-                                                   style="height:200px;width:auto;" controls muted></video>
+                                           <div>
+    {% if videonme.has_perspective_videos %}
+    <div id="buttonbar_nme_{{videonme.offset}}-top" style="background-color:transparent;height:auto;">
+        {% if videonme.has_left_perspective %}
+        <button class="btn video_button" id="show_nme_{{videonme.offset}}_left" style="font-size:18px;background-color:transparent;">
+            <span class="glyphicon glyphicon-facetime-video" style="transform:rotateZ(-30deg);rotateY(0deg);height:auto;"></span>
+        </button>
+        {% endif %}
+    <button class="btn video_button active" id="show_nme_{{videonme.offset}}_middle" style="font-size:18px;background-color:transparent;">
+        <span class="glyphicon glyphicon-user"></span>
+    </button>
+        {% if videonme.has_right_perspective %}
+        <button class="btn video_button" id="show_nme_{{videonme.offset}}_right" style="font-size:18px;background-color:transparent;">
+            <span class="glyphicon glyphicon-facetime-video" style="transform:rotateZ(210deg);height:auto;"></span></button>
+        {% endif %}
+    </div>
+    {% endif %}
+
+        <div id="player_nme_{{videonme.offset}}" style="">
+            <video id='videonmeplayer_{{videonme.offset}}_middle' src="{{protected_media_url}}{{videonme.get_video_path}}?v={% now 'YmdHis' %}"
+                   style="height:200px;width:auto;" controls muted></video>
+
+        {% if videonme.has_left_perspective %}
+            {% with nme_videos_lookup|get_item:videonme.offset as nme_perspectives %}
+            {% with nme_perspectives|get_item:'left' as nmevideo_left %}
+            <video id='videonmeplayer_{{videonme.offset}}_left' src="{{protected_media_url}}{{nmevideo_left.get_video_path}}?v={% now 'YmdHis' %}"
+                   style="height:200px;width:auto;" controls muted></video>
+            {% endwith %}
+            {% endwith %}
+        {% endif %}
+        {% if videonme.has_right_perspective %}
+            {% with nme_videos_lookup|get_item:videonme.offset as nme_perspectives %}
+            {% with nme_perspectives|get_item:'right' as nmevideo_right %}
+            <video id='videonmeplayer_{{videonme.offset}}_right' src="{{protected_media_url}}{{nmevideo_right.get_video_path}}?v={% now 'YmdHis' %}"
+                   style="height:200px;width:auto;" controls muted></video>
+            {% endwith %}
+            {% endwith %}
+        {% endif %}
+        </div>
+        <div id="buttonbar_nme_{{videonme.offset}}" style="background-color:transparent;">
+        <button class="btn" id="play_nme_{{videonme.offset}}_perspective" onclick="play_perspective();"
+                style="font-size:16px;background-color:transparent;"><span class="glyphicon glyphicon-play"></span></button>
+        <button class="btn" id="pause_nme_{{videonme.offset}}_perspective" onclick="pause_perspective();"
+                style="font-size:16px;background-color:transparent;"><span class="glyphicon glyphicon-pause"></span></button>
+        <button class="btn" id="fullscreen_nme_{{videonme.offset}}_perspective" onclick="openFullscreen();"
+                style="font-size:16px;background-color:transparent;"><span class="glyphicon glyphicon-fullscreen"></span></button>
+        </div>
+                                           <!--                                           <div id="nmeplayer">-->
+<!--                                            <video id='videonmeplayer' src="{{protected_media_url}}{{videonme.get_video_path}}?v={% now 'YmdHis' %}"-->
+<!--                                                   style="height:200px;width:auto;" controls muted></video>-->
+<!--                                           </div>-->
                                            </div>
                                         </td>
                                    </tr>
@@ -1862,6 +1911,7 @@ textarea:focus {
                          </table>
                       </div>
                     {% endfor %}
+                        </div>
                     </td>
                 </tr>
                </table>
