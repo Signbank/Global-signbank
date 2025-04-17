@@ -18,6 +18,7 @@ from signbank.settings.server_specific import (LANGUAGES, LANGUAGE_CODE, USE_REG
                                                MORPHEME_DISPLAY_FIELDS, SHOW_FIELD_CHOICE_COLORS,
                                                MINIMAL_PAIRS_SEARCH_FIELDS, MINIMAL_PAIRS_CHOICE_FIELDS,
                                                RECENTLY_ADDED_SIGNS_PERIOD)
+from signbank.video.models import GlossVideo
 from signbank.dictionary.models import (Gloss, Morpheme, Definition, Relation, RelationToForeignSign,
                                         OtherMedia, Handshape, SemanticField, DerivationHistory,
                                         AnnotationIdglossTranslation, Dataset, FieldChoice, LemmaIdgloss,
