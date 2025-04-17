@@ -1,29 +1,28 @@
 import json
 
-from signbank.dictionary.context_data import get_selected_datasets
+from django.contrib import messages
+from django.utils.translation import gettext_lazy as _
+from django.core.exceptions import ObjectDoesNotExist
+from django.shortcuts import get_object_or_404
 from django.views.generic.list import ListView
 from django.views.generic.detail import DetailView
-from django.core.paginator import Paginator
-from django.views.generic.edit import CreateView, DeleteView, UpdateView
+from django.http import Http404
+
+from signbank.settings.server_specific import (DEFAULT_DATASET_ACRONYM, SHOW_DATASET_INTERFACE_OPTIONS,
+                                               USE_REGULAR_EXPRESSIONS)
+
 from signbank.video.models import GlossVideo, GlossVideoNME, GlossVideoPerspective
-from signbank.dictionary.models import Dataset, Gloss, AnnotationIdglossTranslation
-from signbank.dictionary.forms import GlossVideoSearchForm
+from signbank.dictionary.models import Dataset, Gloss
+from signbank.dictionary.forms import GlossVideoSearchForm, check_language_fields
 from signbank.dataset_operations import (find_unlinked_video_files_for_dataset, gloss_annotations_check,
                                          gloss_videos_check, gloss_video_filename_check, gloss_subclass_videos_check,
                                          wrong_filename_filter, get_primary_videos_for_gloss, get_backup_videos_for_gloss,
                                          get_perspective_videos_for_gloss, get_nme_videos_for_gloss, get_wrong_videos_for_gloss)
 from signbank.tools import get_dataset_languages
-from signbank.settings.server_specific import *
-from guardian.shortcuts import get_objects_for_user
-from django.core.exceptions import PermissionDenied, ObjectDoesNotExist
 from signbank.dictionary.adminviews import show_warning, error_message_regular_expression
-from django.contrib import messages
-from django.shortcuts import *
-from django.conf import settings
-from django.utils.translation import override, gettext, gettext_lazy as _, activate
-from signbank.query_parameters import (set_up_language_fields, check_language_fields, query_parameters_from_get,
-                                       apply_language_filters_to_results, apply_video_filters_to_results,
-                                       apply_nmevideo_filters_to_results)
+from signbank.dictionary.context_data import get_selected_datasets
+from signbank.query_parameters import (set_up_language_fields, query_parameters_from_get,
+                                       apply_language_filters_to_results)
 
 
 class DatasetConstraintsView(DetailView):
@@ -58,8 +57,8 @@ class DatasetConstraintsView(DetailView):
         context['dataset_languages'] = dataset_languages
         context['default_language'] = dataset.default_language
 
-        context['SHOW_DATASET_INTERFACE_OPTIONS'] = getattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS', False)
-        context['USE_REGULAR_EXPRESSIONS'] = getattr(settings, 'USE_REGULAR_EXPRESSIONS', False)
+        context['SHOW_DATASET_INTERFACE_OPTIONS'] = SHOW_DATASET_INTERFACE_OPTIONS
+        context['USE_REGULAR_EXPRESSIONS'] = USE_REGULAR_EXPRESSIONS
 
         glosses = Gloss.objects.filter(lemma__dataset=dataset, morpheme=None)
         nr_of_glosses = glosses.count()
@@ -114,8 +113,8 @@ class GlossVideoListView(ListView):
         context['dataset_languages'] = dataset_languages
         context['default_language'] = self.dataset.default_language if self.dataset else ''
 
-        context['SHOW_DATASET_INTERFACE_OPTIONS'] = getattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS', False)
-        context['USE_REGULAR_EXPRESSIONS'] = getattr(settings, 'USE_REGULAR_EXPRESSIONS', False)
+        context['SHOW_DATASET_INTERFACE_OPTIONS'] = SHOW_DATASET_INTERFACE_OPTIONS
+        context['USE_REGULAR_EXPRESSIONS'] = USE_REGULAR_EXPRESSIONS
 
         glosses = Gloss.objects.filter(lemma__dataset=self.dataset, archived=False, morpheme=None).distinct()
         nr_of_glosses = glosses.count()
@@ -217,7 +216,7 @@ class GlossVideoListView(ListView):
             count_wrong_filename = len(gloss_video_ids)
         count_video_objects = count_glossvideos + count_glossbackupvideos + count_glossperspvideos + count_glossnmevideos + count_wrong_filename
 
-        # This is prevent the interface from choking on backup videos
+        # This is to prevent the interface from choking on backup videos
         # For NGT there are over 100,000 backup video objects
         if count_video_objects > 1000:
             translated_message = str(count_video_objects) + _(' results. Please refine your query to retrieve fewer results.')

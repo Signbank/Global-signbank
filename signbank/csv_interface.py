@@ -1,11 +1,26 @@
+import re
+import csv
+import datetime as DT
 
-from signbank.dictionary.models import *
-from tagging.models import Tag, TaggedItem
-from signbank.dictionary.forms import *
+from django.db import models
+from django.utils.timezone import get_current_timezone
+from django.utils.translation import override, activate
+from django.core.exceptions import ObjectDoesNotExist, MultipleObjectsReturned
+from django.http import StreamingHttpResponse
+
+from signbank.settings.server_specific import (LANGUAGES, LEFT_DOUBLE_QUOTE_PATTERNS, RIGHT_DOUBLE_QUOTE_PATTERNS,
+                                               FIELDS, DEFAULT_KEYWORDS_LANGUAGE, DEFAULT_LANGUAGE_HEADER_COLUMN,
+                                               DEFAULT_DATASET_ACRONYM,
+                                               DEBUG_SENSES, DEBUG_CSV, DEBUG_API, SHOW_DATASET_INTERFACE_OPTIONS,
+                                               HANDEDNESS_ARTICULATION_FIELDS, HANDSHAPE_ETYMOLOGY_FIELDS)
+from signbank.dictionary.models import (Dataset, Gloss,
+                                        Handshape, DerivationHistory, Keyword, SemanticField, GlossRevision,
+                                        ExampleSentence, Translation, FieldChoice,
+                                        Sense, GlossSense, SenseTranslation, ExampleSentenceTranslation)
 from signbank.dictionary.consistency_senses import check_consistency_senses
-from django.utils.translation import override, gettext_lazy as _, activate
-from signbank.settings.server_specific import LANGUAGES, LEFT_DOUBLE_QUOTE_PATTERNS, RIGHT_DOUBLE_QUOTE_PATTERNS
 from signbank.dictionary.update_senses_mapping import add_sense_to_revision_history
+
+from tagging.models import Tag, TaggedItem
 
 
 def add_sentence_to_revision_history(request, gloss, old_value, new_value):
@@ -16,7 +31,7 @@ def add_sentence_to_revision_history(request, gloss, old_value, new_value):
                              field_name=sentence_label,
                              gloss=gloss,
                              user=request.user,
-                             time=datetime.now(tz=get_current_timezone()))
+                             time=DT.datetime.now(tz=get_current_timezone()))
     revision.save()
 
 
@@ -78,7 +93,7 @@ def sense_examplesentences_for_language(gloss, language):
         order = gs.order
         sense = gs.sense
         if order in gloss_senses.keys():
-            if settings.DEBUG_CSV:
+            if DEBUG_CSV:
                 # if something is messed up with duplicate senses with the same number, just ignore
                 print('ERROR: sense_examplesentences_for_language duplicate order: ', order)
                 print(gloss, str(gloss.id), order, sense)
@@ -117,7 +132,6 @@ def map_values_to_sentence_type(values, include_sentences=True):
     activate(LANGUAGES[0][0])
     sentencetype_role_choices = [st.name for st in FieldChoice.objects.filter(field__iexact='SentenceType',
                                                                               machine_value__gt=1)]
-    import re
     pattern_mapped_sorted_note_names = []
     for note_name in sentencetype_role_choices:
         escaped_note_name = re.sub(r'([()])', r'\\\1', note_name)
@@ -152,7 +166,7 @@ def get_sense_numbers(gloss):
         order = gs.order
         sense = gs.sense
         if order in gloss_senses.keys():
-            if settings.DEBUG_CSV:
+            if DEBUG_CSV:
                 # if something is messed up with duplicate senses with the same number, just ignore
                 print('ERROR: get_sense_numbers duplicate order: ', str(gloss.id), str(order))
                 continue
@@ -174,7 +188,7 @@ def get_senses_to_sentences(gloss):
         order = gs.order
         sense = gs.sense
         if order in gloss_senses.keys():
-            if settings.DEBUG_CSV:
+            if DEBUG_CSV:
                 # if something is messed up with duplicate senses with the same number, just ignore
                 print('ERROR: get_sense_numbers duplicate order: ', str(gloss.id), str(order))
                 continue
@@ -244,7 +258,7 @@ def update_sentences_parse(sense_numbers, sense_numbers_to_sentences, new_senten
             continue
         new_sentence_tuples.append(find_all[0])
 
-    if settings.DEBUG_CSV:
+    if DEBUG_CSV:
         print('Parsed sentence tuples: ', new_sentence_tuples)
 
     sentence_ids = []
@@ -316,7 +330,7 @@ def csv_update_sentences(request, gloss, language, new_sentences_string, update=
     # this function assumes the new_senses_string is correctly parsed
     # the function update_senses_parse tests this
     # the sense numbers in the new_senses_string are unique numbers between 1 and 9
-    if settings.DEBUG_CSV:
+    if DEBUG_CSV:
         print('call to csv_update_sentences: ', gloss, str(gloss.id), language, new_sentences_string)
     if not new_sentences_string:
         return
@@ -332,13 +346,13 @@ def csv_update_sentences(request, gloss, language, new_sentences_string, update=
         order = gs.order
         sense = gs.sense
         if order in gloss_senses.keys():
-            if settings.DEBUG_CSV or settings.DEBUG_SENSES:
+            if DEBUG_CSV or DEBUG_SENSES:
                 print('ERROR: csv_update_sentences: duplicate order: ', order)
                 print('ERROR: csv_update_sentences: ', gloss, str(gloss.id), order, sense)
         gloss_senses[order] = sense
 
     current_sentences_string = sense_examplesentences_for_language(gloss, language)
-    if settings.DEBUG_CSV:
+    if DEBUG_CSV:
         print('Existing sentences: ', current_sentences_string)
 
     new_sentence_tuples = []
@@ -346,7 +360,7 @@ def csv_update_sentences(request, gloss, language, new_sentences_string, update=
         find_all, map_errors = map_values_to_sentence_type(sentence_tuple, include_sentences=True)
         if map_errors or not find_all:
             # examine errors
-            if settings.DEBUG_CSV:
+            if DEBUG_CSV:
                 print('ERROR: Parsing error sentence tuple: ', sentence_tuple)
             continue
         new_sentence_tuples.append(find_all[0])
@@ -365,11 +379,11 @@ def csv_update_sentences(request, gloss, language, new_sentences_string, update=
         new_sentence_dict['sentence_text'] = sentence_text
         new_sentences_list.append(new_sentence_dict)
 
-    if settings.DEBUG_CSV:
+    if DEBUG_CSV:
         print('Sentences to update: ', new_sentences_list)
 
     if not update:
-        if settings.DEBUG_CSV:
+        if DEBUG_CSV:
             print('Sentences to update: update set to False')
         return
 
@@ -403,7 +417,7 @@ def csv_update_sentences(request, gloss, language, new_sentences_string, update=
 
 def csv_create_sentence(request, gloss, dataset_languages, sentence_to_create, create=False):
     """CSV Import Update the senses field"""
-    if settings.DEBUG_CSV:
+    if DEBUG_CSV:
         print('call to csv_create_sentence: ', gloss, str(gloss.id), sentence_to_create)
 
     glosssenses = GlossSense.objects.filter(gloss=gloss).order_by('order')
@@ -429,7 +443,7 @@ def csv_create_sentence(request, gloss, dataset_languages, sentence_to_create, c
     new_sentence_dict['negative'] = sentence_to_create['negative'] == 'True'
 
     if not create:
-        if settings.DEBUG_CSV:
+        if DEBUG_CSV:
             print('New sentences to create: create set to False')
         return
 
@@ -438,7 +452,7 @@ def csv_create_sentence(request, gloss, dataset_languages, sentence_to_create, c
     examplesentence = ExampleSentence(negative=new_sentence_dict['negative'],
                                       sentenceType=new_sentence_dict['sentence_type'])
     examplesentence.save()
-    sense.exampleSentences.add(examplesentence, through_defaults={'order':sense.exampleSentences.count()+1})
+    sense.exampleSentences.add(examplesentence, through_defaults={'order': sense.exampleSentences.count()+1})
 
     for language in dataset_languages:
         sentence_text = sentence_to_create['sentence_text_'+language.language_code_2char]
@@ -478,11 +492,11 @@ def sense_translations_for_language(gloss, language):
     for order, sense in gloss_senses.items():
         sensetranslations = sense.senseTranslations.filter(language=language)
         if not sensetranslations.count():
-            if settings.DEBUG_CSV:
+            if DEBUG_CSV:
                 print('No sensetranslation object for ', gloss, ' ( ', str(gloss.id), ') ', language)
             continue
         elif sensetranslations.count() > 1:
-            if settings.DEBUG_CSV:
+            if DEBUG_CSV:
                 print('Multiple sensetranslation objects for ', gloss, ' ( ', str(gloss.id), ') ', sensetranslations)
         sensetranslation = sensetranslations.first()
         keywords_list = []
@@ -497,7 +511,7 @@ def sense_translations_for_language(gloss, language):
         sense_translations = ' | '.join(translations_per_language)
     else:
         sense_translations = ""
-    if settings.DEBUG_CSV:
+    if DEBUG_CSV:
         print(gloss, str(gloss.id), language, sense_translations)
     return sense_translations
 
@@ -516,41 +530,41 @@ def update_senses_parse(new_senses_string):
             order_string, keywords_string = ns.split('. ')
         except ValueError:
             # incorrect separator between sense number and keywords
-            if settings.DEBUG_CSV:
+            if DEBUG_CSV:
                 print('first error: ', ns)
             return False
         try:
             order = int(order_string)
         except ValueError:
             # sense is not a number
-            if settings.DEBUG_CSV:
+            if DEBUG_CSV:
                 print('second error: ', ns, order_string, keywords_string)
             return False
         if order not in range(1, 9):
             # sense out of range
-            if settings.DEBUG_CSV:
+            if DEBUG_CSV:
                 print('third error: ', ns, order, keywords_string)
             return False
         if order in order_list:
             # duplicate sense number found
-            if settings.DEBUG_CSV:
+            if DEBUG_CSV:
                 print('fourth error: ', ns, order, keywords_string)
             return False
         order_list.append(order)
         if not keywords_string:
-            if settings.DEBUG_CSV:
+            if DEBUG_CSV:
                 # no keywords specified
                 print('fifth error: ', ns)
                 return False
         try:
             keywords_list = keywords_string.split(', ')
         except ValueError:
-            if settings.DEBUG_CSV:
+            if DEBUG_CSV:
                 print('sixth error: ', ns, order, keywords_string)
             return False
         if len(keywords_list) != len(list(set(keywords_list))):
             # duplicates in same sense
-            if settings.DEBUG_CSV:
+            if DEBUG_CSV:
                 print('seventh error: ', ns, order, keywords_list)
             return False
 
@@ -570,11 +584,11 @@ def sense_translations_for_language_mapping(gloss, language):
     for order, sense in gloss_senses.items():
         sensetranslations = sense.senseTranslations.filter(language=language)
         if not sensetranslations.count():
-            if settings.DEBUG_CSV:
+            if DEBUG_CSV:
                 print('No sensetranslation object for ', gloss, ' ( ', str(gloss.id), ') ', language)
             continue
         elif sensetranslations.count() > 1:
-            if settings.DEBUG_CSV:
+            if DEBUG_CSV:
                 print('Multiple sensetranslation objects for ', gloss, ' ( ', str(gloss.id), ') ', sensetranslations)
         sensetranslation = sensetranslations.first()
         keywords_list = []
@@ -583,7 +597,7 @@ def sense_translations_for_language_mapping(gloss, language):
             keywords_list.append(translation.translation.text)
         if keywords_list:
             sense_keywords_mapping[order] = keywords_list
-    if settings.DEBUG_CSV:
+    if DEBUG_CSV:
         print('sense_translations_for_language_mapping: ', gloss, str(gloss.id), language, sense_keywords_mapping)
     return sense_keywords_mapping
 
@@ -594,7 +608,7 @@ def csv_create_senses(request, gloss, language, new_senses_string, create=False)
     # the function update_senses_parse tests this
     # the sense numbers in the new_senses_string are unique numbers between 1 and 9
     # the request argument is needed to save the user sense creation in the Gloss Revision History
-    if settings.DEBUG_CSV:
+    if DEBUG_CSV:
         print('call to csv_create_senses: ', gloss, str(gloss.id), language, '"', new_senses_string, '"')
     if not new_senses_string:
         return
@@ -613,7 +627,7 @@ def csv_create_senses(request, gloss, language, new_senses_string, create=False)
         keywords_list = [kw.strip() for kw in keywords_list_split]
         new_senses_dict[int(order_string)] = keywords_list
 
-    if settings.DEBUG_CSV:
+    if DEBUG_CSV:
         print('new senses to create: ', new_senses_dict)
     gloss_senses = GlossSense.objects.filter(gloss=gloss)
 
@@ -621,10 +635,10 @@ def csv_create_senses(request, gloss, language, new_senses_string, create=False)
         # there are currently no senses for this gloss, create an empty 1st one
         # in case the user has started numbering at something other than 1, get this
         new_senses_orders = sorted(ns for ns in new_senses_dict.keys())
-        if settings.DEBUG_CSV:
+        if DEBUG_CSV:
             print('new sense orders: ', new_senses_orders)
         if create:
-            if settings.DEBUG_CSV:
+            if DEBUG_CSV:
                 print('csv_create_senses create: ', gloss, new_senses_string, new_senses_orders)
             # there are currently no senses for this gloss
             create_empty_sense(gloss, new_senses_orders[0], erase=True)
@@ -687,7 +701,7 @@ def required_csv_columns(dataset_languages, create_or_update='create_gloss'):
         required_columns = ['Signbank ID', 'Dataset', 'Sense Number', 'Sentence Type', 'Negative']
 
         for lang in dataset_languages:
-            language_name = getattr(lang, settings.DEFAULT_LANGUAGE_HEADER_COLUMN['English'])
+            language_name = getattr(lang, DEFAULT_LANGUAGE_HEADER_COLUMN['English'])
             column_name = "Example Sentences (%s)" % language_name
             required_columns.append(column_name)
     else:
@@ -778,9 +792,9 @@ def csv_gloss_to_row(gloss, dataset_languages, fields):
             value = ''
 
         if value is None:
-            if f.name in settings.HANDEDNESS_ARTICULATION_FIELDS:
+            if f.name in HANDEDNESS_ARTICULATION_FIELDS:
                 value = 'Neutral'
-            elif f.name in settings.HANDSHAPE_ETYMOLOGY_FIELDS:
+            elif f.name in HANDSHAPE_ETYMOLOGY_FIELDS:
                 value = 'False'
             else:
                 if hasattr(f, 'field_choice_category'):
@@ -1020,8 +1034,7 @@ def csv_lemma_to_row(lemma, dataset_languages):
 
 def minimalpairs_focusgloss(gloss_id, language_code):
 
-    from django.utils import translation
-    translation.activate(language_code)
+    activate(language_code)
 
     this_gloss = Gloss.objects.get(id=gloss_id)
 
@@ -1054,7 +1067,7 @@ def minimalpairs_focusgloss(gloss_id, language_code):
                 # the value is a Boolean or it might not be set
                 if focus_gloss_choice == 'True' or focus_gloss_choice is True:
                     focus_gloss_value = 'Yes'
-                elif focus_gloss_choice == 'Neutral' and field in settings.HANDEDNESS_ARTICULATION_FIELDS:
+                elif focus_gloss_choice == 'Neutral' and field in HANDEDNESS_ARTICULATION_FIELDS:
                     focus_gloss_value = 'Neutral'
                 else:
                     focus_gloss_value = 'No'
@@ -1068,7 +1081,7 @@ def minimalpairs_focusgloss(gloss_id, language_code):
                 # the value is a Boolean or it might not be set
                 if other_gloss_choice == 'True' or other_gloss_choice is True:
                     other_gloss_value = 'Yes'
-                elif other_gloss_choice == 'Neutral' and field in settings.HANDEDNESS_ARTICULATION_FIELDS:
+                elif other_gloss_choice == 'Neutral' and field in HANDEDNESS_ARTICULATION_FIELDS:
                     other_gloss_value = 'Neutral'
                 else:
                     other_gloss_value = 'No'
@@ -1093,7 +1106,7 @@ def minimalpairs_focusgloss(gloss_id, language_code):
 
 def csv_header_row_minimalpairslist():
 
-    if hasattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS') and settings.SHOW_DATASET_INTERFACE_OPTIONS:
+    if SHOW_DATASET_INTERFACE_OPTIONS:
         header = ['Dataset', 'Focus Gloss', 'ID', 'Minimal Pair Gloss', 'ID', 'Field Name', 'Source Sign Value',
                   'Contrasting Sign Value']
     else:
@@ -1151,7 +1164,7 @@ def normalize_boolean(gloss_field, new_boolean, original_boolean):
     elif new_boolean.lower() in ['false', 'nee', 'no']:
         return 'False'
     else:
-        if settings.DEBUG_API:
+        if DEBUG_API:
             print('normalize_boolean NO MATCH: ', gloss_field, new_boolean)
         return original_boolean
 
@@ -1207,7 +1220,7 @@ def export_csv_template(request):
         dataset = Dataset.objects.get(id=dataset_id)
     else:
         # if the user uses the url outside the csv templates, the default dataset is used
-        dataset = Dataset.objects.get(acronym=settings.DEFAULT_DATASET_ACRONYM)
+        dataset = Dataset.objects.get(acronym=DEFAULT_DATASET_ACRONYM)
 
     dataset_languages = dataset.translation_languages.all()
 
@@ -1236,8 +1249,6 @@ def export_csv_template(request):
     csv_rows = [header_row, empty_row]
     # this is based on an example in the Django 4.2 documentation
     from signbank.dictionary.adminviews import Echo
-    from django.http import StreamingHttpResponse
-    import csv
 
     pseudo_buffer = Echo()
     new_writer = csv.writer(pseudo_buffer)

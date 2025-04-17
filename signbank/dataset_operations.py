@@ -1,21 +1,25 @@
+import re
 import shutil
 import os.path
+from pathlib import Path
+
 from django.contrib.auth.decorators import permission_required
-from signbank.dictionary.models import *
+from django.http import JsonResponse
+
+from signbank.settings.server_specific import (WRITABLE_FOLDER, GLOSS_VIDEO_DIRECTORY, DEBUG_VIDEOS, DELETED_FILES_FOLDER)
+from signbank.dictionary.models import (Gloss, AnnotationIdglossTranslation)
 from signbank.video.models import (GlossVideo, GlossVideoNME, GlossVideoPerspective, filename_matches_backup_video,
                                    filename_matches_perspective, filename_matches_nme, filename_matches_video,
                                    flattened_video_path)
 from signbank.video.convertvideo import video_file_type_extension
 from signbank.tools import get_two_letter_dir
-import re
-from django.http import JsonResponse
-from pathlib import Path
+
 
 
 def video_type(glossvideo):
     # if the file exists, this will obtain the type of video as an extension
 
-    video_file_full_path = os.path.join(settings.WRITABLE_FOLDER, str(glossvideo.videofile))
+    video_file_full_path = os.path.join(WRITABLE_FOLDER, str(glossvideo.videofile))
     return video_file_type_extension(video_file_full_path)
 
 
@@ -59,7 +63,7 @@ def renumber_backup_videos(gloss):
         if inx == current_version:
             continue
 
-        if settings.DEBUG_VIDEOS:
+        if DEBUG_VIDEOS:
             print('dataset_operations:renumber_backup_videos: change version ', current_version, inx)
 
         gloss_video.version = inx
@@ -73,21 +77,21 @@ def rename_backup_videos(gloss):
     two_letter_dir = get_two_letter_dir(idgloss)
     dataset_dir = gloss.lemma.dataset.acronym
     for inx, glossvideo in enumerate(glossvideos, 1):
-        video_file_full_path = os.path.join(settings.WRITABLE_FOLDER, str(glossvideo.videofile))
+        video_file_full_path = os.path.join(WRITABLE_FOLDER, str(glossvideo.videofile))
         video_extension = video_file_type_extension(video_file_full_path)
         # keep this a normal string concatenation, not an f-string
         desired_filename_without_extension = idgloss + '-' + glossid + video_extension
         _, bak = os.path.splitext(glossvideo.videofile.name)
         desired_extension = '.bak' + str(glossvideo.id)
         desired_filename = desired_filename_without_extension + desired_extension
-        desired_relative_path = os.path.join(settings.GLOSS_VIDEO_DIRECTORY,
+        desired_relative_path = os.path.join(GLOSS_VIDEO_DIRECTORY,
                                              dataset_dir, two_letter_dir, desired_filename)
         current_relative_path = str(glossvideo.videofile)
         if filename_matches_backup_video(current_relative_path):
             continue
-        source = os.path.join(settings.WRITABLE_FOLDER, current_relative_path)
-        destination = os.path.join(settings.WRITABLE_FOLDER, desired_relative_path)
-        if settings.DEBUG_VIDEOS:
+        source = os.path.join(WRITABLE_FOLDER, current_relative_path)
+        destination = os.path.join(WRITABLE_FOLDER, desired_relative_path)
+        if DEBUG_VIDEOS:
             print('dataset_operations:rename_backup_videos:rename: ', source, destination)
             print('desired_relative_path: ', desired_relative_path)
         # if the file exists, rename it, otherwise only modify the filename of the object
@@ -108,7 +112,7 @@ def gloss_has_videos_with_extra_chars_in_filename(gloss):
 
 def path_exists(relativepath):
 
-    fullpath = os.path.join(settings.WRITABLE_FOLDER, relativepath)
+    fullpath = os.path.join(WRITABLE_FOLDER, relativepath)
     return os.path.exists(fullpath)
 
 
@@ -124,11 +128,11 @@ def weed_out_duplicate_version_0_videos(gloss):
         return
 
     # first delete the objects that do not have a video
-    if settings.DEBUG_VIDEOS:
+    if DEBUG_VIDEOS:
         print('dataset_operations:weed_out_duplicate_version_0_videos:more than one version 0 ', glossvideos)
     for gv in glossvideos:
         # delete the objects with no video
-        gv_full_path = os.path.join(settings.WRITABLE_FOLDER, str(gv.videofile))
+        gv_full_path = os.path.join(WRITABLE_FOLDER, str(gv.videofile))
         if not path_exists(gv_full_path):
             gv.delete()
 
@@ -147,15 +151,15 @@ def weed_out_duplicate_version_0_videos(gloss):
     for gv in glossvideos:
         if gv == glossvideo:
             continue
-        gv_full_path = os.path.join(settings.WRITABLE_FOLDER, str(gv.videofile))
+        gv_full_path = os.path.join(WRITABLE_FOLDER, str(gv.videofile))
         try:
             os.unlink(gv.videofile.path)
             os.remove(gv_full_path)
             gv.delete()
-            if settings.DEBUG_VIDEOS:
+            if DEBUG_VIDEOS:
                 print('dataset_operations:weed_out_duplicate_version_0_videos:remove: ', gv_full_path)
         except (OSError, PermissionError):
-            if settings.DEBUG_VIDEOS:
+            if DEBUG_VIDEOS:
                 print('Exception dataset_operations:weed_out_duplicate_version_0_videos:remove: ', gv_full_path)
 
 
@@ -176,18 +180,18 @@ def rename_gloss_video(gloss):
     glossid = str(gloss.id)
     two_letter_dir = get_two_letter_dir(idgloss)
     dataset_dir = gloss.lemma.dataset.acronym
-    video_file_full_path = os.path.join(settings.WRITABLE_FOLDER, str(glossvideo.videofile))
+    video_file_full_path = os.path.join(WRITABLE_FOLDER, str(glossvideo.videofile))
     video_extension = video_file_type_extension(video_file_full_path)
     # keep this a normal string concatenation, not an f-string
     desired_filename = idgloss + '-' + glossid + video_extension
-    desired_relative_path = os.path.join(settings.GLOSS_VIDEO_DIRECTORY,
+    desired_relative_path = os.path.join(GLOSS_VIDEO_DIRECTORY,
                                          dataset_dir, two_letter_dir, desired_filename)
     current_relative_path = str(glossvideo.videofile)
     if current_relative_path == desired_relative_path:
         return
-    source = os.path.join(settings.WRITABLE_FOLDER, current_relative_path)
-    destination = os.path.join(settings.WRITABLE_FOLDER, desired_relative_path)
-    if settings.DEBUG_VIDEOS:
+    source = os.path.join(WRITABLE_FOLDER, current_relative_path)
+    destination = os.path.join(WRITABLE_FOLDER, desired_relative_path)
+    if DEBUG_VIDEOS:
         print('dataset_operations:rename_backup_videos:rename: ', source, destination)
         print('desired_relative_path: ', desired_relative_path)
     # if the file exists, rename it, otherwise only modify the filename of the object
@@ -286,7 +290,7 @@ def gloss_video_filename_check(dataset):
             non_mp4_videos.append((gloss, list_videos))
         idgloss = gloss.idgloss
         two_letter_dir = get_two_letter_dir(idgloss)
-        folder_pattern = settings.GLOSS_VIDEO_DIRECTORY + os.sep + dataset.acronym + os.sep + two_letter_dir
+        folder_pattern = GLOSS_VIDEO_DIRECTORY + os.sep + dataset.acronym + os.sep + two_letter_dir
         folder_not_in_filename = [gv for gv in glossvideos if folder_pattern not in str(gv.videofile)]
         if folder_not_in_filename:
             list_videos = [(gv.version, str(gv.videofile), path_exists(str(gv.videofile))) for gv in folder_not_in_filename]
@@ -302,7 +306,7 @@ def gloss_video_filename_check(dataset):
 def find_unlinked_video_files(dataset, linked_file_names):
     """Return list of file_names that are not found in file list of db"""
 
-    dataset_folder = os.path.join(settings.WRITABLE_FOLDER, settings.GLOSS_VIDEO_DIRECTORY, dataset.acronym)
+    dataset_folder = os.path.join(WRITABLE_FOLDER, GLOSS_VIDEO_DIRECTORY, dataset.acronym)
 
     unlinked_video_filenames = []
 
@@ -310,8 +314,8 @@ def find_unlinked_video_files(dataset, linked_file_names):
         for file in files:
             filename_string = str(file)
             if filename_string in ['.DS_Store'] or filename_string.endswith('.icloud'):
-                # Signbank is running on MacOS
-                # this is a MacOS icons file or an iCloud sync file, ignore it
+                # Signbank is running on macOS
+                # this is a macOS icons file or an iCloud sync file, ignore it
                 continue
             if filename_string.endswith('.bak') or re.search(r"\.bak\d+$", filename_string):
                 # ignore backup files since they aren't viewable as protected media
@@ -323,11 +327,11 @@ def find_unlinked_video_files(dataset, linked_file_names):
                     or filename_without_extension.endswith('_left')
                     or filename_without_extension.endswith('_right')
                     or filename_without_extension.endswith('_center')
-                    or re.search(r"\_nme_\d+$", filename_without_extension)):
+                    or re.search(r"_nme_\d+$", filename_without_extension)):
                 continue
             two_char_folder = os.path.basename(subdir)
             # obtain a relative path using os.path.join
-            relative_path = str(os.path.join(settings.GLOSS_VIDEO_DIRECTORY, dataset.acronym, two_char_folder, file))
+            relative_path = str(os.path.join(GLOSS_VIDEO_DIRECTORY, dataset.acronym, two_char_folder, file))
             if relative_path not in linked_file_names:
                 unlinked_video_filenames.append(relative_path)
 
@@ -370,7 +374,7 @@ def update_gloss_video_backups(request, glossid):
 def has_correct_filename(videofile, nmevideo, perspective, version):
     if not videofile:
         return False
-    video_file_full_path = Path(settings.WRITABLE_FOLDER, videofile)
+    video_file_full_path = Path(WRITABLE_FOLDER, videofile)
     if nmevideo is not None:
         filename_is_correct = filename_matches_nme(video_file_full_path) is not None
         return filename_is_correct
@@ -461,16 +465,16 @@ def move_backups_to_trash(glossvideos):
         relative_path = str(obj.videofile)
         if not relative_path:
             continue
-        video_file_full_path = os.path.join(settings.WRITABLE_FOLDER, relative_path)
+        video_file_full_path = os.path.join(WRITABLE_FOLDER, relative_path)
         if not os.path.exists(video_file_full_path):
-            if settings.DEBUG_VIDEOS:
+            if DEBUG_VIDEOS:
                 print('video:admin:remove_backups:delete object: ', relative_path)
             obj.delete()
             continue
 
         # move the video file to DELETED_FILES_FOLDER and erase the name to avoid the signals on GlossVideo delete
         deleted_file_name = flattened_video_path(relative_path)
-        destination = os.path.join(settings.WRITABLE_FOLDER, settings.DELETED_FILES_FOLDER, deleted_file_name)
+        destination = os.path.join(WRITABLE_FOLDER, DELETED_FILES_FOLDER, deleted_file_name)
         destination_dir = os.path.dirname(destination)
         if not os.path.exists(destination_dir):
             os.makedirs(destination_dir)
@@ -479,13 +483,13 @@ def move_backups_to_trash(glossvideos):
                 obj.videofile.name = ""
                 obj.save()
                 shutil.move(video_file_full_path, destination)
-                if settings.DEBUG_VIDEOS:
+                if DEBUG_VIDEOS:
                     print('video:admin:remove_backups:shutil.move: ', video_file_full_path, destination)
             except (OSError, PermissionError) as e:
                 print(e)
                 continue
         # the object does not point to anything anymore, so it can be deleted
-        if settings.DEBUG_VIDEOS:
+        if DEBUG_VIDEOS:
             print('video:admin:remove_backups:delete object: ', relative_path)
         obj.delete()
 

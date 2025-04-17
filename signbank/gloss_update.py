@@ -1,31 +1,40 @@
+import datetime as DT
+import ast
+import json
+import os
 
+from django.db import models, DatabaseError, IntegrityError
 from django.utils.translation import gettext_lazy as _, activate, gettext
-
-from signbank.attachments.views import upload_file
-from signbank.dictionary.models import *
-from signbank.video.models import GlossVideoDescription, GlossVideoNME, NME_PERSPECTIVE_CHOICES
-from django.db.models.fields import BooleanField
-from signbank.tools import get_default_annotationidglosstranslation
-from django.db.transaction import atomic
 from django.utils.timezone import get_current_timezone
 from django.views.decorators.csrf import csrf_exempt
 from django.http import JsonResponse
+from django.core.exceptions import ObjectDoesNotExist, MultipleObjectsReturned, ValidationError
+from django.db.transaction import atomic, TransactionManagementError
+
 from guardian.shortcuts import get_objects_for_user
-from signbank.tools import get_interface_language_and_default_language_codes
+from pympi.Elan import Eaf
+from tempfile import NamedTemporaryFile
+
+from signbank.settings.server_specific import (FIELDS, MODELTRANSLATION_LANGUAGES, DEBUG_API)
+from signbank.dictionary.models import (Dataset, Gloss, Language, AnnotationIdglossTranslation, LemmaIdglossTranslation,
+                                        Handshape, DerivationHistory, Keyword, SemanticField, GlossRevision,
+                                        Sense, SenseTranslation, ExampleSentence, Translation, AnnotatedGloss,
+                                        AnnotatedSentence, AnnotatedSentenceSource, AnnotatedSentenceTranslation,
+                                        AnnotatedSentenceContext, FieldChoice, FieldChoiceForeignKey,
+                                        CATEGORY_MODELS_MAPPING)
+from signbank.video.models import GlossVideoDescription, GlossVideoNME, AnnotatedVideo
+from signbank.video.views import get_glosses_from_eaf
+from signbank.tools import get_default_annotationidglosstranslation
 from signbank.csv_interface import normalize_field_choice, normalize_boolean
 from signbank.api_token import put_api_user_in_request
-from signbank.abstract_machine import get_interface_language_api, retrieve_language_code_from_header
-import datetime as DT
-from signbank.tools import get_default_annotationidglosstranslation
+from signbank.abstract_machine import retrieve_language_code_from_header
 from signbank.dictionary.batch_edit import add_gloss_update_to_revision_history
-
-import ast
-import base64
 
 PERSPECTIVE_VIDEO_LABELS = {}
 PERSPECTIVE_VIDEO_LABELS['center'] = ['center', 'centered', 'mid', 'default', 'file', 'video']
 PERSPECTIVE_VIDEO_LABELS['left'] = ['left', 'l']
 PERSPECTIVE_VIDEO_LABELS['right'] = ['right', 'r']
+
 
 def names_of_update_gloss_fields(dataset, language_code):
     activate(language_code)
@@ -531,7 +540,7 @@ def gloss_update_do_changes(user, gloss, changes, language_code):
                                      field_name=field,
                                      gloss=gloss,
                                      user=user,
-                                     time=datetime.now(tz=get_current_timezone()))
+                                     time=DT.datetime.now(tz=get_current_timezone()))
             revision.save()
 
 
@@ -588,14 +597,14 @@ def gloss_pre_update(gloss, input_fields_dict, language_code):
                 if errors:
                     # already checked at a previous step
                     continue
-            if settings.DEBUG_API:
+            if DEBUG_API:
                 print('gloss_pre_update: ', human_readable_field, original_value, new_senses)
             if original_value != new_senses:
                 internal_field = Gloss.get_field('senses')
                 fields_to_update[internal_field] = (original_value, new_senses)
             continue
         if human_readable_field not in human_readable_to_internal.keys():
-            if settings.DEBUG_API:
+            if DEBUG_API:
                 print('gloss_pre_update: json field not found in Gloss fields: ', human_readable_field)
             continue
         internal_field = human_readable_to_internal[human_readable_field]
@@ -701,7 +710,7 @@ def api_update_gloss(request, datasetid, glossid, language_code='en'):
         return JsonResponse(results, status=400)
 
     value_dict = get_gloss_update_human_readable_value_dict(request)
-    if settings.DEBUG_API:
+    if DEBUG_API:
         print('api_update_gloss ', glossid, ' input value_dict: ', value_dict)
     errors = check_fields_can_be_updated(gloss, value_dict, dataset, interface_language_code)
     if errors:
@@ -725,7 +734,7 @@ def api_update_gloss(request, datasetid, glossid, language_code='en'):
         results['updatestatus'] = "Failed"
         return JsonResponse(results, status=400)
 
-    if settings.DEBUG_API:
+    if DEBUG_API:
         # now we are ready to do the update, save the intended update fields to the log
         print('api_update_gloss ', glossid, ' fields_to_update: ', fields_to_update)
 
@@ -763,7 +772,7 @@ def gloss_archival_delete(user, gloss, annotation):
                              field_name='archived',
                              gloss=gloss,
                              user=user,
-                             time=datetime.now(tz=get_current_timezone()))
+                             time=DT.datetime.now(tz=get_current_timezone()))
     revision.save()
 
 
@@ -777,7 +786,7 @@ def gloss_archival_restore(user, gloss, annotation):
                              field_name='restored',
                              gloss=gloss,
                              user=user,
-                             time=datetime.now(tz=get_current_timezone()))
+                             time=DT.datetime.now(tz=get_current_timezone()))
     revision.save()
 
 
@@ -787,7 +796,7 @@ def api_delete_gloss(request, datasetid, glossid):
 
     results = dict()
     interface_language_code = request.headers.get('Accept-Language', 'en')
-    if interface_language_code not in settings.MODELTRANSLATION_LANGUAGES:
+    if interface_language_code not in MODELTRANSLATION_LANGUAGES:
         interface_language_code = 'en'
     activate(interface_language_code)
 
@@ -875,7 +884,7 @@ def api_restore_gloss(request, datasetid, glossid):
 
     results = dict()
     interface_language_code = request.headers.get('Accept-Language', 'en')
-    if interface_language_code not in settings.MODELTRANSLATION_LANGUAGES:
+    if interface_language_code not in MODELTRANSLATION_LANGUAGES:
         interface_language_code = 'en'
     activate(interface_language_code)
 
@@ -1060,7 +1069,7 @@ def gloss_nmevideo_do_changes(user, gloss, nmevideo, changes, language_code, cre
                              field_name=operation,
                              gloss=gloss,
                              user=user,
-                             time=datetime.now(tz=get_current_timezone()))
+                             time=DT.datetime.now(tz=get_current_timezone()))
     revision.save()
 
     for field, original_human_value, glossrevision_newvalue in changes_done:
@@ -1069,7 +1078,7 @@ def gloss_nmevideo_do_changes(user, gloss, nmevideo, changes, language_code, cre
                                  field_name=field,
                                  gloss=gloss,
                                  user=user,
-                                 time=datetime.now(tz=get_current_timezone()))
+                                 time=DT.datetime.now(tz=get_current_timezone()))
         revision.save()
 
 
@@ -1079,7 +1088,7 @@ def api_update_gloss_nmevideo(request, datasetid, glossid, videoid):
 
     results = dict()
     interface_language_code = request.headers.get('Accept-Language', 'en')
-    if interface_language_code not in settings.MODELTRANSLATION_LANGUAGES:
+    if interface_language_code not in MODELTRANSLATION_LANGUAGES:
         interface_language_code = 'en'
     activate(interface_language_code)
 
@@ -1221,7 +1230,7 @@ def api_create_gloss_nmevideo(request, datasetid, glossid):
 
     results = dict()
     interface_language_code = request.headers.get('Accept-Language', 'en')
-    if interface_language_code not in settings.MODELTRANSLATION_LANGUAGES:
+    if interface_language_code not in MODELTRANSLATION_LANGUAGES:
         interface_language_code = 'en'
     activate(interface_language_code)
 
@@ -1313,7 +1322,7 @@ def api_delete_gloss_nmevideo(request, datasetid, glossid, videoid):
 
     results = dict()
     interface_language_code = request.headers.get('Accept-Language', 'en')
-    if interface_language_code not in settings.MODELTRANSLATION_LANGUAGES:
+    if interface_language_code not in MODELTRANSLATION_LANGUAGES:
         interface_language_code = 'en'
     activate(interface_language_code)
 
@@ -1453,9 +1462,6 @@ def api_create_annotated_sentence(request, datasetid):
     if not (video_file and eaf_file):
         return JsonResponse({"error": gettext("Missing a required field.")}, status=400)
 
-    from pympi.Elan import Eaf
-    from tempfile import NamedTemporaryFile
-
     # Create a temporary file
     with NamedTemporaryFile(delete=False, suffix='.eaf') as tmp_eaf_file:
         for chunk in eaf_file.chunks():
@@ -1470,7 +1476,6 @@ def api_create_annotated_sentence(request, datasetid):
     annotated_sentence = AnnotatedSentence.objects.create()
 
     # Get glosses and sentences from the eaf file
-    from signbank.video.views import get_glosses_from_eaf
     annotations, labels_not_found, sentence_dict = get_glosses_from_eaf(eaf, dataset.acronym)
     if len(annotations) == 0:
         return JsonResponse({"error": gettext("No annotations found in EAF file.")}, status=400)
@@ -1483,7 +1488,7 @@ def api_create_annotated_sentence(request, datasetid):
         annotated_sentence.add_translations(sentence_dict)
     
     source_obj = AnnotatedSentenceSource.objects.filter(name=source).first()
-    if source_obj == None and source != '':
+    if source_obj is None and source != '':
         return JsonResponse({"error": gettext("Annotated sentence source received but not found.")}, status=400)
     
     # Add the video to the AnnotatedSentence object
@@ -1504,7 +1509,7 @@ def api_update_annotated_sentence(request, datasetid, annotatedsentenceid):
     post_data = json.loads(request.body.decode('utf-8'))
 
     interface_language_code = request.headers.get('Accept-Language', 'en')
-    if interface_language_code not in settings.MODELTRANSLATION_LANGUAGES:
+    if interface_language_code not in MODELTRANSLATION_LANGUAGES:
         interface_language_code = 'en'
     activate(interface_language_code)
 
@@ -1545,7 +1550,7 @@ def api_update_annotated_sentence(request, datasetid, annotatedsentenceid):
     url = post_data['Url']
 
     source_obj = AnnotatedSentenceSource.objects.filter(name=source).first()
-    if source_obj == None and source != '':
+    if source_obj is None and source != '':
         return JsonResponse({"error": gettext("Annotated sentence source received but not found.")}, status=400)
     
     annotated_sentence_video = annotated_sentence.annotatedvideo
@@ -1595,7 +1600,6 @@ def api_delete_annotated_sentence(request, datasetid, annotatedsentenceid):
     if annotated_sentence.get_dataset() != dataset:
         return JsonResponse({"error": gettext("Annotated sentence not found in dataset.")}, status=404)
     
-    from signbank.video.models import AnnotatedVideo
     annotated_videos = AnnotatedVideo.objects.filter(annotatedsentence=annotated_sentence)
     for annotated_video in annotated_videos:
         annotated_video.delete_files()

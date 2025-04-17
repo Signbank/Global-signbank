@@ -1,15 +1,15 @@
-from django.shortcuts import get_object_or_404
-
-from django.contrib.auth.decorators import permission_required
 from django.db import DatabaseError, IntegrityError
 from django.db.transaction import TransactionManagementError
 
-from signbank.dictionary.models import *
+from signbank.settings.server_specific import DEBUG_SENSES
+
+from signbank.dictionary.models import Gloss, GlossSense, SenseTranslation
 
 
 def consistent_senses(gloss, include_translations=False, allow_empty_language=False):
     # this method is unambiguous in its coding
     # it explicitly codes everything it checks
+    assert isinstance(gloss, Gloss), TypeError("Not a Gloss object")
     translation_languages = gloss.lemma.dataset.translation_languages.all()
     glosssenses = GlossSense.objects.filter(gloss=gloss)
     gloss_senses_lookup = dict()
@@ -33,9 +33,9 @@ def consistent_senses(gloss, include_translations=False, allow_empty_language=Fa
             if allow_empty_language and not sense_translation:
                 continue
             translations = sense_translation.translations.all()
-            if settings.DEBUG_SENSES:
+            if DEBUG_SENSES:
                 for t in translations:
-                    print("'gloss': ", str(gloss.id), ", 'sense': ", str(order),
+                    print("'gloss': ", str(gloss.pk), ", 'sense': ", str(order),
                           ", 'orderIndex': ", str(t.orderIndex), ", 'language': ", str(t.language),
                           ", 'index': ", str(t.translation.index), ", 'translation_id': ", str(t.id),
                           ", 'translation.text': ", t.translation.text)
@@ -54,7 +54,7 @@ def consistent_senses(gloss, include_translations=False, allow_empty_language=Fa
 
 
 def check_consistency_senses(gloss, delete_empty=False):
-
+    assert isinstance(gloss, Gloss), TypeError("Not a Gloss object")
     glosssenses = GlossSense.objects.filter(gloss=gloss)
     gloss_sense_orders = [gs.order for gs in glosssenses]
     # use a list to store potential duplicates with no translations
@@ -84,7 +84,7 @@ def check_consistency_senses(gloss, delete_empty=False):
 
 
 def reorder_translations(gloss_sense, order):
-
+    assert isinstance(gloss_sense, GlossSense), TypeError("Not a GlossSense object")
     gloss = gloss_sense.gloss
     consistent = consistent_senses(gloss, include_translations=False)
     if not consistent:
@@ -156,6 +156,8 @@ def reorder_translations(gloss_sense, order):
 
 
 def reorder_sensetranslations(gloss, sensetranslation, order, reset=False, force_reset=False):
+    assert isinstance(gloss, Gloss), TypeError("Not a Gloss object")
+    assert isinstance(sensetranslation, SenseTranslation), TypeError("Not a SenseTranslation object")
     inconsistent_translations = []
     inconsistent_translation_ids = []
     wrong_gloss_translations = []
@@ -222,7 +224,7 @@ def reorder_sensetranslations(gloss, sensetranslation, order, reset=False, force
 
 
 def reorder_senses(gloss):
-
+    assert isinstance(gloss, Gloss), TypeError("Not a Gloss object")
     glosssenses = GlossSense.objects.filter(gloss=gloss)
     gloss_sense_orders = [gs.order for gs in glosssenses]
     gloss_senses_with_order = dict()
@@ -255,5 +257,3 @@ def reorder_senses(gloss):
             sense.delete()
     # reorder after deleting empty objects
     gloss.reorder_senses()
-
-

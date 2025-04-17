@@ -1,18 +1,51 @@
+from django.db.models import Q
+from django.utils.translation import gettext, gettext_lazy as _
+
+from django.contrib.auth.decorators import permission_required
+from django.http import JsonResponse
+
+from django.conf import settings
 
 from signbank.dictionary.models import Gloss, GlossRevision, Language, FieldChoice, Handshape
-import datetime as DT
-from django.shortcuts import render, get_object_or_404, redirect
-from django.contrib.auth.decorators import permission_required
-from django.http import HttpResponseRedirect, JsonResponse
 from signbank.dictionary.update import okay_to_update_gloss
-from django.urls import reverse
-from django.conf import settings
-from signbank.dictionary.translate_choice_list import check_value_to_translated_human_value
-from django.utils.translation import gettext_lazy as _, activate, gettext
-from signbank.dictionary.context_data import get_selected_datasets
-from django.core.exceptions import PermissionDenied, ObjectDoesNotExist, MultipleObjectsReturned
 from signbank.csv_interface import normalize_field_choice
-from django.db.models import Q, Count, CharField, TextField, Value as V
+
+
+def check_value_to_translated_human_value(field_name, check_value):
+    # check_value has type CharField
+    # translates to a human value dynamically
+    # used to translate the values stored in GlossRevision when booleans
+    # the Gloss model needs to be imported here, at runtime
+    gloss_fields = Gloss.get_field_names()
+    if field_name not in gloss_fields or Gloss.get_field(field_name).__class__.__name__ != 'BooleanField':
+        # don't do anything to value
+        return check_value
+
+    # the value is a Boolean or it might not be set
+    # if it's weakdrop or weakprop, it has a value Neutral when it's not set
+    # look for aliases for empty to account for legacy data
+    if field_name not in settings.HANDEDNESS_ARTICULATION_FIELDS:
+        # This accounts for legacy values stored in the revision history
+        if check_value == '' or check_value in ['False', 'No', 'Nee', '&nbsp;']:
+            translated_value = _('No')
+            return translated_value
+        elif check_value in ['True', 'Yes', 'Ja', '1', 'letter', 'number']:
+            translated_value = _('Yes')
+            return translated_value
+        else:
+            return check_value
+    else:
+        # field is in settings.HANDEDNESS_ARTICULATION_FIELDS
+        # use the abbreviation that appears in the template
+        value_abbreviation = 'WD' if field_name == 'weakdrop' else 'WP'
+        if check_value in ['True', '+WD', '+WP', '1']:
+            translated_value = '+' + value_abbreviation
+        elif check_value in ['None', '', 'Neutral', 'notset']:
+            translated_value = _('Neutral')
+        else:
+            # here, the value is False
+            translated_value = '-' + value_abbreviation
+        return translated_value
 
 
 def get_field_choice_from_name(fieldname, value, language_codes):
@@ -159,7 +192,7 @@ def pretty_print_revisions(gloss):
             'field_name': revision_verbose_fieldname,
             'field_name_qualification': field_name_qualification,
             'old_value': display_old_value,
-            'new_value': display_new_value }
+            'new_value': display_new_value}
         revisions.append(revision_dict)
 
     return revisions
