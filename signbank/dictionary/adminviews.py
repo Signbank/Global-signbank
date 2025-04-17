@@ -4,6 +4,7 @@ import json
 import re
 import mimetypes
 import datetime as DT
+from datetime import timedelta
 
 from django.views.generic.list import ListView
 from django.views.generic.detail import DetailView
@@ -5446,11 +5447,9 @@ class RecentGlossListView(ListView):
 
         context['USE_REGULAR_EXPRESSIONS'] = USE_REGULAR_EXPRESSIONS
         context['SHOW_DATASET_INTERFACE_OPTIONS'] = SHOW_DATASET_INTERFACE_OPTIONS
-
         return context
 
     def get_queryset(self):
-
         selected_datasets = get_selected_datasets(self.request)
         dataset_languages = Language.objects.filter(dataset__in=selected_datasets).distinct()
 
@@ -5468,11 +5467,9 @@ class RecentGlossListView(ListView):
         get = self.request.GET
         days_input = get.get('days', RecentGlossSearchForm.days_default)
         self.days = days_input
-
-        days = DT.datetime.timedelta(days=int(days_input))
+        days = timedelta(days=days_input)
         timetype = get.get('timetype', self.timestamp_field)
         self.timestamp_field = timetype
-
         filter_field = timetype + '__range'
         timeline = get.get('timeline', 'chronological')
         self.timeline = timeline
