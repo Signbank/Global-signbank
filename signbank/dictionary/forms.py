@@ -1,47 +1,36 @@
 from colorfield.fields import ColorWidget
-from django import forms
-from django.core.exceptions import ValidationError, ObjectDoesNotExist
+from datetime import timedelta
+import datetime as DT
+import re
 
-from django.utils.translation import override, gettext_lazy as _, get_language
-from django.db import OperationalError, ProgrammingError
+from django import forms
+from django.core.exceptions import ObjectDoesNotExist
+from django.utils.translation import override, gettext_lazy as _, gettext
 from django.db.transaction import atomic
-from signbank.video.fields import VideoUploadToFLVField
+from django.utils.timezone import get_current_timezone
+
+from urllib.parse import parse_qsl
+from tagging.models import Tag
+
+from signbank.settings.base import (GLOSS_CHOICE_FIELDS, MORPHEME_CHOICE_FIELDS)
+from signbank.settings.server_specific import (LANGUAGES, LANGUAGE_CODE, USE_REGULAR_EXPRESSIONS,
+                                               MODELTRANSLATION_LANGUAGES, FIELDS, DATE_FORMAT,
+                                               MORPHEME_DISPLAY_FIELDS, SHOW_FIELD_CHOICE_COLORS,
+                                               MINIMAL_PAIRS_SEARCH_FIELDS, MINIMAL_PAIRS_CHOICE_FIELDS,
+                                               RECENTLY_ADDED_SIGNS_PERIOD)
 from signbank.video.models import GlossVideo
-from signbank.dictionary.models import (Dialect, Gloss, Morpheme, Definition, Relation, RelationToForeignSign,
-                                        MorphologyDefinition, OtherMedia, Handshape, SemanticField, DerivationHistory,
-                                        AnnotationIdglossTranslation, Dataset, FieldChoice, LemmaIdgloss, AnnotatedSentence,
-                                        LemmaIdglossTranslation, Translation, Keyword, Language, SignLanguage,
+from signbank.dictionary.models import (Gloss, Morpheme, Definition, Relation, RelationToForeignSign,
+                                        OtherMedia, Handshape, SemanticField, DerivationHistory,
+                                        AnnotationIdglossTranslation, Dataset, FieldChoice, LemmaIdgloss,
+                                        LemmaIdglossTranslation, Language, AnnotatedSentence,
                                         QueryParameterFieldChoice, SearchHistory, QueryParameter,
                                         QueryParameterMultilingual, QueryParameterHandshape, SemanticFieldTranslation,
                                         ExampleSentence, Affiliation, AffiliatedUser, AffiliatedGloss, GlossSense,
                                         SenseTranslation, AnnotatedGloss)
-from signbank.dictionary.field_choices import fields_to_fieldcategory_dict
-from django.conf import settings
-from tagging.models import Tag
-import datetime as DT
-from django.utils.timezone import get_current_timezone
-from signbank.settings.server_specific import DEFAULT_KEYWORDS_LANGUAGE, LANGUAGES, MODELTRANSLATION_LANGUAGES
-from signbank.settings.base import FIELDS
-
 from signbank.dictionary.translate_choice_list import choicelist_queryset_to_translated_dict
-from django.utils.translation import gettext
+from signbank.tools import get_selected_datasets_for_user
 
-from django_select2 import *
-from easy_select2.widgets import Select2, Select2Multiple
-from signbank.settings.server_specific import LANGUAGES, REGEX_SPECIAL_CHARACTERS, USE_REGULAR_EXPRESSIONS
-
-
-def tag_choices():
-    # this function is needed at compile time, tags are refreshed at run-time in the init methods
-    try:
-        tag_choices_list = [(tag.name, tag.name.replace('_', ' ')) for tag in Tag.objects.all()]
-        tags_objects = Tag.objects.all()
-        tags_list = [tag.refresh_from_db() for tag in tags_objects]
-        tag_choices_list = [(tag.name, tag.name.replace('_', ' ')) for tag in tags_list]
-    except (OperationalError, ProgrammingError) as e:
-        tag_choices_list = []
-    return tag_choices_list
-
+from easy_select2.widgets import Select2
 
 # This overrides the __str__ method of class Tag (included in packages)
 # This is needed by the model choice fields to display the tags
@@ -221,7 +210,6 @@ class GlossSearchForm(forms.ModelForm):
 
     search = forms.CharField(label=_('Search Gloss'))
     sortOrder = forms.CharField(label=_('Sort Order'))
-    tags = forms.ChoiceField(label=_('Tags'), choices=tag_choices)
     translation = forms.CharField(label=_('Search Senses'))
     hasvideo = forms.ChoiceField(label=_('Has Video'), choices=[(0, '-')],
                                  widget=forms.Select(attrs=ATTRS_FOR_BOOLEAN_FORMS))
@@ -302,10 +290,10 @@ class GlossSearchForm(forms.ModelForm):
 
     createdBy = forms.CharField(label=_('Created By'), widget=forms.TextInput(attrs=ATTRS_FOR_FORMS))
     createdAfter = forms.DateField(label=_('Created After'),
-                                   input_formats=[settings.DATE_FORMAT], required=False,
+                                   input_formats=[DATE_FORMAT], required=False,
                                    widget=forms.TextInput(attrs={'type': 'date'}))
     createdBefore = forms.DateField(label=_('Created Before'),
-                                    input_formats=[settings.DATE_FORMAT], required=False,
+                                    input_formats=[DATE_FORMAT], required=False,
                                     widget=forms.TextInput(attrs={'type': 'date'}))
 
     gloss_search_field_prefix = "glosssearch_"
@@ -317,7 +305,7 @@ class GlossSearchForm(forms.ModelForm):
     class Meta:
 
         model = Gloss
-        fields = (settings.FIELDS['phonology'] + settings.FIELDS['semantics'] + settings.FIELDS['main'] +
+        fields = (FIELDS['phonology'] + FIELDS['semantics'] + FIELDS['main'] +
                   ['inWeb', 'isNew', 'excludeFromEcv'])
 
     @classmethod
@@ -337,7 +325,7 @@ class GlossSearchForm(forms.ModelForm):
         # language fields will be set up elsewhere
         # field choice choices will be set up elsewhere
         # these are the multiselect field choice fields for morphemes
-        for fieldname in settings.GLOSS_CHOICE_FIELDS:
+        for fieldname in GLOSS_CHOICE_FIELDS:
             if fieldname in ['definitionRole', 'hasComponentOfType', 'mrpType', 'hasRelation']:
                 # this is a search form field name
                 continue
@@ -400,7 +388,6 @@ def check_language_fields(searchform, formclass, queryDict, languages):
             menu_bar_field_label = GlossSearchForm.get_field(menu_bar_field).label
             language_field_labels[menu_bar_field] = gettext(menu_bar_field_label)
 
-    import re
     # check for matches starting with: + * [ ( ) ?
     # or ending with a +
     regexp = re.compile(r'^[+*\[()?]|([^+]+\+$)')
@@ -419,6 +406,7 @@ def check_language_fields(searchform, formclass, queryDict, languages):
 
     return language_fields_okay, search_fields, field_values
 
+
 def check_language_fields_annotatedsentence(searchform, formclass, queryDict, languages):
     # this function inspects the search parameters from GlossSearchForm looking for occurrences of + at the start
     language_fields_okay = True
@@ -436,7 +424,6 @@ def check_language_fields_annotatedsentence(searchform, formclass, queryDict, la
             if annotatedsentence_field_name in queryDict.keys():
                 language_field_values[annotatedsentence_field_name] = queryDict[annotatedsentence_field_name]
 
-    import re
     # check for matches starting with: + * [ ( ) ?
     # or ending with a +
     regexp = re.compile(r'^[+*\[()?]|([^+]+\+$)')
@@ -461,7 +448,9 @@ class MorphemeSearchForm(forms.ModelForm):
 
     search = forms.CharField(label=_("Search Gloss"))
     sortOrder = forms.CharField(label=_("Sort Order"))
-    tags = forms.ChoiceField(label=_('Tags'), choices=tag_choices)
+    tags = forms.ChoiceField(label=_('Tags'),
+                             choices=[(0, '-')],
+                             widget=forms.Select(attrs=ATTRS_FOR_FORMS))
     translation = forms.CharField(label=_('Search Senses'))
     hasvideo = forms.ChoiceField(label=_('Has Video'), choices=[(0, '-')],
                                  widget=forms.Select(attrs=ATTRS_FOR_BOOLEAN_FORMS))
@@ -489,10 +478,10 @@ class MorphemeSearchForm(forms.ModelForm):
                                       widget=forms.Select(attrs=ATTRS_FOR_BOOLEAN_FORMS))
 
     createdBefore = forms.DateField(label=_('Created Before'),
-                                    input_formats=[settings.DATE_FORMAT],
+                                    input_formats=[DATE_FORMAT],
                                     widget=forms.TextInput(attrs={'class': 'form-control', 'type': 'date'}))
     createdAfter = forms.DateField(label=_('Created After'),
-                                   input_formats=[settings.DATE_FORMAT],
+                                   input_formats=[DATE_FORMAT],
                                    widget=forms.TextInput(attrs={'class': 'form-control', 'type': 'date'}))
 
     createdBy = forms.CharField(label=_('Created By'), widget=forms.TextInput(attrs=ATTRS_FOR_FORMS))
@@ -505,7 +494,7 @@ class MorphemeSearchForm(forms.ModelForm):
 
         model = Morpheme
 
-        fields = settings.MORPHEME_DISPLAY_FIELDS + settings.FIELDS['semantics'] + settings.FIELDS['main'] + ['inWeb', 'isNew', 'mrpType']
+        fields = MORPHEME_DISPLAY_FIELDS + FIELDS['semantics'] + FIELDS['main'] + ['inWeb', 'isNew', 'mrpType']
 
     def __init__(self, *args, **kwargs):
         super(MorphemeSearchForm, self).__init__(*args, **kwargs)
@@ -513,7 +502,7 @@ class MorphemeSearchForm(forms.ModelForm):
         # language fields will be set up elsewhere
         # field choice choices will be set up elsewhere
         # these are the multiselect field choice fields for morphemes
-        for fieldname in settings.MORPHEME_CHOICE_FIELDS:
+        for fieldname in MORPHEME_CHOICE_FIELDS:
             if fieldname in ['definitionRole']:
                 # this is a search form field name
                 continue
@@ -579,7 +568,7 @@ class RelationToForeignSignForm(forms.ModelForm):
 
     class Meta:
         model = RelationToForeignSign
-        fields = ['loan','other_lang','other_lang_gloss']
+        fields = ['loan', 'other_lang', 'other_lang_gloss']
         widgets = {}
 
 
@@ -587,7 +576,7 @@ class GlossMorphologyForm(forms.Form):
     """Morphology specification of a Gloss"""
 
     parent_gloss_id = forms.CharField(label=_('Parent Gloss'))
-    role = forms.ChoiceField(label=_('Type'),choices=[],
+    role = forms.ChoiceField(label=_('Type'), choices=[],
                              widget=forms.Select(attrs=ATTRS_FOR_FORMS), required=True)
     morpheme_id = forms.CharField(label=_('Morpheme'))
 
@@ -616,7 +605,7 @@ class GlossBlendForm(forms.Form):
 class OtherMediaForm(forms.ModelForm):
 
     gloss = forms.CharField()
-    file = forms.FileField(widget=forms.FileInput(attrs={'accept':'video/*, image/*, application/pdf'}),
+    file = forms.FileField(widget=forms.FileInput(attrs={'accept': 'video/*, image/*, application/pdf'}),
                            required=True)
     alternative_gloss = forms.TextInput()
 
@@ -663,13 +652,16 @@ class CSVMetadataForm(forms.Form):
 
     file = forms.FileField()
 
+
 class EAFFilesForm(forms.Form):
 
     file = forms.FileField(widget=forms.ClearableFileInput())
 
+
 class CSVUploadForm(forms.Form):
 
     file = forms.FileField()
+
 
 class ImageUploadForGlossForm(forms.Form):
     """Form for image upload for a particular gloss"""
@@ -834,7 +826,6 @@ def check_multilingual_fields(ClassModel, queryDict, languages):
                 language_field_labels[search_field_name] = ClassModel.get_field(search_field_name).verbose_name+(
                         " (%s)" % language.name)
 
-    import re
     # check for matches starting with: + * [ ( ) ?
     # or ending with a +
     regexp = re.compile(r'^[+*\[()?]|([^+]+\+$)')
@@ -927,7 +918,6 @@ class LemmaCreateForm(forms.ModelForm):
 
         super(LemmaCreateForm, self).__init__(queryDict, *args, **kwargs)
 
-        from signbank.tools import get_selected_datasets_for_user
         if not self.languages:
             selected_datasets = get_selected_datasets_for_user(self.user)
             self.languages = Language.objects.filter(dataset__in=selected_datasets).distinct()
@@ -1017,7 +1007,7 @@ class LemmaUpdateForm(forms.ModelForm):
                 if lemma_idgloss_text == '':
                     # delete existing translation if there is already a translation for a different language
                     if instance_has_translations > 1:
-                        translation_to_delete = LemmaIdglossTranslation.objects.get(pk = lemmaidglosstranslation.pk, language = language)
+                        translation_to_delete = LemmaIdglossTranslation.objects.get(pk=lemmaidglosstranslation.pk, language=language)
                         translation_to_delete.delete()
                         # one of the translations has been deleted, update the total
                         instance_has_translations -= 1
@@ -1030,7 +1020,7 @@ class LemmaUpdateForm(forms.ModelForm):
                     lemmaidglosstranslation.text = lemma_idgloss_text
                     lemmaidglosstranslation.save()
             else:
-                raise Exception("Lemma with id %s has more than one lemma idgloss translation for language %s"% (self.instance.pk, language.name))
+                raise Exception("Lemma with id %s has more than one lemma idgloss translation for language %s" % (self.instance.pk, language.name))
         return
 
 
@@ -1045,7 +1035,7 @@ class KeyMappingSearchForm(forms.ModelForm):
         ATTRS_FOR_FORMS = {'class': 'form-control'}
 
         model = Gloss
-        fields = settings.MINIMAL_PAIRS_SEARCH_FIELDS
+        fields = MINIMAL_PAIRS_SEARCH_FIELDS
 
     def __init__(self, queryDict, *args, **kwargs):
         languages = kwargs.pop('languages')
@@ -1076,7 +1066,7 @@ class FocusGlossSearchForm(forms.ModelForm):
     class Meta:
 
         model = Gloss
-        fields = settings.MINIMAL_PAIRS_SEARCH_FIELDS
+        fields = MINIMAL_PAIRS_SEARCH_FIELDS
 
     def __init__(self, *args, **kwargs):
         super(FocusGlossSearchForm, self).__init__(*args, **kwargs)
@@ -1084,7 +1074,7 @@ class FocusGlossSearchForm(forms.ModelForm):
         # language fields will be set up elsewhere
         # field choice choices will be set up elsewhere
 
-        for fieldname in settings.MINIMAL_PAIRS_CHOICE_FIELDS:
+        for fieldname in MINIMAL_PAIRS_CHOICE_FIELDS:
             field_label = Gloss.get_field(fieldname).verbose_name
             self.fields[fieldname] = forms.ChoiceField(label=field_label,
                                                        choices=[(0, '-')],
@@ -1093,14 +1083,13 @@ class FocusGlossSearchForm(forms.ModelForm):
             self.fields[boolean_field].choices = [('0', '-'), ('2', _('Yes')), ('3', _('No'))]
 
 
-import datetime
-RECENTLY_ADDED_TIME_DELTAS = {days: datetime.timedelta(days=days).days for days in [90, 60, 30, 14, 7]}
+RECENTLY_ADDED_TIME_DELTAS = {days: timedelta(days=days).days for days in [90, 60, 30, 14, 7]}
+
 
 class RecentGlossSearchForm(forms.ModelForm):
 
     use_required_attribute = False  # otherwise the html required attribute will show up on every form
 
-    from signbank.settings.server_specific import RECENTLY_ADDED_SIGNS_PERIOD
     days_default = RECENTLY_ADDED_SIGNS_PERIOD.days
 
     class Meta:
@@ -1108,7 +1097,7 @@ class RecentGlossSearchForm(forms.ModelForm):
         ATTRS_FOR_FORMS = {'class': 'form-control'}
 
         model = Gloss
-        fields = settings.MINIMAL_PAIRS_SEARCH_FIELDS
+        fields = MINIMAL_PAIRS_SEARCH_FIELDS
 
     def __init__(self, *args, **kwargs):
         super(RecentGlossSearchForm, self).__init__(*args, **kwargs)
@@ -1144,7 +1133,7 @@ class FieldChoiceColorForm(forms.Form):
 class FieldChoiceForm(forms.ModelForm):
     # this ModelForm is needed in order to validate against duplicates
 
-    show_field_choice_colors = settings.SHOW_FIELD_CHOICE_COLORS
+    show_field_choice_colors = SHOW_FIELD_CHOICE_COLORS
     field_category = ''
     prepopulated_fields = {}
 
@@ -1162,10 +1151,9 @@ class FieldChoiceForm(forms.ModelForm):
         # see if the user is inside a category
         try:
             changelist_filters = self.initial['_changelist_filters']
-        except:
+        except KeyError:
             changelist_filters = ''
 
-        from urllib.parse import parse_qsl
         if changelist_filters:
             query_params = dict(parse_qsl(changelist_filters))
         else:
@@ -1179,7 +1167,7 @@ class FieldChoiceForm(forms.ModelForm):
             # restrict categories to those already existing
             # categories are determined by the fields in the Models, the user does not create categories
             field_choice_categories = FieldChoice.objects.all().values('field').distinct()
-            field_choice_categories = [ f['field'] for f in field_choice_categories]
+            field_choice_categories = [f['field'] for f in field_choice_categories]
             field_choice_categories = sorted(list(set(field_choice_categories)))
             field_choices = [(f, f) for f in field_choice_categories]
             self.fields['field'].widget = forms.Select(choices=field_choices)
@@ -1197,7 +1185,7 @@ class FieldChoiceForm(forms.ModelForm):
             # for display in the HTML color picker, the field color needs to be prefixed with #
             # in the database,only the hex number is stored
             # adding a # has already been taken care for an instance object by the get_form of FieldChoiceAdmin
-            self.fields['field_color'].widget = forms.TextInput(attrs={'type': 'color' })
+            self.fields['field_color'].widget = forms.TextInput(attrs={'type': 'color'})
 
         # in the model, the default value is ffffff
         # in the admin, the default value is a display value, so needs the #
@@ -1228,20 +1216,20 @@ class FieldChoiceForm(forms.ModelForm):
         #     raise forms.ValidationError(_('This Field Choice Category does not exist'))
 
         for language in MODELTRANSLATION_LANGUAGES:
-            name_languagecode = 'name_'+ language.replace('-', '_')
+            name_languagecode = 'name_' + language.replace('-', '_')
             if name_languagecode not in data_fields.keys():
                 raise forms.ValidationError(_('The Name fields for all languages are required'))
 
         if not self.instance:
             for language, langauge_name in [(l[0], l[1]) for l in LANGUAGES if l[0] in MODELTRANSLATION_LANGUAGES]:
-                name_languagecode = 'name_'+ language.replace('-', '_')
+                name_languagecode = 'name_' + language.replace('-', '_')
                 name_languagecode_value = data_fields[name_languagecode]
                 if self.already_exists(field, name_languagecode, name_languagecode_value):
                     raise forms.ValidationError(_('The combination ' + field + ' -- ' + name_languagecode_value
                                                   + ' already exists for ' + langauge_name))
         else:
             for language, langauge_name in [(l[0], l[1]) for l in LANGUAGES if l[0] in MODELTRANSLATION_LANGUAGES]:
-                name_languagecode = 'name_'+ language.replace('-', '_')
+                name_languagecode = 'name_' + language.replace('-', '_')
                 name_languagecode_value = data_fields[name_languagecode]
                 if getattr(self.instance, name_languagecode) == name_languagecode_value:
                     continue
@@ -1253,7 +1241,7 @@ class FieldChoiceForm(forms.ModelForm):
 
 class SemanticFieldColorForm(forms.Form):
 
-    show_field_choice_colors = settings.SHOW_FIELD_CHOICE_COLORS
+    show_field_choice_colors = SHOW_FIELD_CHOICE_COLORS
     field_color = forms.CharField(widget=ColorWidget)
     readonly_fields = ['machine_value']
 
@@ -1266,7 +1254,7 @@ class SemanticFieldColorForm(forms.Form):
 class SemanticFieldForm(forms.ModelForm):
     # this ModelForm is needed in order to validate against duplicates
 
-    show_field_choice_colors = settings.SHOW_FIELD_CHOICE_COLORS
+    show_field_choice_colors = SHOW_FIELD_CHOICE_COLORS
     prepopulated_fields = {}
 
     class Meta:
@@ -1306,7 +1294,7 @@ class SemanticFieldTranslationForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         languages = kwargs.pop('languages')
         semfield = kwargs.pop('semField')
-        with override(settings.LANGUAGE_CODE):
+        with override(LANGUAGE_CODE):
             default_initial = semfield.name
 
         super(SemanticFieldTranslationForm, self).__init__(*args, **kwargs)
@@ -1330,7 +1318,7 @@ class SemanticFieldTranslationForm(forms.ModelForm):
 
 class DerivationHistoryColorForm(forms.Form):
 
-    show_field_choice_colors = settings.SHOW_FIELD_CHOICE_COLORS
+    show_field_choice_colors = SHOW_FIELD_CHOICE_COLORS
     field_color = forms.CharField(widget=ColorWidget)
     readonly_fields = ['machine_value']
 
@@ -1339,9 +1327,10 @@ class DerivationHistoryColorForm(forms.Form):
         fields = ['name'] \
                  + ['field_color', 'machine_value', ]
 
+
 class HandshapeColorForm(forms.Form):
 
-    show_field_choice_colors = settings.SHOW_FIELD_CHOICE_COLORS
+    show_field_choice_colors = SHOW_FIELD_CHOICE_COLORS
     field_color = forms.CharField(widget=ColorWidget)
     readonly_fields = ['machine_value']
 
@@ -1350,10 +1339,11 @@ class HandshapeColorForm(forms.Form):
         fields = ['name'] \
                  + ['field_color', 'machine_value', ]
 
+
 class HandshapeForm(forms.ModelForm):
     # this ModelForm is needed in order to validate against duplicates
 
-    show_field_choice_colors = settings.SHOW_FIELD_CHOICE_COLORS
+    show_field_choice_colors = SHOW_FIELD_CHOICE_COLORS
     prepopulated_fields = {}
 
     class Meta:

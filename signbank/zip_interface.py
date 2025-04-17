@@ -1,32 +1,21 @@
-import json
-from gzip import WRITE
-
-from django.views.decorators.csrf import csrf_exempt
-
-from signbank.dictionary.models import *
-from django.db.models import FileField
-from django.core.files.base import ContentFile, File
-from tagging.models import Tag, TaggedItem
-from signbank.dictionary.forms import *
-from django.utils.translation import override, gettext_lazy as _, activate
-from signbank.settings.server_specific import LANGUAGES, LEFT_DOUBLE_QUOTE_PATTERNS, RIGHT_DOUBLE_QUOTE_PATTERNS, \
-    API_VIDEO_ARCHIVES
-
-from django.http import HttpResponse, HttpResponseRedirect, HttpResponseForbidden, HttpResponseBadRequest, JsonResponse
-from signbank.settings.server_specific import VIDEOS_TO_IMPORT_FOLDER
-import zipfile
-from django.urls import reverse, reverse_lazy
-import urllib.request
-import tempfile
 import shutil
 import os
+
+from django.core.files.base import File
+from django.views.decorators.csrf import csrf_exempt
+from django.db.transaction import atomic, TransactionManagementError, DatabaseError
+
+from signbank.settings.server_specific import (WRITABLE_FOLDER, GLOSS_VIDEO_DIRECTORY, VIDEOS_TO_IMPORT_FOLDER,
+                                               DEBUG_VIDEOS)
+from signbank.dictionary.models import (Gloss, Language)
 from signbank.video.models import GlossVideo, GlossVideoHistory
-from django.http import StreamingHttpResponse
-from django.contrib.auth.models import Group, User
+from signbank.tools import get_two_letter_dir
+
+import zipfile
 
 
 def import_folder(video_file_path):
-    # this removes the settings.WRITABLE_FOLDER from the path, so as not to show to user
+    # this removes the WRITABLE_FOLDER from the path, so as not to show to user
     video_folder = os.path.dirname(video_file_path)
     path_units = video_folder.split('/')
     # import_path of form import_videos/NGT/nld
@@ -236,11 +225,10 @@ def get_gloss_filepath(video_file_path, gloss):
     if annotation_text != filename_without_extension:
         # gloss annotation does not match zip file name
         return "", "", ""
-    from signbank.tools import get_two_letter_dir
     two_letter_dir = get_two_letter_dir(gloss.idgloss)
     destination_folder = os.path.join(
-        settings.WRITABLE_FOLDER,
-        settings.GLOSS_VIDEO_DIRECTORY,
+        WRITABLE_FOLDER,
+        GLOSS_VIDEO_DIRECTORY,
         dataset_acronym,
         two_letter_dir
     )
@@ -253,7 +241,7 @@ def get_gloss_filepath(video_file_path, gloss):
 
     video_file_name = idgloss + '-' + glossid + extension
     goal = os.path.join(destination_folder, video_file_name)
-    video_path = os.path.join(settings.GLOSS_VIDEO_DIRECTORY,
+    video_path = os.path.join(GLOSS_VIDEO_DIRECTORY,
                               dataset_acronym,
                               two_letter_dir)
     return goal, video_file_name, video_path
@@ -276,11 +264,11 @@ def get_gloss_filepath_glossid(video_file_path, gloss):
     if glossid != filename_without_extension:
         # gloss id does not match zip file name
         return "", "", ""
-    from signbank.tools import get_two_letter_dir
+
     two_letter_dir = get_two_letter_dir(gloss.idgloss)
     destination_folder = os.path.join(
-        settings.WRITABLE_FOLDER,
-        settings.GLOSS_VIDEO_DIRECTORY,
+        WRITABLE_FOLDER,
+        GLOSS_VIDEO_DIRECTORY,
         dataset_acronym,
         two_letter_dir
     )
@@ -290,7 +278,7 @@ def get_gloss_filepath_glossid(video_file_path, gloss):
 
     video_file_name = idgloss + '-' + glossid + extension
     goal = os.path.join(destination_folder, video_file_name)
-    video_path = os.path.join(settings.GLOSS_VIDEO_DIRECTORY,
+    video_path = os.path.join(GLOSS_VIDEO_DIRECTORY,
                               dataset_acronym,
                               two_letter_dir)
     return goal, video_file_name, video_path
@@ -343,7 +331,7 @@ def import_video_file(request, gloss, video_file_path, useid=False):
             if not goal_gloss_file_path:
                 errors = "Incorrect gloss path for import."
                 errors_deleting = remove_video_file_from_import_videos(video_file_path)
-                if errors_deleting and settings.DEBUG_VIDEOS:
+                if errors_deleting and DEBUG_VIDEOS:
                     print('import_video_file: ', errors_deleting)
                 return "Failed", errors
             existing_videos = GlossVideo.objects.filter(gloss=gloss, glossvideonme=None, glossvideoperspective=None, version=0)
@@ -389,7 +377,7 @@ def import_video_file(request, gloss, video_file_path, useid=False):
         status, errors = "Failed", "Failed"
 
     errors_deleting = remove_video_file_from_import_videos(video_file_path)
-    if errors_deleting and settings.DEBUG_VIDEOS:
+    if errors_deleting and DEBUG_VIDEOS:
         print('import_video_file: ', errors_deleting)
 
     return status, errors

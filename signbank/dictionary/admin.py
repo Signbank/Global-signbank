@@ -1,24 +1,39 @@
-from colorfield.fields import ColorWidget
+from django.db.models import Q
+from django.db import models
+from reversion.admin import VersionAdmin
 from django import forms
-from django.forms import TextInput, Textarea, CharField
+from django.forms import Textarea
+from django.core.exceptions import ObjectDoesNotExist, MultipleObjectsReturned
+
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
-from signbank.dictionary.models import *
-from signbank.dictionary.forms import DefinitionForm, FieldChoiceForm, SemanticFieldForm, HandshapeForm, \
-    QueryParameterFieldChoiceForm, SearchHistoryForm, QueryParameterBooleanForm, QueryParameterMultilingualForm, \
-    QueryParameterHandshapeForm
-from reversion.admin import VersionAdmin
-from signbank.settings import server_specific
-from signbank.settings.server_specific import FIELDS, SEPARATE_ENGLISH_IDGLOSS_FIELD, LANGUAGES, LANGUAGE_CODE
+from django.contrib.auth.models import User
+from django.contrib.admin import SimpleListFilter
+
 from modeltranslation.admin import TranslationAdmin
-from guardian.admin import GuardedModelAdmin
 from django.contrib.auth import get_permission_codename
-from django.contrib import messages
-from django.shortcuts import render, get_object_or_404, redirect
-from django.urls import reverse_lazy
 from django.utils.translation import override, gettext_lazy as _
 
-from signbank.video.models import AnnotatedVideo
+from guardian.admin import GuardedModelAdmin
+
+from signbank.settings.server_specific import FIELDS, SHOW_DATASET_INTERFACE_OPTIONS, LANGUAGE_CODE, SHOW_FIELD_CHOICE_COLORS
+from signbank.dictionary.models import (Dataset, Gloss, Translation, LemmaIdgloss, FieldChoice, RelationToForeignSign,
+                                        Definition, Relation, AnnotationIdglossTranslation, Language, SignLanguage,
+                                        LemmaIdglossTranslation, Handshape, SemanticField, SemanticFieldTranslation,
+                                        AnnotatedSentenceTranslation, GlossSense, Sense, SenseTranslation, Keyword,
+                                        ExampleSentence, ExampleSentenceTranslation, AnnotatedSentenceSource,
+                                        Morpheme, OtherMedia, Dialect,
+                                        MorphologyDefinition, SimultaneousMorphologyDefinition,
+                                        DerivationHistory, DerivationHistoryTranslation,
+                                        GlossRevision, DeletedGlossOrMedia,
+                                        UserProfile, Affiliation, AffiliatedUser,
+                                        SearchHistory,
+                                        QueryParameterMultilingual,  QueryParameterSemanticField,
+                                        QueryParameterDerivationHistory,
+                                        QueryParameterBoolean, QueryParameterFieldChoice, QueryParameterHandshape)
+from signbank.dictionary.forms import (FieldChoiceForm, SemanticFieldForm, HandshapeForm,
+                                       QueryParameterFieldChoiceForm, SearchHistoryForm, QueryParameterBooleanForm,
+                                       QueryParameterMultilingualForm, QueryParameterHandshapeForm)
 
 
 class DatasetAdmin(GuardedModelAdmin):
@@ -48,6 +63,7 @@ class KeywordAdmin(VersionAdmin):
     def has_add_permission(self, request):
         return False
 
+
 class TranslationInline(admin.TabularInline):
     model = Translation
     readonly_fields = ['id', 'language']
@@ -55,12 +71,14 @@ class TranslationInline(admin.TabularInline):
     fields = ['id', 'language', 'translation', 'index', 'orderIndex']
     extra = 0
 
+
 class RelationToForeignSignInline(admin.TabularInline):
     model = RelationToForeignSign
     readonly_fields = ['id', 'loan', 'other_lang', 'other_lang_gloss']
     list_display = ['id', 'loan', 'other_lang', 'other_lang_gloss']
     fields = ['id', 'loan', 'other_lang', 'other_lang_gloss']
     extra = 0
+
 
 class DefinitionInline(admin.TabularInline):
     model = Definition
@@ -74,7 +92,7 @@ class DefinitionInline(admin.TabularInline):
     choice_list = FieldChoice.objects.filter(field__iexact='NoteType')
 
     formfield_overrides = {
-        models.TextField: {'widget': Textarea(attrs={'rows':1, 'cols':40}) }
+        models.TextField: {'widget': Textarea(attrs={'rows': 1, 'cols': 40})}
     }
 
     def note(self, obj):
@@ -95,6 +113,7 @@ class DefinitionInline(admin.TabularInline):
         filtered_queryset = qs.filter(gloss=this_object)
         return filtered_queryset
 
+
 class RelationInline(admin.TabularInline):
     model = Relation
     readonly_fields = ['id', 'role', 'target']
@@ -104,12 +123,14 @@ class RelationInline(admin.TabularInline):
     verbose_name_plural = "Relations to other Glosses"
     extra = 0
 
+
 class OtherMediaInline(admin.TabularInline):
     model = OtherMedia
     readonly_fields = ['id', 'path', 'type', 'alternative_gloss']
     list_display = ['id', 'path', 'type', 'alternative_gloss']
     fields = ['id', 'path', 'type', 'alternative_gloss']
     extra = 0
+
 
 class AnnotationIdglossTranslationInline(admin.TabularInline):
     model = AnnotationIdglossTranslation
@@ -120,10 +141,12 @@ class AnnotationIdglossTranslationInline(admin.TabularInline):
 
     extra = 0
 
+
 class SenseInline(admin.TabularInline):
     model = GlossSense
 
     extra = 0
+
 
 class LemmaIdglossTranslationForm(forms.ModelForm):
 
@@ -196,7 +219,7 @@ class LemmaIdglossTranslationInline(admin.TabularInline):
                 translation_languages.append(translation.language)
             if obj.dataset:
                 dataset_languages = obj.dataset.translation_languages.all()
-                limited_choices = { f for f in dataset_languages if f not in translation_languages }
+                limited_choices = {f for f in dataset_languages if f not in translation_languages}
                 language_choices = [(str(f.id), f.name) for f in limited_choices]
                 formset.form.base_fields['language'].limit_choices_to = language_choices
         else:
@@ -218,6 +241,7 @@ class LemmaIdglossTranslationInline(admin.TabularInline):
                 maximum = 0
         return maximum
 
+
 class LanguageInline(admin.TabularInline):
     model = Language
 
@@ -227,7 +251,6 @@ class LanguageInline(admin.TabularInline):
 
     extra = 0
 
-from django.contrib.admin import SimpleListFilter
 
 class SenseNumberListFilter(SimpleListFilter):
     # Human-readable title which will be displayed in the
@@ -267,7 +290,7 @@ class GlossAdminForm(forms.ModelForm):
                       + FIELDS['phonology'] \
                       + FIELDS['frequency'] \
                       + FIELDS['semantics'] \
-                      + ['inWeb', 'isNew', 'creator','creationDate','alternative_id']
+                      + ['inWeb', 'isNew', 'creator', 'creationDate', 'alternative_id']
 
     def __init__(self, *args, **kwargs):
         super(GlossAdminForm, self).__init__(*args, **kwargs)
@@ -293,7 +316,7 @@ class GlossAdmin(VersionAdmin):
                       + FIELDS['phonology'] \
                       + FIELDS['frequency'] \
                       + FIELDS['semantics'] \
-                      + ['inWeb', 'isNew', 'creator','creationDate','alternative_id']
+                      + ['inWeb', 'isNew', 'creator', 'creationDate', 'alternative_id']
 
     idgloss_fields = ['id', 'lemma']
 
@@ -302,8 +325,8 @@ class GlossAdmin(VersionAdmin):
     raw_id_fields = ['lemma']
 
     fieldsets = ((None, {'fields': tuple(idgloss_fields)+tuple(FIELDS['main'])+('signlanguage', 'dialect')}, ),
-                 ('Publication Status', {'fields': ('inWeb',  'isNew', 'creator','creationDate','alternative_id'),
-                                       'classes': ('collapse',)}, ),
+                 ('Publication Status', {'fields': ('inWeb',  'isNew', 'creator', 'creationDate', 'alternative_id'),
+                                         'classes': ('collapse',)}, ),
                  ('Phonology', {'fields': FIELDS['phonology'], 'classes': ('collapse',)}, ),
                  ('Semantics', {'fields': FIELDS['semantics'], 'classes': ('collapse',)}),
               )
@@ -313,7 +336,7 @@ class GlossAdmin(VersionAdmin):
     list_display = ['id', 'lemma', 'inWeb']
 
     search_fields = ['^lemma__lemmaidglosstranslation__text', 'id']
-    inlines = [ AnnotationIdglossTranslationInline, RelationInline, RelationToForeignSignInline, DefinitionInline, TranslationInline, OtherMediaInline, SenseInline]
+    inlines = [AnnotationIdglossTranslationInline, RelationInline, RelationToForeignSignInline, DefinitionInline, TranslationInline, OtherMediaInline, SenseInline]
 
     history_latest_first = True
 
@@ -359,7 +382,7 @@ class MorphologyDefinitionAdmin(VersionAdmin):
     extra = 0
 
     formfield_overrides = {
-        models.TextField: {'widget': Textarea(attrs={'rows':1, 'cols':40}) }
+        models.TextField: {'widget': Textarea(attrs={'rows': 1, 'cols': 40})}
     }
 
     def get_actions(self, request):
@@ -374,11 +397,12 @@ class MorphologyDefinitionAdmin(VersionAdmin):
         translations = []
         count_dataset_languages = obj.parent_gloss.dataset.translation_languages.all().count() if obj.parent_gloss.dataset else 0
         for translation in obj.parent_gloss.lemma.lemmaidglosstranslation_set.all():
-            if settings.SHOW_DATASET_INTERFACE_OPTIONS and count_dataset_languages > 1:
+            if SHOW_DATASET_INTERFACE_OPTIONS and count_dataset_languages > 1:
                 translations.append("{}: {}".format(translation.language, translation.text))
             else:
                 translations.append("{}".format(translation.text))
         return ", ".join(translations)
+
 
 class SimultaneousMorphologyDefinitionAdmin(VersionAdmin):
     model = MorphologyDefinition
@@ -395,7 +419,7 @@ class SimultaneousMorphologyDefinitionAdmin(VersionAdmin):
     extra = 0
 
     formfield_overrides = {
-        models.TextField: {'widget': Textarea(attrs={'rows':1, 'cols':40}) }
+        models.TextField: {'widget': Textarea(attrs={'rows': 1, 'cols': 40})}
     }
 
     def get_actions(self, request):
@@ -410,11 +434,12 @@ class SimultaneousMorphologyDefinitionAdmin(VersionAdmin):
         translations = []
         count_dataset_languages = obj.parent_gloss.dataset.translation_languages.all().count() if obj.parent_gloss.dataset else 0
         for translation in obj.parent_gloss.lemma.lemmaidglosstranslation_set.all():
-            if settings.SHOW_DATASET_INTERFACE_OPTIONS and count_dataset_languages > 1:
+            if SHOW_DATASET_INTERFACE_OPTIONS and count_dataset_languages > 1:
                 translations.append("{}: {}".format(translation.language, translation.text))
             else:
                 translations.append("{}".format(translation.text))
         return ", ".join(translations)
+
 
 class HandshapeAdmin(VersionAdmin, TranslationAdmin):
 
@@ -425,10 +450,7 @@ class HandshapeAdmin(VersionAdmin, TranslationAdmin):
     fields = ['name', 'field_color', 'machine_value']
     form = HandshapeForm
 
-    if hasattr(server_specific, 'SHOW_FIELD_CHOICE_COLORS') and server_specific.SHOW_FIELD_CHOICE_COLORS:
-        show_handshape_colors = True
-    else:
-        show_handshape_colors = False
+    show_handshape_colors = SHOW_FIELD_CHOICE_COLORS
 
     list_display = ['machine_value', 'name', 'gloss_count']
     ordering = ['machine_value']
@@ -490,7 +512,7 @@ class HandshapeAdmin(VersionAdmin, TranslationAdmin):
 
         gloss_handshape_fields = gloss_handshape_fields()
         for field_name in gloss_handshape_fields:
-            queries = [Q(**{ field_name + '__machine_value' : machine_value })]
+            queries = [Q(**{field_name + '__machine_value': machine_value})]
             query = queries.pop()
             for item in queries:
                 query |= item
@@ -498,6 +520,7 @@ class HandshapeAdmin(VersionAdmin, TranslationAdmin):
             if count_in_use > 0:
                 return False
         return True
+
 
 class SemanticFieldTranslationInline(admin.TabularInline):
 
@@ -523,10 +546,10 @@ class SemanticFieldAdmin(VersionAdmin, TranslationAdmin):
 
     list_display = ['machine_value', 'name', 'description']
 
-    inlines = [SemanticFieldTranslationInline,]
+    inlines = [SemanticFieldTranslationInline, ]
 
     formfield_overrides = {
-        models.TextField: {'widget': Textarea(attrs={'rows': 1, 'cols': 40}) }
+        models.TextField: {'widget': Textarea(attrs={'rows': 1, 'cols': 40})}
     }
 
     def get_form(self, request, obj=None, **kwargs):
@@ -614,14 +637,14 @@ class DerivationHistoryAdmin(VersionAdmin, TranslationAdmin):
     model = DerivationHistory
     form = DerivationHistoryAdminForm
 
-    readonly_fields=['machine_value']
+    readonly_fields = ['machine_value']
 
     list_display = ['machine_value', 'name', 'description']
 
-    inlines = [DerivationHistoryTranslationInline,]
+    inlines = [DerivationHistoryTranslationInline, ]
 
     formfield_overrides = {
-        models.TextField: {'widget': Textarea(attrs={'rows':1, 'cols':40}) }
+        models.TextField: {'widget': Textarea(attrs={'rows': 1, 'cols': 40})}
     }
 
     def get_actions(self, request):
@@ -638,7 +661,7 @@ class DerivationHistoryTranslationAdmin(VersionAdmin):
 
     model = DerivationHistoryTranslation
 
-    readonly_fields=['derivHist', 'language', 'name']
+    readonly_fields = ['derivHist', 'language', 'name']
 
     list_display = ['derivHist', 'name', 'language']
 
@@ -656,6 +679,7 @@ class DerivationHistoryTranslationAdmin(VersionAdmin):
     def has_add_permission(self, request):
         return False
 
+
 class GlossRevisionUserFilter(admin.SimpleListFilter):
 
     title = _('User')
@@ -664,7 +688,7 @@ class GlossRevisionUserFilter(admin.SimpleListFilter):
     def lookups(self, request, model_admin):
         # filter on users who have actually changed things
         users_present = GlossRevision.objects.all().values('user').distinct()
-        user_tuples = [ (u.id, u.username) for u in User.objects.filter(id__in=users_present) ]
+        user_tuples = [(u.id, u.username) for u in User.objects.filter(id__in=users_present)]
         return (tuple(
             (user_id, user_username) for (user_id, user_username) in user_tuples
         ))
@@ -673,6 +697,7 @@ class GlossRevisionUserFilter(admin.SimpleListFilter):
         if self.value():
             return queryset.filter(user_id=self.value())
         return queryset.all()
+
 
 class GlossRevisionDatasetFilter(admin.SimpleListFilter):
 
@@ -689,6 +714,7 @@ class GlossRevisionDatasetFilter(admin.SimpleListFilter):
         if self.value():
             return queryset.filter(gloss__lemma__dataset_id=self.value())
         return queryset.all()
+
 
 class GlossRevisionAdmin(VersionAdmin):
 
@@ -726,6 +752,7 @@ class RegistrationProfileAdmin(admin.ModelAdmin):
     list_display = ('__str__', 'activation_key_expired', )
     search_fields = ('user__username', 'user__first_name', )
 
+
 class DialectInline(admin.TabularInline):
 
     model = Dialect
@@ -738,8 +765,9 @@ class DialectInline(admin.TabularInline):
         }
 
     formfield_overrides = {
-        models.TextField: {'widget': Textarea(attrs={'rows':1, 'cols':40}) }
+        models.TextField: {'widget': Textarea(attrs={'rows': 1, 'cols': 40})}
     }
+
 
 class DialectAdmin(VersionAdmin):
     model = Dialect
@@ -752,7 +780,7 @@ class DialectAdmin(VersionAdmin):
     extra = 0
 
     formfield_overrides = {
-        models.TextField: {'widget': Textarea(attrs={'rows':1, 'cols':40}) }
+        models.TextField: {'widget': Textarea(attrs={'rows': 1, 'cols': 40})}
     }
 
     def get_actions(self, request):
@@ -760,6 +788,7 @@ class DialectAdmin(VersionAdmin):
         if 'delete_selected' in actions:
             del actions['delete_selected']
         return actions
+
 
 class SignLanguageAdmin(VersionAdmin):
     model = SignLanguage
@@ -771,7 +800,7 @@ class SignLanguageAdmin(VersionAdmin):
     extra = 0
 
     formfield_overrides = {
-        models.TextField: {'widget': Textarea(attrs={'rows':1, 'cols':40}) }
+        models.TextField: {'widget': Textarea(attrs={'rows': 1, 'cols': 40})}
     }
 
     def get_actions(self, request):
@@ -780,6 +809,7 @@ class SignLanguageAdmin(VersionAdmin):
             del actions['delete_selected']
         return actions
 
+
 # Define an inline admin descriptor for UserProfile model
 # which acts a bit like a singleton
 class UserProfileInline(admin.StackedInline):
@@ -787,24 +817,22 @@ class UserProfileInline(admin.StackedInline):
     can_delete = False
     verbose_name_plural = 'profile'
 
+
 # Define a new User admin
 class UserAdmin(UserAdmin):
     inlines = (UserProfileInline, )
 
 
 class FieldChoiceAdmin(VersionAdmin, TranslationAdmin):
-    readonly_fields=['machine_value']
-    actions=['delete_selected']
+    readonly_fields = ['machine_value']
+    actions = ['delete_selected']
 
     model = FieldChoice
     fields = ['field', 'name'] \
-             + ['field_color', 'machine_value' ]
+             + ['field_color', 'machine_value']
     form = FieldChoiceForm
 
-    if hasattr(server_specific, 'SHOW_FIELD_CHOICE_COLORS') and server_specific.SHOW_FIELD_CHOICE_COLORS:
-        show_field_choice_colors = True
-    else:
-        show_field_choice_colors = False
+    show_field_choice_colors = SHOW_FIELD_CHOICE_COLORS
 
     list_display = ['choice'] \
                    + ['machine_value', 'field']
@@ -879,7 +907,7 @@ class FieldChoiceAdmin(VersionAdmin, TranslationAdmin):
 
         fields_with_choices_glosses = fields_with_choices_glosses()
         if field_value in fields_with_choices_glosses.keys():
-            queries = [Q(**{ field_name + '__machine_value' : field_machine_value })
+            queries = [Q(**{field_name + '__machine_value': field_machine_value})
                        for field_name in fields_with_choices_glosses[field_value]]
             query = queries.pop()
             for item in queries:
@@ -889,7 +917,7 @@ class FieldChoiceAdmin(VersionAdmin, TranslationAdmin):
 
         fields_with_choices_handshapes = fields_with_choices_handshapes()
         if field_value in fields_with_choices_handshapes.keys():
-            queries_h = [Q(**{ field_name + '__machine_value' : field_machine_value })
+            queries_h = [Q(**{field_name + '__machine_value': field_machine_value})
                          for field_name in fields_with_choices_handshapes[field_value]]
             query_h = queries_h.pop()
             for item in queries_h:
@@ -899,7 +927,7 @@ class FieldChoiceAdmin(VersionAdmin, TranslationAdmin):
 
         fields_with_choices_examplesentences = fields_with_choices_examplesentences()
         if field_value in fields_with_choices_examplesentences.keys():
-            queries_h = [Q(**{ field_name + '__machine_value' : field_machine_value })
+            queries_h = [Q(**{field_name + '__machine_value': field_machine_value})
                          for field_name in fields_with_choices_examplesentences[field_value]]
             query_h = queries_h.pop()
             for item in queries_h:
@@ -909,8 +937,8 @@ class FieldChoiceAdmin(VersionAdmin, TranslationAdmin):
 
         fields_with_choices_definition = fields_with_choices_definition()
         if field_value in fields_with_choices_definition.keys():
-            queries_d = [Q(**{ field_name + '__machine_value' : field_machine_value })
-                                for field_name in fields_with_choices_definition[field_value]]
+            queries_d = [Q(**{field_name + '__machine_value': field_machine_value})
+                         for field_name in fields_with_choices_definition[field_value]]
             query_d = queries_d.pop()
             for item in queries_d:
                 query_d |= item
@@ -919,7 +947,7 @@ class FieldChoiceAdmin(VersionAdmin, TranslationAdmin):
 
         fields_with_choices_morphology_definition = fields_with_choices_morphology_definition()
         if field_value in fields_with_choices_morphology_definition.keys():
-            queries_d = [Q(**{ field_name + '__machine_value' : field_machine_value })
+            queries_d = [Q(**{field_name + '__machine_value': field_machine_value})
                          for field_name in fields_with_choices_morphology_definition[field_value]]
             query_d = queries_d.pop()
             for item in queries_d:
@@ -929,7 +957,7 @@ class FieldChoiceAdmin(VersionAdmin, TranslationAdmin):
 
         fields_with_choices_other_media_type = fields_with_choices_other_media_type()
         if field_value in fields_with_choices_other_media_type.keys():
-            queries_d = [Q(**{ field_name + '__machine_value' : field_machine_value })
+            queries_d = [Q(**{field_name + '__machine_value': field_machine_value})
                          for field_name in fields_with_choices_other_media_type[field_value]]
             query_d = queries_d.pop()
             for item in queries_d:
@@ -939,7 +967,7 @@ class FieldChoiceAdmin(VersionAdmin, TranslationAdmin):
 
         fields_with_choices_morpheme_type = fields_with_choices_morpheme_type()
         if field_value in fields_with_choices_morpheme_type.keys():
-            queries_d = [Q(**{ field_name + '__machine_value' : field_machine_value })
+            queries_d = [Q(**{field_name + '__machine_value': field_machine_value})
                          for field_name in fields_with_choices_morpheme_type[field_value]]
             query_d = queries_d.pop()
             for item in queries_d:
@@ -1074,7 +1102,7 @@ class LemmaIdglossAdmin(VersionAdmin):
         translations = []
         count_dataset_languages = obj.dataset.translation_languages.all().count() if obj.dataset else 0
         for translation in obj.lemmaidglosstranslation_set.all():
-            if settings.SHOW_DATASET_INTERFACE_OPTIONS and count_dataset_languages > 1:
+            if SHOW_DATASET_INTERFACE_OPTIONS and count_dataset_languages > 1:
                 translations.append("{}: {}".format(translation.language, translation.text))
             else:
                 translations.append("{}".format(translation.text))
@@ -1420,9 +1448,11 @@ class AnnotatedSentenceSourceAdmin(admin.ModelAdmin):
     search_fields = ['name']
     list_filter = ['dataset']
 
+
 class AnnotatedSentenceTranslationAdmin(admin.ModelAdmin):
     list_display = ('annotatedsentence_id', 'language', 'text')
     search_fields = ['text']
+
 
 class AffiliationAdmin(admin.ModelAdmin):
     list_display = ("name", )
@@ -1438,8 +1468,8 @@ admin.site.register(SignLanguage, SignLanguageAdmin)
 admin.site.register(Gloss, GlossAdmin)
 admin.site.register(Morpheme, GlossAdmin)
 admin.site.register(Keyword, KeywordAdmin)
-admin.site.register(FieldChoice,FieldChoiceAdmin)
-admin.site.register(MorphologyDefinition,MorphologyDefinitionAdmin)
+admin.site.register(FieldChoice, FieldChoiceAdmin)
+admin.site.register(MorphologyDefinition, MorphologyDefinitionAdmin)
 admin.site.register(SimultaneousMorphologyDefinition, SimultaneousMorphologyDefinitionAdmin)
 admin.site.unregister(User)
 admin.site.register(User, UserAdmin)
@@ -1448,7 +1478,7 @@ admin.site.register(SemanticField, SemanticFieldAdmin)
 admin.site.register(SemanticFieldTranslation, SemanticFieldTranslationAdmin)
 admin.site.register(DerivationHistory, DerivationHistoryAdmin)
 admin.site.register(DerivationHistoryTranslation, DerivationHistoryTranslationAdmin)
-admin.site.register(GlossRevision,GlossRevisionAdmin)
+admin.site.register(GlossRevision, GlossRevisionAdmin)
 admin.site.register(DeletedGlossOrMedia, DeletedGlossOrMediaAdmin)
 
 admin.site.register(UserProfile)

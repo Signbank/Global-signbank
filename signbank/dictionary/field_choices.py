@@ -1,7 +1,12 @@
-from signbank.dictionary.models import *
-from signbank.dictionary.translate_choice_list import choicelist_queryset_to_translated_dict, \
-    choicelist_queryset_to_machine_value_dict, choicelist_queryset_to_colors, \
-    choicelist_queryset_to_field_colors
+from django.db.models import Q
+
+from signbank.settings.server_specific import FIELDS, HANDEDNESS_ARTICULATION_FIELDS, HANDSHAPE_ETYMOLOGY_FIELDS
+from signbank.dictionary.models import (Gloss, Morpheme, Handshape, FieldChoice, Definition, MorphologyDefinition,
+                                        ExampleSentence, OtherMedia, DerivationHistory, SemanticField,
+                                        CATEGORY_MODELS_MAPPING)
+from signbank.dictionary.translate_choice_list import (choicelist_queryset_to_translated_dict,
+                                                       choicelist_queryset_to_machine_value_dict,
+                                                       choicelist_queryset_to_colors)
 
 
 def fields_to_categories():
@@ -20,7 +25,7 @@ def fields_to_categories():
                     choice_categories.append(field)
                 continue
 
-            if field in settings.HANDSHAPE_ETYMOLOGY_FIELDS + settings.HANDEDNESS_ARTICULATION_FIELDS:
+            if field in HANDSHAPE_ETYMOLOGY_FIELDS + HANDEDNESS_ARTICULATION_FIELDS:
                 continue
             if field in Gloss.get_field_names():
                 field_field = Gloss.get_field(field)
@@ -72,7 +77,7 @@ def fields_to_fieldcategory_dict(fieldnames=[]):
         elif field in ['hasRelation']:
             choice_categories[field] = 'Relation'
             continue
-        if field in settings.HANDSHAPE_ETYMOLOGY_FIELDS + settings.HANDEDNESS_ARTICULATION_FIELDS:
+        if field in HANDSHAPE_ETYMOLOGY_FIELDS + HANDEDNESS_ARTICULATION_FIELDS:
             continue
         if field in Gloss.get_field_names():
             field_field = Gloss.get_field(field)
@@ -232,7 +237,7 @@ def get_static_choice_lists_per_field():
     fieldnames = []
     for topic in ['main', 'phonology', 'semantics']:
         for fieldname in FIELDS[topic]:
-            if fieldname in settings.HANDSHAPE_ETYMOLOGY_FIELDS + settings.HANDEDNESS_ARTICULATION_FIELDS:
+            if fieldname in HANDSHAPE_ETYMOLOGY_FIELDS + HANDEDNESS_ARTICULATION_FIELDS:
                 continue
             fieldnames.append(fieldname)
 

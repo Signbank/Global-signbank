@@ -1,15 +1,12 @@
-from django.db import models, OperationalError, ProgrammingError
+from django.db import models
 from django.contrib.auth import models as authmodels
 from django.conf import settings
-from signbank.settings.base import COMMENT_VIDEO_LOCATION, WRITABLE_FOLDER
 import os
-from signbank.video.fields import VideoUploadToFLVField
 from django import forms
 
 from django.utils.translation import gettext_lazy as _
-from django.utils.encoding import escape_uri_path
 
-from signbank.dictionary.models import *
+from signbank.dictionary.models import Gloss, Morpheme, SignLanguage
 
 # models to represent the feedback from users in the site
 
