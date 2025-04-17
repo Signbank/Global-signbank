@@ -261,6 +261,8 @@ urlpatterns = [
 
     re_path(r'update_gloss_video_backups/(?P<glossid>\d+)/$',
             permission_required('dictionary.change_gloss')(signbank.dataset_operations.update_gloss_video_backups)),
+    re_path(r'move_gloss_video_backups_to_trash/(?P<glossid>\d+)/$',
+            permission_required('dictionary.change_gloss')(signbank.dataset_operations.move_gloss_video_backups_to_trash)),
 
     re_path(r'info/$', signbank.dictionary.views.info),
     re_path(r'protected_media/(?P<filename>.*)$', signbank.dictionary.views.protected_media, name='protected_media'),

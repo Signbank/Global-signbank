@@ -1614,3 +1614,42 @@ class AnnotatedGlossForm(forms.ModelForm):
         super(AnnotatedGlossForm, self).__init__(*args, **kwargs)
 
         self.fields['isRepresentative'].choices = [('0', '-'), ('yes', _('Yes')), ('no', _('No'))]
+
+
+class GlossVideoSearchForm(forms.ModelForm):
+
+    isPrimaryVideo = forms.ChoiceField(label=_('Is Primary Video'),
+                                      choices=[(0, '-')],
+                                      widget=forms.Select(attrs=ATTRS_FOR_FORMS))
+    isPerspectiveVideo = forms.ChoiceField(label=_('Is Perspective Video'),
+                                           choices=[(0, '-')],
+                                           widget=forms.Select(attrs=ATTRS_FOR_FORMS))
+    isNMEVideo = forms.ChoiceField(label=_('Is NME or Perspective NME Video'),
+                                   choices=[(0, '-')],
+                                   widget=forms.Select(attrs=ATTRS_FOR_FORMS))
+    isBackup = forms.ChoiceField(label=_('Is Backup Video'),
+                                 choices=[(0, '-')],
+                                 widget=forms.Select(attrs=ATTRS_FOR_FORMS))
+    wrongFilename = forms.ChoiceField(label=_('Wrong Filename'),
+                                        choices=[(0, '-')],
+                                        widget=forms.Select(attrs=ATTRS_FOR_FORMS))
+
+    gloss_search_field_prefix = "glosssearch_"
+    keyword_search_field_prefix = "keyword_"
+    lemma_search_field_prefix = "lemma_"
+
+    class Meta:
+
+        ATTRS_FOR_FORMS = {'class': 'form-control'}
+
+        model = GlossVideo
+
+        fields = ['gloss', 'videofile', 'version']
+
+    def __init__(self, *args, **kwargs):
+        super(GlossVideoSearchForm, self).__init__(*args, **kwargs)
+
+        # language fields will be set up elsewhere
+
+        for boolean_field in ['isPrimaryVideo', 'isPerspectiveVideo', 'isNMEVideo', 'isBackup', 'wrongFilename']:
+            self.fields[boolean_field].choices = [('0', '-'), ('2', _('Yes')), ('3', _('No'))]
