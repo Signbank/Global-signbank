@@ -2466,15 +2466,40 @@ class Gloss(models.Model):
         return nmevideos.count()
 
     def get_nme_videos(self):
+        # Only retrieve the primary NME video
+        from signbank.video.models import GlossVideoNME
+        nmevideos = GlossVideoNME.objects.filter(gloss=self, perspective__in=['', 'center'])
+        return nmevideos
+
+    def get_nme_videos_lookup(self):
+        # Group the NME video objects together by their offset; this is used for retrieval in the template
         from signbank.video.models import GlossVideoNME
         nmevideos = GlossVideoNME.objects.filter(gloss=self)
-        return nmevideos
+        nme_videos_dict = dict()
+        for nmevideo in nmevideos:
+            if nmevideo.offset not in nme_videos_dict.keys():
+                nme_videos_dict[nmevideo.offset] = dict()
+            if nmevideo.perspective not in nme_videos_dict[nmevideo.offset].keys():
+                nme_videos_dict[nmevideo.offset][nmevideo.perspective] = nmevideo
+        return nme_videos_dict
+
+    def nme_video_has_left_perspective(self, offset):
+        # this is used in the template to conditionally generate code
+        from signbank.video.models import GlossVideoNME
+        primary_nmevideo = GlossVideoNME.objects.filter(gloss=self, offset=offset, perspective__in=['', 'center']).first()
+        return primary_nmevideo.has_left_perspective if primary_nmevideo else False
+
+    def nme_video_has_right_perspective(self, offset):
+        # this is used in the template to conditionally generate code
+        from signbank.video.models import GlossVideoNME
+        primary_nmevideo = GlossVideoNME.objects.filter(gloss=self, offset=offset, perspective__in=['', 'center']).first()
+        return primary_nmevideo.has_right_perspective if primary_nmevideo else False
 
     def add_nme_video(self, user, videofile, new_offset, recorded, perspective='center'):
         # Preventing circular import
         from signbank.video.models import GlossVideoNME, GlossVideoHistory, get_video_file_path
 
-        existing_offsets_for_this_perspective = [nmev.offset for nmev in GlossVideoNME.objects.filter(gloss=self,perspective=perspective)]
+        existing_offsets_for_this_perspective = [nmev.offset for nmev in GlossVideoNME.objects.filter(gloss=self, perspective=perspective)]
         if new_offset in existing_offsets_for_this_perspective:
             # override given offset to avoid duplicate usage
             offset = max(existing_offsets_for_this_perspective)+1

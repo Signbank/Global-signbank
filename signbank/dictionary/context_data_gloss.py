@@ -97,7 +97,7 @@ def get_annotated_sentences(gloss):
 
 
 def get_nme_video_descriptions(gloss):
-    glossnmevideos = GlossVideoNME.objects.filter(gloss=gloss)
+    glossnmevideos = GlossVideoNME.objects.filter(gloss=gloss, perspective__in=['', 'center'])
     nme_video_descriptions = dict()
     for nmevideo in glossnmevideos:
         nme_video_descriptions[nmevideo] = {}
