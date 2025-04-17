@@ -4,7 +4,6 @@
 {% load i18n %}
 {% load annotation_idgloss_translation %}
 {% load tagging_tags %}
-{% load wrong_sign %}
 
 {% block bootstrap3_title %}
 {% blocktrans %}Signbank: Recently Added Signs{% endblocktrans %}
@@ -17,7 +16,10 @@ var csrf_token = '{{csrf_token}}';
 var days_field = '{{days_field}}';
 var timestamp_field = '{{timestamp_field}}';
 var timeline_field = '{{timeline_field}}';
+</script>
+<link rel="stylesheet" href="{{STATIC_URL}}css/select2-dark-mode.css">
 
+<script>
 $(document).ready(function() {
     $('#id_days').val(days_field);
     $("input[name='days']").each(function() {

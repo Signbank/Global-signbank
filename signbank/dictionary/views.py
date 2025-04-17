@@ -1726,55 +1726,6 @@ def switch_to_language(request,language):
     return HttpResponse('OK')
 
 
-def recently_added_glosses(request):
-    selected_datasets = get_selected_datasets(request)
-    dataset_languages = Language.objects.filter(dataset__in=selected_datasets).distinct()
-
-    (interface_language, interface_language_code,
-     default_language, default_language_code) = get_interface_language_and_default_language_codes(request)
-
-    dataset_display_languages = []
-    for lang in dataset_languages:
-        dataset_display_languages.append(lang.language_code_2char)
-    if interface_language_code in dataset_display_languages:
-        lang_attr_name = interface_language_code
-    else:
-        lang_attr_name = default_language_code
-
-    recently_added_signs_since_date = DT.datetime.now(tz=get_current_timezone()) - RECENTLY_ADDED_SIGNS_PERIOD
-    recent_glosses = Gloss.objects.filter(morpheme=None, lemma__dataset__in=selected_datasets, archived=False).filter(
-        creationDate__range=[recently_added_signs_since_date, DT.datetime.now(tz=get_current_timezone())]).order_by(
-        '-creationDate')
-
-    items = construct_scrollbar(recent_glosses, 'sign', lang_attr_name)
-    request.session['search_results'] = items
-    request.session['search_type'] = 'sign'
-    request.session.modified = True
-
-    return render(request, 'dictionary/recently_added_glosses.html',
-                  {'glosses': recent_glosses,
-                   'dataset_languages': dataset_languages,
-                   'selected_datasets': selected_datasets,
-                   'language': interface_language,
-                   'number_of_days': RECENTLY_ADDED_SIGNS_PERIOD.days,
-                   'USE_REGULAR_EXPRESSIONS': USE_REGULAR_EXPRESSIONS,
-                   'SHOW_DATASET_INTERFACE_OPTIONS': SHOW_DATASET_INTERFACE_OPTIONS})
-
-
-def proposed_new_signs(request):
-    selected_datasets = get_selected_datasets(request)
-    dataset_languages = Language.objects.filter(dataset__in=selected_datasets).distinct()
-    proposed_or_new_signs = (Gloss.objects.filter(isNew=True, archived=False) |
-                             TaggedItem.objects.get_intersection_by_model(Gloss, "sign:_proposed")).order_by('creationDate').reverse()
-    return render(request, 'dictionary/recently_added_glosses.html',
-                  {'glosses': proposed_or_new_signs,
-                   'dataset_languages': dataset_languages,
-                   'selected_datasets': selected_datasets,
-                   'number_of_days': RECENTLY_ADDED_SIGNS_PERIOD.days,
-                   'USE_REGULAR_EXPRESSIONS': USE_REGULAR_EXPRESSIONS,
-                   'SHOW_DATASET_INTERFACE_OPTIONS': SHOW_DATASET_INTERFACE_OPTIONS})
-
-
 def create_citation_image(request, pk):
     if 'HTTP_REFERER' in request.META:
         url = request.META['HTTP_REFERER']
