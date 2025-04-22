@@ -42,6 +42,7 @@ def addvideo(request):
 
         object_id = form.cleaned_data['object_id']
         object_type = form.cleaned_data['object_type']
+        fieldname = object_type
         vfile = form.cleaned_data['videofile']
         redirect_url = form.cleaned_data['redirect']
         recorded = form.cleaned_data['recorded']
@@ -57,22 +58,27 @@ def addvideo(request):
             gloss = Gloss.objects.filter(id=object_id).first()
             if not gloss:
                 return redirect(redirect_url)
-            gloss.add_video(request.user, vfile, recorded)
+            gloss_video = gloss.add_video(request.user, vfile, recorded)
+            uploaded_video = str(gloss_video)
         elif object_type == 'gloss_perspectivevideo':
             gloss = Gloss.objects.filter(id=object_id).first()
             if not gloss:
                 return redirect(redirect_url)
             perspective = form.cleaned_data['perspective']
             stringpersp = str(perspective)
-            perspvideo = gloss.add_perspective_video(request.user, vfile, stringpersp, recorded)
+            if stringpersp:
+                fieldname += '_' + stringpersp
+            perspective_video = gloss.add_perspective_video(request.user, vfile, stringpersp, recorded)
             if settings.DEBUG_VIDEOS:
-                print('Perspective video created: ', str(perspvideo))
+                print('Perspective video created: ', str(perspective_video))
+            uploaded_video = str(perspective_video)
         elif object_type == 'gloss_nmevideo':
             gloss = Gloss.objects.filter(id=object_id).first()
             if not gloss:
                 return redirect(redirect_url)
             offset = form.cleaned_data['offset']
             perspective = form.cleaned_data['nme_perspective']
+            fieldname += '_' + str(offset) + '_' + str(perspective)
             nmevideo = gloss.add_nme_video(request.user, vfile, offset, recorded, perspective)
             translation_languages = gloss.lemma.dataset.translation_languages.all()
             descriptions = dict()
@@ -83,6 +89,7 @@ def addvideo(request):
             nmevideo.add_descriptions(descriptions)
             nmevideo.perspective = perspective
             nmevideo.save()
+            uploaded_video = str(nmevideo.videofile)
         elif object_type == 'morpheme_video':
             morpheme = Morpheme.objects.filter(id=object_id).first()
             if not morpheme:
@@ -114,19 +121,22 @@ def addvideo(request):
             if annotated_video is None:
                 messages.add_message(request, messages.ERROR, _('Annotated sentence upload went wrong. Please try again.'))
                 annotated_sentence.delete()
-            else:
-                annotated_sentence.save()
+                return redirect(redirect_url)
+
+            uploaded_video = str(annotated_video)
+
+            annotated_sentence.save()
         else:
             # the object_type does not match anything, just return
             return redirect(redirect_url)
 
-        revision = GlossRevision(old_value='', new_value=vfile.name,
-                                 field_name=object_type,
+        revision = GlossRevision(old_value='', new_value=uploaded_video,
+                                 field_name=fieldname,
                                  gloss=gloss, user=request.user, time=DT.datetime.now(tz=get_current_timezone()))
         revision.save()
 
         return redirect(redirect_url)
-
+0
 
 def find_non_overlapping_annotated_glosses(timeslots, annotations_tier_1, annotations_tier_2):
     non_overlapping_glosses = []

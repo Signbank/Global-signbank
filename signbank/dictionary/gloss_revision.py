@@ -94,6 +94,8 @@ def pretty_print_revisions(gloss):
     simple_translation_dict = {
         'sequential_morphology': gettext("Sequential Morphology"),
         'simultaneous_morphology': gettext("Simultaneous Morphology"),
+        'gloss_perspectivevideo_left': gettext("Upload Perspective Video (Left)"),
+        'gloss_perspectivevideo_right': gettext("Upload Perspective Video (Right)"),
         'blend_morphology': gettext("Blend Morphology"),
         'archived': gettext("Deleted"),
         'restored': gettext("Restored")
@@ -118,6 +120,18 @@ def pretty_print_revisions(gloss):
                 revision_verbose_fieldname = gettext("NME Video") + ' ' + gettext("Delete")
             else:
                 revision_verbose_fieldname = gettext("NME Video") + ' ' + gettext("Update")
+        elif revision.field_name.startswith('gloss_nmevideo_'):
+            try:
+                prefix, operation, offset, perspective = revision.field_name.split('_')
+            except ValueError:
+                prefix, operation, offset, perspective = 'gloss', 'nmevideo', '0', ''
+            if perspective == 'left':
+                video_perspective = " (" + gettext("(Left)") + ")"
+            elif perspective == 'right':
+                video_perspective = " (" + gettext("(Right)") + ")"
+            else:
+                video_perspective = ""
+            revision_verbose_fieldname = gettext("Upload NME Video") + ' ' + offset + video_perspective
         elif revision.field_name in Gloss.get_field_names():
             revision_verbose_fieldname = gettext(Gloss.get_field(revision.field_name).verbose_name)
         elif revision.field_name in simple_translation_dict.keys():

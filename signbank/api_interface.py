@@ -687,7 +687,7 @@ def api_add_video(request, gloss_id):
             continue
 
         vfile = request.FILES[label]
-        gloss.add_video(request.user, vfile, False)
+        gloss_video = gloss.add_video(request.user, vfile, False)
         nr_of_videos += 1
 
     for label in LEFT_VIDEO_LABELS:

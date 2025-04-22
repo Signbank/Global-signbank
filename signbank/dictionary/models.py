@@ -2459,7 +2459,7 @@ class Gloss(models.Model):
             glossvideohistory = GlossVideoHistory(action="upload", gloss=self, actor=user,
                                                   uploadfile=videofile, goal_location=video_file_full_path)
             glossvideohistory.save()
-
+            return video
         else:
             msg = "A GlossVideo object could not be created for gloss " % self.pk
             raise ValidationError(msg)
