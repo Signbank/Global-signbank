@@ -5469,7 +5469,7 @@ class RecentGlossListView(ListView):
         get = self.request.GET
         days_input = get.get('days', RecentGlossSearchForm.days_default)
         self.days = days_input
-        days = timedelta(days=days_input)
+        days = timedelta(days=int(days_input))
         timetype = get.get('timetype', self.timestamp_field)
         self.timestamp_field = timetype
         filter_field = timetype + '__range'
