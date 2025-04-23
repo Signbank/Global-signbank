@@ -22,6 +22,7 @@ from signbank.settings.base import SUPPORTED_CITATION_IMAGE_EXTENSIONS
 
 from signbank.dictionary.models import (Dataset, Gloss, AnnotatedSentence)
 from signbank.tools import get_two_letter_dir, api_fields
+from signbank.dictionary.batch_edit import add_gloss_update_to_revision_history
 from signbank.api_token import put_api_user_in_request
 from signbank.abstract_machine import get_interface_language_api, retrieve_language_code_from_header
 from signbank.zip_interface import (check_subfolders_for_unzipping_ids, get_filenames, check_subfolders_for_unzipping,
@@ -688,6 +689,7 @@ def api_add_video(request, gloss_id):
 
         vfile = request.FILES[label]
         gloss_video = gloss.add_video(request.user, vfile, False)
+        add_gloss_update_to_revision_history(request.user, gloss, 'gloss_video', '', str(gloss_video))
         nr_of_videos += 1
 
     for label in LEFT_VIDEO_LABELS:
@@ -696,7 +698,8 @@ def api_add_video(request, gloss_id):
             continue
 
         vfile = request.FILES[label]
-        gloss.add_perspective_video(request.user, vfile, 'left', False)
+        left_perspective_video = gloss.add_perspective_video(request.user, vfile, 'left', False)
+        add_gloss_update_to_revision_history(request.user, gloss, 'gloss_perspectivevideo_left', '', str(left_perspective_video))
         nr_of_videos += 1
 
     for label in RIGHT_VIDEO_LABELS:
@@ -705,7 +708,8 @@ def api_add_video(request, gloss_id):
             continue
 
         vfile = request.FILES[label]
-        gloss.add_perspective_video(request.user, vfile, 'right', False)
+        right_perspective_video = gloss.add_perspective_video(request.user, vfile, 'right', False)
+        add_gloss_update_to_revision_history(request.user, gloss, 'gloss_perspectivevideo_right', '', str(right_perspective_video))
         nr_of_videos += 1
 
     return JsonResponse({'message': f'Uploaded {nr_of_videos} videos to dataset {dataset}.'}, status=200)
