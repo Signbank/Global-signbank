@@ -1296,7 +1296,7 @@ textarea:focus {
                             <td>{{perspectivevideoform.videofile}}</td>
                           </tr>
                          <tr>
-                            <td>{{perspectivevideoform.perspective}}</td>
+                            <td class="td td-light" style='width:5em'>{{perspectivevideoform.perspective}}</td>
                           </tr>
                           <tr>
                             <td id="perspvideo-buttons">
@@ -1908,64 +1908,64 @@ textarea:focus {
                                    <tr>
                                        <td colspan="2">
                                            <div>
-    {% if videonme.has_perspective_videos %}
-    <div id="buttonbar_nme_{{videonme.offset}}-top" style="background-color:transparent;height:auto;">
-        {% if videonme.has_left_perspective %}
-        <button class="btn video_button_nme" id="show_nme_{{videonme.offset}}_left"
-                data-offset="{{videonme.offset}}" onclick="show_nme_left(this);"
-                style="font-size:18px;background-color:transparent;">
-            <span class="glyphicon glyphicon-facetime-video" style="transform:rotateZ(-30deg);rotateY(0deg);height:auto;"></span>
-        </button>
-        {% endif %}
-    <button class="btn video_button_nme active" id="show_nme_{{videonme.offset}}_middle"
-            data-offset="{{videonme.offset}}" onclick="show_nme_middle(this);"
-            style="font-size:18px;background-color:transparent;">
-        <span class="glyphicon glyphicon-user"></span>
-    </button>
-        {% if videonme.has_right_perspective %}
-        <button class="btn video_button_nme" id="show_nme_{{videonme.offset}}_right"
-                data-offset="{{videonme.offset}}" onclick="show_nme_right(this);"
-                style="font-size:18px;background-color:transparent;">
-            <span class="glyphicon glyphicon-facetime-video" style="transform:rotateZ(210deg);height:auto;"></span></button>
-        {% endif %}
-    </div>
-    {% endif %}
+                                            {% if videonme.has_perspective_videos %}
+                                            <div id="buttonbar_nme_{{videonme.offset}}-top" style="background-color:transparent;height:auto;">
+                                                {% if videonme.has_left_perspective %}
+                                                <button class="btn video_button_nme" id="show_nme_{{videonme.offset}}_left"
+                                                        data-offset="{{videonme.offset}}" onclick="show_nme_left(this);"
+                                                        style="font-size:18px;background-color:transparent;">
+                                                    <span class="glyphicon glyphicon-facetime-video" style="transform:rotateZ(-30deg);rotateY(0deg);height:auto;"></span>
+                                                </button>
+                                                {% endif %}
+                                            <button class="btn video_button_nme active" id="show_nme_{{videonme.offset}}_middle"
+                                                    data-offset="{{videonme.offset}}" onclick="show_nme_middle(this);"
+                                                    style="font-size:18px;background-color:transparent;">
+                                                <span class="glyphicon glyphicon-user"></span>
+                                            </button>
+                                                {% if videonme.has_right_perspective %}
+                                                <button class="btn video_button_nme" id="show_nme_{{videonme.offset}}_right"
+                                                        data-offset="{{videonme.offset}}" onclick="show_nme_right(this);"
+                                                        style="font-size:18px;background-color:transparent;">
+                                                    <span class="glyphicon glyphicon-facetime-video" style="transform:rotateZ(210deg);height:auto;"></span></button>
+                                                {% endif %}
+                                            </div>
+                                            {% endif %}
 
-        <div id="player_nme_{{videonme.offset}}" style="">
-            <video id='videonmeplayer_{{videonme.offset}}_middle' class="videonmeplayer_middle"
-                   src="{{protected_media_url}}{{videonme.get_video_path}}?v={% now 'YmdHis' %}"
-                   style="height:200px;width:auto;" playsinline autoplay muted></video>
+                                                <div id="player_nme_{{videonme.offset}}" style="">
+                                                    <video id='videonmeplayer_{{videonme.offset}}_middle' class="videonmeplayer_middle"
+                                                           src="{{protected_media_url}}{{videonme.get_video_path}}?v={% now 'YmdHis' %}"
+                                                           style="height:200px;width:auto;" playsinline muted></video>
 
-        {% if videonme.has_left_perspective %}
-            {% with nme_videos_lookup|get_item:videonme.offset as nme_perspectives %}
-            {% with nme_perspectives|get_item:'left' as nmevideo_left %}
-            <video id='videonmeplayer_{{videonme.offset}}_left'  class="videonmeplayer_left"
-                   src="{{protected_media_url}}{{nmevideo_left.get_video_path}}?v={% now 'YmdHis' %}"
-                   style="height:200px;width:auto;" playsinline autoplay muted></video>
-            {% endwith %}
-            {% endwith %}
-        {% endif %}
-        {% if videonme.has_right_perspective %}
-            {% with nme_videos_lookup|get_item:videonme.offset as nme_perspectives %}
-            {% with nme_perspectives|get_item:'right' as nmevideo_right %}
-            <video id='videonmeplayer_{{videonme.offset}}_right'  class="videonmeplayer_right"
-                   src="{{protected_media_url}}{{nmevideo_right.get_video_path}}?v={% now 'YmdHis' %}"
-                   style="height:200px;width:auto;" playsinline autoplay muted></video>
-            {% endwith %}
-            {% endwith %}
-        {% endif %}
-        </div>
-        <div id="buttonbar_nme_{{videonme.offset}}" style="background-color:transparent;">
-        <button class="btn" id="play_nme_{{videonme.offset}}_perspective"
-                onclick="play_perspective_nme(this);" data-offset="{{videonme.offset}}"
-                style="font-size:16px;background-color:transparent;"><span class="glyphicon glyphicon-play"></span></button>
-        <button class="btn" id="pause_nme_{{videonme.offset}}_perspective"
-                onclick="pause_perspective_nme(this);" data-offset="{{videonme.offset}}"
-                style="font-size:16px;background-color:transparent;"><span class="glyphicon glyphicon-pause"></span></button>
-<!--        <button class="btn" id="fullscreen_nme_{{videonme.offset}}_perspective"-->
-<!--                onclick="openFullscreen_nme(this);" data-offset="{{videonme.offset}}"-->
-<!--                style="font-size:16px;background-color:transparent;"><span class="glyphicon glyphicon-fullscreen"></span></button>-->
-        </div>
+                                                {% if videonme.has_left_perspective %}
+                                                    {% with nme_videos_lookup|get_item:videonme.offset as nme_perspectives %}
+                                                    {% with nme_perspectives|get_item:'left' as nmevideo_left %}
+                                                    <video id='videonmeplayer_{{videonme.offset}}_left'  class="videonmeplayer_left"
+                                                           src="{{protected_media_url}}{{nmevideo_left.get_video_path}}?v={% now 'YmdHis' %}"
+                                                           style="height:200px;width:auto;" playsinline muted></video>
+                                                    {% endwith %}
+                                                    {% endwith %}
+                                                {% endif %}
+                                                {% if videonme.has_right_perspective %}
+                                                    {% with nme_videos_lookup|get_item:videonme.offset as nme_perspectives %}
+                                                    {% with nme_perspectives|get_item:'right' as nmevideo_right %}
+                                                    <video id='videonmeplayer_{{videonme.offset}}_right'  class="videonmeplayer_right"
+                                                           src="{{protected_media_url}}{{nmevideo_right.get_video_path}}?v={% now 'YmdHis' %}"
+                                                           style="height:200px;width:auto;" playsinline muted></video>
+                                                    {% endwith %}
+                                                    {% endwith %}
+                                                {% endif %}
+                                                </div>
+                                                <div id="buttonbar_nme_{{videonme.offset}}" style="background-color:transparent;">
+                                                <button class="btn" id="play_nme_{{videonme.offset}}_perspective"
+                                                        onclick="play_perspective_nme(this);" data-offset="{{videonme.offset}}"
+                                                        style="font-size:16px;background-color:transparent;"><span class="glyphicon glyphicon-play"></span></button>
+                                                <button class="btn" id="pause_nme_{{videonme.offset}}_perspective"
+                                                        onclick="pause_perspective_nme(this);" data-offset="{{videonme.offset}}"
+                                                        style="font-size:16px;background-color:transparent;"><span class="glyphicon glyphicon-pause"></span></button>
+                                        <!--        <button class="btn" id="fullscreen_nme_{{videonme.offset}}_perspective"-->
+                                        <!--                onclick="openFullscreen_nme(this);" data-offset="{{videonme.offset}}"-->
+                                        <!--                style="font-size:16px;background-color:transparent;"><span class="glyphicon glyphicon-fullscreen"></span></button>-->
+                                                </div>
                                            </div>
                                         </td>
                                    </tr>
@@ -1981,7 +1981,6 @@ textarea:focus {
                                     </tr>
                                    {% endfor %}
                                    {% endwith %}
-                                   <tr>Perspective {{videonme.perspective}}</tr>
                                    <tr class="editform">
                                        <td>{% trans "Index" %}</td>
                                        <td class='edit edit_int' id='nmevideo_offset_{{videonme.id}}'>{{videonme.offset}}</td>
@@ -2041,12 +2040,12 @@ textarea:focus {
                                     </td>
                                 </tr>
                                 {% endfor %}
-
+                                <tr>
                                 <th>{% trans "Perspective" %}</th>
-                                <td>
+                                <td class="td td-light" style='width:5em'>
                                     {{nmevideoform.nme_perspective}}
                                 </td>
-
+                                </tr>
                             </table>
                       <br><br>
                     </form>
