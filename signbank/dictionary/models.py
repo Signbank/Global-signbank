@@ -1,4 +1,6 @@
 from colorfield.fields import ColorField
+import datetime as DT
+from django.utils.timezone import get_current_timezone
 from django.db.models import Q
 from django.db import models
 from django.conf import settings
@@ -2449,8 +2451,6 @@ class Gloss(models.Model):
                 msg = "The video could not be saved in the GlossVideo object for gloss " % self.pk
                 raise ValidationError(msg)
 
-            import datetime as DT
-            from django.utils.timezone import get_current_timezone
             self.lastUpdated = DT.datetime.now(tz=get_current_timezone())
             self.save()
             video.make_poster_image()
@@ -2523,8 +2523,7 @@ class Gloss(models.Model):
             video.videofile.save(relative_path, videofile)
         else:
             return GlossVideoNME(gloss=self, offset=offset, perspective=perspective)
-        import datetime as DT
-        from django.utils.timezone import get_current_timezone
+
         self.lastUpdated = DT.datetime.now(tz=get_current_timezone())
         self.save()
         video.save()
@@ -2567,8 +2566,7 @@ class Gloss(models.Model):
             msg = "No video file supplied for perspective video upload of gloss %s" \
                   % (self.pk)
             raise ValidationError(msg)
-        import datetime as DT
-        from django.utils.timezone import get_current_timezone
+
         self.lastUpdated = DT.datetime.now(tz=get_current_timezone())
         self.save()
         video.save()
