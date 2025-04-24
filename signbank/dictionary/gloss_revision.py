@@ -94,8 +94,9 @@ def pretty_print_revisions(gloss):
     simple_translation_dict = {
         'sequential_morphology': gettext("Sequential Morphology"),
         'simultaneous_morphology': gettext("Simultaneous Morphology"),
-        'gloss_perspectivevideo_left': gettext("Upload Perspective Video (Left)"),
-        'gloss_perspectivevideo_right': gettext("Upload Perspective Video (Right)"),
+        'gloss_video': gettext("Upload Primary Video"),
+        'gloss_perspectivevideo_left': gettext("Upload Perspective Video (left)"),
+        'gloss_perspectivevideo_right': gettext("Upload Perspective Video (right)"),
         'blend_morphology': gettext("Blend Morphology"),
         'archived': gettext("Deleted"),
         'restored': gettext("Restored")
@@ -126,12 +127,12 @@ def pretty_print_revisions(gloss):
             except ValueError:
                 prefix, operation, offset, perspective = 'gloss', 'nmevideo', '0', ''
             if perspective == 'left':
-                video_perspective = " ({left})".format(left=gettext("Left"))
+                video_perspective = " ({left})".format(left=gettext("left"))
             elif perspective == 'right':
-                video_perspective = " ({right})".format(right=gettext("Right"))
+                video_perspective = " ({right})".format(right=gettext("right"))
             else:
                 video_perspective = ""
-            revision_verbose_fieldname = gettext("Upload NME Video") + ' ' + offset + video_perspective
+            revision_verbose_fieldname = "{operation} {offset}{perspective}".format(operation=gettext("Upload NME Video"), offset=offset, perspective=video_perspective)
         elif revision.field_name in Gloss.get_field_names():
             revision_verbose_fieldname = gettext(Gloss.get_field(revision.field_name).verbose_name)
         elif revision.field_name in simple_translation_dict.keys():
