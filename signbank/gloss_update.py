@@ -22,7 +22,7 @@ from signbank.dictionary.models import (Dataset, Gloss, Language, AnnotationIdgl
                                         AnnotatedSentence, AnnotatedSentenceSource, AnnotatedSentenceTranslation,
                                         AnnotatedSentenceContext, FieldChoice, FieldChoiceForeignKey,
                                         CATEGORY_MODELS_MAPPING)
-from signbank.video.models import GlossVideoDescription, GlossVideoNME, AnnotatedVideo
+from signbank.video.models import GlossVideoDescription, GlossVideoNME, AnnotatedVideo, NME_PERSPECTIVE_CHOICES
 from signbank.video.views import get_glosses_from_eaf
 from signbank.tools import get_default_annotationidglosstranslation
 from signbank.csv_interface import normalize_field_choice, normalize_boolean

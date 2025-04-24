@@ -1222,6 +1222,8 @@ class GlossDetailView(DetailView):
 
         context['nme_video_descriptions'] = get_nme_video_descriptions(gloss)
 
+        context['nme_videos_lookup'] = gloss.get_nme_videos_lookup
+
         # it does not work to put this in a separate function
         # the url parameter encoding is erased by Django of it's not constructed here
         lemma_group = gloss.lemma.gloss_set.all()
@@ -5467,7 +5469,7 @@ class RecentGlossListView(ListView):
         get = self.request.GET
         days_input = get.get('days', RecentGlossSearchForm.days_default)
         self.days = days_input
-        days = timedelta(days=days_input)
+        days = timedelta(days=int(days_input))
         timetype = get.get('timetype', self.timestamp_field)
         self.timestamp_field = timetype
         filter_field = timetype + '__range'

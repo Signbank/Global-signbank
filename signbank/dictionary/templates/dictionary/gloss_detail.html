@@ -196,6 +196,12 @@ function checkKey(e)
 .video_button.active {
     color: red;
 }
+.video_button_nme:hover {
+    color: red;
+}
+.video_button_nme.active {
+    color: red;
+}
 </style>
     <script type='text/javascript' src="{{STATIC_URL}}js/gloss_edit_color.js"></script>
     <script type="text/javascript" src="{{STATIC_URL}}js/drag_drop_files.js"></script>
@@ -263,10 +269,30 @@ function checkKey(e)
             $('#videoplayer_right').trigger('play');
         }
 
+        function play_perspective_nme(el) {
+            var offset = $(el).attr('data-offset');
+            var middle_player = '#videonmeplayer_'+offset+'_middle';
+            var left_player = '#videonmeplayer_'+offset+'_left';
+            var right_player = '#videonmeplayer_'+offset+'_right';
+            $(middle_player).trigger('play');
+            $(left_player).trigger('play');
+            $(right_player).trigger('play');
+        }
+
         function pause_perspective() {
             $('#videoplayer_middle').trigger('pause');
             $('#videoplayer_left').trigger('pause');
             $('#videoplayer_right').trigger('pause');
+        }
+
+        function pause_perspective_nme(el) {
+            var offset = $(el).attr('data-offset');
+            var middle_player = '#videonmeplayer_'+offset+'_middle';
+            var left_player = '#videonmeplayer_'+offset+'_left';
+            var right_player = '#videonmeplayer_'+offset+'_right';
+            $(middle_player).trigger('pause');
+            $(left_player).trigger('pause');
+            $(right_player).trigger('pause');
         }
 
         function restart_video(vid) {
@@ -282,6 +308,19 @@ function checkKey(e)
             var left = $('#videoplayer_left');
             restart_video(left);
             var right = $('#videoplayer_right');
+            restart_video(right);
+        }
+
+        function restart_perspective_nme() {
+            var offset = $(el).attr('data-offset');
+            var middle_player = '#videonmeplayer_'+offset+'_middle';
+            var left_player = '#videonmeplayer_'+offset+'_left';
+            var right_player = '#videonmeplayer_'+offset+'_right';
+            var middle = $(middle_player);
+            restart_video(middle);
+            var left = $(left_player);
+            restart_video(left);
+            var right = $(right_player);
             restart_video(right);
         }
 
@@ -358,6 +397,9 @@ function checkKey(e)
             $('#videoplayer_middle').show();
             $('#videoplayer_left').hide();
             $('#videoplayer_right').hide();
+            $('.videonmeplayer_middle').show();
+            $('.videonmeplayer_left').hide();
+            $('.videonmeplayer_right').hide();
         });
 
         $('#searchquery').css({'margin-bottom': 10, 'padding-bottom': 10});
@@ -388,6 +430,39 @@ function checkKey(e)
             $('#videoplayer_left').hide();
             $('#videoplayer_right').hide();
         });
+        function show_nme_left(el) {
+            var offset = $(el).attr('data-offset');
+            $('.video_button_nme').removeClass("active");
+            $(el).addClass("active");
+            var middle_player = '#videonmeplayer_'+offset+'_middle';
+            var left_player = '#videonmeplayer_'+offset+'_left';
+            var right_player = '#videonmeplayer_'+offset+'_right';
+            $(middle_player).hide();
+            $(left_player).show();
+            $(right_player).hide();
+        };
+        function show_nme_right(el) {
+            var offset = $(el).attr('data-offset');
+            $('.video_button_nme').removeClass("active");
+            $(el).addClass("active");
+            var middle_player = '#videonmeplayer_'+offset+'_middle';
+            var left_player = '#videonmeplayer_'+offset+'_left';
+            var right_player = '#videonmeplayer_'+offset+'_right';
+            $(middle_player).hide();
+            $(left_player).hide();
+            $(right_player).show();
+        };
+        function show_nme_middle(el) {
+            var offset = $(el).attr('data-offset');
+            $('.video_button_nme').removeClass("active");
+            $(el).addClass("active");
+            var middle_player = '#videonmeplayer_'+offset+'_middle';
+            var left_player = '#videonmeplayer_'+offset+'_left';
+            var right_player = '#videonmeplayer_'+offset+'_right';
+            $(middle_player).show();
+            $(left_player).hide();
+            $(right_player).hide();
+        };
     </script>
 {% endblock %}
 
@@ -1221,7 +1296,7 @@ textarea:focus {
                             <td>{{perspectivevideoform.videofile}}</td>
                           </tr>
                          <tr>
-                            <td>{{perspectivevideoform.perspective}}</td>
+                            <td class="td td-light" style='width:5em'>{{perspectivevideoform.perspective}}</td>
                           </tr>
                           <tr>
                             <td id="perspvideo-buttons">
@@ -1798,6 +1873,7 @@ textarea:focus {
                <table class='table table-responsive' style="text-align: left;width:100%;">
                 <tr style="overflow-y:auto;">
                     <td style="display:inline-block;">
+                        <div>
                     {% for videonme in gloss.get_nme_videos %}
                         <div class="table-responsive" style="display:inline-block;">
                          <table class="table table-condensed" style="text-align: left;">
@@ -1831,9 +1907,65 @@ textarea:focus {
                                <table>
                                    <tr>
                                        <td colspan="2">
-                                           <div id="nmeplayer">
-                                            <video id='videonmeplayer' src="{{protected_media_url}}{{videonme.get_video_path}}?v={% now 'YmdHis' %}"
-                                                   style="height:200px;width:auto;" controls muted></video>
+                                           <div>
+                                            {% if videonme.has_perspective_videos %}
+                                            <div id="buttonbar_nme_{{videonme.offset}}-top" style="background-color:transparent;height:auto;">
+                                                {% if videonme.has_left_perspective %}
+                                                <button class="btn video_button_nme" id="show_nme_{{videonme.offset}}_left"
+                                                        data-offset="{{videonme.offset}}" onclick="show_nme_left(this);"
+                                                        style="font-size:18px;background-color:transparent;">
+                                                    <span class="glyphicon glyphicon-facetime-video" style="transform:rotateZ(-30deg);rotateY(0deg);height:auto;"></span>
+                                                </button>
+                                                {% endif %}
+                                            <button class="btn video_button_nme active" id="show_nme_{{videonme.offset}}_middle"
+                                                    data-offset="{{videonme.offset}}" onclick="show_nme_middle(this);"
+                                                    style="font-size:18px;background-color:transparent;">
+                                                <span class="glyphicon glyphicon-user"></span>
+                                            </button>
+                                                {% if videonme.has_right_perspective %}
+                                                <button class="btn video_button_nme" id="show_nme_{{videonme.offset}}_right"
+                                                        data-offset="{{videonme.offset}}" onclick="show_nme_right(this);"
+                                                        style="font-size:18px;background-color:transparent;">
+                                                    <span class="glyphicon glyphicon-facetime-video" style="transform:rotateZ(210deg);height:auto;"></span></button>
+                                                {% endif %}
+                                            </div>
+                                            {% endif %}
+
+                                                <div id="player_nme_{{videonme.offset}}" style="">
+                                                    <video id='videonmeplayer_{{videonme.offset}}_middle' class="videonmeplayer_middle"
+                                                           src="{{protected_media_url}}{{videonme.get_video_path}}?v={% now 'YmdHis' %}"
+                                                           style="height:200px;width:auto;" playsinline muted></video>
+
+                                                {% if videonme.has_left_perspective %}
+                                                    {% with nme_videos_lookup|get_item:videonme.offset as nme_perspectives %}
+                                                    {% with nme_perspectives|get_item:'left' as nmevideo_left %}
+                                                    <video id='videonmeplayer_{{videonme.offset}}_left'  class="videonmeplayer_left"
+                                                           src="{{protected_media_url}}{{nmevideo_left.get_video_path}}?v={% now 'YmdHis' %}"
+                                                           style="height:200px;width:auto;" playsinline muted></video>
+                                                    {% endwith %}
+                                                    {% endwith %}
+                                                {% endif %}
+                                                {% if videonme.has_right_perspective %}
+                                                    {% with nme_videos_lookup|get_item:videonme.offset as nme_perspectives %}
+                                                    {% with nme_perspectives|get_item:'right' as nmevideo_right %}
+                                                    <video id='videonmeplayer_{{videonme.offset}}_right'  class="videonmeplayer_right"
+                                                           src="{{protected_media_url}}{{nmevideo_right.get_video_path}}?v={% now 'YmdHis' %}"
+                                                           style="height:200px;width:auto;" playsinline muted></video>
+                                                    {% endwith %}
+                                                    {% endwith %}
+                                                {% endif %}
+                                                </div>
+                                                <div id="buttonbar_nme_{{videonme.offset}}" style="background-color:transparent;">
+                                                <button class="btn" id="play_nme_{{videonme.offset}}_perspective"
+                                                        onclick="play_perspective_nme(this);" data-offset="{{videonme.offset}}"
+                                                        style="font-size:16px;background-color:transparent;"><span class="glyphicon glyphicon-play"></span></button>
+                                                <button class="btn" id="pause_nme_{{videonme.offset}}_perspective"
+                                                        onclick="pause_perspective_nme(this);" data-offset="{{videonme.offset}}"
+                                                        style="font-size:16px;background-color:transparent;"><span class="glyphicon glyphicon-pause"></span></button>
+                                        <!--        <button class="btn" id="fullscreen_nme_{{videonme.offset}}_perspective"-->
+                                        <!--                onclick="openFullscreen_nme(this);" data-offset="{{videonme.offset}}"-->
+                                        <!--                style="font-size:16px;background-color:transparent;"><span class="glyphicon glyphicon-fullscreen"></span></button>-->
+                                                </div>
                                            </div>
                                         </td>
                                    </tr>
@@ -1849,7 +1981,6 @@ textarea:focus {
                                     </tr>
                                    {% endfor %}
                                    {% endwith %}
-                                   <tr>Perspective {{videonme.perspective}}</tr>
                                    <tr class="editform">
                                        <td>{% trans "Index" %}</td>
                                        <td class='edit edit_int' id='nmevideo_offset_{{videonme.id}}'>{{videonme.offset}}</td>
@@ -1862,6 +1993,7 @@ textarea:focus {
                          </table>
                       </div>
                     {% endfor %}
+                        </div>
                     </td>
                 </tr>
                </table>
@@ -1908,12 +2040,12 @@ textarea:focus {
                                     </td>
                                 </tr>
                                 {% endfor %}
-
+                                <tr>
                                 <th>{% trans "Perspective" %}</th>
-                                <td>
+                                <td class="td td-light" style='width:5em'>
                                     {{nmevideoform.nme_perspective}}
                                 </td>
-
+                                </tr>
                             </table>
                       <br><br>
                     </form>
