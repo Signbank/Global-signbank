@@ -126,9 +126,9 @@ def pretty_print_revisions(gloss):
             except ValueError:
                 prefix, operation, offset, perspective = 'gloss', 'nmevideo', '0', ''
             if perspective == 'left':
-                video_perspective = " (" + gettext("Left") + ")"
+                video_perspective = " ({left})".format(left=gettext("Left"))
             elif perspective == 'right':
-                video_perspective = " (" + gettext("Right") + ")"
+                video_perspective = " ({right})".format(right=gettext("Right"))
             else:
                 video_perspective = ""
             revision_verbose_fieldname = gettext("Upload NME Video") + ' ' + offset + video_perspective
