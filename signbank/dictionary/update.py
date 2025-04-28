@@ -13,6 +13,7 @@ from django.core.exceptions import ObjectDoesNotExist, MultipleObjectsReturned, 
 from django.core.files import File
 from django.contrib.auth.decorators import permission_required
 from django.db.models.fields import BooleanField, IntegerField
+from django.forms.models import ModelChoiceField
 from django.db import DatabaseError, IntegrityError
 from django.utils.timezone import get_current_timezone
 from django.contrib import messages
@@ -31,7 +32,7 @@ from signbank.video.models import (AnnotatedVideo, GlossVideoNME, GlossVideoDesc
 from signbank.video.convertvideo import convert_video
 
 from signbank.settings.server_specific import (WRITABLE_FOLDER, PREFIX_URL, USE_REGULAR_EXPRESSIONS,
-                                               SHOW_DATASET_INTERFACE_OPTIONS,
+                                               SHOW_DATASET_INTERFACE_OPTIONS, OBLIGATORY_FIELDS,
                                                OTHER_MEDIA_DIRECTORY, MORPHEME_DISPLAY_FIELDS,
                                                DATASET_METADATA_DIRECTORY, DATASET_EAF_DIRECTORY,
                                                GUARDED_GLOSS_DELETE, GUARDED_MORPHEME_DELETE,
@@ -137,6 +138,7 @@ def add_gloss(request):
         except (ObjectDoesNotExist, IntegerField, ValueError, TypeError):
             return show_error(request, _("The given Lemma Idgloss ID is unknown."), form, dataset_languages)
 
+    obligatory_fields_dict = dict()
     # if we get to here a dataset has been chosen for the new gloss and a lemma has been selected or created
     for item, value in request.POST.items():
         if item.startswith(form.gloss_create_field_prefix):
@@ -149,6 +151,12 @@ def add_gloss(request):
             if glosses_for_this_language_and_annotation_idgloss.count() > 0:
                 messages.add_message(request, messages.ERROR, _('Annotation ID Gloss not unique.'))
                 return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
+        elif item.startswith('lemmacreate_'):
+            continue
+        elif item in ['csrfmiddlewaretoken', 'dataset', 'lemma_language', 'idgloss', 'select_or_new_lemma']:
+            continue
+        else:
+            obligatory_fields_dict[item] = int(value)
 
     try:
         gloss = form.save()
@@ -157,16 +165,22 @@ def add_gloss(request):
         gloss.lemma = lemmaidgloss
 
         gloss_fields = [Gloss.get_field(fname) for fname in Gloss.get_field_names()]
-
-        # Set a default for all FieldChoice fields
-        for field in [f for f in gloss_fields if isinstance(f, FieldChoiceForeignKey)]:
-            field_value = getattr(gloss, field.name)
-            if field_value is None:
-                field_choice_category = field.field_choice_category
+        for field in [f for f in gloss_fields if isinstance(f, Handshape)]:
+            handshape_object = Handshape.objects.get(machine_value=0)
+            setattr(gloss, field.name, handshape_object)
+            if field.name in OBLIGATORY_FIELDS:
+                if field.name not in obligatory_fields_dict.keys():
+                    # no value was provided
+                    continue
                 try:
-                    fieldchoice = FieldChoice.objects.get(field=field_choice_category, machine_value=0)
+                    handshape_object = Handshape.objects.get(machine_value=obligatory_fields_dict[field.name])
+                    setattr(gloss, field.name, handshape_object)
                 except ObjectDoesNotExist:
-                    fieldchoice = FieldChoice.objects.create(field=field_choice_category, machine_value=0, name='-')
+                    pass
+        for field in [f for f in gloss_fields if isinstance(f, FieldChoiceForeignKey)]:
+            if field.name in OBLIGATORY_FIELDS and field.name in obligatory_fields_dict.keys():
+                fieldchoice = FieldChoice.objects.get(field=field.field_choice_category,
+                                                      machine_value=obligatory_fields_dict[field.name])
                 setattr(gloss, field.name, fieldchoice)
 
         gloss.save()

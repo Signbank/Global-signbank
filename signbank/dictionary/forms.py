@@ -17,7 +17,7 @@ from signbank.settings.server_specific import (LANGUAGES, LANGUAGE_CODE, USE_REG
                                                MODELTRANSLATION_LANGUAGES, FIELDS, DATE_FORMAT,
                                                MORPHEME_DISPLAY_FIELDS, SHOW_FIELD_CHOICE_COLORS,
                                                MINIMAL_PAIRS_SEARCH_FIELDS, MINIMAL_PAIRS_CHOICE_FIELDS,
-                                               RECENTLY_ADDED_SIGNS_PERIOD)
+                                               RECENTLY_ADDED_SIGNS_PERIOD, OBLIGATORY_FIELDS)
 from signbank.video.models import GlossVideo
 from signbank.dictionary.models import (Gloss, Morpheme, Definition, Relation, RelationToForeignSign,
                                         OtherMedia, Handshape, SemanticField, DerivationHistory,
@@ -50,7 +50,7 @@ class GlossCreateForm(forms.ModelForm):
 
     class Meta:
         model = Gloss
-        fields = []
+        fields = ['handedness', 'domhndsh', 'subhndsh']
 
     def __init__(self, queryDict, *args, **kwargs):
         self.languages = kwargs.pop('languages')
@@ -69,28 +69,50 @@ class GlossCreateForm(forms.ModelForm):
             if glosscreate_field_name in queryDict:
                 self.fields[glosscreate_field_name].value = queryDict[glosscreate_field_name]
 
+        self.fields['handedness'] = forms.ModelChoiceField(label=_('Handedness'),
+                                                           queryset=FieldChoice.objects.filter(field='Handedness').order_by(
+                                                                         'machine_value'), empty_label=None,
+                                                           widget=forms.Select(attrs=ATTRS_FOR_FORMS),
+                                                           required='handedness' in OBLIGATORY_FIELDS)
+        self.fields['domhndsh'] = forms.ModelChoiceField(label=_('Strong Hand'),
+                                                         queryset=Handshape.objects.all().order_by(
+                                                             'machine_value'), empty_label=None,
+                                                         widget=forms.Select(attrs=ATTRS_FOR_FORMS),
+                                                         required='domhndsh' in OBLIGATORY_FIELDS)
+        self.fields['subhndsh'] = forms.ModelChoiceField(label=_('Weak Hand'),
+                                                         queryset=Handshape.objects.all().order_by(
+                                                                 'machine_value'), empty_label=None,
+                                                         widget=forms.Select(attrs=ATTRS_FOR_FORMS),
+                                                         required='subhndsh' in OBLIGATORY_FIELDS)
+
     @atomic  # This rolls back the gloss creation if creating annotationidglosstranslations fails
     def save(self, commit=True):
-        gloss = super(GlossCreateForm, self).save(commit)
+        gloss = Gloss()
+        gloss.save()
         dataset = Dataset.objects.get(id=self['dataset'].value())
         for language in self.languages:
             glosscreate_field_name = self.gloss_create_field_prefix + language.language_code_2char
             annotation_idgloss_text = self[glosscreate_field_name].value()
-            existing_annotationidglosstranslations = gloss.annotationidglosstranslation_set.filter(language=language)
-            if existing_annotationidglosstranslations is None or len(existing_annotationidglosstranslations) == 0:
-                annotationidglosstranslation = AnnotationIdglossTranslation(gloss=gloss, language=language,
-                                                                            text=annotation_idgloss_text,
-                                                                            dataset=dataset)
-                annotationidglosstranslation.save()
-            elif len(existing_annotationidglosstranslations) == 1:
-                annotationidglosstranslation = existing_annotationidglosstranslations[0]
-                annotationidglosstranslation.text = annotation_idgloss_text
-                annotationidglosstranslation.save()
-            else:
+            existing_annotationidglosstranslations = AnnotationIdglossTranslation.objects.filter(language=language, text=annotation_idgloss_text, gloss__lemma__dataset=dataset)
+            if existing_annotationidglosstranslations.count() > 0:
+                existing_gloss = existing_annotationidglosstranslations.first().gloss
                 raise Exception(
                     "In class %s: gloss with id %s has more than one annotation idgloss translation for language %s"
-                    % (self.__class__.__name__, gloss.pk, language.name)
+                    % (self.__class__.__name__, existing_gloss.pk, language.name)
                 )
+            annotationidglosstranslation = AnnotationIdglossTranslation(gloss=gloss, language=language,
+                                                                        text=annotation_idgloss_text)
+            annotationidglosstranslation.save()
+
+        if 'handedness' in OBLIGATORY_FIELDS:
+            handedness_field = FieldChoice.objects.get(field='Handedness', machine_value=self['handedness'].value())
+            setattr(gloss, 'handedness', handedness_field)
+        if 'domhndsh' in OBLIGATORY_FIELDS:
+            domhndsh_field = Handshape.objects.get(machine_value=self['domhndsh'].value())
+            setattr(gloss, 'domhndsh', domhndsh_field)
+        if 'subhndsh' in OBLIGATORY_FIELDS:
+            subhndsh_field = Handshape.objects.get(machine_value=self['subhndsh'].value())
+            setattr(gloss, 'subhndsh', subhndsh_field)
         gloss.creator.add(self.user)
         gloss.creationDate = DT.datetime.now()
         gloss.save()

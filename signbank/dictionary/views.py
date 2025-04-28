@@ -36,7 +36,7 @@ from signbank.settings.server_specific import (PREFIX_URL, WRITABLE_FOLDER, GLOS
                                                LANGUAGE_CODE, USE_HANDSHAPE, HANDSHAPE_IMAGE_DIRECTORY,
                                                RECENTLY_ADDED_SIGNS_PERIOD, USE_REGULAR_EXPRESSIONS,
                                                FIELDS, DEFINITION_FIELDS, SHOW_QUERY_PARAMETERS_AS_BUTTON,
-                                               DEFAULT_LANGUAGE_HEADER_COLUMN, DEFAULT_DATASET_ACRONYM)
+                                               DEFAULT_LANGUAGE_HEADER_COLUMN, DEFAULT_DATASET_ACRONYM, OBLIGATORY_FIELDS)
 from signbank.settings.base import (MAXIMUM_UPLOAD_SIZE, SUPPORTED_CITATION_IMAGE_EXTENSIONS, USE_X_SENDFILE,
                                     ALWAYS_REQUIRE_LOGIN, MEDIA_ROOT, ESCAPE_UPLOADED_VIDEO_FILE_PATH)
 from signbank.video.models import (GlossVideo, small_appendix, add_small_appendix)
@@ -60,7 +60,9 @@ from signbank.tools import (get_two_letter_dir, get_default_annotationidglosstra
                             split_csv_lines_header_body,
                             split_csv_lines_sentences_header_body, create_sentence_from_valuedict,
                             get_deleted_gloss_or_media_data, get_gloss_data)
-from signbank.dictionary.field_choices import fields_to_fieldcategory_dict
+from signbank.dictionary.field_choices import (get_static_choice_lists, get_frequencies_for_category, category_to_fields,
+                                               fields_to_categories, fields_to_fieldcategory_dict,
+                                               get_static_choice_lists_per_field)
 from signbank.csv_interface import (csv_create_senses, csv_update_sentences, csv_create_sentence, required_csv_columns,
                                     choice_fields_choices)
 from signbank.dictionary.translate_choice_list import (machine_value_to_translated_human_value,
@@ -406,7 +408,6 @@ def add_new_sign(request):
     if 'last_used_dataset' not in request.session.keys():
         request.session['last_used_dataset'] = last_used_dataset.acronym
     context['last_used_dataset'] = last_used_dataset
-
     if 'change_dataset' not in get_user_perms(request.user, last_used_dataset):
         feedback_message = gettext("No permission to change dataset")
         return show_warning(request, feedback_message, selected_datasets)
@@ -421,9 +422,15 @@ def add_new_sign(request):
 
     context['SHOW_DATASET_INTERFACE_OPTIONS'] = SHOW_DATASET_INTERFACE_OPTIONS
     context['USE_REGULAR_EXPRESSIONS'] = USE_REGULAR_EXPRESSIONS
+    context['OBLIGATORY_FIELDS'] = OBLIGATORY_FIELDS
 
     context['add_gloss_form'] = GlossCreateForm(request.GET, languages=dataset_languages, user=request.user,
                                                 last_used_dataset=last_used_dataset)
+
+    # do not lazy evaluate these; evaluate before putting in context variables
+    static_choice_lists, static_choice_list_colors = get_static_choice_lists_per_field()
+    context['static_choice_lists'] = static_choice_lists
+    context['static_choice_list_colors'] = static_choice_list_colors
 
     return render(request, 'dictionary/add_gloss.html', context)
 

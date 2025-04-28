@@ -1,10 +1,10 @@
-#Where the Signbank installation lives on your server
+# Where the Signbank installation lives on your server
 ROOT = '/var/www/'
 
-#Where the code is (where you did git clone)
+# Where the code is (where you did git clone)
 BASE_DIR = 'repo/'
 
-#Where Signbank can store things like images and videos
+# Where Signbank can store things like images and videos
 WRITABLE_FOLDER = 'writable/'
 GLOSS_VIDEO_DIRECTORY = 'glossvideo'
 EXAMPLESENTENCE_VIDEO_DIRECTORY = 'sensevideo'
@@ -25,10 +25,10 @@ TEST_DATA_DIRECTORY = 'test_data'
 BACKUP_VIDEOS_FOLDER = 'video_backups'
 DELETED_FILES_FOLDER = 'prullenmand'
 
-#Tmp folder to use
+# Tmp folder to use
 TMP_DIR = '/tmp'
 
-#Database settings
+# Database settings
 DATABASES = {'default':
                 {
                     'ENGINE': 'django.db.backends.sqlite3',
@@ -39,32 +39,32 @@ DATABASES = {'default':
                 }
             }
 
-#Where to store various kinds of metadata not in a table
+# Where to store various kinds of metadata not in a table
 METADATA_LOCATION = 'metadata.csv'
 
-#Video software to use to get the middle frame
+# Video software to use to get the middle frame
 FFMPEG_PROGRAM = "ffmpeg"
 
-#List of tuples containing the name and the email address of the admins
+# List of tuples containing the name and the email address of the admins
 ADMINS = [('Spongebob Squarepants','s.squarepants@gmail.com')]
 
-#What do we call this Signbank (for example NGT Signank, Global Signbank, ASL Signbank)?
+# What do we call this Signbank (for example NGT Signank, Global Signbank, ASL Signbank)?
 LANGUAGE_NAME = 'Global'
 COUNTRY_NAME = 'Narnia'
 
-#Influences which template and css folder are used
+# Influences which template and css folder are used
 SIGNBANK_VERSION_CODE = 'mysignbank'
 
-#Should include protocol and end with a slash
+# Should include protocol and end with a slash
 URL = 'https://example.com/'
 
-#A list of hosts, without protocol or slash
+# A list of hosts, without protocol or slash
 ALLOWED_HOSTS = ['example.com']
 
 # In case your Signbank lives in a subdirectory
 PREFIX_URL = ''
 
-#The interface languages supported by your installation
+# The interface languages supported by your installation
 gettext = lambda s: s
 LANGUAGES = (
     ('en', gettext('English')),
@@ -78,22 +78,22 @@ LANGUAGES_LANGUAGE_CODE_3CHAR = (
     ('en', 'eng'),
 )
 
-#Short (abbreviated) version of how language users call their language, to be used in the langauge picker
+# Short (abbreviated) version of how language users call their language, to be used in the langauge picker
 INTERFACE_LANGUAGE_SHORT_NAMES = ['EN']
 
-#The main interface language
+# The main interface language
 LANGUAGE_CODE = "en"
 
-#The main language for keywords (translations), using the 2 character language code
+# The main language for keywords (translations), using the 2 character language code
 DEFAULT_KEYWORDS_LANGUAGE = {'language_code_2char': 'en'}
 
-#The language column on which to sort in the list view
+# The language column on which to sort in the list view
 DEFAULT_LANGUAGE_HEADER_COLUMN = {'English': 'name_en'}
 
 # The default column prefix for the human readable FieldChoice name, used for display of Field Choices
 FALLBACK_FIELDCHOICE_HUMAN_LANGUAGE = 'english'
 
-#Hide other interface languages
+# Hide other interface languages
 SHOW_ENGLISH_ONLY = False
 SEPARATE_ENGLISH_IDGLOSS_FIELD = True
 
@@ -193,15 +193,15 @@ FREQUENCY_FIELDS = {}
 HANDSHAPE_ETYMOLOGY_FIELDS = ['domhndsh_letter','domhndsh_number','subhndsh_letter','subhndsh_number']
 HANDEDNESS_ARTICULATION_FIELDS = ['weakdrop','weakprop']
 
-#Use these fields to figure out which glosses are minimal pairs
+# Use these fields to figure out which glosses are minimal pairs
 MINIMAL_PAIRS_FIELDS = ['handedness','domhndsh','subhndsh','handCh','relatArtic','locprim','relOriMov','relOriLoc',
                         'oriCh','contType','movSh','movDir','repeat','altern']
 MINIMAL_PAIRS_SEARCH_FIELDS = MINIMAL_PAIRS_FIELDS + ['namEnt','semField','valence']
 MINIMAL_PAIRS_CHOICE_FIELDS = ['handedness', 'domhndsh', 'subhndsh', 'handCh', 'relatArtic', 'locprim', 'relOriMov',
                                'relOriLoc', 'oriCh', 'contType', 'movSh', 'movDir', 'namEnt', 'semField', 'valence']
 
-#Display these fields as columns in the list view
-GLOSS_LIST_DISPLAY_FIELDS = ['handedness','domhndsh','subhndsh','locprim']
+# Display these fields as columns in the list view
+GLOSS_LIST_DISPLAY_FIELDS = ['handedness', 'domhndsh', 'subhndsh', 'locprim']
 
 # These are fields in the Search forms by panel
 SEARCH_BY = {}
@@ -215,15 +215,17 @@ QUERY_DISPLAY_FIELDS = MINIMAL_PAIRS_SEARCH_FIELDS
 SHOW_QUERY_PARAMETERS_AS_BUTTON = True
 
 # fields are ordered per kind: Field Choice Lists, Text, Boolean
-MORPHEME_DISPLAY_FIELDS = ['handedness','handCh','relatArtic','locprim','relOriMov',
-                       'relOriLoc','oriCh','contType','movSh','movDir', 'locVirtObj','phonOth','repeat','altern']
+MORPHEME_DISPLAY_FIELDS = ['handedness', 'handCh', 'relatArtic', 'locprim', 'relOriMov', 'relOriLoc', 'oriCh',
+                           'contType', 'movSh', 'movDir', 'locVirtObj', 'phonOth', 'repeat', 'altern']
 
-#Where the ECV files are
+OBLIGATORY_FIELDS = ['handedness', 'domhndsh', 'subhndsh']
+
+# Where the ECV files are
 ECV_FOLDER = 'ecv/'
 ECV_FILE = 'myecv.ecv'
 ECV_FOLDER_ABSOLUTE_PATH = WRITABLE_FOLDER+ECV_FOLDER
 
-#What do you want to include in the ECV file?
+# What do you want to include in the ECV file?
 ECV_SETTINGS = {
     'include_phonology_and_frequencies': True,
 
@@ -248,68 +250,68 @@ ECV_SETTINGS = {
 MINIMUM_OVERLAP_BETWEEN_SIGNING_HANDS = 40
 DISABLE_MOVING_THUMBNAILS_ABOVE_NR_OF_GLOSSES = 200
 
-#Make a smaller version of uploaded images, for storage reasons?
+# Make a smaller version of uploaded images, for storage reasons?
 CROP_GLOSS_IMAGES = True
 
-#Where the WSGI files lives
+# Where the WSGI files lives
 WSGI_FILE = 'lib/python2.7/site-packages/signbank/wsgi.py'
 
-#Whether the morpheme functionality should be present in the interface
+# Whether the morpheme functionality should be present in the interface
 SHOW_MORPHEME_SEARCH = True
 
-#Whether the letter number phonology should be present in the interface
+# Whether the letter number phonology should be present in the interface
 SHOW_LETTER_NUMBER_PHONOLOGY = True
 
-#Whether colors can be set for field choices
+# Whether colors can be set for field choices
 SHOW_FIELD_CHOICE_COLORS = True
 
-#Whether the dataset functionality should be present in the interface
+# Whether the dataset functionality should be present in the interface
 SHOW_DATASET_INTERFACE_OPTIONS = True
 
 # Used in Toggle View to hide
 SHOW_NAMED_ENTITY = False
 
-#Settings for the default dataset
+# Settings for the default dataset
 DEFAULT_DATASET = 'Your Dataset'
 DEFAULT_DATASET_ACRONYM = 'YDS'
 DEFAULT_DATASET_LANGUAGE_ID = 1
 DEFAULT_DATASET_PK = 1
 TEST_DATASET_ACRONYM = 'TESTDB'
 
-#whether the Handshape functionality should be present in the interface
+# whether the Handshape functionality should be present in the interface
 USE_HANDSHAPE = True
 
-#whether the Derivation History functionality should be present in the interface
+# whether the Derivation History functionality should be present in the interface
 USE_DERIVATIONHISTORY = True
 
 # Only set this to true after the foreign key field choices have replaced the machine value field choices in the migration
 USE_FIELD_CHOICE_FOREIGN_KEY = True
 
-#Gloss fields used in the API
+# Gloss fields used in the API
 API_FIELDS = ['idgloss']
 
-#How long will new glosses be considered new?
+# How long will new glosses be considered new?
 import datetime
 RECENTLY_ADDED_SIGNS_PERIOD = datetime.timedelta(days=90)
 # The following is the ISO 8601 format
 DATE_FORMAT = "%Y-%m-%d"
 
-#Experimental feature to make the list view faster
+# Experimental feature to make the list view faster
 SPEED_UP_RETRIEVING_ALL_SIGNS = True
 
-#Delete the video and image files when a GlossVideo instance is deleted
+# Delete the video and image files when a GlossVideo instance is deleted
 DELETE_FILES_ON_GLOSSVIDEO_DELETE = False
 
-#Whether the non ASCII characters in the path and filename of an uploaded video should be escaped
+# Whether the non ASCII characters in the path and filename of an uploaded video should be escaped
 ESCAPE_UPLOADED_VIDEO_FILE_PATH = False
 
-#Enables plugin such that images/videos only appear to logged in users
+# Enables plugin such that images/videos only appear to logged in users
 USE_X_SENDFILE = False
 
 # this keeps the browser from crashing
 MAX_SCROLL_BAR = 500
 
-#Print to debug registration / access emails
+# Print to debug registration / access emails
 DEFAULT_FROM_EMAIL = 'w.stoop@let.ru.nl'
 DEBUG_EMAILS_ON = False
 

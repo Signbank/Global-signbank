@@ -21,8 +21,11 @@
 {% block extrajs %}
 
     <script type="text/javascript">
+        var dark_mode = '{{request.session.dark_mode}}';
+        var dark_mode_django = '{{dark_mode}}';
         var url = '{{ PREFIX_URL }}';
         var language_code = '{{LANGUAGE_CODE}}';
+        var saving_str = '{{saving_str|escapejs}}';
         var permission = 0;
         {% for s_dataset in selected_datasets %}
         {% get_obj_perms request.user for s_dataset as "dataset_perms" %}
@@ -35,12 +38,21 @@
         } else {
             user_can_add_gloss = false;
         };
+    var gloss_dataset_id = {{ last_used_dataset.id}};
+    var gloss_default_language_code = '{{last_used_dataset.default_language.language_code_2char}}';
+    var csrf_token = '{{csrf_token}}';
+
+    var choice_lists = [];
+    var static_choice_lists = {{static_choice_lists|safe}};
+    var original_static_choice_list_colors = {{static_choice_list_colors|safe}};
+
     </script>
 
     <script type="text/javascript" src="{{ STATIC_URL }}js/jquery.jeditable.mini.js"></script>
     <script type="text/javascript" src="{{ STATIC_URL }}js/jquery.jeditable.checkbox.js"></script>
     <script type="text/javascript" src="{{ STATIC_URL }}js/typeahead.bundle.min.js"></script>
     <script type="text/javascript" src="{{ STATIC_URL }}js/gloss_add.js"></script>
+<!--    <script type='text/javascript' src="{{STATIC_URL}}js/gloss_edit_color.js"></script>-->
 
     <script type="text/javascript">
     var lemma_create_field_prefix = "{{ lemma_create_field_prefix }}";
@@ -95,7 +107,7 @@
          {% csrf_token %}
          <table class='table table-condensed-light' style='width: 1200px;'>
              <tr>
-                 <th style='width:300px;'><label for='dataset'>Dataset</label></th>
+                 <th style='width:300px;'><label for='id_dataset'>Dataset</label></th>
                  <td class='td td-light'><select id="id_dataset" name="dataset" required="">
                          {% for s_dataset in selected_datasets %}
                          {% get_obj_perms request.user for s_dataset as "dataset_perms" %}
@@ -179,6 +191,45 @@
                          <input type="hidden" id="select_or_new_lemma" name="select_or_new_lemma" value="select"/>
                      </td>
              </tr>
+             {% if 'handedness' in OBLIGATORY_FIELDS %}
+             <tr>
+                 {% with add_gloss_form.fields|get_item:'handedness' as handedness_field %}
+                 <th><label for="id_handedness">{{handedness_field.label}}</label></th>
+                 <td>
+                    <select name="handedness" id="handedness">
+                        {% for value, text in handedness_field.choices %}
+                        <option value={{value}}>{{text}}</option>
+                        {% endfor %}
+                    </select></td>
+                 {% endwith %}
+             </tr>
+             {% endif %}
+             {% if 'domhndsh' in OBLIGATORY_FIELDS %}
+             <tr>
+                 {% with add_gloss_form.fields|get_item:'domhndsh' as domhndsh_field %}
+                 <th><label for="id_domhndsh">{{domhndsh_field.label}}</label></th>
+                 <td>
+                    <select name="domhndsh" id="domhndsh">
+                        {% for value, text in domhndsh_field.choices %}
+                        <option value={{value}}>{{text}}</option>
+                        {% endfor %}
+                    </select></td>
+                 {% endwith %}
+             </tr>
+             {% endif %}
+             {% if 'subhndsh' in OBLIGATORY_FIELDS %}
+             <tr>
+                 {% with add_gloss_form.fields|get_item:'subhndsh' as subhndsh_field %}
+                 <th><label for="id_subhndsh">{{subhndsh_field.label}}</label></th>
+                 <td>
+                    <select name="subhndsh" id="subhndsh">
+                        {% for value, text in subhndsh_field.choices %}
+                        <option value={{value}}>{{text}}</option>
+                        {% endfor %}
+                    </select></td>
+                 {% endwith %}
+             </tr>
+             {% endif %}
          </table>
 
      <input class='btn btn-primary' type='submit' value='{% trans "Add New Sign" %}'>
