@@ -89,7 +89,7 @@
 
 {% block content %}
 
-<!--   {% if perms.dictionary.add_gloss %}-->
+   {% if perms.dictionary.add_gloss %}
    <p>{% trans "Please provide some initial data" %}:</p>
      <form action='{% url "dictionary:add_gloss" %}' method='POST'>
          {% csrf_token %}
@@ -183,6 +183,6 @@
 
      <input class='btn btn-primary' type='submit' value='{% trans "Add New Sign" %}'>
      </form>
-<!--      {% endif %}-->
+  {% endif %}
 
 {% endblock %}

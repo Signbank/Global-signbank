@@ -17,7 +17,7 @@ from django.utils.datastructures import MultiValueDictKeyError
 from django.utils.encoding import escape_uri_path
 from urllib.parse import quote
 from django.contrib import messages
-from django.core.exceptions import ValidationError, ObjectDoesNotExist, MultipleObjectsReturned
+from django.core.exceptions import ValidationError, ObjectDoesNotExist, MultipleObjectsReturned, PermissionDenied
 from django.utils.translation import gettext_lazy as _, activate, override, gettext
 from django.views.decorators.csrf import csrf_exempt
 from django.utils.timezone import get_current_timezone
@@ -68,6 +68,7 @@ from signbank.dictionary.translate_choice_list import (machine_value_to_translat
 from signbank.abstract_machine import get_interface_language_api
 from signbank.api_token import put_api_user_in_request
 from signbank.dictionary.gloss_revision import pretty_print_revisions
+from signbank.dictionary.adminviews import show_warning
 
 
 def login_required_config(f):
@@ -390,20 +391,25 @@ def try_code(request, pk):
 
 # this method is called from the Signbank menu bar
 def add_new_sign(request):
+    if not request.user.has_perm('dictionary.add_gloss'):
+        raise PermissionDenied
+
     context = {}
 
     selected_datasets = get_selected_datasets(request)
 
-    default_dataset_acronym = DEFAULT_DATASET_ACRONYM
-    default_dataset = Dataset.objects.get(acronym=default_dataset_acronym)
+    if not selected_datasets or selected_datasets.count() > 1:
+        feedback_message = gettext('To create a new gloss, please select a single dataset.')
+        return show_warning(request, feedback_message, selected_datasets)
 
-    if len(selected_datasets) == 1:
-        last_used_dataset = selected_datasets[0].acronym
-    elif 'last_used_dataset' in request.session.keys():
-        last_used_dataset = request.session['last_used_dataset']
-    else:
-        last_used_dataset = None
+    last_used_dataset = selected_datasets.first()
+    if 'last_used_dataset' not in request.session.keys():
+        request.session['last_used_dataset'] = last_used_dataset.acronym
     context['last_used_dataset'] = last_used_dataset
+
+    if 'change_dataset' not in get_user_perms(request.user, last_used_dataset):
+        feedback_message = gettext("No permission to change dataset")
+        return show_warning(request, feedback_message, selected_datasets)
 
     dataset_languages = Language.objects.filter(dataset__in=selected_datasets).distinct()
 

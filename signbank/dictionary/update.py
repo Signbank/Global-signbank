@@ -9,7 +9,7 @@ from django.http import (HttpResponse, HttpResponseRedirect, HttpResponseForbidd
                          JsonResponse, Http404)
 from django.shortcuts import render, get_object_or_404, redirect
 from django.urls import reverse
-from django.core.exceptions import ObjectDoesNotExist, MultipleObjectsReturned, ValidationError
+from django.core.exceptions import ObjectDoesNotExist, MultipleObjectsReturned, ValidationError, PermissionDenied
 from django.core.files import File
 from django.contrib.auth.decorators import permission_required
 from django.db.models.fields import BooleanField, IntegerField
@@ -17,7 +17,7 @@ from django.db import DatabaseError, IntegrityError
 from django.utils.timezone import get_current_timezone
 from django.contrib import messages
 from django.contrib.auth.models import Group
-from django.utils.translation import gettext_lazy as _
+from django.utils.translation import gettext_lazy as _, activate, override, gettext
 from django.db.transaction import atomic, TransactionManagementError
 from django.contrib.auth.models import User
 
@@ -71,6 +71,7 @@ from signbank.dictionary.update_glosses import (mapping_toggle_relOriLoc, mappin
                                                 mapping_toggle_contType, mapping_toggle_movDir, mapping_toggle_movSh,
                                                 batch_edit_create_sense)
 from signbank.dictionary.batch_edit import batch_edit_update_gloss, add_gloss_update_to_revision_history
+from signbank.dictionary.adminviews import show_warning
 
 
 def show_error(request, translated_message, form, dataset_languages):
@@ -84,42 +85,49 @@ def show_error(request, translated_message, form, dataset_languages):
                    'SHOW_DATASET_INTERFACE_OPTIONS': SHOW_DATASET_INTERFACE_OPTIONS})
 
 
-# this method is called from the GlossListView (Add Gloss button on the page)
+# this method is called as dictionary:add_gloss from the template for /signs/add/
 def add_gloss(request):
     """Create a new gloss and redirect to the edit view"""
     if not request.method == "POST":
         return HttpResponseForbidden("Add gloss method must be POST")
 
-    dataset = None
-    if 'dataset' in request.POST and request.POST['dataset'] is not None:
-        dataset = Dataset.objects.get(pk=request.POST['dataset'])
-        selected_datasets = Dataset.objects.filter(pk=request.POST['dataset'])
-    else:
-        selected_datasets = get_selected_datasets(request)
+    if not request.user.has_perm('dictionary.add_gloss'):
+        raise PermissionDenied
+
+    selected_datasets = get_selected_datasets(request)
+    if not selected_datasets or selected_datasets.count() > 1:
+        feedback_message = gettext('To create a new gloss, please select a single dataset.')
+        return show_warning(request, feedback_message, selected_datasets)
+
+    if 'dataset' not in request.POST or request.POST['dataset'] is None:
+        feedback_message = gettext('To create a new gloss, please select a single dataset.')
+        return show_warning(request, feedback_message, selected_datasets)
+
+    dataset = Dataset.objects.get(pk=request.POST['dataset'])
+    selected_datasets = Dataset.objects.filter(pk=request.POST['dataset'])
+
     dataset_languages = Language.objects.filter(dataset__in=selected_datasets).distinct()
 
-    if dataset:
-        last_used_dataset = dataset.acronym
-    elif len(selected_datasets) == 1:
-        last_used_dataset = selected_datasets[0].acronym
-    elif 'last_used_dataset' in request.session.keys():
-        last_used_dataset = request.session['last_used_dataset']
-    else:
-        last_used_dataset = None
+    last_used_dataset = dataset
+    if 'last_used_dataset' not in request.session.keys():
+        request.session['last_used_dataset'] = last_used_dataset.acronym
+    if 'change_dataset' not in get_user_perms(request.user, last_used_dataset):
+        feedback_message = gettext("No permission to change dataset")
+        return show_warning(request, feedback_message, selected_datasets)
 
     form = GlossCreateForm(request.POST, languages=dataset_languages, user=request.user, last_used_dataset=last_used_dataset)
 
-    # Lemma handling
-    lemma_form = None
+    if not form.is_valid():
+        return show_error(request, _("The add gloss form is not valid."), form, dataset_languages)
+
     if request.POST['select_or_new_lemma'] == 'new':
         lemma_form = LemmaCreateForm(request.POST, languages=dataset_languages, user=request.user, last_used_dataset=last_used_dataset)
         if not lemma_form.is_valid():
-            return show_error(request, _("You are not authorized to change the selected dataset."), form, dataset_languages)
-
+            return show_error(request, _("The new lemma form is not valid."), form, dataset_languages)
         lemmaidgloss = lemma_form.save()
     else:
         lemmaidgloss_id = request.POST['idgloss']
-        if lemmaidgloss_id == '' or lemmaidgloss_id == 'confirmed':
+        if not lemmaidgloss_id or lemmaidgloss_id == 'confirmed':
             # if the user has typed in an identifier instead of selecting from the Lemma lookahead list
             # or if the user has gone to the previous page and not selected the lemma again
             # in this case, the original template value 'confirmed' has bot been replaced with a lemma id
@@ -129,17 +137,7 @@ def add_gloss(request):
         except (ObjectDoesNotExist, IntegerField, ValueError, TypeError):
             return show_error(request, _("The given Lemma Idgloss ID is unknown."), form, dataset_languages)
 
-    # Check for 'change_dataset' permission
-    if dataset and ('change_dataset' not in get_user_perms(request.user, dataset)) \
-            and ('change_dataset' not in get_group_perms(request.user, dataset))\
-            and not request.user.is_staff:
-        return show_error(request, _("You are not authorized to change the selected dataset."), form, dataset_languages)
-
-    elif not dataset:
-        # Dataset is empty, this is an error
-        return show_error(request, _("Please provide a dataset."), form, dataset_languages)
-
-    # if we get to here a dataset has been chosen for the new gloss
+    # if we get to here a dataset has been chosen for the new gloss and a lemma has been selected or created
     for item, value in request.POST.items():
         if item.startswith(form.gloss_create_field_prefix):
             language_code_2char = item[len(form.gloss_create_field_prefix):]
@@ -152,19 +150,10 @@ def add_gloss(request):
                 messages.add_message(request, messages.ERROR, _('Annotation ID Gloss not unique.'))
                 return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
 
-    if not form.is_valid():
-        return show_error(request, _("The add gloss form is not valid."), form, dataset_languages)
-
-    if lemma_form and not lemma_form.is_valid():
-        return show_error(request, _("The new lemma form is not valid."), form, dataset_languages)
-
-    if not lemmaidgloss:
-        return show_error(request, _("Please select or create a lemma."), form, dataset_languages)
-
     try:
         gloss = form.save()
         gloss.creationDate = DT.datetime.now()
-        gloss.excludeFromEcv = False
+        gloss.excludeFromEcv = True
         gloss.lemma = lemmaidgloss
 
         gloss_fields = [Gloss.get_field(fname) for fname in Gloss.get_field_names()]
@@ -187,12 +176,8 @@ def add_gloss(request):
             for ua in user_affiliations:
                 new_affiliation, created = AffiliatedGloss.objects.get_or_create(affiliation=ua.affiliation,
                                                                                  gloss=gloss)
-
     except ValidationError as ve:
         return show_error(request, ve.message, form, dataset_languages)
-
-    if 'search_results' not in request.session.keys():
-        request.session['search_results'] = []
 
     # new gloss created successfully, go to GlossDetailView
     return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': gloss.id})+'?edit')
