@@ -1,4 +1,6 @@
 from colorfield.fields import ColorField
+import datetime as DT
+from django.utils.timezone import get_current_timezone
 from django.db.models import Q
 from django.db import models
 from django.conf import settings
@@ -2387,7 +2389,6 @@ class Gloss(models.Model):
 
     def get_video(self):
         """Return the video object for this gloss or None if no video available"""
-
         video_path = self.get_video_path()
         if not video_path:
             return ''
@@ -2449,13 +2450,16 @@ class Gloss(models.Model):
             except OSError:
                 msg = "The video could not be saved in the GlossVideo object for gloss " % self.pk
                 raise ValidationError(msg)
+
+            self.lastUpdated = DT.datetime.now(tz=get_current_timezone())
+            self.save()
             video.make_poster_image()
 
             video_file_full_path = os.path.join(WRITABLE_FOLDER, relative_path)
             glossvideohistory = GlossVideoHistory(action="upload", gloss=self, actor=user,
                                                   uploadfile=videofile, goal_location=video_file_full_path)
             glossvideohistory.save()
-
+            return video
         else:
             msg = "A GlossVideo object could not be created for gloss " % self.pk
             raise ValidationError(msg)
@@ -2518,7 +2522,10 @@ class Gloss(models.Model):
             # Save the new videofile in the video object
             video.videofile.save(relative_path, videofile)
         else:
-            return GlossVideoNME(gloss=self, offset=offset, perspective=perspective) 
+            return GlossVideoNME(gloss=self, offset=offset, perspective=perspective)
+
+        self.lastUpdated = DT.datetime.now(tz=get_current_timezone())
+        self.save()
         video.save()
 
         return video
@@ -2559,6 +2566,9 @@ class Gloss(models.Model):
             msg = "No video file supplied for perspective video upload of gloss %s" \
                   % (self.pk)
             raise ValidationError(msg)
+
+        self.lastUpdated = DT.datetime.now(tz=get_current_timezone())
+        self.save()
         video.save()
 
         return video
@@ -4321,7 +4331,7 @@ class AnnotatedSentence(models.Model):
 
     def has_video(self):
         """Test to see if the video for this sign is present"""
-        
+
         return self.get_video() not in ['', None]
 
     def add_video(self, user, videofile, eaffile, source, url):
