@@ -427,11 +427,6 @@ def add_new_sign(request):
     context['add_gloss_form'] = GlossCreateForm(request.GET, languages=dataset_languages, user=request.user,
                                                 last_used_dataset=last_used_dataset)
 
-    # do not lazy evaluate these; evaluate before putting in context variables
-    static_choice_lists, static_choice_list_colors = get_static_choice_lists_per_field()
-    context['static_choice_lists'] = static_choice_lists
-    context['static_choice_list_colors'] = static_choice_list_colors
-
     return render(request, 'dictionary/add_gloss.html', context)
 
 

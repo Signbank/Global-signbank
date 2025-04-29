@@ -75,6 +75,9 @@ class BasicCRUDTests(TestCase):
         print(self.handedness_fieldchoice_1, self.handedness_fieldchoice_2)
         self.locprim_fieldchoice_1 = FieldChoice.objects.filter(field='Location', machine_value__gt=1).first()
         self.locprim_fieldchoice_2 = FieldChoice.objects.filter(field='Location', machine_value__gt=1).last()
+        self.domhndsh_1 = Handshape.objects.filter(machine_value__gt=1).first()
+        self.subhndsh_1 = Handshape.objects.filter(machine_value__gt=1).last()
+        print(self.domhndsh_1, self.subhndsh_1)
 
     def test_CRUD(self):
 
@@ -197,7 +200,11 @@ class BasicCRUDTests(TestCase):
         test_dataset = Dataset.objects.get(name=dataset_name)
 
         # Construct the Create Gloss form data
-        create_gloss_form_data = {'dataset': test_dataset.id, 'select_or_new_lemma': "new"}
+        create_gloss_form_data = {'dataset': test_dataset.id, 'select_or_new_lemma': "new",
+                                  'handedness': str(self.handedness_fieldchoice_2.machine_value),
+                                  'domhndsh': str(self.domhndsh_1.machine_value),
+                                  'subhndsh': str(self.subhndsh_1.machine_value)}
+
         for language in test_dataset.translation_languages.all():
             create_gloss_form_data[GlossCreateForm.gloss_create_field_prefix + language.language_code_2char] = \
                 "annotationidglosstranslation_test_" + language.language_code_2char
@@ -206,9 +213,8 @@ class BasicCRUDTests(TestCase):
 
         # User does not have permission to change dataset. Creating a gloss should fail.
         response = client.post('/dictionary/update/gloss/', create_gloss_form_data)
-
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, "You are not authorized to change the selected dataset.")
+        self.assertContains(response, "No permission to change dataset")
 
         # Give the test user permission to change a dataset
         assign_perm('change_dataset', self.user, test_dataset)

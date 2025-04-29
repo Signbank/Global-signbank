@@ -56,7 +56,6 @@ class GlossCreateForm(forms.ModelForm):
         self.languages = kwargs.pop('languages')
         self.user = kwargs.pop('user')
         self.last_used_dataset = kwargs.pop('last_used_dataset')
-
         super(GlossCreateForm, self).__init__(queryDict, *args, **kwargs)
 
         if 'dataset' in queryDict:
@@ -69,21 +68,30 @@ class GlossCreateForm(forms.ModelForm):
             if glosscreate_field_name in queryDict:
                 self.fields[glosscreate_field_name].value = queryDict[glosscreate_field_name]
 
-        self.fields['handedness'] = forms.ModelChoiceField(label=_('Handedness'),
-                                                           queryset=FieldChoice.objects.filter(field='Handedness').order_by(
-                                                                         'machine_value'), empty_label=None,
-                                                           widget=forms.Select(attrs=ATTRS_FOR_FORMS),
-                                                           required='handedness' in OBLIGATORY_FIELDS)
-        self.fields['domhndsh'] = forms.ModelChoiceField(label=_('Strong Hand'),
-                                                         queryset=Handshape.objects.all().order_by(
-                                                             'machine_value'), empty_label=None,
-                                                         widget=forms.Select(attrs=ATTRS_FOR_FORMS),
-                                                         required='domhndsh' in OBLIGATORY_FIELDS)
-        self.fields['subhndsh'] = forms.ModelChoiceField(label=_('Weak Hand'),
-                                                         queryset=Handshape.objects.all().order_by(
-                                                                 'machine_value'), empty_label=None,
-                                                         widget=forms.Select(attrs=ATTRS_FOR_FORMS),
-                                                         required='subhndsh' in OBLIGATORY_FIELDS)
+        self.fields['handedness'] = forms.ChoiceField(label=_('Handedness'),
+                                                      choices = choicelist_queryset_to_translated_dict(
+                                                          list(FieldChoice.objects.filter(field='Handedness').order_by(
+                                                              'machine_value')),
+                                                          ordered=False, id_prefix='', shortlist=False
+                                                      ),
+                                                      widget=forms.Select(attrs=ATTRS_FOR_FORMS),
+                                                      required=False)
+        self.fields['domhndsh'] = forms.ChoiceField(label=_('Strong Hand'),
+                                                    choices = choicelist_queryset_to_translated_dict(
+                                                        list(Handshape.objects.all().order_by(
+                                                            'machine_value')),
+                                                        ordered=False, id_prefix='', shortlist=False
+                                                    ),
+                                                    widget=forms.Select(attrs=ATTRS_FOR_FORMS),
+                                                    required=False)
+        self.fields['subhndsh'] = forms.ChoiceField(label=_('Weak Hand'),
+                                                    choices = choicelist_queryset_to_translated_dict(
+                                                        list(Handshape.objects.all().order_by(
+                                                            'machine_value')),
+                                                        ordered=False, id_prefix='', shortlist=False
+                                                    ),
+                                                    widget=forms.Select(attrs=ATTRS_FOR_FORMS),
+                                                    required=False)
 
     @atomic  # This rolls back the gloss creation if creating annotationidglosstranslations fails
     def save(self, commit=True):
@@ -105,7 +113,9 @@ class GlossCreateForm(forms.ModelForm):
             annotationidglosstranslation.save()
 
         if 'handedness' in OBLIGATORY_FIELDS:
-            handedness_field = FieldChoice.objects.get(field='Handedness', machine_value=self['handedness'].value())
+            fieldchoice_machine_value = self['handedness'].value()
+            print(fieldchoice_machine_value, type(fieldchoice_machine_value))
+            handedness_field = FieldChoice.objects.get(field='Handedness', machine_value=fieldchoice_machine_value)
             setattr(gloss, 'handedness', handedness_field)
         if 'domhndsh' in OBLIGATORY_FIELDS:
             domhndsh_field = Handshape.objects.get(machine_value=self['domhndsh'].value())
