@@ -42,17 +42,13 @@
     var gloss_default_language_code = '{{last_used_dataset.default_language.language_code_2char}}';
     var csrf_token = '{{csrf_token}}';
 
-    var choice_lists = [];
-    var static_choice_lists = {{static_choice_lists|safe}};
-    var original_static_choice_list_colors = {{static_choice_list_colors|safe}};
-
     </script>
 
-    <script type="text/javascript" src="{{ STATIC_URL }}js/jquery.jeditable.mini.js"></script>
+    <script type="text/javascript" src="{{ STATIC_URL }}js/jquery.jeditable.mini_colors.js"></script>
     <script type="text/javascript" src="{{ STATIC_URL }}js/jquery.jeditable.checkbox.js"></script>
     <script type="text/javascript" src="{{ STATIC_URL }}js/typeahead.bundle.min.js"></script>
     <script type="text/javascript" src="{{ STATIC_URL }}js/gloss_add.js"></script>
-<!--    <script type='text/javascript' src="{{STATIC_URL}}js/gloss_edit_color.js"></script>-->
+    <script type='text/javascript' src="{{ STATIC_URL }}js/lemma_typeahead.js"></script>
 
     <script type="text/javascript">
     var lemma_create_field_prefix = "{{ lemma_create_field_prefix }}";
@@ -94,9 +90,6 @@
         return false;
     }
     </script>
-
-<script type='text/javascript' src="{{ STATIC_URL }}js/lemma_typeahead.js"></script>
-
 {% endblock %}
 
 {% block content %}
@@ -195,7 +188,7 @@
              <tr>
                  {% with add_gloss_form.fields|get_item:'handedness' as handedness_field %}
                  <th><label for="id_handedness">{{handedness_field.label}}</label></th>
-                 <td>
+                 <td class='td td-light'>
                     <select name="handedness" id="handedness">
                         {% for value, text in handedness_field.choices %}
                         <option value={{value}}>{{text}}</option>
@@ -208,7 +201,7 @@
              <tr>
                  {% with add_gloss_form.fields|get_item:'domhndsh' as domhndsh_field %}
                  <th><label for="id_domhndsh">{{domhndsh_field.label}}</label></th>
-                 <td>
+                 <td class='td td-light'>
                     <select name="domhndsh" id="domhndsh">
                         {% for value, text in domhndsh_field.choices %}
                         <option value={{value}}>{{text}}</option>
@@ -221,7 +214,7 @@
              <tr>
                  {% with add_gloss_form.fields|get_item:'subhndsh' as subhndsh_field %}
                  <th><label for="id_subhndsh">{{subhndsh_field.label}}</label></th>
-                 <td>
+                 <td class='td td-light'>
                     <select name="subhndsh" id="subhndsh">
                         {% for value, text in subhndsh_field.choices %}
                         <option value={{value}}>{{text}}</option>

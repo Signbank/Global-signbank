@@ -107,7 +107,8 @@ def add_gloss(request):
     if request.POST['select_or_new_lemma'] == 'new':
         lemma_form = LemmaCreateForm(request.POST, languages=dataset_languages, user=request.user, last_used_dataset=dataset)
         if not lemma_form.is_valid():
-            raise ValidationError(_("The new lemma form is not valid."))
+            messages.add_message(request, messages.ERROR, _("The new lemma form is not valid."))
+            return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
         lemmaidgloss = lemma_form.save()
     else:
         lemmaidgloss_id = request.POST['idgloss']
@@ -115,11 +116,13 @@ def add_gloss(request):
             # if the user has typed in an identifier instead of selecting from the Lemma lookahead list
             # or if the user has gone to the previous page and not selected the lemma again
             # in this case, the original template value 'confirmed' has bot been replaced with a lemma id
-            raise ValidationError(_("The given Lemma Idgloss is a string, not a Lemma."))
+            messages.add_message(request, messages.ERROR, _("The given Lemma Idgloss is a string, not a Lemma."))
+            return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
         try:
             lemmaidgloss = LemmaIdgloss.objects.get(id=lemmaidgloss_id)
         except (ObjectDoesNotExist, IntegerField, ValueError, TypeError):
-            raise ValidationError(_("The given Lemma Idgloss ID is unknown."))
+            messages.add_message(request, messages.ERROR, _("The given Lemma Idgloss ID is unknown."))
+            return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
     obligatory_fields_dict = dict()
 
     # if we get to here a dataset has been chosen for the new gloss and a lemma has been selected or created
@@ -150,10 +153,10 @@ def add_gloss(request):
             existing_annotationidglosstranslations = AnnotationIdglossTranslation.objects.filter(language=language, text=annotation_idgloss_text, gloss__lemma__dataset=dataset)
             if existing_annotationidglosstranslations.count() > 0:
                 existing_gloss = existing_annotationidglosstranslations.first().gloss
-                raise Exception(
-                    "Gloss with id %s has more than one annotation idgloss translation for language %s"
-                    % (existing_gloss.pk, language.name)
-                )
+                feedback_message = "Gloss with id {glossid} has more than one annotation for language {language}".format(glossid=existing_gloss.pk, language=language.name)
+                messages.add_message(request, messages.ERROR, feedback_message)
+                return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
+
             annotationidglosstranslation = AnnotationIdglossTranslation(gloss=gloss, language=language,
                                                                         text=annotation_idgloss_text)
             annotationidglosstranslation.save()
@@ -166,11 +169,9 @@ def add_gloss(request):
         for field in ['domhndsh', 'subhndsh']:
             if field not in OBLIGATORY_FIELDS or field not in obligatory_fields_dict.keys():
                 continue
-            try:
-                handshape_object = Handshape.objects.get(machine_value=obligatory_fields_dict[field])
-                setattr(gloss, field, handshape_object)
-            except ObjectDoesNotExist:
-                pass
+            handshape_object = Handshape.objects.get(machine_value=obligatory_fields_dict[field])
+            setattr(gloss, field, handshape_object)
+
         for field in [f for f in gloss_fields if isinstance(f, FieldChoiceForeignKey)]:
             if field.name in OBLIGATORY_FIELDS and field.name in obligatory_fields_dict.keys():
                 fieldchoice = FieldChoice.objects.get(field=field.field_choice_category,
@@ -184,8 +185,9 @@ def add_gloss(request):
             for ua in user_affiliations:
                 new_affiliation, created = AffiliatedGloss.objects.get_or_create(affiliation=ua.affiliation,
                                                                                  gloss=gloss)
-    except ValidationError as ve:
-        raise ValidationError(_("Error creating the new gloss: ") + ve.message)
+    except (ValidationError, DatabaseError, TransactionManagementError, Keyword):
+        messages.add_message(request, messages.ERROR, _("Error creating the new gloss."))
+        return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
 
     # new gloss created successfully, go to GlossDetailView
     return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': gloss.id})+'?edit')

@@ -114,7 +114,6 @@ class GlossCreateForm(forms.ModelForm):
 
         if 'handedness' in OBLIGATORY_FIELDS:
             fieldchoice_machine_value = self['handedness'].value()
-            print(fieldchoice_machine_value, type(fieldchoice_machine_value))
             handedness_field = FieldChoice.objects.get(field='Handedness', machine_value=fieldchoice_machine_value)
             setattr(gloss, 'handedness', handedness_field)
         if 'domhndsh' in OBLIGATORY_FIELDS:
