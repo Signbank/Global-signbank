@@ -104,6 +104,12 @@ def add_gloss(request):
         feedback_message = gettext("No permission to change dataset")
         return show_warning(request, feedback_message, selected_datasets)
 
+    if 'videofile' not in request.FILES.keys():
+        messages.add_message(request, messages.ERROR, _("A video file is required."))
+        return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
+
+    vfile = request.FILES['videofile']
+
     if request.POST['select_or_new_lemma'] == 'new':
         lemma_form = LemmaCreateForm(request.POST, languages=dataset_languages, user=request.user, last_used_dataset=dataset)
         if not lemma_form.is_valid():
@@ -123,7 +129,9 @@ def add_gloss(request):
         except (ObjectDoesNotExist, IntegerField, ValueError, TypeError):
             messages.add_message(request, messages.ERROR, _("The given Lemma Idgloss ID is unknown."))
             return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
+
     obligatory_fields_dict = dict()
+    obligatory_fields_dict['videofile'] = vfile
 
     # if we get to here a dataset has been chosen for the new gloss and a lemma has been selected or created
     for item, value in request.POST.items():
@@ -144,6 +152,11 @@ def add_gloss(request):
         else:
             obligatory_fields_dict[item] = int(value)
 
+    for obligatory_field in OBLIGATORY_FIELDS+['videofile']:
+        if obligatory_field not in obligatory_fields_dict.keys():
+            error_message = gettext("Field {field} is required.".format(field=obligatory_field))
+            messages.add_message(request, messages.ERROR, error_message)
+            return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
     try:
         gloss = Gloss()
         gloss.save()
@@ -185,7 +198,8 @@ def add_gloss(request):
             for ua in user_affiliations:
                 new_affiliation, created = AffiliatedGloss.objects.get_or_create(affiliation=ua.affiliation,
                                                                                  gloss=gloss)
-    except (ValidationError, DatabaseError, TransactionManagementError, Keyword):
+        gloss.add_video(request.user, obligatory_fields_dict['videofile'], False)
+    except (ValidationError, TypeError, Keyword):
         messages.add_message(request, messages.ERROR, _("Error creating the new gloss."))
         return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
 

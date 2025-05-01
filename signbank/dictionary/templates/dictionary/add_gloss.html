@@ -11,6 +11,10 @@
 
 {% load guardian_tags %}
 
+{% block extrahead %}
+<link rel="stylesheet" type="text/css" href="{{STATIC_URL}}css/dropstyle.css">
+<link rel="stylesheet" type="text/css" href="{{STATIC_URL}}css/recordstyle.css">
+<link rel="stylesheet" type="text/css" href="{{STATIC_URL}}css/modalstyle.css">
 <style>
 .hasTooltip:hover .isTooltip {
     position: fixed;
@@ -18,6 +22,8 @@
     bottom: 100%;
 }
 </style>
+{% endblock %}
+
 {% block extrajs %}
 
     <script type="text/javascript">
@@ -49,6 +55,8 @@
     <script type="text/javascript" src="{{ STATIC_URL }}js/typeahead.bundle.min.js"></script>
     <script type="text/javascript" src="{{ STATIC_URL }}js/gloss_add.js"></script>
     <script type='text/javascript' src="{{ STATIC_URL }}js/lemma_typeahead.js"></script>
+    <script type="text/javascript" src="{{STATIC_URL}}js/drag_drop_files.js"></script>
+    <script type="text/javascript" src="{{STATIC_URL}}js/recordscript.js"></script>
 
     <script type="text/javascript">
     var lemma_create_field_prefix = "{{ lemma_create_field_prefix }}";
@@ -96,7 +104,7 @@
 
    {% if perms.dictionary.add_gloss %}
    <p>{% trans "Please provide some initial data" %}:</p>
-     <form action='{% url "dictionary:add_gloss" %}' method='POST'>
+     <form action='{% url "dictionary:add_gloss" %}' method='POST' enctype="multipart/form-data">
          {% csrf_token %}
          <table class='table table-condensed-light' style='width: 1200px;'>
              <tr>
@@ -176,14 +184,43 @@
                             </tr>
                             {% endfor %}
                             </table>
-                             <span style="line-height:40px;">
-                                 <button style="line-height:20px;" type="button" class="btn btn-primary"
+                             <span style="line-height:40px;width:auto;">
+                                 <button style="line-height:20px;width:auto;" type="button" class="btn btn-primary"
                                          onclick="copyTranslationsToLemma(this)">{% trans "Copy Annotation Fields to Lemma Translations" %}</button>
                              </span>
                          </div>
                          <input type="hidden" id="select_or_new_lemma" name="select_or_new_lemma" value="select"/>
                      </td>
              </tr>
+
+            <tr>
+             {% csrf_token %}
+             <th>{% trans "Upload New Video" %}</th>
+                <td style="width:400px;">
+                <div class='editform'>
+                    <fieldset>
+                        <label for="id_videofile" class="drop-container" id="drop-container-video">
+                          <div id="videogallery" class="gallery"></div>
+                          <span id = "drop-container-title-video" class="drop-title">Drop video here<br>or...</span>
+                          <label id="drop-container-video-status" class="hide">Status here</label>
+                          <form>
+                            {% csrf_token %}
+                            <table>
+                              <tr>
+                                <td>{{videoform.videofile}}</td>
+                              </tr>
+                              <tr>
+                                <td id="video-buttons">
+                                    <input class='btn btn-primary' type='button' value='Upload' />
+                                </td>
+                              </tr>
+                            </table>
+                          </form>
+                        </label>
+                    </fieldset>
+                </div>
+                </td>
+            </tr>
              {% if 'handedness' in OBLIGATORY_FIELDS %}
              <tr>
                  {% with add_gloss_form.fields|get_item:'handedness' as handedness_field %}
@@ -228,5 +265,5 @@
      <input class='btn btn-primary' type='submit' value='{% trans "Add New Sign" %}'>
      </form>
   {% endif %}
-
+<br><br><br>
 {% endblock %}

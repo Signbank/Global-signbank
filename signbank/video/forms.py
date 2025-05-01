@@ -58,3 +58,20 @@ class VideoUploadForObjectForm(forms.Form):
         
         if dataset:
             self.fields['source_id'].queryset = AnnotatedSentenceSource.objects.filter(dataset=dataset)
+
+
+class VideoUploadForGlossCreateForm(forms.Form):
+    """Form for video upload for all video types"""
+
+    videofile = forms.FileField(label="Upload Video",
+                                widget=forms.FileInput(attrs={'accept': 'video/mp4, video/quicktime'}))
+
+    def __init__(self, *args, **kwargs):
+        super(VideoUploadForGlossCreateForm, self).__init__(*args, **kwargs)
+
+    def clean_file(self):
+        data = self.cleaned_data['videofile']
+        if not data:
+            raise forms.ValidationError(_("Please choose a video file to upload."))
+        else:
+            return data

@@ -40,6 +40,7 @@ from signbank.settings.server_specific import (PREFIX_URL, WRITABLE_FOLDER, GLOS
 from signbank.settings.base import (MAXIMUM_UPLOAD_SIZE, SUPPORTED_CITATION_IMAGE_EXTENSIONS, USE_X_SENDFILE,
                                     ALWAYS_REQUIRE_LOGIN, MEDIA_ROOT, ESCAPE_UPLOADED_VIDEO_FILE_PATH)
 from signbank.video.models import (GlossVideo, small_appendix, add_small_appendix)
+from signbank.video.forms import VideoUploadForGlossCreateForm
 from signbank.dictionary.models import (Dataset, Language, Gloss, Morpheme, LemmaIdgloss, LemmaIdglossTranslation,
                                         Handshape, SignLanguage, AnnotatedSentence,
                                         AnnotationIdglossTranslation, FieldChoice, AffiliatedUser, AffiliatedGloss,
@@ -426,6 +427,7 @@ def add_new_sign(request):
 
     context['add_gloss_form'] = GlossCreateForm(request.GET, languages=dataset_languages, user=request.user,
                                                 last_used_dataset=last_used_dataset)
+    context['videoform'] = VideoUploadForGlossCreateForm()
 
     return render(request, 'dictionary/add_gloss.html', context)
 
