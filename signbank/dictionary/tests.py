@@ -18,6 +18,7 @@ from django.contrib.admin.sites import AdminSite
 from django.test.client import RequestFactory
 from django.core.serializers.json import DjangoJSONEncoder
 from django.test import Client
+from django.test.client import MULTIPART_CONTENT
 from django.utils.encoding import escape_uri_path
 from django.utils import translation
 from django.core.exceptions import ObjectDoesNotExist
@@ -72,12 +73,10 @@ class BasicCRUDTests(TestCase):
 
         self.handedness_fieldchoice_1 = FieldChoice.objects.filter(field='Handedness', machine_value__gt=1).first()
         self.handedness_fieldchoice_2 = FieldChoice.objects.filter(field='Handedness', machine_value__gt=1).last()
-        print(self.handedness_fieldchoice_1, self.handedness_fieldchoice_2)
         self.locprim_fieldchoice_1 = FieldChoice.objects.filter(field='Location', machine_value__gt=1).first()
         self.locprim_fieldchoice_2 = FieldChoice.objects.filter(field='Location', machine_value__gt=1).last()
         self.domhndsh_1 = Handshape.objects.filter(machine_value__gt=1).first()
         self.subhndsh_1 = Handshape.objects.filter(machine_value__gt=1).last()
-        print(self.domhndsh_1, self.subhndsh_1)
 
     def test_CRUD(self):
 
@@ -200,19 +199,11 @@ class BasicCRUDTests(TestCase):
         test_dataset = Dataset.objects.get(name=dataset_name)
 
         # Construct the Create Gloss form data
-        create_gloss_form_data = {'dataset': test_dataset.id, 'select_or_new_lemma': "new",
-                                  'handedness': str(self.handedness_fieldchoice_2.machine_value),
-                                  'domhndsh': str(self.domhndsh_1.machine_value),
-                                  'subhndsh': str(self.subhndsh_1.machine_value)}
-
-        for language in test_dataset.translation_languages.all():
-            create_gloss_form_data[GlossCreateForm.gloss_create_field_prefix + language.language_code_2char] = \
-                "annotationidglosstranslation_test_" + language.language_code_2char
-            create_gloss_form_data[LemmaCreateForm.lemma_create_field_prefix + language.language_code_2char] = \
-                "lemmaidglosstranslation_test_" + language.language_code_2char
+        create_gloss_form_data = create_gloss_data(test_dataset, "")
 
         # User does not have permission to change dataset. Creating a gloss should fail.
-        response = client.post('/dictionary/update/gloss/', create_gloss_form_data)
+        response = client.post('/dictionary/update/gloss/', data=create_gloss_form_data, format='multipart')
+
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, "No permission to change dataset")
 
@@ -3757,13 +3748,7 @@ class SensesCRUDTests(TestCase):
         self.assertTrue(logged_in)
 
         # Construct the Create Gloss form data
-        create_gloss_form_data = {'dataset': test_dataset.id, 'select_or_new_lemma': "new"}
-        for language in test_dataset.translation_languages.all():
-            create_gloss_form_data[GlossCreateForm.gloss_create_field_prefix + language.language_code_2char] = \
-                "annotationidglosstranslation_test_" + language.language_code_2char
-            create_gloss_form_data[LemmaCreateForm.lemma_create_field_prefix + language.language_code_2char] = \
-                "lemmaidglosstranslation_test_" + language.language_code_2char
-
+        create_gloss_form_data = create_gloss_data(test_dataset, "")
         response = client.post('/dictionary/update/gloss/', create_gloss_form_data)
 
         glosses = Gloss.objects.filter(lemma__dataset=test_dataset)
@@ -3930,24 +3915,12 @@ class SensesCRUDTests(TestCase):
         print('Similar Senses Tests.')
 
         # Construct the Create Gloss form data
-        create_gloss_form_data = {'dataset': test_dataset.id, 'select_or_new_lemma': "new"}
-        for language in test_dataset.translation_languages.all():
-            create_gloss_form_data[GlossCreateForm.gloss_create_field_prefix + language.language_code_2char] = \
-                "gloss_1_annotationidglosstranslation_test_" + language.language_code_2char
-            create_gloss_form_data[LemmaCreateForm.lemma_create_field_prefix + language.language_code_2char] = \
-                "gloss_1_lemmaidglosstranslation_test_" + language.language_code_2char
-
-        response = client.post('/dictionary/update/gloss/', create_gloss_form_data, follow=True)
+        create_gloss1_form_data = create_gloss_data(test_dataset, "gloss_1_")
+        response = client.post('/dictionary/update/gloss/', create_gloss1_form_data, follow=True)
 
         # Construct a second Create Gloss form data
-        create_gloss_2_form_data = {'dataset': test_dataset.id, 'select_or_new_lemma': "new"}
-        for language in test_dataset.translation_languages.all():
-            create_gloss_2_form_data[GlossCreateForm.gloss_create_field_prefix + language.language_code_2char] = \
-                "gloss_2_annotationidglosstranslation_test_" + language.language_code_2char
-            create_gloss_2_form_data[LemmaCreateForm.lemma_create_field_prefix + language.language_code_2char] = \
-                "gloss_2_lemmaidglosstranslation_test_" + language.language_code_2char
-
-        response = client.post('/dictionary/update/gloss/', create_gloss_2_form_data, follow=True)
+        create_gloss2_form_data = create_gloss_data(test_dataset, "gloss_2_")
+        response = client.post('/dictionary/update/gloss/', create_gloss2_form_data, follow=True)
 
         glosses = Gloss.objects.filter(lemma__dataset=test_dataset).order_by('id')
         self.assertEqual(glosses.count(), 2)
@@ -4033,14 +4006,8 @@ class SensesCRUDTests(TestCase):
         print('Test No empty translations created for Senses.')
 
         # Construct the Create Gloss form data
-        create_gloss_form_data = {'dataset': test_dataset.id, 'select_or_new_lemma': "new"}
-        for language in test_dataset.translation_languages.all():
-            create_gloss_form_data[GlossCreateForm.gloss_create_field_prefix + language.language_code_2char] = \
-                "gloss_1_annotationidglosstranslation_test_" + language.language_code_2char
-            create_gloss_form_data[LemmaCreateForm.lemma_create_field_prefix + language.language_code_2char] = \
-                "gloss_1_lemmaidglosstranslation_test_" + language.language_code_2char
-
-        response = client.post('/dictionary/update/gloss/', create_gloss_form_data, follow=True)
+        create_gloss1_form_data = create_gloss_data(test_dataset, "gloss_1_")
+        response = client.post('/dictionary/update/gloss/', create_gloss1_form_data, follow=True)
 
         glosses = Gloss.objects.filter(lemma__dataset=test_dataset)
         self.assertEqual(glosses.count(), 1)
@@ -4073,3 +4040,32 @@ class SensesCRUDTests(TestCase):
         print('Empty string " " does not appear in the translations.')
         self.assertTrue("" not in text_of_sense_translations)
         print('Empty string "" does not appear in the translations.')
+
+def generate_file():
+    try:
+        videofile = open(settings.WRITABLE_FOLDER + 'test_data/video.mp4', 'rb')
+        test_video_file_exists = True
+    except (FileNotFoundError, PermissionError):
+        test_video_file_exists = False
+        videofile = ''
+    return test_video_file_exists, videofile
+
+
+def create_gloss_data(dataset, gloss_text):
+    handedness_fieldchoice_2 = FieldChoice.objects.filter(field='Handedness', machine_value__gt=1).last()
+    domhndsh_1 = Handshape.objects.filter(machine_value__gt=1).first()
+    subhndsh_1 = Handshape.objects.filter(machine_value__gt=1).last()
+
+    # Construct the Create Gloss form data
+    create_gloss_form_data = {'dataset': dataset.id, 'select_or_new_lemma': "new",
+                              'handedness': str(handedness_fieldchoice_2.machine_value),
+                              'domhndsh': str(domhndsh_1.machine_value),
+                              'subhndsh': str(subhndsh_1.machine_value)}
+
+    for language in dataset.translation_languages.all():
+        create_gloss_form_data[GlossCreateForm.gloss_create_field_prefix + language.language_code_2char] = gloss_text + "annotationidglosstranslation_test_" + language.language_code_2char
+        create_gloss_form_data[LemmaCreateForm.lemma_create_field_prefix + language.language_code_2char] = gloss_text + "lemmaidglosstranslation_test_" + language.language_code_2char
+
+    create_gloss_form_data['videofile'] = generate_file()
+
+    return create_gloss_form_data

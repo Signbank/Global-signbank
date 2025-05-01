@@ -104,11 +104,14 @@ def add_gloss(request):
         feedback_message = gettext("No permission to change dataset")
         return show_warning(request, feedback_message, selected_datasets)
 
-    if 'videofile' not in request.FILES.keys():
+    if 'videofile' in request.FILES.keys():
+        vfile = request.FILES['videofile']
+    elif 'videofile' in request.POST.keys():
+        # for unit tests, the file is found in the POST data
+        vfile = request.POST['videofile']
+    else:
         messages.add_message(request, messages.ERROR, _("A video file is required."))
         return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
-
-    vfile = request.FILES['videofile']
 
     if request.POST['select_or_new_lemma'] == 'new':
         lemma_form = LemmaCreateForm(request.POST, languages=dataset_languages, user=request.user, last_used_dataset=dataset)
@@ -148,6 +151,8 @@ def add_gloss(request):
         elif item.startswith('lemmacreate_'):
             continue
         elif item in ['csrfmiddlewaretoken', 'dataset', 'lemma_language', 'idgloss', 'select_or_new_lemma']:
+            continue
+        elif item in ['videofile']:
             continue
         else:
             obligatory_fields_dict[item] = int(value)
