@@ -189,6 +189,9 @@ class Definition(models.Model):
                                     verbose_name=_("Note Type"), related_name="definition")
     count = models.IntegerField(default=3)
     published = models.BooleanField(default=True)
+    creationDate = models.DateField(_('Creation date'), default=datetime(2015, 1, 1))
+    lastUpdated = models.DateTimeField(_('Last updated'), auto_now=True)
+    creator = models.ManyToManyField(User)
 
     class Meta:
         ordering = ['gloss', 'role', 'count']
@@ -212,7 +215,7 @@ class Definition(models.Model):
         return self.role.name if self.role else '-'
 
     def note_text(self):
-        stripped_text = self.text.strip()
+        stripped_text = str(self.text).strip()
         if '\n' in stripped_text:
             # this function is used for displaying notes in the CSV update
             # this makes mysterious differences in old and new values visible
