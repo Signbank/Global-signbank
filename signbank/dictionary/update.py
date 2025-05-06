@@ -1772,7 +1772,7 @@ def add_definition(request, glossid):
     defn.save()
     defn.creator.add(request.user)
 
-    add_gloss_update_to_revision_history(request.user, gloss_or_morpheme, 'defintion_create', '', text)
+    add_gloss_update_to_revision_history(request.user, gloss_or_morpheme, 'definition_create', '', text)
 
     return HttpResponseRedirect(reverse(reverse_url, kwargs={'pk': gloss_or_morpheme.id})+'?editdef')
 

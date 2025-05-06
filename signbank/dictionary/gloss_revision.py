@@ -104,7 +104,7 @@ def pretty_print_revisions(gloss):
         'definitioncount': gettext("Note Index"),
         'definitionpub': gettext("Note Published"),
         'definition': gettext("Note Text"),
-        'defintion_create': gettext("Note"),
+        'definition_create': gettext("Note"),
         'definitionrole': gettext("Note Type")
     }
     revisions = []
@@ -173,7 +173,7 @@ def pretty_print_revisions(gloss):
         elif revision.field_name in ['Sense', 'Senses', 'senses',
                                      'Sentence',
                                      'sequential_morphology', 'simultaneous_morphology', 'blend_morphology',
-                                     'definition', 'definitiondelete', 'defintion_create', 'definitioncount', 'definitionpub', 'definitionrole']:
+                                     'definition', 'definitiondelete', 'definition_create', 'definitioncount', 'definitionpub', 'definitionrole']:
             if revision.old_value and not revision.new_value:
                 # this translation exists in the interface of Gloss Edit View
                 delete_command = gettext('Delete')
