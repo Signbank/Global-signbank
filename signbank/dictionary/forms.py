@@ -93,46 +93,6 @@ class GlossCreateForm(forms.ModelForm):
                                                     widget=forms.Select(attrs=ATTRS_FOR_FORMS),
                                                     required=False)
 
-    @atomic  # This rolls back the gloss creation if creating annotationidglosstranslations fails
-    def save(self, commit=True):
-        gloss = Gloss()
-        gloss.save()
-        dataset = Dataset.objects.get(id=self['dataset'].value())
-        for language in self.languages:
-            glosscreate_field_name = self.gloss_create_field_prefix + language.language_code_2char
-            annotation_idgloss_text = self[glosscreate_field_name].value()
-            existing_annotationidglosstranslations = AnnotationIdglossTranslation.objects.filter(language=language, text=annotation_idgloss_text, gloss__lemma__dataset=dataset)
-            if existing_annotationidglosstranslations.count() > 0:
-                existing_gloss = existing_annotationidglosstranslations.first().gloss
-                raise Exception(
-                    "In class %s: gloss with id %s has more than one annotation idgloss translation for language %s"
-                    % (self.__class__.__name__, existing_gloss.pk, language.name)
-                )
-            annotationidglosstranslation = AnnotationIdglossTranslation(gloss=gloss, language=language,
-                                                                        text=annotation_idgloss_text)
-            annotationidglosstranslation.save()
-
-        if 'handedness' in OBLIGATORY_FIELDS:
-            fieldchoice_machine_value = self['handedness'].value()
-            handedness_field = FieldChoice.objects.get(field='Handedness', machine_value=fieldchoice_machine_value)
-            setattr(gloss, 'handedness', handedness_field)
-        if 'domhndsh' in OBLIGATORY_FIELDS:
-            domhndsh_field = Handshape.objects.get(machine_value=self['domhndsh'].value())
-            setattr(gloss, 'domhndsh', domhndsh_field)
-        if 'subhndsh' in OBLIGATORY_FIELDS:
-            subhndsh_field = Handshape.objects.get(machine_value=self['subhndsh'].value())
-            setattr(gloss, 'subhndsh', subhndsh_field)
-        gloss.creator.add(self.user)
-        gloss.creationDate = DT.datetime.now()
-        gloss.save()
-        user_affiliations = AffiliatedUser.objects.filter(user=self.user)
-        if user_affiliations.count() > 0:
-            for ua in user_affiliations:
-                new_affiliation, created = AffiliatedGloss.objects.get_or_create(affiliation=ua.affiliation,
-                                                                                 gloss=gloss)
-
-        return gloss
-
 
 class MorphemeCreateForm(forms.ModelForm):
     """Form for creating a new morpheme from scratch"""
