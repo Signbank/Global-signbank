@@ -1,8 +1,6 @@
-from django.conf.urls import *
 from django.conf import settings
 from django.contrib.auth.decorators import login_required, permission_required
 from django.contrib.auth.views import LoginView, LogoutView
-#import signbank.registration.forms # I think this is unused?
 from django.conf.urls.static import static
 from django.urls import re_path, path, include
 from django.views.generic import TemplateView
@@ -14,9 +12,7 @@ import signbank.feedback.urls
 import signbank.feedback.views
 import signbank.attachments.urls
 import signbank.video.urls
-import signbank.video.views
 import signbank.registration.urls
-import django.contrib.auth.views
 import django.contrib.admindocs.urls
 import django_summernote.urls
 
@@ -90,7 +86,6 @@ urlpatterns = [
 
     re_path(r'^signs/recently_added/$', login_required(RecentGlossListView.as_view()),
             name='recently_added_glosses'),
-    re_path(r'^signs/proposed_new/$', signbank.dictionary.views.proposed_new_signs),
     re_path(r'^handshapes/show_all/$', HandshapeListView.as_view(), {'show_all': True}),
     re_path(r'^signs/search_handshape/$', permission_required('dictionary.search_gloss')(HandshapeListView.as_view()),
                 name='admin_handshape_list'),
