@@ -1768,8 +1768,9 @@ def add_definition(request, glossid):
     defn.creationDate = DT.datetime.now()
     defn.save()
     defn.creator.add(request.user)
+    revision_value = ': '.join([role.name, text])
 
-    add_gloss_update_to_revision_history(request.user, gloss_or_morpheme, 'definition_create', '', text)
+    add_gloss_update_to_revision_history(request.user, gloss_or_morpheme, 'definition_create', '', revision_value)
 
     return HttpResponseRedirect(reverse(reverse_url, kwargs={'pk': gloss_or_morpheme.id})+'?editdef')
 
