@@ -2841,7 +2841,7 @@ textarea:focus {
                     {% endif %}
                     {% endif %}
                 </td>
-                <td>{{def.creationDate}}</td>
+                <td>{% if def.creationDate %}{{def.creationDate}}{% endif %}</td>
                 <td>{% for creator in def.creator.all %}
                             {% if forloop.last %}
                                 {{creator.first_name}} {{creator.last_name}}

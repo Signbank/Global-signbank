@@ -1571,8 +1571,6 @@ def update_definition(request, gloss, field, value):
         add_gloss_update_to_revision_history(request.user, gloss_or_morpheme, 'definitiondelete', original_value, '')
         return HttpResponseRedirect(reverse(reverse_url, kwargs={'pk': gloss_or_morpheme.id})+'?editdef')
 
-    defn.lastUpdated = DT.datetime.now()
-
     if what == 'definition':
         # update the definition
         original_value = defn.note_text()
@@ -1768,7 +1766,6 @@ def add_definition(request, glossid):
 
     defn = Definition(gloss=gloss_or_morpheme, count=count, role=role, text=text, published=published)
     defn.creationDate = DT.datetime.now()
-    defn.lastUpdated = DT.datetime.now()
     defn.save()
     defn.creator.add(request.user)
 

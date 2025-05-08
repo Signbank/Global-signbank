@@ -189,7 +189,7 @@ class Definition(models.Model):
                                     verbose_name=_("Note Type"), related_name="definition")
     count = models.IntegerField(default=3)
     published = models.BooleanField(default=True)
-    creationDate = models.DateField(_('Creation date'), default=datetime(2015, 1, 1))
+    creationDate = models.DateField(_('Creation date'), null=True)
     lastUpdated = models.DateTimeField(_('Last updated'), auto_now=True)
     creator = models.ManyToManyField(User)
 
