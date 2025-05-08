@@ -218,7 +218,10 @@ SHOW_QUERY_PARAMETERS_AS_BUTTON = True
 MORPHEME_DISPLAY_FIELDS = ['handedness', 'handCh', 'relatArtic', 'locprim', 'relOriMov', 'relOriLoc', 'oriCh',
                            'contType', 'movSh', 'movDir', 'locVirtObj', 'phonOth', 'repeat', 'altern']
 
-OBLIGATORY_FIELDS = ['handedness', 'domhndsh', 'subhndsh']
+# The following fields have been implemented
+# OBLIGATORY_FIELDS = ['videofile', 'handedness', 'domhndsh', 'subhndsh',
+#                      'domhndsh_number', 'domhndsh_letter', 'subhndsh_number', 'subhndsh_letter']
+OBLIGATORY_FIELDS = []
 
 # Where the ECV files are
 ECV_FOLDER = 'ecv/'

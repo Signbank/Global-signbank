@@ -192,7 +192,7 @@
                          <input type="hidden" id="select_or_new_lemma" name="select_or_new_lemma" value="select"/>
                      </td>
              </tr>
-
+            {% if 'videofile' in OBLIGATORY_FIELDS %}
             <tr>
              {% csrf_token %}
              <th>{% trans "Upload New Video" %}</th>
@@ -221,6 +221,7 @@
                 </div>
                 </td>
             </tr>
+             {% endif %}
              {% if 'handedness' in OBLIGATORY_FIELDS %}
              <tr>
                  {% with add_gloss_form.fields|get_item:'handedness' as handedness_field %}
@@ -247,6 +248,32 @@
                  {% endwith %}
              </tr>
              {% endif %}
+             {% if 'domhndsh_letter' in OBLIGATORY_FIELDS %}
+             <tr>
+                 {% with add_gloss_form.fields|get_item:'domhndsh_letter' as domhndsh_letter_field %}
+                 <th><label for="id_domhndsh_letter">{{domhndsh_letter_field.label}}</label></th>
+                 <td class='td td-light'>
+                    <select name="domhndsh_letter" id="domhndsh_letter">
+                        {% for value, text in domhndsh_letter_field.choices %}
+                        <option value={{value}}>{{text}}</option>
+                        {% endfor %}
+                    </select></td>
+                 {% endwith %}
+             </tr>
+             {% endif %}
+             {% if 'domhndsh_number' in OBLIGATORY_FIELDS %}
+             <tr>
+                 {% with add_gloss_form.fields|get_item:'domhndsh_number' as domhndsh_number_field %}
+                 <th><label for="id_domhndsh_number">{{domhndsh_number_field.label}}</label></th>
+                 <td class='td td-light'>
+                    <select name="domhndsh_number" id="domhndsh_number">
+                        {% for value, text in domhndsh_number_field.choices %}
+                        <option value={{value}}>{{text}}</option>
+                        {% endfor %}
+                    </select></td>
+                 {% endwith %}
+             </tr>
+             {% endif %}
              {% if 'subhndsh' in OBLIGATORY_FIELDS %}
              <tr>
                  {% with add_gloss_form.fields|get_item:'subhndsh' as subhndsh_field %}
@@ -254,6 +281,32 @@
                  <td class='td td-light'>
                     <select name="subhndsh" id="subhndsh">
                         {% for value, text in subhndsh_field.choices %}
+                        <option value={{value}}>{{text}}</option>
+                        {% endfor %}
+                    </select></td>
+                 {% endwith %}
+             </tr>
+             {% endif %}
+             {% if 'subhndsh_letter' in OBLIGATORY_FIELDS %}
+             <tr>
+                 {% with add_gloss_form.fields|get_item:'subhndsh_letter' as subhndsh_letter_field %}
+                 <th><label for="id_subhndsh_letter">{{subhndsh_letter_field.label}}</label></th>
+                 <td class='td td-light'>
+                    <select name="subhndsh_letter" id="subhndsh_letter">
+                        {% for value, text in subhndsh_letter_field.choices %}
+                        <option value={{value}}>{{text}}</option>
+                        {% endfor %}
+                    </select></td>
+                 {% endwith %}
+             </tr>
+             {% endif %}
+             {% if 'subhndsh_number' in OBLIGATORY_FIELDS %}
+             <tr>
+                 {% with add_gloss_form.fields|get_item:'subhndsh_number' as subhndsh_number_field %}
+                 <th><label for="id_subhndsh_number">{{subhndsh_number_field.label}}</label></th>
+                 <td class='td td-light'>
+                    <select name="subhndsh_number" id="subhndsh_number">
+                        {% for value, text in subhndsh_number_field.choices %}
                         <option value={{value}}>{{text}}</option>
                         {% endfor %}
                     </select></td>

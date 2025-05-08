@@ -109,18 +109,27 @@ def add_gloss(request):
     elif 'videofile' in request.POST.keys():
         # for unit tests, the file is found in the POST data
         vfile = request.POST['videofile']
+    elif 'videofile' not in OBLIGATORY_FIELDS:
+        vfile = None
     else:
         messages.add_message(request, messages.ERROR, _("A video file is required."))
         return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
 
     if request.POST['select_or_new_lemma'] == 'new':
+        new_lemma = True
         lemma_form = LemmaCreateForm(request.POST, languages=dataset_languages, user=request.user, last_used_dataset=dataset)
         if not lemma_form.is_valid():
             messages.add_message(request, messages.ERROR, _("The new lemma form is not valid."))
             return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
-        lemmaidgloss = lemma_form.save()
+        try:
+            lemmaidgloss = lemma_form.save()
+        except ValidationError as e:
+            feedback_message = getattr(e, 'message', repr(e))
+            messages.add_message(request, messages.ERROR, feedback_message)
+            return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
     else:
         lemmaidgloss_id = request.POST['idgloss']
+        new_lemma = False
         if not lemmaidgloss_id or lemmaidgloss_id == 'confirmed':
             # if the user has typed in an identifier instead of selecting from the Lemma lookahead list
             # or if the user has gone to the previous page and not selected the lemma again
@@ -134,7 +143,9 @@ def add_gloss(request):
             return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
 
     obligatory_fields_dict = dict()
-    obligatory_fields_dict['videofile'] = vfile
+    if vfile:
+        # only put in the dictionary if non-empty
+        obligatory_fields_dict['videofile'] = vfile
 
     # if we get to here a dataset has been chosen for the new gloss and a lemma has been selected or created
     for item, value in request.POST.items():
@@ -146,6 +157,8 @@ def add_gloss(request):
                         annotationidglosstranslation__language=language,
                         annotationidglosstranslation__text__exact=value)
             if glosses_for_this_language_and_annotation_idgloss.count() > 0:
+                if new_lemma:
+                    lemmaidgloss.delete()
                 messages.add_message(request, messages.ERROR, _('Annotation ID Gloss not unique.'))
                 return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
         elif item.startswith('lemmacreate_'):
@@ -154,17 +167,22 @@ def add_gloss(request):
             continue
         elif item in ['videofile']:
             continue
+        elif item in ['domhndsh_letter', 'domhndsh_number', 'subhndsh_letter', 'subhndsh_number']:
+            obligatory_fields_dict[item] = value == '2'
         else:
             obligatory_fields_dict[item] = int(value)
 
-    for obligatory_field in OBLIGATORY_FIELDS+['videofile']:
+    for obligatory_field in OBLIGATORY_FIELDS:
         if obligatory_field not in obligatory_fields_dict.keys():
+            if new_lemma:
+                lemmaidgloss.delete()
             error_message = gettext("Field {field} is required.".format(field=obligatory_field))
             messages.add_message(request, messages.ERROR, error_message)
             return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
+
+    gloss = Gloss()
+    gloss.save()
     try:
-        gloss = Gloss()
-        gloss.save()
         for language in dataset_languages:
             glosscreate_field_name = 'glosscreate_' + language.language_code_2char
             annotation_idgloss_text = request.POST[glosscreate_field_name]
@@ -196,6 +214,10 @@ def add_gloss(request):
                                                       machine_value=obligatory_fields_dict[field.name])
                 setattr(gloss, field.name, fieldchoice)
 
+        for field in ['domhndsh_letter', 'domhndsh_number', 'subhndsh_letter', 'subhndsh_number']:
+            if field in obligatory_fields_dict.keys() and obligatory_fields_dict[field]:
+                setattr(gloss, field, True)
+
         gloss.save()
         gloss.creator.add(request.user)
         user_affiliations = AffiliatedUser.objects.filter(user=request.user)
@@ -203,8 +225,12 @@ def add_gloss(request):
             for ua in user_affiliations:
                 new_affiliation, created = AffiliatedGloss.objects.get_or_create(affiliation=ua.affiliation,
                                                                                  gloss=gloss)
-        gloss.add_video(request.user, obligatory_fields_dict['videofile'], False)
+        if 'videofile' in OBLIGATORY_FIELDS:
+            gloss.add_video(request.user, obligatory_fields_dict['videofile'], False)
     except (ValidationError, TypeError, Keyword):
+        if new_lemma:
+            lemmaidgloss.delete()
+        gloss.delete()
         messages.add_message(request, messages.ERROR, _("Error creating the new gloss."))
         return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
 

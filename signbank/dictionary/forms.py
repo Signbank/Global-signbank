@@ -39,6 +39,9 @@ Tag.__str__ = lambda self: self.name.replace('_', ' ')
 # To offer capital first letter tags
 # Tag.__str__ = lambda self: self.name.replace('_', ' ').title()
 
+ATTRS_FOR_FORMS = {'class': 'form-control'}
+ATTRS_FOR_BOOLEAN_FORMS = {'class': 'form-control', 'style': 'width:90px'}
+
 
 class GlossCreateForm(forms.ModelForm):
     """Form for creating a new gloss from scratch"""
@@ -48,9 +51,20 @@ class GlossCreateForm(forms.ModelForm):
     user = None
     last_used_dataset = None
 
+    domhndsh_letter = forms.ChoiceField(label=_('letter'), choices=[(0, '-')], required=False,
+                                        widget=forms.Select(attrs=ATTRS_FOR_BOOLEAN_FORMS))
+    domhndsh_number = forms.ChoiceField(label=_('number'), choices=[(0, '-')], required=False,
+                                        widget=forms.Select(attrs=ATTRS_FOR_BOOLEAN_FORMS))
+
+    subhndsh_letter = forms.ChoiceField(label=_('letter'), choices=[(0, '-')], required=False,
+                                        widget=forms.Select(attrs=ATTRS_FOR_BOOLEAN_FORMS))
+    subhndsh_number = forms.ChoiceField(label=_('number'), choices=[(0, '-')], required=False,
+                                        widget=forms.Select(attrs=ATTRS_FOR_BOOLEAN_FORMS))
+
     class Meta:
         model = Gloss
-        fields = ['handedness', 'domhndsh', 'subhndsh']
+        fields = ['handedness', 'domhndsh', 'subhndsh',
+                  'domhndsh_number', 'domhndsh_letter', 'subhndsh_number', 'subhndsh_letter']
 
     def __init__(self, queryDict, *args, **kwargs):
         self.languages = kwargs.pop('languages')
@@ -92,6 +106,8 @@ class GlossCreateForm(forms.ModelForm):
                                                     ),
                                                     widget=forms.Select(attrs=ATTRS_FOR_FORMS),
                                                     required=False)
+        for boolean_field in ['domhndsh_letter', 'domhndsh_number', 'subhndsh_letter', 'subhndsh_number']:
+            self.fields[boolean_field].choices = [(0, '-'), (2, _('True')), (3, _('False'))]
 
 
 class MorphemeCreateForm(forms.ModelForm):
@@ -151,10 +167,6 @@ class MorphemeCreateForm(forms.ModelForm):
         morpheme.save()
 
         return morpheme
-
-
-ATTRS_FOR_FORMS = {'class': 'form-control'}
-ATTRS_FOR_BOOLEAN_FORMS = {'class': 'form-control', 'style': 'width:90px'}
 
 
 class TagUpdateForm(forms.Form):
