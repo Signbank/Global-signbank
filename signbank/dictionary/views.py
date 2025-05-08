@@ -2281,7 +2281,7 @@ def protected_media(request, filename, document_root=WRITABLE_FOLDER, show_index
             filename = quoted_filename
             path = quoted_path
 
-    if not USE_X_SENDFILE:
+    if USE_X_SENDFILE:
         if filename.split('.')[-1] == 'mp4':
             response = HttpResponse(content_type='video/mp4')
         elif filename.split('.')[-1] == 'png':
