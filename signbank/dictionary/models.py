@@ -2451,7 +2451,7 @@ class Gloss(models.Model):
             try:
                 video.videofile.save(relative_path, videofile)
             except OSError:
-                msg = "The video could not be saved in the GlossVideo object for gloss " % self.pk
+                msg = gettext("The video could not be saved in the GlossVideo object for gloss {glossid}.").format(glossid=self.pk)
                 raise ValidationError(msg)
 
             self.lastUpdated = DT.datetime.now(tz=get_current_timezone())
@@ -2464,7 +2464,7 @@ class Gloss(models.Model):
             glossvideohistory.save()
             return video
         else:
-            msg = "A GlossVideo object could not be created for gloss " % self.pk
+            msg = gettext("A GlossVideo object could not be created for gloss {glossid}.").format(glossid=self.pk)
             raise ValidationError(msg)
 
     def has_nme_videos(self):
@@ -2566,8 +2566,7 @@ class Gloss(models.Model):
             # Save the new videofile in the video object
             video.videofile.save(relative_path, videofile)
         else:
-            msg = "No video file supplied for perspective video upload of gloss %s" \
-                  % (self.pk)
+            msg = gettext("No video file supplied for perspective video upload of gloss {glossid}.").format(glossid=self.pk)
             raise ValidationError(msg)
 
         self.lastUpdated = DT.datetime.now(tz=get_current_timezone())
@@ -2580,8 +2579,7 @@ class Gloss(models.Model):
         from signbank.video.models import GlossVideo
         glossvideos = GlossVideo.objects.filter(gloss=self, glossvideonme=None, glossvideoperspective=None, version=0)
         if not glossvideos:
-            msg = ("Gloss::create_citation_image: no video for gloss %s"
-                   % self.pk)
+            msg = gettext("Gloss::create_citation_image: no video for gloss {glossid}.").format(glossid=self.pk)
             raise ValidationError(msg)
         glossvideo = glossvideos.first()
         glossvideo.make_poster_image()
@@ -2590,8 +2588,7 @@ class Gloss(models.Model):
         from signbank.video.models import GlossVideo
         glossvideos = GlossVideo.objects.filter(gloss=self, glossvideonme=None, glossvideoperspective=None, version=0)
         if not glossvideos:
-            msg = ("Gloss::create_stills: no video for gloss %s"
-                   % self.pk)
+            msg = gettext("Gloss::create_stills: no video for gloss {glossid}.").format(glossid=self.pk)
             raise ValidationError(msg)
         glossvideo = glossvideos.first()
         glossvideo.make_image_sequence()
@@ -3584,8 +3581,8 @@ class AnnotationIdglossTranslation(models.Model):
             # Before an item is saved the language is checked against the languages of the dataset the gloss is in.
             dataset_languages = dataset.translation_languages.all()
             if not self.language in dataset_languages:
-                msg = "Language %s is not in the set of language of the dataset gloss %s belongs to" \
-                      % (self.language.name, self.gloss.id)
+                msg = gettext("Language {language} is not in the set of languages for dataset {acronym}.").format(language=self.language.name,
+                                                                                                                  acronym=dataset.acronym)
                 raise ValidationError(msg)
 
             # The annotation idgloss translation text for a language must be unique within a dataset.
@@ -3596,7 +3593,10 @@ class AnnotationIdglossTranslation(models.Model):
                     (glosses_with_same_text.count() == 1 and glosses_with_same_text.first() == self)
                     or glosses_with_same_text is None or glosses_with_same_text.count() == 0):
                 gloss_with_same_text = glosses_with_same_text.first()
-                msg = f"The annotation idgloss translation text '{self.text}' is not unique within dataset '{dataset.acronym}' for gloss '{self.gloss.id}'. Gloss {gloss_with_same_text.id} also has this text."
+                msg = gettext("The annotation text {translation} is not unique within dataset {acronym} for gloss {glossid}. Gloss {othergloss} also has this text.").format(translation=self.text,
+                                                                                                                                                                             acronym=dataset.acronym,
+                                                                                                                                                                             glossid=self.gloss.id,
+                                                                                                                                                                             othergloss=gloss_with_same_text.id)
                 raise ValidationError(msg)
 
         super(AnnotationIdglossTranslation, self).save(*args, **kwargs)
@@ -3650,16 +3650,16 @@ class LemmaIdglossTranslation(models.Model):
             # Before an item is saved the language is checked against the languages of the dataset the lemma is in.
             dataset_languages = dataset.translation_languages.all()
             if self.language not in dataset_languages:
-                msg = "Language %s is not in the set of language of the dataset gloss %s belongs to" \
-                      % (self.language.name, self.lemma.id)
+                msg = gettext("Language {language} is not in the dataset languages of lemma {lemmaid}.").format(language=self.language.name,
+                                                                                                                lemmaid=self.lemma.pk)
                 raise ValidationError(msg)
 
             # The lemma idgloss translation text for a language must be unique within a dataset.
             lemmas_with_same_text = dataset.lemmaidgloss_set.filter(lemmaidglosstranslation__text__exact=self.text,
                                                                     lemmaidglosstranslation__language=self.language)
             if lemmas_with_same_text.count() > 1:
-                msg = "The lemma idgloss translation text '%s' is not unique within dataset '%s' for lemma '%s'." \
-                      % (self.text, dataset.acronym, self.lemma.id)
+                msg = gettext("The lemma text {translation} is not unique within dataset {acronym}.").format(translation=self.text,
+                                                                                                             acronym=dataset.acronym)
                 raise ValidationError(msg)
 
         super(LemmaIdglossTranslation, self).save(*args, **kwargs)

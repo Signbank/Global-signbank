@@ -188,8 +188,11 @@ def add_gloss(request):
             annotation_idgloss_text = request.POST[glosscreate_field_name]
             existing_annotationidglosstranslations = AnnotationIdglossTranslation.objects.filter(language=language, text=annotation_idgloss_text, gloss__lemma__dataset=dataset)
             if existing_annotationidglosstranslations.count() > 0:
+                if new_lemma:
+                    lemmaidgloss.delete()
+                gloss.delete()
                 existing_gloss = existing_annotationidglosstranslations.first().gloss
-                feedback_message = "Gloss with id {glossid} has more than one annotation for language {language}".format(glossid=existing_gloss.pk, language=language.name)
+                feedback_message = gettext("Gloss with id {glossid} has more than one annotation for language {language}".format(glossid=existing_gloss.pk, language=language.name))
                 messages.add_message(request, messages.ERROR, feedback_message)
                 return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
 
@@ -227,11 +230,12 @@ def add_gloss(request):
                                                                                  gloss=gloss)
         if 'videofile' in OBLIGATORY_FIELDS:
             gloss.add_video(request.user, obligatory_fields_dict['videofile'], False)
-    except (ValidationError, TypeError, Keyword):
+    except (ValidationError, TypeError, Keyword) as e:
+        feedback_message = getattr(e, 'message', repr(e))
+        messages.add_message(request, messages.ERROR, feedback_message)
         if new_lemma:
             lemmaidgloss.delete()
         gloss.delete()
-        messages.add_message(request, messages.ERROR, _("Error creating the new gloss."))
         return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
 
     # new gloss created successfully, go to GlossDetailView
