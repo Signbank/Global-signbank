@@ -99,7 +99,13 @@ def pretty_print_revisions(gloss):
         'gloss_perspectivevideo_right': gettext("Upload Perspective Video (right)"),
         'blend_morphology': gettext("Blend Morphology"),
         'archived': gettext("Deleted"),
-        'restored': gettext("Restored")
+        'restored': gettext("Restored"),
+        'definitiondelete': gettext("Note"),
+        'definitioncount': gettext("Note Index"),
+        'definitionpub': gettext("Note Published"),
+        'definition': gettext("Note Text"),
+        'definition_create': gettext("Note"),
+        'definitionrole': gettext("Note Type")
     }
     revisions = []
     for revision in GlossRevision.objects.filter(gloss=gloss):
@@ -166,7 +172,8 @@ def pretty_print_revisions(gloss):
                 field_name_qualification = ''
         elif revision.field_name in ['Sense', 'Senses', 'senses',
                                      'Sentence',
-                                     'sequential_morphology', 'simultaneous_morphology', 'blend_morphology']:
+                                     'sequential_morphology', 'simultaneous_morphology', 'blend_morphology',
+                                     'definition', 'definitiondelete', 'definition_create', 'definitioncount', 'definitionpub', 'definitionrole']:
             if revision.old_value and not revision.new_value:
                 # this translation exists in the interface of Gloss Edit View
                 delete_command = gettext('Delete')
@@ -196,6 +203,9 @@ def pretty_print_revisions(gloss):
             else:
                 display_old_value = check_value_to_translated_human_value(revision.field_name, revision.old_value)
                 display_new_value = check_value_to_translated_human_value(revision.field_name, revision.new_value)
+        elif revision.field_name in ['definitionpub']:
+            display_old_value = _("Yes") if revision.old_value == 'True' else _("No")
+            display_new_value = _("Yes") if revision.new_value == 'True' else _("No")
         else:
             display_old_value = revision.old_value
             display_new_value = revision.new_value

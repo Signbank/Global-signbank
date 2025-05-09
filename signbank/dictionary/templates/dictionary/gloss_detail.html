@@ -2798,8 +2798,10 @@ textarea:focus {
             <table class='table'>
               <tr>
                   <th style='width:1em'></th>
-                  <th style='width:3em'>{% trans "Published" %}</th>
-                  <th style='width:20em'>{% trans "Index" %}</th>
+                  <th style="width:10em">{% trans "Creation Date" %}</th>
+                  <th style="width:10em">{% trans "Creator" %}</th>
+                  <th style='width:22em'>{% trans "Published" %}</th>
+                  <th style='width:22em'>{% trans "Index" %}</th>
                   <th style='width:20em'>{% trans "Type" %}</th>
                   <th>{% trans "Text" %}</th>
               </tr>
@@ -2839,7 +2841,15 @@ textarea:focus {
                     {% endif %}
                     {% endif %}
                 </td>
-                <td {% if perms.dictionary.can_publish %}class='edit edit_check'{% endif %} id='definitionpub_{{def.id}}'
+                <td>{{def.creationDate|default_if_none:''}}</td>
+                <td>{% for creator in def.creator.all %}
+                            {% if forloop.last %}
+                                {{creator.first_name}} {{creator.last_name}}
+                            {% else %}
+                                {{creator.first_name}} {{creator.last_name}},
+                            {% endif %}
+                    {% endfor %}</td>
+                <td class='edit edit_check' id='definitionpub_{{def.id}}'
                     value='{{def.published}}'>{% if def.published %}{% trans "Yes" %}{% else %}{% trans "No" %}{% endif %}</td>
                 <td class='edit edit_int' id='definitioncount_{{def.id}}'>{{def.count}}</td>
                 <td class="td td-light" id='definitionrole_{{def.id}}'
@@ -2856,6 +2866,8 @@ textarea:focus {
                 {% csrf_token %}
                  <table class='table'>
                     <tr>
+                        <td class="td td-light" style="width:7em"></td>
+                        <td class="td td-light" style="width:7em"></td>
                         <td class="td td-light" style="width:2em"></td>
                         <td class="td td-light" style="width:7em"><input class='checkbox' name='published' id='id_published' type='checkbox'></td>
                         <td class="td td-light" style='width:5em'><input class='form-control form-control-light' name='count' id='id_count' type='number' value=3></td>
@@ -2863,6 +2875,8 @@ textarea:focus {
                         <td class="td td-light">{{definitionform.text}}</td>
                     </tr>
                      <tr>
+                        <td></td>
+                        <td></td>
                         <td></td>
                         <td></td>
                         <td></td>
