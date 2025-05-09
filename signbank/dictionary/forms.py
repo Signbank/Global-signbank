@@ -17,7 +17,7 @@ from signbank.settings.server_specific import (LANGUAGES, LANGUAGE_CODE, USE_REG
                                                MODELTRANSLATION_LANGUAGES, FIELDS, DATE_FORMAT,
                                                MORPHEME_DISPLAY_FIELDS, SHOW_FIELD_CHOICE_COLORS,
                                                MINIMAL_PAIRS_SEARCH_FIELDS, MINIMAL_PAIRS_CHOICE_FIELDS,
-                                               RECENTLY_ADDED_SIGNS_PERIOD)
+                                               RECENTLY_ADDED_SIGNS_PERIOD, OBLIGATORY_FIELDS)
 from signbank.video.models import GlossVideo
 from signbank.dictionary.models import (Gloss, Morpheme, Definition, Relation, RelationToForeignSign,
                                         OtherMedia, Handshape, SemanticField, DerivationHistory,
@@ -39,6 +39,9 @@ Tag.__str__ = lambda self: self.name.replace('_', ' ')
 # To offer capital first letter tags
 # Tag.__str__ = lambda self: self.name.replace('_', ' ').title()
 
+ATTRS_FOR_FORMS = {'class': 'form-control'}
+ATTRS_FOR_BOOLEAN_FORMS = {'class': 'form-control', 'style': 'width:90px'}
+
 
 class GlossCreateForm(forms.ModelForm):
     """Form for creating a new gloss from scratch"""
@@ -48,15 +51,25 @@ class GlossCreateForm(forms.ModelForm):
     user = None
     last_used_dataset = None
 
+    domhndsh_letter = forms.ChoiceField(label=_('letter'), choices=[(0, '-')], required=False,
+                                        widget=forms.Select(attrs=ATTRS_FOR_BOOLEAN_FORMS))
+    domhndsh_number = forms.ChoiceField(label=_('number'), choices=[(0, '-')], required=False,
+                                        widget=forms.Select(attrs=ATTRS_FOR_BOOLEAN_FORMS))
+
+    subhndsh_letter = forms.ChoiceField(label=_('letter'), choices=[(0, '-')], required=False,
+                                        widget=forms.Select(attrs=ATTRS_FOR_BOOLEAN_FORMS))
+    subhndsh_number = forms.ChoiceField(label=_('number'), choices=[(0, '-')], required=False,
+                                        widget=forms.Select(attrs=ATTRS_FOR_BOOLEAN_FORMS))
+
     class Meta:
         model = Gloss
-        fields = []
+        fields = ['handedness', 'domhndsh', 'subhndsh',
+                  'domhndsh_number', 'domhndsh_letter', 'subhndsh_number', 'subhndsh_letter']
 
     def __init__(self, queryDict, *args, **kwargs):
         self.languages = kwargs.pop('languages')
         self.user = kwargs.pop('user')
         self.last_used_dataset = kwargs.pop('last_used_dataset')
-
         super(GlossCreateForm, self).__init__(queryDict, *args, **kwargs)
 
         if 'dataset' in queryDict:
@@ -69,38 +82,32 @@ class GlossCreateForm(forms.ModelForm):
             if glosscreate_field_name in queryDict:
                 self.fields[glosscreate_field_name].value = queryDict[glosscreate_field_name]
 
-    @atomic  # This rolls back the gloss creation if creating annotationidglosstranslations fails
-    def save(self, commit=True):
-        gloss = super(GlossCreateForm, self).save(commit)
-        dataset = Dataset.objects.get(id=self['dataset'].value())
-        for language in self.languages:
-            glosscreate_field_name = self.gloss_create_field_prefix + language.language_code_2char
-            annotation_idgloss_text = self[glosscreate_field_name].value()
-            existing_annotationidglosstranslations = gloss.annotationidglosstranslation_set.filter(language=language)
-            if existing_annotationidglosstranslations is None or len(existing_annotationidglosstranslations) == 0:
-                annotationidglosstranslation = AnnotationIdglossTranslation(gloss=gloss, language=language,
-                                                                            text=annotation_idgloss_text,
-                                                                            dataset=dataset)
-                annotationidglosstranslation.save()
-            elif len(existing_annotationidglosstranslations) == 1:
-                annotationidglosstranslation = existing_annotationidglosstranslations[0]
-                annotationidglosstranslation.text = annotation_idgloss_text
-                annotationidglosstranslation.save()
-            else:
-                raise Exception(
-                    "In class %s: gloss with id %s has more than one annotation idgloss translation for language %s"
-                    % (self.__class__.__name__, gloss.pk, language.name)
-                )
-        gloss.creator.add(self.user)
-        gloss.creationDate = DT.datetime.now()
-        gloss.save()
-        user_affiliations = AffiliatedUser.objects.filter(user=self.user)
-        if user_affiliations.count() > 0:
-            for ua in user_affiliations:
-                new_affiliation, created = AffiliatedGloss.objects.get_or_create(affiliation=ua.affiliation,
-                                                                                 gloss=gloss)
-
-        return gloss
+        self.fields['handedness'] = forms.ChoiceField(label=_('Handedness'),
+                                                      choices = choicelist_queryset_to_translated_dict(
+                                                          list(FieldChoice.objects.filter(field='Handedness').order_by(
+                                                              'machine_value')),
+                                                          ordered=False, id_prefix='', shortlist=False
+                                                      ),
+                                                      widget=forms.Select(attrs=ATTRS_FOR_FORMS),
+                                                      required=False)
+        self.fields['domhndsh'] = forms.ChoiceField(label=_('Strong Hand'),
+                                                    choices = choicelist_queryset_to_translated_dict(
+                                                        list(Handshape.objects.all().order_by(
+                                                            'machine_value')),
+                                                        ordered=False, id_prefix='', shortlist=False
+                                                    ),
+                                                    widget=forms.Select(attrs=ATTRS_FOR_FORMS),
+                                                    required=False)
+        self.fields['subhndsh'] = forms.ChoiceField(label=_('Weak Hand'),
+                                                    choices = choicelist_queryset_to_translated_dict(
+                                                        list(Handshape.objects.all().order_by(
+                                                            'machine_value')),
+                                                        ordered=False, id_prefix='', shortlist=False
+                                                    ),
+                                                    widget=forms.Select(attrs=ATTRS_FOR_FORMS),
+                                                    required=False)
+        for boolean_field in ['domhndsh_letter', 'domhndsh_number', 'subhndsh_letter', 'subhndsh_number']:
+            self.fields[boolean_field].choices = [(0, '-'), (2, _('True')), (3, _('False'))]
 
 
 class MorphemeCreateForm(forms.ModelForm):
@@ -160,10 +167,6 @@ class MorphemeCreateForm(forms.ModelForm):
         morpheme.save()
 
         return morpheme
-
-
-ATTRS_FOR_FORMS = {'class': 'form-control'}
-ATTRS_FOR_BOOLEAN_FORMS = {'class': 'form-control', 'style': 'width:90px'}
 
 
 class TagUpdateForm(forms.Form):

@@ -17,7 +17,7 @@ from django.utils.datastructures import MultiValueDictKeyError
 from django.utils.encoding import escape_uri_path
 from urllib.parse import quote
 from django.contrib import messages
-from django.core.exceptions import ValidationError, ObjectDoesNotExist, MultipleObjectsReturned
+from django.core.exceptions import ValidationError, ObjectDoesNotExist, MultipleObjectsReturned, PermissionDenied
 from django.utils.translation import gettext_lazy as _, activate, override, gettext
 from django.views.decorators.csrf import csrf_exempt
 from django.utils.timezone import get_current_timezone
@@ -36,10 +36,11 @@ from signbank.settings.server_specific import (PREFIX_URL, WRITABLE_FOLDER, GLOS
                                                LANGUAGE_CODE, USE_HANDSHAPE, HANDSHAPE_IMAGE_DIRECTORY,
                                                RECENTLY_ADDED_SIGNS_PERIOD, USE_REGULAR_EXPRESSIONS,
                                                FIELDS, DEFINITION_FIELDS, SHOW_QUERY_PARAMETERS_AS_BUTTON,
-                                               DEFAULT_LANGUAGE_HEADER_COLUMN, DEFAULT_DATASET_ACRONYM)
+                                               DEFAULT_LANGUAGE_HEADER_COLUMN, DEFAULT_DATASET_ACRONYM, OBLIGATORY_FIELDS)
 from signbank.settings.base import (MAXIMUM_UPLOAD_SIZE, SUPPORTED_CITATION_IMAGE_EXTENSIONS, USE_X_SENDFILE,
                                     ALWAYS_REQUIRE_LOGIN, MEDIA_ROOT, ESCAPE_UPLOADED_VIDEO_FILE_PATH)
 from signbank.video.models import (GlossVideo, small_appendix, add_small_appendix)
+from signbank.video.forms import VideoUploadForGlossCreateForm
 from signbank.dictionary.models import (Dataset, Language, Gloss, Morpheme, LemmaIdgloss, LemmaIdglossTranslation,
                                         Handshape, SignLanguage, AnnotatedSentence,
                                         AnnotationIdglossTranslation, FieldChoice, AffiliatedUser, AffiliatedGloss,
@@ -60,7 +61,9 @@ from signbank.tools import (get_two_letter_dir, get_default_annotationidglosstra
                             split_csv_lines_header_body,
                             split_csv_lines_sentences_header_body, create_sentence_from_valuedict,
                             get_deleted_gloss_or_media_data, get_gloss_data)
-from signbank.dictionary.field_choices import fields_to_fieldcategory_dict
+from signbank.dictionary.field_choices import (get_static_choice_lists, get_frequencies_for_category, category_to_fields,
+                                               fields_to_categories, fields_to_fieldcategory_dict,
+                                               get_static_choice_lists_per_field)
 from signbank.csv_interface import (csv_create_senses, csv_update_sentences, csv_create_sentence, required_csv_columns,
                                     choice_fields_choices)
 from signbank.dictionary.translate_choice_list import (machine_value_to_translated_human_value,
@@ -68,6 +71,7 @@ from signbank.dictionary.translate_choice_list import (machine_value_to_translat
 from signbank.abstract_machine import get_interface_language_api
 from signbank.api_token import put_api_user_in_request
 from signbank.dictionary.gloss_revision import pretty_print_revisions
+from signbank.dictionary.adminviews import show_warning
 
 
 def login_required_config(f):
@@ -390,20 +394,24 @@ def try_code(request, pk):
 
 # this method is called from the Signbank menu bar
 def add_new_sign(request):
+    if not request.user.has_perm('dictionary.add_gloss'):
+        raise PermissionDenied
+
     context = {}
 
     selected_datasets = get_selected_datasets(request)
 
-    default_dataset_acronym = DEFAULT_DATASET_ACRONYM
-    default_dataset = Dataset.objects.get(acronym=default_dataset_acronym)
+    if not selected_datasets or selected_datasets.count() > 1:
+        feedback_message = gettext('To create a new gloss, please select a single dataset.')
+        return show_warning(request, feedback_message, selected_datasets)
 
-    if len(selected_datasets) == 1:
-        last_used_dataset = selected_datasets[0].acronym
-    elif 'last_used_dataset' in request.session.keys():
-        last_used_dataset = request.session['last_used_dataset']
-    else:
-        last_used_dataset = None
+    last_used_dataset = selected_datasets.first()
+    if 'last_used_dataset' not in request.session.keys():
+        request.session['last_used_dataset'] = last_used_dataset.acronym
     context['last_used_dataset'] = last_used_dataset
+    if 'change_dataset' not in get_user_perms(request.user, last_used_dataset):
+        feedback_message = gettext("No permission to change dataset")
+        return show_warning(request, feedback_message, selected_datasets)
 
     dataset_languages = Language.objects.filter(dataset__in=selected_datasets).distinct()
 
@@ -415,9 +423,11 @@ def add_new_sign(request):
 
     context['SHOW_DATASET_INTERFACE_OPTIONS'] = SHOW_DATASET_INTERFACE_OPTIONS
     context['USE_REGULAR_EXPRESSIONS'] = USE_REGULAR_EXPRESSIONS
+    context['OBLIGATORY_FIELDS'] = OBLIGATORY_FIELDS
 
     context['add_gloss_form'] = GlossCreateForm(request.GET, languages=dataset_languages, user=request.user,
                                                 last_used_dataset=last_used_dataset)
+    context['videoform'] = VideoUploadForGlossCreateForm()
 
     return render(request, 'dictionary/add_gloss.html', context)
 

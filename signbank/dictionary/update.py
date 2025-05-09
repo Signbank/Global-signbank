@@ -9,15 +9,16 @@ from django.http import (HttpResponse, HttpResponseRedirect, HttpResponseForbidd
                          JsonResponse, Http404)
 from django.shortcuts import render, get_object_or_404, redirect
 from django.urls import reverse
-from django.core.exceptions import ObjectDoesNotExist, MultipleObjectsReturned, ValidationError
+from django.core.exceptions import ObjectDoesNotExist, MultipleObjectsReturned, ValidationError, PermissionDenied
 from django.core.files import File
 from django.contrib.auth.decorators import permission_required
 from django.db.models.fields import BooleanField, IntegerField
+from django.forms.models import ModelChoiceField
 from django.db import DatabaseError, IntegrityError
 from django.utils.timezone import get_current_timezone
 from django.contrib import messages
 from django.contrib.auth.models import Group
-from django.utils.translation import gettext_lazy as _
+from django.utils.translation import gettext_lazy as _, activate, override, gettext
 from django.db.transaction import atomic, TransactionManagementError
 from django.contrib.auth.models import User
 
@@ -31,7 +32,7 @@ from signbank.video.models import (AnnotatedVideo, GlossVideoNME, GlossVideoDesc
 from signbank.video.convertvideo import convert_video
 
 from signbank.settings.server_specific import (WRITABLE_FOLDER, PREFIX_URL, USE_REGULAR_EXPRESSIONS,
-                                               SHOW_DATASET_INTERFACE_OPTIONS,
+                                               SHOW_DATASET_INTERFACE_OPTIONS, OBLIGATORY_FIELDS,
                                                OTHER_MEDIA_DIRECTORY, MORPHEME_DISPLAY_FIELDS,
                                                DATASET_METADATA_DIRECTORY, DATASET_EAF_DIRECTORY,
                                                GUARDED_GLOSS_DELETE, GUARDED_MORPHEME_DELETE,
@@ -71,114 +72,154 @@ from signbank.dictionary.update_glosses import (mapping_toggle_relOriLoc, mappin
                                                 mapping_toggle_contType, mapping_toggle_movDir, mapping_toggle_movSh,
                                                 batch_edit_create_sense)
 from signbank.dictionary.batch_edit import batch_edit_update_gloss, add_gloss_update_to_revision_history
+from signbank.dictionary.adminviews import show_warning
 
 
-def show_error(request, translated_message, form, dataset_languages):
-    # this function is used by the add_gloss function below
-    messages.add_message(request, messages.ERROR, translated_message)
-    return render(request, 'dictionary/add_gloss.html',
-                  {'add_gloss_form': form,
-                   'dataset_languages': dataset_languages,
-                   'selected_datasets': get_selected_datasets(request),
-                   'USE_REGULAR_EXPRESSIONS': USE_REGULAR_EXPRESSIONS,
-                   'SHOW_DATASET_INTERFACE_OPTIONS': SHOW_DATASET_INTERFACE_OPTIONS})
-
-
-# this method is called from the GlossListView (Add Gloss button on the page)
+# this method is called as dictionary:add_gloss from the template for /signs/add/
 def add_gloss(request):
     """Create a new gloss and redirect to the edit view"""
     if not request.method == "POST":
         return HttpResponseForbidden("Add gloss method must be POST")
 
-    dataset = None
-    if 'dataset' in request.POST and request.POST['dataset'] is not None:
-        dataset = Dataset.objects.get(pk=request.POST['dataset'])
-        selected_datasets = Dataset.objects.filter(pk=request.POST['dataset'])
-    else:
-        selected_datasets = get_selected_datasets(request)
+    if not request.user.has_perm('dictionary.add_gloss'):
+        raise PermissionDenied
+
+    selected_datasets = get_selected_datasets(request)
+    if not selected_datasets or selected_datasets.count() > 1:
+        feedback_message = gettext('To create a new gloss, please select a single dataset.')
+        return show_warning(request, feedback_message, selected_datasets)
+
+    if 'dataset' not in request.POST or request.POST['dataset'] is None:
+        feedback_message = gettext('To create a new gloss, please select a single dataset.')
+        return show_warning(request, feedback_message, selected_datasets)
+
+    dataset = Dataset.objects.get(pk=request.POST['dataset'])
+    selected_datasets = Dataset.objects.filter(pk=request.POST['dataset'])
+
     dataset_languages = Language.objects.filter(dataset__in=selected_datasets).distinct()
 
-    if dataset:
-        last_used_dataset = dataset.acronym
-    elif len(selected_datasets) == 1:
-        last_used_dataset = selected_datasets[0].acronym
-    elif 'last_used_dataset' in request.session.keys():
-        last_used_dataset = request.session['last_used_dataset']
+    if 'last_used_dataset' not in request.session.keys():
+        request.session['last_used_dataset'] = dataset.acronym
+    if 'change_dataset' not in get_user_perms(request.user, dataset):
+        feedback_message = gettext("No permission to change dataset")
+        return show_warning(request, feedback_message, selected_datasets)
+
+    if 'videofile' in request.FILES.keys():
+        vfile = request.FILES['videofile']
+    elif 'videofile' in request.POST.keys():
+        # for unit tests, the file is found in the POST data
+        vfile = request.POST['videofile']
+    elif 'videofile' not in OBLIGATORY_FIELDS:
+        vfile = None
     else:
-        last_used_dataset = None
+        messages.add_message(request, messages.ERROR, _("A video file is required."))
+        return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
 
-    form = GlossCreateForm(request.POST, languages=dataset_languages, user=request.user, last_used_dataset=last_used_dataset)
-
-    # Lemma handling
-    lemma_form = None
     if request.POST['select_or_new_lemma'] == 'new':
-        lemma_form = LemmaCreateForm(request.POST, languages=dataset_languages, user=request.user, last_used_dataset=last_used_dataset)
+        new_lemma = True
+        lemma_form = LemmaCreateForm(request.POST, languages=dataset_languages, user=request.user, last_used_dataset=dataset)
         if not lemma_form.is_valid():
-            return show_error(request, _("You are not authorized to change the selected dataset."), form, dataset_languages)
-
-        lemmaidgloss = lemma_form.save()
+            messages.add_message(request, messages.ERROR, _("The new lemma form is not valid."))
+            return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
+        try:
+            lemmaidgloss = lemma_form.save()
+        except ValidationError as e:
+            feedback_message = getattr(e, 'message', repr(e))
+            messages.add_message(request, messages.ERROR, feedback_message)
+            return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
     else:
         lemmaidgloss_id = request.POST['idgloss']
-        if lemmaidgloss_id == '' or lemmaidgloss_id == 'confirmed':
+        new_lemma = False
+        if not lemmaidgloss_id or lemmaidgloss_id == 'confirmed':
             # if the user has typed in an identifier instead of selecting from the Lemma lookahead list
             # or if the user has gone to the previous page and not selected the lemma again
             # in this case, the original template value 'confirmed' has bot been replaced with a lemma id
-            return show_error(request, _("The given Lemma Idgloss is a string, not a Lemma."), form, dataset_languages)
+            messages.add_message(request, messages.ERROR, _("The given Lemma Idgloss is a string, not a Lemma."))
+            return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
         try:
             lemmaidgloss = LemmaIdgloss.objects.get(id=lemmaidgloss_id)
         except (ObjectDoesNotExist, IntegerField, ValueError, TypeError):
-            return show_error(request, _("The given Lemma Idgloss ID is unknown."), form, dataset_languages)
+            messages.add_message(request, messages.ERROR, _("The given Lemma Idgloss ID is unknown."))
+            return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
 
-    # Check for 'change_dataset' permission
-    if dataset and ('change_dataset' not in get_user_perms(request.user, dataset)) \
-            and ('change_dataset' not in get_group_perms(request.user, dataset))\
-            and not request.user.is_staff:
-        return show_error(request, _("You are not authorized to change the selected dataset."), form, dataset_languages)
+    obligatory_fields_dict = dict()
+    if vfile:
+        # only put in the dictionary if non-empty
+        obligatory_fields_dict['videofile'] = vfile
 
-    elif not dataset:
-        # Dataset is empty, this is an error
-        return show_error(request, _("Please provide a dataset."), form, dataset_languages)
-
-    # if we get to here a dataset has been chosen for the new gloss
+    # if we get to here a dataset has been chosen for the new gloss and a lemma has been selected or created
     for item, value in request.POST.items():
-        if item.startswith(form.gloss_create_field_prefix):
-            language_code_2char = item[len(form.gloss_create_field_prefix):]
+        if item.startswith('glosscreate_'):
+            language_code_2char = item[len('glosscreate_'):]
             language = Language.objects.get(language_code_2char=language_code_2char)
             glosses_in_dataset = Gloss.objects.filter(lemma__dataset=dataset)
             glosses_for_this_language_and_annotation_idgloss = glosses_in_dataset.filter(
                         annotationidglosstranslation__language=language,
                         annotationidglosstranslation__text__exact=value)
             if glosses_for_this_language_and_annotation_idgloss.count() > 0:
+                if new_lemma:
+                    lemmaidgloss.delete()
                 messages.add_message(request, messages.ERROR, _('Annotation ID Gloss not unique.'))
                 return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
+        elif item.startswith('lemmacreate_'):
+            continue
+        elif item in ['csrfmiddlewaretoken', 'dataset', 'lemma_language', 'idgloss', 'select_or_new_lemma']:
+            continue
+        elif item in ['videofile']:
+            continue
+        elif item in ['domhndsh_letter', 'domhndsh_number', 'subhndsh_letter', 'subhndsh_number']:
+            obligatory_fields_dict[item] = value == '2'
+        else:
+            obligatory_fields_dict[item] = int(value)
 
-    if not form.is_valid():
-        return show_error(request, _("The add gloss form is not valid."), form, dataset_languages)
+    for obligatory_field in OBLIGATORY_FIELDS:
+        if obligatory_field not in obligatory_fields_dict.keys():
+            if new_lemma:
+                lemmaidgloss.delete()
+            error_message = gettext("Field {field} is required.".format(field=obligatory_field))
+            messages.add_message(request, messages.ERROR, error_message)
+            return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
 
-    if lemma_form and not lemma_form.is_valid():
-        return show_error(request, _("The new lemma form is not valid."), form, dataset_languages)
-
-    if not lemmaidgloss:
-        return show_error(request, _("Please select or create a lemma."), form, dataset_languages)
-
+    gloss = Gloss()
+    gloss.save()
     try:
-        gloss = form.save()
+        for language in dataset_languages:
+            glosscreate_field_name = 'glosscreate_' + language.language_code_2char
+            annotation_idgloss_text = request.POST[glosscreate_field_name]
+            existing_annotationidglosstranslations = AnnotationIdglossTranslation.objects.filter(language=language, text=annotation_idgloss_text, gloss__lemma__dataset=dataset)
+            if existing_annotationidglosstranslations.count() > 0:
+                if new_lemma:
+                    lemmaidgloss.delete()
+                gloss.delete()
+                existing_gloss = existing_annotationidglosstranslations.first().gloss
+                feedback_message = gettext("Gloss with id {glossid} has more than one annotation for language {language}".format(glossid=existing_gloss.pk, language=language.name))
+                messages.add_message(request, messages.ERROR, feedback_message)
+                return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
+
+            annotationidglosstranslation = AnnotationIdglossTranslation(gloss=gloss, language=language,
+                                                                        text=annotation_idgloss_text)
+            annotationidglosstranslation.save()
+
         gloss.creationDate = DT.datetime.now()
-        gloss.excludeFromEcv = False
+        gloss.excludeFromEcv = True
         gloss.lemma = lemmaidgloss
 
         gloss_fields = [Gloss.get_field(fname) for fname in Gloss.get_field_names()]
+        for field in ['domhndsh', 'subhndsh']:
+            if field not in OBLIGATORY_FIELDS or field not in obligatory_fields_dict.keys():
+                continue
+            handshape_object = Handshape.objects.get(machine_value=obligatory_fields_dict[field])
+            setattr(gloss, field, handshape_object)
 
-        # Set a default for all FieldChoice fields
         for field in [f for f in gloss_fields if isinstance(f, FieldChoiceForeignKey)]:
-            field_value = getattr(gloss, field.name)
-            if field_value is None:
-                field_choice_category = field.field_choice_category
-                try:
-                    fieldchoice = FieldChoice.objects.get(field=field_choice_category, machine_value=0)
-                except ObjectDoesNotExist:
-                    fieldchoice = FieldChoice.objects.create(field=field_choice_category, machine_value=0, name='-')
+            if field.name in OBLIGATORY_FIELDS and field.name in obligatory_fields_dict.keys():
+                fieldchoice = FieldChoice.objects.get(field=field.field_choice_category,
+                                                      machine_value=obligatory_fields_dict[field.name])
                 setattr(gloss, field.name, fieldchoice)
+
+        for field in ['domhndsh_letter', 'domhndsh_number', 'subhndsh_letter', 'subhndsh_number']:
+            if field in obligatory_fields_dict.keys() and obligatory_fields_dict[field]:
+                setattr(gloss, field, True)
 
         gloss.save()
         gloss.creator.add(request.user)
@@ -187,12 +228,15 @@ def add_gloss(request):
             for ua in user_affiliations:
                 new_affiliation, created = AffiliatedGloss.objects.get_or_create(affiliation=ua.affiliation,
                                                                                  gloss=gloss)
-
-    except ValidationError as ve:
-        return show_error(request, ve.message, form, dataset_languages)
-
-    if 'search_results' not in request.session.keys():
-        request.session['search_results'] = []
+        if 'videofile' in OBLIGATORY_FIELDS:
+            gloss.add_video(request.user, obligatory_fields_dict['videofile'], False)
+    except (ValidationError, TypeError, Keyword) as e:
+        feedback_message = getattr(e, 'message', repr(e))
+        messages.add_message(request, messages.ERROR, feedback_message)
+        if new_lemma:
+            lemmaidgloss.delete()
+        gloss.delete()
+        return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
 
     # new gloss created successfully, go to GlossDetailView
     return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': gloss.id})+'?edit')

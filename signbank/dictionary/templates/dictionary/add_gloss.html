@@ -11,6 +11,10 @@
 
 {% load guardian_tags %}
 
+{% block extrahead %}
+<link rel="stylesheet" type="text/css" href="{{STATIC_URL}}css/dropstyle.css">
+<link rel="stylesheet" type="text/css" href="{{STATIC_URL}}css/recordstyle.css">
+<link rel="stylesheet" type="text/css" href="{{STATIC_URL}}css/modalstyle.css">
 <style>
 .hasTooltip:hover .isTooltip {
     position: fixed;
@@ -18,11 +22,16 @@
     bottom: 100%;
 }
 </style>
+{% endblock %}
+
 {% block extrajs %}
 
     <script type="text/javascript">
+        var dark_mode = '{{request.session.dark_mode}}';
+        var dark_mode_django = '{{dark_mode}}';
         var url = '{{ PREFIX_URL }}';
         var language_code = '{{LANGUAGE_CODE}}';
+        var saving_str = '{{saving_str|escapejs}}';
         var permission = 0;
         {% for s_dataset in selected_datasets %}
         {% get_obj_perms request.user for s_dataset as "dataset_perms" %}
@@ -35,12 +44,19 @@
         } else {
             user_can_add_gloss = false;
         };
+    var gloss_dataset_id = {{ last_used_dataset.id}};
+    var gloss_default_language_code = '{{last_used_dataset.default_language.language_code_2char}}';
+    var csrf_token = '{{csrf_token}}';
+
     </script>
 
-    <script type="text/javascript" src="{{ STATIC_URL }}js/jquery.jeditable.mini.js"></script>
+    <script type="text/javascript" src="{{ STATIC_URL }}js/jquery.jeditable.mini_colors.js"></script>
     <script type="text/javascript" src="{{ STATIC_URL }}js/jquery.jeditable.checkbox.js"></script>
     <script type="text/javascript" src="{{ STATIC_URL }}js/typeahead.bundle.min.js"></script>
     <script type="text/javascript" src="{{ STATIC_URL }}js/gloss_add.js"></script>
+    <script type='text/javascript' src="{{ STATIC_URL }}js/lemma_typeahead.js"></script>
+    <script type="text/javascript" src="{{STATIC_URL}}js/drag_drop_files.js"></script>
+    <script type="text/javascript" src="{{STATIC_URL}}js/recordscript.js"></script>
 
     <script type="text/javascript">
     var lemma_create_field_prefix = "{{ lemma_create_field_prefix }}";
@@ -82,20 +98,17 @@
         return false;
     }
     </script>
-
-<script type='text/javascript' src="{{ STATIC_URL }}js/lemma_typeahead.js"></script>
-
 {% endblock %}
 
 {% block content %}
 
-<!--   {% if perms.dictionary.add_gloss %}-->
+   {% if perms.dictionary.add_gloss %}
    <p>{% trans "Please provide some initial data" %}:</p>
-     <form action='{% url "dictionary:add_gloss" %}' method='POST'>
+     <form action='{% url "dictionary:add_gloss" %}' method='POST' enctype="multipart/form-data">
          {% csrf_token %}
          <table class='table table-condensed-light' style='width: 1200px;'>
              <tr>
-                 <th style='width:300px;'><label for='dataset'>Dataset</label></th>
+                 <th style='width:300px;'><label for='id_dataset'>Dataset</label></th>
                  <td class='td td-light'><select id="id_dataset" name="dataset" required="">
                          {% for s_dataset in selected_datasets %}
                          {% get_obj_perms request.user for s_dataset as "dataset_perms" %}
@@ -171,18 +184,139 @@
                             </tr>
                             {% endfor %}
                             </table>
-                             <span style="line-height:40px;">
-                                 <button style="line-height:20px;" type="button" class="btn btn-primary"
+                             <span style="line-height:40px;width:auto;">
+                                 <button style="line-height:20px;width:auto;" type="button" class="btn btn-primary"
                                          onclick="copyTranslationsToLemma(this)">{% trans "Copy Annotation Fields to Lemma Translations" %}</button>
                              </span>
                          </div>
                          <input type="hidden" id="select_or_new_lemma" name="select_or_new_lemma" value="select"/>
                      </td>
              </tr>
+            {% if 'videofile' in OBLIGATORY_FIELDS %}
+            <tr>
+             {% csrf_token %}
+             <th>{% trans "Upload New Video" %}</th>
+                <td style="width:400px;">
+                <div class='editform'>
+                    <fieldset>
+                        <label for="id_videofile" class="drop-container" id="drop-container-video">
+                          <div id="videogallery" class="gallery"></div>
+                          <span id = "drop-container-title-video" class="drop-title">Drop video here<br>or...</span>
+                          <label id="drop-container-video-status" class="hide">Status here</label>
+                          <form>
+                            {% csrf_token %}
+                            <table>
+                              <tr>
+                                <td>{{videoform.videofile}}</td>
+                              </tr>
+                              <tr>
+                                <td id="video-buttons">
+                                    <input class='btn btn-primary' type='button' value='Upload' />
+                                </td>
+                              </tr>
+                            </table>
+                          </form>
+                        </label>
+                    </fieldset>
+                </div>
+                </td>
+            </tr>
+             {% endif %}
+             {% if 'handedness' in OBLIGATORY_FIELDS %}
+             <tr>
+                 {% with add_gloss_form.fields|get_item:'handedness' as handedness_field %}
+                 <th><label for="id_handedness">{{handedness_field.label}}</label></th>
+                 <td class='td td-light'>
+                    <select name="handedness" id="handedness">
+                        {% for value, text in handedness_field.choices %}
+                        <option value={{value}}>{{text}}</option>
+                        {% endfor %}
+                    </select></td>
+                 {% endwith %}
+             </tr>
+             {% endif %}
+             {% if 'domhndsh' in OBLIGATORY_FIELDS %}
+             <tr>
+                 {% with add_gloss_form.fields|get_item:'domhndsh' as domhndsh_field %}
+                 <th><label for="id_domhndsh">{{domhndsh_field.label}}</label></th>
+                 <td class='td td-light'>
+                    <select name="domhndsh" id="domhndsh">
+                        {% for value, text in domhndsh_field.choices %}
+                        <option value={{value}}>{{text}}</option>
+                        {% endfor %}
+                    </select></td>
+                 {% endwith %}
+             </tr>
+             {% endif %}
+             {% if 'domhndsh_letter' in OBLIGATORY_FIELDS %}
+             <tr>
+                 {% with add_gloss_form.fields|get_item:'domhndsh_letter' as domhndsh_letter_field %}
+                 <th><label for="id_domhndsh_letter">{{domhndsh_letter_field.label}}</label></th>
+                 <td class='td td-light'>
+                    <select name="domhndsh_letter" id="domhndsh_letter">
+                        {% for value, text in domhndsh_letter_field.choices %}
+                        <option value={{value}}>{{text}}</option>
+                        {% endfor %}
+                    </select></td>
+                 {% endwith %}
+             </tr>
+             {% endif %}
+             {% if 'domhndsh_number' in OBLIGATORY_FIELDS %}
+             <tr>
+                 {% with add_gloss_form.fields|get_item:'domhndsh_number' as domhndsh_number_field %}
+                 <th><label for="id_domhndsh_number">{{domhndsh_number_field.label}}</label></th>
+                 <td class='td td-light'>
+                    <select name="domhndsh_number" id="domhndsh_number">
+                        {% for value, text in domhndsh_number_field.choices %}
+                        <option value={{value}}>{{text}}</option>
+                        {% endfor %}
+                    </select></td>
+                 {% endwith %}
+             </tr>
+             {% endif %}
+             {% if 'subhndsh' in OBLIGATORY_FIELDS %}
+             <tr>
+                 {% with add_gloss_form.fields|get_item:'subhndsh' as subhndsh_field %}
+                 <th><label for="id_subhndsh">{{subhndsh_field.label}}</label></th>
+                 <td class='td td-light'>
+                    <select name="subhndsh" id="subhndsh">
+                        {% for value, text in subhndsh_field.choices %}
+                        <option value={{value}}>{{text}}</option>
+                        {% endfor %}
+                    </select></td>
+                 {% endwith %}
+             </tr>
+             {% endif %}
+             {% if 'subhndsh_letter' in OBLIGATORY_FIELDS %}
+             <tr>
+                 {% with add_gloss_form.fields|get_item:'subhndsh_letter' as subhndsh_letter_field %}
+                 <th><label for="id_subhndsh_letter">{{subhndsh_letter_field.label}}</label></th>
+                 <td class='td td-light'>
+                    <select name="subhndsh_letter" id="subhndsh_letter">
+                        {% for value, text in subhndsh_letter_field.choices %}
+                        <option value={{value}}>{{text}}</option>
+                        {% endfor %}
+                    </select></td>
+                 {% endwith %}
+             </tr>
+             {% endif %}
+             {% if 'subhndsh_number' in OBLIGATORY_FIELDS %}
+             <tr>
+                 {% with add_gloss_form.fields|get_item:'subhndsh_number' as subhndsh_number_field %}
+                 <th><label for="id_subhndsh_number">{{subhndsh_number_field.label}}</label></th>
+                 <td class='td td-light'>
+                    <select name="subhndsh_number" id="subhndsh_number">
+                        {% for value, text in subhndsh_number_field.choices %}
+                        <option value={{value}}>{{text}}</option>
+                        {% endfor %}
+                    </select></td>
+                 {% endwith %}
+             </tr>
+             {% endif %}
          </table>
 
      <input class='btn btn-primary' type='submit' value='{% trans "Add New Sign" %}'>
      </form>
-<!--      {% endif %}-->
-
+  {% endif %}
+<br><br><br>
 {% endblock %}
