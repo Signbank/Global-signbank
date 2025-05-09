@@ -1564,34 +1564,44 @@ def update_definition(request, gloss, field, value):
 
     if not defn.gloss.id == gloss_or_morpheme.id:
         return HttpResponseBadRequest("Definition doesn't match gloss", {'content-type': 'text/plain'})
-    
+
     if what == 'definitiondelete':
+        original_value = defn.note_text()
         defn.delete()
+        add_gloss_update_to_revision_history(request.user, gloss_or_morpheme, 'definitiondelete', original_value, '')
         return HttpResponseRedirect(reverse(reverse_url, kwargs={'pk': gloss_or_morpheme.id})+'?editdef')
-    
+
     if what == 'definition':
         # update the definition
+        original_value = defn.note_text()
         defn.text = value
         defn.save()
         newvalue = defn.text
+        new_history_value = defn.text
     elif what == 'definitioncount':
+        original_value = str(defn.count)
         defn.count = int(value)
         defn.save()
         newvalue = defn.count
+        new_history_value = str(defn.count)
     elif what == 'definitionpub':
-        
+        original_value = str(defn.published)
         if request.user.has_perm('dictionary.can_publish'):
             defn.published = value in ['Yes', 'yes', 'ja', 'Ja', '是', 'true', 'True', True, 1]
             defn.save()
-        
+
+        new_history_value = str(defn.published)
         if defn.published:
-            newvalue = 'Yes'
+            newvalue = _("Yes")
         else:
-            newvalue = 'No'
+            newvalue = _("No")
     elif what == 'definitionrole':
         defn.role = FieldChoice.objects.get(field='NoteType', machine_value=int(value))
         defn.save()
         newvalue = defn.role.name
+        new_history_value = newvalue
+
+    add_gloss_update_to_revision_history(request.user, gloss_or_morpheme, what, original_value, new_history_value)
 
     return HttpResponse(str(newvalue), {'content-type': 'text/plain'})
 
@@ -1755,7 +1765,12 @@ def add_definition(request, glossid):
     text = form.cleaned_data['text']
 
     defn = Definition(gloss=gloss_or_morpheme, count=count, role=role, text=text, published=published)
+    defn.creationDate = DT.datetime.now()
     defn.save()
+    defn.creator.add(request.user)
+    revision_value = ': '.join([role.name, text])
+
+    add_gloss_update_to_revision_history(request.user, gloss_or_morpheme, 'definition_create', '', revision_value)
 
     return HttpResponseRedirect(reverse(reverse_url, kwargs={'pk': gloss_or_morpheme.id})+'?editdef')
 
