@@ -31,7 +31,7 @@ from signbank.dictionary.models import (Dataset, Gloss, Translation, LemmaIdglos
                                         QueryParameterMultilingual,  QueryParameterSemanticField,
                                         QueryParameterDerivationHistory,
                                         QueryParameterBoolean, QueryParameterFieldChoice, QueryParameterHandshape)
-from signbank.dictionary.forms import (FieldChoiceForm, SemanticFieldForm, HandshapeForm,
+from signbank.dictionary.forms import (FieldChoiceForm, SemanticFieldForm, HandshapeForm, GlossProvenanceForm,
                                        QueryParameterFieldChoiceForm, SearchHistoryForm, QueryParameterBooleanForm,
                                        QueryParameterMultilingualForm, QueryParameterHandshapeForm)
 
