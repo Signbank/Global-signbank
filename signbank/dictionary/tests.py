@@ -28,7 +28,7 @@ from guardian.shortcuts import assign_perm
 from collections import OrderedDict
 from django.conf import settings
 
-from signbank.settings.server_specific import MODELTRANSLATION_LANGUAGES, ECV_FOLDER_ABSOLUTE_PATH, FIELDS
+from signbank.settings.server_specific import MODELTRANSLATION_LANGUAGES, ECV_FOLDER_ABSOLUTE_PATH, FIELDS, OBLIGATORY_FIELDS
 from signbank.video.models import GlossVideo
 from signbank.dictionary.models import (Dataset, Language, Gloss, Morpheme, Handshape, Keyword, SignLanguage,
                                         GlossSense, MorphologyDefinition,
@@ -4057,15 +4057,23 @@ def create_gloss_data(dataset, gloss_text):
     subhndsh_1 = Handshape.objects.filter(machine_value__gt=1).last()
 
     # Construct the Create Gloss form data
-    create_gloss_form_data = {'dataset': dataset.id, 'select_or_new_lemma': "new",
-                              'handedness': str(handedness_fieldchoice_2.machine_value),
-                              'domhndsh': str(domhndsh_1.machine_value),
-                              'subhndsh': str(subhndsh_1.machine_value)}
-
+    create_gloss_form_data = {'dataset': dataset.id, 'select_or_new_lemma': "new"}
+    if 'handedness' in OBLIGATORY_FIELDS:
+        create_gloss_form_data['handedness'] = str(handedness_fieldchoice_2.machine_value)
+    if 'domhndsh' in OBLIGATORY_FIELDS:
+        create_gloss_form_data['domhndsh'] = str(domhndsh_1.machine_value)
+    if 'subhndsh' in OBLIGATORY_FIELDS:
+       create_gloss_form_data['subhndsh'] = str(subhndsh_1.machine_value)
+    for field in ['domhndsh_letter', 'domhndsh_number', 'subhndsh_letter', 'subhndsh_number']:
+        if field not in OBLIGATORY_FIELDS:
+            continue
+        # set to empty choice
+        create_gloss_form_data[field] = '0'
     for language in dataset.translation_languages.all():
         create_gloss_form_data[GlossCreateForm.gloss_create_field_prefix + language.language_code_2char] = gloss_text + "annotationidglosstranslation_test_" + language.language_code_2char
         create_gloss_form_data[LemmaCreateForm.lemma_create_field_prefix + language.language_code_2char] = gloss_text + "lemmaidglosstranslation_test_" + language.language_code_2char
 
-    create_gloss_form_data['videofile'] = generate_file()
+    if 'videofile' in OBLIGATORY_FIELDS:
+        create_gloss_form_data['videofile'] = generate_file()
 
     return create_gloss_form_data
