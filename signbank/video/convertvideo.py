@@ -227,17 +227,17 @@ def extension_on_filename(filename):
 
     m = re.search(r".+-(\d+)\.(mp4|m4v|mov|webm|mkv|m2v)\.(bak\d+)$", filename_with_extension)
     if m:
-        return m.group(2)
+        return '.'+m.group(2)
     m = re.search(r".+-(\d+)\.(mp4|m4v|mov|webm|mkv|m2v)\.(bak\d+)$", filename_without_extension)
     if m:
-        return m.group(2)
+        return '.'+m.group(2)
     # Default if no file exists and the filename is invalid, allows to work on dev servers.
     return '.mp4'
 
 
 def video_file_type_extension(video_file_full_path):
 
-    if not video_file_full_path or 'glossvideo' not in video_file_full_path:
+    if not video_file_full_path or 'glossvideo' not in str(video_file_full_path):
         return ''
 
     if not os.path.exists(video_file_full_path):
