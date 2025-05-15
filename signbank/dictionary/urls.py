@@ -42,6 +42,7 @@ urlpatterns = [
     re_path(r'^update/affiliation/(?P<glossid>\d+)$', signbank.dictionary.update.add_affiliation, name='add_affiliation'),
     re_path(r'^update/morphemetag/(?P<morphemeid>\d+)$', signbank.dictionary.update.add_morphemetag, name='add_morphemetag'),
     re_path(r'^update/definition/(?P<glossid>\d+)$', signbank.dictionary.update.add_definition, name='add_definition'),
+    re_path(r'^update/provenance/(?P<glossid>\d+)$', signbank.dictionary.update.add_provenance, name='add_provenance'),
     re_path(r'^update/relation/$', signbank.dictionary.update.add_relation, name='add_relation'),
     re_path(r'^update/relationtoforeignsign/$', signbank.dictionary.update.add_relationtoforeignsign, name='add_relationtoforeignsign'),
     re_path(r'^update/morphologydefinition/$', signbank.dictionary.update.add_morphology_definition, name='add_morphologydefinition'),
