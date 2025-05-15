@@ -219,10 +219,9 @@ class GlossVideoFileTypeFilter(admin.SimpleListFilter):
             if not key:
                 return False
             video_file_full_path = Path(WRITABLE_FOLDER, videofile)
-            if not video_file_full_path.exists():
-                return key == 'False'
             file_extension = video_file_type_extension(video_file_full_path)
-            return key == str((file_extension == '.mp4'))
+            has_mp4_type = file_extension == '.mp4'
+            return key == str(has_mp4_type)
 
         queryset_res = queryset.values('id', 'videofile')
         results = [qv['id'] for qv in queryset_res
