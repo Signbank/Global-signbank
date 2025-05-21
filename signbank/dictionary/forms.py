@@ -611,6 +611,8 @@ class OtherMediaForm(forms.ModelForm):
     file = forms.FileField(widget=forms.FileInput(attrs={'accept': 'video/*, image/*, application/pdf'}),
                            required=True)
     alternative_gloss = forms.TextInput()
+    description = forms.CharField(widget=forms.Textarea(attrs={'cols': 80, 'rows': 5,
+                                                               'placeholder': _("Description/Explanation")}))
 
     class Meta:
         model = OtherMedia
@@ -681,18 +683,23 @@ class DatasetUpdateForm(forms.ModelForm):
     conditions_of_use = forms.CharField(widget=forms.Textarea(attrs={'cols': 80, 'rows': 5, 
                                                                      'placeholder': 'Conditions of use'}))
     reference = forms.CharField(widget=forms.Textarea(attrs={'cols': 80, 'rows': 5, 'placeholder': 'Reference'}))
+    prominent_media = forms.ChoiceField(label=_('Prominent Media Type'), choices=[(0, '-')], required=False,
+                                        widget=forms.Select(attrs=ATTRS_FOR_FORMS))
 
     class Meta:
         ATTRS_FOR_FORMS = {'class': 'form-control'}
 
         model = Dataset
-        fields = ['description', 'conditions_of_use', 'acronym', 'copyright', 'reference', 'owners', 'is_public', 'default_language']
+        fields = ['description', 'conditions_of_use', 'acronym', 'copyright', 'reference', 'owners',
+                  'is_public', 'default_language', 'prominent_media']
 
     def __init__(self, *args, **kwargs):
         languages = kwargs.pop('languages')
         super(DatasetUpdateForm, self).__init__(*args, **kwargs)
         self.fields['default_language'] = forms.ChoiceField(widget=forms.Select(attrs={'class': 'form-control'}), choices=languages)
-
+        self.fields['prominent_media'].choices = choicelist_queryset_to_translated_dict(
+            list(FieldChoice.objects.filter(field='OtherMediaType').order_by('machine_value')),
+            ordered=False, id_prefix='', shortlist=False)
 
 attrs_default = {'class': 'form-control'}
 FINGER_SELECTION = ((True, 'True'), (False, 'False'))

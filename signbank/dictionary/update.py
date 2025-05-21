@@ -3035,108 +3035,144 @@ def update_dataset(request, datasetid):
     We are sent one field and value at a time, return the new value
     once we've updated it."""
 
-    if request.method == "POST":
+    if request.method != "POST":
+        return HttpResponseForbidden(_("Dataset Update Not Allowed"))
 
-        dataset = get_object_or_404(Dataset, id=datasetid)
-        dataset.save() # This updates the lastUpdated field
+    dataset = get_object_or_404(Dataset, id=datasetid)
+    dataset.save() # This updates the lastUpdated field
 
-        try:
-            group_manager = Group.objects.get(name='Dataset_Manager')
-        except ObjectDoesNotExist:
-            messages.add_message(request, messages.ERROR, _('No group Dataset_Manager found.'))
-            return HttpResponseForbidden("Dataset Update Not Allowed")
+    try:
+        group_manager = Group.objects.get(name='Dataset_Manager')
+    except ObjectDoesNotExist:
+        messages.add_message(request, messages.ERROR, _('No group Dataset_Manager found.'))
+        return HttpResponseForbidden(_("Dataset Update Not Allowed"))
 
-        groups_of_user = request.user.groups.all()
-        if not group_manager in groups_of_user:
-            messages.add_message(request, messages.ERROR,
-                                 _('You must be in group Dataset Manager to modify dataset details.'))
-            return HttpResponseForbidden("Dataset Update Not Allowed")
+    groups_of_user = request.user.groups.all()
+    if not group_manager in groups_of_user:
+        messages.add_message(request, messages.ERROR,
+                             _('You must be in group Dataset Manager to modify dataset details.'))
+        return HttpResponseForbidden(_("Dataset Update Not Allowed"))
 
-        user_change_datasets = get_objects_for_user(request.user, 'change_dataset', Dataset, accept_global_perms=False)
-        if dataset not in user_change_datasets:
-            return HttpResponseForbidden("Dataset Update Not Allowed")
+    user_change_datasets = get_objects_for_user(request.user, 'change_dataset', Dataset, accept_global_perms=False)
+    if dataset not in user_change_datasets:
+        return HttpResponseForbidden(_("Dataset Update Not Allowed"))
 
-        field = request.POST.get('id', '')
-        value = request.POST.get('value', '')
-        original_value = ''
+    field = request.POST.get('id', '')
+    value = request.POST.get('value', '')
+    original_value = ''
 
-        if field == 'description':
-            original_value = getattr(dataset,field)
+    if field == 'description':
+        original_value = getattr(dataset,field)
+        setattr(dataset, field, value)
+        dataset.save()
+        return HttpResponse(str(original_value) + str('\t') + str(value), {'content-type': 'text/plain'})
+    elif field == 'copyright':
+            original_value = getattr(dataset, field)
             setattr(dataset, field, value)
             dataset.save()
             return HttpResponse(str(original_value) + str('\t') + str(value), {'content-type': 'text/plain'})
-        elif field == 'copyright':
-                original_value = getattr(dataset, field)
-                setattr(dataset, field, value)
-                dataset.save()
-                return HttpResponse(str(original_value) + str('\t') + str(value), {'content-type': 'text/plain'})
-        elif field == 'reference':
-                original_value = getattr(dataset, field)
-                setattr(dataset, field, value)
-                dataset.save()
-                return HttpResponse(str(original_value) + str('\t') + str(value), {'content-type': 'text/plain'})
-        elif field == 'conditions_of_use':
-                original_value = getattr(dataset, field)
-                setattr(dataset, field, value)
-                dataset.save()
-                return HttpResponse(str(original_value) + str('\t') + str(value), {'content-type': 'text/plain'})
-        elif field == 'acronym':
-                original_value = getattr(dataset, field)
-                setattr(dataset, field, value)
-                dataset.save()
-                return HttpResponse(str(original_value) + str('\t') + str(value), {'content-type': 'text/plain'})
-        elif field == 'is_public':
-                original_value = getattr(dataset, field)
-                dataset.is_public = value == 'True'
-                dataset.save()
-                if dataset.is_public:
-                    newvalue = True
-                else:
-                    newvalue = False
-                return HttpResponse(str(original_value) + str('\t') + str(newvalue), {'content-type': 'text/plain'})
-        elif field == 'add_owner':
-            update_owner(dataset, field, value)
-        elif field == 'default_language':
+    elif field == 'reference':
             original_value = getattr(dataset, field)
-            # variable original_value is used for feedback to the interface
-            if original_value:
-                original_value = original_value.name
-            else:
-                original_value = '-'
-            if value == '-':
-                # this option is not offered by the interface, value must be one of the translation languages (not empty '-')
-                # this code is here if we want to user to be able to "unset" the default language in the interface
-                setattr(dataset, field, None)
-                dataset.save()
-            else:
-                try:
-                    new_default_language = Language.objects.get(name=value)
-                    setattr(dataset, field, new_default_language)
-                    dataset.save()
-                except ObjectDoesNotExist:
-                    value = original_value
+            setattr(dataset, field, value)
+            dataset.save()
             return HttpResponse(str(original_value) + str('\t') + str(value), {'content-type': 'text/plain'})
+    elif field == 'conditions_of_use':
+            original_value = getattr(dataset, field)
+            setattr(dataset, field, value)
+            dataset.save()
+            return HttpResponse(str(original_value) + str('\t') + str(value), {'content-type': 'text/plain'})
+    elif field == 'acronym':
+            original_value = getattr(dataset, field)
+            setattr(dataset, field, value)
+            dataset.save()
+            return HttpResponse(str(original_value) + str('\t') + str(value), {'content-type': 'text/plain'})
+    elif field == 'is_public':
+            original_value = getattr(dataset, field)
+            dataset.is_public = value == 'True'
+            dataset.save()
+            if dataset.is_public:
+                newvalue = True
+            else:
+                newvalue = False
+            return HttpResponse(str(original_value) + str('\t') + str(newvalue), {'content-type': 'text/plain'})
+    elif field == 'add_owner':
+        update_owner(dataset, field, value)
+    elif field == 'default_language':
+        original_value = getattr(dataset, field)
+        # variable original_value is used for feedback to the interface
+        original_value = original_value.name if original_value else '-'
+        if value == '-':
+            # this option is not offered by the interface, value must be one of the translation languages (not empty '-')
+            # this code is here if we want to user to be able to "unset" the default language in the interface
+            setattr(dataset, field, None)
+            dataset.save()
         else:
-
-            if not field in Dataset.get_field_names():
-                return HttpResponseBadRequest("Unknown field", {'content-type': 'text/plain'})
-
-            # unknown if we need this code yet for the above fields
-            whitespace = tuple(' \n\r\t')
-            if value.startswith(whitespace) or value.endswith(whitespace):
-                value = value.strip()
-            original_value = getattr(dataset,field)
-
-        #This is because you cannot concat none to a string in py3
-        if original_value is None:
-            original_value = ''
-
-        # The machine_value (value) representation is also returned to accommodate Hyperlinks to Handshapes in gloss_edit.js
+            try:
+                new_default_language = Language.objects.get(name=value)
+                setattr(dataset, field, new_default_language)
+                dataset.save()
+            except ObjectDoesNotExist:
+                value = original_value
         return HttpResponse(str(original_value) + str('\t') + str(value), {'content-type': 'text/plain'})
-
     else:
-        print('update dataset is not POST')
-        return HttpResponseForbidden("Dataset Update Not Allowed")
+
+        if field not in Dataset.get_field_names():
+            return HttpResponseBadRequest("Unknown field", {'content-type': 'text/plain'})
+
+        # unknown if we need this code yet for the above fields
+        whitespace = tuple(' \n\r\t')
+        if value.startswith(whitespace) or value.endswith(whitespace):
+            value = value.strip()
+        original_value = getattr(dataset,field)
+
+    #This is because you cannot concat none to a string in py3
+    if original_value is None:
+        original_value = ''
+
+    # The machine_value (value) representation is also returned to accommodate Hyperlinks to Handshapes in gloss_edit.js
+    return HttpResponse(str(original_value) + str('\t') + str(value), {'content-type': 'text/plain'})
+
+
+def update_dataset_prominent_media(request, datasetid):
+
+    if not request.user.is_authenticated:
+        messages.add_message(request, messages.ERROR, _('Please login to use this functionality.'))
+        return HttpResponseForbidden(_("Dataset Update Not Allowed"))
+
+    if request.method != "POST":
+        return HttpResponseForbidden(_("Dataset Update Not Allowed"))
+
+    dataset = get_object_or_404(Dataset, id=datasetid)
+
+    try:
+        group_manager = Group.objects.get(name='Dataset_Manager')
+    except ObjectDoesNotExist:
+        messages.add_message(request, messages.ERROR, _('No group Dataset_Manager found.'))
+        return HttpResponseForbidden(_("Dataset Update Not Allowed"))
+
+    groups_of_user = request.user.groups.all()
+    if not group_manager in groups_of_user:
+        messages.add_message(request, messages.ERROR,
+                             _('You must be in group Dataset Manager to modify dataset details.'))
+        return HttpResponseForbidden(_("Dataset Update Not Allowed"))
+
+    user_change_datasets = get_objects_for_user(request.user, 'change_dataset', Dataset, accept_global_perms=False)
+    if dataset not in user_change_datasets:
+        return HttpResponseForbidden(_("Dataset Update Not Allowed"))
+
+    original_value = getattr(dataset, 'prominent_media')
+    original_value = original_value.name if original_value else '-'
+
+    prominent_media = request.POST.get('prominent_media', '')
+    if not prominent_media:
+        return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
+
+    other_media_type = FieldChoice.objects.get(field='OtherMediaType', machine_value=int(prominent_media))
+    dataset.prominent_media = other_media_type
+    value = other_media_type.name
+    dataset.save()
+    return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
+
 
 def update_owner(dataset, field, values):
     # expecting possibly multiple values

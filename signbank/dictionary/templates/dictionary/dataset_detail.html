@@ -1,18 +1,15 @@
 {% extends 'baselayout.html' %}
 {% load i18n %}
-{% load bootstrap3 %}
 {% load stylesheet %}
 {% load annotation_idgloss_translation %}
+{% load bootstrap3 %}
+
 {% load has_group %}
 
 {% load guardian_tags %}
 
 
 {% block extrajs %}
-    <script type="text/javascript" src="{{ STATIC_URL }}js/jquery.jeditable.mini.js"></script>
-    <script type="text/javascript" src="{{ STATIC_URL }}js/jquery.jeditable.checkbox.js"></script>
-    <script type="text/javascript" src="{{ STATIC_URL }}js/typeahead.bundle.min.js"></script>
-
     <script type='text/javascript'>
     var url = '{{ PREFIX_URL }}';
 
@@ -22,8 +19,10 @@
     var csrf_token = '{{csrf_token}}';
     var edit_post_url = '{{PREFIX_URL}}/datasets/change_details/{{dataset.id}}';
     var language_choices = '{{default_language_choice_list|safe}}';
-    console.log(language_choices);
     </script>
+    <script type="text/javascript" src="{{STATIC_URL}}js/jquery.jeditable.mini.js"></script>
+    <script type="text/javascript" src="{{ STATIC_URL }}js/jquery.jeditable.checkbox.js"></script>
+    <script type="text/javascript" src="{{ STATIC_URL }}js/typeahead.bundle.min.js"></script>
     <script type='text/javascript' src="{{ STATIC_URL }}js/dataset_edit.js"></script>
 
 <style>
@@ -65,24 +64,25 @@ textarea:focus {
          {% endif %}
     </div>
 
-    <table class='table table-responsive table-responsive-light'>
-        <tr><th style="width:300px;">{% trans "Dataset name" %}</th>
+    <table class='table table-responsive table-responsive-light' style="width:1200px;">
+        <tr><th style="width:250px;">{% trans "Dataset name" %}</th>
             <td class="td td-light">{{dataset.name}}</td>
         </tr>
-        <tr><th>{% trans "Acronym" %}</th>
+        <tr><th style="width:250px;">{% trans "Acronym" %}</th>
             <td class='edit edit_area' align="left" id='acronym' name='acronym'
                 value="{{datasetform.acronym.value|default:'-'}}">{{dataset.acronym}}</td>
         </tr>
-        <tr><th>Number of glosses</th>
+        <tr><th style="width:250px;">Number of glosses</th>
             <td>{{nr_of_public_glosses}} public glosses, {{nr_of_glosses}} total</td>
         </tr>
-        <tr><th>{% trans "Accessible by others" %}</th>
+        <tr><th style="width:250px;">{% trans "Accessible by others" %}</th>
             <td class="edit edit_check" id='is_public' type="hidden" value='{% if dataset.is_public %}True{% else %}False{% endif %}' name="is_public">
                 {% if dataset.is_public %}True{% else %}False{% endif %}
             </td>
         </tr>
-        <tr><th>{% trans "Owner &amp; Contact person(s)" %}</th>
+        <tr><th style="width:250px;">{% trans "Owner &amp; Contact person(s)" %}</th>
             <td class="table-cell">
+                <div style="display:inline-block;">
                 {% for owner in dataset.owners.all %}
                     {% if forloop.last %}
                         {{owner.first_name}} {{owner.last_name}} ({{owner.username}})
@@ -90,13 +90,15 @@ textarea:focus {
                         {{owner.first_name}} {{owner.last_name}} ({{owner.username}}),
                     {% endif %}
                 {% endfor %}
+                </div>
                 {% get_obj_perms request.user for dataset as "dataset_perms" %}
                 {% if "change_dataset" in dataset_perms %}
                 {% if request.user|has_group:"Dataset_Manager" %}
-                    <form name='add_owner_form' id='add_owner_form' method='get'>
-                        <table class='table table-condensed' style="background: transparent;">
-                        <tr>
-                            <td>
+                <div class="editmode" style="display:none;">
+                    <form name='add_owner_form' id='add_owner_form' method='get' >
+                        <table class='table table-condensed table-condensed-light' style="background: transparent;">
+                        <tr class="tr tr-light">
+                            <td class="td td-light">
                             {% csrf_token %}
                             <input class='form-control form-control-light usertypeahead usertypeahead-light' size="36"
                                    placeholder='{% trans "Username" %}'>
@@ -108,36 +110,65 @@ textarea:focus {
                         </tr>
                         </table>
                     </form>
+                </div>
                 {% endif %}
                 {% endif %}
             </td>
         </tr>
-        <tr><th>{% trans "Description" %}</th>
+        <tr>
+             {% with datasetform.fields|get_item:'prominent_media' as prominent_media %}
+             <th style="width:250px;"><label for="prominent_media">{{prominent_media.label}}</label></th>
+             <td class='td td-light' style='width:20em;' >
+                <div class="editmode" style="display:none;">
+                <form id="prominent_media_form" method="POST"
+                      action="{{PREFIX_URL}}/datasets/change_details_prominent_media/{{dataset.id}}/"
+                      class="edit_prominent_media pages-form pages-form-light">
+                    {% csrf_token %}
+                    <input type="hidden" name="datasetid" value={{dataset.id}}>
+
+                 <select id="prominent_media" class='form-control form-control-light'
+                         name="prominent_media" form="prominent_media_form">
+                 {% for value, text in prominent_media.choices %}
+                     {% if value == dataset.get_prominent_media_machine_value %}
+                        <option value={{value}} selected>{{text}}</option>
+                     {% else %}
+                        <option value={{value}}>{{text}}</option>
+                     {% endif %}
+                 {% endfor %}
+                 </select>
+                <button class="btn btn-primary" type="submit">{% trans "Set Prominent Media Type" %}</button>
+                </form>
+                </div>
+                <div class="viewmode td td-light" style="display:inline-block;">{{dataset.get_prominent_media_display}}</div>
+             </td>
+             {% endwith %}
+        </tr>
+        <tr><th style="width:250px;">{% trans "Description" %}</th>
             <td class='edit edit_area' align="left" id='description' name='description'
                 placeholder='{% trans "Description" %}'
-                value="{{datasetform.description.value|default:''}}">{{dataset.description|wordwrap:120|linebreaks}}</td></tr>
-        <tr><th>{% trans "Sign language" %}</th>
+                value="{{datasetform.description.value}}">{{dataset.description|wordwrap:120|linebreaks}}</td></tr>
+        <tr><th style="width:250px;">{% trans "Sign language" %}</th>
             <td class="td td-light">{{dataset.signlanguage.name}} ({{dataset.signlanguage.description}})</td>
         </tr>
-        <tr><th>{% trans "Translation languages" %}</th>
+        <tr><th style="width:250px;">{% trans "Translation languages" %}</th>
             <td class="td td-light">{% for tl in dataset.translation_languages.all %}{{tl.name}}{% if not forloop.last %}, {% endif %}{% endfor %}</td>
         </tr>
-        <tr><th>{% trans "Default language" %}</th>
+        <tr><th style="width:250px;">{% trans "Default language" %}</th>
             {% csrf_token %}
             <td class='edit edit_default_language' id='default_language'
                 value='{{datasetform.default_language.value}}'>{{dataset.default_language}}</td></tr>
-        <tr><th>{% trans "Conditions for data citation and usage" %}</th>
+        <tr><th style="width:250px;">{% trans "Conditions for data citation and usage" %}</th>
             <td class='edit edit_area' id='conditions_of_use' name='conditions_of_use'
                 placeholder='{% trans "Conditions of use by others" %}'
                 value="{{datasetform.conditions_of_use.value|default:''}}">
                 <p>{{dataset.conditions_of_use|wordwrap:120|linebreaks}}</p></td>
         </tr>
-        <tr><th>{% trans "Copyright statement" %}</th>
+        <tr><th style="width:250px;">{% trans "Copyright statement" %}</th>
             <td class='edit edit_area' id='copyright' name='copyright'
                 placeholder='{% trans "Copyright statement" %}'
                 value="{{datasetform.copyright.value|default:''}}">{{dataset.copyright|wordwrap:120|linebreaks}}</td>
         </tr>
-        <tr><th>{% trans "Reference" %}</th>
+        <tr><th style="width:250px;">{% trans "Reference" %}</th>
             <td class='edit edit_area' id='reference' name='reference'
                 placeholder='{% trans "Reference" %}'
                 value="{{datasetform.reference.value|default:''}}">{{dataset.reference|wordwrap:120|linebreaks}}</td>
