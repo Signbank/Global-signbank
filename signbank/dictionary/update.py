@@ -1649,6 +1649,7 @@ def update_definition(request, gloss, field, value):
 
     return HttpResponse(str(newvalue), {'content-type': 'text/plain'})
 
+
 def update_other_media(gloss,field,value):
 
     if gloss.is_morpheme():
@@ -1683,9 +1684,13 @@ def update_other_media(gloss,field,value):
     elif action_or_fieldname == 'other-media-alternative-gloss':
         other_media.alternative_gloss = value
 
+    elif action_or_fieldname == 'other-media-description':
+        other_media.description = value
+
     other_media.save()
 
     return HttpResponse(str(value), {'content-type': 'text/plain'})
+
 
 def add_relation(request):
     """Add a new relation instance"""
@@ -2189,6 +2194,7 @@ def delete_annotated_sentence(request, glossid):
 
     return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
 
+
 def add_othermedia(request):
 
     if not request.method == "POST":
@@ -2256,6 +2262,8 @@ def add_othermedia(request):
                              _("The other media filename is already in use. Please use a different filename."))
         return HttpResponseRedirect(reverse(reverse_url, kwargs={'pk': request.POST['gloss']}))
 
+    othermedia_decription = request.POST['description']
+
     # to accommodate large files, the Other Media data is first stored in the database
     # if something goes wrong this object is deleted again
     # Save the database record
@@ -2263,6 +2271,7 @@ def add_othermedia(request):
     newothermedia = OtherMedia(path=other_media_path,
                                alternative_gloss=request.POST['alternative_gloss'],
                                type=othermediatype,
+                               description=othermedia_decription,
                                parent_gloss=gloss_or_morpheme)
     newothermedia.save()
 

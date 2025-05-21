@@ -1476,7 +1476,8 @@ class GlossDetailView(DetailView):
 
             file_type = mimetypes.guess_type(path, strict=True)[0]
 
-            context['other_media'].append([media_okay, other_media.pk, path, file_type, human_value_media_type, other_media.alternative_gloss, other_media_filename])
+            context['other_media'].append([media_okay, other_media.pk, path, file_type, human_value_media_type,
+                                           other_media.alternative_gloss, other_media.description, other_media_filename])
 
             # Save the other_media_type choices (same for every other_media,
             # but necessary because they all have other ids)
