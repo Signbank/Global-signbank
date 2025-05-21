@@ -612,13 +612,15 @@ class OtherMediaForm(forms.ModelForm):
                            required=True)
     alternative_gloss = forms.TextInput()
     description = forms.CharField(widget=forms.Textarea(attrs={'cols': 80, 'rows': 5,
-                                                               'placeholder': _("Description/Explanation")}))
+                                                               'placeholder': _("Description/Explanation")}),
+                                  required=False)
 
     class Meta:
         model = OtherMedia
         fields = ['file']
 
     def __init__(self, *args, **kwargs):
+        self.gloss = kwargs.pop('gloss')
         super(OtherMediaForm, self).__init__(*args, **kwargs)
         self.fields['type'] = forms.ChoiceField(label=_('Type'),
                                                 choices= choicelist_queryset_to_translated_dict(
@@ -627,18 +629,6 @@ class OtherMediaForm(forms.ModelForm):
                                                     ordered=False, id_prefix='', shortlist=False
                                                 ),
                                                 widget=forms.Select(attrs=ATTRS_FOR_FORMS))
-
-    def get_form(self, request, obj=None, **kwargs):
-        form = super(OtherMediaForm, self).get_form(request, obj, **kwargs)
-        return form
-
-    def clean_type(self):
-        data = self.cleaned_data['type']
-        if data in ['0', '1']:
-            # choice is '-' or 'N/A'
-            raise forms.ValidationError(_("Please choose a type description when uploading other media."))
-        else:
-            return data
 
     def clean_file(self):
         data = self.cleaned_data['file']

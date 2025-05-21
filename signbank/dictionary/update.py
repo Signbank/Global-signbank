@@ -2194,12 +2194,6 @@ def add_othermedia(request):
     if not request.method == "POST":
         return HttpResponseForbidden("Add other media method must be POST")
 
-    form = OtherMediaForm(request.POST,request.FILES)
-
-    if not form.is_valid():
-        # fallback to the requesting page
-        return HttpResponseRedirect('/')
-
     morpheme_or_gloss = Gloss.objects.get(id=request.POST['gloss'], archived=False)
 
     if morpheme_or_gloss.is_morpheme():
@@ -2246,7 +2240,7 @@ def add_othermedia(request):
     filename_base = '.'.join(split_norm_filename[:-1])
 
     if filetype == 'video/mp4':
-        # handle 'm4v' extension
+        # handle 'm4v' extension, this overwrites an extension that does not match the filetype for mp4
         extension = 'mp4'
 
     if not os.path.isdir(goal_directory):
@@ -2256,6 +2250,11 @@ def add_othermedia(request):
     # if the source filename is right to left, the extension is at the end
     destination_filename = filename_base + '.' + extension
     goal_path = os.path.join(goal_directory, destination_filename)
+
+    if os.path.exists(goal_path):
+        messages.add_message(request, messages.ERROR,
+                             _("The other media filename is already in use. Please use a different filename."))
+        return HttpResponseRedirect(reverse(reverse_url, kwargs={'pk': request.POST['gloss']}))
 
     # to accommodate large files, the Other Media data is first stored in the database
     # if something goes wrong this object is deleted again
@@ -2272,27 +2271,27 @@ def add_othermedia(request):
 
     # create the destination file
     try:
-        if os.path.exists(goal_path):
-            raise OSError
         f = open(goal_path, 'wb+')
         filename_plus_extension = destination_filename
     except (UnicodeEncodeError, IOError, OSError):
         quoted_filename = urllib.parse.quote(filename_base, safe='')
         filename_plus_extension = quoted_filename + '.' + extension
         goal_location_str = os.path.join(goal_directory, filename_plus_extension)
+        if os.path.exists(goal_location_str):
+            messages.add_message(request, messages.ERROR,
+                                 _("The other media filename is already in use. Please use a different filename."))
+            return HttpResponseRedirect(reverse(reverse_url, kwargs={'pk': request.POST['gloss']}))
         # we need to use a quoted filename instead, update the other media object
         other_media_path = request.POST['gloss'] + '/' + filename_plus_extension
         newothermedia.path = other_media_path
         newothermedia.save()
         try:
-            if os.path.exists(goal_location_str):
-                raise OSError
             f = open(goal_location_str, 'wb+')
         except (UnicodeEncodeError, IOError, OSError):
             # something went wrong with uploading, delete the object
             newothermedia.delete()
             messages.add_message(request, messages.ERROR,
-                        _("The other media file could not be uploaded. Please use a different filename."))
+                        _("The other media filename could not be created: {filename}").format(filename=filename_plus_extension))
             return HttpResponseRedirect(reverse(reverse_url, kwargs={'pk': request.POST['gloss']}))
 
     destination = File(f)
@@ -2302,67 +2301,6 @@ def add_othermedia(request):
     destination.close()
 
     destination_location = os.path.join(goal_directory, filename_plus_extension)
-
-    magic_file_type = magic.from_buffer(open(destination_location, "rb").read(2040), mime=True)
-
-    if not magic_file_type:
-        # unrecognised file type has been uploaded
-        os.remove(destination_location)
-        # something went wrong with uploading, delete the object
-        newothermedia.delete()
-        messages.add_message(request, messages.ERROR, _("Upload other media failed: The file has an unknown type."))
-        return HttpResponseRedirect(reverse(reverse_url, kwargs={'pk': request.POST['gloss']}))
-    # the code below converts the file to an mp4 file if it is currently another type of video
-    if magic_file_type == 'video/quicktime':
-        # convert using ffmpeg
-        new_destination_location = filename_base + ".mp4"
-        other_media_path = str(gloss_or_morpheme.pk) + '/' + new_destination_location
-        target_destination_location = os.path.join(goal_directory, new_destination_location)
-
-        # convert the quicktime video to mp4
-        success = convert_video(destination_location, target_destination_location)
-        if not success:
-            # problems converting a quicktime media to mp4
-            os.remove(target_destination_location)
-            os.remove(destination_location)
-            # something went wrong with uploading, delete the object
-            newothermedia.delete()
-            messages.add_message(request, messages.ERROR,
-                                 _("Upload other media failed: The Quicktime file could not be converted to MP4."))
-            return HttpResponseRedirect(reverse(reverse_url, kwargs={'pk': request.POST['gloss']}))
-        else:
-            newothermedia.path = other_media_path
-            newothermedia.save()
-            os.remove(destination_location)
-
-    elif magic_file_type != 'video/mp4':
-        # convert using ffmpeg
-        temp_destination_location = destination_location + ".mov"
-        os.rename(destination_location, temp_destination_location)
-
-        # convert the video to h264
-        success = convert_video(temp_destination_location, destination_location)
-
-        if success:
-            # the destination filename already has the extension mp4
-            os.remove(temp_destination_location)
-        else:
-            # problems converting a quicktime media to h264
-            os.remove(temp_destination_location)
-            os.remove(destination_location)
-            # something went wrong with uploading, delete the object
-            newothermedia.delete()
-            messages.add_message(request, messages.ERROR,
-                                 _("Upload other media failed: The file could not be converted to H264."))
-            return HttpResponseRedirect(reverse(reverse_url, kwargs={'pk': request.POST['gloss']}))
-
-    if filetype.split('/')[0] != magic_file_type.split('/')[0]:
-        # the uploaded file extension does not match its type
-        os.remove(destination_location)
-        # something went wrong with uploading, delete the object
-        newothermedia.delete()
-        messages.add_message(request, messages.ERROR, _("Upload other media failed: The file extension does not match its type."))
-        return HttpResponseRedirect(reverse(reverse_url, kwargs={'pk': request.POST['gloss']}))
 
     return HttpResponseRedirect(reverse(reverse_url, kwargs={'pk': request.POST['gloss']})+'?editothermedia')
 

@@ -1359,7 +1359,7 @@ class GlossDetailView(DetailView):
         context['morphologyform'] = GlossMorphologyForm()
         context['morphemeform'] = GlossMorphemeForm()
         context['blendform'] = GlossBlendForm()
-        context['othermediaform'] = OtherMediaForm()
+        context['othermediaform'] = OtherMediaForm(gloss=context['gloss'])
         context['lemma_create_field_prefix'] = LemmaCreateForm.lemma_create_field_prefix
 
         context['handedness'] = (int(self.object.handedness.machine_value) > 1) \
@@ -5192,7 +5192,7 @@ class MorphemeDetailView(DetailView):
         context['imageform'] = ImageUploadForGlossForm()
         context['definitionform'] = DefinitionForm()
         context['relationform'] = RelationForm()
-        context['othermediaform'] = OtherMediaForm()
+        context['othermediaform'] = OtherMediaForm(gloss=context['morpheme'])
 
         # Get the set of all the Gloss signs that point to me
         other_glosses_that_point_to_morpheme = SimultaneousMorphologyDefinition.objects.filter(morpheme_id__exact=context['morpheme'].id)
