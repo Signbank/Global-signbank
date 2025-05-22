@@ -2,6 +2,7 @@
 {% load i18n %}
 {% load stylesheet %}
 {% load annotation_idgloss_translation %}
+{% load field_choice %}
 {% load bootstrap3 %}
 
 {% block bootstrap3_title %}
@@ -1862,6 +1863,38 @@ textarea:focus {
 
         </table>
 
+{% if prominent_media_type and prominent_media_type.machine_value > 1 %}
+   <div class="panel panel-default panel-light">
+        <div class='panel-heading panel-light' data-toggle='collapse'
+             data-target='#prominent_media'>{{gloss.lemma.dataset.get_prominent_media_display}}
+        </div>
+        <div id='prominent_media' class='collapse'>
+            <div class="panel panel-default panel-light">
+            <div class="table-responsive" style="display:inline-block;">
+            <table class="table table-condensed" style="text-align: left;">
+            <tr>
+            {% for media_okay,pk,path,file_type,file_name in prominent_media %}
+                {% if media_okay and path %}
+                    {% if file_type|startswith:"video" %}
+                    <td>
+                        <div id="other_media_player_{{pk}}" style="height:259px;width:auto;">
+                            <video id='videoplayer_other_media_{{pk}}' src="{{path}}"
+                                   playsinline muted controls style="height:200px;width:auto;"></video>
+                        </div>
+                    </td>
+                    {% else %}
+                    {% endif %}
+                {% endif %}
+            {% endfor %}
+            </tr>
+            </table>
+            </div>
+            </div>
+        </div>
+   </div>
+
+{% endif %}
+
    <!-- Non-manual videos -->
    <div class="panel panel-default panel-light">
         <div class='panel-heading panel-light' data-toggle='collapse'
@@ -3024,7 +3057,7 @@ textarea:focus {
                   <th style='width:20em'>{% trans "Description" %}</th>
               </tr>
 
-               {% for media_okay,pk,path,file_type,type,alternative_gloss, description,file_name in other_media %}
+               {% for media_okay,pk,path,file_type,type,alternative_gloss,description,file_name in other_media %}
                <tr>
                    {% if "change_dataset" in dataset_perms %}
                      <td>
