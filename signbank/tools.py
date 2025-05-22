@@ -6,10 +6,13 @@ import json
 import hashlib
 import re
 import codecs
+from lxml import etree
 import datetime as DT
 from datetime import date
+from dateutil.parser import parse
 
 from django.db import models
+from django.utils.timezone import get_current_timezone
 from django.utils.translation import override, activate, gettext
 from django.views.decorators.csrf import csrf_exempt
 from django.utils.dateformat import format
@@ -2347,3 +2350,21 @@ def get_checksum_for_path(file_path):
             return file_hash.hexdigest()
     except FileNotFoundError:
         return None
+
+
+def get_eaf_creation_time(fname):
+    """
+    Extracts the creation time from an EAF file.
+    EAF = ELAN Annotation File - https://archive.mpi.nl/tla/elan/
+    """
+    with open(fname, encoding="utf-8") as eaf:
+        try:
+            xml = etree.parse(eaf)
+            # root node is ANNOTATION_DOCUMENT
+            root = xml.getroot()
+            creation_date = root.attrib['DATE']
+            date_time_obj = parse(creation_date)
+        except:
+            date_time_obj = DT.datetime.now(tz=get_current_timezone())
+
+        return date_time_obj
