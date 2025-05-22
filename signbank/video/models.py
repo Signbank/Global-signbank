@@ -30,7 +30,7 @@ from signbank.dictionary.models import (Gloss, Morpheme, Dataset, Language, Lemm
                                         ExampleSentence, AnnotatedSentence, AnnotatedSentenceSource)
 from signbank.tools import get_two_letter_dir, generate_still_image
 
-from CNGT_scripts.python.resizeVideos import VideoResizer
+from signbank.video.resizeVideos import VideoResizer
 from urllib.parse import urlparse
 from pathlib import Path
 from pympi.Elan import Eaf

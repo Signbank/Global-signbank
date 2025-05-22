@@ -42,7 +42,7 @@ from signbank.csv_interface import (sense_translations_for_language, update_sens
                                     normalize_field_choice)
 
 from tagging.models import TaggedItem, Tag
-from CNGT_scripts.python.extractMiddleFrame import MiddleFrameExtracter
+from signbank.video.extractMiddleFrame import MiddleFrameExtracter
 
 
 def get_two_letter_dir(idgloss):
