@@ -48,13 +48,13 @@ from signbank.dictionary.models import (Dataset, SignLanguage, Dialect, Gloss, M
                                         Affiliation, AffiliatedUser, AffiliatedGloss, SearchHistory,
                                         GlossRevision, SenseExamplesentence, SimultaneousMorphologyDefinition,
                                         AnnotatedSentenceSource, AnnotatedSentenceContext, UserProfile, QueryParameter,
-                                        get_default_language_id)
+                                        get_default_language_id, GlossProvenance)
 from signbank.dictionary.forms import (RelationForm, VariantsForm, RelationToForeignSignForm, GlossBlendForm,
                                        GlossCreateForm, DefinitionForm, GlossMorphemeForm, GlossMorphologyForm,
                                        MorphemeCreateForm, LemmaCreateForm, AffiliationUpdateForm, OtherMediaForm,
                                        CSVMetadataForm, EAFFilesForm, FieldChoiceColorForm,
                                        SemanticFieldColorForm, HandshapeColorForm, DerivationHistoryColorForm,
-                                       TagUpdateForm)
+                                       TagUpdateForm, GlossProvenanceForm)
 from signbank.dictionary.translate_choice_list import machine_value_to_translated_human_value
 from signbank.dictionary.context_data import get_selected_datasets
 
@@ -851,6 +851,10 @@ def update_gloss(request, glossid):
     if field.startswith('definition'):
 
         return update_definition(request, gloss, field, value)
+
+    elif field.startswith('provenance'):
+
+        return update_provenance(request, gloss, field, value)
 
     elif field.startswith('relationforeign'):
 
@@ -4025,3 +4029,78 @@ def trash_gloss(request, glossid):
     gloss.delete()
 
     return HttpResponseRedirect(reverse('dictionary:change_lemma', kwargs={'pk': lemma_id}))
+
+
+def add_provenance(request, glossid):
+    """Add a new provenance for this gloss"""
+
+    thisgloss = get_object_or_404(Gloss, id=glossid, archived=False)
+
+    if thisgloss.is_morpheme():
+        gloss_or_morpheme = thisgloss.morpheme
+        reverse_url = 'dictionary:admin_morpheme_view'
+    else:
+        gloss_or_morpheme = thisgloss
+        reverse_url = 'dictionary:admin_gloss_view'
+
+    if not request.method == "POST":
+        return HttpResponseForbidden("Add provenance method must be POST")
+
+    method_machine_value = request.POST.get('method', '0')
+    method = FieldChoice.objects.get(field='Provenance', machine_value=int(method_machine_value))
+    description = request.POST.get('description', '')
+
+    prov = GlossProvenance(gloss=gloss_or_morpheme, method=method, description=description)
+    prov.creationDate = DT.datetime.now()
+    prov.save()
+    prov.creator.add(request.user)
+    revision_value = ': '.join([method.name, description])
+
+    add_gloss_update_to_revision_history(request.user, gloss_or_morpheme, 'provenance_create', '', revision_value)
+
+    return HttpResponseRedirect(reverse(reverse_url, kwargs={'pk': gloss_or_morpheme.id}) + '?editprovenance')
+
+
+def update_provenance(request, gloss, field, value):
+    """Update one of the provenance fields"""
+
+    if gloss.is_morpheme():
+        gloss_or_morpheme = gloss.morpheme
+        reverse_url = 'dictionary:admin_morpheme_view'
+    else:
+        gloss_or_morpheme = gloss
+        reverse_url = 'dictionary:admin_gloss_view'
+
+    newvalue = ''
+    (what, provid) = field.split('_')
+    try:
+        prov = GlossProvenance.objects.get(id=provid)
+    except ObjectDoesNotExist:
+        return HttpResponseBadRequest("Bad Provenance ID '%s'" % defid, {'content-type': 'text/plain'})
+
+    if not prov.gloss.id == gloss_or_morpheme.id:
+        return HttpResponseBadRequest("Provenance doesn't match gloss", {'content-type': 'text/plain'})
+
+    if what == 'provenancedelete':
+        original_value = prov.provenance_text()
+        prov.delete()
+        add_gloss_update_to_revision_history(request.user, gloss_or_morpheme, 'provenancedelete', original_value, '')
+        return HttpResponseRedirect(reverse(reverse_url, kwargs={'pk': gloss_or_morpheme.id})+'?editdef')
+
+    if what == 'provenancedescription':
+        # update the description
+        original_value = prov.provenance_text()
+        prov.description = value
+        prov.save()
+        newvalue = prov.description
+        new_history_value = prov.description
+    elif what == 'provenancemethod':
+        original_value = prov.get_method_display()
+        prov.method = FieldChoice.objects.get(field='Provenance', machine_value=int(value))
+        prov.save()
+        newvalue = prov.method.name
+        new_history_value = newvalue
+
+    add_gloss_update_to_revision_history(request.user, gloss_or_morpheme, what, original_value, new_history_value)
+
+    return HttpResponse(str(newvalue), {'content-type': 'text/plain'})
