@@ -686,7 +686,7 @@ class DatasetUpdateForm(forms.ModelForm):
         ATTRS_FOR_FORMS = {'class': 'form-control'}
 
         model = Dataset
-        fields = ['description', 'conditions_of_use', 'acronym', 'copyright', 'reference', 'owners', 'is_public', 'default_language']
+        fields = ['description', 'conditions_of_use', 'acronym', 'copyright', 'reference', 'owners', 'is_public', 'default_language', 'use_provenance']
 
     def __init__(self, *args, **kwargs):
         languages = kwargs.pop('languages')

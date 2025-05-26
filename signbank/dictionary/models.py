@@ -3247,6 +3247,7 @@ class Dataset(models.Model):
     owners = models.ManyToManyField(User, help_text="Users responsible for the dataset content.")
 
     exclude_choices = models.ManyToManyField('FieldChoice', help_text="Exclude these field choices", blank=True)
+    use_provenance = models.BooleanField(default=False, help_text=_("Use provenance model"))
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)

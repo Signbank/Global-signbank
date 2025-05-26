@@ -1466,6 +1466,7 @@ class GlossDetailView(DetailView):
 
         context['notes_groupedby_role'] = get_notes_groupedby_role(gloss)
         context['provenance_groupedby_method'] = get_provenance_groupedby_method(gloss)
+        context['use_provenance'] = dataset_of_requested_gloss.use_provenance
 
         # Gather the OtherMedia
         context['other_media'] = []

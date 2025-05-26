@@ -3098,6 +3098,15 @@ def update_dataset(request, datasetid):
                 else:
                     newvalue = False
                 return HttpResponse(str(original_value) + str('\t') + str(newvalue), {'content-type': 'text/plain'})
+        elif field == 'use_provenance':
+                original_value = getattr(dataset, field)
+                dataset.use_provenance = value == 'True'
+                dataset.save()
+                if dataset.use_provenance:
+                    newvalue = True
+                else:
+                    newvalue = False
+                return HttpResponse(str(original_value) + str('\t') + str(newvalue), {'content-type': 'text/plain'})
         elif field == 'add_owner':
             update_owner(dataset, field, value)
         elif field == 'default_language':
@@ -4085,7 +4094,7 @@ def update_provenance(request, gloss, field, value):
         original_value = prov.provenance_text()
         prov.delete()
         add_gloss_update_to_revision_history(request.user, gloss_or_morpheme, 'provenancedelete', original_value, '')
-        return HttpResponseRedirect(reverse(reverse_url, kwargs={'pk': gloss_or_morpheme.id})+'?editdef')
+        return HttpResponseRedirect(reverse(reverse_url, kwargs={'pk': gloss_or_morpheme.id})+'?editprovenance')
 
     if what == 'provenancedescription':
         # update the description

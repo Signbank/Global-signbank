@@ -2894,6 +2894,7 @@ textarea:focus {
     </div>
 
     <!-- Provenance -->
+    {% if use_provenance %}
     <div class="panel panel-default panel-light">
         <div class='panel-heading panel-light' data-toggle='collapse' data-target='#provenance'>{% trans "Provenance" %}
                     {% if provenance_groupedby_method.items %}
@@ -2992,6 +2993,7 @@ textarea:focus {
         </div>
 
     </div>
+    {% endif %}
 
     <!-- Example sentences -->
     <div class="panel panel-default panel-light">
