@@ -1890,7 +1890,8 @@ def add_morpheme_definition(request, glossid):
     except ObjectDoesNotExist:
 
         # The user has tried to type in a name rather than select from the list.
-        messages.add_message(request, messages.ERROR, _('Simultaneuous morphology: no morpheme found with identifier {}.'.format(morph_id)))
+        feedback_message = gettext('Simultaneuous morphology: no morpheme found with identifier {morphid}.'.format(morphid=morph_id))
+        messages.add_message(request, messages.ERROR, feedback_message)
 
         return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': thisgloss.id})+'?editmorphdef')
 
