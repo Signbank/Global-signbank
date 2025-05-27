@@ -4067,6 +4067,9 @@ def add_provenance(request, glossid):
 
     add_gloss_update_to_revision_history(request.user, gloss_or_morpheme, 'provenance_create', '', revision_value)
 
+    gloss_or_morpheme.lastUpdated = DT.datetime.now(tz=get_current_timezone())
+    gloss_or_morpheme.save()
+
     return HttpResponseRedirect(reverse(reverse_url, kwargs={'pk': gloss_or_morpheme.id}) + '?editprovenance')
 
 
@@ -4089,6 +4092,9 @@ def update_provenance(request, gloss, field, value):
 
     if not prov.gloss.id == gloss_or_morpheme.id:
         return HttpResponseBadRequest("Provenance doesn't match gloss", {'content-type': 'text/plain'})
+
+    gloss_or_morpheme.lastUpdated = DT.datetime.now(tz=get_current_timezone())
+    gloss_or_morpheme.save()
 
     if what == 'provenancedelete':
         original_value = prov.provenance_text()
