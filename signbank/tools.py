@@ -211,7 +211,7 @@ def create_gloss_from_valuedict(valuedict, dataset, row_nr, earlier_creation_sam
                     if glosses_with_same_text.count() > 0:
                         existing_glosses[language.language_code_2char] = glosses_with_same_text
                 else:
-                    error_string = 'Row ' + str(row_nr + 1) + ' has an empty ' + column_name
+                    error_string = gettext("Row {row} has an empty {column_name}").format(row=str(row_nr+1), column_name=column_name)
                     errors_found += [error_string]
             else:
                 print('column name not in value dict: ', column_name)
@@ -250,7 +250,7 @@ def create_gloss_from_valuedict(valuedict, dataset, row_nr, earlier_creation_sam
                 annotationidglosstranslation_dict[language.language_code_2char] = annotationidglosstranslation_text
                 if language.language_code_2char in earlier_creation_annotationidgloss.keys() and \
                         annotationidglosstranslation_text in earlier_creation_annotationidgloss[language.language_code_2char]:
-                    error_string = 'Duplicate Annotation ID Gloss found for '+ language_name +': '+annotationidglosstranslation_text
+                    error_string = gettext("Duplicate Annotation ID Gloss found for {language}: {annotation}").format(language=language_name, annotation=annotationidglosstranslation_text)
                     errors_found += [error_string]
 
                 if not earlier_creation_annotationidgloss or (
@@ -280,7 +280,7 @@ def create_gloss_from_valuedict(valuedict, dataset, row_nr, earlier_creation_sam
 
         range_of_earlier_creation = [v for (i, v) in earlier_creation_same_csv.items()]
         if earlier_creation_same_csv and new_gloss in range_of_earlier_creation:
-            error_string = 'Row ' + str(row_nr + 1) + ' is a duplicate gloss creation.'
+            error_string = gettext("Row {row} is a duplicate gloss creation.").format(row=str(row_nr+1))
             errors_found += [error_string]
 
     # save the parameters for the new gloss under the row number
@@ -305,12 +305,12 @@ def compare_valuedict_to_gloss(valuedict, gloss_id, my_datasets, nl,
     try:
         gloss = Gloss.objects.select_related().get(pk=gloss_id)
     except ObjectDoesNotExist:
-        error_string = 'Could not find gloss for ID ' + str(gloss_id)
+        error_string = gettext("Could not find gloss for ID {glossid}.").format(glossid=str(gloss_id))
         errors_found.append(error_string)
         return differences, errors_found, earlier_updates_same_csv, earlier_updates_lemmaidgloss
 
     if gloss_id in earlier_updates_same_csv:
-        e = 'Signbank ID (' + str(gloss_id) + ') found in multiple rows (Row ' + str(nl + 1) + ').'
+        e = gettext("Signbank ID {glossid} found in multiple rows (Row {row}).").format(glossid=str(gloss_id), row=str(nl+1))
         errors_found.append(e)
         return differences, errors_found, earlier_updates_same_csv, earlier_updates_lemmaidgloss
     else:
@@ -372,8 +372,7 @@ def compare_valuedict_to_gloss(valuedict, gloss_id, my_datasets, nl,
                                 lemma__dataset=gloss.lemma.dataset).count()
 
                             if glosses_with_same_annotation:
-                                error_string = 'ERROR: Signbank ID (' + str(gloss_id) \
-                                               + ')  key value already exists: ' + human_key + ': ' + str(new_human_value)
+                                error_string = gettext("ERROR: Signbank ID {glossid} key value already exists: {column}: {value}").format(glossid=str(gloss_id), column=human_key, value=str(new_human_value))
                                 errors_found += [error_string]
 
                             else:
@@ -402,7 +401,7 @@ def compare_valuedict_to_gloss(valuedict, gloss_id, my_datasets, nl,
                         # lemma not set
                         lemma_idgloss_string = ''
                     if lemma_idgloss_string != new_human_value and new_human_value not in ['None', '']:
-                        error_string = 'ERROR: Attempt to update Lemma translations: ' + human_key
+                        error_string = gettext("ERROR: Attempt to update Lemma translations: {column}").format(column=human_key)
                         errors_found += [error_string]
                 continue
 
@@ -413,7 +412,7 @@ def compare_valuedict_to_gloss(valuedict, gloss_id, my_datasets, nl,
                 language = Language.objects.filter(**{language_name_column: language_name}).first()
                 if not language:
                     current_keyword_string = ""
-                    error_string = 'ERROR: Non-existent language specified for Senses column: ' + human_key
+                    error_string = gettext("ERROR: Non-existent language specified for Senses column: {column}").format(column=human_key)
                     errors_found += [error_string]
                 else:
                     current_keyword_string = sense_translations_for_language(gloss, language)
@@ -425,8 +424,7 @@ def compare_valuedict_to_gloss(valuedict, gloss_id, my_datasets, nl,
                         if not okay:
                             print('current senses: ', current_keyword_string)
                             print('not okay new string: ', new_human_value)
-                            error_string = 'ERROR Gloss ' + str(
-                                gloss.id) + ': Error parsing value in Senses column ' + human_key + ': ' + new_human_value
+                            error_string = gettext("ERROR Gloss {glossid}: Error parsing value in Senses column {column}: {value}").format(glossid=str(gloss_id), column=human_key, value=new_human_value)
                             errors_found += [error_string]
 
                 if new_human_value not in ['None', ''] and not current_keyword_string:
@@ -450,7 +448,7 @@ def compare_valuedict_to_gloss(valuedict, gloss_id, my_datasets, nl,
                 sense_numbers_to_sentences = get_senses_to_sentences(gloss)
                 if not language:
                     current_sentences_string = ""
-                    error_string = 'ERROR: Non-existent language specified for Senses column: ' + human_key
+                    error_string = gettext("ERROR: Non-existent language specified for Senses column: {column}").format(column=human_key)
                     errors_found += [error_string]
                 else:
                     current_sentences_string = sense_examplesentences_for_language(gloss, language)
@@ -460,8 +458,7 @@ def compare_valuedict_to_gloss(valuedict, gloss_id, my_datasets, nl,
                     if not okay:
                         print('current sentences: ', current_sentences_string)
                         print('not okay new sentences string: ', new_human_value)
-                        error_string = 'ERROR Gloss ' + str(
-                            gloss.id) + ': Error parsing value in Example Sentences column ' + human_key + ': ' + new_human_value
+                        error_string = gettext("ERROR Gloss {glossid}: Error parsing value in Example Sentences column {column}: {value}").format(glossid=str(gloss_id), column=human_key, value=new_human_value)
                         errors_found += [error_string]
                 difference_org, difference, errors_found = csv_sentence_tuples_list_compare(str(gloss_id),
                                                                                             current_sentences_string,
@@ -543,8 +540,7 @@ def compare_valuedict_to_gloss(valuedict, gloss_id, my_datasets, nl,
                     # To be safe, confirm the original dataset is not empty, to catch legacy code
                     if not current_dataset or current_dataset == 'None' or current_dataset is None:
                         # Dataset must be non-empty to create a new gloss
-                        error_string = 'For ' + default_annotationidglosstranslation + ' (' + str(gloss_id) + '), Dataset must be non-empty. There is currently no dataset defined for this gloss.'
-
+                        error_string = gettext("For {annotation} ({glossid}), Dataset must be non-empty. There is currently no dataset defined for this gloss.").format(annotation=default_annotationidglosstranslation, glossid=str(gloss_id))
                         errors_found += [error_string]
                     continue
 
@@ -561,9 +557,8 @@ def compare_valuedict_to_gloss(valuedict, gloss_id, my_datasets, nl,
                                             'new_machine_value': new_human_value,
                                             'new_human_value': new_human_value})
                 else:
-                    error_string = 'For ' + default_annotationidglosstranslation + ' (' + str(
-                        gloss_id) + '), could not find ' + str(new_human_value) + ' for ' + human_key
-
+                    error_string = gettext(
+                        "For {annotation} ({glossid}), could not find {value} for {column}.").format(annotation=default_annotationidglosstranslation, glossid=str(gloss_id), value=new_human_value, column=human_key)
                     errors_found += [error_string]
 
                 continue
@@ -802,8 +797,9 @@ def compare_valuedict_to_gloss(valuedict, gloss_id, my_datasets, nl,
                 # make sure all fields exist
                 new_values_sorted_lookup = lookup_semantic_fields(new_human_value_list)
                 if new_values_sorted_lookup.count() != len(new_human_value_list):
-                    error_string = 'For ' + default_annotationidglosstranslation + ' (' + str(
-                        gloss_id) + '), could not parse ' + new_human_value + ' for ' + human_key
+                    error_string = gettext("For {annotation} ({glossid}), could not parse {value} for {column}.").format(
+                        annotation=default_annotationidglosstranslation, glossid=str(gloss_id), value=new_human_value,
+                        column=human_key)
                     errors_found += [error_string]
                     continue
                 new_semfield_sorted_lookup_values = [str(sf.name) for sf in new_values_sorted_lookup]
@@ -840,14 +836,12 @@ def compare_valuedict_to_gloss(valuedict, gloss_id, my_datasets, nl,
                 # Signbank ID is skipped, for this purpose it was popped from the fields to compare
                 # Skip above fields with complex values: Keywords, Signlanguages, Dialects,
                 # Relations to other signs, Relations to foreign signs, Morphology.
-
-                error_string = 'For ' + default_annotationidglosstranslation + ' (' + str(
-                    gloss_id) + '), could not identify column name: ' + str(human_key)
-
+                error_string = gettext("For {annotation} ({glossid}), could not identify column name: {column}.").format(
+                    annotation=default_annotationidglosstranslation, glossid=str(gloss_id), column=human_key)
                 errors_found += [error_string]
 
                 if not column_name_error:
-                    error_string = 'HINT: Try exporting a CSV file to see what column names can be used.'
+                    error_string = gettext("HINT: Try exporting a CSV file to see what column names can be used.")
                     errors_found += [error_string]
                     column_name_error = True
 
@@ -868,9 +862,10 @@ def compare_valuedict_to_gloss(valuedict, gloss_id, my_datasets, nl,
                                                                field=field.field_choice_category)
                         new_machine_value = field_choice.machine_value
                     except ObjectDoesNotExist:
-                        error_string = 'For ' + default_annotationidglosstranslation + ' (' + str(
-                            gloss_id) + '), could not find option ' + new_human_value + ' for ' + human_key
-
+                        error_string = gettext(
+                            "For {annotation} ({glossid}), could not find option {value} for {column}.").format(
+                            annotation=default_annotationidglosstranslation, glossid=str(gloss_id),
+                            value=new_human_value, column=human_key)
                         errors_found += [error_string]
                         continue
 
@@ -882,9 +877,10 @@ def compare_valuedict_to_gloss(valuedict, gloss_id, my_datasets, nl,
                     handshape = Handshape.objects.get(name__iexact=new_human_value)
                     new_machine_value = handshape.machine_value
                 except ObjectDoesNotExist:
-                    error_string = 'For ' + default_annotationidglosstranslation + ' (' + str(
-                        gloss_id) + '), could not find option ' + new_human_value + ' for ' + human_key
-
+                    error_string = gettext(
+                        "For {annotation} ({glossid}), could not find option {value} for {column}.").format(
+                        annotation=default_annotationidglosstranslation, glossid=str(gloss_id),
+                        value=new_human_value, column=human_key)
                     errors_found += [error_string]
                     continue
 
@@ -915,11 +911,16 @@ def compare_valuedict_to_gloss(valuedict, gloss_id, my_datasets, nl,
                     # If the new value is empty, don't count this as a type error, error_string is generated conditionally
                     if field.name in HANDEDNESS_ARTICULATION_FIELDS:
                         if new_human_value is not None and new_human_value not in ['None', '']:
-                            error_string = 'For ' + default_annotationidglosstranslation + ' (' + str(gloss_id) + '), value ' + str(new_human_value) + ' for ' + human_key + ' should be a Boolean or Neutral.'
+                            error_string = gettext(
+                                "For {annotation} ({glossid}), value {value} for {column} should be a Boolean or Neutral.").format(
+                                annotation=default_annotationidglosstranslation, glossid=str(gloss_id),
+                                value=new_human_value, column=human_key)
                     else:
                         if new_human_value is not None and new_human_value not in ['None', '']:
-                            error_string = 'For ' + default_annotationidglosstranslation + ' (' + str(gloss_id) + '), value ' + str(new_human_value) + ' for ' + human_key + ' is not a Boolean.'
-
+                            error_string = gettext(
+                                "For {annotation} ({glossid}), value {value} for {column} is not a Boolean.").format(
+                                annotation=default_annotationidglosstranslation, glossid=str(gloss_id),
+                                value=new_human_value, column=human_key)
                     if error_string:
                         errors_found += [error_string]
                     continue
@@ -934,9 +935,10 @@ def compare_valuedict_to_gloss(valuedict, gloss_id, my_datasets, nl,
             try:
                 original_machine_value = getattr(gloss, gloss_field_name)
             except KeyError:
-                error_string = 'For ' + default_annotationidglosstranslation + ' (' + str(
-                    gloss_id) + '), could not get original value for field: ' + gloss_field_name
-
+                error_string = gettext(
+                    "For {annotation} ({glossid}), could not get original value for field: {field}").format(
+                    annotation=default_annotationidglosstranslation, glossid=str(gloss_id),
+                    field=gloss_field_name)
                 errors_found += [error_string]
                 continue
 
@@ -1018,13 +1020,12 @@ def compare_valuedict_to_lemma(valuedict, lemma_id, my_datasets, nl,
     try:
         lemma = LemmaIdgloss.objects.select_related().get(pk=lemma_id)
     except ObjectDoesNotExist as e:
-
-        e = 'Could not find lemma for ID ' + str(lemma_id)
+        e = gettext("Could not find lemma for ID {lemmaid}.").format(lemmaid=str(lemma_id))
         errors_found.append(e)
         return differences, errors_found, earlier_updates_same_csv, earlier_updates_lemmaidgloss
 
     if lemma_id in earlier_updates_same_csv:
-        e = 'Lemma ID (' + str(lemma_id) + ') found in multiple rows (Row ' + str(nl + 1) + ').'
+        e = gettext("Lemma ID {lemmaid} found in multiple rows (Row {row}).").format(lemmaid=str(lemma_id), row=str(nl+1))
         errors_found.append(e)
         return differences, errors_found, earlier_updates_same_csv, earlier_updates_lemmaidgloss
     else:
@@ -1047,7 +1048,7 @@ def compare_valuedict_to_lemma(valuedict, lemma_id, my_datasets, nl,
 
     if not count_new_nonempty_translations:
         # somebody has modified the lemma translations to delete all of them:
-        e = 'Row ' + str(nl + 1) + ': Lemma ID ' + str(lemma_id) + ' must have at least one translation.'
+        e = gettext("Row {row}: Lemma ID {lemmaid} must have at least one translation.").format(row=str(nl+1), lemmaid=str(lemma_id))
         errors_found.append(e)
         return differences, errors_found, earlier_updates_same_csv, earlier_updates_lemmaidgloss
 
@@ -1116,8 +1117,9 @@ def check_existence_dialect(gloss, values):
             if new_value not in found:
                 found += [new_value]
         else:
-            error_string = ('ERROR: For gloss ' + default_annotationidglosstranslation + ' (' + str(gloss.pk)
-                            + '), new Dialect value ' + str(new_value) + ' not found.')
+            error_string = gettext(
+                "ERROR: For gloss {annotation} ({glossid}), new Dialect value {value} not found.").format(
+                annotation=default_annotationidglosstranslation, glossid=str(gloss.pk), value=str(new_value))
             errors.append(error_string)
             not_found += [new_value]
         continue
@@ -1135,14 +1137,16 @@ def check_existence_signlanguage(gloss, values):
     for new_value in values:
         if SignLanguage.objects.filter(name__iexact=new_value):
             if new_value in found:
-                error_string = 'WARNING: For gloss ' + default_annotationidglosstranslation + ' (' + str(
-                    gloss.pk) + '), new Sign Language value ' + str(new_value) + ' is duplicate.'
+                error_string = gettext(
+                    "WARNING: For gloss {annotation} ({glossid}), new Sign Language value {value} is duplicate.").format(
+                    annotation=default_annotationidglosstranslation, glossid=str(gloss.pk), value=str(new_value))
                 errors.append(error_string)
             else:
                 found += [new_value]
         else:
-            error_string = 'ERROR: For gloss ' + default_annotationidglosstranslation + ' (' + str(gloss.pk) + '), new Sign Language value ' + str(new_value) + ' not found.'
-
+            error_string = gettext(
+                "ERROR: For gloss {annotation} ({glossid}), new Sign Language value {value} not found.").format(
+                annotation=default_annotationidglosstranslation, glossid=str(gloss.pk), value=str(new_value))
             errors.append(error_string)
             not_found += [new_value]
         continue
@@ -1172,9 +1176,10 @@ def check_existence_notes(gloss, values, note_type_error, note_tuple_error, defa
         note_tuple_error = True
         note_type_error = False
         # error in processing new notes
-        error_string1 = 'For ' + default_annotationidglosstranslation + ' (' + str(
-            gloss.pk) + '), could not parse note: ' + values
-        error_string2 = "Note values must be a comma-separated list of tagged tuples: 'Type:(Boolean,Index,Text)'"
+        error_string1 = gettext(
+            "For {annotation} ({glossid}), could not parse note: {values}").format(
+            annotation=default_annotationidglosstranslation, glossid=str(gloss.pk), value=values)
+        error_string2 = gettext("Note values must be a comma-separated list of tagged tuples: 'Type:(Boolean,Index,Text)'")
         new_note_errors.append(error_string1)
         new_note_errors.append(error_string2)
         # it doesn't work to use the translation here because it's a proxy
@@ -1208,12 +1213,12 @@ def check_existence_notes(gloss, values, note_type_error, note_tuple_error, defa
             (field, name, count, text) = take_apart.groups()
 
             if field not in all_notes_names:
-                error_string = 'For ' + default_annotationidglosstranslation + ' (' + str(
-                    gloss.pk) + '), a non-existent note type was found: ' + field + '.'
-
+                error_string = gettext(
+                    "For {annotation} ({glossid}), a non-existent note type was found: {field}.").format(
+                    annotation=default_annotationidglosstranslation, glossid=str(gloss.pk), field=field)
                 new_note_errors += [error_string]
                 if not note_type_error:
-                    error_string = 'Current note types are: ' + all_notes_display + '.'
+                    error_string = gettext('Current note types are: {all_notes_display}.').format(all_notes_display=all_notes_display)
                     new_note_errors += [error_string]
                     note_type_error = True
             else:
@@ -1221,14 +1226,15 @@ def check_existence_notes(gloss, values, note_type_error, note_tuple_error, defa
                 new_human_values.append(new_tuple)
         else:
             # error in processing new notes
-            error_string = 'For ' + default_annotationidglosstranslation + ' (' + str(
-                gloss.pk) + '), could not parse note: ' + split_value
+            error_string = gettext(
+                "For {annotation} ({glossid}), could not parse note: {value}.").format(
+                annotation=default_annotationidglosstranslation, glossid=str(gloss.pk), value=split_value)
 
             if not note_tuple_error:
                 new_note_errors += [error_string]
-                error_string1 = "Note values must be a comma-separated list of tagged tuples: 'Type:(Boolean,Index,Text)'"
+                error_string1 = gettext("Note values must be a comma-separated list of tagged tuples: 'Type:(Boolean,Index,Text)'")
                 new_note_errors += [error_string1]
-                error_string2 = 'Try exporting a CSV for glosses with Notes to check the format.'
+                error_string2 = gettext("Try exporting a CSV for glosses with Notes to check the format.")
                 new_note_errors += [error_string2]
                 note_tuple_error = True
             else:
@@ -1348,12 +1354,12 @@ def check_existence_tags(gloss_id, new_human_value_list, tag_name_error, default
     # check for non-existent tags
     for t in sorted_new_tags:
         if t not in all_tags:
-            error_string = 'For ' + default_annotationidglosstranslation + ' (' + str(
-                gloss_id) + '), a new Tag name was found: ' + t.replace('_', ' ') + '.'
-
+            error_string = gettext(
+                "For {annotation} ({glossid}), a new Tag name was found: {tag}.").format(
+                annotation=default_annotationidglosstranslation, glossid=str(gloss_id), tag=t.replace('_', ' '))
             new_tag_errors += [error_string]
             if not tag_name_error:
-                error_string = 'Current tag names are: ' + all_tags_display + '.'
+                error_string = gettext("Current tag names are: {all_tags_display}.").format(all_tags_display=all_tags_display)
                 new_tag_errors += [error_string]
                 tag_name_error = True
 
@@ -1375,22 +1381,25 @@ def check_existence_sequential_morphology(gloss, values):
         filter_morphemes = Gloss.objects.filter(lemma__dataset=gloss.lemma.dataset,
                                                 annotationidglosstranslation__text__exact=new_value).distinct()
         if not filter_morphemes:
-            error_string = 'ERROR: For gloss ' + default_annotationidglosstranslation + ' (' + str(
-                gloss.pk) + '), new Sequential Morphology gloss ' + new_value + ' not found.'
+            error_string = gettext(
+                "ERROR: For gloss {annotation} ({glossid}), new Sequential Morphology gloss {value} not found.").format(
+                annotation=default_annotationidglosstranslation, glossid=str(gloss.pk), value=new_value)
             errors.append(error_string)
             not_found += [new_value]
             continue
         elif filter_morphemes.count() > 1:
-            error_string = 'ERROR: For gloss ' + default_annotationidglosstranslation + ' (' + str(
-                gloss.pk) + '), multiple matches found for Sequential Morphology gloss ' + new_value + '.'
+            error_string = gettext(
+                "ERROR: For gloss {annotation} ({glossid}), multiple matches found for Sequential Morphology gloss {value}.").format(
+                annotation=default_annotationidglosstranslation, glossid=str(gloss.pk), value=new_value)
             errors.append(error_string)
             continue
         else:
             found += [new_value]
 
     if len(new_values) > 4:
-        error_string = 'ERROR: For gloss ' + default_annotationidglosstranslation + ' (' + str(
-            gloss.pk) + ', too many Sequential Morphology components.'
+        error_string = gettext(
+            "ERROR: For gloss {annotation} ({glossid}), too many Sequential Morphology components.").format(
+            annotation=default_annotationidglosstranslation, glossid=str(gloss.pk))
         errors.append(error_string)
 
     return found, not_found, errors
@@ -1411,8 +1420,9 @@ def check_existence_simultaneous_morphology(gloss, values):
             morpheme = morpheme.strip()
             tuples_list.append((morpheme, role))
         except ValueError:
-            error_string = 'ERROR: For gloss ' + default_annotationidglosstranslation + ' (' + str(gloss.pk) \
-                           + '), formatting error in Simultaneous Morphology: ' + str(new_value_tuple) + '. Tuple morpheme:role expected.'
+            error_string = gettext(
+                "ERROR: For gloss {annotation} ({glossid}), formatting error in Simultaneous Morphology: {input}. Tuple morpheme:role expected.").format(
+                annotation=default_annotationidglosstranslation, glossid=str(gloss.pk), input=str(new_value_tuple))
             errors.append(error_string)
 
     for (morpheme, role) in tuples_list:
@@ -1421,19 +1431,22 @@ def check_existence_simultaneous_morphology(gloss, values):
                                                    annotationidglosstranslation__text__exact=morpheme).distinct()
 
         if not filter_morphemes:
-            error_string = 'ERROR: For gloss ' + default_annotationidglosstranslation + ' (' + str(
-                gloss.pk) + '), new Simultaneous Morphology gloss ' + str(morpheme) + ' not found.'
+            error_string = gettext(
+                "ERROR: For gloss {annotation} ({glossid}), new Simultaneous Morphology gloss {morpheme} not found.").format(
+                annotation=default_annotationidglosstranslation, glossid=str(gloss.pk), morpheme=str(morpheme))
             errors.append(error_string)
             continue
         elif filter_morphemes.count() > 1:
-            error_string = 'ERROR: For gloss ' + default_annotationidglosstranslation + ' (' + str(
-                gloss.pk) + '), multiple matches found for Simultaneous Morphology gloss ' + morpheme + '.'
+            error_string = gettext(
+                "ERROR: For gloss {annotation} ({glossid}), multiple matches found for Simultaneous Morphology gloss {morpheme}.").format(
+                annotation=default_annotationidglosstranslation, glossid=str(gloss.pk), morpheme=morpheme)
             errors.append(error_string)
             continue
         morpheme_gloss = filter_morphemes.first()
         if not morpheme_gloss.is_morpheme():
-            error_string = 'ERROR: For gloss ' + default_annotationidglosstranslation + ' (' + str(
-                gloss.pk) + '), new Simultaneous Morphology gloss ' + str(morpheme) + ' is not a morpheme.'
+            error_string = gettext(
+                "ERROR: For gloss {annotation} ({glossid}), new Simultaneous Morphology gloss {morpheme} is not a morpheme.").format(
+                annotation=default_annotationidglosstranslation, glossid=str(gloss.pk), morpheme=str(morpheme))
             errors.append(error_string)
             continue
         if checked:
@@ -1461,8 +1474,9 @@ def check_existence_blend_morphology(gloss, values):
             morpheme = morpheme.strip()
             tuples_list.append((morpheme, role))
         except ValueError:
-            error_string = 'ERROR: For gloss ' + default_annotationidglosstranslation + ' (' + str(gloss.pk) \
-                           + '), formatting error in Blend Morphology: ' + str(new_value_tuple) + '. Tuple gloss:role expected.'
+            error_string = gettext(
+                "ERROR: For gloss {annotation} ({glossid}), formatting error in Blend Morphology: {input}. Tuple gloss:role expected.").format(
+                annotation=default_annotationidglosstranslation, glossid=str(gloss.pk), input=str(new_value_tuple))
             errors.append(error_string)
 
     for (morpheme, role) in tuples_list:
@@ -1471,13 +1485,15 @@ def check_existence_blend_morphology(gloss, values):
                                               annotationidglosstranslation__text__exact=morpheme).distinct()
 
         if not filter_glosses:
-            error_string = 'ERROR: For gloss ' + default_annotationidglosstranslation + ' (' + str(
-                gloss.pk) + '), new Blend Morphology gloss ' + morpheme + '  not found.'
+            error_string = gettext(
+                "ERROR: For gloss {annotation} ({glossid}), new Blend Morphology gloss {morpheme} not found.").format(
+                annotation=default_annotationidglosstranslation, glossid=str(gloss.pk), morpheme=morpheme)
             errors.append(error_string)
             continue
         elif filter_glosses.count() > 1:
-            error_string = 'ERROR: For gloss ' + default_annotationidglosstranslation + ' (' + str(
-                gloss.pk) + '), multiple matches found for Blend Morphology gloss ' + morpheme + '.'
+            error_string = gettext(
+                "ERROR: For gloss {annotation} ({glossid}), multiple matches found for Blend Morphology gloss {morpheme}.").format(
+                annotation=default_annotationidglosstranslation, glossid=str(gloss.pk), morpheme=morpheme)
             errors.append(error_string)
             continue
         if checked:
@@ -1512,8 +1528,9 @@ def check_existence_relations(gloss, relations, values):
             other_gloss = other_gloss.strip()
             sorted_values.append((role, other_gloss))
         except ValueError:
-            error_string = 'ERROR: For gloss ' + default_annotationidglosstranslation + ' (' + str(gloss.pk) \
-                           + '), formatting error in Relations to other signs: ' + str(new_value_tuple) + '. Tuple role:gloss expected.'
+            error_string = gettext(
+                "ERROR: For gloss {annotation} ({glossid}), formatting error in Relations to other signs: {input}. Tuple role:gloss expected.").format(
+                annotation=default_annotationidglosstranslation, glossid=str(gloss.pk), input=str(new_value_tuple))
             errors.append(error_string)
 
     # remove duplicates
@@ -1528,9 +1545,9 @@ def check_existence_relations(gloss, relations, values):
             if role not in RELATION_ROLES:
                 raise ValueError
         except ValueError:
-            error_string = 'ERROR: For gloss ' + default_annotationidglosstranslation + ' (' + str(gloss.pk) \
-                           + '), column Relations to other signs: ' + role + ':' + other_gloss + '. Role ' + role + ' not found.' \
-                    + ' Role should be one of: ' + RELATION_ROLES_DISPLAY + '.'
+            error_string = gettext(
+                "ERROR: For gloss {annotation} ({glossid}), column Relations to other signs: {role}:{other_gloss}. Role {role} not found. Role should be one of: {RELATION_ROLES_DISPLAY}.").format(
+                annotation=default_annotationidglosstranslation, glossid=str(gloss.pk), role=role, other_gloss=other_gloss, RELATION_ROLES_DISPLAY=RELATION_ROLES_DISPLAY)
             errors.append(error_string)
 
     # check other glosses
@@ -1540,14 +1557,14 @@ def check_existence_relations(gloss, relations, values):
                                              annotationidglosstranslation__text__exact=other_gloss).distinct()
 
         if not filter_target:
-            error_string = 'ERROR: For gloss ' + default_annotationidglosstranslation + ' (' + str(gloss.pk) \
-                           + '), column Relations to other signs: ' + role + ':' + other_gloss + '. Other gloss ' \
-                           + other_gloss + ' not found.'
+            error_string = gettext(
+                "ERROR: For gloss {annotation} ({glossid}), column Relations to other signs: {role}:{other_gloss}. Other gloss {other_gloss} not found.").format(
+                annotation=default_annotationidglosstranslation, glossid=str(gloss.pk), role=role, other_gloss=other_gloss)
             errors.append(error_string)
         elif filter_target.count() > 1:
-            error_string = 'ERROR: For gloss ' + default_annotationidglosstranslation + ' (' + str(
-                gloss.pk) + '), column Relations to other signs: ' + role + ':' + other_gloss + \
-                           '. Multiple matches found for other gloss ' + other_gloss + '.'
+            error_string = gettext(
+                "ERROR: For gloss {annotation} ({glossid}), column Relations to other signs: {role}:{other_gloss}. Multiple matches found for other gloss {other_gloss}.").format(
+                annotation=default_annotationidglosstranslation, glossid=str(gloss.pk), role=role, other_gloss=other_gloss)
             errors.append(error_string)
             continue
 
@@ -1575,9 +1592,9 @@ def check_existence_foreign_relations(gloss, relations, values):
             (loan_word, other_lang, other_lang_gloss) = new_value_tuple.split(':')
             sorted_values.append((loan_word, other_lang, other_lang_gloss))
         except ValueError:
-            error_string = 'ERROR: For gloss ' + default_annotationidglosstranslation + ' (' + str(gloss.pk) \
-                           + '), formatting error in Relations to foreign signs: ' + str(new_value_tuple) \
-                           + '. Tuple bool:string:string expected.'
+            error_string = gettext(
+                "ERROR: For gloss {annotation} ({glossid}), formatting error in Relations to foreign signs: {input}. Tuple bool:string:string expected.").format(
+                annotation=default_annotationidglosstranslation, glossid=str(gloss.pk), input=str(new_value_tuple))
             errors.append(error_string)
 
     # remove duplicates
@@ -1599,10 +1616,10 @@ def check_existence_foreign_relations(gloss, relations, values):
             else:
                 checked = ':'.join([loan_word, other_lang, other_lang_gloss])
         except ValueError:
-            error_string = 'ERROR: For gloss ' + default_annotationidglosstranslation + ' (' + str(gloss.pk) \
-                           + '), formatting error in Relations to foreign signs: ' \
-                           + loan_word + ':' + other_lang + ':' + other_lang_gloss \
-                           + '. Tuple bool:string:string expected.'
+            error_string = gettext(
+                "ERROR: For gloss {annotation} ({glossid}), formatting error in Relations to foreign signs: {loan_word}:{other_lang}:{other_lang_gloss}. Tuple bool:string:string expected.").format(
+                annotation=default_annotationidglosstranslation, glossid=str(gloss.pk),
+                loan_word=loan_word, other_lang=other_lang, other_lang_gloss=other_lang_gloss)
             errors.append(error_string)
 
             pass
