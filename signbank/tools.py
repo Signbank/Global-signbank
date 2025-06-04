@@ -5,6 +5,7 @@ from zipfile import ZipFile
 import json
 import hashlib
 import re
+import copy
 import codecs
 import datetime as DT
 from datetime import date
@@ -1178,7 +1179,7 @@ def check_existence_notes(gloss, values, note_type_error, note_tuple_error, defa
         # error in processing new notes
         error_string1 = gettext(
             "For {annotation} ({glossid}), could not parse note: {values}").format(
-            annotation=default_annotationidglosstranslation, glossid=str(gloss.pk), value=values)
+            annotation=default_annotationidglosstranslation, glossid=str(gloss.pk), values=values)
         error_string2 = gettext("Note values must be a comma-separated list of tagged tuples: 'Type:(Boolean,Index,Text)'")
         new_note_errors.append(error_string1)
         new_note_errors.append(error_string2)
@@ -1227,8 +1228,8 @@ def check_existence_notes(gloss, values, note_type_error, note_tuple_error, defa
         else:
             # error in processing new notes
             error_string = gettext(
-                "For {annotation} ({glossid}), could not parse note: {value}.").format(
-                annotation=default_annotationidglosstranslation, glossid=str(gloss.pk), value=split_value)
+                "For {annotation} ({glossid}), could not parse note: {values}.").format(
+                annotation=default_annotationidglosstranslation, glossid=str(gloss.pk), values=values)
 
             if not note_tuple_error:
                 new_note_errors += [error_string]
@@ -1259,8 +1260,9 @@ def check_existence_notes(gloss, values, note_type_error, note_tuple_error, defa
     return new_notes_display, sorted_new_notes_display, new_note_errors, note_type_error, note_tuple_error
 
 
-def map_values_to_notes_id(values):
+def map_values_to_notes_id(input_values):
 
+    values = copy.deepcopy(input_values)
     map_errors = False
     activate(LANGUAGES[0][0])
     note_role_choices = FieldChoice.objects.filter(field__iexact='NoteType', machine_value__gt=1).order_by('-name')
@@ -1284,7 +1286,7 @@ def map_values_to_notes_id(values):
         regex_string = r"%s: \(" % note_name
         m = re.search(regex_string, mapped_values)
         if m:
-            regex = re.compile(note_name+': \(')
+            regex = re.compile(note_name+": \\(")
             mapped_values = regex.sub(escaped_note_reverse_translation[note_name]+': (', mapped_values)
     # see if any note names have not been reverse mapped
     find_all = re.findall(r'\D+: ?[(]', mapped_values)
