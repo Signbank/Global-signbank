@@ -6647,7 +6647,7 @@ class LemmaDeleteView(DeleteView):
     model = LemmaIdgloss
     success_url = reverse_lazy('dictionary:admin_lemma_list')
 
-    def delete(self, request, *args, **kwargs):
+    def form_valid(self, request, *args, **kwargs):
         self.object = self.get_object()
         if self.object.gloss_set.all():
             messages.add_message(request, messages.ERROR, _("There are glosses using this lemma."))
