@@ -1280,13 +1280,12 @@ def map_values_to_notes_id(values):
         escaped_note_reverse_translation[escaped_note_name] = note_reverse_translation[note_name]
 
     mapped_values = values
-
     for note_name in pattern_mapped_sorted_note_names:
-        regex_string = r"%s" % note_name + r": "
+        regex_string = r"%s: \(" % note_name
         m = re.search(regex_string, mapped_values)
         if m:
-            regex = re.compile(note_name)
-            mapped_values = regex.sub(escaped_note_reverse_translation[note_name], mapped_values)
+            regex = re.compile(note_name+': \(')
+            mapped_values = regex.sub(escaped_note_reverse_translation[note_name]+': (', mapped_values)
     # see if any note names have not been reverse mapped
     find_all = re.findall(r'\D+: ?[(]', mapped_values)
     if find_all:
