@@ -296,6 +296,18 @@ function checkKey(e)
             $(right_player).trigger('pause');
         }
 
+        function play_other_media(el) {
+            var pk = $(el).attr('data-pk');
+            var middle_player = '#videoplayer_other_media_'+pk;
+            $(middle_player).trigger('play');
+        }
+
+        function pause_other_media(el) {
+            var pk = $(el).attr('data-pk');
+            var middle_player = '#videoplayer_other_media_'+pk;
+            $(middle_player).trigger('pause');
+        }
+
         function restart_video(vid) {
             if (!vid) { return; }
             vid.trigger('pause');
@@ -1879,7 +1891,19 @@ textarea:focus {
                     <td>
                         <div id="other_media_player_{{pk}}" style="height:259px;width:auto;">
                             <video id='videoplayer_other_media_{{pk}}' src="{{path}}"
-                                   playsinline muted controls style="height:200px;width:auto;"></video>
+                                   playsinline muted style="height:200px;width:auto;"></video>
+                            <div id="buttonbar_other_media_{{pk}}" style="background-color:transparent;">
+                            <button class="btn" id="play_other_media_{{pk}}" onclick="play_other_media(this);" data-pk="{{pk}}"
+                                    style="font-size:16px;background-color:transparent;"><span class="glyphicon glyphicon-play"></span></button>
+                            <button class="btn" id="pause_other_media_{{pk}}" onclick="pause_other_media(this);" data-pk="{{pk}}"
+                                    style="font-size:16px;background-color:transparent;"><span class="glyphicon glyphicon-pause"></span></button>
+                            </div>
+                        </div>
+                    </td>
+                    {% elif file_type|startswith:"image" %}
+                    <td>
+                        <div id="other_media_image_{{pk}}" style="height:259px;width:auto;">
+                            <img id="imageframe_other_media_{{pk}}" src="{{path}}" style="height:200px;width:auto;">
                         </div>
                     </td>
                     {% else %}
