@@ -4,7 +4,7 @@ import datetime as DT
 
 from django.db import models
 from django.utils.timezone import get_current_timezone
-from django.utils.translation import override, activate
+from django.utils.translation import override, activate, gettext
 from django.core.exceptions import ObjectDoesNotExist, MultipleObjectsReturned
 from django.http import StreamingHttpResponse
 
@@ -1211,6 +1211,20 @@ def choice_fields_choices():
         elif f.name in ['weakdrop', 'weakprop']:
             fields_choices[f.verbose_name.encode('ascii', 'ignore').decode()] = ['Neutral', 'True', 'False']
 
+    tags_objects = Tag.objects.all()
+    refreshed_tags = []
+    for tag in tags_objects:
+        tag.refresh_from_db()
+        refreshed_tags.append(tag)
+    all_tags = [t.name.replace('_', ' ').title() for t in refreshed_tags]
+
+    fields_choices[gettext("Tags")] = all_tags
+
+    note_role_choices = FieldChoice.objects.filter(field__iexact='NoteType',
+                                                   machine_value__gte=0).order_by('machine_value')
+    all_notes_names = [n.name for n in note_role_choices]
+
+    fields_choices[gettext("Notes")] = all_notes_names
     return fields_choices
 
 
