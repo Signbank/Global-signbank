@@ -1308,24 +1308,6 @@ class Gloss(models.Model):
     def get_subhndsh_display(self):
         return self.subhndsh.name if self.subhndsh else '-'
 
-    def get_weakdrop_display(self):
-        if self.weakdrop is None:
-            coerced_value = 'None'
-        elif self.weakdrop is True:
-            coerced_value = 'True'
-        else:
-            coerced_value = 'False'
-        return coerced_value
-
-    def get_weakprop_display(self):
-        if self.weakprop is None:
-            coerced_value = 'None'
-        elif self.weakprop is True:
-            coerced_value = 'True'
-        else:
-            coerced_value = 'False'
-        return coerced_value
-
     def get_semField_display(self):
         return ", ".join([str(sf.name) for sf in self.semField.all()])
 
