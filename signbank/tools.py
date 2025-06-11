@@ -929,6 +929,8 @@ def compare_valuedict_to_gloss(valuedict, gloss_id, my_datasets, nl,
             else:
                 if new_human_value == 'None':
                     new_machine_value = None
+                elif field.__class__.__name__ == 'CharField' or field.__class__.__name__ == 'TextField':
+                    new_machine_value = new_human_value.lstrip('\"').rstrip('\"')
                 else:
                     new_machine_value = new_human_value
 
@@ -979,7 +981,13 @@ def compare_valuedict_to_gloss(valuedict, gloss_id, my_datasets, nl,
                 # make sure passed parameter is a string
                 coerced_string = str(new_human_value)
             else:
-                coerced_string = new_human_value
+                coerced_string = new_human_value.lstrip('\"').rstrip('\"').replace('\n', '\\n')
+                original_human_value = original_human_value.replace('\n', '\\n')
+
+            if type(original_machine_value) == str:
+                # escape any newlines in text fields
+                original_machine_value = original_machine_value.replace('\n', '\\n')
+
             new_human_value = unescape(coerced_string)
 
             # test if blank value
@@ -991,7 +999,7 @@ def compare_valuedict_to_gloss(valuedict, gloss_id, my_datasets, nl,
             s2 = re.sub(' ', '', new_human_value)
 
             # If the original value is implicitly not set, and the new value is not set, ignore this change
-            if (s1 in ['', 'None', 'False']) and s2 == '':
+            if (s1 in ['', 'None', 'False']) and s2 in ['', '-']:
                 pass
             # Check for change, and save your findings if there is one
             elif original_machine_value != new_machine_value and new_machine_value is not None:
@@ -1206,7 +1214,7 @@ def check_existence_notes(gloss, values, note_type_error, note_tuple_error, defa
         list_index += 1
 
     for split_value in splits_combined:
-        take_apart = re.match(r'([0-9]+): ?[(](False|True),\s?([0-9]+),\s?(.+)[)]', split_value)
+        take_apart = re.match(r'([0-9]+): ?[(](False|True),\s?-?([0-9]+),\s?(.+)[)]', split_value)
         if take_apart:
             (field, name, count, text) = take_apart.groups()
             new_tuple = (field, name, count, text.strip())
@@ -1364,6 +1372,7 @@ def check_existence_sequential_morphology(gloss, values):
     not_found = []
     for new_value in new_values:
         filter_morphemes = Gloss.objects.filter(lemma__dataset=gloss.lemma.dataset,
+                                                annotationidglosstranslation__language=gloss.lemma.dataset.default_language,
                                                 annotationidglosstranslation__text__exact=new_value).distinct()
         if not filter_morphemes:
             error_string = gettext(
@@ -1413,6 +1422,7 @@ def check_existence_simultaneous_morphology(gloss, values):
     for (morpheme, role) in tuples_list:
 
         filter_morphemes = Morpheme.objects.filter(lemma__dataset=gloss.lemma.dataset,
+                                                   annotationidglosstranslation__language=gloss.lemma.dataset.default_language,
                                                    annotationidglosstranslation__text__exact=morpheme).distinct()
 
         if not filter_morphemes:
@@ -1505,7 +1515,7 @@ def check_existence_relations(gloss, relations, values):
     # check syntax
     for new_value_tuple in values:
         try:
-            (role, other_gloss) = new_value_tuple.split(':')
+            (role, other_gloss) = new_value_tuple.split(':', 1)
             role = role.strip()
 
             role = role.replace(' ', '')
@@ -1539,6 +1549,7 @@ def check_existence_relations(gloss, relations, values):
     for (role, other_gloss) in sorted_values:
 
         filter_target = Gloss.objects.filter(lemma__dataset=gloss.lemma.dataset,
+                                             annotationidglosstranslation__language=gloss.lemma.dataset.default_language,
                                              annotationidglosstranslation__text__exact=other_gloss).distinct()
 
         if not filter_target:

@@ -1155,10 +1155,8 @@ def import_csv_update(request):
                 current_lemmaidglosstranslations[language] = lemma_translation.text if lemma_translation else ''
             if lemmaidglosstranslations \
                     and current_lemmaidglosstranslations != lemmaidglosstranslations:
-                help = 'Row ' + str(nl + 2) + ': Attempt to update Lemma translations for Signbank ID ' + str(pk)
+                help = gettext("Row {row}: Attempt to update Lemma translations for Signbank ID {glossid}. Use Import CSV Lemma Update instead.").format(row=str(nl+2), glossid=str(pk))
                 error.append(help)
-                messages.add_message(request, messages.ERROR,
-                                     _('Attempt to update Lemma translations. Use Import CSV Lemma Update instead.'))
                 continue
 
             try:
@@ -1219,13 +1217,14 @@ def import_csv_update(request):
                         # lemma not set
                         lemma_idgloss_string = ''
                     if lemma_idgloss_string != new_value and new_value not in ['None', '']:
-                        error_string = 'ERROR: Attempt to update Lemma translations: ' + new_value
+                        error_string = gettext(
+                            "Attempt to update Lemma translations: {new_value}. Use Import CSV Lemma Update instead.").format(
+                            new_value=new_value)
+
                         if error:
                             error.append(error_string)
                         else:
                             error = [error_string]
-                        messages.add_message(request, messages.ERROR,
-                                             _('Attempt to update Lemma translations. Use Import CSV Lemma Update.'))
 
                 continue   # avoid default field update
 

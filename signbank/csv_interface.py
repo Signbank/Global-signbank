@@ -784,12 +784,15 @@ def csv_gloss_to_row(gloss, dataset_languages, fields):
         elif f.related_model == DerivationHistory:
             value = ", ".join([str(sf.name) for sf in gloss.derivHist.all()])
         else:
-            value = getattr(gloss, f.name)
+            internal_value = getattr(gloss, f.name)
 
-        # some legacy glosses have empty text fields of other formats
-        if (f.__class__.__name__ == 'CharField' or f.__class__.__name__ == 'TextField') \
-                and value in ['-', '------', ' ']:
-            value = ''
+            if ((f.__class__.__name__ == 'CharField' or f.__class__.__name__ == 'TextField')
+                    and internal_value not in [None, '', '-', '------', ' ']):
+                # surround internal string value with double quotes for export, in case of punctuation (semi-colon) in string
+                value = internal_value.strip().replace('\n', '\\n')
+                value = '"' + value + '"'
+            else:
+                value = internal_value
 
         if value is None:
             if f.name in HANDEDNESS_ARTICULATION_FIELDS:
@@ -810,7 +813,6 @@ def csv_gloss_to_row(gloss, dataset_languages, fields):
         if not isinstance(value, str):
             # this is needed for csv
             value = str(value)
-
         row.append(value)
 
     # get languages
