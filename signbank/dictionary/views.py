@@ -1476,7 +1476,7 @@ def import_csv_lemmas(request):
     seen_dataset_names = [dataset.acronym]
 
     if dataset not in user_datasets:
-        feedback_message = _('You do not have change permission for the chosen dataset.')
+        feedback_message = gettext('You do not have change permission for the chosen dataset.')
         messages.add_message(request, messages.ERROR, feedback_message)
 
         return render(request, 'dictionary/import_csv_update_lemmas.html',
@@ -1500,7 +1500,7 @@ def import_csv_lemmas(request):
             # non UTF-8 encoded files also fail
             csv_text = new_file.read().decode('UTF-8-sig')
         except (UnicodeDecodeError, UnicodeError):
-            feedback_message = _('Unrecognised text encoding. Please export your file to UTF-8 format using e.g. LibreOffice.')
+            feedback_message = gettext('Unrecognised text encoding. Please export your file to UTF-8 format.')
             messages.add_message(request, messages.ERROR, feedback_message)
 
             return render(request, 'dictionary/import_csv_update_lemmas.html',
@@ -1524,11 +1524,11 @@ def import_csv_lemmas(request):
         if extra_keys or missing_keys or not delimiter_okay:
             # this is intended to assist the user in the case that a wrong file was selected
             if not delimiter_okay:
-                feedback_message = _('The delimiter is not comma, tab, or semicolon.')
+                feedback_message = gettext('The delimiter is not comma, tab, or semicolon: {delimiter}').format(delimiter=found_delimiter)
             elif extra_keys:
-                feedback_message = _('The header row of the csv file looks like this: ') + ', '.join(extra_keys)
+                feedback_message = gettext('The header row of the csv file looks like this: {columns}').format(columns=', '.join(extra_keys))
             else:
-                feedback_message = _('Some required column headers are missing: ') + ', '.join(missing_keys)
+                feedback_message = gettext('Some required column headers are missing: {columns}').format(columns=', '.join(missing_keys))
             messages.add_message(request, messages.ERROR, feedback_message)
             return render(request, 'dictionary/import_csv_update_lemmas.html',
                           {'form': uploadform, 'stage': 0, 'changes': changes,
@@ -1564,7 +1564,7 @@ def import_csv_lemmas(request):
                 try:
                     pk = int(value_dict['Lemma ID'])
                 except ValueError:
-                    e = 'Row '+str(nl + 2) + ': Lemma ID must be numerical: ' + str(value_dict['Lemma ID'])
+                    e = gettext('Row {row}: Lemma ID must be numerical: {lemmaid}').format(row=str(nl+2), lemmaid=str(value_dict['Lemma ID']))
                     error.append(e)
                     fatal_error = True
                     break
@@ -1573,7 +1573,7 @@ def import_csv_lemmas(request):
                 try:
                     pk = int(value_dict['Signbank ID'])
                 except ValueError:
-                    e = 'Row '+str(nl + 2) + ': Signbank ID must be numerical: ' + str(value_dict['Signbank ID'])
+                    e = gettext('Row {row}: Signbank ID must be numerical: {glossid}').format(row=str(nl+2), glossid=str(value_dict['Signbank ID']))
                     error.append(e)
                     fatal_error = True
                     break
@@ -1582,13 +1582,13 @@ def import_csv_lemmas(request):
 
             # catch possible empty values for dataset, primarily for pretty printing error message
             if dataset_name == '' or dataset_name is None or dataset_name == 0 or dataset_name == 'NULL':
-                e_dataset_empty = 'Row ' + str(nl + 2) + ': The Dataset is missing.'
+                e_dataset_empty = gettext('Row {row}: The Dataset is missing.').format(row=str(nl+2))
                 error.append(e_dataset_empty)
                 fatal_error = True
                 break
             if dataset_name not in seen_dataset_names:
                 # seen more than one dataset
-                e3 = 'Row ' + str(nl + 2) + ': Dataset not in selected datasets: %s.' % dataset_name
+                e3 = gettext('Row {row}: Dataset not in selected datasets: {dataset}').format(row=str(nl+2), dataset=dataset_name)
                 error.append(e3)
                 fatal_error = True
                 break
@@ -1603,32 +1603,32 @@ def import_csv_lemmas(request):
                     # also stores empty values
                     lemmaidglosstranslations[language] = lemma_idgloss_value
 
-            # # updating lemmas, propose changes (make dict)
+            lemma = None
+            # updating lemmas, propose changes (make dict)
             if 'Lemma ID' in value_dict.keys():
+                lemmaid = value_dict['Lemma ID']
                 try:
-                    lemma = LemmaIdgloss.objects.select_related().get(pk=pk)
+                    lemma = LemmaIdgloss.objects.select_related().get(pk=int(lemmaid))
                 except ObjectDoesNotExist as e:
-
-                    e = 'Row ' + str(nl + 2) + ': Could not find lemma for Lemma ID '+str(pk)
+                    e = gettext('Row {row}: Could not find lemma for Lemma ID {lemmaid}').format(row=str(nl+2), lemmaid=lemmaid)
                     error.append(e)
                     continue
             elif 'Signbank ID' in value_dict.keys():
+                glossid = value_dict['Signbank ID']
                 try:
-                    gloss = Gloss.objects.select_related().get(pk=pk, archived=False)
+                    gloss = Gloss.objects.select_related().get(pk=int(glossid), archived=False)
                     lemma = gloss.lemma
                     value_dict['Lemma ID'] = str(lemma.pk)
                 except ObjectDoesNotExist as e:
-
-                    e = 'Row ' + str(nl + 2) + ': Could not find lemma for Signbank ID ' + str(pk)
+                    e = gettext('Row {row}: Could not find lemma for Signbank ID {glossid}').format(row=str(nl+2), glossid=glossid)
                     error.append(e)
                     continue
-            else:
-                e = 'Row ' + str(nl + 2) + ': Could not identify lemma.'
+            if not lemma:
+                e = gettext('Row {row}: Could not identify lemma.').format(row=str(nl+2))
                 error.append(e)
                 continue
             if lemma.dataset.acronym != dataset_name:
-                e1 = 'Row ' + str(nl + 2) + ': The Dataset column (' + dataset.acronym \
-                     + ') does not correspond to that of the Lemma ID (' + str(pk) + ').'
+                e1 = gettext('Row {row}: The Dataset column ({acronym}) does not correspond to that of the Lemma ID ({lemmaid})').format(row=str(nl + 2), acronym=dataset.acronym, lemmaid=str(lemma.pk))
                 error.append(e1)
                 # ignore the rest of the row
                 continue
@@ -2388,8 +2388,9 @@ def show_unassigned_glosses(request):
                     for gloss in glosses_to_be_assigned:
                         gloss.dataset = dataset
                         gloss.save()
-                except ObjectDoesNotExist as objectDoesNotExist:
-                    print('Assigning glosses to a dataset resulted in an error: ' + objectDoesNotExist.message)
+                except ObjectDoesNotExist as oe:
+                    feedback_message = getattr(oe, 'message', repr(oe))
+                    print('Assigning glosses to a dataset resulted in an error: ' + feedback_message)
 
         return HttpResponseRedirect(reverse('show_unassigned_glosses'))
     else:
@@ -2682,7 +2683,7 @@ def import_csv_create_sentences(request):
             # non UTF-8 encoded files also fail
             csv_text = new_file.read().decode('UTF-8')
         except (UnicodeDecodeError, UnicodeError):
-            feedback_message = _('Unrecognised format in selected CSV file.')
+            feedback_message = gettext('Unrecognised format in selected CSV file.')
             messages.add_message(request, messages.ERROR, feedback_message)
 
             return render(request, 'dictionary/import_csv_create_sentences.html',
@@ -2707,11 +2708,11 @@ def import_csv_create_sentences(request):
         if extra_keys or missing_keys or not delimiter_okay:
             # this is intended to assist the user in the case that a wrong file was selected
             if not delimiter_okay:
-                feedback_message = _('The delimiter is not comma, tab, or semicolon.')
+                feedback_message = gettext('The delimiter is not comma, tab, or semicolon.')
             elif extra_keys:
-                feedback_message = _('The header row of the csv file looks like this: ') + ', '.join(extra_keys)
+                feedback_message = gettext('The header row of the csv file has extra keys: {extrakeys}').format(extrakeys=', '.join(extra_keys))
             else:
-                feedback_message = _('Some required column headers are missing: ') + ', '.join(missing_keys)
+                feedback_message = gettext('Some required column headers are missing: {missingkeys}').format(missingkeys=', '.join(missing_keys))
             messages.add_message(request, messages.ERROR, feedback_message)
             return render(request, 'dictionary/import_csv_create_sentences.html',
                           {'form': uploadform, 'stage': 0, 'changes': changes,
@@ -2725,7 +2726,7 @@ def import_csv_create_sentences(request):
 
         if extra_keys:
             # this is intended to assist the user in the case that a wrong file was selected
-            feedback_message = _('Extra columns were found: ') + ', '. join(extra_keys)
+            feedback_message = gettext('Extra columns were found: {extrakeys}').format(extrakeys=', '. join(extra_keys))
             messages.add_message(request, messages.ERROR, feedback_message)
             return render(request, 'dictionary/import_csv_create_sentences.html',
                           {'form': uploadform, 'stage': 0, 'changes': changes,
