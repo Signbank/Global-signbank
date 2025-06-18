@@ -86,7 +86,13 @@
             "description": "A zipfile containing 3 json files: `glosses.json`, `image_urls.json` and `video_urls.json`"
           }
         },
-        "tags": ["Collecting information"]
+        "tags": ["Collecting information"],
+        "security":
+        [
+          {
+            "bearerAuth": []
+          }
+        ]
       }
     },
     "/dictionary/info/":
@@ -104,7 +110,13 @@
             "description": "The names (acronyms) of available datasets."
           }
         },
-        "tags": ["Collecting information"]
+        "tags": ["Collecting information"],
+        "security":
+        [
+          {
+            "bearerAuth": []
+          }
+        ]
       }
     },
     "/dictionary/get_fields_data/{datasetid}":
@@ -133,7 +145,13 @@
             "description": "The full set of fields for a dataset."
           }
         },
-        "tags": ["Collecting information"]
+        "tags": ["Collecting information"],
+        "security":
+        [
+          {
+            "bearerAuth": []
+          }
+        ]
       }
     },
     "/dictionary/get_fields_data/{datasetid}/nl/":
@@ -162,7 +180,13 @@
             "description": "De volledige set velden voor een dataset."
           }
         },
-        "tags": ["Informatie verzamelen"]
+        "tags": ["Informatie verzamelen"],
+        "security":
+        [
+          {
+            "bearerAuth": []
+          }
+        ]
       }
     },
     "/dictionary/get_gloss_data/{datasetid}/{glossid}":
