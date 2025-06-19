@@ -68,7 +68,7 @@ from signbank.csv_interface import (csv_create_senses, csv_update_sentences, csv
                                     choice_fields_choices)
 from signbank.dictionary.translate_choice_list import (machine_value_to_translated_human_value,
                                                        choicelist_queryset_to_translated_dict)
-from signbank.abstract_machine import get_interface_language_api
+from signbank.abstract_machine import get_interface_language_api, retrieve_language_code_from_header
 from signbank.api_token import put_api_user_in_request
 from signbank.dictionary.gloss_revision import pretty_print_revisions
 from signbank.dictionary.adminviews import show_warning
@@ -2143,14 +2143,19 @@ def get_unused_videos(request):
                    })
 
 
-def package(request):
+@csrf_exempt
+@put_api_user_in_request
+def package(request, language_code='en'):
 
-    interface_language_code = get_interface_language_api(request, request.user)
+    interface_language_code = retrieve_language_code_from_header(language_code,
+                                                                 request.headers.get('Accept-Language', ''),
+                                                                 request.META.get('HTTP_ACCEPT_LANGUAGE', None))
     activate(interface_language_code)
 
     if 'dataset_name' not in request.GET:
         return HttpResponseBadRequest(gettext('No dataset name provided.'))
     dataset_acronym = request.GET['dataset_name']
+
     if not dataset_acronym:
         return HttpResponseBadRequest(gettext('Dataset name empty.'))
     dataset = Dataset.objects.filter(acronym=dataset_acronym).first()
