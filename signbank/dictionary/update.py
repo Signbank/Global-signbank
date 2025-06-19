@@ -1049,11 +1049,11 @@ def update_gloss(request, glossid):
             # value is the html 'value' received during editing
             # value gets converted to a Boolean by the following statement
             if field in ['weakdrop', 'weakprop']:
-                NEUTRALBOOLEANCHOICES = { 'None': '1', 'True': '2', 'False': '3' }
+                NEUTRALBOOLEANCHOICES = { None: '1', True: '2', False: '3' }
                 category_value = 'phonology'
                 if value not in ['1', '2', '3']:
                     # this code is for the case the user has not selected a value in the list
-                    if value in ['None', 'True', 'False']:
+                    if value in [None, True, False]:
                         value = NEUTRALBOOLEANCHOICES[value]
                     else:
                         # something is wrong, set to None
