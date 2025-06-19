@@ -3174,6 +3174,7 @@ class OtherMedia(models.Model):
                                     verbose_name=_("Type"), related_name='other_media')
     alternative_gloss = models.CharField(max_length=50)
     path = models.CharField(max_length=100)
+    description = models.TextField(null=True, blank=True, verbose_name=_("Description/Explanation"))
 
     @classmethod
     def get_field_names(cls):
@@ -3245,6 +3246,10 @@ class Dataset(models.Model):
     owners = models.ManyToManyField(User, help_text="Users responsible for the dataset content.")
 
     exclude_choices = models.ManyToManyField('FieldChoice', help_text="Exclude these field choices", blank=True)
+    prominent_media = FieldChoiceForeignKey(FieldChoice, on_delete=models.SET_NULL, null=True,
+                                            limit_choices_to={'field': FieldChoice.OTHERMEDIATYPE},
+                                            field_choice_category=FieldChoice.OTHERMEDIATYPE,
+                                            verbose_name=_("Prominent Media Type"), related_name='prominent_media')
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -3254,6 +3259,12 @@ class Dataset(models.Model):
 
     def __str__(self):
         return self.acronym
+
+    def get_prominent_media_machine_value(self):
+        return str(self.prominent_media.machine_value) if self.prominent_media else '0'
+
+    def get_prominent_media_display(self):
+        return str(self.prominent_media.name) if self.prominent_media else '-'
 
     @classmethod
     def get_field_names(cls):
