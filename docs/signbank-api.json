@@ -51,7 +51,7 @@
           {
             "name": "dataset_name",
             "in": "query",
-            "description": "Acrynym of the dataset, like `NGT` or `ASL`",
+            "description": "Acronym of the dataset, like `NGT` or `ASL`",
             "required": true,
             "schema":
             {
@@ -87,6 +87,60 @@
           }
         },
         "tags": ["Collecting information"],
+        "security":
+        [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/dictionary/package/nl/":
+    {
+      "get":
+      {
+        "description": "Dit levert een zipbestand met afbeeldingen en video's op, bedoeld voor gebruik in gebarentaalsoftware (oorspronkelijk ontworpen voor gebruik met video-annotatiesoftware ELAN). Als u de parameter `since_timestamp` instelt, je krijgt alleen alle glossen die na die specifieke seconde zijn gemaakt of bijgewerkt, zo hoef je niet de hele collectie te downloaden.",
+        "parameters":
+        [
+          {
+            "name": "dataset_name",
+            "in": "query",
+            "description": "Acroniem van de dataset, zoals `NGT` of `ASL`",
+            "required": true,
+            "schema":
+            {
+              "type": "string"
+            }
+          },
+          {
+            "name": "since_timestamp",
+            "in": "query",
+            "description": "(Unix-tijdperkformaat, 1 januari 2024 zal 1704067200 zijn). Beperkt de glossen tot alles wat na deze seconde is gemaakt of bijgewerkt.",
+            "required": false,
+            "schema":
+            {
+              "type": "int"
+            }
+          },
+          {
+            "name": "extended_fields",
+            "in": "query",
+            "description": "",
+            "required": false,
+            "schema":
+            {
+              "type": "bool"
+            }
+          }
+        ],
+        "responses":
+        {
+          "200":
+          {
+            "description": "Een zipbestand met 3 json-bestanden: `glosses.json`, `image_urls.json` and `video_urls.json`"
+          }
+        },
+        "tags": ["Informatie verzamelen"],
         "security":
         [
           {
