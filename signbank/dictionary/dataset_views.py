@@ -1,7 +1,7 @@
 import json
 
 from django.contrib import messages
-from django.utils.translation import gettext_lazy as _
+from django.utils.translation import gettext, gettext_lazy as _
 from django.core.exceptions import ObjectDoesNotExist
 from django.shortcuts import get_object_or_404
 from django.views.generic.list import ListView
@@ -219,7 +219,7 @@ class GlossVideoListView(ListView):
         # This is to prevent the interface from choking on backup videos
         # For NGT there are over 100,000 backup video objects
         if count_video_objects > 1000:
-            translated_message = str(count_video_objects) + _(' results. Please refine your query to retrieve fewer results.')
+            translated_message = gettext("{count_video_objects} results. Please refine your query to retrieve fewer results.").format(count_video_objects=str(count_video_objects))
             messages.add_message(self.request, messages.ERROR, translated_message)
             # reset the counts of the individual objects for the template, since the query has not been done yet
             count_glossvideos, count_glossbackupvideos, count_glossperspvideos, count_glossnmevideos, count_wrong_filename = 0, 0, 0, 0, 0
