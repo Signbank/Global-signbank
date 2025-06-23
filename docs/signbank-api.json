@@ -51,7 +51,7 @@
           {
             "name": "dataset_name",
             "in": "query",
-            "description": "Acrynym of the dataset, like `NGT` or `ASL`",
+            "description": "Acronym of the dataset, like `NGT` or `ASL`",
             "required": true,
             "schema":
             {
@@ -86,7 +86,67 @@
             "description": "A zipfile containing 3 json files: `glosses.json`, `image_urls.json` and `video_urls.json`"
           }
         },
-        "tags": ["Collecting information"]
+        "tags": ["Collecting information"],
+        "security":
+        [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/dictionary/package/nl/":
+    {
+      "get":
+      {
+        "description": "Dit levert een zipbestand met afbeeldingen en video's op, bedoeld voor gebruik in gebarentaalsoftware (oorspronkelijk ontworpen voor gebruik met video-annotatiesoftware ELAN). Als u de parameter `since_timestamp` instelt, je krijgt alleen alle glossen die na die specifieke seconde zijn gemaakt of bijgewerkt, zo hoef je niet de hele collectie te downloaden.",
+        "parameters":
+        [
+          {
+            "name": "dataset_name",
+            "in": "query",
+            "description": "Acroniem van de dataset, zoals `NGT` of `ASL`",
+            "required": true,
+            "schema":
+            {
+              "type": "string"
+            }
+          },
+          {
+            "name": "since_timestamp",
+            "in": "query",
+            "description": "(Unix-tijdperkformaat, 1 januari 2024 zal 1704067200 zijn). Beperkt de glossen tot alles wat na deze seconde is gemaakt of bijgewerkt.",
+            "required": false,
+            "schema":
+            {
+              "type": "int"
+            }
+          },
+          {
+            "name": "extended_fields",
+            "in": "query",
+            "description": "",
+            "required": false,
+            "schema":
+            {
+              "type": "bool"
+            }
+          }
+        ],
+        "responses":
+        {
+          "200":
+          {
+            "description": "Een zipbestand met 3 json-bestanden: `glosses.json`, `image_urls.json` and `video_urls.json`"
+          }
+        },
+        "tags": ["Informatie verzamelen"],
+        "security":
+        [
+          {
+            "bearerAuth": []
+          }
+        ]
       }
     },
     "/dictionary/info/":
@@ -104,7 +164,13 @@
             "description": "The names (acronyms) of available datasets."
           }
         },
-        "tags": ["Collecting information"]
+        "tags": ["Collecting information"],
+        "security":
+        [
+          {
+            "bearerAuth": []
+          }
+        ]
       }
     },
     "/dictionary/get_fields_data/{datasetid}":
@@ -133,7 +199,48 @@
             "description": "The full set of fields for a dataset."
           }
         },
-        "tags": ["Collecting information"]
+        "tags": ["Collecting information"],
+        "security":
+        [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/dictionary/get_fields_data/{datasetid}/nl/":
+    {
+      "get":
+      {
+        "description": "Geeft de set velden voor een dataset. Het zijn in principe de velden die beschikbaar zijn op de Signbank-pagina 'Zoeken'. Met een API-token wordt de volledige set velden weergegeven.",
+        "parameters":
+        [
+          {
+            "name": "datasetid",
+            "in": "path",
+            "description": "De dataset-ID is vereist om de taalgebaseerde velden te kunnen verstrekken (annotatie, lemma, betekenissen).",
+            "required": true,
+            "schema":
+            {
+              "type": "string",
+              "default": "5"
+            }
+          }
+        ],
+        "responses":
+        {
+          "200":
+          {
+            "description": "De volledige set velden voor een dataset."
+          }
+        },
+        "tags": ["Informatie verzamelen"],
+        "security":
+        [
+          {
+            "bearerAuth": []
+          }
+        ]
       }
     },
     "/dictionary/get_gloss_data/{datasetid}/{glossid}":
@@ -217,7 +324,7 @@
             "description": "Gedetailleerde informatie over de glos."
           }
         },
-        "tags": ["Informatie aan het verzamelen"],
+        "tags": ["Informatie verzamelen"],
         "security":
         [
           {
@@ -344,6 +451,87 @@
           }
         },
         "tags": ["Adding Signbank data"],
+        "security":
+        [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/dictionary/api_create_gloss/{datasetid}/nl/":
+    {
+      "post":
+      {
+        "description": "Maak een nieuwe glos aan. Betekenissen zijn optioneel.",
+        "parameters":
+        [
+          {
+            "name": "datasetid",
+            "in": "path",
+            "description": "ID van de dataset waarvan deze glos deel moet uitmaken (niet het acroniem).",
+            "required": true,
+            "schema":
+            {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody":
+        {
+          "content":
+          {
+            "application/json":
+            {
+              "schema":
+              {
+                "type": "object",
+                "properties":
+                {
+                  "Dataset":
+                  {
+                    "type": "string",
+                    "description": "Acroniem van de dataset, zoals `NGT` of `ASL`"
+                  },
+                  "Lemma-ID-Glos (Nederlands)":
+                  {
+                    "type": "string"
+                  },
+                  "Lemma-ID-Glos (Engels)":
+                  {
+                    "type": "string"
+                  },
+                  "Annotatie-ID-Glos (Nederlands)":
+                  {
+                    "type": "string"
+                  },
+                  "Annotatie-ID-Glos (Engels)":
+                  {
+                    "type": "string"
+                  },
+                  "Betekenissen (Nederlands)":
+                  {
+                    "type": "string",
+                    "example": "[['string']]"
+                  },
+                  "Betekenissen (Engels)":
+                  {
+                    "type": "string",
+                    "example": "[['string']]"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses":
+        {
+          "200":
+          {
+            "description": "Creatie succesvol"
+          }
+        },
+        "tags": ["Signbank-gegevens toevoegen"],
         "security":
         [
           {
@@ -530,13 +718,13 @@
     {
       "post":
       {
-        "description": "Change a gloss. Only include those gloss fields you wish to update. Values of fields with choices should match those available in Signbank. Between languages the number of senses given must be the same, but the number of words in a sense can differ. Use DOUBLE QUOTES.",
+        "description": "Update a gloss. Only include those gloss fields you wish to update. Values of fields with choices should match those available in Signbank. Between languages the number of senses given must be the same, but the number of words in a sense can differ. Use DOUBLE QUOTES.",
         "parameters":
         [
           {
             "name": "datasetid",
             "in": "path",
-            "description": "ID of the dataset this gloss should be part of (not the acronym)",
+            "description": "ID of the dataset this gloss is part of (not the acronym)",
             "required": true,
             "schema":
             {
@@ -766,6 +954,254 @@
           }
         },
         "tags": ["Updating Signbank data"],
+        "security":
+        [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/dictionary/api_update_gloss/{datasetid}/{glossid}/nl/":
+    {
+      "post":
+      {
+        "description": "Een gloss bijwerken. Alleen de glos-velden opnemen die je wilt updaten. De waarden van velden met keuzemogelijkheden moeten overeenkomen met de waarden die beschikbaar zijn in Signbank. Het aantal betekenissen van alle talen moeten gelijk zijn, maar het aantal woorden kan in zekere zin verschillen. Gebruik DUBBELE AANHALINGSTEKENS.",
+        "parameters":
+        [
+          {
+            "name": "datasetid",
+            "in": "path",
+            "description": "ID van de dataset waarvan deze glos deel uitmaakt (niet het acroniem)",
+            "required": true,
+            "schema":
+            {
+              "type": "string"
+            }
+          },
+          {
+            "name": "glossid",
+            "in": "path",
+            "description": "ID van de glos",
+            "required": true,
+            "schema":
+            {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody":
+        {
+          "content":
+          {
+            "application/json":
+            {
+              "schema":
+              {
+                "type": "object",
+                "properties":
+                {
+                  "Lemma-ID-Glos (Nederlands)":
+                  {
+                    "type": "string"
+                  },
+                  "Lemma-ID-Glos (Engels)":
+                  {
+                    "type": "string"
+                  },
+                  "Annotatie-ID-Glos (Nederlands)":
+                  {
+                    "type": "string"
+                  },
+                  "Annotatie-ID-Glos (Engels)":
+                  {
+                    "type": "string"
+                  },
+                  "Woordsoort":
+                  {
+                    "type": "string"
+                  },
+                  "Handigheid":
+                  {
+                    "type": "string"
+                  },
+                  "Sterke Hand":
+                  {
+                    "type": "string"
+                  },
+                  "Zwakke Hand":
+                  {
+                    "type": "string"
+                  },
+                  "Handvormverandering":
+                  {
+                    "type": "string"
+                  },
+                  "Relatie Tussen Articulatoren":
+                  {
+                    "type": "string"
+                  },
+                  "Plaats":
+                  {
+                    "type": "string"
+                  },
+                  "Type Contact":
+                  {
+                    "type": "string"
+                  },
+                  "Vorm Van De Beweging":
+                  {
+                    "type": "string"
+                  },
+                  "Richting Van De Beweging":
+                  {
+                    "type": "string"
+                  },
+                  "Herhaalde Beweging":
+                  {
+                    "type": "string"
+                  },
+                  "Alternerende Beweging":
+                  {
+                    "type": "string"
+                  },
+                  "Relatieve Oriëntatie: Beweging":
+                  {
+                    "type": "string"
+                  },
+                  "Relatieve Oriëntatie: Locatie":
+                  {
+                    "type": "string"
+                  },
+                  "Oriëntatieverandering":
+                  {
+                    "type": "string"
+                  },
+                  "Virtueel Object":
+                  {
+                    "type": "string"
+                  },
+                  "Fonologie: Overig":
+                  {
+                    "type": "string"
+                  },
+                  "Orale Component":
+                  {
+                    "type": "string"
+                  },
+                  "Gesproken Component":
+                  {
+                    "type": "string"
+                  },
+                  "Fonetische Variatie":
+                  {
+                    "type": "string"
+                  },
+                  "Sterke Hand Letter":
+                  {
+                    "type": "string"
+                  },
+                  "Sterke Hand Cijfer":
+                  {
+                    "type": "string"
+                  },
+                  "Zwakke Hand Letter":
+                  {
+                    "type": "string"
+                  },
+                  "Zwakke Hand Cijfer":
+                  {
+                    "type": "int"
+                  },
+                  "Weak Drop":
+                  {
+                    "type": "string"
+                  },
+                  "Weak Prop":
+                  {
+                    "type": "string"
+                  },
+                  "Semantisch Veld":
+                  {
+                    "type": "string"
+                  },
+                  "Derivatieachtergrond":
+                  {
+                    "type": "string"
+                  },
+                  "Naam":
+                  {
+                    "type": "string"
+                  },
+                  "Valence":
+                  {
+                    "type": "string"
+                  },
+                  "Iconisch Beeld":
+                  {
+                    "type": "string"
+                  },
+                  "Concepticon Concept Set":
+                  {
+                    "type": "string"
+                  },
+                  "In Het Woordenboek":
+                  {
+                    "type": "bool"
+                  },
+                  "Voorstel Voor Nieuw Gebaar?":
+                  {
+                    "type": "bool"
+                  },
+                  "Buiten Ecv Houden":
+                  {
+                    "type": "bool"
+                  },
+                  "Betekenissen":
+                  {
+                    "type": "object",
+                    "properties":
+                    {
+                      "en":
+                      {
+                        "type": "array",
+                        "items":
+                        {
+                          "type": "array",
+                          "items":
+                          {
+                            "type": "string"
+                          }
+                        }
+                      },
+                      "nl":
+                      {
+                        "type": "array",
+                        "items":
+                        {
+                          "type": "array",
+                          "items":
+                          {
+                            "type": "string"
+                          }
+                        }
+                      }
+                    }
+                  }
+
+                }
+              }
+            }
+          }
+        },
+        "responses":
+        {
+          "200":
+          {
+            "description": "Update succesvol"
+          }
+        },
+        "tags": ["Signbank-gegevens bijwerken"],
         "security":
         [
           {
