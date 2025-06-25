@@ -141,15 +141,16 @@ function ready_videos(el) {
     {% elif caller == 'gloss_detail_view' and gloss_id %}
         <a class="btn btn-default btn-default-light" href='{% url "dictionary:admin_gloss_view" pk=gloss_id %}'>{% trans "Return to Gloss Details" %}</a>
     {% endif %}
-     <form action='{% url "dictionary:change_lemma" object.pk %}' method='post'>
+     <form action='{% url "dictionary:update_lemma" lemma.pk %}' method='post'>
          {% csrf_token %}
          <table class='table' style='width: 400px;'>
-         {{ change_lemma_form.as_table }}
+             {{change_lemma_form}}
          </table>
 
      <input type='hidden' id="page" name="page" value="{{page_in_lemma_list}}">
      <input type='hidden' id="gloss_found" name="gloss_found" value="{{gloss_found}}">
      <input type='hidden' id="gloss_id" name="gloss_id" value="{{gloss_id}}">
+     <input type='hidden' id='request_path' name='request_path' value="{{request_path}}">
      <input class='btn btn-primary' type='submit' value='{% trans "Update" %}'>
      </form>
 <br>
@@ -160,7 +161,7 @@ function ready_videos(el) {
             <table class='table' style='width: 1200px;'>
                 <tr>
                     <th>{% trans "Dataset" %}</th>
-                    <td><a href="{{PREFIX_URL}}/datasets/{{object.dataset.acronym}}" >{{ object.dataset.acronym }}</a></td>
+                    <td><a href="{{PREFIX_URL}}/datasets/{{lemma.dataset.acronym}}" >{{ lemma.dataset.acronym }}</a></td>
                 </tr>
                 <tr>
                     <th>{% trans "Glosses" %}</th>

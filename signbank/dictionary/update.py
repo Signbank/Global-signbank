@@ -54,7 +54,7 @@ from signbank.dictionary.forms import (RelationForm, VariantsForm, RelationToFor
                                        MorphemeCreateForm, LemmaCreateForm, AffiliationUpdateForm, OtherMediaForm,
                                        CSVMetadataForm, EAFFilesForm, FieldChoiceColorForm,
                                        SemanticFieldColorForm, HandshapeColorForm, DerivationHistoryColorForm,
-                                       TagUpdateForm)
+                                       TagUpdateForm, LemmaUpdateForm)
 from signbank.dictionary.translate_choice_list import machine_value_to_translated_human_value
 from signbank.dictionary.context_data import get_selected_datasets
 
@@ -1259,6 +1259,58 @@ def update_annotation_idgloss(request, gloss, field, value):
         return HttpResponseBadRequest(feedback_message, {'content-type': 'text/plain'})
 
     return HttpResponse(str(value), {'content-type': 'text/plain'})
+
+
+def update_lemma_idgloss(request, lemmaid):
+    """Update the LemmaIdGlossTranslation"""
+
+    if not request.method == "POST":
+        return HttpResponseForbidden("Update lemma method must be POST")
+
+    request_path = ''
+    selected_datasets = get_selected_datasets(request)
+    lemma = LemmaIdgloss.objects.filter(pk=int(lemmaid)).first()
+    if not lemma:
+        translated_message = _('The requested lemma does not exist.')
+        return HttpResponseForbidden(translated_message)
+    if not lemma.dataset:
+        translated_message = _('The requested lemma has no dataset.')
+        return HttpResponseForbidden(translated_message)
+
+    form = LemmaUpdateForm(request.POST, instance=lemma, languages=lemma.dataset.translation_languages.all())
+
+    for item, value in request.POST.items():
+        value = value.strip()
+        if item.startswith(LemmaUpdateForm.lemma_update_field_prefix):
+            if not value:
+                # just ignore. the forms required attribute prevents this, but it could be empty if the user put spaces
+                continue
+            language_code_2char = item[len(LemmaUpdateForm.lemma_update_field_prefix):]
+            language = Language.objects.get(language_code_2char=language_code_2char)
+            lemmas_for_this_language_and_annotation_idgloss = LemmaIdgloss.objects.filter(
+                lemmaidglosstranslation__language=language,
+                lemmaidglosstranslation__text__exact=value.upper(),
+                dataset=lemma.dataset)
+            if lemmas_for_this_language_and_annotation_idgloss.count() > 0:
+                for nextLemma in lemmas_for_this_language_and_annotation_idgloss:
+                    if nextLemma.pk != lemma.pk:
+                        # found a different lemma with same translation
+                        translated_message = _('Lemma ID Gloss is not unique for that language.')
+                        return show_warning(request, translated_message, selected_datasets)
+            form.fields[LemmaUpdateForm.lemma_update_field_prefix + language_code_2char] = value
+        elif item == 'request_path':
+            request_path = value
+
+    if not request_path:
+        request_path = request.META.get('HTTP_REFERER')
+    try:
+        form.save()
+        messages.add_message(request, messages.INFO, _("The changes to the lemma have been saved."))
+        return HttpResponseRedirect(request_path)
+    except Exception as e:
+        print('Exception saving LemmaUpdateForm: ', e)
+        messages.add_message(request, messages.ERROR, _("Updating the lemma failed."))
+        return HttpResponseRedirect(request_path)
 
 
 def update_nmevideo(user, gloss, field, value):

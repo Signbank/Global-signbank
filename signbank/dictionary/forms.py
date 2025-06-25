@@ -941,7 +941,7 @@ class LemmaCreateForm(forms.ModelForm):
         existing_lemma_translations = lemma.lemmaidglosstranslation_set.all()
         for language in self.languages:
             lemmacreate_field_name = self.lemma_create_field_prefix + language.language_code_2char
-            lemma_idgloss_text = self[lemmacreate_field_name].value()
+            lemma_idgloss_text = self.fields[lemmacreate_field_name].value()
             existing_lemmaidglosstranslations = existing_lemma_translations.filter(language=language)
             if existing_lemmaidglosstranslations.count() == 0:
                 lemmaidglosstranslation = LemmaIdglossTranslation(lemma=lemma, language=language,
@@ -967,34 +967,23 @@ class LemmaUpdateForm(forms.ModelForm):
         model = LemmaIdgloss
         fields = []
 
-    def __init__(self, queryDict=None, *args, **kwargs):
-        if 'page_in_lemma_list' in kwargs:
-            self.page_in_lemma_list = kwargs.pop('page_in_lemma_list')
-
-        super(LemmaUpdateForm, self).__init__(queryDict, *args, **kwargs)
-        self.languages = self.instance.dataset.translation_languages.all()
-
+    def __init__(self, *args, **kwargs):
+        self.languages = kwargs.pop('languages')
+        super(LemmaUpdateForm, self).__init__(*args, **kwargs)
         for language in self.languages:
-            lemmaupdate_field_name = self.lemma_update_field_prefix + language.language_code_2char
-            self.fields[lemmaupdate_field_name] = forms.CharField(label=_("Lemma") + (" (%s)" % language.name), required=True)
-            if queryDict:
-                if lemmaupdate_field_name in queryDict:
-                    self.fields[lemmaupdate_field_name].initial = queryDict[lemmaupdate_field_name]
-            else:
-                try:
-                    self.fields[lemmaupdate_field_name].initial = \
-                        self.instance.lemmaidglosstranslation_set.get(language=language).text
-                except:
-                    pass
+            lemmaupdate_field_name = LemmaUpdateForm.lemma_update_field_prefix + language.language_code_2char
+            self.fields[lemmaupdate_field_name] = forms.CharField(label=_("Lemma") + (" (%s)" % language.name),
+                                                                  required=True,
+                                                                  widget=forms.TextInput(attrs=ATTRS_FOR_FORMS))
 
     @atomic
     def save(self, commit=True):
         # the number of translations should be at least 1
-        instance_has_translations = self.instance.lemmaidglosstranslation_set.count()
+        instance_has_translations = self.instance.lemmaidglosstranslation_set.all().count()
         for language in self.languages:
             lemmaupdate_field_name = self.lemma_update_field_prefix + language.language_code_2char
-            lemma_idgloss_text = self.fields[lemmaupdate_field_name].initial
-            existing_lemmaidglosstranslations = self.instance.lemmaidglosstranslation_set.filter(language=language)
+            lemma_idgloss_text = self.fields[lemmaupdate_field_name]
+            existing_lemmaidglosstranslations = self.instance.lemmaidglosstranslation_set.all().filter(language=language)
             if existing_lemmaidglosstranslations is None or len(existing_lemmaidglosstranslations) == 0:
                 if lemma_idgloss_text == '':
                     # lemma translation is already empty for this language
@@ -1003,7 +992,7 @@ class LemmaUpdateForm(forms.ModelForm):
                 else:
                     # save a new translation
                     lemmaidglosstranslation = LemmaIdglossTranslation(lemma=self.instance, language=language,
-                                                                    text=lemma_idgloss_text)
+                                                                      text=lemma_idgloss_text)
                     lemmaidglosstranslation.save()
             elif len(existing_lemmaidglosstranslations) == 1:
                 lemmaidglosstranslation = existing_lemmaidglosstranslations[0]
@@ -1018,13 +1007,28 @@ class LemmaUpdateForm(forms.ModelForm):
                         # this exception refuses to be put into messages after being caught in LemmaUpdateView
                         # gives a runtime error
                         # therefore the exception is caught byt a different message is displayed
-                        raise Exception("Lemma with id %s must have at least one translation." % self.instance.pk)
+                        raise Exception("Lemma with id %s must have at least one translation." % str(self.instance.pk))
                 else:
                     lemmaidglosstranslation.text = lemma_idgloss_text
                     lemmaidglosstranslation.save()
             else:
-                raise Exception("Lemma with id %s has more than one lemma idgloss translation for language %s" % (self.instance.pk, language.name))
+                raise Exception("Lemma with id %s has more than one lemma idgloss translation for language %s" % (str(self.instance.pk), language.name))
         return
+
+
+def set_up_lemma_language_fields(lemma_form, instance):
+    lemma_form.instance = instance
+
+    lemma_form.languages = lemma_form.instance.dataset.translation_languages.all()
+
+    initial_language_fields = lemma_form.instance.lemmaidglosstranslation_set.all()
+    for language in lemma_form.languages:
+        lemmaupdate_field_name = LemmaUpdateForm.lemma_update_field_prefix + language.language_code_2char
+        if initial_language_fields.filter(language=language).count() > 0:
+            lemma_form.fields[lemmaupdate_field_name].initial = initial_language_fields.get(language=language).text
+        else:
+            # this is actually an error, it makes the form invalid, if you try to save it as is
+            lemma_form.fields[lemmaupdate_field_name].initial = ''
 
 
 class KeyMappingSearchForm(forms.ModelForm):
