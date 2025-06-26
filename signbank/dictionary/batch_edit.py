@@ -228,7 +228,7 @@ def check_constraints_on_gloss_language_fields(gloss, value_dict):
     existing_lemmas = []
     for language, lemmas in lemmas_per_language_translation.items():
         if lemmas.count():
-            e5 = gettext("Lemma ID Gloss") + " (" + language.name + ") " + gettext("already exists.")
+            e5 = gettext("Lemma ID Gloss ({language}) already exists.").format(language=language.name)
             errors.append(e5)
             if lemmas.first().lemma.pk not in existing_lemmas:
                 existing_lemmas.append(lemmas.first().lemma.pk)
@@ -250,8 +250,7 @@ def check_constraints_on_gloss_language_fields(gloss, value_dict):
             this_annotation = annotations.first()
             if this_annotation.gloss.id not in existing_glosses and this_annotation.gloss.id != gloss.id:
                 existing_glosses.append(this_annotation.gloss.id)
-                e7 = gettext('Annotation ID Gloss') + " (" + language.name + ') ' + gettext(
-                    'already exists.')
+                e7 = gettext("Annotation ID Gloss ({language}) already exists.").format(language=language.name)
                 errors.append(e7)
     if len(existing_glosses) > 1:
         e6 = gettext("Annotation translations refer to different already existing glosses.")

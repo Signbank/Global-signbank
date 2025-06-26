@@ -2959,7 +2959,9 @@ class SearchHistoryView(ListView):
             # this is a safety measure
             for lang in languages:
                 if lang not in dataset_languages:
-                    messages.add_message(self.request, messages.ERROR, _('Language '+lang.name+' is missing from the selected datasets.'))
+                    feedback_message = (gettext('Language {language} is missing from the selected datasets.')
+                                        .format(language=lang.name))
+                    messages.add_message(self.request, messages.ERROR, feedback_message)
                     return HttpResponseRedirect(PREFIX_URL + '/analysis/search_history/')
 
             return self.render_to_run_query(context, queryid)
@@ -4078,16 +4080,16 @@ class DatasetManagerView(ListView):
                 dataset_object.default_language = language
                 dataset_object.save()
                 messages.add_message(self.request, messages.INFO,
-                                     _('The default language of {} is set to {}.'
-                                      .format(dataset_object.acronym, language.name)))
+                                     gettext('The default language of {acronym} is set to {language}.'
+                                             .format(acronym=dataset_object.acronym, language=language.name)))
             else:
                 messages.add_message(self.request, messages.INFO,
-                                     _('{} is not in the set of languages of dataset {}.'
-                                      .format(language.name, dataset_object.acronym)))
+                                     gettext('{language} is not in the set of languages of dataset {acronym}.'
+                                             .format(language=language.name, acronym=dataset_object.acronym)))
         except (ObjectDoesNotExist, KeyError):
             messages.add_message(self.request, messages.ERROR,
-                                 _('Something went wrong setting the default language for '
-                                  + dataset_object.acronym))
+                                 gettext('Something went wrong setting the default language for {acronym}.'
+                                         .format(acronym=dataset_object.acronym)))
         return HttpResponseRedirect(reverse('admin_dataset_manager'))
 
     def render_to_add_user_response(self, context):
