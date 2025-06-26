@@ -1308,6 +1308,24 @@ class Gloss(models.Model):
     def get_subhndsh_display(self):
         return self.subhndsh.name if self.subhndsh else '-'
 
+    def get_weakdrop_display(self):
+        if self.weakdrop is None:
+            coerced_value = 'None'
+        elif self.weakdrop is True:
+            coerced_value = 'True'
+        else:
+            coerced_value = 'False'
+        return coerced_value
+
+    def get_weakprop_display(self):
+        if self.weakprop is None:
+            coerced_value = 'None'
+        elif self.weakprop is True:
+            coerced_value = 'True'
+        else:
+            coerced_value = 'False'
+        return coerced_value
+
     def get_semField_display(self):
         return ", ".join([str(sf.name) for sf in self.semField.all()])
 
@@ -2646,24 +2664,10 @@ class Gloss(models.Model):
 
         return self.options_to_json(RELATION_ROLE_CHOICES)
 
-    def handedness_weak_drop_prop_json(self):
-        """Return JSON for the etymology choice list"""
-
-        NEUTRALBOOLEANCHOICES = [('None', _('Neutral')), ('True', _('Yes')), ('False', _('No'))]
-
-        return self.options_to_json(NEUTRALBOOLEANCHOICES)
-
-    def handedness_weak_drop_reverse_prop_json(self):
+    def handedness_weak_choices(self):
         """Return JSON for the etymology choice list"""
 
         NEUTRALBOOLEANCHOICES = [('1', _('Neutral')), ('2', _('Yes')), ('3', _('No'))]
-
-        return self.options_to_json(NEUTRALBOOLEANCHOICES)
-
-    def handedness_weak_drop_json(self):
-        """Return JSON for the etymology choice list"""
-
-        NEUTRALBOOLEANCHOICES = [(_('Neutral'), '1'), (_('Yes'), '2'), (_('No'), '3')]
 
         return self.options_to_json(NEUTRALBOOLEANCHOICES)
 
