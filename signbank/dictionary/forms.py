@@ -984,7 +984,7 @@ class LemmaUpdateForm(forms.ModelForm):
             lemmaupdate_field_name = self.lemma_update_field_prefix + language.language_code_2char
             lemma_idgloss_text = self.fields[lemmaupdate_field_name]
             existing_lemmaidglosstranslations = self.instance.lemmaidglosstranslation_set.all().filter(language=language)
-            if existing_lemmaidglosstranslations is None or len(existing_lemmaidglosstranslations) == 0:
+            if existing_lemmaidglosstranslations.count() == 0:
                 if lemma_idgloss_text == '':
                     # lemma translation is already empty for this language
                     # don't create an empty translation
@@ -994,8 +994,8 @@ class LemmaUpdateForm(forms.ModelForm):
                     lemmaidglosstranslation = LemmaIdglossTranslation(lemma=self.instance, language=language,
                                                                       text=lemma_idgloss_text)
                     lemmaidglosstranslation.save()
-            elif len(existing_lemmaidglosstranslations) == 1:
-                lemmaidglosstranslation = existing_lemmaidglosstranslations[0]
+            elif existing_lemmaidglosstranslations.count() == 1:
+                lemmaidglosstranslation = existing_lemmaidglosstranslations.first()
                 if lemma_idgloss_text == '':
                     # delete existing translation if there is already a translation for a different language
                     if instance_has_translations > 1:
@@ -1028,6 +1028,7 @@ def set_up_lemma_language_fields(lemma_form, instance):
             lemma_form.fields[lemmaupdate_field_name].initial = initial_language_fields.get(language=language).text
         else:
             # this is actually an error, it makes the form invalid, if you try to save it as is
+            # but some legacy lemmas do not have all the language translations filled in
             lemma_form.fields[lemmaupdate_field_name].initial = ''
 
 
