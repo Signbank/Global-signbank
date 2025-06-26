@@ -99,7 +99,7 @@
     {
       "get":
       {
-        "description": "Dit levert een zipbestand met afbeeldingen en video's op, bedoeld voor gebruik in gebarentaalsoftware (oorspronkelijk ontworpen voor gebruik met video-annotatiesoftware ELAN). Als u de parameter `since_timestamp` instelt, je krijgt alleen alle glossen die na die specifieke seconde zijn gemaakt of bijgewerkt, zo hoef je niet de hele collectie te downloaden.",
+        "description": "Dit levert een zipbestand met afbeeldingen en video's op, bedoeld voor gebruik in gebarentaalsoftware (oorspronkelijk ontworpen voor gebruik met video-annotatiesoftware ELAN). Als u de parameter `since_timestamp` instelt, krijgt u alleen alle glossen die na die specifieke seconde zijn gemaakt of bijgewerkt, zo hoef je niet de hele collectie te downloaden.",
         "parameters":
         [
           {
