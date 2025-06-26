@@ -1,5 +1,5 @@
 from django.db import migrations, models
-
+from signbank.settings.server_specific import MODELTRANSLATION_LANGUAGES
 
 def add_default_provenance(apps, schema_editor):
     """
@@ -11,17 +11,11 @@ def add_default_provenance(apps, schema_editor):
     FieldChoice = apps.get_model('dictionary', 'FieldChoice')
     new_field_choice_0, created = FieldChoice.objects.get_or_create(field='Provenance', machine_value=0)
     new_field_choice_1, created = FieldChoice.objects.get_or_create(field='Provenance', machine_value=1)
-    new_field_choice_0.name_en = '-'
-    new_field_choice_0.name_nl = '-'
-    new_field_choice_0.name_zh_hans = '-'
-    new_field_choice_0.name_he = '-'
-    new_field_choice_0.name_ar = '-'
+    for language in MODELTRANSLATION_LANGUAGES:
+        field_name = 'name_' + language.replace('-', '_')
+        setattr(new_field_choice_0, field_name, '-')
+        setattr(new_field_choice_1, field_name, 'N/A')
     new_field_choice_0.save()
-    new_field_choice_1.name_en = 'N/A'
-    new_field_choice_1.name_nl = 'N/A'
-    new_field_choice_1.name_zh_hans = 'N/A'
-    new_field_choice_1.name_he = 'N/A'
-    new_field_choice_1.name_ar = 'N/A'
     new_field_choice_1.save()
 
 class Migration(migrations.Migration):

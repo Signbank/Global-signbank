@@ -4392,7 +4392,7 @@ class GlossProvenance(models.Model):
                                     limit_choices_to={'field': FieldChoice.PROVENANCE},
                                     field_choice_category=FieldChoice.PROVENANCE,
                                     verbose_name=_("Method"), related_name="method")
-    creationDate = models.DateField(_('Creation date'), auto_now=True)
+    creationDate = models.DateField(_('Creation date'), auto_now_add=True)
     lastUpdated = models.DateTimeField(_('Last updated'), auto_now=True)
     creator = models.ManyToManyField(User)
 
