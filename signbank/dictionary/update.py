@@ -12,6 +12,7 @@ from django.urls import reverse
 from django.core.exceptions import ObjectDoesNotExist, MultipleObjectsReturned, ValidationError, PermissionDenied
 from django.core.files import File
 from django.contrib.auth.decorators import permission_required
+from django.views.decorators.http import require_http_methods
 from django.db.models.fields import BooleanField, IntegerField
 from django.forms.models import ModelChoiceField
 from django.db import DatabaseError, IntegrityError
@@ -4040,6 +4041,7 @@ def trash_gloss(request, glossid):
     return HttpResponseRedirect(reverse('dictionary:change_lemma', kwargs={'pk': lemma_id}))
 
 
+@require_http_methods(["POST"])
 def add_provenance(request, glossid):
     """Add a new provenance for this gloss"""
 
@@ -4052,15 +4054,11 @@ def add_provenance(request, glossid):
         gloss_or_morpheme = thisgloss
         reverse_url = 'dictionary:admin_gloss_view'
 
-    if not request.method == "POST":
-        return HttpResponseForbidden("Add provenance method must be POST")
-
     method_machine_value = request.POST.get('method', '0')
     method = FieldChoice.objects.get(field='Provenance', machine_value=int(method_machine_value))
     description = request.POST.get('description', '')
 
     prov = GlossProvenance(gloss=gloss_or_morpheme, method=method, description=description)
-    prov.creationDate = DT.datetime.now()
     prov.save()
     prov.creator.add(request.user)
     revision_value = ': '.join([method.name, description])
@@ -4073,6 +4071,7 @@ def add_provenance(request, glossid):
     return HttpResponseRedirect(reverse(reverse_url, kwargs={'pk': gloss_or_morpheme.id}) + '?editprovenance')
 
 
+@require_http_methods(["POST"])
 def update_provenance(request, gloss, field, value):
     """Update one of the provenance fields"""
 
@@ -4085,10 +4084,8 @@ def update_provenance(request, gloss, field, value):
 
     newvalue = ''
     (what, provid) = field.split('_')
-    try:
-        prov = GlossProvenance.objects.get(id=provid)
-    except ObjectDoesNotExist:
-        return HttpResponseBadRequest("Bad Provenance ID '%s'" % defid, {'content-type': 'text/plain'})
+
+    prov = get_object_or_404(GlossProvenance, id=provid)
 
     if not prov.gloss.id == gloss_or_morpheme.id:
         return HttpResponseBadRequest("Provenance doesn't match gloss", {'content-type': 'text/plain'})

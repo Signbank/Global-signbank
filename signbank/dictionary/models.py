@@ -4392,22 +4392,12 @@ class GlossProvenance(models.Model):
                                     limit_choices_to={'field': FieldChoice.PROVENANCE},
                                     field_choice_category=FieldChoice.PROVENANCE,
                                     verbose_name=_("Method"), related_name="method")
-    creationDate = models.DateField(_('Creation date'), null=True)
+    creationDate = models.DateField(_('Creation date'), auto_now=True)
     lastUpdated = models.DateTimeField(_('Last updated'), auto_now=True)
     creator = models.ManyToManyField(User)
 
     class Meta:
         ordering = ['gloss', 'method']
-
-    @classmethod
-    def get_field_names(cls):
-        fields = cls._meta.get_fields(include_hidden=True)
-        return [field.name for field in fields if field.concrete]
-
-    @classmethod
-    def get_field(cls, field):
-        field = cls._meta.get_field(field)
-        return field
 
     def get_method_display(self):
         return self.method.name if self.method else '-'
