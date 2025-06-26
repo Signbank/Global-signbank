@@ -4,6 +4,9 @@ var original_values_for_changes_made = new Array();
 
 $(document).ready(function() {
 
+    configure_edit();
+    disable_edit();
+
     if (window.location.search.match('manage')) {
 
         target_manage = '#' + window.location.search.split("?")[1];
@@ -16,10 +19,6 @@ $(document).ready(function() {
             $(target_manage).addClass('in');
         }
     }
-
-    configure_edit();
-
-    disable_edit();
 
     if (window.location.search.match('edit')) {
         toggle_edit();
@@ -61,12 +60,14 @@ function disable_edit() {
     $('.edit').editable('disable');
     $('.edit').css('color', 'inherit');
     $('#edit_message').text('');
+    $('.editmode').css('display', 'none');
+    $('.viewmode').css('display', 'inline-block');
     if (busy_editing) {
-
+//        location.reload();  // this was sometimes necessary
+        busy_editing = 0;
     };
 
     $('#enable_edit').addClass('btn-primary').removeClass('btn-danger');
-
     $('.empty_row').hide();
 
     //To prevent RSI
@@ -89,13 +90,14 @@ function disable_edit() {
 
 function enable_edit() {
     //$('#affix-bar').hide(); // The affix bar appears on top of the Delete modal popup window, so it is hidden during editting
+    $('.viewmode').css('display', 'none');
+    $('.editmode').css('display', 'inline-block');
     $('.edit').editable('enable');
     $('.edit').css('color', 'red');
     $('#edit_message').text('Click on red text to edit  ');
     $('#edit_message').css('color', 'inherit');
 
     $('#enable_edit').removeClass('btn-primary').addClass('btn-danger');
-
     $('.empty_row').show();
 
     //To prevent RSI
