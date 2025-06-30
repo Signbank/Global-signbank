@@ -534,6 +534,16 @@ select option {
     padding-right: 2px;
     border-radius: 6px;
 }
+button a {
+    all: unset;
+    text-decoration: none;
+    font-size: 10px;
+    padding-left: 10px;
+    padding-right: 10px;
+    border-radius: 6px;
+    height: 28px;
+    outline: none;
+}
 </style>
 <style>
 .form-group {
@@ -1343,12 +1353,15 @@ textarea:focus {
                     </span>
                 </td>
             </tr>
-            <tr class="empty_row lemma_buttons" id="lemma-buttons-group" name="lemma-buttons-group"><th></th>
+            <tr class="empty_row lemma_buttons" id="lemma-buttons-group" ><th></th>
                 <td>
-                    <div id="lemma_buttons" name="lemma_buttons">
-                        <button id='show_edit_lemma_form' name='show_edit_lemma_form'
-                                style="width:auto;"
-                                class='btn btn-primary btn-space lemma-button'>{% trans "Edit Lemma" %}</button>
+                    <div id="lemma_buttons">
+                        <button id='show_edit_lemma_form' name='show_edit_lemma_form' type="button"
+                                style="width:auto;" class='btn btn-primary btn-space lemma-button'
+                                value='{% trans "Edit Lemma" %}'>
+                            <a href="{{PREFIX_URL}}/dictionary/lemma/update/{{gloss.lemma.id}}"
+                               style="text-decoration:none; color:white;">{% trans "Edit Lemma" %}</a>
+                        </button>
                         <button id='show_set_lemma_form' name='show_set_lemma_form'
                                 class='btn btn-primary btn-space lemma-button'>{% trans "Choose Other" %}</button>
                         <button id='show_create_lemma_form' name='show_create_lemma_form'
@@ -1360,10 +1373,6 @@ textarea:focus {
                 <th></th>
                 <td id="lemma_forms_cell" class='td td-light'>
                 <span>
-                <form name='edit_lemma_form' id='edit_lemma_form'
-                        method='get' action='{% url "dictionary:change_lemma" gloss.lemma.id %}'>
-                    <input class='btn btn-primary' value='{% trans "Edit Lemma" %}' type='submit'>
-                </form>
                 <form name='set_lemma_form' id='set_lemma_form'
                     onsubmit='return validateForm("set_lemma_form","value","gloss_lemma_id",
                                                 "Please choose a lemma.",

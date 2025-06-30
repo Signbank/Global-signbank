@@ -212,7 +212,6 @@ function disable_edit() {
     $('#edit_lemma_form').hide();
     $("#set_lemma_form").hide();
     $("#add_lemma_form").hide();
-    $('#show_edit_lemma_form').hide();
     $('#show_set_lemma_form').hide();
     $('#show_create_lemma_form').hide();
     $('#lemma_buttons_group').hide();
@@ -294,7 +293,6 @@ function enable_edit() {
         }
     });
     busy_editing = 1;
-//    $('#lemma a').hide();
 };
 
 function toggle_edit(redirect_to_next) {
@@ -302,8 +300,6 @@ function toggle_edit(redirect_to_next) {
     {
         disable_edit();
         $('#edit_lemma_form').hide();
-//        $('#set_lemma_form').hide();
-        $('#show_edit_lemma_form').hide();
         $('#show_set_lemma_form').hide();
         $('#show_create_lemma_form').hide();
         $('#lemma_buttons_group').hide();
@@ -325,12 +321,9 @@ function toggle_edit(redirect_to_next) {
     } else {
         enable_edit();
         $('#edit_lemma_form').show();
-        $('#show_edit_lemma_form').show();
         $('#show_set_lemma_form').show();
         $('#show_create_lemma_form').show();
         $('#lemma_buttons_group').show();
-
-//        $('#set_lemma_form').show();
         $('#enable_edit').addClass('edit_enabled');
         $('#enable_edit').text(turn_off_edit_mode_str);
     }
@@ -1067,26 +1060,12 @@ function showLemmaForm(lemma_element) {
 
 function hideLemmaForm(lemma_element) {
     $(lemma_element).parent().hide();
-//    $("#add_lemma_form").hide();
-
-//    lemma_element.parent().find("[name='set_lemma_form']").hide();
-//    lemma_element.parent().find("[name='add_lemma_form']").hide();
-//    lemma_element.parent().find("[name='edit_lemma_form']").show();
-//    lemma_element.show();
     $('#lemma_buttons_group').show();
     $('#lemma_buttons').show();
-    $('#show_edit_lemma_form').show();
     $('#show_set_lemma_form').show();
     $('#show_create_lemma_form').show();
     $('.lemma_buttons').css("visibility", "visible")
 }
-
-
-$("#show_edit_lemma_form").on('click', function() {
-    if(busy_editing) {
-        $('#edit_lemma_form').submit();
-    }
-});
 
 $("#show_set_lemma_form").on('click', function() {
     if(busy_editing) {
