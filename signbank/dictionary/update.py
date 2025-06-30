@@ -4056,12 +4056,12 @@ def add_provenance(request, glossid):
 
     method_machine_value = request.POST.get('method', '0')
     method = FieldChoice.objects.get(field='Provenance', machine_value=int(method_machine_value))
-    description = request.POST.get('description', '')
+    description = request.POST.get('description', '').strip()
 
     prov = GlossProvenance(gloss=gloss_or_morpheme, method=method, description=description)
     prov.save()
     prov.creator.add(request.user)
-    revision_value = ': '.join([method.name, description])
+    revision_value = f'{method.name}: {description}'
 
     add_gloss_update_to_revision_history(request.user, gloss_or_morpheme, 'provenance_create', '', revision_value)
 
