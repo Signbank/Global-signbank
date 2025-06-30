@@ -1268,8 +1268,8 @@ class GlossDetailView(DetailView):
 
         # set up weak drop weak prop fields
         context['handedness_fields'] = []
-        weak_drop = getattr(gloss, 'weakdrop')
-        weak_prop = getattr(gloss, 'weakprop')
+        weak_drop = gloss.get_weakdrop_display()
+        weak_prop = gloss.get_weakprop_display()
         context['handedness_fields'].append([weak_drop, 'weakdrop', labels['weakdrop'], 'list'])
         context['handedness_fields'].append([weak_prop, 'weakprop', labels['weakprop'], 'list'])
 
