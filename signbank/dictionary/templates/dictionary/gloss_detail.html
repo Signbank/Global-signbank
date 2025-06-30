@@ -51,7 +51,7 @@
     var relation_role_choices = {{gloss.relation_role_choices_json|safe}};
     var relation_delete_choices = { "delete" : "Delete" };
     var relation_delete_choices_colors = { "delete" : "ffffff" };
-    var handedness_weak_choices = {{gloss.handedness_weak_drop_prop_json|safe}};
+    var handedness_weak_choices = {{gloss.handedness_weak_choices|safe}};
     var handedness_weak_choices_colors = {};
     for (var key in handedness_weak_choices) {
         if (dark_mode_django == 'True') {
@@ -60,9 +60,6 @@
             handedness_weak_choices_colors[key] = 'ffffff';
         }
     };
-    var handedness_weak_drop_reverse = {{gloss.handedness_weak_drop_prop_json|safe}};
-    var handedness_weakdrop = handedness_weak_drop_reverse['{{gloss.weakdrop}}'];
-    var handedness_weakprop = handedness_weak_drop_reverse['{{gloss.weakprop}}'];
     var dialects = {{gloss.dialect_choices|safe}};
     var semanticfield_choices = {{gloss.semanticfield_choices|safe}};
     var derivationhistory_choices = {{gloss.derivationhistory_choices|safe}};
@@ -2395,10 +2392,10 @@ textarea:focus {
                         {% for value,name,label,kind in handedness_fields %}
                             {% if name == 'weakdrop' %}
                             <td class="edit edit_WD" id='{{name}}'
-                                value="{{value}}">{% if value %}+WD{% elif value == None %}&nbsp;{% else %}-WD{% endif %}</td>
+                                value="{{value}}">{% if value == 'True' %}+WD{% elif value == 'None' %}&nbsp;{% else %}-WD{% endif %}</td>
                             {% else %}
                             <td class="edit edit_WP" id='{{name}}'
-                                value="{{value}}">{% if value %}+WP{% elif value == None %}&nbsp;{% else %}-WP{% endif %}</td>
+                                value="{{value}}">{% if value == 'True' %}+WP{% elif value == 'None' %}&nbsp;{% else %}-WP{% endif %}</td>
                             {% endif %}
 		                {% endfor %}
                     </tr>
@@ -2410,10 +2407,10 @@ textarea:focus {
                         {% for value,name,label,kind in handedness_fields %}
                             {% if name == 'weakdrop' %}
                             <td class="edit edit_WD" id='{{name}}'
-                                value="{{value}}">{% if value %}+WD{% elif value == None %}&nbsp;{% else %}-WD{% endif %}</td>
+                                value="{{value}}">{% if value == 'True' %}+WD{% elif value == 'None' %}&nbsp;{% else %}-WD{% endif %}</td>
                             {% else %}
                             <td class="edit edit_WP" id='{{name}}'
-                                value="{{value}}">{% if value %}+WP{% elif value == None %}&nbsp;{% else %}-WP{% endif %}</td>
+                                value="{{value}}">{% if value == 'True' %}+WP{% elif value == 'None' %}&nbsp;{% else %}-WP{% endif %}</td>
                             {% endif %}
                         {% endfor %}
                     </tr>
