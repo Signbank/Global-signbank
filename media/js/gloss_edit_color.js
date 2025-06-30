@@ -439,11 +439,9 @@ function configure_edit() {
      $('.edit_WD').click(function()
 	 {
 	     var this_data = $(this).attr('value');
-	     var edit_list_choices = handedness_weak_choices;
-	     var edit_list_choice_colors = handedness_weak_choices_colors;
 	     var index_of_modified_field = '1';
-         for (var key in edit_list_choices) {
-            var value = edit_list_choices[key];
+         for (var key in handedness_weak_choices) {
+            var value = handedness_weak_choices[key];
             if (value == this_data) {
                 index_of_modified_field = key;
                 break;
@@ -454,8 +452,8 @@ function configure_edit() {
 		     params : { a: index_of_modified_field,
 		                field: 'weakdrop',
 		                display: $(this).attr('value'),
-		                colors: edit_list_choice_colors,
-		                choices: edit_list_choices },
+		                colors: handedness_weak_choices_colors,
+		                choices: handedness_weak_choices },
 		     type      : 'select',
 		     data    : handedness_weak_choices,
 			 callback : update_view_and_remember_original_value
@@ -464,11 +462,9 @@ function configure_edit() {
      $('.edit_WP').click(function()
 	 {
 	     var this_data = $(this).attr('value');
-	     var edit_list_choices = handedness_weak_choices;
-	     var edit_list_choice_colors = handedness_weak_choices_colors;
 	     var index_of_modified_field = '1';
-         for (var key in edit_list_choices) {
-            var value = edit_list_choices[key];
+         for (var key in handedness_weak_choices) {
+            var value = handedness_weak_choices[key];
             if (value == this_data) {
                 index_of_modified_field = key;
                 break;
@@ -479,8 +475,8 @@ function configure_edit() {
 		     params : { a: index_of_modified_field,
 		                field: 'weakprop',
 		                display: $(this).attr('value'),
-		                colors: edit_list_choice_colors,
-		                choices: edit_list_choices },
+		                colors: handedness_weak_choices_colors,
+		                choices: handedness_weak_choices },
 		     type      : 'select',
 		     data    : handedness_weak_choices,
 			 callback : update_view_and_remember_original_value
