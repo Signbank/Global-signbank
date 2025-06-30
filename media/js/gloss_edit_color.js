@@ -436,23 +436,51 @@ function configure_edit() {
          checkbox: { trueValue: yes_str, falseValue: no_str },
 		 callback : update_view_and_remember_original_value
      });
-     $('.edit_WD').editable(edit_post_url, {
-         params : { a: handedness_weakdrop,
-                    field: 'weakdrop',
-                    choices: handedness_weak_choices,
-                    colors: handedness_weak_choices_colors },
-         type      : 'select',
-         data: handedness_weak_choices,
-		 callback : update_view_and_remember_original_value
+     $('.edit_WD').click(function()
+	 {
+	     var this_data = $(this).attr('value');
+	     var index_of_modified_field = '1';
+         for (var key in handedness_weak_choices) {
+            var value = handedness_weak_choices[key];
+            if (value == this_data) {
+                index_of_modified_field = key;
+                break;
+            }
+         };
+         $(this).attr('data-value', index_of_modified_field);
+		 $(this).editable(edit_post_url, {
+		     params : { a: index_of_modified_field,
+		                field: 'weakdrop',
+		                display: $(this).attr('value'),
+		                colors: handedness_weak_choices_colors,
+		                choices: handedness_weak_choices },
+		     type      : 'select',
+		     data    : handedness_weak_choices,
+			 callback : update_view_and_remember_original_value
+		 });
      });
-     $('.edit_WP').editable(edit_post_url, {
-         params : { a: handedness_weakprop,
-                    field: 'weakprop',
-                    choices: handedness_weak_choices,
-                    colors: handedness_weak_choices_colors },
-         type      : 'select',
-         data: handedness_weak_choices,
-		 callback : update_view_and_remember_original_value
+     $('.edit_WP').click(function()
+	 {
+	     var this_data = $(this).attr('value');
+	     var index_of_modified_field = '1';
+         for (var key in handedness_weak_choices) {
+            var value = handedness_weak_choices[key];
+            if (value == this_data) {
+                index_of_modified_field = key;
+                break;
+            }
+         };
+         $(this).attr('data-value', index_of_modified_field);
+		 $(this).editable(edit_post_url, {
+		     params : { a: index_of_modified_field,
+		                field: 'weakprop',
+		                display: $(this).attr('value'),
+		                colors: handedness_weak_choices_colors,
+		                choices: handedness_weak_choices },
+		     type      : 'select',
+		     data    : handedness_weak_choices,
+			 callback : update_view_and_remember_original_value
+		 });
      });
      $('.edit_letter').editable(edit_post_url, {
          params : { a: 0 },
