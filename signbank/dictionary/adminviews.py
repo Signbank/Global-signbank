@@ -6477,12 +6477,15 @@ class LemmaUpdateView(UpdateView):
         context['USE_REGULAR_EXPRESSIONS'] = USE_REGULAR_EXPRESSIONS
 
         # get the page of the lemma list on which this lemma appears in order ro return to it after update
-        request_path = self.request.META.get('HTTP_REFERER')
-
-        if not request_path:
+        if not self.request_path or 'show_all' in self.request_path:
             context['caller'] = 'lemma_list'
+            context['show_all'] = True
+        elif 'update' in self.request_path:
+            # user was busy updating for a while and the HTTP referer is the update page
+            context['caller'] = 'gloss_detail_view'
         else:
-            path_parms = request_path.split('?page=')
+            context['show_all'] = False
+            path_parms = self.request_path.split('?page=')
             if len(path_parms) > 1:
                 self.page_in_lemma_list = str(path_parms[1])
             if 'gloss' in path_parms[0]:
@@ -6500,14 +6503,6 @@ class LemmaUpdateView(UpdateView):
                     self.gloss_found = False
             else:
                 context['caller'] = 'lemma_list'
-        # These are needed for return to the Gloss Details
-        # They are passed to the POST handling via hidden variables in the template
-        context['gloss_id'] = self.gloss_id
-        context['gloss_found'] = self.gloss_found
-
-        # if there was a query, return to the query results in the template on button Return to Lemma List
-        if request_path:
-            self.request_path = request_path
 
         context['request_path'] = self.request_path
 
@@ -6536,6 +6531,16 @@ class LemmaUpdateView(UpdateView):
             lemma_group_list.append((lemma, annotation_idgloss))
         context['lemma_group_count'] = lemma_group_count
         context['lemma_group_list'] = lemma_group_list
+
+        if lemma_group_count == 1 and not self.gloss_found:
+            # 'gloss' not in url
+            self.gloss_id = lemma_group_glossset[0].id
+
+        # These are needed for return to the Gloss Details
+        # They are passed to the POST handling via hidden variables in the template
+        context['gloss_id'] = self.gloss_id
+        context['gloss_found'] = self.gloss_found
+
         return context
 
     def get(self, request, *args, **kwargs):
