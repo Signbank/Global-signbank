@@ -5,6 +5,7 @@ import locale
 
 from django.core.exceptions import ObjectDoesNotExist, MultipleObjectsReturned
 from django.shortcuts import get_object_or_404, HttpResponseRedirect, HttpResponse
+from django.views.decorators.http import require_http_methods
 from django.contrib import messages
 from django.db.models import Q
 
@@ -1128,6 +1129,7 @@ def update_corpus_document_counts(dataset_acronym, document_id, **kwargs):
     return updated_glosses.keys()
 
 
+@require_http_methods(["POST"])
 def update_document_counts(request, dataset_id, document_id):
 
     try:
@@ -1140,10 +1142,6 @@ def update_document_counts(request, dataset_id, document_id):
         return HttpResponseRedirect(PREFIX_URL + '/datasets/frequency/' + dataset_id)
     if not request.user.has_perm('dictionary.change_gloss'):
         messages.add_message(request, messages.ERROR, _('No permission to update corpus.'))
-        return HttpResponseRedirect(PREFIX_URL + '/datasets/frequency/' + dataset_id)
-
-    if not request.method == "POST":
-        print('update_document_counts: not POST')
         return HttpResponseRedirect(PREFIX_URL + '/datasets/frequency/' + dataset_id)
 
     try:
