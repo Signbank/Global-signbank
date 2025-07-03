@@ -2890,6 +2890,108 @@ textarea:focus {
     
     </div>
 
+    <!-- Provenance -->
+    {% if use_provenance %}
+    <div class="panel panel-default panel-light">
+        <div class='panel-heading panel-light' data-toggle='collapse' data-target='#provenance'>{% trans "Provenance" %}
+                    {% if provenance_groupedby_method.items %}
+                    <div class="pull-right">
+                    <span id="provenance-icon"><img id='provenance_img' src='{{STATIC_URL}}images/document_with_text_and_picture.png'
+                                                  style="width:15px; height:15px; margin: 0px;"></span>
+                    </div>
+                    {% endif %}
+        </div>
+        <div id='provenance' class='collapse'>
+
+            <table class='table'>
+              <tr>
+                  <th style='width:1em'></th>
+                  <th style="width:10em">{% trans "Creation Date" %}</th>
+                  <th style="width:10em">{% trans "Creator" %}</th>
+                  <th style='width:20em'>{% trans "Method" %}</th>
+                  <th>{% trans "Description" %}</th>
+              </tr>
+              {% for method_id, prov_list in provenance_groupedby_method.items %}
+
+              {% for prov in prov_list %}
+              <tr>
+                <td>
+
+                   {% if "change_dataset" in dataset_perms %}
+                    <span class='glyphicon glyphicon-trash provenance_delete' data-toggle='modal' data-target='#delete_provenance_modal_{{prov.id}}'></span>
+
+                     <div class="modal fade" id="delete_provenance_modal_{{prov.id}}" role="dialog" aria-labelledby="#modalTitleProvenance" aria-hidden="true">
+                         <div class="modal-dialog modal-sm">
+                            <div class="modal-content">
+                                <div class='modal-header'>
+                                    <h2 id='modalTitleProvenance'>{% trans "Delete This Provenance" %}</h2>
+                                </div>
+                                <div class='modal-body'>
+                                    <p><strong>{{method_id.1}}</strong> {{prov.description}}</p>
+                                    <p>{% trans "This action will delete this note. It cannot be undone." %}</p>
+                                 </div>
+                              <form action='{% url "dictionary:update_gloss" gloss.id %}' method='post'>
+                                  {% csrf_token %}
+                                  <input type='hidden' name='id' value='provenancedelete_{{prov.id}}'>
+                                  <input type='hidden' name='value' value='confirmed'>
+                                  <div class="modal-footer">
+                                    <button type="button" class="btn btn-default btn-default-light" data-dismiss="modal">{% trans "Cancel" %}</button>
+                                    <input type="submit" class="btn btn-primary" value='{% trans "Confirm Delete" %}'>
+                                  </div>
+                              </form>
+
+                            </div>
+                          </div>
+                     </div>
+                    {% endif %}
+                </td>
+                <td>{{prov.creationDate|default_if_none:''}}</td>
+                <td>{% for creator in prov.creator.all %}
+                            {% if forloop.last %}
+                                {{creator.first_name}} {{creator.last_name}}
+                            {% else %}
+                                {{creator.first_name}} {{creator.last_name}},
+                            {% endif %}
+                    {% endfor %}</td>
+                <td class="td td-light" id='provenancemethod_{{prov.id}}'
+                    data-field='provenancemethod'>{{method_id.1}}</td>
+                <td class='edit edit_area' id='provenancedescription_{{prov.id}}' style="height:80;">{{prov.description}}</td>
+              </tr>
+              {% endfor %}
+            {% endfor %}
+            </table>
+
+           {% if "change_dataset" in dataset_perms %}
+            <form class="editform" id='add_provenance' action='{% url "dictionary:add_provenance" gloss.id %}' method="POST">
+                <fieldset>
+                {% csrf_token %}
+                 <table class='table'>
+                    <tr>
+                        <td class="td td-light" style="width:7em"></td>
+                        <td class="td td-light" style="width:2em"></td>
+                        <td class="td td-light" style="width:7em"></td>
+                        <td class="td td-light" style='width:20em'>{{provenanceform.method}}</td>
+                        <td class="td td-light">{{provenanceform.description}}</td>
+                    </tr>
+                     <tr>
+                        <td></td>
+                        <td></td>
+                        <td></td>
+                        <td></td>
+                        <td></td>
+                        <td><input class='btn btn-primary' type='submit' value='{% trans "Save New Provenance" %}'></td>
+                    </tr>
+                 </table>
+            </fieldset>
+
+            </form>
+            {% endif %}
+
+        </div>
+
+    </div>
+    {% endif %}
+
     <!-- Example sentences -->
     <div class="panel panel-default panel-light">
         <div class='panel-heading panel-light' data-toggle='collapse'

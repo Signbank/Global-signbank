@@ -142,6 +142,11 @@ textarea:focus {
                 placeholder='{% trans "Reference" %}'
                 value="{{datasetform.reference.value|default:''}}">{{dataset.reference|wordwrap:120|linebreaks}}</td>
         </tr>
+        <tr><th>{% trans "Use Provenance Model" %}</th>
+            <td class="edit edit_check" id='use_provenance' type="hidden" value='{% if dataset.use_provenance %}True{% else %}False{% endif %}' name="use_provenance">
+                {% if dataset.use_provenance %}True{% else %}False{% endif %}
+            </td>
+        </tr>
     </table>
 
     <div>
