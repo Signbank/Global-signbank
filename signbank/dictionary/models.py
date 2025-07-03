@@ -188,7 +188,7 @@ class MetaModelMixin:
         return field
 
 
-class Definition(models.Model, MetaModelMixin):
+class Definition(MetaModelMixin, models.Model):
     """An English text associated with a gloss. It's called a note in the web interface"""
 
     def __str__(self):
@@ -300,7 +300,7 @@ class RelationToForeignSign(models.Model):
         search_fields = ['gloss__idgloss']
 
 
-class Handshape(models.Model, MetaModelMixin):
+class Handshape(MetaModelMixin, models.Model):
     machine_value = models.IntegerField(_("Machine value"), primary_key=True)
     name = models.CharField(max_length=50)
     field_color = ColorField(default='ffffff')
@@ -549,7 +549,7 @@ class Language(models.Model):
     def __str__(self):
         return self.name
 
-class ExampleSentence(models.Model, MetaModelMixin):
+class ExampleSentence(MetaModelMixin, models.Model):
     """An example sentence belongs to one or more sense(s)"""
     
     sentenceType = FieldChoiceForeignKey(FieldChoice, on_delete=models.SET_NULL, null=True,
@@ -857,7 +857,7 @@ def post_remove_examplesentence_reorder(sender, instance, **kwargs):
     instance.reorder_examplesentences()
 
 
-class Gloss(models.Model, MetaModelMixin):
+class Gloss(MetaModelMixin, models.Model):
     class Meta:
         verbose_name_plural = "Glosses"
         # ordering: for Lemma View in the Gloss List View, we need to have glosses in the same Lemma Group sorted
@@ -2907,7 +2907,7 @@ class Relation(models.Model):
         return self.target.annotation_idgloss(default_language)
 
 
-class MorphologyDefinition(models.Model, MetaModelMixin):
+class MorphologyDefinition(MetaModelMixin, models.Model):
     """Tells something about morphology of a gloss"""
 
     parent_gloss = models.ForeignKey(Gloss, related_name="parent_glosses", on_delete=models.CASCADE)
@@ -2924,7 +2924,7 @@ class MorphologyDefinition(models.Model, MetaModelMixin):
         return self.role.name if self.role else self.role
 
 
-class Morpheme(Gloss, MetaModelMixin):
+class Morpheme(Gloss):
     """A morpheme definition uses all the fields of a gloss, but adds its own characteristics (#174)"""
 
     # Fields that are specific for morphemes, and not so much for 'sign-words' (=Gloss) as a whole
@@ -3121,7 +3121,7 @@ class BlendMorphology(models.Model):
         return self.parent_gloss.idgloss
 
 
-class OtherMedia(models.Model, MetaModelMixin):
+class OtherMedia(MetaModelMixin, models.Model):
     """Videos of or related to a gloss, often created by another project"""
 
     parent_gloss = models.ForeignKey(Gloss, on_delete=models.CASCADE)
@@ -3172,7 +3172,7 @@ class OtherMedia(models.Model, MetaModelMixin):
         return media_okay, path, other_media_filename
 
 
-class Dataset(models.Model, MetaModelMixin):
+class Dataset(MetaModelMixin, models.Model):
     """A dataset, can be public/private and can be of only one SignLanguage"""
     name = models.CharField(unique=True, blank=False, null=False, max_length=60)
     is_public = models.BooleanField(default=False, help_text="Is this dataset public or private?")
