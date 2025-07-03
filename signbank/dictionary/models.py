@@ -177,7 +177,20 @@ class Keyword(models.Model):
         search_fields = ['text']
 
 
-class Definition(models.Model):
+class MetaModelMixin:
+
+    @classmethod
+    def get_field_names(cls):
+        fields = cls._meta.get_fields(include_hidden=True)
+        return [field.name for field in fields if field.concrete]
+
+    @classmethod
+    def get_field(cls, field):
+        field = cls._meta.get_field(field)
+        return field
+
+
+class Definition(MetaModelMixin, models.Model):
     """An English text associated with a gloss. It's called a note in the web interface"""
 
     def __str__(self):
@@ -202,16 +215,6 @@ class Definition(models.Model):
         list_display = ['gloss', 'role', 'count', 'text']
         list_filter = ['role']
         search_fields = ['gloss__idgloss']
-
-    @classmethod
-    def get_field_names(cls):
-        fields = cls._meta.get_fields(include_hidden=True)
-        return [field.name for field in fields if field.concrete]
-
-    @classmethod
-    def get_field(cls, field):
-        field = cls._meta.get_field(field)
-        return field
 
     def get_role_display(self):
         return self.role.name if self.role else '-'
@@ -299,7 +302,7 @@ class RelationToForeignSign(models.Model):
         search_fields = ['gloss__idgloss']
 
 
-class Handshape(models.Model):
+class Handshape(MetaModelMixin, models.Model):
     machine_value = models.IntegerField(_("Machine value"), primary_key=True)
     name = models.CharField(max_length=50)
     field_color = ColorField(default='ffffff')
@@ -392,16 +395,6 @@ class Handshape(models.Model):
             else:
                 d[f.name] = _(field.name)
         return d
-
-    @classmethod
-    def get_field_names(cls):
-        fields = cls._meta.get_fields(include_hidden=True)
-        return [field.name for field in fields if field.concrete]
-
-    @classmethod
-    def get_field(cls, field):
-        field = cls._meta.get_field(field)
-        return field
 
     def get_image_path(self, check_existence=True):
         """Returns the path within the writable and static folder"""
@@ -558,7 +551,7 @@ class Language(models.Model):
     def __str__(self):
         return self.name
 
-class ExampleSentence(models.Model):
+class ExampleSentence(MetaModelMixin, models.Model):
     """An example sentence belongs to one or more sense(s)"""
     
     sentenceType = FieldChoiceForeignKey(FieldChoice, on_delete=models.SET_NULL, null=True,
@@ -566,16 +559,6 @@ class ExampleSentence(models.Model):
                                     field_choice_category=FieldChoice.SENTENCETYPE,
                                     verbose_name=_("Sentence Type"), related_name="sentence_type")
     negative = models.BooleanField(default=False)
-
-    @classmethod
-    def get_field_names(cls):
-        fields = cls._meta.get_fields(include_hidden=True)
-        return [field.name for field in fields if field.concrete]
-
-    @classmethod
-    def get_field(cls, field):
-        field = cls._meta.get_field(field)
-        return field
 
     def get_dataset(self):
         return self.senses.first().glosses.first().lemma.dataset
@@ -876,7 +859,7 @@ def post_remove_examplesentence_reorder(sender, instance, **kwargs):
     instance.reorder_examplesentences()
 
 
-class Gloss(models.Model):
+class Gloss(MetaModelMixin, models.Model):
     class Meta:
         verbose_name_plural = "Glosses"
         # ordering: for Lemma View in the Gloss List View, we need to have glosses in the same Lemma Group sorted
@@ -921,16 +904,6 @@ class Gloss(models.Model):
             else:
                 d[f.name] = _(field.name)
         return d
-
-    @classmethod
-    def get_field_names(cls):
-        fields = cls._meta.get_fields(include_hidden=True)
-        return [field.name for field in fields if field.concrete]
-
-    @classmethod
-    def get_field(cls, field):
-        field = cls._meta.get_field(field)
-        return field
 
     archived = models.BooleanField(_("Archived"), default=False)
 
@@ -2936,7 +2909,7 @@ class Relation(models.Model):
         return self.target.annotation_idgloss(default_language)
 
 
-class MorphologyDefinition(models.Model):
+class MorphologyDefinition(MetaModelMixin, models.Model):
     """Tells something about morphology of a gloss"""
 
     parent_gloss = models.ForeignKey(Gloss, related_name="parent_glosses", on_delete=models.CASCADE)
@@ -2948,16 +2921,6 @@ class MorphologyDefinition(models.Model):
 
     def __str__(self):
         return self.morpheme.idgloss
-
-    @classmethod
-    def get_field_names(cls):
-        fields = cls._meta.get_fields(include_hidden=True)
-        return [field.name for field in fields if field.concrete]
-
-    @classmethod
-    def get_field(cls, field):
-        field = cls._meta.get_field(field)
-        return field
 
     def get_role(self):
         return self.role.name if self.role else self.role
@@ -2981,16 +2944,6 @@ class Morpheme(Gloss):
         # We won't use this method in the interface but leave it for debugging purposes
 
         return self.idgloss
-
-    @classmethod
-    def get_field_names(cls):
-        fields = cls._meta.get_fields(include_hidden=True)
-        return [field.name for field in fields if field.concrete]
-
-    @classmethod
-    def get_field(cls, field):
-        field = cls._meta.get_field(field)
-        return field
 
     def get_mrpType_display(self):
         # to avoid extra code in the template, return '-' if the type has not been set
@@ -3170,7 +3123,7 @@ class BlendMorphology(models.Model):
         return self.parent_gloss.idgloss
 
 
-class OtherMedia(models.Model):
+class OtherMedia(MetaModelMixin, models.Model):
     """Videos of or related to a gloss, often created by another project"""
 
     parent_gloss = models.ForeignKey(Gloss, on_delete=models.CASCADE)
@@ -3180,16 +3133,6 @@ class OtherMedia(models.Model):
                                     verbose_name=_("Type"), related_name='other_media')
     alternative_gloss = models.CharField(max_length=50)
     path = models.CharField(max_length=100)
-
-    @classmethod
-    def get_field_names(cls):
-        fields = cls._meta.get_fields(include_hidden=True)
-        return [field.name for field in fields if field.concrete]
-
-    @classmethod
-    def get_field(cls, field):
-        field = cls._meta.get_field(field)
-        return field
 
     def get_othermedia_path(self, gloss_id, check_existence=False):
         # read only method
@@ -3231,7 +3174,7 @@ class OtherMedia(models.Model):
         return media_okay, path, other_media_filename
 
 
-class Dataset(models.Model):
+class Dataset(MetaModelMixin, models.Model):
     """A dataset, can be public/private and can be of only one SignLanguage"""
     name = models.CharField(unique=True, blank=False, null=False, max_length=60)
     is_public = models.BooleanField(default=False, help_text="Is this dataset public or private?")
@@ -3261,16 +3204,6 @@ class Dataset(models.Model):
 
     def __str__(self):
         return self.acronym
-
-    @classmethod
-    def get_field_names(cls):
-        fields = cls._meta.get_fields(include_hidden=True)
-        return [field.name for field in fields if field.concrete]
-
-    @classmethod
-    def get_field(cls, field):
-        field = cls._meta.get_field(field)
-        return field
 
     def generate_short_name(self):
 
