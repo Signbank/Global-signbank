@@ -1,7 +1,7 @@
 import os
 
 from django.contrib.auth.models import Group
-from django.utils.translation import gettext_lazy as _
+from django.utils.translation import gettext, gettext_lazy as _
 from django.contrib import messages
 from django.core.exceptions import ObjectDoesNotExist
 from django.http import HttpResponseRedirect, JsonResponse
@@ -101,8 +101,7 @@ def upload_zipped_videos_folder(request):
     if not video_paths_okay:
         errors_deleting = remove_zip_file_from_archive(goal_zipped_file)
         default_language_3char = dataset.default_language.language_code_3char
-        feedback = (_("The zip archive has the wrong structure. It should be: ")
-                    + str(dataset.acronym) + '/' + default_language_3char + '/annotation.mp4')
+        feedback = gettext("The zip archive has the wrong structure. It should be: {acronym}/{language3char}/annotation.mp4").format(acronym=dataset.acronym, language3char=default_language_3char)
         messages.add_message(request, messages.ERROR, feedback)
         return HttpResponseRedirect(reverse('admin_dataset_media', args=[dataset.id]))
 
@@ -153,7 +152,7 @@ def import_video_to_gloss_manager(request, video_file_path):
                                  annotationidglosstranslation__language__language_code_3char=language_3_code,
                                  annotationidglosstranslation__text__exact=filename_without_extension).first()
     if not gloss:
-        errors = "Gloss not found. for " + filename_without_extension
+        errors = gettext("Gloss not found for {filename_without_extension}").format(filename_without_extension=filename_without_extension)
         import_video_data["gloss"] = ""
         import_video_data["annotation"] = ""
         import_video_data["videopath"] = videopath
@@ -226,7 +225,7 @@ def import_video_to_gloss_json(request):
         return JsonResponse({})
 
     videofile = request.POST.get('videofile', '')
-    print(videofile)
+
     if not videofile:
         return JsonResponse({})
 
