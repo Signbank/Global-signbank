@@ -7,6 +7,7 @@ from django.db import models, DatabaseError, IntegrityError
 from django.utils.translation import gettext_lazy as _, activate, gettext
 from django.utils.timezone import get_current_timezone
 from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.http import require_http_methods
 from django.http import JsonResponse
 from django.core.exceptions import ObjectDoesNotExist, MultipleObjectsReturned, ValidationError
 from django.db.transaction import atomic, TransactionManagementError
@@ -1418,11 +1419,9 @@ def api_delete_gloss_nmevideo(request, datasetid, glossid, videoid):
 
 
 @csrf_exempt
+@require_http_methods(["POST"])
 @put_api_user_in_request
 def api_create_annotated_sentence(request, datasetid):
-
-    if not request.method == 'POST': 
-        return JsonResponse({"error": "POST method required."}, status=400)
 
     try:
         dataset_id = int(datasetid)

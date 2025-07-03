@@ -12,6 +12,7 @@ from django.urls import reverse
 from django.core.exceptions import ObjectDoesNotExist, MultipleObjectsReturned, ValidationError, PermissionDenied
 from django.core.files import File
 from django.contrib.auth.decorators import permission_required
+from django.views.decorators.http import require_http_methods
 from django.db.models.fields import BooleanField, IntegerField
 from django.forms.models import ModelChoiceField
 from django.db import DatabaseError, IntegrityError
@@ -76,11 +77,9 @@ from signbank.dictionary.adminviews import show_warning
 
 
 # this method is called as dictionary:add_gloss from the template for /signs/add/
+@require_http_methods(["POST"])
 def add_gloss(request):
     """Create a new gloss and redirect to the edit view"""
-    if not request.method == "POST":
-        return HttpResponseForbidden("Add gloss method must be POST")
-
     if not request.user.has_perm('dictionary.add_gloss'):
         raise PermissionDenied
 
@@ -242,15 +241,13 @@ def add_gloss(request):
     return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': gloss.id})+'?edit')
 
 
+@require_http_methods(["POST"])
 def update_examplesentence(request, examplesentenceid):
     """View to update an examplesentence model from the editable modal"""
 
     if not request.user.has_perm('dictionary.change_examplesentence'):
         return HttpResponseForbidden("Example sentence Update Not Allowed")
 
-    if not request.method == "POST":
-        return HttpResponseForbidden("Example sentence Update method must be POST")
-    
     examplesentence = ExampleSentence.objects.all().get(id=examplesentenceid)
     old_example_sentence = str(examplesentence)
     sense = Sense.objects.all().get(id=request.POST['senseid'])
@@ -319,15 +316,13 @@ def update_examplesentence(request, examplesentenceid):
     return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': request.POST['glossid']})+'?edit')
 
 
+@require_http_methods(["POST"])
 def create_examplesentence(request, senseid):
     """View to create an exampelsentence model from the editable modal"""
 
     if not request.user.has_perm('dictionary.add_examplesentence'):
         return HttpResponseForbidden("Sense Creation Not Allowed")
 
-    if not request.method == "POST":
-        return HttpResponseForbidden("Example sentence Creation method must be POST")
-    
     dataset = Dataset.objects.get(id = request.POST['dataset'])
     dataset_languages = dataset.translation_languages.all()
     sense = Sense.objects.all().get(id=senseid)
@@ -374,14 +369,12 @@ def create_examplesentence(request, senseid):
     return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': request.POST['glossid']})+'?edit')
 
 
+@require_http_methods(["POST"])
 def delete_examplesentence(request, senseid):
     """View to delete an examplesentence model from the editable modal"""
 
     if not request.user.has_perm('dictionary.delete_examplesentence'):
         return HttpResponseForbidden("Example sentence Deletion Not Allowed")
-
-    if not request.method == "POST":
-        return HttpResponseForbidden("Example sentence Deletion method must be POST")
 
     examplesentence = ExampleSentence.objects.all().get(id=request.POST['examplesentenceid'])
     old_example_sentence = str(examplesentence)
@@ -485,11 +478,9 @@ def link_sense(request, senseid):
     return HttpResponseForbidden("TEMPORARY: Sense Linking Not Allowed")
 
 
+@require_http_methods(["POST"])
 def update_sense(request, senseid):
     """View to update a sense model from the editable modal"""
-
-    if not request.method == "POST":
-        return HttpResponseForbidden("Sense Update method must be POST")
 
     if 'glossid' not in request.POST:
         return HttpResponseForbidden("Sense Update missing gloss id")
@@ -646,11 +637,9 @@ def update_sense(request, senseid):
     return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': gloss.id})+'?edit')
 
 
+@require_http_methods(["POST"])
 def create_sense(request, glossid):
     """View to create a sense model from the editable modal"""
-
-    if not request.method == "POST":
-        return HttpResponseForbidden("Sense Creation method must be POST")
 
     if not request.user.has_perm('dictionary.add_sense'):
         messages.add_message(request, messages.ERROR, _('Sense Creation Not Allowed'))
@@ -726,11 +715,9 @@ def create_sense(request, glossid):
     return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': glossid})+'?edit')
 
 
+@require_http_methods(["POST"])
 def delete_sense(request, glossid):
     """View to delete a sense model from the editable modal"""
-
-    if not request.method == "POST":
-        return HttpResponseForbidden("Sense Deletion method must be POST")
 
     if not request.user.has_perm('dictionary.delete_sense'):
         messages.add_message(request, messages.ERROR, _('Sense Deletion Not Allowed'))
@@ -784,6 +771,7 @@ def delete_sense(request, glossid):
     return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': glossid})+'?edit')
 
 
+@require_http_methods(["POST"])
 def update_gloss(request, glossid):
     """View to update a gloss model from the jeditable jquery form
     We are sent one field and value at a time, return the new value
@@ -791,9 +779,6 @@ def update_gloss(request, glossid):
 
     if not request.user.has_perm('dictionary.change_gloss'):
         return HttpResponseForbidden("Gloss Update Not Allowed")
-
-    if not request.method == "POST":
-        return HttpResponseForbidden("Gloss Update method must be POST")
 
     gloss = get_object_or_404(Gloss, id=glossid, archived=False)
 
@@ -1687,11 +1672,10 @@ def update_other_media(gloss,field,value):
 
     return HttpResponse(str(value), {'content-type': 'text/plain'})
 
+
+@require_http_methods(["POST"])
 def add_relation(request):
     """Add a new relation instance"""
-    
-    if not request.method == "POST":
-        return HttpResponseForbidden("Add relation method must be POST")
 
     form = RelationForm(request.POST)
 
@@ -1724,10 +1708,8 @@ def add_relation(request):
 
 
 @permission_required('dictionary.change_gloss')
+@require_http_methods(["POST"])
 def variants_of_gloss(request):
-
-    if not request.method == "POST":
-        return HttpResponseForbidden("Variants of gloss method must be POST")
 
     form = VariantsForm(request.POST)
 
@@ -1754,11 +1736,9 @@ def variants_of_gloss(request):
     return HttpResponse(json.dumps(rel), content_type="application/json")
 
 
+@require_http_methods(["POST"])
 def add_relationtoforeignsign(request):
     """Add a new relationtoforeignsign instance"""
-    
-    if not request.method == "POST":
-        return HttpResponseForbidden("Add relation to foreign sign method must be POST")
 
     form = RelationToForeignSignForm(request.POST)
 
@@ -1782,6 +1762,7 @@ def add_relationtoforeignsign(request):
     return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': gloss.id})+'?editrelforeign')
 
 
+@require_http_methods(["POST"])
 def add_definition(request, glossid):
     """Add a new definition for this gloss"""
 
@@ -1794,11 +1775,8 @@ def add_definition(request, glossid):
         gloss_or_morpheme = thisgloss
         reverse_url = 'dictionary:admin_gloss_view'
 
-    if not request.method == "POST":
-        return HttpResponseForbidden("Add definition method must be POST")
-
     form = DefinitionForm(request.POST)
-        
+
     if not form.is_valid():
         # fallback to the requesting page
         return HttpResponseRedirect('/')
@@ -1819,9 +1797,8 @@ def add_definition(request, glossid):
     return HttpResponseRedirect(reverse(reverse_url, kwargs={'pk': gloss_or_morpheme.id})+'?editdef')
 
 
+@require_http_methods(["POST"])
 def add_morphology_definition(request):
-    if not request.method == "POST":
-        return HttpResponseForbidden("Add morphology definition method must be POST")
 
     form = GlossMorphologyForm(request.POST)
 
@@ -1855,10 +1832,8 @@ def add_morphology_definition(request):
 
 
 # Add a 'morpheme' (according to the Morpheme model)
+@require_http_methods(["POST"])
 def add_morpheme_definition(request, glossid):
-
-    if not request.method == "POST":
-        return HttpResponseForbidden("Add morpheme definition method must be POST")
 
     form = GlossMorphemeForm(request.POST)
 
@@ -1912,10 +1887,8 @@ def add_morpheme_definition(request, glossid):
 
 
 # Add a 'blend' (according to the Blend model)
+@require_http_methods(["POST"])
 def add_blend_definition(request, glossid):
-
-    if not request.method == "POST":
-        return HttpResponseForbidden("Add blend definition method must be POST")
 
     form = GlossBlendForm(request.POST)
 
@@ -1952,13 +1925,10 @@ def add_blend_definition(request, glossid):
     return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': thisgloss.id})+'?editmorphdef')
 
 
+@require_http_methods(["POST"])
 def update_handshape(request, handshapeid):
 
     handshape_fields = Handshape.get_field_names()
-
-    if not request.method == "POST":
-        # return HttpResponseForbidden("Update handshape method must be POST")
-        return HttpResponse(" \t \t \t ", {'content-type': 'text/plain'})
 
     hs = get_object_or_404(Handshape, machine_value=handshapeid)
     hs.save() # This updates the lastUpdated field
@@ -2104,11 +2074,10 @@ def edit_annotated_sentence(request, glossid, annotatedsentenceid):
     return render(request, template, context)
 
 
+@require_http_methods(["POST"])
 def save_edit_annotated_sentence(request):
     """Save the edits made for an annotated sentence from the edit page"""
-    if not request.method == "POST":
-        return HttpResponseForbidden("Annotated Sentence Edit method must be POST")
-    
+
     redirect_url = request.POST.get('redirect')
     gloss = Gloss.objects.get(id=request.POST.get('glossid'), archived=False)
     annotated_sentence = AnnotatedSentence.objects.get(id=request.POST.get('annotatedsentenceid'))
@@ -2171,10 +2140,10 @@ def save_edit_annotated_sentence(request):
     
     return redirect(redirect_url)
 
+
+@require_http_methods(["POST"])
 def delete_annotated_sentence(request, glossid):
     """View to delete an annotated sentence model from the editable modal"""
-    if not request.method == "POST":
-        return HttpResponseForbidden("Annotated Sentence Deletion method must be POST")
 
     if not request.user.has_perm('dictionary.delete_annotatedsentence'):
         messages.add_message(request, messages.ERROR, _('Annotated Sentence Deletion Not Allowed'))
@@ -2189,10 +2158,9 @@ def delete_annotated_sentence(request, glossid):
 
     return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
 
-def add_othermedia(request):
 
-    if not request.method == "POST":
-        return HttpResponseForbidden("Add other media method must be POST")
+@require_http_methods(["POST"])
+def add_othermedia(request):
 
     form = OtherMediaForm(request.POST,request.FILES)
 
@@ -2412,10 +2380,10 @@ def update_morphology_definition(gloss, field, value):
     return HttpResponse(str(newvalue), {'content-type': 'text/plain'})
 
 
+@require_http_methods(["POST"])
 def add_morpheme(request):
     """Create a new morpheme and redirect to the edit view"""
-    if request.method != "POST":
-        return HttpResponseRedirect(reverse('dictionary:admin_morpheme_list'))
+
     dataset = None
     if 'dataset' in request.POST and request.POST['dataset'] is not None:
         dataset = Dataset.objects.get(pk=request.POST['dataset'])
@@ -2512,15 +2480,13 @@ def add_morpheme(request):
                                                                'SHOW_DATASET_INTERFACE_OPTIONS': SHOW_DATASET_INTERFACE_OPTIONS})
 
 
+@require_http_methods(["POST"])
 def update_morpheme(request, morphemeid):
     """View to update a morpheme model from the jeditable jquery form
     We are sent one field and value at a time, return the new value
     once we've updated it."""
     if not request.user.has_perm('dictionary.change_morpheme'):
         return HttpResponseForbidden("Morpheme Update Not Allowed")
-
-    if not request.method == "POST":
-        return HttpResponseForbidden("Update morpheme method must be POST")
 
     morpheme = get_object_or_404(Morpheme, id=morphemeid)
 
@@ -2816,11 +2782,9 @@ def update_blend_definition(gloss, field, value):
 
 
 @permission_required('dictionary.change_gloss')
+@require_http_methods(["POST"])
 def add_tag(request, glossid):
     """View to add a tag to a gloss"""
-
-    if not request.method == "POST":
-        return HttpResponseForbidden("Add gloss tag method must be POST")
 
     thisgloss = get_object_or_404(Gloss, id=glossid, archived=False)
     tags_label = 'Tags'
@@ -2928,11 +2892,9 @@ def toggle_sense_tag(request, glossid):
     return JsonResponse(result)
 
 
+@require_http_methods(["POST"])
 def add_morphemetag(request, morphemeid):
     """View to add a tag to a morpheme"""
-
-    if not request.method == "POST":
-        return HttpResponseForbidden("Add morpheme tag method must be POST")
 
     thismorpheme = get_object_or_404(Morpheme, id=morphemeid)
 
@@ -2958,11 +2920,10 @@ def add_morphemetag(request, morphemeid):
                            'tagform': TagUpdateForm()})
     return response
 
+
+@require_http_methods(["POST"])
 def change_dataset_selection(request):
     """View to change dataset selection"""
-
-    if not request.method == "POST":
-        return HttpResponseForbidden("Change dataset selection method must be POST")
 
     dataset_prefix = 'dataset_'
 
@@ -3030,113 +2991,109 @@ def change_dataset_selection(request):
     return redirect(PREFIX_URL + '/datasets/select')
 
 
+@require_http_methods(["POST"])
 def update_dataset(request, datasetid):
     """View to update a dataset model from the jeditable jquery form
     We are sent one field and value at a time, return the new value
     once we've updated it."""
 
-    if request.method == "POST":
+    dataset = get_object_or_404(Dataset, id=datasetid)
+    dataset.save() # This updates the lastUpdated field
 
-        dataset = get_object_or_404(Dataset, id=datasetid)
-        dataset.save() # This updates the lastUpdated field
+    try:
+        group_manager = Group.objects.get(name='Dataset_Manager')
+    except ObjectDoesNotExist:
+        messages.add_message(request, messages.ERROR, _('No group Dataset_Manager found.'))
+        return HttpResponseForbidden("Dataset Update Not Allowed")
 
-        try:
-            group_manager = Group.objects.get(name='Dataset_Manager')
-        except ObjectDoesNotExist:
-            messages.add_message(request, messages.ERROR, _('No group Dataset_Manager found.'))
-            return HttpResponseForbidden("Dataset Update Not Allowed")
+    groups_of_user = request.user.groups.all()
+    if not group_manager in groups_of_user:
+        messages.add_message(request, messages.ERROR,
+                             _('You must be in group Dataset Manager to modify dataset details.'))
+        return HttpResponseForbidden("Dataset Update Not Allowed")
 
-        groups_of_user = request.user.groups.all()
-        if not group_manager in groups_of_user:
-            messages.add_message(request, messages.ERROR,
-                                 _('You must be in group Dataset Manager to modify dataset details.'))
-            return HttpResponseForbidden("Dataset Update Not Allowed")
+    user_change_datasets = get_objects_for_user(request.user, 'change_dataset', Dataset, accept_global_perms=False)
+    if dataset not in user_change_datasets:
+        return HttpResponseForbidden("Dataset Update Not Allowed")
 
-        user_change_datasets = get_objects_for_user(request.user, 'change_dataset', Dataset, accept_global_perms=False)
-        if dataset not in user_change_datasets:
-            return HttpResponseForbidden("Dataset Update Not Allowed")
+    field = request.POST.get('id', '')
+    value = request.POST.get('value', '')
+    original_value = ''
 
-        field = request.POST.get('id', '')
-        value = request.POST.get('value', '')
-        original_value = ''
-
-        if field == 'description':
-            original_value = getattr(dataset,field)
+    if field == 'description':
+        original_value = getattr(dataset,field)
+        setattr(dataset, field, value)
+        dataset.save()
+        return HttpResponse(str(original_value) + str('\t') + str(value), {'content-type': 'text/plain'})
+    elif field == 'copyright':
+            original_value = getattr(dataset, field)
             setattr(dataset, field, value)
             dataset.save()
             return HttpResponse(str(original_value) + str('\t') + str(value), {'content-type': 'text/plain'})
-        elif field == 'copyright':
-                original_value = getattr(dataset, field)
-                setattr(dataset, field, value)
-                dataset.save()
-                return HttpResponse(str(original_value) + str('\t') + str(value), {'content-type': 'text/plain'})
-        elif field == 'reference':
-                original_value = getattr(dataset, field)
-                setattr(dataset, field, value)
-                dataset.save()
-                return HttpResponse(str(original_value) + str('\t') + str(value), {'content-type': 'text/plain'})
-        elif field == 'conditions_of_use':
-                original_value = getattr(dataset, field)
-                setattr(dataset, field, value)
-                dataset.save()
-                return HttpResponse(str(original_value) + str('\t') + str(value), {'content-type': 'text/plain'})
-        elif field == 'acronym':
-                original_value = getattr(dataset, field)
-                setattr(dataset, field, value)
-                dataset.save()
-                return HttpResponse(str(original_value) + str('\t') + str(value), {'content-type': 'text/plain'})
-        elif field == 'is_public':
-                original_value = getattr(dataset, field)
-                dataset.is_public = value == 'True'
-                dataset.save()
-                if dataset.is_public:
-                    newvalue = True
-                else:
-                    newvalue = False
-                return HttpResponse(str(original_value) + str('\t') + str(newvalue), {'content-type': 'text/plain'})
-        elif field == 'add_owner':
-            update_owner(dataset, field, value)
-        elif field == 'default_language':
+    elif field == 'reference':
             original_value = getattr(dataset, field)
-            # variable original_value is used for feedback to the interface
-            if original_value:
-                original_value = original_value.name
-            else:
-                original_value = '-'
-            if value == '-':
-                # this option is not offered by the interface, value must be one of the translation languages (not empty '-')
-                # this code is here if we want to user to be able to "unset" the default language in the interface
-                setattr(dataset, field, None)
-                dataset.save()
-            else:
-                try:
-                    new_default_language = Language.objects.get(name=value)
-                    setattr(dataset, field, new_default_language)
-                    dataset.save()
-                except ObjectDoesNotExist:
-                    value = original_value
+            setattr(dataset, field, value)
+            dataset.save()
             return HttpResponse(str(original_value) + str('\t') + str(value), {'content-type': 'text/plain'})
+    elif field == 'conditions_of_use':
+            original_value = getattr(dataset, field)
+            setattr(dataset, field, value)
+            dataset.save()
+            return HttpResponse(str(original_value) + str('\t') + str(value), {'content-type': 'text/plain'})
+    elif field == 'acronym':
+            original_value = getattr(dataset, field)
+            setattr(dataset, field, value)
+            dataset.save()
+            return HttpResponse(str(original_value) + str('\t') + str(value), {'content-type': 'text/plain'})
+    elif field == 'is_public':
+            original_value = getattr(dataset, field)
+            dataset.is_public = value == 'True'
+            dataset.save()
+            if dataset.is_public:
+                newvalue = True
+            else:
+                newvalue = False
+            return HttpResponse(str(original_value) + str('\t') + str(newvalue), {'content-type': 'text/plain'})
+    elif field == 'add_owner':
+        update_owner(dataset, field, value)
+    elif field == 'default_language':
+        original_value = getattr(dataset, field)
+        # variable original_value is used for feedback to the interface
+        if original_value:
+            original_value = original_value.name
         else:
-
-            if not field in Dataset.get_field_names():
-                return HttpResponseBadRequest("Unknown field", {'content-type': 'text/plain'})
-
-            # unknown if we need this code yet for the above fields
-            whitespace = tuple(' \n\r\t')
-            if value.startswith(whitespace) or value.endswith(whitespace):
-                value = value.strip()
-            original_value = getattr(dataset,field)
-
-        #This is because you cannot concat none to a string in py3
-        if original_value is None:
-            original_value = ''
-
-        # The machine_value (value) representation is also returned to accommodate Hyperlinks to Handshapes in gloss_edit.js
+            original_value = '-'
+        if value == '-':
+            # this option is not offered by the interface, value must be one of the translation languages (not empty '-')
+            # this code is here if we want to user to be able to "unset" the default language in the interface
+            setattr(dataset, field, None)
+            dataset.save()
+        else:
+            try:
+                new_default_language = Language.objects.get(name=value)
+                setattr(dataset, field, new_default_language)
+                dataset.save()
+            except ObjectDoesNotExist:
+                value = original_value
         return HttpResponse(str(original_value) + str('\t') + str(value), {'content-type': 'text/plain'})
-
     else:
-        print('update dataset is not POST')
-        return HttpResponseForbidden("Dataset Update Not Allowed")
+
+        if not field in Dataset.get_field_names():
+            return HttpResponseBadRequest("Unknown field", {'content-type': 'text/plain'})
+
+        # unknown if we need this code yet for the above fields
+        whitespace = tuple(' \n\r\t')
+        if value.startswith(whitespace) or value.endswith(whitespace):
+            value = value.strip()
+        original_value = getattr(dataset,field)
+
+    #This is because you cannot concat none to a string in py3
+    if original_value is None:
+        original_value = ''
+
+    # The machine_value (value) representation is also returned to accommodate Hyperlinks to Handshapes in gloss_edit.js
+    return HttpResponse(str(original_value) + str('\t') + str(value), {'content-type': 'text/plain'})
+
 
 def update_owner(dataset, field, values):
     # expecting possibly multiple values
@@ -3167,6 +3124,7 @@ def update_owner(dataset, field, values):
     return HttpResponse(str(new_owners_value) + '\t' + str(owners_value), {'content-type': 'text/plain'})
 
 
+@require_http_methods(["POST"])
 def update_excluded_choices(request):
     selected_datasets = get_selected_datasets(request)
 
@@ -3225,78 +3183,72 @@ def update_excluded_choices(request):
     return HttpResponseRedirect(reverse('admin_dataset_field_choices'))
 
 
+@require_http_methods(["POST"])
 def update_field_choice_color(request, category, fieldchoiceid):
 
-    if request.method == "POST":
-        if category == 'SemField':
-            form = SemanticFieldColorForm(request.POST)
-            thisfieldchoice = get_object_or_404(SemanticField, pk=fieldchoiceid)
-        elif category == 'derivHist':
-            form = DerivationHistoryColorForm(request.POST)
-            thisfieldchoice = get_object_or_404(DerivationHistory, pk=fieldchoiceid)
-        elif category == 'Handshape':
-            form = HandshapeColorForm(request.POST)
-            thisfieldchoice = get_object_or_404(Handshape, pk=fieldchoiceid)
-        else:
-            form = FieldChoiceColorForm(request.POST)
-            thisfieldchoice = get_object_or_404(FieldChoice, pk=fieldchoiceid)
+    if category == 'SemField':
+        form = SemanticFieldColorForm(request.POST)
+        thisfieldchoice = get_object_or_404(SemanticField, pk=fieldchoiceid)
+    elif category == 'derivHist':
+        form = DerivationHistoryColorForm(request.POST)
+        thisfieldchoice = get_object_or_404(DerivationHistory, pk=fieldchoiceid)
+    elif category == 'Handshape':
+        form = HandshapeColorForm(request.POST)
+        thisfieldchoice = get_object_or_404(Handshape, pk=fieldchoiceid)
+    else:
+        form = FieldChoiceColorForm(request.POST)
+        thisfieldchoice = get_object_or_404(FieldChoice, pk=fieldchoiceid)
 
-        if form.is_valid():
+    if form.is_valid():
 
-            new_color = form.cleaned_data['field_color']
+        new_color = form.cleaned_data['field_color']
 
-            if new_color[0] == '#':
-                new_color = new_color[1:]
+        if new_color[0] == '#':
+            new_color = new_color[1:]
 
-            original_value = thisfieldchoice.field_color
-            machine_value = str(thisfieldchoice.machine_value)
-            thisfieldchoice.field_color = new_color
-            thisfieldchoice.save()
-            # category = thisfieldchoice.field
+        original_value = thisfieldchoice.field_color
+        machine_value = str(thisfieldchoice.machine_value)
+        thisfieldchoice.field_color = new_color
+        thisfieldchoice.save()
+        # category = thisfieldchoice.field
 
-            return HttpResponse(category + '\t' + fieldchoiceid + '\t' + str(original_value) + '\t' + str(new_color) + '\t' + machine_value,
-                                {'content-type': 'text/plain'})
-
-    # If we get here the request method has apparently been changed to get instead of post, can this happen?
-    raise Http404('Incorrect request')
+        return HttpResponse(category + '\t' + fieldchoiceid + '\t' + str(original_value) + '\t' + str(new_color) + '\t' + machine_value,
+                            {'content-type': 'text/plain'})
 
 
+@require_http_methods(["POST"])
 def upload_metadata(request):
-    if request.method == "POST":
 
-        form = CSVMetadataForm(request.POST,request.FILES)
+    form = CSVMetadataForm(request.POST,request.FILES)
 
-        if form.is_valid():
+    if form.is_valid():
 
-            new_metadata = request.FILES['file']
+        new_metadata = request.FILES['file']
 
-            # extension = '.'+new_metadata.name.split('.')[-1]
-            # print('extension: ', extension)
+        # extension = '.'+new_metadata.name.split('.')[-1]
+        # print('extension: ', extension)
 
-            for key in request.POST.keys():
-                if key == 'dataset_acronym':
-                    dataset_acronym = request.POST['dataset_acronym']
+        for key in request.POST.keys():
+            if key == 'dataset_acronym':
+                dataset_acronym = request.POST['dataset_acronym']
 
-            metafile_name = dataset_acronym + '_metadata.csv'
+        metafile_name = dataset_acronym + '_metadata.csv'
 
-            if not os.path.isdir(WRITABLE_FOLDER + DATASET_METADATA_DIRECTORY):
-                os.mkdir(WRITABLE_FOLDER + DATASET_METADATA_DIRECTORY, mode=0o755)
+        if not os.path.isdir(WRITABLE_FOLDER + DATASET_METADATA_DIRECTORY):
+            os.mkdir(WRITABLE_FOLDER + DATASET_METADATA_DIRECTORY, mode=0o755)
 
-            goal_string = WRITABLE_FOLDER + DATASET_METADATA_DIRECTORY + '/' + metafile_name
+        goal_string = WRITABLE_FOLDER + DATASET_METADATA_DIRECTORY + '/' + metafile_name
 
-            f_handle = open(goal_string, mode='wb+')
+        f_handle = open(goal_string, mode='wb+')
 
-            for chunk in request.FILES['file'].chunks():
-                f_handle.write(chunk)
+        for chunk in request.FILES['file'].chunks():
+            f_handle.write(chunk)
 
-            return HttpResponseRedirect(reverse('admin_dataset_manager'))
-
-    raise Http404('Incorrect request')
+        return HttpResponseRedirect(reverse('admin_dataset_manager'))
 
 
+@require_http_methods(["POST"])
 def remove_eaf_files(request):
-    if request.method != "POST":
-        return
 
     # Process the request data
     selected_paths = []
@@ -3335,9 +3287,8 @@ def remove_eaf_files(request):
     return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
 
 
+@require_http_methods(["POST"])
 def upload_eaf_files(request):
-    if request.method != "POST":
-        raise Http404('Incorrect request')
 
     form = EAFFilesForm(request.POST,request.FILES)
     if form.is_valid():
@@ -3475,15 +3426,12 @@ def upload_eaf_files(request):
         return HttpResponseRedirect(reverse('admin_dataset_manager'))
 
 
+@require_http_methods(["POST"])
 def update_expiry(request):
 
     # if something is wrong with the call, proceed to Signbank Welcome Page
     # This can happen if the user types in the url rather than getting there via the User Profile View
     # And the Extend Expiry button was not shown on their profile
-
-    # Check for request type
-    if request.method != "POST":
-        return HttpResponseRedirect(PREFIX_URL + '/')
 
     # Check if we have a username
     if 'username' in request.POST.keys():
@@ -3511,6 +3459,7 @@ def update_expiry(request):
     return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
 
 
+@require_http_methods(["POST"])
 def update_query(request, queryid):
 
     if not request.user.is_authenticated:
@@ -3518,9 +3467,6 @@ def update_query(request, queryid):
 
     if not request.user.has_perm('dictionary.change_searchhistory'):
         return HttpResponseForbidden("Query Update Not Allowed")
-
-    if not request.method == "POST":
-        return HttpResponseForbidden("Query Update method must be POST")
 
     query = get_object_or_404(SearchHistory, id=queryid)
 
@@ -3554,6 +3500,7 @@ def update_query(request, queryid):
     return HttpResponse(str(original_value) + str('\t') + str(value), {'content-type': 'text/plain'})
 
 
+@require_http_methods(["POST"])
 def update_semfield(request, semfieldid):
 
     if not request.user.is_authenticated:
@@ -3561,9 +3508,6 @@ def update_semfield(request, semfieldid):
 
     if not request.user.has_perm('dictionary.add_semanticfieldtranslation'):
         return HttpResponseForbidden("Semantic Field Update Not Allowed")
-
-    if not request.method == "POST":
-        return HttpResponse("", {'content-type': 'text/plain'})
 
     semfield = get_object_or_404(SemanticField, machine_value=int(semfieldid))
 
@@ -3918,6 +3862,7 @@ def quick_create_sense(request, glossid):
 
 
 @permission_required('dictionary.change_gloss')
+@require_http_methods(["POST"])
 def add_affiliation(request, glossid):
     """View to add an affiliation to a gloss"""
     form = AffiliationUpdateForm(request.POST)
@@ -3994,13 +3939,11 @@ def restore_gloss(request, glossid):
     return JsonResponse(result)
 
 
+@require_http_methods(["POST"])
 def trash_gloss(request, glossid):
     """View to update a gloss model from the jeditable jquery form
     We are sent one field and value at a time, return the new value
     once we've updated it."""
-
-    if not request.method == "POST":
-        return HttpResponseForbidden("Gloss deletion method must be POST")
 
     if not request.user.has_perm('dictionary.change_gloss'):
         return HttpResponseForbidden("Gloss update not allowed")
