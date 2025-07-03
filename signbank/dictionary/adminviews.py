@@ -16,7 +16,7 @@ from django.db.models.query import QuerySet
 from django.db.models.functions import Concat
 from django.db.models import Q, Count, CharField, Value as V, Prefetch
 from django.db.models.fields import BooleanField
-from django.http import (HttpResponse, HttpResponseRedirect,
+from django.http import (HttpResponse, HttpResponseRedirect, HttpResponseForbidden,
                          QueryDict, JsonResponse, StreamingHttpResponse, Http404)
 from django.urls import reverse_lazy, reverse
 from django.core.exceptions import PermissionDenied, ObjectDoesNotExist, MultipleObjectsReturned, ValidationError

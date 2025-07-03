@@ -1271,11 +1271,12 @@ def update_lemma_idgloss(request, lemmaid):
     selected_datasets = get_selected_datasets(request)
     lemma = LemmaIdgloss.objects.filter(pk=int(lemmaid)).first()
     if not lemma:
-        translated_message = _('The requested lemma does not exist.')
-        return HttpResponseForbidden(translated_message)
+        feedback_message = _('The requested lemma does not exist.')
+        return show_warning(request, feedback_message, selected_datasets)
+
     if not lemma.dataset:
-        translated_message = _('The requested lemma has no dataset.')
-        return HttpResponseForbidden(translated_message)
+        feedback_message = _('The requested lemma has no dataset.')
+        return show_warning(request, feedback_message, selected_datasets)
 
     translation_languages = lemma.dataset.translation_languages.all()
 
@@ -1292,14 +1293,13 @@ def update_lemma_idgloss(request, lemmaid):
             language = Language.objects.get(language_code_2char=language_code_2char)
             if not value:
                 # the form's required attribute prevents this, but it could be empty if the user put spaces
-                translated_message = gettext("Lemma ({language}) must be non-empty.").format(language=language.name)
-                messages.add_message(request, messages.ERROR, translated_message)
-                return HttpResponseRedirect(request_path)
+                feedback_message = gettext("Lemma ({language}) must be non-empty.").format(language=language.name)
+                return show_warning(request, feedback_message, selected_datasets)
 
             form.fields[LemmaUpdateForm.lemma_update_field_prefix + language_code_2char] = value
             form_language_dict[language] = value
 
-        elif item == 'request_path':
+        elif item == 'request_path' and value != '':
             request_path = value
 
     # the following does validation of the form: consistency checks on proposed changes
@@ -1310,22 +1310,18 @@ def update_lemma_idgloss(request, lemmaid):
                                                                       lemmaidglosstranslation__language=language)
         lemmas_with_same_text = lemmas_with_same_text.exclude(id=lemma.id)
         if lemmas_with_same_text.count() > 0:
-            msg = gettext("The lemma text {translation} is not unique within dataset {acronym}.").format(
+            feedback_message = gettext("The lemma text {translation} is not unique within dataset {acronym}.").format(
                 translation=new_text,
                 acronym=lemma.dataset.acronym)
-            messages.add_message(request, messages.ERROR, msg)
-            return HttpResponseRedirect(request_path)
+            return show_warning(request, feedback_message, selected_datasets)
 
-    if not request_path:
-        request_path = request.META.get('HTTP_REFERER')
     try:
         form.save()
         messages.add_message(request, messages.INFO, _("The changes to the lemma have been saved."))
         return HttpResponseRedirect(request_path)
     except Exception as e:
         feedback_message = getattr(e, 'message', repr(e))
-        messages.add_message(request, messages.ERROR, feedback_message)
-        return HttpResponseRedirect(request_path)
+        return show_warning(request, feedback_message, selected_datasets)
 
 
 def update_nmevideo(user, gloss, field, value):
