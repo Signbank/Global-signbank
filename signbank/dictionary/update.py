@@ -1267,7 +1267,10 @@ def update_annotation_idgloss(request, gloss, field, value):
 def update_lemma_idgloss(request, lemmaid):
     """Update the LemmaIdGlossTranslation"""
 
+    # set up two possible return pages, the "page that preceded this page" and "this page"
     request_path = request.META.get('HTTP_REFERER')
+    this_page = '/dictionary/lemma/update/{lemmaid}'.format(lemmaid=lemmaid)
+
     selected_datasets = get_selected_datasets(request)
     lemma = LemmaIdgloss.objects.filter(pk=int(lemmaid)).first()
     if not lemma:
@@ -1300,7 +1303,11 @@ def update_lemma_idgloss(request, lemmaid):
             form_language_dict[language] = value
 
         elif item == 'request_path' and value != '':
+            # this is passed from the template
             request_path = value
+        elif item == 'this_page' and value != '':
+            # this is passed from the template
+            this_page = value
 
     # the following does validation of the form: consistency checks on proposed changes
     for language in translation_languages:
@@ -1318,7 +1325,12 @@ def update_lemma_idgloss(request, lemmaid):
     try:
         form.save()
         messages.add_message(request, messages.INFO, _("The changes to the lemma have been saved."))
-        return HttpResponseRedirect(request_path)
+        if 'gloss' not in request_path or 'update' in request_path:
+            # if the page that happened before this update was not Gloss Detail but was an "update" use "this_page"
+            # rather than the request path, to make sure the lemma id was not navigated away by e.g., the scroll bar to a different lemma
+            return HttpResponseRedirect(this_page)
+        else:
+            return HttpResponseRedirect(request_path)
     except Exception as e:
         feedback_message = getattr(e, 'message', repr(e))
         return show_warning(request, feedback_message, selected_datasets)

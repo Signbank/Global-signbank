@@ -6453,6 +6453,7 @@ class LemmaUpdateView(UpdateView):
     search_type = 'lemma'
     lemma_update_form = None
     request_path = None
+    this_page = None
 
     def get_context_data(self, **kwargs):
         context = super(LemmaUpdateView, self).get_context_data(**kwargs)
@@ -6505,6 +6506,7 @@ class LemmaUpdateView(UpdateView):
                 context['caller'] = 'lemma_list'
 
         context['request_path'] = self.request_path
+        context['this_page'] = self.this_page
 
         context['page_in_lemma_list'] = self.page_in_lemma_list
         dataset = self.object.dataset
@@ -6556,7 +6558,8 @@ class LemmaUpdateView(UpdateView):
 
         if not self.request_path:
             self.request_path = reverse_lazy('dictionary:change_lemma', kwargs={'pk': self.object.id})
-
+        if not self.this_page:
+            self.this_page = '/dictionary/lemma/update/{lemmaid}'.format(lemmaid=str(self.object.id))
         if not self.object.dataset:
             translated_message = _('Requested lemma has no dataset.')
             return show_warning(request, translated_message, selected_datasets)
