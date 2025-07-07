@@ -2367,6 +2367,6 @@ def dataset_no_multiple_lemma_translation_objects(dataset):
                 results[dataset][language]['multiple'].append(lemma)
             elif lemma_translation_objects.filter(language=language).count() == 0:
                 results[dataset][language]['none'].append(lemma)
-            elif lemma_translation_objects.filter(language=language, text='').count() > 1:
+            elif lemma_translation_objects.filter(language=language, text='').count() > 0:
                 results[dataset][language]['empty'].append(lemma)
     return results

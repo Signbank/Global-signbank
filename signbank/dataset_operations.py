@@ -524,5 +524,5 @@ def dataset_lemma_constraints_check(lemma):
     for language in lemma.dataset.translation_languages.all():
         lemma_dict[language] = (lemma_translation_objects.filter(language=language).count() == 0,
                                 lemma_translation_objects.filter(language=language).count() > 1,
-                                lemma_translation_objects.filter(language=language, text='').count() > 1)
+                                lemma_translation_objects.filter(language=language, text='').count() > 0)
     return lemma_dict
