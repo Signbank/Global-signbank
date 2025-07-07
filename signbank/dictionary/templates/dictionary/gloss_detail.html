@@ -1882,7 +1882,7 @@ textarea:focus {
             <div class="table-responsive" style="display:inline-block;">
             <table class="table table-condensed" style="text-align: left;">
             <tr>
-            {% for media_okay,pk,path,file_type,file_name in prominent_media %}
+            {% for media_okay,pk,path,file_type,file_name, description in prominent_media %}
                 {% if media_okay and path %}
                     {% if file_type|startswith:"video" %}
                     <td>
@@ -1896,12 +1896,14 @@ textarea:focus {
                                     style="font-size:16px;background-color:transparent;"><span class="glyphicon glyphicon-pause"></span></button>
                             </div>
                         </div>
+                        <div>{{description}}</div>
                     </td>
                     {% elif file_type|startswith:"image" %}
                     <td>
                         <div id="other_media_image_{{pk}}" style="height:259px;width:auto;">
                             <img id="imageframe_other_media_{{pk}}" src="{{path}}" style="height:200px;width:auto;">
                         </div>
+                        <div>{{description}}</div>
                     </td>
                     {% else %}
                     {% endif %}

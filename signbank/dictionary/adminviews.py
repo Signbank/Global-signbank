@@ -1489,7 +1489,7 @@ class GlossDetailView(DetailView):
 
             if other_media.type is not None and gl.lemma.dataset.prominent_media is not None:
                 if other_media.type.machine_value == gl.lemma.dataset.prominent_media.machine_value:
-                    context['prominent_media'].append((media_okay, other_media.pk, path, file_type, other_media_filename))
+                    context['prominent_media'].append((media_okay, other_media.pk, path, file_type, other_media_filename, other_media.description))
 
         context['other_media_field_choices'] = json.dumps(context['other_media_field_choices'])
 
