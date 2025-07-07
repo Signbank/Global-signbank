@@ -978,42 +978,25 @@ class LemmaUpdateForm(forms.ModelForm):
 
     @atomic
     def save(self, commit=True):
-        # the number of translations should be at least 1
-        instance_has_translations = self.instance.lemmaidglosstranslation_set.all().count()
+        existing_lemmaidglosstranslations = self.instance.lemmaidglosstranslation_set.all()
         for language in self.languages:
             lemmaupdate_field_name = self.lemma_update_field_prefix + language.language_code_2char
-            lemma_idgloss_text = self.fields[lemmaupdate_field_name]
-            existing_lemmaidglosstranslations = self.instance.lemmaidglosstranslation_set.all().filter(language=language)
-            if existing_lemmaidglosstranslations.count() == 0:
-                if lemma_idgloss_text == '':
-                    # lemma translation is already empty for this language
-                    # don't create an empty translation
-                    pass
-                else:
-                    # save a new translation
-                    lemmaidglosstranslation = LemmaIdglossTranslation(lemma=self.instance, language=language,
-                                                                      text=lemma_idgloss_text)
-                    lemmaidglosstranslation.save()
-            elif existing_lemmaidglosstranslations.count() == 1:
-                lemmaidglosstranslation = existing_lemmaidglosstranslations.first()
-                if lemma_idgloss_text == '':
-                    # delete existing translation if there is already a translation for a different language
-                    if instance_has_translations > 1:
-                        translation_to_delete = LemmaIdglossTranslation.objects.get(pk=lemmaidglosstranslation.pk, language=language)
-                        translation_to_delete.delete()
-                        # one of the translations has been deleted, update the total
-                        instance_has_translations -= 1
-                    else:
-                        # this exception refuses to be put into messages after being caught in LemmaUpdateView
-                        # gives a runtime error
-                        # therefore the exception is caught byt a different message is displayed
-                        raise Exception("Lemma with id %s must have at least one translation." % str(self.instance.pk))
-                else:
-                    lemmaidglosstranslation.text = lemma_idgloss_text
-                    lemmaidglosstranslation.save()
-            else:
+            lemma_idgloss_text = self.fields[lemmaupdate_field_name].strip()
+            if not lemma_idgloss_text:
+                # do not allow to set lemma text to empty
+                raise Exception("Lemma with id %s must have at least one translation." % str(self.instance.pk))
+            existing_lemmaidglosstranslations_language = existing_lemmaidglosstranslations.filter(language=language)
+            if existing_lemmaidglosstranslations_language.count() > 1:
                 raise Exception("Lemma with id %s has more than one lemma idgloss translation for language %s" % (str(self.instance.pk), language.name))
-        return
+            lemmaidglosstranslation = existing_lemmaidglosstranslations_language.first()
+            if not lemmaidglosstranslation:
+                # save a new translation
+                lemmaidglosstranslation = LemmaIdglossTranslation(lemma=self.instance, language=language,
+                                                                  text=lemma_idgloss_text)
+                lemmaidglosstranslation.save()
+            else:
+                lemmaidglosstranslation.text = lemma_idgloss_text
+                lemmaidglosstranslation.save()
 
 
 def set_up_lemma_language_fields(lemma_form, instance):

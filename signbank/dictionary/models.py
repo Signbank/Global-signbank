@@ -3583,23 +3583,27 @@ class LemmaIdglossTranslation(models.Model):
         2. The lemma idgloss translation text for a language must be unique within a dataset.
         Note that bulk updates will not use this method. Therefore, always iterate over a queryset when updating."""
         dataset = self.lemma.dataset
-        if dataset:
-            # Before an item is saved the language is checked against the languages of the dataset the lemma is in.
-            dataset_languages = dataset.translation_languages.all()
-            if self.language not in dataset_languages:
-                msg = gettext("Language {language} is not in the dataset languages of lemma {lemmaid}.").format(language=self.language.name,
-                                                                                                                lemmaid=self.lemma.pk)
-                raise ValidationError(msg)
+        if not dataset:
+            msg = gettext("Lemma {lemmaid} has no dataset.").format(lemmaid=self.lemma.pk)
+            raise ValidationError(msg)
 
-            # The lemma idgloss translation text for a language must be unique within a dataset.
-            lemmas_with_same_text = dataset.lemmaidgloss_set.filter(lemmaidglosstranslation__text__exact=self.text,
-                                                                    lemmaidglosstranslation__language=self.language)
-            if lemmas_with_same_text.count() > 1:
-                msg = gettext("The lemma text {translation} is not unique within dataset {acronym}.").format(translation=self.text,
-                                                                                                             acronym=dataset.acronym)
-                raise ValidationError(msg)
+        # Before an item is saved the language is checked against the languages of the dataset the lemma is in.
+        dataset_languages = dataset.translation_languages.all()
+        if self.language not in dataset_languages:
+            msg = gettext("Language {language} is not in the dataset languages of lemma {lemmaid}.").format(language=self.language.name,
+                                                                                                            lemmaid=self.lemma.pk)
+            raise ValidationError(msg)
+
+        # The lemma idgloss translation text for a language must be unique within a dataset.
+        lemmas_with_same_text = dataset.lemmaidgloss_set.filter(lemmaidglosstranslation__text__iexact=self.text,
+                                                                lemmaidglosstranslation__language=self.language)
+        if lemmas_with_same_text.count() > 1:
+            msg = gettext("The lemma text {translation} is not unique within dataset {acronym}.").format(translation=self.text,
+                                                                                                         acronym=dataset.acronym)
+            raise ValidationError(msg)
 
         super(LemmaIdglossTranslation, self).save(*args, **kwargs)
+
 
 class GlossRevision(models.Model):
 

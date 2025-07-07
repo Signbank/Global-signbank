@@ -3,6 +3,7 @@ import shutil
 import os.path
 from pathlib import Path
 
+from django.contrib.admin.templatetags.admin_list import results
 from django.contrib.auth.decorators import permission_required
 from django.http import JsonResponse
 
@@ -512,3 +513,16 @@ def move_gloss_video_backups_to_trash(request, glossid):
     move_backups_to_trash(glossvideos)
 
     return JsonResponse({'videos': ''})
+
+
+def dataset_lemma_constraints_check(lemma):
+    # report the status of the constraints for the given lemma: per dataset language, no translations, multiple translations, empty translation objects
+    # the case of no translations for a language is legacy data, so not necessarily a constraint violation, but they cannot be empty if updated
+    lemma_translation_objects = lemma.lemmaidglosstranslation_set.all()
+    lemma_dict = dict()
+
+    for language in lemma.dataset.translation_languages.all():
+        lemma_dict[language] = (lemma_translation_objects.filter(language=language).count() == 0,
+                                lemma_translation_objects.filter(language=language).count() > 1,
+                                lemma_translation_objects.filter(language=language, text='').count() > 1)
+    return lemma_dict

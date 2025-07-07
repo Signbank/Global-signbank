@@ -2347,3 +2347,26 @@ def get_checksum_for_path(file_path):
             return file_hash.hexdigest()
     except FileNotFoundError:
         return None
+
+
+def dataset_no_multiple_lemma_translation_objects(dataset):
+    # for use in a command to check all the lemma's of a dataset for constraint violations
+    # the "none" case is legacy data, so not necessarily a constraint violation, but they cannot be empty if updated
+    results = dict()
+    results[dataset] = dict()
+    dataset_lemmas = dataset.lemmaidgloss_set.all()
+    for language in dataset.translation_languages.all():
+        results[dataset][language] = dict()
+        results[dataset][language]['none'] = []
+        results[dataset][language]['multiple'] = []
+        results[dataset][language]['empty'] = []
+    for lemma in dataset_lemmas:
+        lemma_translation_objects = lemma.lemmaidglosstranslation_set.all()
+        for language in dataset.translation_languages.all():
+            if lemma_translation_objects.filter(language=language).count() > 1:
+                results[dataset][language]['multiple'].append(lemma)
+            elif lemma_translation_objects.filter(language=language).count() == 0:
+                results[dataset][language]['none'].append(lemma)
+            elif lemma_translation_objects.filter(language=language, text='').count() > 1:
+                results[dataset][language]['empty'].append(lemma)
+    return results

@@ -233,6 +233,7 @@ function do_export_csv(e1) {
           {% endfor %}
           <th>{% trans "Number of Glosses" %}</th>
           <th>{% trans "Number of Archived Glosses" %}</th>
+          <th>{% trans "Constraints" %}</th>
           <th>{% trans "Update" %}</th>
       </tr>
     </thead>
@@ -258,6 +259,10 @@ function do_export_csv(e1) {
             </td>
             <td>
                 {{ lemma.num_archived_glosses }}
+            </td>
+            <td>{% with lemma|constraints as constraints_summary %}
+                {{constraints_summary}}
+                {% endwith %}
             </td>
             <td>
             {% get_obj_perms request.user for lemma.dataset as "dataset_perms" %}

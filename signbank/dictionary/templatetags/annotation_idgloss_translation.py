@@ -1,6 +1,9 @@
 from django.template import Library
+from django.utils.translation import gettext
+
 from signbank.dictionary.forms import GlossSearchForm, MorphemeSearchForm, AnnotatedSentenceSearchForm
 from signbank.tools import get_default_annotationidglosstranslation
+from signbank.dataset_operations import dataset_lemma_constraints_check
 from signbank.dictionary.batch_edit import get_sense_numbers
 
 import json
@@ -88,6 +91,20 @@ def get_lemma_idgloss_translation_no_default(lemma, language):
     # one of the dataset translation languages has no annotation for this lemma
     return str(lemma.id)
 
+@register.filter
+def constraints(lemma):
+    # for use in the LemmaListView to summarise constraint violations
+    constraints_dict = dataset_lemma_constraints_check(lemma)
+    result = []
+    for key  in constraints_dict.keys():
+        (no_translations, multiple_translations, empty_text) = constraints_dict[key]
+        if no_translations:
+            result.append(key.name + gettext(" has no translation"))
+        elif multiple_translations:
+            result.append(key.name + gettext(" has multiple translations"))
+        elif empty_text:
+            result.append(key.name + gettext(" has an empty text translation"))
+    return ", ".join(result)
 
 @register.filter
 def get_search_field_for_language(form, language):
