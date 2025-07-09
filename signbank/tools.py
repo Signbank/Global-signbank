@@ -2370,3 +2370,26 @@ def dataset_no_multiple_lemma_translation_objects(dataset):
             elif lemma_translation_objects.filter(language=language, text='').count() > 0:
                 results[dataset][language]['empty'].append(lemma)
     return results
+
+
+def copy_missing_lemmaidglosstranslation_from_annotationidglosstranslation(lemma):
+
+    lemma_translation_objects = lemma.lemmaidglosstranslation_set.all()
+    dataset_languages = lemma.dataset.translation_languages.all()
+    lemma_group_glossset = Gloss.objects.filter(lemma=lemma)
+    if lemma_group_glossset.count() != 1:
+        return
+    if dataset_languages.count() == lemma_translation_objects.count():
+        return
+    gloss_translations = lemma_group_glossset.first().annotationidglosstranslation_set.all()
+    for language in dataset_languages:
+        lemma_translation_for_language = lemma_translation_objects.filter(language=language).first()
+        if lemma_translation_for_language:
+            continue
+        gloss_translation_for_language = gloss_translations.filter(language=language).first()
+        if not gloss_translation_for_language:
+            return
+        new_lemma_translation = LemmaIdglossTranslation(lemma=lemma, language=language,
+                                                        text=gloss_translation_for_language.text)
+        new_lemma_translation.save()
+    return

@@ -60,7 +60,7 @@ from signbank.dictionary.forms import (RelationForm, VariantsForm, RelationToFor
 from signbank.dictionary.translate_choice_list import machine_value_to_translated_human_value
 from signbank.dictionary.context_data import get_selected_datasets
 
-from signbank.tools import gloss_from_identifier, get_default_annotationidglosstranslation
+from signbank.tools import gloss_from_identifier, get_default_annotationidglosstranslation, copy_missing_lemmaidglosstranslation_from_annotationidglosstranslation
 from signbank.frequency import document_identifiers_from_paths, documents_paths_dictionary
 from signbank.dictionary.update_senses_mapping import (mapping_edit_keywords, mapping_group_keywords, mapping_add_keyword,
                                                        mapping_edit_senses_matrix, mapping_toggle_sense_tag)
@@ -1334,6 +1334,29 @@ def update_lemma_idgloss(request, lemmaid):
     except Exception as e:
         feedback_message = getattr(e, 'message', repr(e))
         return show_warning(request, feedback_message, selected_datasets)
+
+
+@permission_required('dictionary.change_lemma')
+def copy_missing_language_lemma_idgloss(request, lemmaid):
+    """Copy a missing translation from the Annotation to the LemmaIdGlossTranslation"""
+
+    lemma = LemmaIdgloss.objects.filter(pk=int(lemmaid)).first()
+    if not lemma:
+        return JsonResponse({})
+
+    if not lemma.dataset:
+        return JsonResponse({})
+
+    copy_missing_lemmaidglosstranslation_from_annotationidglosstranslation(lemma)
+
+    lemma_translations = []
+    for translation in lemma.lemmaidglosstranslation_set.all():
+        lemma_translations.append({'lang2char': translation.language.language_code_2char,
+                                   'text': translation.text})
+    results = {}
+    results['lemmaid'] = lemmaid
+    results['lemma_translations'] = lemma_translations
+    return JsonResponse(results)
 
 
 def update_nmevideo(user, gloss, field, value):

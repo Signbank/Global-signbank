@@ -14,6 +14,8 @@
 <script type="text/javascript" src="{{STATIC_URL}}js/jquery.jeditable.mini.js"></script>
 
 <script type='text/javascript'>
+var url = '{{PREFIX_URL}}';
+var csrf_token = '{{csrf_token}}';
 var show_dataset_interface_options = {{ SHOW_DATASET_INTERFACE_OPTIONS|yesno:"true,false" }};
 var csrf_token = '{{csrf_token}}';
 var page_number = {{ page_number }};
@@ -21,7 +23,11 @@ var paginate_by = '{{paginate_by}}';
 var page_number = {{page_obj.number}};
 var populate_fields_keys = {{populate_fields_keys|safe}};
 var populate_fields = {{populate_fields|safe}};
+</script>
 
+<script type='text/javascript' src="{{ STATIC_URL }}js/lemmas_toggle_edit.js"></script>
+
+<script>
 $(document).ready(function(){
         $('.delete-entry').on('click', function() {
             var url = $(this).attr('modal_url');
@@ -248,9 +254,11 @@ function do_export_csv(e1) {
             {% for dataset_lang in dataset_languages %}
               {% with lemma|get_lemma_idgloss_translation:dataset_lang as lemmaidglosstranslation %}
               <td>
+                  <div id="lemma_text_{{lemma.pk}}_{{dataset_lang.language_code_2char}}">
                   {% if lemmaidglosstranslation != "" %}
                     {{lemmaidglosstranslation}}
                   {% endif %}
+                  </div>
               </td>
             {% endwith %}
           {% endfor %}
@@ -270,6 +278,15 @@ function do_export_csv(e1) {
                 <a class="change-entry" href="{% url 'dictionary:change_lemma' lemma.pk %}" >
                     <span class="glyphicon glyphicon-pencil" data-toggle="tooltip" data-original-title="{% trans 'Update' %}"></span>
                 </a>
+                {% if not lemma.has_all_translations and lemma.num_gloss == 1 %}
+                <span id="lemma_wrench_{{lemma.pk}}">
+                <button id='quick_language_fields_btn_{{lemma.pk}}' class="quick_copy_missing_language_fields btn"
+                        name='quick_language_fields_{{lemma.pk}}'
+                        value='{{lemma.pk}}' style="height:36px;color:red;"
+                        type="submit" ><span class="glyphicon glyphicon-wrench" data-toggle="tooltip" data-original-title="{% trans 'Copy Missing Translations' %}"></span>
+                </button>
+                </span>
+                {% endif %}
                 {% if not lemma.num_gloss %}
                 <a class="delete-entry" href="" data-toggle="modal" data-target="#deleteModal" modal_url="{% url 'dictionary:delete_lemma' lemma.pk %}">
                     <span class="glyphicon glyphicon-trash" data-toggle="tooltip" data-original-title="{% trans 'Delete' %}"></span>

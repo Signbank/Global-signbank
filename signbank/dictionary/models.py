@@ -3564,6 +3564,11 @@ class LemmaIdgloss(models.Model):
         glosses_with_this_lemma = Gloss.objects.filter(lemma__pk=self.pk, archived=True).count()
         return glosses_with_this_lemma
 
+    def has_all_translations(self):
+        count_dataset_languages = self.dataset.translation_languages.all().count() if self.dataset else 0
+        count_translations = self.lemmaidglosstranslation_set.all().count()
+        return count_dataset_languages == count_translations
+
 
 class LemmaIdglossTranslation(models.Model):
     """A Lemma ID Gloss"""
