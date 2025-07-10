@@ -86,6 +86,7 @@ class FieldChoice(models.Model):
     VALENCE = 'Valence'
     WORDCLASS = 'WordClass'
     SENTENCETYPE = 'SentenceType'
+    PROVENANCE = 'Provenance'
 
     FIELDCHOICE_FIELDS = [
         (ABSORIFING, 'AbsOriFing'),
@@ -119,7 +120,8 @@ class FieldChoice(models.Model):
         (THUMB, 'Thumb'),
         (VALENCE, 'Valence'),
         (WORDCLASS, 'WordClass'),
-        (SENTENCETYPE, 'SentenceType')
+        (SENTENCETYPE, 'SentenceType'),
+        (PROVENANCE, 'Provenance')
     ]
 
     field = models.CharField(max_length=50, choices=FIELDCHOICE_FIELDS)
@@ -3192,6 +3194,7 @@ class Dataset(MetaModelMixin, models.Model):
     owners = models.ManyToManyField(User, help_text="Users responsible for the dataset content.")
 
     exclude_choices = models.ManyToManyField('FieldChoice', help_text="Exclude these field choices", blank=True)
+    use_provenance = models.BooleanField(default=False, help_text=_("Use provenance model"))
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -4325,3 +4328,33 @@ class Synset(models.Model):
 
     def __str__(self):
         return self.name
+
+
+class GlossProvenance(models.Model):
+
+    gloss = models.ForeignKey("Gloss", on_delete=models.CASCADE)
+    description = models.TextField()
+    method = FieldChoiceForeignKey(FieldChoice, on_delete=models.SET_NULL, null=True,
+                                    limit_choices_to={'field': FieldChoice.PROVENANCE},
+                                    field_choice_category=FieldChoice.PROVENANCE,
+                                    verbose_name=_("Method"), related_name="method")
+    creationDate = models.DateField(_('Creation date'), auto_now_add=True)
+    lastUpdated = models.DateTimeField(_('Last updated'), auto_now=True)
+    creator = models.ManyToManyField(User)
+
+    class Meta:
+        ordering = ['gloss', 'method']
+
+    def get_method_display(self):
+        return self.method.name if self.method else '-'
+
+    def provenance_text(self):
+        stripped_text = str(self.description).strip()
+        if '\n' in stripped_text:
+            # this function is used for displaying notes in the CSV update
+            # this makes mysterious differences in old and new values visible
+            stripped_text = stripped_text.replace('\n', '<br>')
+        return stripped_text
+
+    def provenance_tuple(self):
+        return self.get_method_display(), self.provenance_text()

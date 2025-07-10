@@ -32,19 +32,23 @@ var busy_editing = 0;
              $('#relations').addClass('in');
          }
 
-         if (window.location.search.match('editdef')) {
+         else if (window.location.search.match('editdef')) {
              $('#definitions').addClass('in');
          }
 
-         if (window.location.search.match('editmorphdef')) {
+         else if (window.location.search.match('editprovenance')) {
+             $('#provenance').addClass('in');
+         }
+
+         else if (window.location.search.match('editmorphdef')) {
              $('#morphology').addClass('in');
          }
 
-         if (window.location.search.match('editothermedia')) {
+         else if (window.location.search.match('editothermedia')) {
              $('#othermedia').addClass('in');
          }
 
-         if (window.location.search.match('editnme')) {
+         else if (window.location.search.match('editnme')) {
              $('#nmevideos').addClass('in');
          }
      }
@@ -192,6 +196,7 @@ function disable_edit() {
     $('.sense-icon').hide();
     $('#enable_edit').addClass('btn-primary').removeClass('btn-danger');
     $('#add_definition').hide();
+    $('#add_provenance').hide();
     $('#add_relation_form').hide();
     $('#add_relationtoforeignsign_form').hide();
     $('#add_morphologydefinition_form').hide();
@@ -200,6 +205,7 @@ function disable_edit() {
     $('#add_component').hide();
     $('#add_morphemedefinition_form').hide();
     $('.definition_delete').hide();
+    $('.provenance_delete').hide();
     $('.relation_delete').hide();
     $('.other-video-delete').hide();
     $('.relationtoforeignsign_delete').hide();
@@ -265,6 +271,7 @@ function enable_edit() {
     $('.sense-icon').show();
     $('#enable_edit').removeClass('btn-primary').addClass('btn-danger');
     $('#add_definition').show();
+    $('#add_provenance').show();
     $('#add_relation_form').show();
     $('#add_relationtoforeignsign_form').show();
     $('#add_morphologydefinition_form').show();
@@ -273,6 +280,7 @@ function enable_edit() {
     $('#add_component').show();
     $('#add_morphemedefinition_form').show();
     $('.definition_delete').show();
+    $('.provenance_delete').show();
     $('.relation_delete').show();
     $('.relation_delete').css('color', 'inherit');
     $('.other-video-delete').show();
