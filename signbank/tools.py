@@ -10,6 +10,8 @@ import datetime as DT
 from datetime import date
 
 from django.db import models
+from django.db.models.functions import Lower
+from collections import Counter
 from django.utils.translation import override, activate, gettext
 from django.views.decorators.csrf import csrf_exempt
 from django.utils.dateformat import format
@@ -2392,4 +2394,27 @@ def copy_missing_lemmaidglosstranslation_from_annotationidglosstranslation(lemma
         new_lemma_translation = LemmaIdglossTranslation(lemma=lemma, language=language,
                                                         text=gloss_translation_for_language.text)
         new_lemma_translation.save()
+    return
+
+
+def count_duplicate_lemmas(dataset):
+    qs = LemmaIdglossTranslation.objects.values_list('text', 'language__name', 'lemma__dataset__acronym')
+    translations = [(tr[0].lower(), tr[1], tr[2]) for tr in qs if tr[2] == dataset.acronym]
+    duplicates = [k for k, v in Counter(translations).items() if v > 1]
+    count_duplicates = len(duplicates)
+    glosses = Gloss.objects.filter(lemma__dataset=dataset).annotate(tr=Lower('lemma__lemmaidglosstranslation__text')).filter(
+        tr__in=list(map(lambda x: x[0], duplicates))).distinct()
+    count_glosses = glosses.count()
+    glosses_per_lemma = glosses.values_list('lemma__id', 'lemma__lemmaidglosstranslation__text')
+    lemmas_with_duplicates_list = [tr[0] for tr in glosses_per_lemma]
+    lemmas_with_duplicates_unique = LemmaIdgloss.objects.filter(id__in=lemmas_with_duplicates_list).distinct()
+    print(lemmas_with_duplicates_unique.count(), ' unique lemma objects with duplicates found')
+    sorted_lemmas = lemmas_with_duplicates_unique.order_by('lemmaidglosstranslation__language__id', 'lemmaidglosstranslation__text')
+
+    for unique_lemma in lemmas_with_duplicates_unique:
+        for translation in unique_lemma.lemmaidglosstranslation_set.all():
+            print('    ', translation.language, translation.text)
+            duplicate_translations = LemmaIdglossTranslation.objects.filter(language=translation.language, text__iexact=translation.text, lemma__dataset=unique_lemma.dataset).exclude(lemma=unique_lemma)
+            for duplicate_translation in duplicate_translations:
+                print('          ', duplicate_translation.language, duplicate_translation.text, duplicate_translation.lemma.id)
     return

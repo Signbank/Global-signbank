@@ -83,7 +83,7 @@ from signbank.dictionary.forms import (AnnotatedSentenceSearchForm, GlossSearchF
                                        check_language_fields_annotatedsentence)
 from signbank.tools import (write_ecv_file_for_dataset,
                             construct_scrollbar, get_dataset_languages, get_datasets_with_public_glosses,
-                            searchform_panels, map_search_results_to_gloss_list,
+                            searchform_panels, map_search_results_to_gloss_list, count_duplicate_lemmas,
                             get_interface_language_and_default_language_codes, get_default_annotationidglosstranslation)
 from signbank.csv_interface import (csv_gloss_to_row, csv_header_row_glosslist, csv_header_row_morphemelist,
                                     csv_morpheme_to_row, csv_header_row_handshapelist, csv_handshape_to_row,
@@ -6187,6 +6187,8 @@ class LemmaListView(ListView):
         context['selected_datasets'] = selected_datasets
         dataset_languages = get_dataset_languages(selected_datasets)
         context['dataset_languages'] = dataset_languages
+
+        count_duplicate_lemmas(selected_datasets.first())
 
         # use these to fill the form fields of a just done query
         populate_keys, populate_fields = search_fields_from_get(self.search_form, self.request.GET)
