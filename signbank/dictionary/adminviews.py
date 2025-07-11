@@ -80,7 +80,7 @@ from signbank.dictionary.forms import (AnnotatedSentenceSearchForm, GlossSearchF
                                        GlossMorphologyForm, GlossBlendForm, DefinitionForm, GlossMorphemeForm,
                                        SemanticFieldTranslationForm, ZippedVideosForm,
                                        check_language_fields, check_multilingual_fields, SentenceForm,
-                                       check_language_fields_annotatedsentence)
+                                       check_language_fields_annotatedsentence, GlossProvenanceForm)
 from signbank.tools import (write_ecv_file_for_dataset,
                             construct_scrollbar, get_dataset_languages, get_datasets_with_public_glosses,
                             searchform_panels, map_search_results_to_gloss_list,
@@ -121,6 +121,7 @@ from signbank.dictionary.context_data_gloss import (get_other_relations, get_ann
                                                     get_nme_video_descriptions, get_simultaneous_morphology,
                                                     get_sequential_morphology,
                                                     get_annotation_idgloss_per_language_dict, get_notes_groupedby_role,
+                                                    get_provenance_groupedby_method,
                                                     get_phonology_list_kinds, get_human_value_for_field_value)
 from signbank.dictionary.related_objects import (morpheme_is_related_to, gloss_is_related_to,
                                                  okay_to_move_gloss, same_translation_languages, okay_to_move_glosses,
@@ -1355,6 +1356,7 @@ class GlossDetailView(DetailView):
         context['perspectivevideoform'] = VideoUploadForObjectForm(languages=dataset_languages)
         context['imageform'] = ImageUploadForGlossForm()
         context['definitionform'] = DefinitionForm()
+        context['provenanceform'] = GlossProvenanceForm(gloss=context['gloss'])
         context['relationform'] = RelationForm()
         context['morphologyform'] = GlossMorphologyForm()
         context['morphemeform'] = GlossMorphemeForm()
@@ -1463,6 +1465,8 @@ class GlossDetailView(DetailView):
         context['homonyms_but_not_saved'] = homonyms_but_not_saved
 
         context['notes_groupedby_role'] = get_notes_groupedby_role(gloss)
+        context['provenance_groupedby_method'] = get_provenance_groupedby_method(gloss)
+        context['use_provenance'] = dataset_of_requested_gloss.use_provenance
 
         # Gather the OtherMedia
         context['other_media'] = []
