@@ -1028,9 +1028,7 @@ def update_gloss(request, glossid):
         if field not in Gloss.get_field_names():
             return HttpResponseBadRequest("Unknown field", {'content-type': 'text/plain'})
 
-        whitespace = tuple(' \n\r\t')
-        if value.startswith(whitespace) or value.endswith(whitespace):
-            value = value.strip()
+        value = value.strip()
         original_value = getattr(gloss,field)
         if field in ['domhndsh', 'subhndsh', 'final_domhndsh', 'final_subhndsh']:
             original_value = original_value.name if original_value else original_value
@@ -1238,10 +1236,7 @@ def update_annotation_idgloss(request, gloss, field, value):
         feedback_message = getattr("The translation language does not exist.")
         return HttpResponseBadRequest(feedback_message, {'content-type': 'text/plain'})
 
-    # value might be empty string
-    whitespace = tuple(' \n\r\t')
-    if value.startswith(whitespace) or value.endswith(whitespace):
-        value = value.strip()
+    value = value.strip()
 
     if not value:
         # don't allow user to set Annotation ID Gloss to empty
@@ -1276,9 +1271,7 @@ def update_nmevideo(user, gloss, field, value):
             # only use descriptions on primary NME video
             return HttpResponse(value, {'content-type': 'text/plain'})
         language = Language.objects.filter(language_code_2char=language_code_2char).first()
-        whitespace = tuple(' \n\r\t')
-        if value.startswith(whitespace) or value.endswith(whitespace):
-            value = value.strip()
+        value = value.strip()
         try:
             description = GlossVideoDescription.objects.get(nmevideo=nmevideo, language=language)
         except ObjectDoesNotExist:
@@ -3080,10 +3073,7 @@ def update_dataset(request, datasetid):
         if field not in Dataset.get_field_names():
             return HttpResponseBadRequest("Unknown field", {'content-type': 'text/plain'})
 
-        # unknown if we need this code yet for the above fields
-        whitespace = tuple(' \n\r\t')
-        if value.startswith(whitespace) or value.endswith(whitespace):
-            value = value.strip()
+        value = value.strip()
         original_value = getattr(dataset,field)
 
     #This is because you cannot concat none to a string in py3
@@ -3121,12 +3111,12 @@ def update_dataset_prominent_media(request, datasetid):
     if dataset not in user_change_datasets:
         return HttpResponseForbidden(_("Dataset Update Not Allowed"))
 
-    original_value = getattr(dataset, 'prominent_media')
-    original_value = original_value.name if original_value else '-'
-
     prominent_media = request.POST.get('prominent_media', '')
     if not prominent_media:
         return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
+
+    original_value = getattr(dataset, 'prominent_media')
+    original_value = original_value.name if original_value else '-'
 
     other_media_type = FieldChoice.objects.get(field='OtherMediaType', machine_value=int(prominent_media))
     dataset.prominent_media = other_media_type
