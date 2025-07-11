@@ -26,7 +26,7 @@ from signbank.dictionary.models import (Gloss, Morpheme, Definition, Relation, R
                                         QueryParameterFieldChoice, SearchHistory, QueryParameter,
                                         QueryParameterMultilingual, QueryParameterHandshape, SemanticFieldTranslation,
                                         ExampleSentence, Affiliation, AffiliatedUser, AffiliatedGloss, GlossSense,
-                                        SenseTranslation, AnnotatedGloss)
+                                        SenseTranslation, AnnotatedGloss, GlossProvenance)
 from signbank.dictionary.translate_choice_list import choicelist_queryset_to_translated_dict
 from signbank.tools import get_selected_datasets_for_user
 
@@ -681,7 +681,7 @@ class DatasetUpdateForm(forms.ModelForm):
 
         model = Dataset
         fields = ['description', 'conditions_of_use', 'acronym', 'copyright', 'reference', 'owners',
-                  'is_public', 'default_language', 'prominent_media']
+                  'is_public', 'default_language', 'use_provenance', 'prominent_media']
 
     def __init__(self, *args, **kwargs):
         languages = kwargs.pop('languages')
@@ -1654,3 +1654,25 @@ class GlossVideoSearchForm(forms.ModelForm):
 
         for boolean_field in ['isPrimaryVideo', 'isPerspectiveVideo', 'isNMEVideo', 'isBackup', 'wrongFilename']:
             self.fields[boolean_field].choices = [('0', '-'), ('2', _('Yes')), ('3', _('No'))]
+
+
+class GlossProvenanceForm(forms.ModelForm):
+
+    description = forms.CharField(widget=forms.Textarea(attrs={'cols': 60, 'rows': 5, 'placeholder': _('Enter New Note')}))
+    method = forms.ChoiceField(label=_('Method'),
+                               choices=[(0, '-')],
+                               widget=forms.Select(attrs=ATTRS_FOR_FORMS))
+    class Meta:
+        model = GlossProvenance
+        fields = ('gloss', 'description', 'method')
+
+    def __init__(self, *args, **kwargs):
+        self.gloss = kwargs.pop('gloss')
+        super(GlossProvenanceForm, self).__init__(*args, **kwargs)
+        self.fields['method'] = forms.ChoiceField(label=_('Method'),
+                                                  choices=choicelist_queryset_to_translated_dict(
+                                                        list(FieldChoice.objects.filter(field='Provenance').order_by(
+                                                            'machine_value')),
+                                                        ordered=False, id_prefix='', shortlist=False
+                                                  ),
+                                                  widget=forms.Select(attrs=ATTRS_FOR_FORMS))

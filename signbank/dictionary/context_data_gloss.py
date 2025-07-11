@@ -140,3 +140,15 @@ def get_human_value_for_field_value(field_value):
     if field_type == 'str' and (field_value is None or field_value in ['-', ' ', '------', '']):
         return ''
     return field_value
+
+
+def get_provenance_groupedby_method(gloss):
+    provenance = gloss.glossprovenance_set.all()
+    provenance_groupedby_method = {}
+    for prov in provenance:
+        translated_provenance_method = prov.method.name if prov.method else '-'
+        method_id = (prov.method, translated_provenance_method)
+        if method_id not in provenance_groupedby_method:
+            provenance_groupedby_method[method_id] = []
+        provenance_groupedby_method[method_id].append(prov)
+    return provenance_groupedby_method
