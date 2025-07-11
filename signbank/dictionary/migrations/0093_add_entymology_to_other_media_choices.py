@@ -1,6 +1,8 @@
 from __future__ import unicode_literals
 
 from django.db import migrations
+from signbank.settings.server_specific import MODELTRANSLATION_LANGUAGES
+
 
 def add_entymology_choice(apps, schema_editor):
 
@@ -10,18 +12,19 @@ def add_entymology_choice(apps, schema_editor):
     max_used_machine_value = max(used_machine_values)
     new_field_choice, created = FieldChoice.objects.get_or_create(field='OtherMediaType', name='Etymology',
                                                                   machine_value=max_used_machine_value+1)
-    new_field_choice.name_en = 'Etymology'
-    new_field_choice.name_nl = 'Etymologie'
-    new_field_choice.name_zh_hans = 'Etymology'
-    new_field_choice.name_ar = 'Etymology'
-    new_field_choice.name_he = 'Etymology'
+    for language in MODELTRANSLATION_LANGUAGES:
+        field_name = 'name_' + language.replace('-', '_')
+        if field_name == 'name_nl':
+            setattr(new_field_choice, field_name, 'Etymologie')
+        else:
+            setattr(new_field_choice, field_name, 'Etymology')
     new_field_choice.save()
     return
 
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('dictionary', '0090_dataset_prominent_media_othermedia_description'),
+        ('dictionary', '0092_dataset_prominent_media_othermedia_description'),
     ]
 
     operations = [

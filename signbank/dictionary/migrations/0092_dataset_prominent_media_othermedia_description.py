@@ -8,7 +8,7 @@ import signbank.dictionary.models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('dictionary', '0089_definition_creationdate_definition_creator_and_more'),
+        ('dictionary', '0091_provenance_fieldchoice_defaults'),
     ]
 
     operations = [
