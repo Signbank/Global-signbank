@@ -1028,9 +1028,7 @@ def update_gloss(request, glossid):
         if field not in Gloss.get_field_names():
             return HttpResponseBadRequest("Unknown field", {'content-type': 'text/plain'})
 
-        whitespace = tuple(' \n\r\t')
-        if value.startswith(whitespace) or value.endswith(whitespace):
-            value = value.strip()
+        value = value.strip()
         original_value = getattr(gloss,field)
         if field in ['domhndsh', 'subhndsh', 'final_domhndsh', 'final_subhndsh']:
             original_value = original_value.name if original_value else original_value
@@ -1238,10 +1236,7 @@ def update_annotation_idgloss(request, gloss, field, value):
         feedback_message = getattr("The translation language does not exist.")
         return HttpResponseBadRequest(feedback_message, {'content-type': 'text/plain'})
 
-    # value might be empty string
-    whitespace = tuple(' \n\r\t')
-    if value.startswith(whitespace) or value.endswith(whitespace):
-        value = value.strip()
+    value = value.strip()
 
     if not value:
         # don't allow user to set Annotation ID Gloss to empty
@@ -1276,9 +1271,7 @@ def update_nmevideo(user, gloss, field, value):
             # only use descriptions on primary NME video
             return HttpResponse(value, {'content-type': 'text/plain'})
         language = Language.objects.filter(language_code_2char=language_code_2char).first()
-        whitespace = tuple(' \n\r\t')
-        if value.startswith(whitespace) or value.endswith(whitespace):
-            value = value.strip()
+        value = value.strip()
         try:
             description = GlossVideoDescription.objects.get(nmevideo=nmevideo, language=language)
         except ObjectDoesNotExist:
@@ -1654,6 +1647,7 @@ def update_definition(request, gloss, field, value):
 
     return HttpResponse(str(newvalue), {'content-type': 'text/plain'})
 
+
 def update_other_media(gloss,field,value):
 
     if gloss.is_morpheme():
@@ -1688,9 +1682,13 @@ def update_other_media(gloss,field,value):
     elif action_or_fieldname == 'other-media-alternative-gloss':
         other_media.alternative_gloss = value
 
+    elif action_or_fieldname == 'other-media-description':
+        other_media.description = value
+
     other_media.save()
 
     return HttpResponse(str(value), {'content-type': 'text/plain'})
+
 
 def add_relation(request):
     """Add a new relation instance"""
@@ -2194,16 +2192,11 @@ def delete_annotated_sentence(request, glossid):
 
     return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
 
+
 def add_othermedia(request):
 
     if not request.method == "POST":
         return HttpResponseForbidden("Add other media method must be POST")
-
-    form = OtherMediaForm(request.POST,request.FILES)
-
-    if not form.is_valid():
-        # fallback to the requesting page
-        return HttpResponseRedirect('/')
 
     morpheme_or_gloss = Gloss.objects.get(id=request.POST['gloss'], archived=False)
 
@@ -2251,7 +2244,7 @@ def add_othermedia(request):
     filename_base = '.'.join(split_norm_filename[:-1])
 
     if filetype == 'video/mp4':
-        # handle 'm4v' extension
+        # handle 'm4v' extension, this overwrites an extension that does not match the filetype for mp4
         extension = 'mp4'
 
     if not os.path.isdir(goal_directory):
@@ -2262,6 +2255,13 @@ def add_othermedia(request):
     destination_filename = filename_base + '.' + extension
     goal_path = os.path.join(goal_directory, destination_filename)
 
+    if os.path.exists(goal_path):
+        messages.add_message(request, messages.ERROR,
+                             _("The other media filename is already in use. Please use a different filename."))
+        return HttpResponseRedirect(reverse(reverse_url, kwargs={'pk': request.POST['gloss']}))
+
+    othermedia_decription = request.POST['description']
+
     # to accommodate large files, the Other Media data is first stored in the database
     # if something goes wrong this object is deleted again
     # Save the database record
@@ -2269,6 +2269,7 @@ def add_othermedia(request):
     newothermedia = OtherMedia(path=other_media_path,
                                alternative_gloss=request.POST['alternative_gloss'],
                                type=othermediatype,
+                               description=othermedia_decription,
                                parent_gloss=gloss_or_morpheme)
     newothermedia.save()
 
@@ -2277,27 +2278,27 @@ def add_othermedia(request):
 
     # create the destination file
     try:
-        if os.path.exists(goal_path):
-            raise OSError
         f = open(goal_path, 'wb+')
         filename_plus_extension = destination_filename
     except (UnicodeEncodeError, IOError, OSError):
         quoted_filename = urllib.parse.quote(filename_base, safe='')
         filename_plus_extension = quoted_filename + '.' + extension
         goal_location_str = os.path.join(goal_directory, filename_plus_extension)
+        if os.path.exists(goal_location_str):
+            messages.add_message(request, messages.ERROR,
+                                 _("The other media filename is already in use. Please use a different filename."))
+            return HttpResponseRedirect(reverse(reverse_url, kwargs={'pk': request.POST['gloss']}))
         # we need to use a quoted filename instead, update the other media object
         other_media_path = request.POST['gloss'] + '/' + filename_plus_extension
         newothermedia.path = other_media_path
         newothermedia.save()
         try:
-            if os.path.exists(goal_location_str):
-                raise OSError
             f = open(goal_location_str, 'wb+')
         except (UnicodeEncodeError, IOError, OSError):
             # something went wrong with uploading, delete the object
             newothermedia.delete()
             messages.add_message(request, messages.ERROR,
-                        _("The other media file could not be uploaded. Please use a different filename."))
+                        _("The other media filename could not be created: {filename}").format(filename=filename_plus_extension))
             return HttpResponseRedirect(reverse(reverse_url, kwargs={'pk': request.POST['gloss']}))
 
     destination = File(f)
@@ -2307,67 +2308,6 @@ def add_othermedia(request):
     destination.close()
 
     destination_location = os.path.join(goal_directory, filename_plus_extension)
-
-    magic_file_type = magic.from_buffer(open(destination_location, "rb").read(2040), mime=True)
-
-    if not magic_file_type:
-        # unrecognised file type has been uploaded
-        os.remove(destination_location)
-        # something went wrong with uploading, delete the object
-        newothermedia.delete()
-        messages.add_message(request, messages.ERROR, _("Upload other media failed: The file has an unknown type."))
-        return HttpResponseRedirect(reverse(reverse_url, kwargs={'pk': request.POST['gloss']}))
-    # the code below converts the file to an mp4 file if it is currently another type of video
-    if magic_file_type == 'video/quicktime':
-        # convert using ffmpeg
-        new_destination_location = filename_base + ".mp4"
-        other_media_path = str(gloss_or_morpheme.pk) + '/' + new_destination_location
-        target_destination_location = os.path.join(goal_directory, new_destination_location)
-
-        # convert the quicktime video to mp4
-        success = convert_video(destination_location, target_destination_location)
-        if not success:
-            # problems converting a quicktime media to mp4
-            os.remove(target_destination_location)
-            os.remove(destination_location)
-            # something went wrong with uploading, delete the object
-            newothermedia.delete()
-            messages.add_message(request, messages.ERROR,
-                                 _("Upload other media failed: The Quicktime file could not be converted to MP4."))
-            return HttpResponseRedirect(reverse(reverse_url, kwargs={'pk': request.POST['gloss']}))
-        else:
-            newothermedia.path = other_media_path
-            newothermedia.save()
-            os.remove(destination_location)
-
-    elif magic_file_type != 'video/mp4':
-        # convert using ffmpeg
-        temp_destination_location = destination_location + ".mov"
-        os.rename(destination_location, temp_destination_location)
-
-        # convert the video to h264
-        success = convert_video(temp_destination_location, destination_location)
-
-        if success:
-            # the destination filename already has the extension mp4
-            os.remove(temp_destination_location)
-        else:
-            # problems converting a quicktime media to h264
-            os.remove(temp_destination_location)
-            os.remove(destination_location)
-            # something went wrong with uploading, delete the object
-            newothermedia.delete()
-            messages.add_message(request, messages.ERROR,
-                                 _("Upload other media failed: The file could not be converted to H264."))
-            return HttpResponseRedirect(reverse(reverse_url, kwargs={'pk': request.POST['gloss']}))
-
-    if filetype.split('/')[0] != magic_file_type.split('/')[0]:
-        # the uploaded file extension does not match its type
-        os.remove(destination_location)
-        # something went wrong with uploading, delete the object
-        newothermedia.delete()
-        messages.add_message(request, messages.ERROR, _("Upload other media failed: The file extension does not match its type."))
-        return HttpResponseRedirect(reverse(reverse_url, kwargs={'pk': request.POST['gloss']}))
 
     return HttpResponseRedirect(reverse(reverse_url, kwargs={'pk': request.POST['gloss']})+'?editothermedia')
 
@@ -3040,117 +2980,150 @@ def update_dataset(request, datasetid):
     We are sent one field and value at a time, return the new value
     once we've updated it."""
 
-    if request.method == "POST":
+    if request.method != "POST":
+        return HttpResponseForbidden(_("Dataset Update Not Allowed"))
 
-        dataset = get_object_or_404(Dataset, id=datasetid)
-        dataset.save() # This updates the lastUpdated field
+    dataset = get_object_or_404(Dataset, id=datasetid)
+    dataset.save() # This updates the lastUpdated field
 
-        try:
-            group_manager = Group.objects.get(name='Dataset_Manager')
-        except ObjectDoesNotExist:
-            messages.add_message(request, messages.ERROR, _('No group Dataset_Manager found.'))
-            return HttpResponseForbidden("Dataset Update Not Allowed")
+    try:
+        group_manager = Group.objects.get(name='Dataset_Manager')
+    except ObjectDoesNotExist:
+        messages.add_message(request, messages.ERROR, _('No group Dataset_Manager found.'))
+        return HttpResponseForbidden(_("Dataset Update Not Allowed"))
 
-        groups_of_user = request.user.groups.all()
-        if not group_manager in groups_of_user:
-            messages.add_message(request, messages.ERROR,
-                                 _('You must be in group Dataset Manager to modify dataset details.'))
-            return HttpResponseForbidden("Dataset Update Not Allowed")
+    groups_of_user = request.user.groups.all()
+    if not group_manager in groups_of_user:
+        messages.add_message(request, messages.ERROR,
+                             _('You must be in group Dataset Manager to modify dataset details.'))
+        return HttpResponseForbidden(_("Dataset Update Not Allowed"))
 
-        user_change_datasets = get_objects_for_user(request.user, 'change_dataset', Dataset, accept_global_perms=False)
-        if dataset not in user_change_datasets:
-            return HttpResponseForbidden("Dataset Update Not Allowed")
+    user_change_datasets = get_objects_for_user(request.user, 'change_dataset', Dataset, accept_global_perms=False)
+    if dataset not in user_change_datasets:
+        return HttpResponseForbidden(_("Dataset Update Not Allowed"))
 
-        field = request.POST.get('id', '')
-        value = request.POST.get('value', '')
+    field = request.POST.get('id', '')
+    value = request.POST.get('value', '')
+    original_value = ''
+
+    if field == 'description':
+        original_value = getattr(dataset,field)
+        setattr(dataset, field, value)
+        dataset.save()
+        return HttpResponse(str(original_value) + str('\t') + str(value), {'content-type': 'text/plain'})
+    elif field == 'copyright':
+        original_value = getattr(dataset, field)
+        setattr(dataset, field, value)
+        dataset.save()
+        return HttpResponse(str(original_value) + str('\t') + str(value), {'content-type': 'text/plain'})
+    elif field == 'reference':
+        original_value = getattr(dataset, field)
+        setattr(dataset, field, value)
+        dataset.save()
+        return HttpResponse(str(original_value) + str('\t') + str(value), {'content-type': 'text/plain'})
+    elif field == 'conditions_of_use':
+        original_value = getattr(dataset, field)
+        setattr(dataset, field, value)
+        dataset.save()
+        return HttpResponse(str(original_value) + str('\t') + str(value), {'content-type': 'text/plain'})
+    elif field == 'acronym':
+        original_value = getattr(dataset, field)
+        setattr(dataset, field, value)
+        dataset.save()
+        return HttpResponse(str(original_value) + str('\t') + str(value), {'content-type': 'text/plain'})
+    elif field == 'is_public':
+        original_value = getattr(dataset, field)
+        dataset.is_public = value == 'True'
+        dataset.save()
+        if dataset.is_public:
+            newvalue = True
+        else:
+            newvalue = False
+        return HttpResponse(str(original_value) + str('\t') + str(newvalue), {'content-type': 'text/plain'})
+    elif field == 'use_provenance':
+        original_value = getattr(dataset, field)
+        dataset.use_provenance = value == 'True'
+        dataset.save()
+        if dataset.use_provenance:
+            newvalue = True
+        else:
+            newvalue = False
+        return HttpResponse(str(original_value) + str('\t') + str(newvalue), {'content-type': 'text/plain'})
+    elif field == 'add_owner':
+        update_owner(dataset, field, value)
+    elif field == 'default_language':
+        original_value = getattr(dataset, field)
+        # variable original_value is used for feedback to the interface
+        original_value = original_value.name if original_value else '-'
+        if value == '-':
+            # this option is not offered by the interface, value must be one of the translation languages (not empty '-')
+            # this code is here if we want to user to be able to "unset" the default language in the interface
+            setattr(dataset, field, None)
+            dataset.save()
+        else:
+            try:
+                new_default_language = Language.objects.get(name=value)
+                setattr(dataset, field, new_default_language)
+                dataset.save()
+            except ObjectDoesNotExist:
+                value = original_value
+        return HttpResponse(str(original_value) + str('\t') + str(value), {'content-type': 'text/plain'})
+    else:
+
+        if field not in Dataset.get_field_names():
+            return HttpResponseBadRequest("Unknown field", {'content-type': 'text/plain'})
+
+        value = value.strip()
+        original_value = getattr(dataset,field)
+
+    #This is because you cannot concat none to a string in py3
+    if original_value is None:
         original_value = ''
 
-        if field == 'description':
-            original_value = getattr(dataset,field)
-            setattr(dataset, field, value)
-            dataset.save()
-            return HttpResponse(str(original_value) + str('\t') + str(value), {'content-type': 'text/plain'})
-        elif field == 'copyright':
-                original_value = getattr(dataset, field)
-                setattr(dataset, field, value)
-                dataset.save()
-                return HttpResponse(str(original_value) + str('\t') + str(value), {'content-type': 'text/plain'})
-        elif field == 'reference':
-                original_value = getattr(dataset, field)
-                setattr(dataset, field, value)
-                dataset.save()
-                return HttpResponse(str(original_value) + str('\t') + str(value), {'content-type': 'text/plain'})
-        elif field == 'conditions_of_use':
-                original_value = getattr(dataset, field)
-                setattr(dataset, field, value)
-                dataset.save()
-                return HttpResponse(str(original_value) + str('\t') + str(value), {'content-type': 'text/plain'})
-        elif field == 'acronym':
-                original_value = getattr(dataset, field)
-                setattr(dataset, field, value)
-                dataset.save()
-                return HttpResponse(str(original_value) + str('\t') + str(value), {'content-type': 'text/plain'})
-        elif field == 'is_public':
-                original_value = getattr(dataset, field)
-                dataset.is_public = value == 'True'
-                dataset.save()
-                if dataset.is_public:
-                    newvalue = True
-                else:
-                    newvalue = False
-                return HttpResponse(str(original_value) + str('\t') + str(newvalue), {'content-type': 'text/plain'})
-        elif field == 'use_provenance':
-                original_value = getattr(dataset, field)
-                dataset.use_provenance = value == 'True'
-                dataset.save()
-                if dataset.use_provenance:
-                    newvalue = True
-                else:
-                    newvalue = False
-                return HttpResponse(str(original_value) + str('\t') + str(newvalue), {'content-type': 'text/plain'})
-        elif field == 'add_owner':
-            update_owner(dataset, field, value)
-        elif field == 'default_language':
-            original_value = getattr(dataset, field)
-            # variable original_value is used for feedback to the interface
-            if original_value:
-                original_value = original_value.name
-            else:
-                original_value = '-'
-            if value == '-':
-                # this option is not offered by the interface, value must be one of the translation languages (not empty '-')
-                # this code is here if we want to user to be able to "unset" the default language in the interface
-                setattr(dataset, field, None)
-                dataset.save()
-            else:
-                try:
-                    new_default_language = Language.objects.get(name=value)
-                    setattr(dataset, field, new_default_language)
-                    dataset.save()
-                except ObjectDoesNotExist:
-                    value = original_value
-            return HttpResponse(str(original_value) + str('\t') + str(value), {'content-type': 'text/plain'})
-        else:
+    # The machine_value (value) representation is also returned to accommodate Hyperlinks to Handshapes in gloss_edit.js
+    return HttpResponse(str(original_value) + str('\t') + str(value), {'content-type': 'text/plain'})
 
-            if not field in Dataset.get_field_names():
-                return HttpResponseBadRequest("Unknown field", {'content-type': 'text/plain'})
 
-            # unknown if we need this code yet for the above fields
-            whitespace = tuple(' \n\r\t')
-            if value.startswith(whitespace) or value.endswith(whitespace):
-                value = value.strip()
-            original_value = getattr(dataset,field)
+def update_dataset_prominent_media(request, datasetid):
 
-        #This is because you cannot concat none to a string in py3
-        if original_value is None:
-            original_value = ''
+    if not request.user.is_authenticated:
+        messages.add_message(request, messages.ERROR, _('Please login to use this functionality.'))
+        return HttpResponseForbidden(_("Dataset Update Not Allowed"))
 
-        # The machine_value (value) representation is also returned to accommodate Hyperlinks to Handshapes in gloss_edit.js
-        return HttpResponse(str(original_value) + str('\t') + str(value), {'content-type': 'text/plain'})
+    if request.method != "POST":
+        return HttpResponseForbidden(_("Dataset Update Not Allowed"))
 
-    else:
-        print('update dataset is not POST')
-        return HttpResponseForbidden("Dataset Update Not Allowed")
+    dataset = get_object_or_404(Dataset, id=datasetid)
+
+    try:
+        group_manager = Group.objects.get(name='Dataset_Manager')
+    except ObjectDoesNotExist:
+        messages.add_message(request, messages.ERROR, _('No group Dataset_Manager found.'))
+        return HttpResponseForbidden(_("Dataset Update Not Allowed"))
+
+    groups_of_user = request.user.groups.all()
+    if not group_manager in groups_of_user:
+        messages.add_message(request, messages.ERROR,
+                             _('You must be in group Dataset Manager to modify dataset details.'))
+        return HttpResponseForbidden(_("Dataset Update Not Allowed"))
+
+    user_change_datasets = get_objects_for_user(request.user, 'change_dataset', Dataset, accept_global_perms=False)
+    if dataset not in user_change_datasets:
+        return HttpResponseForbidden(_("Dataset Update Not Allowed"))
+
+    prominent_media = request.POST.get('prominent_media', '')
+    if not prominent_media:
+        return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
+
+    original_value = getattr(dataset, 'prominent_media')
+    original_value = original_value.name if original_value else '-'
+
+    other_media_type = FieldChoice.objects.get(field='OtherMediaType', machine_value=int(prominent_media))
+    dataset.prominent_media = other_media_type
+    value = other_media_type.name
+    dataset.save()
+    return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
+
 
 def update_owner(dataset, field, values):
     # expecting possibly multiple values

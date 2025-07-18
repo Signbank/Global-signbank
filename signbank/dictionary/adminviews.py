@@ -1361,7 +1361,7 @@ class GlossDetailView(DetailView):
         context['morphologyform'] = GlossMorphologyForm()
         context['morphemeform'] = GlossMorphemeForm()
         context['blendform'] = GlossBlendForm()
-        context['othermediaform'] = OtherMediaForm()
+        context['othermediaform'] = OtherMediaForm(gloss=context['gloss'])
         context['lemma_create_field_prefix'] = LemmaCreateForm.lemma_create_field_prefix
 
         context['handedness'] = (int(self.object.handedness.machine_value) > 1) \
@@ -1469,6 +1469,9 @@ class GlossDetailView(DetailView):
         context['use_provenance'] = dataset_of_requested_gloss.use_provenance
 
         # Gather the OtherMedia
+        context['prominent_media_type'] = gl.lemma.dataset.prominent_media  # this can be None
+        context['prominent_media'] = []
+
         context['other_media'] = []
         context['other_media_field_choices'] = {}
         other_media_type_choice_list = FieldChoice.objects.filter(field__iexact='OthermediaType')
@@ -1476,16 +1479,21 @@ class GlossDetailView(DetailView):
         for other_media in gl.othermedia_set.all():
             media_okay, path, other_media_filename = other_media.get_othermedia_path(gl.id, check_existence=True)
 
-            human_value_media_type = other_media.type.name
+            human_value_media_type = other_media.type.name if other_media.type else '-'
 
             file_type = mimetypes.guess_type(path, strict=True)[0]
 
-            context['other_media'].append([media_okay, other_media.pk, path, file_type, human_value_media_type, other_media.alternative_gloss, other_media_filename])
+            context['other_media'].append([media_okay, other_media.pk, path, file_type, human_value_media_type,
+                                           other_media.alternative_gloss, other_media.description, other_media_filename])
 
             # Save the other_media_type choices (same for every other_media,
             # but necessary because they all have other ids)
             context['other_media_field_choices'][
                 'other-media-type_' + str(other_media.pk)] = choicelist_queryset_to_translated_dict(other_media_type_choice_list)
+
+            if other_media.type is not None and gl.lemma.dataset.prominent_media is not None:
+                if other_media.type.machine_value == gl.lemma.dataset.prominent_media.machine_value:
+                    context['prominent_media'].append((media_okay, other_media.pk, path, file_type, other_media_filename, other_media.description))
 
         context['other_media_field_choices'] = json.dumps(context['other_media_field_choices'])
 
@@ -5196,7 +5204,7 @@ class MorphemeDetailView(DetailView):
         context['imageform'] = ImageUploadForGlossForm()
         context['definitionform'] = DefinitionForm()
         context['relationform'] = RelationForm()
-        context['othermediaform'] = OtherMediaForm()
+        context['othermediaform'] = OtherMediaForm(gloss=context['morpheme'])
 
         # Get the set of all the Gloss signs that point to me
         other_glosses_that_point_to_morpheme = SimultaneousMorphologyDefinition.objects.filter(morpheme_id__exact=context['morpheme'].id)
