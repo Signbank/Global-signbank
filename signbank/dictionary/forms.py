@@ -969,7 +969,10 @@ class LemmaUpdateForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         self.languages = kwargs.pop('languages')
+        self.lemmaid = kwargs.pop('lemmaid')
         super(LemmaUpdateForm, self).__init__(*args, **kwargs)
+        self.fields['lemmaid'] = forms.CharField(label=_("Lemma ID"),  widget=forms.TextInput(attrs={'readonly': 'readonly'}))
+        self.fields['lemmaid'].initial = self.lemmaid
         for language in self.languages:
             lemmaupdate_field_name = LemmaUpdateForm.lemma_update_field_prefix + language.language_code_2char
             self.fields[lemmaupdate_field_name] = forms.CharField(label=_("Lemma") + (" (%s)" % language.name),

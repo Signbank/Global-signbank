@@ -19,14 +19,14 @@
 }
 </style>
     <script type='text/javascript'>
-
     var csrf_token = '{{csrf_token}}';
-
-    var url = '{{ PREFIX_URL }}';
-
     var url = '{{PREFIX_URL}}';
-    var language_2chars = {{language_2chars|safe}};
 
+    var language_2chars = {{language_2chars|safe}};
+</script>
+<script type='text/javascript' src="{{ STATIC_URL }}js/lemmas_toggle_edit.js"></script>
+
+<script>
 function ready_videos(el) {
     $(el).find('video').hide();
 
@@ -75,6 +75,9 @@ function ready_videos(el) {
     }
 
     $(document).ready(function() {
+
+        $('[data-toggle="tooltip"]').tooltip();
+
         // setup required for Ajax POST
         function csrfSafeMethod(method) {
             // these HTTP methods do not require CSRF protection
@@ -156,24 +159,118 @@ function ready_videos(el) {
      <input class='btn btn-primary' type='submit' value='{% trans "Update" %}'>
      </form>
 <br>
+        {% with lemma|check_lemma_constraints as constraints_summary %}
+        {% if constraints_summary %}
+        <span id="lemma_constraints_{{lemma.pk}}" style="color:red;">{{constraints_summary}}</span>
+        {% endif %}
+        {% endwith %}
+<br>
+        {% if not lemma.has_duplicates and not lemma.has_all_translations and lemma.num_gloss == 1 %}
+        <span id="lemma_wrench_{{lemma.pk}}" style="height:30px;">
+        <button id='quick_language_fields_btn_{{lemma.pk}}' class="quick_copy_missing_language_fields btn"
+                name='quick_language_fields_{{lemma.pk}}'
+                value='{{lemma.pk}}' style="color:red;background-color:transparent;height:30px;"
+                type="submit" ><span class="glyphicon glyphicon-wrench" style="height:30px;"
+                                     data-toggle="tooltip" data-original-title="{% trans 'Copy Missing Translations' %}"></span>
+        </button>
+        </span>
+        {% endif %}
+<br>
         <div>
         {% if SHOW_DATASET_INTERFACE_OPTIONS %}
             {% url 'dictionary:protected_media' '' as protected_media_url %}
             {% csrf_token %}
-            <table class='table' style='width: 1200px;'>
+            <table class='table' style='width: 1400px;'>
                 <tr>
                     <th>{% trans "Dataset" %}</th>
                     <td><a href="{{PREFIX_URL}}/datasets/{{lemma.dataset.acronym}}" >{{ lemma.dataset.acronym }}</a></td>
                 </tr>
+                {% if lemma.has_duplicates %}
+                <tr>
+                    <th>{% trans "Duplicates" %}</th>
+                    <th></th>
+                    <th style="width:200px;">{% trans "Lemma ID" %}</th>
+                    {% for dataset_lang in dataset_languages %}
+                    <th>{% trans "Lemma ID Gloss" %} ({{ dataset_lang.name }})</th>
+                    {% endfor %}
+                </tr>
+                {% for duplicate in lemma_duplicates %}
+                <tr>
+                <td></td><td></td>
+                    <td><a href="{% url 'dictionary:change_lemma' duplicate.pk %}">{{duplicate.pk}}</a></td>
+                {% for dataset_lang in dataset_languages %}
+                  {% with duplicate|get_lemma_idgloss_translation:dataset_lang as lemmaidglosstranslation %}
+                  <td>
+                      <div id="lemma_text_{{lemma.pk}}_{{dataset_lang.language_code_2char}}">
+                      {% if lemmaidglosstranslation != "" %}
+                        {{lemmaidglosstranslation}}
+                      {% endif %}
+                      </div>
+                  </td>
+                  {% endwith %}
+                {% endfor %}
+                </tr>
+                {% if not duplicate.num_glosses %}
+                <tr>
+                    <th></th><th></th>
+                        <td colspan="3" style="color:red;">{% trans "Lemma" %} {{duplicate.pk}} {% trans "has no glosses." %}</td>
+                </tr>
+                {% else %}
+                    {% for gloss_of_duplicate in duplicate.glosses %}
+                    <tr>
+                        <th></th><th></th>
+                            <th>{% trans "Glosses" %}</th>
+<!--                            <th>{% trans "Video" %}</th>-->
+<!--                            <th style="width:200px;">{% trans "Signbank ID" %}</th>-->
+                               {% for dataset_lang in dataset_languages %}
+                                    <th style="width:400px;">{% trans "Annotation ID Gloss" %} ({{dataset_lang.name}})</th>
+                                {% endfor %}
+                    </tr>
+                    <tr><td></td><td></td><td></td>
+<!--                        <td>{% if gloss_of_duplicate.get_image_path or gloss_of_duplicate.has_video %}-->
+<!--                            <div id='glossvideo_dup_{{gloss_of_duplicate.id}}' class="hover-shows-video">-->
+<!--                            <img class="thumbnail" src="{{protected_media_url}}{{gloss_of_duplicate.get_image_url}}">-->
+<!--                            {% if gloss.has_video %}-->
+<!--                            <video id="videoplayer_dup" class="thumbnail-video"-->
+<!--                                   src="{{protected_media_url}}{{gloss_of_duplicate.get_video_url}}"-->
+<!--                                   type="video/*" muted="muted"></video>-->
+<!--                            {% endif %}-->
+<!--                            </div>-->
+<!--                            {% endif %}-->
+<!--                        </td>-->
+<!--                        <td id="signbank_id_{{gloss_of_duplicate.id}}">{{gloss_of_duplicate.id}} {% if gloss_of_duplicate.archived %}({% trans "Archived" %}){% endif %}</td>-->
+                        {% for dataset_lang in dataset_languages %}
+                        {% with gloss_of_duplicate|get_annotation_idgloss_translation:dataset_lang as annotation_translation %}
+                            <td id="gloss_annotation_{{gloss_of_duplicate.id}}_{{dataset_lang.language_code_2char}}">
+                                {% if not gloss_of_duplicate.archived %}
+                                <a href="{{PREFIX_URL}}/dictionary/gloss/{{gloss_of_duplicate.id}}/">
+                                    {{annotation_translation}}
+                                </a>
+                                {% else %}
+                                    {{annotation_translation}}
+                                {% endif %}
+                            </td>
+                        {% endwith %}
+                        {% endfor %}
+                    </tr>
+                    {% endfor %}
+                    {% endif %}
+                {% endfor %}
+                {% endif %}
                 <tr>
                     <th>{% trans "Glosses" %}</th>
+                    {% if lemma_group_list %}
                     <th>{% trans "Video" %}</th>
                     <th style="width:200px;">{% trans "Signbank ID" %}</th>
                            {% for dataset_lang in dataset_languages %}
                                 <th style="width:400px;">{% trans "Annotation ID Gloss" %} ({{dataset_lang.name}})</th>
                             {% endfor %}
                     <th></th>
+                    {% else %}
+                    <td colspan="3" style="color:red;">{% trans "Lemma" %} {{lemma.pk}} {% trans "has no glosses." %}</td>
+                    {% endif %}
                 </tr>
+                {% if lemma_group_list %}
                 {% for gloss, annotation_idgloss_translations in lemma_group_list %}
                 <tr><td></td>
                     <td>{% if gloss.get_image_path or gloss.has_video %}
@@ -250,6 +347,7 @@ function ready_videos(el) {
                     </td>
                 </tr>
                 {% endfor %}
+                {% endif %}
             </table>
         {% endif %}
         </div>

@@ -17,7 +17,6 @@
 var url = '{{PREFIX_URL}}';
 var csrf_token = '{{csrf_token}}';
 var show_dataset_interface_options = {{ SHOW_DATASET_INTERFACE_OPTIONS|yesno:"true,false" }};
-var csrf_token = '{{csrf_token}}';
 var page_number = {{ page_number }};
 var paginate_by = '{{paginate_by}}';
 var page_number = {{page_obj.number}};
@@ -234,6 +233,7 @@ function do_export_csv(e1) {
     <thead>
       <tr>
           {% if SHOW_DATASET_INTERFACE_OPTIONS %}<th>{% trans "Dataset" %}</th>{% endif %}
+          <th>{% trans "Lemma ID" %}</th>
           {% for dataset_lang in dataset_languages %}
           <th>{% trans "Lemma ID Gloss" %} ({{ dataset_lang.name }})</th>
           {% endfor %}
@@ -245,12 +245,13 @@ function do_export_csv(e1) {
     </thead>
     <tbody>
       {% for lemma in object_list %}
-        <tr>
+        <tr style="height:30px;">
             {% if SHOW_DATASET_INTERFACE_OPTIONS %}
             <td>
                 {{ lemma.dataset.acronym }}
             </td>
             {% endif %}
+            <td>{{lemma.pk}}</td>
             {% for dataset_lang in dataset_languages %}
               {% with lemma|get_lemma_idgloss_translation:dataset_lang as lemmaidglosstranslation %}
               <td>
@@ -268,7 +269,8 @@ function do_export_csv(e1) {
             <td>
                 {{ lemma.num_archived_glosses }}
             </td>
-            <td>{% with lemma|constraints as constraints_summary %}
+            <td id="lemma_constraints_{{lemma.pk}}" style="height:30px;color:red;">
+                {% with lemma|check_lemma_constraints as constraints_summary %}
                 {{constraints_summary}}
                 {% endwith %}
             </td>
@@ -278,12 +280,13 @@ function do_export_csv(e1) {
                 <a class="change-entry" href="{% url 'dictionary:change_lemma' lemma.pk %}" >
                     <span class="glyphicon glyphicon-pencil" data-toggle="tooltip" data-original-title="{% trans 'Update' %}"></span>
                 </a>
-                {% if not lemma.has_all_translations and lemma.num_gloss == 1 %}
-                <span id="lemma_wrench_{{lemma.pk}}">
+                {% if not lemma.has_duplicates and not lemma.has_all_translations and lemma.num_gloss == 1 %}
+                <span id="lemma_wrench_{{lemma.pk}}" style="height:30px;">
                 <button id='quick_language_fields_btn_{{lemma.pk}}' class="quick_copy_missing_language_fields btn"
                         name='quick_language_fields_{{lemma.pk}}'
-                        value='{{lemma.pk}}' style="height:36px;color:red;"
-                        type="submit" ><span class="glyphicon glyphicon-wrench" data-toggle="tooltip" data-original-title="{% trans 'Copy Missing Translations' %}"></span>
+                        value='{{lemma.pk}}' style="color:red;background-color:transparent;height:30px;"
+                        type="submit" ><span class="glyphicon glyphicon-wrench" style="height:30px;"
+                                             data-toggle="tooltip" data-original-title="{% trans 'Copy Missing Translations' %}"></span>
                 </button>
                 </span>
                 {% endif %}

@@ -1,4 +1,4 @@
-// javascript for template admin_lemma_list.html
+// javascript for template admin_lemma_list.html and update_lemma.html
 // this code uses json ajax calls
 
 function toggle_language_fields(data) {
@@ -11,12 +11,18 @@ function toggle_language_fields(data) {
         var translation = lemma_translations[inx];
         var lang2char = translation['lang2char'];
         var text = translation['text'];
+        // for occurrence in Lemma List View
         var hCell = $("#lemma_text_"+lemmaid+"_"+lang2char);
         $(hCell).empty();
         hCell.html(text);
+        // for occurrence in Lemma Update View
+        var inputCell = $("#id_lemmaupdate_"+lang2char);
+        inputCell.attr("value", text);
     }
     var spanCell = $("#lemma_wrench_"+lemmaid);
     $(spanCell).empty();
+    var constraintsCell = $("#lemma_constraints_"+lemmaid);
+    $(constraintsCell).empty();
 }
 
 $(document).ready(function() {

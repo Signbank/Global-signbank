@@ -2376,45 +2376,46 @@ def dataset_no_multiple_lemma_translation_objects(dataset):
 
 def copy_missing_lemmaidglosstranslation_from_annotationidglosstranslation(lemma):
 
-    lemma_translation_objects = lemma.lemmaidglosstranslation_set.all()
-    dataset_languages = lemma.dataset.translation_languages.all()
+    duplicatelemmas = duplicate_lemmas(lemma)
+    if duplicatelemmas:
+        return
     lemma_group_glossset = Gloss.objects.filter(lemma=lemma)
     if lemma_group_glossset.count() != 1:
         return
+    dataset_languages = lemma.dataset.translation_languages.all()
+    lemma_translation_objects = lemma.lemmaidglosstranslation_set.all()
     if dataset_languages.count() == lemma_translation_objects.count():
         return
     gloss_translations = lemma_group_glossset.first().annotationidglosstranslation_set.all()
     for language in dataset_languages:
         lemma_translation_for_language = lemma_translation_objects.filter(language=language).first()
         if lemma_translation_for_language:
+            # the lemma already has a translation for this language
             continue
         gloss_translation_for_language = gloss_translations.filter(language=language).first()
         if not gloss_translation_for_language:
-            return
+            # there is no translation for this language from the (unique) gloss of this lemma
+            continue
+        # copy the lemma translation for this language from the (unique) gloss of this lemma
         new_lemma_translation = LemmaIdglossTranslation(lemma=lemma, language=language,
                                                         text=gloss_translation_for_language.text)
         new_lemma_translation.save()
     return
 
 
-def count_duplicate_lemmas(dataset):
-    qs = LemmaIdglossTranslation.objects.values_list('text', 'language__name', 'lemma__dataset__acronym')
-    translations = [(tr[0].lower(), tr[1], tr[2]) for tr in qs if tr[2] == dataset.acronym]
-    duplicates = [k for k, v in Counter(translations).items() if v > 1]
-    count_duplicates = len(duplicates)
-    glosses = Gloss.objects.filter(lemma__dataset=dataset).annotate(tr=Lower('lemma__lemmaidglosstranslation__text')).filter(
-        tr__in=list(map(lambda x: x[0], duplicates))).distinct()
-    count_glosses = glosses.count()
-    glosses_per_lemma = glosses.values_list('lemma__id', 'lemma__lemmaidglosstranslation__text')
-    lemmas_with_duplicates_list = [tr[0] for tr in glosses_per_lemma]
-    lemmas_with_duplicates_unique = LemmaIdgloss.objects.filter(id__in=lemmas_with_duplicates_list).distinct()
-    print(lemmas_with_duplicates_unique.count(), ' unique lemma objects with duplicates found')
-    sorted_lemmas = lemmas_with_duplicates_unique.order_by('lemmaidglosstranslation__language__id', 'lemmaidglosstranslation__text')
+def duplicate_lemmas(lemma):
+    # this finds other lemmas in the same dataset with duplicates of the translations of this lemma
+    # it returns a list of unique lemma ids.
+    if lemma.dataset is None:
+        return []
+    duplicate_to_me = []
+    for translation in lemma.lemmaidglosstranslation_set.all():
 
-    for unique_lemma in lemmas_with_duplicates_unique:
-        for translation in unique_lemma.lemmaidglosstranslation_set.all():
-            print('    ', translation.language, translation.text)
-            duplicate_translations = LemmaIdglossTranslation.objects.filter(language=translation.language, text__iexact=translation.text, lemma__dataset=unique_lemma.dataset).exclude(lemma=unique_lemma)
-            for duplicate_translation in duplicate_translations:
-                print('          ', duplicate_translation.language, duplicate_translation.text, duplicate_translation.lemma.id)
-    return
+        duplicate_translations = LemmaIdglossTranslation.objects.filter(language=translation.language,
+                                                                        text__iexact=translation.text,
+                                                                        lemma__dataset=lemma.dataset).exclude(
+            lemma=lemma)
+        for duplicate_translation in duplicate_translations:
+            duplicate_to_me.append(duplicate_translation.lemma.id)
+    duplicate_lemma = list(set(duplicate_to_me))
+    return duplicate_lemma

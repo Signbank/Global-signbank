@@ -81,9 +81,9 @@ from signbank.dictionary.forms import (AnnotatedSentenceSearchForm, GlossSearchF
                                        SemanticFieldTranslationForm, ZippedVideosForm,
                                        check_language_fields, check_multilingual_fields, SentenceForm,
                                        check_language_fields_annotatedsentence, GlossProvenanceForm)
-from signbank.tools import (write_ecv_file_for_dataset,
+from signbank.tools import (write_ecv_file_for_dataset, duplicate_lemmas,
                             construct_scrollbar, get_dataset_languages, get_datasets_with_public_glosses,
-                            searchform_panels, map_search_results_to_gloss_list, count_duplicate_lemmas,
+                            searchform_panels, map_search_results_to_gloss_list,
                             get_interface_language_and_default_language_codes, get_default_annotationidglosstranslation)
 from signbank.csv_interface import (csv_gloss_to_row, csv_header_row_glosslist, csv_header_row_morphemelist,
                                     csv_morpheme_to_row, csv_header_row_handshapelist, csv_handshape_to_row,
@@ -6192,8 +6192,6 @@ class LemmaListView(ListView):
         dataset_languages = get_dataset_languages(selected_datasets)
         context['dataset_languages'] = dataset_languages
 
-        count_duplicate_lemmas(selected_datasets.first())
-
         # use these to fill the form fields of a just done query
         populate_keys, populate_fields = search_fields_from_get(self.search_form, self.request.GET)
         context['populate_fields'] = json.dumps(populate_fields)
@@ -6544,6 +6542,9 @@ class LemmaUpdateView(UpdateView):
             # 'gloss' not in url
             self.gloss_id = lemma_group_glossset[0].id
 
+        duplicates = duplicate_lemmas(self.object)
+        context['lemma_duplicates'] = LemmaIdgloss.objects.filter(pk__in=duplicates)
+
         # These are needed for return to the Gloss Details
         # They are passed to the POST handling via hidden variables in the template
         context['gloss_id'] = self.gloss_id
@@ -6588,7 +6589,7 @@ class LemmaUpdateView(UpdateView):
             return show_warning(request, translated_message + translated_message2, selected_datasets)
 
         if not self.lemma_update_form:
-            self.lemma_update_form = LemmaUpdateForm(instance=self.object, languages=dataset_of_requested_lemma.translation_languages.all())
+            self.lemma_update_form = LemmaUpdateForm(instance=self.object, languages=dataset_of_requested_lemma.translation_languages.all(), lemmaid=str(self.object.id))
         if not self.lemma_update_form.is_bound:
             set_up_lemma_language_fields(self.lemma_update_form, self.object)
 

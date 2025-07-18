@@ -1307,7 +1307,7 @@ def update_lemma_idgloss(request, lemmaid):
 
     translation_languages = lemma.dataset.translation_languages.all()
 
-    form = LemmaUpdateForm(request.POST, instance=lemma, languages=translation_languages)
+    form = LemmaUpdateForm(request.POST, instance=lemma, languages=translation_languages, lemmaid=lemmaid)
 
     # data structure for the form data, for checking consistency later, not inside the same loop
     form_language_dict = dict()

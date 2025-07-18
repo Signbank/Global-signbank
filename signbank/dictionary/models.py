@@ -3563,6 +3563,10 @@ class LemmaIdgloss(models.Model):
         glosses_with_this_lemma = Gloss.objects.filter(lemma__pk=self.pk).count()
         return glosses_with_this_lemma
 
+    def glosses(self):
+        glosses_with_this_lemma = Gloss.objects.filter(lemma__pk=self.pk)
+        return glosses_with_this_lemma
+
     def num_archived_glosses(self):
         glosses_with_this_lemma = Gloss.objects.filter(lemma__pk=self.pk, archived=True).count()
         return glosses_with_this_lemma
@@ -3571,6 +3575,17 @@ class LemmaIdgloss(models.Model):
         count_dataset_languages = self.dataset.translation_languages.all().count() if self.dataset else 0
         count_translations = self.lemmaidglosstranslation_set.all().count()
         return count_dataset_languages == count_translations
+
+    def has_duplicates(self):
+        for translation in self.lemmaidglosstranslation_set.all():
+
+            duplicate_translations = LemmaIdglossTranslation.objects.filter(language=translation.language,
+                                                                            text__iexact=translation.text,
+                                                                            lemma__dataset=self.dataset).exclude(
+                lemma=self)
+            if duplicate_translations:
+                return True
+        return False
 
 
 class LemmaIdglossTranslation(models.Model):
