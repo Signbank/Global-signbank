@@ -81,7 +81,7 @@ from signbank.dictionary.forms import (AnnotatedSentenceSearchForm, GlossSearchF
                                        SemanticFieldTranslationForm, ZippedVideosForm,
                                        check_language_fields, check_multilingual_fields, SentenceForm,
                                        check_language_fields_annotatedsentence, GlossProvenanceForm)
-from signbank.tools import (write_ecv_file_for_dataset, duplicate_lemmas,
+from signbank.tools import (write_ecv_file_for_dataset, find_duplicate_lemmas,
                             construct_scrollbar, get_dataset_languages, get_datasets_with_public_glosses,
                             searchform_panels, map_search_results_to_gloss_list,
                             get_interface_language_and_default_language_codes, get_default_annotationidglosstranslation)
@@ -6543,7 +6543,7 @@ class LemmaUpdateView(UpdateView):
             # 'gloss' not in url
             self.gloss_id = lemma_group_glossset[0].id
 
-        duplicates = duplicate_lemmas(self.object)
+        duplicates = find_duplicate_lemmas(self.object)
         context['lemma_duplicates'] = LemmaIdgloss.objects.filter(pk__in=duplicates)
 
         # These are needed for return to the Gloss Details

@@ -8,7 +8,7 @@ from signbank.settings.base import ECV_SETTINGS
 
 from signbank.dictionary.models import Language
 from signbank.dictionary.forms import GlossSearchForm, MorphemeSearchForm, AnnotatedSentenceSearchForm
-from signbank.tools import get_ecv_description_for_gloss, get_default_annotationidglosstranslation, duplicate_lemmas
+from signbank.tools import get_ecv_description_for_gloss, get_default_annotationidglosstranslation, find_duplicate_lemmas
 from signbank.dataset_operations import dataset_lemma_constraints_check
 from signbank.dictionary.batch_edit import get_sense_numbers
 
@@ -98,7 +98,7 @@ def get_lemma_idgloss_translation_no_default(lemma, language):
 @register.filter
 def check_lemma_constraints(lemma):
     # for use in the LemmaListView and LemmaUpdateView to summarise constraint violations
-    duplicatelemmas = duplicate_lemmas(lemma)
+    duplicatelemmas = find_duplicate_lemmas(lemma)
     constraints_dict = dataset_lemma_constraints_check(lemma)
     result = []
     for duplicate_lemma in duplicatelemmas:

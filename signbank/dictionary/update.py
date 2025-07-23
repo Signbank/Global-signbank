@@ -1372,9 +1372,8 @@ def copy_missing_language_lemma_idgloss(request, lemmaid):
     for translation in lemma.lemmaidglosstranslation_set.all():
         lemma_translations.append({'lang2char': translation.language.language_code_2char,
                                    'text': translation.text})
-    results = {}
-    results['lemmaid'] = lemmaid
-    results['lemma_translations'] = lemma_translations
+    results = {'lemmaid': lemmaid, 'lemma_translations': lemma_translations}
+
     return JsonResponse(results)
 
 
