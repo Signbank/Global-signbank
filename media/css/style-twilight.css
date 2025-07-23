@@ -434,7 +434,8 @@ table {
 .tt-query,
 .tt-hint {
   width: 396px;
-  height: 30px;
+  height: 300px;
+  overflow-y: scroll;
   padding: 8px 12px;
   font-size: 24px;
   line-height: 30px;
@@ -471,7 +472,9 @@ table {
 }
 
 .tt-dropdown-menu {
-  width: 422px;
+  width: 460px;
+  max-height: 300px;
+  overflow-y: scroll;
   margin-top: 0px;
   margin-bottom: 0px;
   padding: 10px 0px;

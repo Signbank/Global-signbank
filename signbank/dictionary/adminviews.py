@@ -5654,27 +5654,20 @@ def lemma_ajax_complete(request, dataset_id, language_code, q):
         # this assumes the default language (LANGUAGE_CODE) in included in the LANGUAGES_LANGUAGE_CODE_3CHAR setting
         interface_language_3char = dict(LANGUAGES_LANGUAGE_CODE_3CHAR)[LANGUAGE_CODE]
     interface_language = Language.objects.get(language_code_3char=interface_language_3char)
-    interface_language_id = interface_language.id
-
-    dataset = Dataset.objects.get(id=dataset_id)
-    dataset_default_language_id = dataset.default_language.id
+    activate(interface_language.language_code_2char)
 
     lemmas = LemmaIdgloss.objects.filter(dataset_id=dataset_id,
-                                         lemmaidglosstranslation__language_id=interface_language_id,
                                          lemmaidglosstranslation__text__istartswith=q)\
         .order_by('lemmaidglosstranslation__text')
-    # lemmas_dict = [{'pk': lemma.pk, 'lemma': str(lemma)} for lemma in set(lemmas)]
 
     lemmas_dict_list = []
     for lemma in set(lemmas):
-        trans_dict = {}
-        for translation in lemma.lemmaidglosstranslation_set.all():
-            if translation.language.id == interface_language_id:
-                trans_dict['pk'] = lemma.pk
-                trans_dict['lemma'] = translation.text
-                lemmas_dict_list.append(trans_dict)
+        trans_dict = {'pk': lemma.pk,
+                      'lemma': f'{lemma.pk}: {str(lemma)}'}
+        lemmas_dict_list.append(trans_dict)
     sorted_lemmas_dict = sorted(lemmas_dict_list, key=lambda x : (x['lemma'], len(x['lemma'])))
     return JsonResponse(sorted_lemmas_dict, safe=False)
+
 
 def sensetranslation_ajax_complete(request, dataset_id, language_code, q):
 
