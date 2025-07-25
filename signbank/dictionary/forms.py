@@ -938,7 +938,7 @@ class LemmaCreateForm(forms.ModelForm):
         existing_lemma_translations = lemma.lemmaidglosstranslation_set.all()
         for language in self.languages:
             lemmacreate_field_name = self.lemma_create_field_prefix + language.language_code_2char
-            lemma_idgloss_text = self.fields[lemmacreate_field_name].value()
+            lemma_idgloss_text = self.fields[lemmacreate_field_name].initial
             existing_lemmaidglosstranslations = existing_lemma_translations.filter(language=language)
             if existing_lemmaidglosstranslations.count() == 0:
                 lemmaidglosstranslation = LemmaIdglossTranslation(lemma=lemma, language=language,
