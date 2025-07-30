@@ -2748,8 +2748,8 @@ def update_blend_definition(gloss, field, value):
         return HttpResponseBadRequest("Unknown form field '%s'" % field, {'content-type': 'text/plain'})
 
 
-@permission_required('dictionary.change_gloss')
 @require_http_methods(["POST"])
+@permission_required('dictionary.change_gloss')
 def add_tag(request, glossid):
     """View to add a tag to a gloss"""
 
@@ -2959,7 +2959,6 @@ def change_dataset_selection(request):
     return redirect(PREFIX_URL + '/datasets/select')
 
 
-@require_http_methods(["POST"])
 def check_permissions_dataset_update(request, dataset):
 
     if not request.user.is_authenticated:
@@ -2990,8 +2989,6 @@ def update_dataset(request, datasetid):
     once we've updated it."""
 
     dataset = get_object_or_404(Dataset, id=datasetid)
-    dataset.save() # This updates the lastUpdated field
-
     check_permissions_dataset_update(request, dataset)
 
     field = request.POST.get('id', '')
@@ -3080,19 +3077,14 @@ def update_dataset(request, datasetid):
 def update_dataset_prominent_media(request, datasetid):
 
     dataset = get_object_or_404(Dataset, id=datasetid)
-
     check_permissions_dataset_update(request, dataset)
 
     prominent_media = request.POST.get('prominent_media', '')
     if not prominent_media:
         return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
 
-    original_value = getattr(dataset, 'prominent_media')
-    original_value = original_value.name if original_value else '-'
-
     other_media_type = FieldChoice.objects.get(field='OtherMediaType', machine_value=int(prominent_media))
     dataset.prominent_media = other_media_type
-    value = other_media_type.name
     dataset.save()
     return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
 
@@ -3214,7 +3206,6 @@ def update_field_choice_color(request, category, fieldchoiceid):
     machine_value = str(thisfieldchoice.machine_value)
     thisfieldchoice.field_color = new_color
     thisfieldchoice.save()
-    # category = thisfieldchoice.field
 
     return HttpResponse(category + '\t' + fieldchoiceid + '\t' + str(original_value) + '\t' + str(new_color) + '\t' + machine_value,
                         {'content-type': 'text/plain'})
