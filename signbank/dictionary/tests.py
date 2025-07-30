@@ -18,7 +18,6 @@ from django.contrib.admin.sites import AdminSite
 from django.test.client import RequestFactory
 from django.core.serializers.json import DjangoJSONEncoder
 from django.test import Client
-from django.test.client import MULTIPART_CONTENT
 from django.utils.encoding import escape_uri_path
 from django.utils import translation
 from django.core.exceptions import ObjectDoesNotExist
@@ -26,9 +25,15 @@ from django.urls import reverse_lazy, reverse
 
 from guardian.shortcuts import assign_perm
 from collections import OrderedDict
-from django.conf import settings
 
-from signbank.settings.server_specific import MODELTRANSLATION_LANGUAGES, ECV_FOLDER_ABSOLUTE_PATH, FIELDS, OBLIGATORY_FIELDS
+from signbank.settings.base import BASE_DIR
+from signbank.settings.server_specific import (PREFIX_URL, MODELTRANSLATION_LANGUAGES, ECV_FOLDER_ABSOLUTE_PATH,
+                                               FIELDS, OBLIGATORY_FIELDS, DEFAULT_DATASET, API_FIELDS,
+                                               DEFAULT_DATASET_ACRONYM, TEST_DATASET_ACRONYM, WRITABLE_FOLDER,
+                                               DEFAULT_LANGUAGE_HEADER_COLUMN, DEFAULT_DATASET_LANGUAGE_ID,
+                                               ESCAPE_UPLOADED_VIDEO_FILE_PATH, ADMIN_URL, HANDSHAPE_ETYMOLOGY_FIELDS,
+                                               HANDEDNESS_ARTICULATION_FIELDS, DATASET_METADATA_DIRECTORY,
+                                               TEST_DATA_DIRECTORY, DATASET_EAF_DIRECTORY)
 from signbank.video.models import GlossVideo
 from signbank.dictionary.models import (Dataset, Language, Gloss, Morpheme, Handshape, Keyword, SignLanguage,
                                         GlossSense, MorphologyDefinition,
@@ -66,7 +71,7 @@ class BasicCRUDTests(TestCase):
         self.user.save()
         self.userprofile = UserProfile(user=self.user)
         self.userprofile.save()
-        dataset_name = settings.DEFAULT_DATASET
+        dataset_name = DEFAULT_DATASET
         test_dataset = Dataset.objects.get(name=dataset_name)
         self.userprofile.selected_datasets.add(test_dataset)
         self.userprofile.save()
@@ -91,7 +96,7 @@ class BasicCRUDTests(TestCase):
         self.assertEqual(found, 0)
 
         # Create the morphemes
-        dataset_name = settings.DEFAULT_DATASET
+        dataset_name = DEFAULT_DATASET
         test_dataset = Dataset.objects.get(name=dataset_name)
 
         # Create a lemma
@@ -175,7 +180,7 @@ class BasicCRUDTests(TestCase):
         self.assertEqual(Translation.objects.all().count(), 3)
 
         # Throwing stuff away with the update functionality
-        client.post(settings.PREFIX_URL + '/dictionary/update/morpheme/'+str(new_morpheme.pk),
+        client.post(PREFIX_URL + '/dictionary/update/morpheme/'+str(new_morpheme.pk),
                     {'id': 'deletegloss', 'value': 'confirmed'})
         found = 0
         for morpheme in Morpheme.objects.filter(handedness=self.handedness_fieldchoice_1):
@@ -195,7 +200,7 @@ class BasicCRUDTests(TestCase):
         self.assertTrue(logged_in)
 
         # Get the test dataset
-        dataset_name = settings.DEFAULT_DATASET
+        dataset_name = DEFAULT_DATASET
         test_dataset = Dataset.objects.get(name=dataset_name)
 
         # Construct the Create Gloss form data
@@ -234,7 +239,7 @@ class BasicCRUDTests(TestCase):
         assign_perm('dictionary.search_gloss', self.user)
 
         # Create the glosses
-        dataset_name = settings.DEFAULT_DATASET
+        dataset_name = DEFAULT_DATASET
         test_dataset = Dataset.objects.get(name=dataset_name)
         default_language = test_dataset.default_language
 
@@ -317,7 +322,7 @@ class BasicCRUDTests(TestCase):
         client.login(username='test-user', password='test-user')
 
         #Get a dataset
-        dataset_name = settings.DEFAULT_DATASET
+        dataset_name = DEFAULT_DATASET
 
         # Give the test user permission to change a dataset
         test_dataset = Dataset.objects.get(name=dataset_name)
@@ -340,7 +345,7 @@ class BasicCRUDTests(TestCase):
 
         # #Create the gloss
         new_gloss = Morpheme()
-        # to test the package functionality of phonology fields, add some to settings.API_FIELDS
+        # to test the package functionality of phonology fields, add some to API_FIELDS
         # for this test, the local settings file has added these two fields
         # they are visible in the result if they appear in API_FIELDS
         new_gloss.handedness = self.handedness_fieldchoice_1
@@ -368,8 +373,8 @@ class BasicCRUDTests(TestCase):
         # this calculates the data retrieved by get_gloss_data for packages
         # it shows the format/display of the returned gloss fields
         # note that the value of the phonology fields are numerical rather than human readable
-        result = changed_gloss.get_fields_dict(settings.API_FIELDS, 'en')
-        print('test_package_function: settings.API_FIELDS: ', settings.API_FIELDS)
+        result = changed_gloss.get_fields_dict(API_FIELDS, 'en')
+        print('test_package_function: API_FIELDS: ', API_FIELDS)
         print('test_package_function: get_fields_dict: ', result)
 
 #Deprecated?
@@ -385,7 +390,7 @@ class BasicQueryTests(TestCase):
         self.user.save()
         self.userprofile = UserProfile(user=self.user)
         self.userprofile.save()
-        dataset_name = settings.DEFAULT_DATASET
+        dataset_name = DEFAULT_DATASET
         test_dataset = Dataset.objects.get(name=dataset_name)
         self.userprofile.selected_datasets.add(test_dataset)
         self.userprofile.save()
@@ -401,7 +406,7 @@ class BasicQueryTests(TestCase):
         client.login(username='test-user', password='test-user')
 
         #Get a dataset
-        dataset_name = settings.DEFAULT_DATASET
+        dataset_name = DEFAULT_DATASET
 
         # Give the test user permission to change a dataset
         test_dataset = Dataset.objects.get(name=dataset_name)
@@ -500,7 +505,7 @@ class ImportExportTests(TestCase):
     def setUp(self):
 
         # create a new temp dataset with fields fetched from default dataset
-        default_dataset = Dataset.objects.get(acronym=settings.DEFAULT_DATASET_ACRONYM)
+        default_dataset = Dataset.objects.get(acronym=DEFAULT_DATASET_ACRONYM)
         signlanguage = SignLanguage.objects.get(name=default_dataset.signlanguage.name)
         translation_languages = default_dataset.translation_languages.all()
         # the id is computed because datasets exist in the test database and we want an unused one
@@ -509,8 +514,8 @@ class ImportExportTests(TestCase):
         max_used_dataset_id = max(used_dataset_ids)
         # Create a temporary dataset that resembles the default dataset
         new_dataset = Dataset(id=max_used_dataset_id+1,
-                              acronym = settings.TEST_DATASET_ACRONYM,
-                              name=settings.TEST_DATASET_ACRONYM,
+                              acronym =TEST_DATASET_ACRONYM,
+                              name=TEST_DATASET_ACRONYM,
                               default_language=default_dataset.default_language,
                               signlanguage = signlanguage)
         new_dataset.save()
@@ -683,7 +688,7 @@ class ImportExportTests(TestCase):
         test_translation_index = 2
         form_data = {'update_or_create': 'update'}
         for language in self.test_dataset.translation_languages.all():
-            language_name = getattr(language, settings.DEFAULT_LANGUAGE_HEADER_COLUMN['English'])
+            language_name = getattr(language, DEFAULT_LANGUAGE_HEADER_COLUMN['English'])
             form_name = '{}.Lemma ID Gloss ({})'.format(gloss.id, language_name)
             form_data[form_name] = '{}{}_{}'.format(lemma_idgloss_translation_prefix, language.language_code_2char,
                                                     test_translation_index)
@@ -696,7 +701,7 @@ class ImportExportTests(TestCase):
         test_translation_index = 1
         form_data = {'update_or_create': 'update'}
         for language in self.test_dataset.translation_languages.all():
-            language_name = getattr(language, settings.DEFAULT_LANGUAGE_HEADER_COLUMN['English'])
+            language_name = getattr(language, DEFAULT_LANGUAGE_HEADER_COLUMN['English'])
             form_name = '{}.Lemma ID Gloss ({})'.format(gloss.id, language_name)
             form_data[form_name] = '{}{}_{}'.format(lemma_idgloss_translation_prefix, language.language_code_2char,
                                                     test_translation_index)
@@ -715,7 +720,7 @@ class ImportExportTests(TestCase):
                 test_translation_index = 1
             else:
                 test_translation_index = 2
-            language_name = getattr(language, settings.DEFAULT_LANGUAGE_HEADER_COLUMN['English'])
+            language_name = getattr(language, DEFAULT_LANGUAGE_HEADER_COLUMN['English'])
             form_name = '{}.Lemma ID Gloss ({})'.format(gloss.id, language_name)
             form_data[form_name] = '{}{}_{}'.format(lemma_idgloss_translation_prefix, language.language_code_2char,
                                                     test_translation_index)
@@ -738,7 +743,7 @@ class ImportExportTests(TestCase):
                 test_translation_index = 1
             else:
                 test_translation_index = 3
-            language_name = getattr(language, settings.DEFAULT_LANGUAGE_HEADER_COLUMN['English'])
+            language_name = getattr(language, DEFAULT_LANGUAGE_HEADER_COLUMN['English'])
             form_name = '{}.Lemma ID Gloss ({})'.format(gloss.id, language_name)
             form_data[form_name] = '{}{}_{}'.format(lemma_idgloss_translation_prefix, language.language_code_2char,
                                                     test_translation_index)
@@ -854,9 +859,9 @@ class VideoTests(TestCase):
         NAME = 'thisisatemporarytestlemmaidglosstranslation'
 
         # Create the glosses
-        dataset_name = settings.DEFAULT_DATASET
+        dataset_name = DEFAULT_DATASET
         test_dataset = Dataset.objects.get(name=dataset_name)
-        default_language = Language.objects.get(id=settings.DEFAULT_DATASET_LANGUAGE_ID)
+        default_language = Language.objects.get(id=DEFAULT_DATASET_LANGUAGE_ID)
 
         assign_perm('change_dataset', self.user, test_dataset)
         print('User granted permmission to change dataset.')
@@ -893,12 +898,12 @@ class VideoTests(TestCase):
             # Upload the video
             print('Uploading the test video.')
             try:
-                videofile = open(settings.WRITABLE_FOLDER+'test_data/video.mp4', 'rb')
+                videofile = open(WRITABLE_FOLDER+'test_data/video.mp4', 'rb')
                 test_video_file_exists = True
             except (FileNotFoundError, PermissionError):
                 test_video_file_exists = False
                 videofile = ''
-                print('The test video is missing: ', settings.WRITABLE_FOLDER+'test_data/video.mp4')
+                print('The test video is missing: ', WRITABLE_FOLDER+'test_data/video.mp4')
 
             if test_video_file_exists:
                 response = client.post('/video/upload/', {'object_id': new_gloss.pk,
@@ -950,9 +955,9 @@ class VideoTests(TestCase):
         NAME = 'XXtéstlemmä%20~山脉%20'  # %20 is an url encoded space
 
         # Create the glosses
-        dataset_name = settings.DEFAULT_DATASET
+        dataset_name = DEFAULT_DATASET
         test_dataset = Dataset.objects.get(name=dataset_name)
-        default_language = Language.objects.get(id=settings.DEFAULT_DATASET_LANGUAGE_ID)
+        default_language = Language.objects.get(id=DEFAULT_DATASET_LANGUAGE_ID)
 
         assign_perm('change_dataset', self.user, test_dataset)
         print('User granted permmission to change dataset.')
@@ -977,7 +982,7 @@ class VideoTests(TestCase):
 
         video_url = '/dictionary/protected_media/glossvideo/'+test_dataset.acronym+'/'+NAME[0:2]+'/'+NAME+'-'+str(new_gloss.pk)+'.mp4'
 
-        if hasattr(settings, 'ESCAPE_UPLOADED_VIDEO_FILE_PATH') and settings.ESCAPE_UPLOADED_VIDEO_FILE_PATH:
+        if ESCAPE_UPLOADED_VIDEO_FILE_PATH:
             # If the file name is escaped, the url should be escaped twice:
             # the file may contain percent encodings,
             # so in the path the percent should be encoded
@@ -996,12 +1001,12 @@ class VideoTests(TestCase):
 
             # Upload the video
             try:
-                videofile = open(settings.WRITABLE_FOLDER+'test_data/video.mp4', 'rb')
+                videofile = open(WRITABLE_FOLDER+'test_data/video.mp4', 'rb')
                 test_video_file_exists = True
             except (FileNotFoundError, PermissionError):
                 test_video_file_exists = False
                 videofile = ''
-                print('The test video is missing: ', settings.WRITABLE_FOLDER+'test_data/video.mp4')
+                print('The test video is missing: ', WRITABLE_FOLDER+'test_data/video.mp4')
 
             if test_video_file_exists:
                 response = client.post('/video/upload/', {'object_id': new_gloss.pk,
@@ -1058,7 +1063,7 @@ class AjaxTests(TestCase):
         NAME = 'thisisatemporarytestgloss'
 
         #Create the dataset
-        dataset_name = settings.DEFAULT_DATASET
+        dataset_name = DEFAULT_DATASET
         test_dataset = Dataset.objects.get(name=dataset_name)
 
         #Create a lemma
@@ -1104,7 +1109,7 @@ class FrontEndTests(TestCase):
         NAME = 'thisisatemporarytestgloss'
 
         #Create the dataset
-        dataset_name = settings.DEFAULT_DATASET
+        dataset_name = DEFAULT_DATASET
         self.test_dataset = Dataset.objects.get(name=dataset_name)
 
         #Create lemma
@@ -1217,7 +1222,7 @@ class ManageDatasetTests(TestCase):
         ANNOTATION_PREFIX = 'thisisatemporarytestannotation'
 
         # Create the dataset
-        dataset_name = settings.DEFAULT_DATASET
+        dataset_name = DEFAULT_DATASET
         self.test_dataset = Dataset.objects.get(name=dataset_name)
 
         # Create a lemma
@@ -1254,11 +1259,6 @@ class ManageDatasetTests(TestCase):
         Tests whether managing datasets is blocked when not logged in
         :return: 
         """
-
-        # The next bit is to solve the problem that a redirect url to the login page contains PREFIX_URL
-        # while in tests a redirect url without PREFIX_URL is expected. See also issue #505
-        settings.LOGIN_URL = settings.LOGIN_URL[len(settings.PREFIX_URL):]
-
         # Grant view permission
         form_data = {'dataset_acronym': self.test_dataset.acronym, 'username': self.user2.username, 'add_view_perm': 'Grant'}
         response = self.client.get(reverse('admin_dataset_manager'), form_data, follow=True)
@@ -1450,13 +1450,13 @@ class LemmaTests(TestCase):
         self.user.save()
         self.userprofile = UserProfile(user=self.user)
         self.userprofile.save()
-        dataset_name = settings.DEFAULT_DATASET
+        dataset_name = DEFAULT_DATASET
         test_dataset = Dataset.objects.get(name=dataset_name)
         self.userprofile.selected_datasets.add(test_dataset)
         self.userprofile.save()
 
         # Create the glosses
-        dataset_name = settings.DEFAULT_DATASET
+        dataset_name = DEFAULT_DATASET
         test_dataset = Dataset.objects.get(name=dataset_name)
 
         # Create a lemma
@@ -1514,7 +1514,7 @@ class LemmaTests(TestCase):
         client.login(username='test-user', password='test-user')
 
         # Get a dataset
-        dataset_name = settings.DEFAULT_DATASET
+        dataset_name = DEFAULT_DATASET
 
         # Give the test user permission to change a dataset
         test_dataset = Dataset.objects.get(name=dataset_name)
@@ -1594,7 +1594,7 @@ class HandshapeTests(TestCase):
         self.user.save()
         self.userprofile = UserProfile(user=self.user)
         self.userprofile.save()
-        dataset_name = settings.DEFAULT_DATASET
+        dataset_name = DEFAULT_DATASET
         test_dataset = Dataset.objects.get(name=dataset_name)
         self.userprofile.selected_datasets.add(test_dataset)
         self.userprofile.save()
@@ -1640,7 +1640,7 @@ class HandshapeTests(TestCase):
 
         print('HandshapeTests test_create_handshape')
         # set the test dataset
-        dataset_name = settings.DEFAULT_DATASET
+        dataset_name = DEFAULT_DATASET
         test_dataset = Dataset.objects.get(name=dataset_name)
         assign_perm('view_dataset', self.user, test_dataset)
         assign_perm('change_dataset', self.user, test_dataset)
@@ -1664,7 +1664,7 @@ class HandshapeTests(TestCase):
         print('HandshapeTests test_handshape_choices')
 
         # set the test dataset
-        dataset_name = settings.DEFAULT_DATASET
+        dataset_name = DEFAULT_DATASET
         test_dataset = Dataset.objects.get(name=dataset_name)
         assign_perm('view_dataset', self.user, test_dataset)
         assign_perm('change_dataset', self.user, test_dataset)
@@ -1727,7 +1727,7 @@ class HandshapeTests(TestCase):
         # create a gloss with and without handshape choices
 
         # set the test dataset
-        dataset_name = settings.DEFAULT_DATASET
+        dataset_name = DEFAULT_DATASET
         test_dataset = Dataset.objects.get(name=dataset_name)
 
         # Create a lemma
@@ -1748,7 +1748,7 @@ class HandshapeTests(TestCase):
         # now set all the choice fields of the gloss to the first choice of FieldChoice
         # it doesn't matter exactly which one, as long as the same one is used to check existence later
 
-        request = self.factory.get('/'+settings.ADMIN_URL+'/dictionary/handshape/')
+        request = self.factory.get('/'+ADMIN_URL+'/dictionary/handshape/')
         request.user = self.user
 
         # give the test user permission to delete handshapes
@@ -1793,7 +1793,7 @@ class MultipleSelectTests(TestCase):
         self.user.save()
         self.userprofile = UserProfile(user=self.user)
         self.userprofile.save()
-        dataset_name = settings.DEFAULT_DATASET
+        dataset_name = DEFAULT_DATASET
         test_dataset = Dataset.objects.get(name=dataset_name)
         self.userprofile.selected_datasets.add(test_dataset)
         self.userprofile.save()
@@ -1827,7 +1827,7 @@ class MultipleSelectTests(TestCase):
     def test_SemanticField(self):
 
         # Create the glosses
-        dataset_name = settings.DEFAULT_DATASET
+        dataset_name = DEFAULT_DATASET
         test_dataset = Dataset.objects.get(name=dataset_name)
 
         #Create a client and log in
@@ -1907,7 +1907,7 @@ class FieldChoiceTests(TestCase):
         self.user_password = 'test_user'
 
         # set the test dataset
-        self.dataset_name = settings.DEFAULT_DATASET
+        self.dataset_name = DEFAULT_DATASET
         self.test_dataset = Dataset.objects.get(name=self.dataset_name)
 
         self.user.user_permissions.add(Permission.objects.get(name='Can change gloss'))
@@ -1977,7 +1977,7 @@ class FieldChoiceTests(TestCase):
                 else:
                     update_data[name_languagecode] = field_value
 
-            url_of_field_choice_change = '/'+settings.ADMIN_URL + '/dictionary/fieldchoice/'+admin_url_change_suffix_1
+            url_of_field_choice_change = '/'+ADMIN_URL + '/dictionary/fieldchoice/'+admin_url_change_suffix_1
             print('Attempt to change fieldchoice url: ', url_of_field_choice_change)
             print('With data: ', update_data)
 
@@ -2019,7 +2019,7 @@ class FieldChoiceTests(TestCase):
         # create a gloss with and without field choices
 
         # set the test dataset
-        dataset_name = settings.DEFAULT_DATASET
+        dataset_name = DEFAULT_DATASET
         test_dataset = Dataset.objects.get(name=dataset_name)
 
         # Create a lemma
@@ -2040,7 +2040,7 @@ class FieldChoiceTests(TestCase):
         # now set all the choice fields of the gloss to the first choice of FieldChoice
         # it doesn't matter exactly which one, as long as the same one is used to check existence later
 
-        request = self.factory.get('/'+settings.ADMIN_URL + '/dictionary/fieldchoice/')
+        request = self.factory.get('/'+ADMIN_URL + '/dictionary/fieldchoice/')
         request.user = self.user
 
         # give the test user permission to delete field choices
@@ -2090,7 +2090,7 @@ class FieldChoiceTests(TestCase):
         # now set all the choice fields of the gloss to the first choice of FieldChoice
         # it doesn't matter exactly which one, as long as the same one is used to check existence later
 
-        request = self.factory.get('/'+settings.ADMIN_URL + '/dictionary/fieldchoice/')
+        request = self.factory.get('/'+ADMIN_URL + '/dictionary/fieldchoice/')
         request.user = self.user
 
         # give the test user permission to delete field choices
@@ -2153,7 +2153,7 @@ class FieldChoiceTests(TestCase):
         # create a gloss with and without field choices
 
         # set the test dataset
-        dataset_name = settings.DEFAULT_DATASET
+        dataset_name = DEFAULT_DATASET
         test_dataset = Dataset.objects.get(name=dataset_name)
 
         # Create a lemma
@@ -2187,7 +2187,7 @@ class FieldChoiceTests(TestCase):
 
         print('TEST new definition created: ', new_definition.__dict__)
 
-        request = self.factory.get('/'+settings.ADMIN_URL + '/dictionary/fieldchoice/')
+        request = self.factory.get('/'+ADMIN_URL + '/dictionary/fieldchoice/')
         request.user = self.user
 
         # # give the test user permission to delete field choices
@@ -2234,7 +2234,7 @@ class FieldChoiceTests(TestCase):
         # a second gloss is created to be the morpheme of the new morphology definition
 
         # set the test dataset
-        dataset_name = settings.DEFAULT_DATASET
+        dataset_name = DEFAULT_DATASET
         test_dataset = Dataset.objects.get(name=dataset_name)
 
         # Create two lemmas
@@ -2280,7 +2280,7 @@ class FieldChoiceTests(TestCase):
 
         print('TEST new morphology definition created: ', new_morphology_definition.__dict__)
 
-        request = self.factory.get('/'+settings.ADMIN_URL + '/dictionary/fieldchoice/')
+        request = self.factory.get('/'+ADMIN_URL + '/dictionary/fieldchoice/')
         request.user = self.user
 
         # # give the test user permission to delete field choices
@@ -2319,7 +2319,7 @@ class FieldChoiceTests(TestCase):
         # create a gloss with and without field choices
 
         # set the test dataset
-        dataset_name = settings.DEFAULT_DATASET
+        dataset_name = DEFAULT_DATASET
         test_dataset = Dataset.objects.get(name=dataset_name)
 
         # Create a lemma
@@ -2355,7 +2355,7 @@ class FieldChoiceTests(TestCase):
 
         print('TEST new othermedia created: ', new_othermedia.__dict__)
 
-        request = self.factory.get('/'+settings.ADMIN_URL + '/dictionary/fieldchoice/')
+        request = self.factory.get('/'+ADMIN_URL + '/dictionary/fieldchoice/')
         request.user = self.user
 
         # # give the test user permission to delete field choices
@@ -2393,7 +2393,7 @@ class FieldChoiceTests(TestCase):
         # create a gloss with and without field choices
 
         # set the test dataset
-        dataset_name = settings.DEFAULT_DATASET
+        dataset_name = DEFAULT_DATASET
         test_dataset = Dataset.objects.get(name=dataset_name)
 
         # Create a lemma
@@ -2429,7 +2429,7 @@ class FieldChoiceTests(TestCase):
 
         print('TEST new morpheme created: ', new_morpheme.__dict__)
 
-        request = self.factory.get('/'+settings.ADMIN_URL + '/dictionary/fieldchoice/')
+        request = self.factory.get('/'+ADMIN_URL + '/dictionary/fieldchoice/')
         request.user = self.user
 
         # # give the test user permission to delete field choices
@@ -2469,7 +2469,7 @@ class testFrequencyAnalysis(TestCase):
         self.user.save()
         self.userprofile = UserProfile(user=self.user)
         self.userprofile.save()
-        dataset_name = settings.DEFAULT_DATASET
+        dataset_name = DEFAULT_DATASET
         test_dataset = Dataset.objects.get(name=dataset_name)
         self.userprofile.selected_datasets.add(test_dataset)
         self.userprofile.save()
@@ -2502,7 +2502,7 @@ class testFrequencyAnalysis(TestCase):
     def test_analysis_frequency(self):
 
         # set the test dataset
-        dataset_name = settings.DEFAULT_DATASET
+        dataset_name = DEFAULT_DATASET
         test_dataset = Dataset.objects.get(name=dataset_name)
 
         language = Language.objects.get(id=get_default_language_id())
@@ -2589,10 +2589,10 @@ class testFrequencyAnalysis(TestCase):
     def test_frequency_sorting(self):
 
         # set the test dataset
-        dataset_name = settings.DEFAULT_DATASET
+        dataset_name = DEFAULT_DATASET
         test_dataset = Dataset.objects.get(name=dataset_name)
 
-        for language_code in settings.MODELTRANSLATION_LANGUAGES:
+        for language_code in MODELTRANSLATION_LANGUAGES:
             translation.activate(language_code)
 
             frequency_dict = test_dataset.generate_frequency_dict()
@@ -2664,14 +2664,14 @@ class testSettings(TestCase):
         self.user.save()
         self.userprofile = UserProfile(user=self.user)
         self.userprofile.save()
-        dataset_name = settings.DEFAULT_DATASET
+        dataset_name = DEFAULT_DATASET
         test_dataset = Dataset.objects.get(name=dataset_name)
         self.userprofile.selected_datasets.add(test_dataset)
         self.userprofile.save()
 
     def test_Settings(self):
 
-        full_root_path = settings.BASE_DIR + 'signbank' + os.sep + 'settings' + os.sep + 'server_specific'
+        full_root_path = BASE_DIR + 'signbank' + os.sep + 'settings' + os.sep + 'server_specific'
         all_settings = [ f for f in os.listdir(full_root_path) if isfile(join(full_root_path, f))
                                     and f.endswith('.py') and f != '__init__.py' and f != 'server_specific.py']
         print('Checking settings files: ', all_settings)
@@ -2728,8 +2728,8 @@ class testSettings(TestCase):
         # next, the test checks that for fields with choice lists that the field_choice_category is defined
         # and that there exist field choices for it
         # this test is intended to help find potential errors in templates that use choice lists for fields
-        if 'phonology' in settings.FIELDS.keys():
-            phonology_fields = settings.FIELDS['phonology']
+        if 'phonology' in FIELDS.keys():
+            phonology_fields = FIELDS['phonology']
             gloss_fields_names = Gloss.get_field_names()
             print('Testing phonology fields for declaration in Gloss model with field_choice_category in FieldChoice table.')
             for f in phonology_fields:
@@ -2758,8 +2758,8 @@ class testSettings(TestCase):
                     fields_for_this_category = FieldChoice.objects.filter(field__iexact=fc_category)
                     self.assertGreater(len(fields_for_this_category),0)
 
-        if 'semantics' in settings.FIELDS.keys():
-            semantics_fields = settings.FIELDS['semantics']
+        if 'semantics' in FIELDS.keys():
+            semantics_fields = FIELDS['semantics']
             print('Testing semantics fields for declaration in Gloss model with field_choice_category in FieldChoice table.')
             for f in semantics_fields:
                 # make sure all semantics fields are defined in Gloss
@@ -2790,8 +2790,8 @@ class testSettings(TestCase):
                     fields_for_this_category = FieldChoice.objects.filter(field__iexact=fc_category, machine_value__gt=1)
                     self.assertGreater(len(fields_for_this_category),0)
 
-        if 'handshape' in settings.FIELDS.keys():
-            handshape_fields = settings.FIELDS['handshape']
+        if 'handshape' in FIELDS.keys():
+            handshape_fields = FIELDS['handshape']
             print('Testing handshape fields for declaration in Handshape model with field_choice_category in FieldChoice table.')
             for f in handshape_fields:
                 # make sure all handshape fields are defined in Gloss
@@ -2847,7 +2847,7 @@ class RevisionHistoryTests(TestCase):
         self.user.save()
         self.userprofile = UserProfile(user=self.user)
         self.userprofile.save()
-        dataset_name = settings.DEFAULT_DATASET
+        dataset_name = DEFAULT_DATASET
         test_dataset = Dataset.objects.get(name=dataset_name)
         self.userprofile.selected_datasets.add(test_dataset)
         self.userprofile.save()
@@ -2855,7 +2855,7 @@ class RevisionHistoryTests(TestCase):
     def test_field_types(self):
 
         # Create a new lemma in the test dataset
-        dataset_name = settings.DEFAULT_DATASET
+        dataset_name = DEFAULT_DATASET
         test_dataset = Dataset.objects.get(name=dataset_name)
         new_lemma = LemmaIdgloss(dataset=test_dataset)
         new_lemma.save()
@@ -2872,7 +2872,7 @@ class RevisionHistoryTests(TestCase):
         new_gloss.save()
 
         gloss_update_phonology_data = []
-        gloss_fields = settings.FIELDS['phonology']+settings.FIELDS['semantics']+settings.FIELDS['main']+['inWeb', 'isNew', 'excludeFromEcv']
+        gloss_fields = FIELDS['phonology']+FIELDS['semantics']+FIELDS['main']+['inWeb', 'isNew', 'excludeFromEcv']
 
         mapped_categories = []
         for f in gloss_fields:
@@ -2949,11 +2949,11 @@ class RevisionHistoryTests(TestCase):
                 new_machine_value_string = f + '_string'
                 gloss_update_phonology_data.append({'id' : f, 'value' : new_machine_value_string})
                 gloss_update_phonology_keys.append(f)
-            elif f in settings.HANDSHAPE_ETYMOLOGY_FIELDS:
+            elif f in HANDSHAPE_ETYMOLOGY_FIELDS:
                 new_machine_value_string = 'true'
                 gloss_update_phonology_data.append({'id' : f, 'value' : new_machine_value_string})
                 gloss_update_phonology_keys.append(f)
-            elif f in settings.HANDEDNESS_ARTICULATION_FIELDS:
+            elif f in HANDEDNESS_ARTICULATION_FIELDS:
                 new_machine_value_string = '2'
                 gloss_update_phonology_data.append({'id': f, 'value': new_machine_value_string})
                 gloss_update_phonology_keys.append(f)
@@ -2989,12 +2989,12 @@ class Corpus_Tests(TestCase):
         self.user.save()
         self.userprofile = UserProfile(user=self.user)
         self.userprofile.save()
-        dataset_name = settings.DEFAULT_DATASET
+        dataset_name = DEFAULT_DATASET
         test_dataset = Dataset.objects.get(name=dataset_name)
         self.userprofile.selected_datasets.add(test_dataset)
         self.userprofile.save()
 
-        dataset_name = settings.DEFAULT_DATASET
+        dataset_name = DEFAULT_DATASET
         self.test_dataset = Dataset.objects.get(name=dataset_name)
         language = self.test_dataset.default_language
 
@@ -3082,7 +3082,7 @@ class Corpus_Tests(TestCase):
         # this imports the Speaker data to the test database
         dataset_acronym = self.test_dataset.acronym
 
-        metadata_location = settings.WRITABLE_FOLDER + settings.DATASET_METADATA_DIRECTORY + os.sep + dataset_acronym + '_metadata.csv'
+        metadata_location = WRITABLE_FOLDER + DATASET_METADATA_DIRECTORY + os.sep + dataset_acronym + '_metadata.csv'
 
         dataset_csv_folder_exists = os.path.exists(metadata_location)
         if not dataset_csv_folder_exists:
@@ -3122,7 +3122,7 @@ class Corpus_Tests(TestCase):
         # this imports the Speaker data to the test database
         dataset_acronym = self.test_dataset.acronym
 
-        metadata_location = settings.WRITABLE_FOLDER + settings.DATASET_METADATA_DIRECTORY + os.sep + dataset_acronym + '_metadata.csv'
+        metadata_location = WRITABLE_FOLDER + DATASET_METADATA_DIRECTORY + os.sep + dataset_acronym + '_metadata.csv'
 
         dataset_csv_folder_exists = os.path.exists(metadata_location)
         if not dataset_csv_folder_exists:
@@ -3137,7 +3137,7 @@ class Corpus_Tests(TestCase):
         # There are initially no documents
         self.assertEqual(count_known_documents0, 0)
 
-        dataset_eaf_folder = os.path.join(settings.WRITABLE_FOLDER, settings.TEST_DATA_DIRECTORY, settings.DATASET_EAF_DIRECTORY,dataset_acronym)
+        dataset_eaf_folder = os.path.join(WRITABLE_FOLDER, TEST_DATA_DIRECTORY, DATASET_EAF_DIRECTORY,dataset_acronym)
 
         dataset_eaf_folder_exists = os.path.exists(dataset_eaf_folder)
         if not dataset_eaf_folder_exists:
@@ -3310,7 +3310,7 @@ class MinimalPairsTests(TestCase):
         self.user.save()
         self.userprofile = UserProfile(user=self.user)
         self.userprofile.save()
-        dataset_name = settings.DEFAULT_DATASET
+        dataset_name = DEFAULT_DATASET
         test_dataset = Dataset.objects.get(name=dataset_name)
         self.userprofile.selected_datasets.add(test_dataset)
         self.userprofile.save()
@@ -3343,7 +3343,7 @@ class MinimalPairsTests(TestCase):
     def test_analysis_minimalpairs(self):
 
         # set the test dataset
-        dataset_name = settings.DEFAULT_DATASET
+        dataset_name = DEFAULT_DATASET
         test_dataset = Dataset.objects.get(name=dataset_name)
 
         # Create 10 lemmas for use in testing
@@ -3466,7 +3466,7 @@ class MinimalPairsTests(TestCase):
     def test_emptyvalues_minimalpairs(self):
 
         # set the test dataset
-        dataset_name = settings.DEFAULT_DATASET
+        dataset_name = DEFAULT_DATASET
         test_dataset = Dataset.objects.get(name=dataset_name)
 
         # Create 10 lemmas for use in testing
@@ -3595,12 +3595,12 @@ class GlossApiGetSignNameAndMediaInfoTests(TestCase):
         self.gloss_name = 'test_gloss_api'
         self.gloss_id = 0
         self.video_url = 'test_video_url_in_gloss_api_tests'
-        self.file_path = path.join(settings.WRITABLE_FOLDER, self.video_url)
+        self.file_path = path.join(WRITABLE_FOLDER, self.video_url)
 
         self.factory = RequestFactory()
 
         # Use a default dataset
-        dataset_name = settings.DEFAULT_DATASET
+        dataset_name = DEFAULT_DATASET
         test_dataset = Dataset.objects.get(name=dataset_name)
         self.dataset = test_dataset.id
 
@@ -3725,7 +3725,7 @@ class SensesCRUDTests(TestCase):
         self.user.save()
         self.userprofile = UserProfile(user=self.user)
         self.userprofile.save()
-        dataset_name = settings.DEFAULT_DATASET
+        dataset_name = DEFAULT_DATASET
         test_dataset = Dataset.objects.get(name=dataset_name)
         self.userprofile.selected_datasets.add(test_dataset)
         self.userprofile.save()
@@ -3735,7 +3735,7 @@ class SensesCRUDTests(TestCase):
         client = Client()
         logged_in = client.login(username='test-user', password='test-user')
         # Get the test dataset
-        dataset_name = settings.DEFAULT_DATASET
+        dataset_name = DEFAULT_DATASET
         test_dataset = Dataset.objects.get(name=dataset_name)
         assign_perm('change_dataset', self.user, test_dataset)
         assign_perm('dictionary.add_gloss', self.user)
@@ -3898,7 +3898,7 @@ class SensesCRUDTests(TestCase):
         client = Client()
         logged_in = client.login(username='test-user', password='test-user')
         # Get the test dataset
-        dataset_name = settings.DEFAULT_DATASET
+        dataset_name = DEFAULT_DATASET
         test_dataset = Dataset.objects.get(name=dataset_name)
         assign_perm('change_dataset', self.user, test_dataset)
         assign_perm('dictionary.add_gloss', self.user)
@@ -3989,7 +3989,7 @@ class SensesCRUDTests(TestCase):
         client = Client()
         logged_in = client.login(username='test-user', password='test-user')
         # Get the test dataset
-        dataset_name = settings.DEFAULT_DATASET
+        dataset_name = DEFAULT_DATASET
         test_dataset = Dataset.objects.get(name=dataset_name)
         assign_perm('change_dataset', self.user, test_dataset)
         assign_perm('dictionary.add_gloss', self.user)
@@ -4043,7 +4043,7 @@ class SensesCRUDTests(TestCase):
 
 def generate_file():
     try:
-        videofile = open(settings.WRITABLE_FOLDER + 'test_data/video.mp4', 'rb')
+        videofile = open(WRITABLE_FOLDER + 'test_data/video.mp4', 'rb')
         test_video_file_exists = True
     except (FileNotFoundError, PermissionError):
         test_video_file_exists = False
