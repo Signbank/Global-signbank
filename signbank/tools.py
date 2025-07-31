@@ -510,7 +510,7 @@ def compare_valuedict_to_gloss(valuedict, gloss_id, my_datasets, nl,
                 if new_human_value in ['None', '', '-']:
                     continue
 
-                current_dialects_string = str(', '.join([dia.signlanguage.name + '/' + str(dia.name)
+                current_dialects_string = str(', '.join([f'{dia.signlanguage.name}/{dia.name}'
                                                          for dia in gloss.dialect.all()]))
 
                 new_human_value_list = [v.strip() for v in new_human_value.split(',')]
@@ -1250,7 +1250,7 @@ def check_existence_notes(gloss, values, note_type_error, note_tuple_error, defa
 
     new_notes_display = []
     for (role, published, count, text) in sorted_new_human_values:
-        new_note = role + ': (' + published + ',' + count + ',' + text + ')'
+        new_note = f'{role}: ({published},{count},{text})'
         new_notes_display.append(new_note)
     sorted_new_notes_display = ', '.join(new_notes_display)
     return new_notes_display, sorted_new_notes_display, new_note_errors, note_type_error, note_tuple_error

@@ -293,7 +293,7 @@ def video_file_path(gloss):
     two_letter_dir = idgloss[:2]
     if len(two_letter_dir) == 1:
         two_letter_dir += '-'
-    filename = idgloss + '-' + str(gloss.id) + ".mp4"
+    filename = f'{idgloss}-{gloss.id}.mp4'
     path = os.path.join(video_dir, dataset_dir, two_letter_dir, filename)
     if ESCAPE_UPLOADED_VIDEO_FILE_PATH:
         path = escape_uri_path(path)
@@ -779,7 +779,7 @@ def import_csv_create(request):
             dataset = glosses_to_create[row]['dataset']
 
             try:
-                dataset_id = Dataset.objects.get(acronym=dataset)
+                dataset_object = Dataset.objects.get(acronym=dataset)
             except ObjectDoesNotExist:
                 # this is an error, this should have already been caught
                 e1 = 'Dataset not found: ' + dataset
@@ -787,7 +787,7 @@ def import_csv_create(request):
                 continue
 
             lemmaidglosstranslations = {}
-            for language in dataset_id.translation_languages.all():
+            for language in dataset_object.translation_languages.all():
                 lemma_id_gloss = glosses_to_create[row]['lemma_id_gloss_' + language.language_code_2char]
                 if lemma_id_gloss:
                     lemmaidglosstranslations[language] = lemma_id_gloss
@@ -795,7 +795,7 @@ def import_csv_create(request):
             existing_lemmas = []
             for language, term in lemmaidglosstranslations.items():
                 try:
-                    existing_lemmas.append(LemmaIdglossTranslation.objects.get(lemma__dataset=dataset_id,
+                    existing_lemmas.append(LemmaIdglossTranslation.objects.get(lemma__dataset=dataset_object,
                                                                                language=language,
                                                                                text=term).lemma)
                 except ObjectDoesNotExist as e:
@@ -807,7 +807,7 @@ def import_csv_create(request):
                 lemma_for_gloss = existing_lemmas[0]
             elif len(existing_lemmas) == 0:
                 with atomic():
-                    lemma_for_gloss = LemmaIdgloss(dataset=dataset_id)
+                    lemma_for_gloss = LemmaIdgloss(dataset=dataset_object)
                     lemma_for_gloss.save()
                     for language, term in lemmaidglosstranslations.items():
                         new_lemmaidglosstranslation = LemmaIdglossTranslation(lemma=lemma_for_gloss,
@@ -815,9 +815,9 @@ def import_csv_create(request):
                         new_lemmaidglosstranslation.save()
             else:
                 # This case should not happen, it should have been caught in stage 1
-                e1 = 'To create glosses in dataset ' + dataset_id.acronym + \
-                     ', the combination of Lemma ID Gloss translations should either refer ' \
-                     'to an existing Lemma ID Gloss or make up a completely new Lemma ID gloss.'
+                e1 = gettext('To create glosses in dataset {acronym}, '
+                             'the combination of Lemma ID Gloss translations should either refer '
+                             'to an existing Lemma ID Gloss or make up a completely new Lemma ID gloss.').format(acronym=dataset_object.acronym)
                 error.append(e1)
                 continue
 
@@ -1774,7 +1774,7 @@ def save_chosen_still_for_gloss(request, pk):
     idgloss = gloss.idgloss
     two_char_folder = get_two_letter_dir(idgloss)
 
-    vfile_name = idgloss + '-' + str(gloss.id) + '.png'
+    vfile_name = f'{idgloss}-{gloss.id}.png'
     still_goal_location = os.path.join(WRITABLE_FOLDER, GLOSS_IMAGE_DIRECTORY, dataset_folder, two_char_folder, vfile_name)
     try:
         if os.path.exists(still_goal_location):
@@ -1953,7 +1953,7 @@ def add_handshape_image(request):
 
             # construct a filename for the image, use sn
             # if present, otherwise use idgloss+gloss id
-            imagefile.name = "handshape_" + str(handshape.machine_value) + extension
+            imagefile.name = f'handshape_{handshape.machine_value}{extension}'
 
             redirect_url = form.cleaned_data['redirect']
 
@@ -2347,7 +2347,7 @@ def show_glosses_with_no_lemma(request):
     for dummy in dummy_lemmas:
         dummy_translations = [t.language.name for t in dummy.lemmaidglosstranslation_set.all()]
         select_string = ', '.join(dummy_translations)
-        lemma_choices.append((dummy, dummy.dataset.acronym + ': ' + select_string))
+        lemma_choices.append((dummy, f'{dummy.dataset.acronym}: {select_string}'))
 
     return render(request, "dictionary/glosses_with_no_lemma.html",
                   {'dataset_languages': dataset_languages,
@@ -2866,7 +2866,7 @@ def import_csv_create_sentences(request):
                 gloss = Gloss.objects.get(id=int(gloss_id), archived=False)
             except ObjectDoesNotExist:
                 # this is an error, this should have already been caught
-                e1 = 'Gloss not found: ' + gloss_id
+                e1 = f'Gloss not found: {gloss_id}'
                 error.append(e1)
                 continue
 
@@ -2876,7 +2876,7 @@ def import_csv_create_sentences(request):
                 dataset = Dataset.objects.get(acronym=dataset_acronym)
             except ObjectDoesNotExist:
                 # this is an error, this should have already been caught
-                e1 = 'Dataset not found: ' + dataset_acronym
+                e1 = f'Dataset not found: {dataset_acronym}'
                 error.append(e1)
                 continue
 
