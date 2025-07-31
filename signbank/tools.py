@@ -11,6 +11,8 @@ import datetime as DT
 from datetime import date
 
 from django.db import models
+from django.db.models.functions import Lower
+from collections import Counter
 from django.utils.translation import override, activate, gettext
 from django.views.decorators.csrf import csrf_exempt
 from django.utils.dateformat import format
@@ -2360,3 +2362,73 @@ def get_checksum_for_path(file_path):
             return file_hash.hexdigest()
     except FileNotFoundError:
         return None
+
+
+def get_lemma_translation_violations(dataset):
+    # for use in a command to check all the lemma's of a dataset for constraint violations
+    # the "none" case is legacy data, so not necessarily a constraint violation, but they cannot be empty if updated
+    results = {dataset: {}}
+    dataset_lemmas = dataset.lemmaidgloss_set.all()
+    for language in dataset.translation_languages.all():
+        results[dataset][language] = {
+            'none': [],
+            'multiple': [],
+            'empty': []
+        }
+    for lemma in dataset_lemmas:
+        lemma_translation_objects = lemma.lemmaidglosstranslation_set.all()
+        for language in dataset.translation_languages.all():
+            if lemma_translation_objects.filter(language=language).count() > 1:
+                results[dataset][language]['multiple'].append(lemma)
+            elif lemma_translation_objects.filter(language=language).count() == 0:
+                results[dataset][language]['none'].append(lemma)
+            elif lemma_translation_objects.filter(language=language, text='').count() > 0:
+                results[dataset][language]['empty'].append(lemma)
+    return results
+
+
+def copy_missing_lemmaidglosstranslation_from_annotationidglosstranslation(lemma):
+
+    duplicatelemmas = find_duplicate_lemmas(lemma)
+    if duplicatelemmas:
+        return
+    lemma_group_glossset = Gloss.objects.filter(lemma=lemma)
+    if lemma_group_glossset.count() != 1:
+        return
+    dataset_languages = lemma.dataset.translation_languages.all()
+    lemma_translation_objects = lemma.lemmaidglosstranslation_set.all()
+    if dataset_languages.count() == lemma_translation_objects.count():
+        return
+    gloss_translations = lemma_group_glossset.first().annotationidglosstranslation_set.all()
+    for language in dataset_languages:
+        lemma_translation_for_language = lemma_translation_objects.filter(language=language).first()
+        if lemma_translation_for_language:
+            # the lemma already has a translation for this language
+            continue
+        gloss_translation_for_language = gloss_translations.filter(language=language).first()
+        if not gloss_translation_for_language:
+            # there is no translation for this language from the (unique) gloss of this lemma
+            continue
+        # copy the lemma translation for this language from the (unique) gloss of this lemma
+        new_lemma_translation = LemmaIdglossTranslation(lemma=lemma, language=language,
+                                                        text=gloss_translation_for_language.text)
+        new_lemma_translation.save()
+    return
+
+
+def find_duplicate_lemmas(lemma):
+    # this finds other lemmas in the same dataset with duplicates of the translations of this lemma
+    # it returns a list of unique lemma ids.
+    if lemma.dataset is None:
+        return []
+    duplicate_to_me = []
+    for translation in lemma.lemmaidglosstranslation_set.all():
+
+        duplicate_translations = LemmaIdglossTranslation.objects.filter(language=translation.language,
+                                                                        text__iexact=translation.text,
+                                                                        lemma__dataset=lemma.dataset).exclude(
+            lemma=lemma)
+        for duplicate_translation in duplicate_translations:
+            duplicate_to_me.append(duplicate_translation.lemma.id)
+    duplicate_lemma = list(set(duplicate_to_me))
+    return duplicate_lemma

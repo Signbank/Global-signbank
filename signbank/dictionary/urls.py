@@ -299,7 +299,10 @@ urlpatterns = [
     re_path(r'^lemma/delete/(?P<pk>\d+)', permission_required('dictionary.delete_lemmaidgloss')(LemmaDeleteView.as_view()), name='delete_lemma'),
     re_path(r'lemma/add/(?P<glossid>\d+)$', signbank.dictionary.adminviews.create_lemma_for_gloss, name='create_lemma_gloss'),
     re_path(r'lemma/update/(?P<pk>\d+)$', permission_required('dictionary.change_lemmaidgloss')(LemmaUpdateView.as_view()), name='change_lemma'),
+    re_path(r'lemma/updatetranslations/(?P<lemmaid>\d+)$', signbank.dictionary.update.update_lemma_idgloss, name='update_lemma'),
     re_path(r'^annotatedsentence/(?P<pk>\d+)', AnnotatedSentenceDetailView.as_view(), name='admin_annotated_sentence_view'),
+    re_path(r'^lemma/copymissinglanguage/(?P<lemmaid>\d+)/$',
+            signbank.dictionary.update.copy_missing_language_lemma_idgloss),
 
     re_path(r'^keywords/$', KeywordListView.as_view(), name='admin_keyword_list'),
 

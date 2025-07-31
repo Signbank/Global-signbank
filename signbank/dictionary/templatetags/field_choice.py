@@ -50,3 +50,7 @@ def get_gloss_field(gloss, field):
         return field_value.name
     else:
         return '-'
+
+@register.filter(name="startswith")
+def startswith(value, arg):
+    return value.startswith(arg)
