@@ -60,8 +60,8 @@ from signbank.dictionary.forms import (RelationForm, VariantsForm, RelationToFor
 from signbank.dictionary.translate_choice_list import machine_value_to_translated_human_value
 from signbank.dictionary.context_data import get_selected_datasets
 
-from signbank.tools import gloss_from_identifier, get_default_annotationidglosstranslation, \
-    copy_missing_lemmaidglosstranslation_from_annotationidglosstranslation
+from signbank.tools import (gloss_from_identifier, get_default_annotationidglosstranslation,
+    copy_missing_lemmaidglosstranslation_from_annotationidglosstranslation)
 from signbank.frequency import document_identifiers_from_paths, documents_paths_dictionary
 from signbank.dictionary.update_senses_mapping import (mapping_edit_keywords, mapping_group_keywords,
                                                        mapping_add_keyword,
@@ -1200,8 +1200,8 @@ def update_gloss(request, glossid):
                              time=DT.datetime.now(tz=get_current_timezone()))
     revision.save()
     # The machine_value (value) representation is also returned to accommodate Hyperlinks to Handshapes in gloss_edit.js
-    return HttpResponse(str(original_value) + '\t' + str(newvalue) + '\t' + str(value) + '\t' + category_value
-                        + '\t' + str(lemma_gloss_group) + '\t' + input_value, {'content-type': 'text/plain'})
+    results = [str(original_value), str(newvalue), str(value), category_value, str(lemma_gloss_group), input_value]
+    return HttpResponse('\t'.join(results), {'content-type': 'text/plain'})
 
 
 def update_keywords(gloss, field, value):
@@ -2180,9 +2180,9 @@ def update_handshape(request, handshapeid):
     else:
         category_value = 'fieldChoice'
 
-    return HttpResponse(
-        str(original_value) + '\t' + str(newvalue) + '\t' + str(category_value) + '\t' + str(newPattern),
-        {'content-type': 'text/plain'})
+    results = [str(original_value), str(newvalue), str(category_value), str(newPattern)]
+
+    return HttpResponse('\t'.join(results),{'content-type': 'text/plain'})
 
 
 def add_annotated_media(request, glossid):
@@ -2847,8 +2847,8 @@ def update_morpheme(request, morphemeid):
             morpheme.__setattr__(field, value)
             morpheme.save()
 
-    return HttpResponse(str(original_value) + '\t' + str(newvalue) + '\t' + str(value) + '\t' + category_value
-                        + '\t' + str(lemma_gloss_group) + '\t' + input_value, {'content-type': 'text/plain'})
+    results = [str(original_value), str(newvalue), str(value), category_value, str(lemma_gloss_group), input_value]
+    return HttpResponse('\t'.join(results), {'content-type': 'text/plain'})
 
 
 def update_morpheme_definition(gloss, field, value):
@@ -2871,9 +2871,9 @@ def update_morpheme_definition(gloss, field, value):
         original_value = getattr(definition, 'role')
         definition.__setattr__('role', value)
         definition.save()
-        return HttpResponse(
-            str(original_value) + '\t' + str(newvalue) + '\t' + str(value) + str('\t') + str(category_value),
-            {'content-type': 'text/plain'})
+        results = [str(original_value), str(newvalue), str(value), str(category_value)]
+
+        return HttpResponse('\t'.join(results), {'content-type': 'text/plain'})
     else:
         return HttpResponseBadRequest("Unknown form field '%s'" % field, {'content-type': 'text/plain'})
 
@@ -2899,9 +2899,8 @@ def update_blend_definition(gloss, field, value):
         original_value = getattr(definition, 'role')
         definition.__setattr__('role', value)
         definition.save()
-        return HttpResponse(
-            str(original_value) + '\t' + str(newvalue) + '\t' + str(value) + str('\t') + str(category_value),
-            {'content-type': 'text/plain'})
+        results = [str(original_value), str(newvalue), str(value), str(category_value)]
+        return HttpResponse('\t'.join(results), {'content-type': 'text/plain'})
     else:
         return HttpResponseBadRequest("Unknown form field '%s'" % field, {'content-type': 'text/plain'})
 
@@ -3150,84 +3149,38 @@ def update_dataset(request, datasetid):
 
     field = request.POST.get('id', '')
     value = request.POST.get('value', '')
-    original_value = ''
 
-    if field == 'description':
-        original_value = getattr(dataset,field)
+    if field in ['description', 'copyright', 'reference', 'conditions_of_use', 'acronym']:
+        original_value = getattr(dataset, field)
+        value = value.strip()
         setattr(dataset, field, value)
         dataset.save()
-        return HttpResponse(str(original_value) + str('\t') + str(value), {'content-type': 'text/plain'})
-    elif field == 'copyright':
+        results = [original_value, value]
+        return HttpResponse('\t'.join(results), {'content-type': 'text/plain'})
+    elif field in ['is_public', 'use_provenance']:
         original_value = getattr(dataset, field)
-        setattr(dataset, field, value)
+        setattr(dataset, field, value == 'True')
         dataset.save()
-        return HttpResponse(str(original_value) + str('\t') + str(value), {'content-type': 'text/plain'})
-    elif field == 'reference':
-        original_value = getattr(dataset, field)
-        setattr(dataset, field, value)
-        dataset.save()
-        return HttpResponse(str(original_value) + str('\t') + str(value), {'content-type': 'text/plain'})
-    elif field == 'conditions_of_use':
-        original_value = getattr(dataset, field)
-        setattr(dataset, field, value)
-        dataset.save()
-        return HttpResponse(str(original_value) + str('\t') + str(value), {'content-type': 'text/plain'})
-    elif field == 'acronym':
-        original_value = getattr(dataset, field)
-        setattr(dataset, field, value)
-        dataset.save()
-        return HttpResponse(str(original_value) + str('\t') + str(value), {'content-type': 'text/plain'})
-    elif field == 'is_public':
-        original_value = getattr(dataset, field)
-        dataset.is_public = value == 'True'
-        dataset.save()
-        if dataset.is_public:
-            newvalue = True
-        else:
-            newvalue = False
-        return HttpResponse(str(original_value) + str('\t') + str(newvalue), {'content-type': 'text/plain'})
-    elif field == 'use_provenance':
-        original_value = getattr(dataset, field)
-        dataset.use_provenance = value == 'True'
-        dataset.save()
-        if dataset.use_provenance:
-            newvalue = True
-        else:
-            newvalue = False
-        return HttpResponse(str(original_value) + str('\t') + str(newvalue), {'content-type': 'text/plain'})
+        results = [str(original_value), value]
+        return HttpResponse('\t'.join(results), {'content-type': 'text/plain'})
     elif field == 'add_owner':
         update_owner(dataset, field, value)
     elif field == 'default_language':
         original_value = getattr(dataset, field)
-        # variable original_value is used for feedback to the interface
         original_value = original_value.name if original_value else '-'
-        if value == '-':
-            # this option is not offered by the interface, value must be one of the translation languages (not empty '-')
-            # this code is here if we want to user to be able to "unset" the default language in the interface
-            setattr(dataset, field, None)
+        try:
+            new_default_language = Language.objects.get(name=value)
+            setattr(dataset, field, new_default_language)
             dataset.save()
-        else:
-            try:
-                new_default_language = Language.objects.get(name=value)
-                setattr(dataset, field, new_default_language)
-                dataset.save()
-            except ObjectDoesNotExist:
-                value = original_value
-        return HttpResponse(str(original_value) + str('\t') + str(value), {'content-type': 'text/plain'})
-    else:
+        except ObjectDoesNotExist:
+            # ignore input value since it does not exist
+            value = original_value
+        results = [original_value, value]
+        return HttpResponse('\t'.join(results), {'content-type': 'text/plain'})
+    elif field not in Dataset.get_field_names():
+        return HttpResponseBadRequest("Unknown field", {'content-type': 'text/plain'})
 
-        if field not in Dataset.get_field_names():
-            return HttpResponseBadRequest("Unknown field", {'content-type': 'text/plain'})
-
-        value = value.strip()
-        original_value = getattr(dataset,field)
-
-    #This is because you cannot concat none to a string in py3
-    if original_value is None:
-        original_value = ''
-
-    # The machine_value (value) representation is also returned to accommodate Hyperlinks to Handshapes in gloss_edit.js
-    return HttpResponse(str(original_value) + str('\t') + str(value), {'content-type': 'text/plain'})
+    return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
 
 
 def update_dataset_prominent_media(request, datasetid):
