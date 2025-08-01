@@ -1145,8 +1145,8 @@ class GlossDetailView(DetailView):
             return show_warning(request, translated_message, selected_datasets)
 
         if dataset_of_requested_gloss not in selected_datasets:
-            translated_message = _('The gloss you are trying to view is not in your selected datasets.')
-            translated_message2 = _(' It is in dataset ') + dataset_of_requested_gloss.acronym
+            translated_message = _('The gloss you are trying to view is not in your selected datasets. ')
+            translated_message2 = _('It is in dataset {dataset}').format(dataset=dataset_of_requested_gloss.acronym)
             return show_warning(request, translated_message + translated_message2, selected_datasets)
 
         if self.public:
@@ -1156,8 +1156,8 @@ class GlossDetailView(DetailView):
                                                           Dataset, accept_global_perms=True, any_perm=True)
 
         if dataset_of_requested_gloss not in datasets_user_can_view:
-            translated_message = _('The gloss you are trying to view is not in a dataset you can view.')
-            translated_message2 = _(' It is in dataset ') + dataset_of_requested_gloss.acronym
+            translated_message = _('The gloss you are trying to view is not in a dataset you can view. ')
+            translated_message2 = _('It is in dataset {dataset}').format(dataset=dataset_of_requested_gloss.acronym)
             return show_warning(request, translated_message + translated_message2, selected_datasets)
 
         senses_consistent = consistent_senses(self.object, include_translations=True,
@@ -1667,7 +1667,7 @@ class GlossDetailView(DetailView):
 
         self.request.session['last_used_dataset'] = dataset.acronym
 
-        success_message = _('Gloss moved to dataset ') + dataset.acronym
+        success_message = _('Gloss moved to dataset {dataset}').format(dataset=dataset.acronym)
         messages.add_message(self.request, messages.INFO, success_message)
 
         return HttpResponseRedirect(PREFIX_URL + '/dictionary/gloss/'+str(gl.id))
@@ -1706,8 +1706,8 @@ class GlossVideosView(DetailView):
                                                       Dataset, accept_global_perms=True, any_perm=True)
 
         if dataset_of_requested_gloss not in selected_datasets:
-            translated_message = _('The gloss you are trying to view is not in your selected datasets.')
-            translated_message2 = _(' It is in dataset ') + dataset_of_requested_gloss.acronym
+            translated_message = _('The gloss you are trying to view is not in your selected datasets. ')
+            translated_message2 = _('It is in dataset {dataset}').format(dataset=dataset_of_requested_gloss.acronym)
             return show_warning(request, translated_message + translated_message2, selected_datasets)
 
         if dataset_of_requested_gloss not in datasets_user_can_view:
@@ -1818,8 +1818,8 @@ class GlossRelationsDetailView(DetailView):
                                                       Dataset, accept_global_perms=True, any_perm=True)
 
         if dataset_of_requested_gloss not in selected_datasets:
-            translated_message = _('The gloss you are trying to view is not in your selected datasets.')
-            translated_message2 = _(' It is in dataset ') + dataset_of_requested_gloss.acronym
+            translated_message = _('The gloss you are trying to view is not in your selected datasets. ')
+            translated_message2 = _('It is in dataset {dataset}').format(dataset=dataset_of_requested_gloss.acronym)
             return show_warning(request, translated_message + translated_message2, selected_datasets)
 
         if dataset_of_requested_gloss not in datasets_user_can_view:
@@ -2971,7 +2971,9 @@ class SearchHistoryView(ListView):
             # this is a safety measure
             for lang in languages:
                 if lang not in dataset_languages:
-                    messages.add_message(self.request, messages.ERROR, _('Language '+lang.name+' is missing from the selected datasets.'))
+                    feedback_message = (gettext('Language {language} is missing from the selected datasets.')
+                                        .format(language=lang.name))
+                    messages.add_message(self.request, messages.ERROR, feedback_message)
                     return HttpResponseRedirect(PREFIX_URL + '/analysis/search_history/')
 
             return self.render_to_run_query(context, queryid)
@@ -3155,8 +3157,8 @@ class GlossFrequencyView(DetailView):
                                                       Dataset, accept_global_perms=True, any_perm=True)
 
         if dataset_of_requested_gloss not in selected_datasets:
-            translated_message = _('The gloss you are trying to view is not in your selected datasets.')
-            translated_message2 = _(' It is in dataset ') + dataset_of_requested_gloss.acronym
+            translated_message = _('The gloss you are trying to view is not in your selected datasets. ')
+            translated_message2 = _('It is in dataset {dataset}').format(dataset=dataset_of_requested_gloss.acronym)
             return show_warning(request, translated_message + translated_message2, selected_datasets)
 
         if dataset_of_requested_gloss not in datasets_user_can_view:
@@ -4090,16 +4092,16 @@ class DatasetManagerView(ListView):
                 dataset_object.default_language = language
                 dataset_object.save()
                 messages.add_message(self.request, messages.INFO,
-                                     _('The default language of {} is set to {}.'
-                                      .format(dataset_object.acronym, language.name)))
+                                     gettext('The default language of {acronym} is set to {language}.'
+                                             .format(acronym=dataset_object.acronym, language=language.name)))
             else:
                 messages.add_message(self.request, messages.INFO,
-                                     _('{} is not in the set of languages of dataset {}.'
-                                      .format(language.name, dataset_object.acronym)))
+                                     gettext('{language} is not in the set of languages of dataset {acronym}.'
+                                             .format(language=language.name, acronym=dataset_object.acronym)))
         except (ObjectDoesNotExist, KeyError):
             messages.add_message(self.request, messages.ERROR,
-                                 _('Something went wrong setting the default language for '
-                                  + dataset_object.acronym))
+                                 gettext('Something went wrong setting the default language for {acronym}.'
+                                         .format(acronym=dataset_object.acronym)))
         return HttpResponseRedirect(reverse('admin_dataset_manager'))
 
     def render_to_add_user_response(self, context):
@@ -5156,8 +5158,8 @@ class MorphemeDetailView(DetailView):
                                                       Dataset, accept_global_perms=False, any_perm=True)
 
         if dataset_of_requested_morpheme not in selected_datasets:
-            translated_message = _('The morpheme you are trying to view is not in your selected datasets.')
-            translated_message2 = _(' It is in dataset ') + dataset_of_requested_morpheme.acronym
+            translated_message = _('The morpheme you are trying to view is not in your selected datasets. ')
+            translated_message2 = _('It is in dataset {dataset}.').format(dataset=dataset_of_requested_morpheme.acronym)
             return show_warning(request, translated_message + translated_message2, selected_datasets)
 
         if dataset_of_requested_morpheme not in datasets_user_can_view:
@@ -6580,13 +6582,13 @@ class LemmaUpdateView(UpdateView):
                                                       Dataset, accept_global_perms=False, any_perm=True)
 
         if dataset_of_requested_lemma not in selected_datasets:
-            translated_message = _('The lemma you are trying to view is not in your selected datasets.')
-            translated_message2 = _(' It is in dataset ') + dataset_of_requested_lemma.acronym
+            translated_message = _('The lemma you are trying to view is not in your selected datasets. ')
+            translated_message2 = _('It is in dataset {dataset}').format(dataset=dataset_of_requested_lemma.acronym)
             return show_warning(request, translated_message + translated_message2, selected_datasets)
 
         if dataset_of_requested_lemma not in datasets_user_can_view:
-            translated_message = _('The lemma you are trying to view is not in a dataset you can view.')
-            translated_message2 = _(' It is in dataset ') + dataset_of_requested_lemma.acronym
+            translated_message = _('The lemma you are trying to view is not in a dataset you can view. ')
+            translated_message2 = _('It is in dataset {dataset}').format(dataset=dataset_of_requested_lemma.acronym)
             return show_warning(request, translated_message + translated_message2, selected_datasets)
 
         if not self.lemma_update_form:
