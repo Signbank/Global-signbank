@@ -782,7 +782,7 @@ def import_csv_create(request):
                 dataset_object = Dataset.objects.get(acronym=dataset)
             except ObjectDoesNotExist:
                 # this is an error, this should have already been caught
-                e1 = 'Dataset not found: ' + dataset
+                e1 = gettext('Dataset not found: {dataset}').format(dataset=dataset)
                 error.append(e1)
                 continue
 
@@ -1829,20 +1829,16 @@ def add_image(request):
             # construct a filename for the image, use sn
             # if present, otherwise use idgloss+gloss id
             if gloss.sn is not None:
-                imagefile.name = str(gloss.sn) + extension
+                imagefile.name = f'{gloss.sn}{extension}'
             else:
-                imagefile.name = gloss.idgloss + "-" + str(gloss.pk) + extension
+                imagefile.name = f'{gloss.idgloss}-{gloss.pk}{extension}'
 
             redirect_url = form.cleaned_data['redirect']
 
             # deal with any existing image for this sign
-            goal_path = os.path.join(
-                WRITABLE_FOLDER,
-                GLOSS_IMAGE_DIRECTORY,
-                gloss.lemma.dataset.acronym,
-                get_two_letter_dir(gloss.idgloss)
-            )
-            goal_location_str = os.path.join(goal_path, gloss.idgloss + '-' + str(gloss.pk) + extension)
+            goal_path = f'{WRITABLE_FOLDER}/{GLOSS_IMAGE_DIRECTORY}/{gloss.lemma.dataset.acronym}/{get_two_letter_dir(gloss.idgloss)}'
+
+            goal_location_str = f'{goal_path}/{gloss.idgloss}-{gloss.pk}{extension}'
 
             exists = os.path.exists(goal_path)
 
@@ -1862,13 +1858,13 @@ def add_image(request):
                 destination = File(f)
             except (SystemError, OSError, IOError):
                 quoted_filename = quote(gloss.idgloss, safe='')
-                filename = quoted_filename + '-' + str(gloss.pk) + extension
+                filename = f'{quoted_filename}-{gloss.pk}{extension}'
                 goal_location_str = os.path.join(goal_path, filename)
                 try:
                     f = open(goal_location_str.encode(sys.getfilesystemencoding()), 'wb+')
                     destination = File(f)
                 except (SystemError, OSError, IOError):
-                    print('add_image, failed to open destintation: ', goal_location_str)
+                    print('add_image, failed to open destination: ', goal_location_str)
                     return redirect(redirect_url)
             # if we get to here, destination has been opened
             for chunk in imagefile.chunks():

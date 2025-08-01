@@ -115,30 +115,27 @@ def save_media(source_folder, language_code_3char, goal_folder, gloss, extension
         extension = '.' + extension
 
     # Figure out some names
-    annotation_id = ""
     try:
         language = Language.objects.get(language_code_3char=language_code_3char)
     except ObjectDoesNotExist:
         # no language exists for this folder
         return False, False
     annotationidglosstranslations = gloss.annotationidglosstranslation_set.filter(language=language)
-    if annotationidglosstranslations and len(annotationidglosstranslations) > 0:
-        annotation_id = annotationidglosstranslations[0].text
-    pk = str(gloss.pk)
-    destination_folder = os.path.join(
-        WRITABLE_FOLDER,
-        goal_folder,
-        gloss.lemma.dataset.acronym,
-        get_two_letter_dir(gloss.idgloss)
-    )
+    if annotationidglosstranslations.count() > 0:
+        annotation_text = annotationidglosstranslations.first().text
+    else:
+        annotation_text = ""
+
+    destination_folder = f'{WRITABLE_FOLDER}/{goal_folder}/{gloss.lemma.dataset.acronym}/{get_two_letter_dir(gloss.idgloss)}'
 
     # Create the necessary subfolder if needed
     if not os.path.isdir(destination_folder):
         os.mkdir(destination_folder)
 
     # Move the file
-    source = source_folder+annotation_id+extension
-    goal = os.path.join(destination_folder, annotation_id+'-'+pk+extension)
+    source = source_folder+annotation_text+extension
+    destination_file = f'{annotation_text}-{gloss.pk}{extension}'
+    goal = os.path.join(destination_folder, destination_file)
 
     if os.path.isfile(goal):
         overwritten = True
@@ -365,7 +362,7 @@ def compare_valuedict_to_gloss(valuedict, gloss_id, my_datasets, nl,
                 if languages:
                     language = languages.first()
                     annotation_idglosses = gloss.annotationidglosstranslation_set.filter(language=language)
-                    if annotation_idglosses:
+                    if annotation_idglosses.count() > 0:
                         annotation_idgloss_string = annotation_idglosses.first().text
 
                         if annotation_idgloss_string != new_human_value and new_human_value not in ['None', '']:
@@ -1303,7 +1300,7 @@ def get_notes_as_string(gloss):
     notes_display = []
     for (role, published, count, text) in sorted_notes_list:
         # does not use a comprehension because of nested parentheses in role and text fields
-        tuple_reordered = role + ': (' + published + ',' + count + ',' + text + ')'
+        tuple_reordered = f'{role}: ({published},{count},{text})'
         notes_display.append(tuple_reordered)
     sorted_notes_display = ', '.join(notes_display)
     return notes_display, sorted_notes_display
@@ -1578,12 +1575,12 @@ def check_existence_foreign_relations(gloss, relations, values):
     default_annotationidglosstranslation = get_default_annotationidglosstranslation(gloss)
 
     errors = []
-    checked = ''
+    output_string = ''
     sorted_values = []
 
     if not values:
         # this is a delete operation
-        return checked, errors
+        return output_string, errors
 
     for new_value_tuple in values:
         try:
@@ -1609,10 +1606,10 @@ def check_existence_foreign_relations(gloss, relations, values):
                 raise ValueError
             other_lang = other_lang.strip()
             other_lang_gloss = other_lang_gloss.strip()
-            if checked:
-                checked += ',' + ':'.join([loan_word, other_lang, other_lang_gloss])
+            if output_string:
+                output_string += f',{loan_word}:{other_lang}:{other_lang_gloss}'
             else:
-                checked = ':'.join([loan_word, other_lang, other_lang_gloss])
+                output_string = f'{loan_word}:{other_lang}:{other_lang_gloss}'
         except ValueError:
             error_string = gettext(
                 "For gloss {annotation} ({glossid}), formatting error in Relations to foreign signs: '{loan_word}:{other_lang}:{other_lang_gloss}'. Tuple 'bool:string:string' expected.").format(
@@ -1622,7 +1619,7 @@ def check_existence_foreign_relations(gloss, relations, values):
 
             pass
 
-    return checked, errors
+    return output_string, errors
 
 
 @csrf_exempt
@@ -2103,7 +2100,7 @@ def construct_scrollbar(qs, search_type, language_code):
                 sentence = AnnotatedSentenceTranslation.objects.filter(annotatedsentence=item.annotatedsentence).first()
                 sentence_words = sentence.text.split()
                 sentence_prefix = ' '.join(sentence_words[:5]) if sentence else ''
-                data_label = str(item.gloss.idgloss) + ' (' + str(item.annotatedsentence.id) + '. ' + sentence_prefix + '...)'
+                data_label = f'{item.gloss.idgloss} ({item.annotatedsentence.id}. {sentence_prefix}...)'
                 items.append(dict(id=str(item.annotatedsentence.id), glossid=str(item.gloss.id),
                                   data_label=data_label, gloss_label=str(item.gloss.idgloss),
                                   href_type='annotatedsentence'))
@@ -2148,7 +2145,7 @@ def construct_scrollbar(qs, search_type, language_code):
 
     elif search_type in ['sense']:
         for item in qs:
-            data_label = '(' + str(item.sense) + ')'
+            data_label = f'({item.sense})'
             items.append(dict(id=str(item.gloss.id), data_label=data_label, href_type='gloss'))
     return items
 
