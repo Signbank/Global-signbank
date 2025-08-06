@@ -21,7 +21,6 @@ from django.contrib import messages
 from django.core.exceptions import ValidationError, ObjectDoesNotExist, MultipleObjectsReturned, PermissionDenied
 from django.utils.translation import gettext_lazy as _, activate, override, gettext
 from django.views.decorators.csrf import csrf_exempt
-from django.utils.timezone import get_current_timezone
 from django.views.static import serve
 from django.db.transaction import atomic
 from django.db.models import Q
@@ -29,13 +28,12 @@ from django.core.files import File
 
 import guardian
 from guardian.shortcuts import get_user_perms, get_objects_for_user
-from tagging.models import TaggedItem
 from wsgiref.util import FileWrapper
 
 from signbank.settings.server_specific import (PREFIX_URL, WRITABLE_FOLDER, GLOSS_VIDEO_DIRECTORY, GLOSS_IMAGE_DIRECTORY,
                                                SHOW_DATASET_INTERFACE_OPTIONS, SIGNBANK_PACKAGES_FOLDER,
                                                LANGUAGE_CODE, USE_HANDSHAPE, HANDSHAPE_IMAGE_DIRECTORY,
-                                               RECENTLY_ADDED_SIGNS_PERIOD, USE_REGULAR_EXPRESSIONS,
+                                               USE_REGULAR_EXPRESSIONS,
                                                FIELDS, DEFINITION_FIELDS, SHOW_QUERY_PARAMETERS_AS_BUTTON,
                                                DEFAULT_LANGUAGE_HEADER_COLUMN, DEFAULT_DATASET_ACRONYM, OBLIGATORY_FIELDS)
 from signbank.settings.base import (MAXIMUM_UPLOAD_SIZE, SUPPORTED_CITATION_IMAGE_EXTENSIONS, USE_X_SENDFILE,
@@ -57,19 +55,17 @@ from signbank.dictionary.context_data import get_selected_datasets
 from signbank.tools import (get_two_letter_dir, get_default_annotationidglosstranslation,
                             get_dataset_languages, get_datasets_with_public_glosses,
                             create_gloss_from_valuedict, compare_valuedict_to_gloss, compare_valuedict_to_lemma,
-                            construct_scrollbar, create_zip_with_json_files,
-                            get_interface_language_and_default_language_codes, detect_delimiter,
+                            create_zip_with_json_files,
+                            detect_delimiter,
                             split_csv_lines_header_body,
                             split_csv_lines_sentences_header_body, create_sentence_from_valuedict,
                             get_deleted_gloss_or_media_data, get_gloss_data)
-from signbank.dictionary.field_choices import (get_static_choice_lists, get_frequencies_for_category, category_to_fields,
-                                               fields_to_categories, fields_to_fieldcategory_dict,
-                                               get_static_choice_lists_per_field)
+from signbank.dictionary.field_choices import fields_to_fieldcategory_dict
 from signbank.csv_interface import (csv_create_senses, csv_update_sentences, csv_create_sentence, required_csv_columns,
                                     choice_fields_choices)
 from signbank.dictionary.translate_choice_list import (machine_value_to_translated_human_value,
                                                        choicelist_queryset_to_translated_dict)
-from signbank.abstract_machine import get_interface_language_api, retrieve_language_code_from_header
+from signbank.abstract_machine import get_interface_language_api
 from signbank.api_token import put_api_user_in_request
 from signbank.dictionary.gloss_revision import pretty_print_revisions
 from signbank.dictionary.adminviews import show_warning
@@ -2134,10 +2130,7 @@ def get_unused_videos(request):
 @put_api_user_in_request
 def package(request, language_code='en'):
 
-    interface_language_code = retrieve_language_code_from_header(language_code,
-                                                                 request.headers.get('Accept-Language', ''),
-                                                                 request.META.get('HTTP_ACCEPT_LANGUAGE', None))
-    activate(interface_language_code)
+    activate(language_code)
 
     if 'dataset_name' not in request.GET:
         return HttpResponseBadRequest(gettext('No dataset name provided.'))
@@ -2195,7 +2188,7 @@ def package(request, language_code='en'):
 
     collected_data = {'video_urls': video_urls,
                       'image_urls': image_urls,
-                      'glosses': get_gloss_data(since_timestamp, interface_language_code,
+                      'glosses': get_gloss_data(since_timestamp, language_code,
                                                                dataset, inWebSet, extended_fields)}
 
     if since_timestamp != 0:

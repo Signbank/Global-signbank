@@ -16,7 +16,7 @@ from django.db.models.query import QuerySet
 from django.db.models.functions import Concat
 from django.db.models import Q, Count, CharField, Value as V, Prefetch
 from django.db.models.fields import BooleanField
-from django.http import (HttpResponse, HttpResponseRedirect,
+from django.http import (HttpResponse, HttpResponseRedirect, HttpResponseForbidden,
                          QueryDict, JsonResponse, StreamingHttpResponse, Http404)
 from django.urls import reverse_lazy, reverse
 from django.core.exceptions import PermissionDenied, ObjectDoesNotExist, MultipleObjectsReturned, ValidationError
@@ -76,12 +76,12 @@ from signbank.dictionary.forms import (AnnotatedSentenceSearchForm, GlossSearchF
                                        FocusGlossSearchForm, HandshapeSearchForm, KeyMappingSearchForm, RecentGlossSearchForm,
                                        AnnotatedGlossForm, TagUpdateForm, AffiliationUpdateForm, DatasetUpdateForm,
                                        ImageUploadForGlossForm, ImageUploadForHandshapeForm, EAFFilesForm,
-                                       LemmaCreateForm, LemmaUpdateForm, MorphemeCreateForm, OtherMediaForm, RelationForm,
+                                       LemmaCreateForm, LemmaUpdateForm, set_up_lemma_language_fields, MorphemeCreateForm, OtherMediaForm, RelationForm,
                                        GlossMorphologyForm, GlossBlendForm, DefinitionForm, GlossMorphemeForm,
                                        SemanticFieldTranslationForm, ZippedVideosForm,
                                        check_language_fields, check_multilingual_fields, SentenceForm,
                                        check_language_fields_annotatedsentence, GlossProvenanceForm)
-from signbank.tools import (write_ecv_file_for_dataset,
+from signbank.tools import (write_ecv_file_for_dataset, find_duplicate_lemmas,
                             construct_scrollbar, get_dataset_languages, get_datasets_with_public_glosses,
                             searchform_panels, map_search_results_to_gloss_list,
                             get_interface_language_and_default_language_codes, get_default_annotationidglosstranslation)
@@ -1361,7 +1361,7 @@ class GlossDetailView(DetailView):
         context['morphologyform'] = GlossMorphologyForm()
         context['morphemeform'] = GlossMorphemeForm()
         context['blendform'] = GlossBlendForm()
-        context['othermediaform'] = OtherMediaForm()
+        context['othermediaform'] = OtherMediaForm(gloss=context['gloss'])
         context['lemma_create_field_prefix'] = LemmaCreateForm.lemma_create_field_prefix
 
         context['handedness'] = (int(self.object.handedness.machine_value) > 1) \
@@ -1469,6 +1469,9 @@ class GlossDetailView(DetailView):
         context['use_provenance'] = dataset_of_requested_gloss.use_provenance
 
         # Gather the OtherMedia
+        context['prominent_media_type'] = gl.lemma.dataset.prominent_media  # this can be None
+        context['prominent_media'] = []
+
         context['other_media'] = []
         context['other_media_field_choices'] = {}
         other_media_type_choice_list = FieldChoice.objects.filter(field__iexact='OthermediaType')
@@ -1476,16 +1479,21 @@ class GlossDetailView(DetailView):
         for other_media in gl.othermedia_set.all():
             media_okay, path, other_media_filename = other_media.get_othermedia_path(gl.id, check_existence=True)
 
-            human_value_media_type = other_media.type.name
+            human_value_media_type = other_media.type.name if other_media.type else '-'
 
             file_type = mimetypes.guess_type(path, strict=True)[0]
 
-            context['other_media'].append([media_okay, other_media.pk, path, file_type, human_value_media_type, other_media.alternative_gloss, other_media_filename])
+            context['other_media'].append([media_okay, other_media.pk, path, file_type, human_value_media_type,
+                                           other_media.alternative_gloss, other_media.description, other_media_filename])
 
             # Save the other_media_type choices (same for every other_media,
             # but necessary because they all have other ids)
             context['other_media_field_choices'][
                 'other-media-type_' + str(other_media.pk)] = choicelist_queryset_to_translated_dict(other_media_type_choice_list)
+
+            if other_media.type is not None and gl.lemma.dataset.prominent_media is not None:
+                if other_media.type.machine_value == gl.lemma.dataset.prominent_media.machine_value:
+                    context['prominent_media'].append((media_okay, other_media.pk, path, file_type, other_media_filename, other_media.description))
 
         context['other_media_field_choices'] = json.dumps(context['other_media_field_choices'])
 
@@ -5196,7 +5204,7 @@ class MorphemeDetailView(DetailView):
         context['imageform'] = ImageUploadForGlossForm()
         context['definitionform'] = DefinitionForm()
         context['relationform'] = RelationForm()
-        context['othermediaform'] = OtherMediaForm()
+        context['othermediaform'] = OtherMediaForm(gloss=context['morpheme'])
 
         # Get the set of all the Gloss signs that point to me
         other_glosses_that_point_to_morpheme = SimultaneousMorphologyDefinition.objects.filter(morpheme_id__exact=context['morpheme'].id)
@@ -5646,27 +5654,20 @@ def lemma_ajax_complete(request, dataset_id, language_code, q):
         # this assumes the default language (LANGUAGE_CODE) in included in the LANGUAGES_LANGUAGE_CODE_3CHAR setting
         interface_language_3char = dict(LANGUAGES_LANGUAGE_CODE_3CHAR)[LANGUAGE_CODE]
     interface_language = Language.objects.get(language_code_3char=interface_language_3char)
-    interface_language_id = interface_language.id
-
-    dataset = Dataset.objects.get(id=dataset_id)
-    dataset_default_language_id = dataset.default_language.id
+    activate(interface_language.language_code_2char)
 
     lemmas = LemmaIdgloss.objects.filter(dataset_id=dataset_id,
-                                         lemmaidglosstranslation__language_id=interface_language_id,
                                          lemmaidglosstranslation__text__istartswith=q)\
         .order_by('lemmaidglosstranslation__text')
-    # lemmas_dict = [{'pk': lemma.pk, 'lemma': str(lemma)} for lemma in set(lemmas)]
 
     lemmas_dict_list = []
     for lemma in set(lemmas):
-        trans_dict = {}
-        for translation in lemma.lemmaidglosstranslation_set.all():
-            if translation.language.id == interface_language_id:
-                trans_dict['pk'] = lemma.pk
-                trans_dict['lemma'] = translation.text
-                lemmas_dict_list.append(trans_dict)
+        trans_dict = {'pk': lemma.pk,
+                      'lemma': f'{lemma.pk}: {str(lemma)}'}
+        lemmas_dict_list.append(trans_dict)
     sorted_lemmas_dict = sorted(lemmas_dict_list, key=lambda x : (x['lemma'], len(x['lemma'])))
     return JsonResponse(sorted_lemmas_dict, safe=False)
+
 
 def sensetranslation_ajax_complete(request, dataset_id, language_code, q):
 
@@ -6450,10 +6451,14 @@ class LemmaUpdateView(UpdateView):
     success_url = reverse_lazy('dictionary:admin_lemma_list')
     page_in_lemma_list = ''
     template_name = 'dictionary/update_lemma.html'
+    context_object_name = 'lemma'
     fields = []
     gloss_found = False
     gloss_id = ''
     search_type = 'lemma'
+    lemma_update_form = None
+    request_path = None
+    this_page = None
 
     def get_context_data(self, **kwargs):
         context = super(LemmaUpdateView, self).get_context_data(**kwargs)
@@ -6478,15 +6483,15 @@ class LemmaUpdateView(UpdateView):
         context['USE_REGULAR_EXPRESSIONS'] = USE_REGULAR_EXPRESSIONS
 
         # get the page of the lemma list on which this lemma appears in order ro return to it after update
-        request_path = self.request.META.get('HTTP_REFERER')
-
-        # if there was a query, return to the query results in the template on button Return to Lemma List
-        context['request_path'] = request_path
-
-        if not request_path:
+        if not self.request_path or 'show_all' in self.request_path:
             context['caller'] = 'lemma_list'
+            context['show_all'] = True
+        elif 'update' in self.request_path:
+            # user was busy updating for a while and the HTTP referer is the update page
+            context['caller'] = 'gloss_detail_view'
         else:
-            path_parms = request_path.split('?page=')
+            context['show_all'] = False
+            path_parms = self.request_path.split('?page=')
             if len(path_parms) > 1:
                 self.page_in_lemma_list = str(path_parms[1])
             if 'gloss' in path_parms[0]:
@@ -6504,10 +6509,9 @@ class LemmaUpdateView(UpdateView):
                     self.gloss_found = False
             else:
                 context['caller'] = 'lemma_list'
-        # These are needed for return to the Gloss Details
-        # They are passed to the POST handling via hidden variables in the template
-        context['gloss_id'] = self.gloss_id
-        context['gloss_found'] = self.gloss_found
+
+        context['request_path'] = self.request_path
+        context['this_page'] = self.this_page
 
         context['page_in_lemma_list'] = self.page_in_lemma_list
         dataset = self.object.dataset
@@ -6516,11 +6520,8 @@ class LemmaUpdateView(UpdateView):
         context['dataset_languages'] = dataset_languages
         context['language_2chars'] = [str(language.language_code_2char) for language in dataset_languages]
 
-        context['change_lemma_form'] = LemmaUpdateForm(instance=self.object, page_in_lemma_list=self.page_in_lemma_list)
-        context['lemma_create_field_prefix'] = LemmaCreateForm.lemma_create_field_prefix
-
+        context['change_lemma_form'] = self.lemma_update_form
         # lemnma group
-
         # Make sure these are evaluated ih Python
         lemma_group_count = self.object.gloss_set.count()
         lemma_group_glossset = Gloss.objects.filter(lemma=self.object)
@@ -6537,81 +6538,24 @@ class LemmaUpdateView(UpdateView):
             lemma_group_list.append((lemma, annotation_idgloss))
         context['lemma_group_count'] = lemma_group_count
         context['lemma_group_list'] = lemma_group_list
+
+        if lemma_group_count == 1 and not self.gloss_found:
+            # 'gloss' not in url
+            self.gloss_id = lemma_group_glossset[0].id
+
+        duplicates = find_duplicate_lemmas(self.object)
+        context['lemma_duplicates'] = LemmaIdgloss.objects.filter(pk__in=duplicates)
+
+        # These are needed for return to the Gloss Details
+        # They are passed to the POST handling via hidden variables in the template
+        context['gloss_id'] = self.gloss_id
+        context['gloss_found'] = self.gloss_found
+
         return context
 
-    def post(self, request, *args, **kwargs):
-
-        selected_datasets = get_selected_datasets(self.request)
-
-        instance = self.get_object()
-        dataset = instance.dataset
-        form = LemmaUpdateForm(request.POST, instance=instance)
-
-        for item, value in request.POST.items():
-            value = value.strip()
-            if item.startswith(form.lemma_update_field_prefix):
-                if value:
-                    language_code_2char = item[len(form.lemma_update_field_prefix):]
-                    language = Language.objects.get(language_code_2char=language_code_2char)
-                    lemmas_for_this_language_and_annotation_idgloss = LemmaIdgloss.objects.filter(
-                        lemmaidglosstranslation__language=language,
-                        lemmaidglosstranslation__text__exact=value.upper(),
-                        dataset=dataset)
-                    if lemmas_for_this_language_and_annotation_idgloss.count() > 0:
-                        for nextLemma in lemmas_for_this_language_and_annotation_idgloss:
-                            if nextLemma.id != instance.id:
-                                # found a different lemma with same translation
-                                translated_message = _('Lemma ID Gloss is not unique for that language.')
-                                return show_warning(request, translated_message, selected_datasets)
-
-                else:
-                    # intent to set lemma translation to empty
-                    pass
-            elif item.startswith('page') and value:
-                # page of the lemma list where the gloss to update is displayed
-                self.page_in_lemma_list = value
-            elif item.startswith('gloss_found') and value:
-                # this was obtained in get_context_data and put in the hidden variable of the template
-                self.gloss_found = value
-            elif item.startswith('gloss_id') and value:
-                # this was obtained in get_context_data and put in the hidden variable of the template
-                self.gloss_id = value
-
-        if form.is_valid():
-
-            request_path = self.request.META.get('HTTP_REFERER')
-            path_parms = request_path.split('?page=')
-            if len(path_parms) > 1:
-                self.page_in_lemma_list = str(path_parms[1])
-
-            try:
-                form.save()
-                messages.add_message(request, messages.INFO, _("The changes to the lemma have been saved."))
-
-            except Exception as e:
-                print(e)
-                # a specific message is put into the messages frmaework rather than the message caught in the exception
-                # if it's not done this way, it gives a runtime error
-                if self.page_in_lemma_list:
-                    messages.add_message(request, messages.ERROR, _("There must be at least one translation for this lemma."))
-                else:
-                    return HttpResponseRedirect(reverse_lazy('dictionary:change_lemma', kwargs={'pk': instance.id}))
-
-            # return to the same page in the list of lemmas, if available
-            if self.page_in_lemma_list:
-                return HttpResponseRedirect(self.success_url + '?page='+self.page_in_lemma_list)
-            elif self.gloss_found and self.gloss_id:
-                # return to Gloss Details
-                gloss_detail_view_url = reverse_lazy('dictionary:admin_gloss_view', kwargs={'pk': self.gloss_id})
-                return HttpResponseRedirect(gloss_detail_view_url)
-            else:
-                return HttpResponseRedirect(self.success_url)
-
-        else:
-            return HttpResponseRedirect(reverse_lazy('dictionary:change_lemma', kwargs={'pk': instance.id}))
-
     def get(self, request, *args, **kwargs):
-
+        # original caller upon fetching the view
+        self.request_path = self.request.META.get('HTTP_REFERER')
         selected_datasets = get_selected_datasets(self.request)
 
         try:
@@ -6620,6 +6564,10 @@ class LemmaUpdateView(UpdateView):
             translated_message = _('The requested lemma does not exist.')
             return show_warning(request, translated_message, selected_datasets)
 
+        if not self.request_path:
+            self.request_path = reverse_lazy('dictionary:change_lemma', kwargs={'pk': self.object.id})
+        if not self.this_page:
+            self.this_page = '/dictionary/lemma/update/{lemmaid}'.format(lemmaid=str(self.object.id))
         if not self.object.dataset:
             translated_message = _('Requested lemma has no dataset.')
             return show_warning(request, translated_message, selected_datasets)
@@ -6640,6 +6588,11 @@ class LemmaUpdateView(UpdateView):
             translated_message = _('The lemma you are trying to view is not in a dataset you can view.')
             translated_message2 = _(' It is in dataset ') + dataset_of_requested_lemma.acronym
             return show_warning(request, translated_message + translated_message2, selected_datasets)
+
+        if not self.lemma_update_form:
+            self.lemma_update_form = LemmaUpdateForm(instance=self.object, languages=dataset_of_requested_lemma.translation_languages.all(), lemmaid=str(self.object.id))
+        if not self.lemma_update_form.is_bound:
+            set_up_lemma_language_fields(self.lemma_update_form, self.object)
 
         context = self.get_context_data(object=self.object)
         return self.render_to_response(context)

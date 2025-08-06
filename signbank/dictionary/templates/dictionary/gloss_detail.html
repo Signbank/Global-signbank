@@ -2,6 +2,7 @@
 {% load i18n %}
 {% load stylesheet %}
 {% load annotation_idgloss_translation %}
+{% load field_choice %}
 {% load bootstrap3 %}
 
 {% block bootstrap3_title %}
@@ -292,6 +293,18 @@ function checkKey(e)
             $(right_player).trigger('pause');
         }
 
+        function play_other_media(el) {
+            var pk = $(el).attr('data-pk');
+            var middle_player = '#videoplayer_other_media_'+pk;
+            $(middle_player).trigger('play');
+        }
+
+        function pause_other_media(el) {
+            var pk = $(el).attr('data-pk');
+            var middle_player = '#videoplayer_other_media_'+pk;
+            $(middle_player).trigger('pause');
+        }
+
         function restart_video(vid) {
             if (!vid) { return; }
             vid.trigger('pause');
@@ -534,6 +547,16 @@ select option {
     padding-right: 2px;
     border-radius: 6px;
 }
+button a {
+    all: unset;
+    text-decoration: none;
+    font-size: 10px;
+    padding-left: 10px;
+    padding-right: 10px;
+    border-radius: 6px;
+    height: 28px;
+    outline: none;
+}
 </style>
 <style>
 .form-group {
@@ -774,7 +797,7 @@ textarea:focus {
     </div>
     
     {% if "change_dataset" in dataset_perms %}
-    <div class='pull-right' style="margin-right:15px;margin-top:10px;">
+    <div class='pull-right' style="margin-right:15px;margin-top:50px;">
 
          <span id='edit_message' style="padding-right: 1.8em;"></span>
 
@@ -1343,12 +1366,15 @@ textarea:focus {
                     </span>
                 </td>
             </tr>
-            <tr class="empty_row lemma_buttons" id="lemma-buttons-group" name="lemma-buttons-group"><th></th>
+            <tr class="empty_row lemma_buttons" id="lemma-buttons-group" ><th></th>
                 <td>
-                    <div id="lemma_buttons" name="lemma_buttons">
-                        <button id='show_edit_lemma_form' name='show_edit_lemma_form'
-                                style="width:auto;"
-                                class='btn btn-primary btn-space lemma-button'>{% trans "Edit Lemma" %}</button>
+                    <div id="lemma_buttons">
+                        <button id='show_edit_lemma_form' name='show_edit_lemma_form' type="button"
+                                style="width:auto;" class='btn btn-primary btn-space lemma-button'
+                                value='{% trans "Edit Lemma" %}'>
+                            <a href="{{PREFIX_URL}}/dictionary/lemma/update/{{gloss.lemma.id}}"
+                               style="text-decoration:none; color:white;">{% trans "Edit Lemma" %}</a>
+                        </button>
                         <button id='show_set_lemma_form' name='show_set_lemma_form'
                                 class='btn btn-primary btn-space lemma-button'>{% trans "Choose Other" %}</button>
                         <button id='show_create_lemma_form' name='show_create_lemma_form'
@@ -1360,15 +1386,6 @@ textarea:focus {
                 <th></th>
                 <td id="lemma_forms_cell" class='td td-light'>
                 <span>
-                <form name='edit_lemma_form' id='edit_lemma_form'
-                        method='post' action='{% url "dictionary:change_lemma" gloss.lemma.id %}'>
-                        {% csrf_token %}
-                    <input type="hidden" class='btn btn-primary'
-                        value='{% trans "Edit Lemma" %}'
-                        type='submit'>
-                    <input type='hidden' name='gloss_lemma_id' value='{{gloss.lemma.id}}'>
-                    <input type='hidden' id="page" name="page" value=''>
-                </form>
                 <form name='set_lemma_form' id='set_lemma_form'
                     onsubmit='return validateForm("set_lemma_form","value","gloss_lemma_id",
                                                 "Please choose a lemma.",
@@ -1858,6 +1875,52 @@ textarea:focus {
             {% endfor %}
 
         </table>
+
+{% if prominent_media_type and prominent_media_type.machine_value > 1 %}
+   <div class="panel panel-default panel-light">
+        <div class='panel-heading panel-light' data-toggle='collapse'
+             data-target='#prominent_media'>{{gloss.lemma.dataset.get_prominent_media_display}}
+        </div>
+        <div id='prominent_media' class='collapse'>
+            <div class="panel panel-default panel-light">
+            <div class="table-responsive" style="display:inline-block;">
+            <table class="table table-condensed" style="text-align: left;">
+            <tr>
+            {% for media_okay,pk,path,file_type,file_name, description in prominent_media %}
+                {% if media_okay and path %}
+                    {% if file_type|startswith:"video" %}
+                    <td>
+                        <div id="other_media_player_{{pk}}" style="height:259px;width:auto;">
+                            <video id='videoplayer_other_media_{{pk}}' src="{{path}}"
+                                   playsinline muted style="height:200px;width:auto;"></video>
+                            <div id="buttonbar_other_media_{{pk}}" style="background-color:transparent;">
+                            <button class="btn" id="play_other_media_{{pk}}" onclick="play_other_media(this);" data-pk="{{pk}}"
+                                    style="font-size:16px;background-color:transparent;"><span class="glyphicon glyphicon-play"></span></button>
+                            <button class="btn" id="pause_other_media_{{pk}}" onclick="pause_other_media(this);" data-pk="{{pk}}"
+                                    style="font-size:16px;background-color:transparent;"><span class="glyphicon glyphicon-pause"></span></button>
+                            </div>
+                        </div>
+                        <div>{{description}}</div>
+                    </td>
+                    {% elif file_type|startswith:"image" %}
+                    <td>
+                        <div id="other_media_image_{{pk}}" style="height:259px;width:auto;">
+                            <img id="imageframe_other_media_{{pk}}" src="{{path}}" style="height:200px;width:auto;">
+                        </div>
+                        <div>{{description}}</div>
+                    </td>
+                    {% else %}
+                    {% endif %}
+                {% endif %}
+            {% endfor %}
+            </tr>
+            </table>
+            </div>
+            </div>
+        </div>
+   </div>
+
+{% endif %}
 
    <!-- Non-manual videos -->
    <div class="panel panel-default panel-light">
@@ -3120,9 +3183,10 @@ textarea:focus {
                   <th style='width:6em'>{% trans "File Type" %}</th>
                   <th style='width:20em'>{% trans "Type" %}</th>
                   <th style='width:12em'>{% trans "Alternative Gloss" %}</th>
+                  <th style='width:20em'>{% trans "Description" %}</th>
               </tr>
 
-               {% for media_okay,pk,path,file_type,type,alternative_gloss,file_name in other_media %}
+               {% for media_okay,pk,path,file_type,type,alternative_gloss,description,file_name in other_media %}
                <tr>
                    {% if "change_dataset" in dataset_perms %}
                      <td>
@@ -3164,6 +3228,7 @@ textarea:focus {
                     <td class="td td-light" id='other-media-file-type_{{pk}}'>{{file_type}}</td>
                     <td class="td td-light" id='other-media-type_{{pk}}'>{{type}}</td>
                     <td class='edit edit_area' id='other-media-alternative-gloss_{{pk}}'>{{alternative_gloss}}</td>
+                    <td class='edit edit_area' id='other-media-description_{{pk}}'>{{description}}</td>
                 </tr>
                {% endfor %}
 
@@ -3181,6 +3246,7 @@ textarea:focus {
                         <td class="td td-light">{{othermediaform.file}}</td>
                         <td class="td td-light">{{othermediaform.type}}</td>
                         <td class="td td-light"><input class='form-control form-control-light' placeholder='{% trans "Alternative Gloss" %}' name='alternative_gloss' type='text'></td>
+                        <td class="td td-light">{{othermediaform.description}}</td>
                     </tr>
                      <tr>
                         <td></td>
