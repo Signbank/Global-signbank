@@ -3486,11 +3486,11 @@ def upload_eaf_files(request):
     # We're using it here during upload in the database manager template because it's already implemented
     (eaf_paths_dict, duplicates) = documents_paths_dictionary(dataset_acronym)
 
-    # if this is the first time eaf files are uploadd to the system, create the folder
+    # if this is the first time eaf files are uploaded to the system, create the folder
     if not os.path.isdir(WRITABLE_FOLDER + DATASET_EAF_DIRECTORY):
         os.mkdir(WRITABLE_FOLDER + DATASET_EAF_DIRECTORY, mode=0o755)
 
-    # if this is the first time eaf files are uploadd for the dataset, create a dataset folder
+    # if this is the first time eaf files are uploaded for the dataset, create a dataset folder
     dataset_eaf_folder = os.path.join(WRITABLE_FOLDER,DATASET_EAF_DIRECTORY,dataset_acronym)
     if not os.path.isdir(dataset_eaf_folder):
         os.mkdir(dataset_eaf_folder, mode=0o755)
@@ -3500,13 +3500,13 @@ def upload_eaf_files(request):
         # this could have a side effect of creating an empty folder
         # at a later step the files are checked to be eaf files
         # incorrectly typed files are removed after creation, but not the folder
-        dataset_eaf_folder = os.path.join(dataset_eaf_folder,folder)
+        dataset_eaf_folder = os.path.join(str(dataset_eaf_folder) , str(folder))
         if not os.path.isdir(dataset_eaf_folder):
             os.mkdir(dataset_eaf_folder, mode=0o755)
 
     # move uploaded files to appropriate location
     for f in request.FILES.getlist('file'):
-        next_eaf_file = os.path.join(dataset_eaf_folder,f.name)
+        next_eaf_file = os.path.join(str(dataset_eaf_folder), str(f.name))
         f_handle = open(next_eaf_file, mode='wb+')
         for chunk in f.chunks():
             f_handle.write(chunk)
@@ -3536,7 +3536,7 @@ def upload_eaf_files(request):
             wrong_format = (extension.lower() != 'eaf')
 
         # Get full paths
-        destination_location = os.path.join(dataset_eaf_folder,new_file)
+        destination_location = os.path.join(str(dataset_eaf_folder), str(new_file))
         file_basename = os.path.basename(new_file)
         basename = os.path.splitext(file_basename)[0]
 
@@ -3558,18 +3558,18 @@ def upload_eaf_files(request):
             ignored_files.append(new_file)
             os.remove(destination_location)
 
-        # Any problems encountered? Add error messages
-        if ignored_files:
-            ignored = ", ".join(ignored_files)
-            messages.add_message(request, messages.ERROR, _('Non-EAF file(s) ignored: {files}').format(files=ignored))
+    # Any problems encountered? Add error messages
+    if ignored_files:
+        ignored = ", ".join(ignored_files)
+        messages.add_message(request, messages.ERROR, _('Non-EAF file(s) ignored: {files}').format(files=ignored))
 
-        if import_twice:
-            twice = ", ".join(import_twice)
-            messages.add_message(request, messages.WARNING, _('File(s) encountered twice: {files}').format(files=twice))
+    if import_twice:
+        twice = ", ".join(import_twice)
+        messages.add_message(request, messages.WARNING, _('File(s) encountered twice: {files}').format(files=twice))
 
-        if duplicate_files:
-            duplicates = ", ".join(duplicate_files)
-            messages.add_message(request, messages.INFO, _('Already imported to a different folder: {files}').format(files=duplicates))
+    if duplicate_files:
+        duplicates = ", ".join(duplicate_files)
+        messages.add_message(request, messages.INFO, _('Already imported to a different folder: {files}').format(files=duplicates))
 
     return HttpResponseRedirect(reverse('admin_dataset_manager'))
 
