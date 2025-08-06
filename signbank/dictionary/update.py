@@ -1811,11 +1811,9 @@ def update_other_media(gloss, field, value):
     return HttpResponse(str(value), {'content-type': 'text/plain'})
 
 
+@require_http_methods(["POST"])
 def add_relation(request):
     """Add a new relation instance"""
-
-    if not request.method == "POST":
-        return HttpResponseForbidden("Add relation method must be POST")
 
     form = RelationForm(request.POST)
 
@@ -1847,10 +1845,9 @@ def add_relation(request):
     return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': source.id}) + '?editrel')
 
 
+@require_http_methods(["POST"])
 @permission_required('dictionary.change_gloss')
 def variants_of_gloss(request):
-    if not request.method == "POST":
-        return HttpResponseForbidden("Variants of gloss method must be POST")
 
     form = VariantsForm(request.POST)
 
@@ -1877,11 +1874,9 @@ def variants_of_gloss(request):
     return HttpResponse(json.dumps(rel), content_type="application/json")
 
 
+@require_http_methods(["POST"])
 def add_relationtoforeignsign(request):
     """Add a new relationtoforeignsign instance"""
-
-    if not request.method == "POST":
-        return HttpResponseForbidden("Add relation to foreign sign method must be POST")
 
     form = RelationToForeignSignForm(request.POST)
 
@@ -1905,6 +1900,7 @@ def add_relationtoforeignsign(request):
     return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': gloss.id}) + '?editrelforeign')
 
 
+@require_http_methods(["POST"])
 def add_definition(request, glossid):
     """Add a new definition for this gloss"""
 
@@ -1916,9 +1912,6 @@ def add_definition(request, glossid):
     else:
         gloss_or_morpheme = thisgloss
         reverse_url = 'dictionary:admin_gloss_view'
-
-    if not request.method == "POST":
-        return HttpResponseForbidden("Add definition method must be POST")
 
     form = DefinitionForm(request.POST)
 
@@ -1979,9 +1972,8 @@ def add_morphology_definition(request):
 
 
 # Add a 'morpheme' (according to the Morpheme model)
+@require_http_methods(["POST"])
 def add_morpheme_definition(request, glossid):
-    if not request.method == "POST":
-        return HttpResponseForbidden("Add morpheme definition method must be POST")
 
     form = GlossMorphemeForm(request.POST)
 
@@ -2041,9 +2033,8 @@ def add_morpheme_definition(request, glossid):
 
 
 # Add a 'blend' (according to the Blend model)
+@require_http_methods(["POST"])
 def add_blend_definition(request, glossid):
-    if not request.method == "POST":
-        return HttpResponseForbidden("Add blend definition method must be POST")
 
     form = GlossBlendForm(request.POST)
 
@@ -2906,12 +2897,10 @@ def update_blend_definition(gloss, field, value):
         return HttpResponseBadRequest("Unknown form field '%s'" % field, {'content-type': 'text/plain'})
 
 
+@require_http_methods(["POST"])
 @permission_required('dictionary.change_gloss')
 def add_tag(request, glossid):
     """View to add a tag to a gloss"""
-
-    if not request.method == "POST":
-        return HttpResponseForbidden("Add gloss tag method must be POST")
 
     thisgloss = get_object_or_404(Gloss, id=glossid, archived=False)
     tags_label = 'Tags'
@@ -3018,11 +3007,9 @@ def toggle_sense_tag(request, glossid):
     return JsonResponse(result)
 
 
+@require_http_methods(["POST"])
 def add_morphemetag(request, morphemeid):
     """View to add a tag to a morpheme"""
-
-    if not request.method == "POST":
-        return HttpResponseForbidden("Add morpheme tag method must be POST")
 
     thismorpheme = get_object_or_404(Morpheme, id=morphemeid)
 
@@ -3121,16 +3108,11 @@ def change_dataset_selection(request):
     return redirect(PREFIX_URL + '/datasets/select')
 
 
-def update_dataset(request, datasetid):
-    """View to update a dataset model from the jeditable jquery form
-    We are sent one field and value at a time, return the new value
-    once we've updated it."""
+def check_permissions_dataset_update(request, dataset):
 
-    if request.method != "POST":
+    if not request.user.is_authenticated:
+        messages.add_message(request, messages.ERROR, _('Please login to use this functionality.'))
         return HttpResponseForbidden(_("Dataset Update Not Allowed"))
-
-    dataset = get_object_or_404(Dataset, id=datasetid)
-    dataset.save() # This updates the lastUpdated field
 
     try:
         group_manager = Group.objects.get(name='Dataset_Manager')
@@ -3147,6 +3129,16 @@ def update_dataset(request, datasetid):
     user_change_datasets = get_objects_for_user(request.user, 'change_dataset', Dataset, accept_global_perms=False)
     if dataset not in user_change_datasets:
         return HttpResponseForbidden(_("Dataset Update Not Allowed"))
+
+
+@require_http_methods(["POST"])
+def update_dataset(request, datasetid):
+    """View to update a dataset model from the jeditable jquery form
+    We are sent one field and value at a time, return the new value
+    once we've updated it."""
+
+    dataset = get_object_or_404(Dataset, id=datasetid)
+    check_permissions_dataset_update(request, dataset)
 
     field = request.POST.get('id', '')
     value = request.POST.get('value', '')
@@ -3230,43 +3222,18 @@ def update_dataset(request, datasetid):
     return HttpResponse(str(original_value) + str('\t') + str(value), {'content-type': 'text/plain'})
 
 
+@require_http_methods(["POST"])
 def update_dataset_prominent_media(request, datasetid):
 
-    if not request.user.is_authenticated:
-        messages.add_message(request, messages.ERROR, _('Please login to use this functionality.'))
-        return HttpResponseForbidden(_("Dataset Update Not Allowed"))
-
-    if request.method != "POST":
-        return HttpResponseForbidden(_("Dataset Update Not Allowed"))
-
     dataset = get_object_or_404(Dataset, id=datasetid)
-
-    try:
-        group_manager = Group.objects.get(name='Dataset_Manager')
-    except ObjectDoesNotExist:
-        messages.add_message(request, messages.ERROR, _('No group Dataset_Manager found.'))
-        return HttpResponseForbidden(_("Dataset Update Not Allowed"))
-
-    groups_of_user = request.user.groups.all()
-    if not group_manager in groups_of_user:
-        messages.add_message(request, messages.ERROR,
-                             _('You must be in group Dataset Manager to modify dataset details.'))
-        return HttpResponseForbidden(_("Dataset Update Not Allowed"))
-
-    user_change_datasets = get_objects_for_user(request.user, 'change_dataset', Dataset, accept_global_perms=False)
-    if dataset not in user_change_datasets:
-        return HttpResponseForbidden(_("Dataset Update Not Allowed"))
+    check_permissions_dataset_update(request, dataset)
 
     prominent_media = request.POST.get('prominent_media', '')
     if not prominent_media:
         return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
 
-    original_value = getattr(dataset, 'prominent_media')
-    original_value = original_value.name if original_value else '-'
-
     other_media_type = FieldChoice.objects.get(field='OtherMediaType', machine_value=int(prominent_media))
     dataset.prominent_media = other_media_type
-    value = other_media_type.name
     dataset.save()
     return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
 
@@ -3301,6 +3268,7 @@ def update_owner(dataset, field, values):
     return HttpResponse(str(new_owners_value) + '\t' + str(owners_value), {'content-type': 'text/plain'})
 
 
+@require_http_methods(["POST"])
 def update_excluded_choices(request):
     selected_datasets = get_selected_datasets(request)
 
@@ -3359,78 +3327,75 @@ def update_excluded_choices(request):
     return HttpResponseRedirect(reverse('admin_dataset_field_choices'))
 
 
+@require_http_methods(["POST"])
 def update_field_choice_color(request, category, fieldchoiceid):
-    if request.method == "POST":
-        if category == 'SemField':
-            form = SemanticFieldColorForm(request.POST)
-            thisfieldchoice = get_object_or_404(SemanticField, pk=fieldchoiceid)
-        elif category == 'derivHist':
-            form = DerivationHistoryColorForm(request.POST)
-            thisfieldchoice = get_object_or_404(DerivationHistory, pk=fieldchoiceid)
-        elif category == 'Handshape':
-            form = HandshapeColorForm(request.POST)
-            thisfieldchoice = get_object_or_404(Handshape, pk=fieldchoiceid)
-        else:
-            form = FieldChoiceColorForm(request.POST)
-            thisfieldchoice = get_object_or_404(FieldChoice, pk=fieldchoiceid)
 
-        if form.is_valid():
+    if category == 'SemField':
+        form = SemanticFieldColorForm(request.POST)
+        thisfieldchoice = get_object_or_404(SemanticField, pk=fieldchoiceid)
+    elif category == 'derivHist':
+        form = DerivationHistoryColorForm(request.POST)
+        thisfieldchoice = get_object_or_404(DerivationHistory, pk=fieldchoiceid)
+    elif category == 'Handshape':
+        form = HandshapeColorForm(request.POST)
+        thisfieldchoice = get_object_or_404(Handshape, pk=fieldchoiceid)
+    else:
+        form = FieldChoiceColorForm(request.POST)
+        thisfieldchoice = get_object_or_404(FieldChoice, pk=fieldchoiceid)
 
-            new_color = form.cleaned_data['field_color']
+    if not form.is_valid():
+        messages.add_message(request, messages.ERROR, _("The form is not valid."))
+        return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
 
-            if new_color[0] == '#':
-                new_color = new_color[1:]
+    new_color = form.cleaned_data['field_color']
 
-            original_value = thisfieldchoice.field_color
-            machine_value = str(thisfieldchoice.machine_value)
-            thisfieldchoice.field_color = new_color
-            thisfieldchoice.save()
-            # category = thisfieldchoice.field
+    if new_color[0] == '#':
+        new_color = new_color[1:]
 
-            return HttpResponse(category + '\t' + fieldchoiceid + '\t' + str(original_value) + '\t' + str(
-                new_color) + '\t' + machine_value,
-                                {'content-type': 'text/plain'})
+    original_value = thisfieldchoice.field_color
+    machine_value = str(thisfieldchoice.machine_value)
+    thisfieldchoice.field_color = new_color
+    thisfieldchoice.save()
 
-    # If we get here the request method has apparently been changed to get instead of post, can this happen?
-    raise Http404('Incorrect request')
+    return HttpResponse(category + '\t' + fieldchoiceid + '\t' + str(original_value) + '\t' + str(new_color) + '\t' + machine_value,
+                        {'content-type': 'text/plain'})
 
 
+@require_http_methods(["POST"])
 def upload_metadata(request):
-    if request.method == "POST":
 
-        form = CSVMetadataForm(request.POST, request.FILES)
+    form = CSVMetadataForm(request.POST,request.FILES)
 
-        if form.is_valid():
+    if not form.is_valid():
+        messages.add_message(request, messages.ERROR, _("The form is not valid."))
+        return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
 
-            new_metadata = request.FILES['file']
+    new_metadata = request.FILES['file']
 
-            # extension = '.'+new_metadata.name.split('.')[-1]
-            # print('extension: ', extension)
+    # extension = '.'+new_metadata.name.split('.')[-1]
+    # print('extension: ', extension)
 
-            for key in request.POST.keys():
-                if key == 'dataset_acronym':
-                    dataset_acronym = request.POST['dataset_acronym']
+    for key in request.POST.keys():
+        if key == 'dataset_acronym':
+            dataset_acronym = request.POST['dataset_acronym']
 
-            metafile_name = dataset_acronym + '_metadata.csv'
+    metafile_name = dataset_acronym + '_metadata.csv'
 
-            if not os.path.isdir(WRITABLE_FOLDER + DATASET_METADATA_DIRECTORY):
-                os.mkdir(WRITABLE_FOLDER + DATASET_METADATA_DIRECTORY, mode=0o755)
+    if not os.path.isdir(WRITABLE_FOLDER + DATASET_METADATA_DIRECTORY):
+        os.mkdir(WRITABLE_FOLDER + DATASET_METADATA_DIRECTORY, mode=0o755)
 
-            goal_string = WRITABLE_FOLDER + DATASET_METADATA_DIRECTORY + '/' + metafile_name
+    goal_string = WRITABLE_FOLDER + DATASET_METADATA_DIRECTORY + '/' + metafile_name
 
-            f_handle = open(goal_string, mode='wb+')
+    f_handle = open(goal_string, mode='wb+')
 
-            for chunk in request.FILES['file'].chunks():
-                f_handle.write(chunk)
+    for chunk in request.FILES['file'].chunks():
+        f_handle.write(chunk)
 
-            return HttpResponseRedirect(reverse('admin_dataset_manager'))
-
-    raise Http404('Incorrect request')
+    return HttpResponseRedirect(reverse('admin_dataset_manager'))
 
 
+@require_http_methods(["POST"])
 def remove_eaf_files(request):
-    if request.method != "POST":
-        return
 
     # Process the request data
     selected_paths = []
@@ -3469,154 +3434,152 @@ def remove_eaf_files(request):
     return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
 
 
+@require_http_methods(["POST"])
 def upload_eaf_files(request):
-    if request.method != "POST":
-        raise Http404('Incorrect request')
 
-    form = EAFFilesForm(request.POST, request.FILES)
-    if form.is_valid():
+    form = EAFFilesForm(request.POST,request.FILES)
+    if not form.is_valid():
+        messages.add_message(request, messages.ERROR, _("The form is not valid."))
+        return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
 
-        # Process the request data
-        if not request.FILES:
-            messages.add_message(request, messages.ERROR, _('No eaf files found.'))
-            return HttpResponseRedirect(reverse('admin_dataset_manager'))
+    # Process the request data
+    if not request.FILES:
+        messages.add_message(request, messages.ERROR, _('No eaf files found.'))
+        return HttpResponseRedirect(reverse('admin_dataset_manager'))
 
-        folder = ''
-        dataset_acronym = ''
-        eaf_filenames_list = []
+    folder = ''
+    dataset_acronym = ''
+    eaf_filenames_list = []
 
-        for f in request.FILES.getlist('file'):
-            eaf_filenames_list.append(f.name)
+    for f in request.FILES.getlist('file'):
+        eaf_filenames_list.append(f.name)
 
-        for key in request.POST.keys():
-            if key == 'dataset_acronym':
-                dataset_acronym = request.POST['dataset_acronym']
-            if key == 'dir_name':
-                folder = request.POST.get('dir_name', '')
+    for key in request.POST.keys():
+        if key == 'dataset_acronym':
+            dataset_acronym = request.POST['dataset_acronym']
+        if key == 'dir_name':
+            folder = request.POST.get('dir_name', '')
 
-        if dataset_acronym == '':
-            messages.add_message(request, messages.ERROR, _('No acronym for dataset.'))
-            return HttpResponseRedirect(reverse('admin_dataset_manager'))
+    if dataset_acronym == '':
+        messages.add_message(request, messages.ERROR, _('No acronym for dataset.'))
+        return HttpResponseRedirect(reverse('admin_dataset_manager'))
 
-        # Get the dataset
-        try:
-            dataset = Dataset.objects.get(acronym=dataset_acronym)
+    # Get the dataset
+    try:
+        dataset = Dataset.objects.get(acronym=dataset_acronym)
 
-        except ObjectDoesNotExist:
-            messages.add_message(request, messages.ERROR, _('Dataset does not exist.'))
-            return HttpResponseRedirect(reverse('admin_dataset_manager'))
+    except ObjectDoesNotExist:
+        messages.add_message(request, messages.ERROR, _('Dataset does not exist.'))
+        return HttpResponseRedirect(reverse('admin_dataset_manager'))
 
-        # Check for 'change_dataset' permission
-        user_change_datasets = get_objects_for_user(request.user, 'change_dataset', Dataset, accept_global_perms=False)
-        if not user_change_datasets.exists() or dataset not in user_change_datasets:
-            messages.add_message(request, messages.ERROR, _("You are not authorized to upload eaf files."))
-            return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
+    # Check for 'change_dataset' permission
+    user_change_datasets = get_objects_for_user(request.user, 'change_dataset', Dataset, accept_global_perms=False)
+    if not user_change_datasets.exists() or dataset not in user_change_datasets:
+        messages.add_message(request, messages.ERROR, _("You are not authorized to upload eaf files."))
+        return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
 
-        # For the following, we want to keep track of which files are already uploaded
-        # Some files may be uploaded but may or may not be processed in the corpus
-        already_uploaded_eafs = dataset.uploaded_eafs()
-        document_identifiers_of_uploaded_eafs = document_identifiers_from_paths(already_uploaded_eafs)
+    # For the following, we want to keep track of which files are already uploaded
+    # Some files may be uploaded but may or may not be processed in the corpus
+    already_uploaded_eafs = dataset.uploaded_eafs()
+    document_identifiers_of_uploaded_eafs = document_identifiers_from_paths(already_uploaded_eafs)
 
-        # this structure is used by the corpus overview template
-        # We're using it here during upload in the database manager template because it's already implemented
-        (eaf_paths_dict, duplicates) = documents_paths_dictionary(dataset_acronym)
+    # this structure is used by the corpus overview template
+    # We're using it here during upload in the database manager template because it's already implemented
+    (eaf_paths_dict, duplicates) = documents_paths_dictionary(dataset_acronym)
 
-        # if this is the first time eaf files are uploadd to the system, create the folder
-        if not os.path.isdir(WRITABLE_FOLDER + DATASET_EAF_DIRECTORY):
-            os.mkdir(WRITABLE_FOLDER + DATASET_EAF_DIRECTORY, mode=0o755)
+    # if this is the first time eaf files are uploadd to the system, create the folder
+    if not os.path.isdir(WRITABLE_FOLDER + DATASET_EAF_DIRECTORY):
+        os.mkdir(WRITABLE_FOLDER + DATASET_EAF_DIRECTORY, mode=0o755)
 
-        # if this is the first time eaf files are uploadd for the dataset, create a dataset folder
-        dataset_eaf_folder = os.path.join(WRITABLE_FOLDER, DATASET_EAF_DIRECTORY, dataset_acronym)
+    # if this is the first time eaf files are uploadd for the dataset, create a dataset folder
+    dataset_eaf_folder = os.path.join(WRITABLE_FOLDER,DATASET_EAF_DIRECTORY,dataset_acronym)
+    if not os.path.isdir(dataset_eaf_folder):
+        os.mkdir(dataset_eaf_folder, mode=0o755)
+
+    # folder was retrieved by the template during selection to upload a folder
+    if folder:
+        # this could have a side effect of creating an empty folder
+        # at a later step the files are checked to be eaf files
+        # incorrectly typed files are removed after creation, but not the folder
+        dataset_eaf_folder = os.path.join(dataset_eaf_folder,folder)
         if not os.path.isdir(dataset_eaf_folder):
             os.mkdir(dataset_eaf_folder, mode=0o755)
 
-        # folder was retrieved by the template during selection to upload a folder
-        if folder:
-            # this could have a side effect of creating an empty folder
-            # at a later step the files are checked to be eaf files
-            # incorrectly typed files are removed after creation, but not the folder
-            dataset_eaf_folder = os.path.join(dataset_eaf_folder, folder)
-            if not os.path.isdir(dataset_eaf_folder):
-                os.mkdir(dataset_eaf_folder, mode=0o755)
+    # move uploaded files to appropriate location
+    for f in request.FILES.getlist('file'):
+        next_eaf_file = os.path.join(dataset_eaf_folder,f.name)
+        f_handle = open(next_eaf_file, mode='wb+')
+        for chunk in f.chunks():
+            f_handle.write(chunk)
 
-        # move uploaded files to appropriate location
-        for f in request.FILES.getlist('file'):
-            next_eaf_file = os.path.join(dataset_eaf_folder, f.name)
-            f_handle = open(next_eaf_file, mode='wb+')
-            for chunk in f.chunks():
-                f_handle.write(chunk)
+    # check whether anything should not have been uploaded
+    # check the type of the first chunk of the uploaded files
+    # check that the files do not already exist
 
-        # check whether anything should not have been uploaded
-        # check the type of the first chunk of the uploaded files
-        # check that the files do not already exist
+    # Create lists for all problems we might encounter
+    ignored_files = []
+    duplicate_files = []
+    already_seen = []
+    import_twice = []
 
-        # Create lists for all problems we might encounter
-        ignored_files = []
-        duplicate_files = []
-        already_seen = []
-        import_twice = []
+    for new_file in eaf_filenames_list:
 
-        for new_file in eaf_filenames_list:
+        # Get the normalized file name
+        norm_filename = os.path.normpath(new_file)
+        split_norm_filename = norm_filename.split('.')
 
-            # Get the normalized file name
-            norm_filename = os.path.normpath(new_file)
-            split_norm_filename = norm_filename.split('.')
+        # Validate format
+        if len(split_norm_filename) == 1:
+            # file has no extension
+            wrong_format = True
+        else:
+            extension = split_norm_filename[-1]
+            wrong_format = (extension.lower() != 'eaf')
 
-            # Validate format
-            if len(split_norm_filename) == 1:
-                # file has no extension
-                wrong_format = True
-            else:
-                extension = split_norm_filename[-1]
-                wrong_format = (extension.lower() != 'eaf')
+        # Get full paths
+        destination_location = os.path.join(dataset_eaf_folder,new_file)
+        file_basename = os.path.basename(new_file)
+        basename = os.path.splitext(file_basename)[0]
 
-            # Get full paths
-            destination_location = os.path.join(dataset_eaf_folder, new_file)
-            file_basename = os.path.basename(new_file)
-            basename = os.path.splitext(file_basename)[0]
+        # Check if the new file is in the same location
+        if basename in document_identifiers_of_uploaded_eafs or basename in eaf_paths_dict.keys():
+            new_file_location = os.path.join(folder,file_basename)
+            if new_file_location not in eaf_paths_dict[basename]:
+                duplicate_files.append(new_file)
 
-            # Check if the new file is in the same location
-            if basename in document_identifiers_of_uploaded_eafs or basename in eaf_paths_dict.keys():
-                new_file_location = os.path.join(folder, file_basename)
-                if new_file_location not in eaf_paths_dict[basename]:
-                    duplicate_files.append(new_file)
+        # Potential conflict, the same file is being imported twice from different locations
+        if basename in already_seen:
+            import_twice.append(new_file)
+        else:
+            already_seen.append(basename)
 
-            # Potential conflict, the same file is being imported twice from different locations
-            if basename in already_seen:
-                import_twice.append(new_file)
-            else:
-                already_seen.append(basename)
+        # Maybe the file is not an eaf file or is missing an extension
+        magic_file_type = magic.from_buffer(open(destination_location, "rb").read(2040), mime=True)
+        if magic_file_type != 'text/xml' or wrong_format:
+            ignored_files.append(new_file)
+            os.remove(destination_location)
 
-            # Maybe the file is not an eaf file or is missing an extension
-            magic_file_type = magic.from_buffer(open(destination_location, "rb").read(2040), mime=True)
-            if magic_file_type != 'text/xml' or wrong_format:
-                ignored_files.append(new_file)
-                os.remove(destination_location)
+    # Any problems encountered? Add error messages
+    if ignored_files:
+        message_string = ", ".join(ignored_files)
+        messages.add_message(request, messages.ERROR, _('Non-EAF file(s) ignored: ')+message_string)
 
-        # Any problems encountered? Add error messages
-        if ignored_files:
-            message_string = ", ".join(ignored_files)
-            messages.add_message(request, messages.ERROR, _('Non-EAF file(s) ignored: ') + message_string)
+    if import_twice:
+        message_string = ", ".join(import_twice)
+        messages.add_message(request, messages.WARNING, _('File(s) encountered twice: ')+message_string)
 
-        if import_twice:
-            message_string = ", ".join(import_twice)
-            messages.add_message(request, messages.WARNING, _('File(s) encountered twice: ') + message_string)
+    if duplicate_files:
+        message_string = ", ".join(duplicate_files)
+        messages.add_message(request, messages.INFO, _('Already imported to different folder: ')+message_string)
 
-        if duplicate_files:
-            message_string = ", ".join(duplicate_files)
-            messages.add_message(request, messages.INFO, _('Already imported to different folder: ') + message_string)
-
-        return HttpResponseRedirect(reverse('admin_dataset_manager'))
+    return HttpResponseRedirect(reverse('admin_dataset_manager'))
 
 
+@require_http_methods(["POST"])
 def update_expiry(request):
     # if something is wrong with the call, proceed to Signbank Welcome Page
     # This can happen if the user types in the url rather than getting there via the User Profile View
     # And the Extend Expiry button was not shown on their profile
-
-    # Check for request type
-    if request.method != "POST":
-        return HttpResponseRedirect(PREFIX_URL + '/')
 
     # Check if we have a username
     if 'username' in request.POST.keys():
