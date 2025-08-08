@@ -2,6 +2,8 @@
 
 import os
 import shutil
+import magic
+
 from django.core.management.base import BaseCommand
 from django.core.exceptions import *
 from signbank.settings.server_specific import WRITABLE_FOLDER, BACKUP_VIDEOS_FOLDER
@@ -25,7 +27,6 @@ class Command(BaseCommand):
                         # create a small version.
                         filepath = os.path.join(WRITABLE_FOLDER, gv.videofile.name)
                         if os.path.exists(filepath.encode('utf-8')):
-                            import magic
                             magic_file_type = magic.from_buffer(open(filepath, "rb").read(2040), mime=True)
                             video_type = magic_file_type.split('/')[0]
                             if video_type != 'video':
