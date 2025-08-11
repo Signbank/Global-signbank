@@ -13,6 +13,7 @@ from django.http import (HttpResponse, HttpResponseRedirect, HttpResponseBadRequ
 from django.shortcuts import render, get_object_or_404, redirect
 from django.urls import reverse
 from django.contrib.auth.decorators import login_required
+from django.views.decorators.http import require_http_methods
 from django.utils.datastructures import MultiValueDictKeyError
 from django.utils.encoding import escape_uri_path
 from urllib.parse import quote
@@ -1792,103 +1793,98 @@ def save_chosen_still_for_gloss(request, pk):
     return JsonResponse({'redirect_url': redirect_url})
 
 
+@require_http_methods(["POST"])
 def add_image(request):
 
-    if 'HTTP_REFERER' in request.META:
-        url = request.META['HTTP_REFERER']
+    url = request.META['HTTP_REFERER'] if 'HTTP_REFERER' in request.META else '/'
+
+    form = ImageUploadForGlossForm(request.POST, request.FILES)
+
+    if not form.is_valid():
+        # if we can't process the form, just redirect back to the
+        # referring page, should just be the case of hitting
+        # Upload without choosing a file but could be
+        # a malicious request, if no referrer, go back to root
+        return redirect(url)
+
+    gloss_id = form.cleaned_data['gloss_id']
+    gloss = get_object_or_404(Gloss, pk=gloss_id, archived=False)
+
+    imagefile = form.cleaned_data['imagefile']
+    extension = '.'+imagefile.name.split('.')[-1]
+
+    if extension not in SUPPORTED_CITATION_IMAGE_EXTENSIONS:
+
+        feedback_message = _('File extension not supported! Please convert to png or jpg')
+
+        messages.add_message(request, messages.ERROR, feedback_message)
+
+        return redirect(url)
+
+    elif imagefile.size > MAXIMUM_UPLOAD_SIZE:
+
+        feedback_message = _('Uploaded file too large!')
+        messages.add_message(request, messages.ERROR, feedback_message)
+
+        return redirect(url)
+
+    # construct a filename for the image, use sn
+    # if present, otherwise use idgloss+gloss id
+    if gloss.sn is not None:
+        imagefile.name = str(gloss.sn) + extension
     else:
-        url = '/'
+        imagefile.name = gloss.idgloss + "-" + str(gloss.pk) + extension
 
-    if request.method == 'POST':
+    redirect_url = form.cleaned_data['redirect']
 
-        form = ImageUploadForGlossForm(request.POST, request.FILES)
+    # deal with any existing image for this sign
+    goal_path = os.path.join(
+        WRITABLE_FOLDER,
+        GLOSS_IMAGE_DIRECTORY,
+        gloss.lemma.dataset.acronym,
+        get_two_letter_dir(gloss.idgloss)
+    )
+    goal_location_str = os.path.join(goal_path, gloss.idgloss + '-' + str(gloss.pk) + extension)
 
-        if form.is_valid():
+    exists = os.path.exists(goal_path)
 
-            gloss_id = form.cleaned_data['gloss_id']
-            gloss = get_object_or_404(Gloss, pk=gloss_id, archived=False)
+    #First make the dir if needed
+    if not exists:
+        try:
+            os.makedirs(goal_path)
+        except OSError as ose:
+            print(ose)
 
-            imagefile = form.cleaned_data['imagefile']
-            extension = '.'+imagefile.name.split('.')[-1]
+    #Remove previous video
+    if gloss.get_image_path():
+        os.remove(WRITABLE_FOLDER+gloss.get_image_path())
 
-            if extension not in SUPPORTED_CITATION_IMAGE_EXTENSIONS:
-
-                feedback_message = _('File extension not supported! Please convert to png or jpg')
-
-                messages.add_message(request, messages.ERROR, feedback_message)
-
-                return redirect(url)
-
-            elif imagefile.size > MAXIMUM_UPLOAD_SIZE:
-
-                feedback_message = _('Uploaded file too large!')
-                messages.add_message(request, messages.ERROR, feedback_message)
-
-                return redirect(url)
-
-            # construct a filename for the image, use sn
-            # if present, otherwise use idgloss+gloss id
-            if gloss.sn is not None:
-                imagefile.name = f'{gloss.sn}{extension}'
-            else:
-                imagefile.name = f'{gloss.idgloss}-{gloss.pk}{extension}'
-
-            redirect_url = form.cleaned_data['redirect']
-
-            # deal with any existing image for this sign
-            goal_path = f'{WRITABLE_FOLDER}/{GLOSS_IMAGE_DIRECTORY}/{gloss.lemma.dataset.acronym}/{get_two_letter_dir(gloss.idgloss)}'
-
-            goal_location_str = f'{goal_path}/{gloss.idgloss}-{gloss.pk}{extension}'
-
-            exists = os.path.exists(goal_path)
-
-            #First make the dir if needed
-            if not exists:
-                try:
-                    os.makedirs(goal_path)
-                except OSError as ose:
-                    print(ose)
-
-            #Remove previous video
-            if gloss.get_image_path():
-                os.remove(WRITABLE_FOLDER+gloss.get_image_path())
-
-            try:
-                f = open(goal_location_str.encode(sys.getfilesystemencoding()), 'wb+')
-                destination = File(f)
-            except (SystemError, OSError, IOError):
-                quoted_filename = quote(gloss.idgloss, safe='')
-                filename = f'{quoted_filename}-{gloss.pk}{extension}'
-                goal_location_str = os.path.join(goal_path, filename)
-                try:
-                    f = open(goal_location_str.encode(sys.getfilesystemencoding()), 'wb+')
-                    destination = File(f)
-                except (SystemError, OSError, IOError):
-                    print('add_image, failed to open destination: ', goal_location_str)
-                    return redirect(redirect_url)
-            # if we get to here, destination has been opened
-            for chunk in imagefile.chunks():
-                destination.write(chunk)
-            destination.close()
-
+    try:
+        f = open(goal_location_str.encode(sys.getfilesystemencoding()), 'wb+')
+        destination = File(f)
+    except (SystemError, OSError, IOError):
+        quoted_filename = quote(gloss.idgloss, safe='')
+        filename = quoted_filename + '-' + str(gloss.pk) + extension
+        goal_location_str = os.path.join(goal_path, filename)
+        try:
+            f = open(goal_location_str.encode(sys.getfilesystemencoding()), 'wb+')
+            destination = File(f)
+        except (SystemError, OSError, IOError):
+            print('add_image, failed to open destintation: ', goal_location_str)
             return redirect(redirect_url)
+    # if we get to here, destination has been opened
+    for chunk in imagefile.chunks():
+        destination.write(chunk)
+    destination.close()
 
-    # if we can't process the form, just redirect back to the
-    # referring page, should just be the case of hitting
-    # Upload without choosing a file but could be
-    # a malicious request, if no referrer, go back to root
-    return redirect(url)
+    return redirect(redirect_url)
 
+
+@require_http_methods(["POST"])
 def delete_image(request, pk):
 
     # return to referer
-    if 'HTTP_REFERER' in request.META:
-        url = request.META['HTTP_REFERER']
-    else:
-        url = '/'
-
-    if not request.method == "POST":
-        return redirect(url)
+    url = request.META['HTTP_REFERER'] if 'HTTP_REFERER' in request.META else '/'
 
     # deal with any existing video for this sign
     gloss = get_object_or_404(Gloss, pk=pk, archived=False)
@@ -1912,81 +1908,76 @@ def delete_image(request, pk):
     return redirect(url)
 
 
+@require_http_methods(["POST"])
 def add_handshape_image(request):
 
-    if 'HTTP_REFERER' in request.META:
-        url = request.META['HTTP_REFERER']
-    else:
-        url = '/'
+    url = request.META['HTTP_REFERER'] if 'HTTP_REFERER' in request.META else '/'
 
     if not USE_HANDSHAPE:
         return redirect(url)
 
-    if request.method == 'POST':
+    form = ImageUploadForHandshapeForm(request.POST, request.FILES)
 
-        form = ImageUploadForHandshapeForm(request.POST, request.FILES)
+    if not form.is_valid():
+        # if we can't process the form, just redirect back to the
+        # referring page, should just be the case of hitting
+        # Upload without choosing a file but could be
+        # a malicious request, if no referrer, go back to root
+        return redirect(url)
 
-        if form.is_valid():
+    handshape_id = form.cleaned_data['handshape_id']
+    handshape = get_object_or_404(Handshape, machine_value=handshape_id)
 
-            handshape_id = form.cleaned_data['handshape_id']
-            handshape = get_object_or_404(Handshape, machine_value=handshape_id)
+    imagefile = form.cleaned_data['imagefile']
+    extension = '.'+imagefile.name.split('.')[-1]
 
-            imagefile = form.cleaned_data['imagefile']
-            extension = '.'+imagefile.name.split('.')[-1]
+    if extension not in SUPPORTED_CITATION_IMAGE_EXTENSIONS:
 
-            if extension not in SUPPORTED_CITATION_IMAGE_EXTENSIONS:
+        feedback_message = _('File extension not supported! Please convert to png or jpg')
+        messages.add_message(request, messages.ERROR, feedback_message)
 
-                feedback_message = _('File extension not supported! Please convert to png or jpg')
-                messages.add_message(request, messages.ERROR, feedback_message)
+        return redirect(url)
 
-                return redirect(url)
+    elif imagefile.size > MAXIMUM_UPLOAD_SIZE:
 
-            elif imagefile.size > MAXIMUM_UPLOAD_SIZE:
+        feedback_message = _('Uploaded file too large!')
+        messages.add_message(request, messages.ERROR, feedback_message)
+        return redirect(url)
 
-                feedback_message = _('Uploaded file too large!')
-                messages.add_message(request, messages.ERROR, feedback_message)
-                return redirect(url)
+    # construct a filename for the image, use sn
+    # if present, otherwise use idgloss+gloss id
+    imagefile.name = "handshape_" + str(handshape.machine_value) + extension
 
-            # construct a filename for the image, use sn
-            # if present, otherwise use idgloss+gloss id
-            imagefile.name = f'handshape_{handshape.machine_value}{extension}'
+    redirect_url = form.cleaned_data['redirect']
 
-            redirect_url = form.cleaned_data['redirect']
+    # deal with any existing image for this sign
+    goal_path = WRITABLE_FOLDER+HANDSHAPE_IMAGE_DIRECTORY + '/' + str(handshape.machine_value) + '/'
+    goal_location = goal_path + 'handshape_' + str(handshape.machine_value) + extension
+    # First make the dir if needed
+    try:
+        os.mkdir(goal_path)
+    except OSError:
+        pass
 
-            # deal with any existing image for this sign
-            goal_path = WRITABLE_FOLDER+HANDSHAPE_IMAGE_DIRECTORY + '/' + str(handshape.machine_value) + '/'
-            goal_location = goal_path + 'handshape_' + str(handshape.machine_value) + extension
-            # First make the dir if needed
-            try:
-                os.mkdir(goal_path)
-            except OSError:
-                pass
+    # Remove previous video
+    if handshape.get_image_path():
+        os.remove(WRITABLE_FOLDER+handshape.get_image_path())
 
-            # Remove previous video
-            if handshape.get_image_path():
-                os.remove(WRITABLE_FOLDER+handshape.get_image_path())
+    # create the destination file
+    try:
+        f = open(goal_location, 'wb+')
+    except (UnicodeEncodeError, IOError, OSError):
+        feedback_message = _('Error uploading handshape image. Please consult the administrator.')
+        messages.add_message(request, messages.ERROR, feedback_message)
+        return redirect(redirect_url)
 
-            # create the destination file
-            try:
-                f = open(goal_location, 'wb+')
-            except (UnicodeEncodeError, IOError, OSError):
-                feedback_message = _('Error uploading handshape image. Please consult the administrator.')
-                messages.add_message(request, messages.ERROR, feedback_message)
-                return redirect(redirect_url)
+    destination = File(f)
+    # Save the file
+    for chunk in request.FILES['imagefile'].chunks():
+        destination.write(chunk)
+    destination.close()
 
-            destination = File(f)
-            # Save the file
-            for chunk in request.FILES['imagefile'].chunks():
-                destination.write(chunk)
-            destination.close()
-
-            return redirect(redirect_url)
-
-    # if we can't process the form, just redirect back to the
-    # referring page, should just be the case of hitting
-    # Upload without choosing a file but could be
-    # a malicious request, if no referrer, go back to root
-    return redirect(url)
+    return redirect(redirect_url)
 
 
 def gloss_annotations(this_gloss):
