@@ -6,6 +6,7 @@ from django.utils.timezone import get_current_timezone
 
 from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth.decorators import login_required
+from django.views.decorators.http import require_http_methods
 from django.contrib import messages
 from django.http import HttpResponse
 from django.conf import settings
@@ -25,119 +26,121 @@ import magic
 from pympi.Elan import Eaf
 
 
+@require_http_methods(["POST"])
 def addvideo(request):
     """View to present a video upload form and process the upload"""
 
-    if request.method == 'POST':
-        last_used_dataset = request.session['last_used_dataset']
-        dataset = Dataset.objects.filter(acronym=last_used_dataset).first()
-        dataset_languages = dataset.translation_languages.all()
-        form = VideoUploadForObjectForm(request.POST, request.FILES, languages=dataset_languages, dataset=dataset)
-        if not form.is_valid():
-            # redirect back to the referring page or root
-            if 'HTTP_REFERER' in request.META:
-                url = request.META['HTTP_REFERER']
-            else:
-                url = '/'
-            return redirect(url)
-
-        object_id = form.cleaned_data['object_id']
-        object_type = form.cleaned_data['object_type']
-        fieldname = object_type
-        vfile = form.cleaned_data['videofile']
-        redirect_url = form.cleaned_data['redirect']
-        recorded = form.cleaned_data['recorded']
-        # add the video, depending on which type of object it is added to
-        if object_type == 'examplesentence_video':
-            sentence = ExampleSentence.objects.filter(id=object_id).first()
-            if not sentence:
-                return redirect(redirect_url)
-            sentence.add_video(request.user, vfile, recorded)
-            # return here, since example sentences do not have a revision history and do not point to a single gloss
-            return redirect(redirect_url)
-        elif object_type == 'gloss_video':
-            gloss = Gloss.objects.filter(id=object_id).first()
-            if not gloss:
-                return redirect(redirect_url)
-            gloss_video = gloss.add_video(request.user, vfile, recorded)
-            uploaded_video = str(gloss_video)
-        elif object_type == 'gloss_perspectivevideo':
-            gloss = Gloss.objects.filter(id=object_id).first()
-            if not gloss:
-                return redirect(redirect_url)
-            perspective = form.cleaned_data['perspective']
-            stringpersp = str(perspective)
-            if stringpersp:
-                fieldname += '_' + stringpersp
-            perspective_video = gloss.add_perspective_video(request.user, vfile, stringpersp, recorded)
-            if settings.DEBUG_VIDEOS:
-                print('Perspective video created: ', str(perspective_video))
-            uploaded_video = str(perspective_video)
-        elif object_type == 'gloss_nmevideo':
-            gloss = Gloss.objects.filter(id=object_id).first()
-            if not gloss:
-                return redirect(redirect_url)
-            offset = form.cleaned_data['offset']
-            perspective = form.cleaned_data['nme_perspective']
-            fieldname += '_' + str(offset) + '_' + str(perspective)
-            nmevideo = gloss.add_nme_video(request.user, vfile, offset, recorded, perspective)
-            translation_languages = gloss.lemma.dataset.translation_languages.all()
-            descriptions = dict()
-            for language in translation_languages:
-                form_field = 'description_' + language.language_code_2char
-                form_value = form.cleaned_data[form_field]
-                descriptions[language.language_code_2char] = form_value.strip()
-            nmevideo.add_descriptions(descriptions)
-            nmevideo.perspective = perspective
-            nmevideo.save()
-            uploaded_video = str(nmevideo.videofile)
-        elif object_type == 'morpheme_video':
-            morpheme = Morpheme.objects.filter(id=object_id).first()
-            if not morpheme:
-                return redirect(redirect_url)
-            morpheme.add_video(request.user, vfile, recorded)
-            # return here, since morphemes do not have a revision history
-            return redirect(redirect_url)
-        elif object_type == 'annotated_video':
-            eaf_file = form.cleaned_data['eaffile']
-            annotated_sentence = AnnotatedSentence.objects.create()
-
-            gloss = Gloss.objects.filter(id=object_id).first()
-            annotations = form.cleaned_data['feedbackdata']
-            annotations = json.loads(annotations)
-            annotated_sentence.add_annotations(annotations, gloss)
-
-            translations = form.cleaned_data['translations']
-            if translations:
-                annotated_sentence.add_translations(json.loads(translations))
-
-            contexts = form.cleaned_data['contexts']
-            if contexts:
-                annotated_sentence.add_contexts(json.loads(contexts))
-
-            source = form.cleaned_data['source_id']
-            url = form.cleaned_data['url']
-            annotated_video = annotated_sentence.add_video(request.user, vfile, eaf_file, source, url)
-
-            if annotated_video is None:
-                messages.add_message(request, messages.ERROR, _('Annotated sentence upload went wrong. Please try again.'))
-                annotated_sentence.delete()
-                return redirect(redirect_url)
-
-            uploaded_video = str(annotated_video)
-
-            annotated_sentence.save()
+    last_used_dataset = request.session['last_used_dataset']
+    dataset = Dataset.objects.filter(acronym=last_used_dataset).first()
+    dataset_languages = dataset.translation_languages.all()
+    form = VideoUploadForObjectForm(request.POST, request.FILES, languages=dataset_languages, dataset=dataset)
+    if not form.is_valid():
+        # redirect back to the referring page or root
+        if 'HTTP_REFERER' in request.META:
+            url = request.META['HTTP_REFERER']
         else:
-            # the object_type does not match anything, just return
+            url = '/'
+        return redirect(url)
+
+    # control below may or may not set these variables
+    gloss = None
+    uploaded_video = ""
+
+    object_id = form.cleaned_data['object_id']
+    object_type = form.cleaned_data['object_type']
+    fieldname = object_type
+    vfile = form.cleaned_data['videofile']
+    redirect_url = form.cleaned_data['redirect']
+    recorded = form.cleaned_data['recorded']
+    # add the video, depending on which type of object it is added to
+    if object_type == 'examplesentence_video':
+        sentence = ExampleSentence.objects.filter(id=object_id).first()
+        if not sentence:
+            return redirect(redirect_url)
+        sentence.add_video(request.user, vfile, recorded)
+        # return here, since example sentences do not have a revision history and do not point to a single gloss
+        return redirect(redirect_url)
+    elif object_type == 'gloss_video':
+        gloss = Gloss.objects.filter(id=object_id).first()
+        if not gloss:
+            return redirect(redirect_url)
+        gloss_video = gloss.add_video(request.user, vfile, recorded)
+        uploaded_video = str(gloss_video)
+    elif object_type == 'gloss_perspectivevideo':
+        gloss = Gloss.objects.filter(id=object_id).first()
+        if not gloss:
+            return redirect(redirect_url)
+        perspective = form.cleaned_data['perspective']
+        stringpersp = str(perspective)
+        if stringpersp:
+            fieldname += '_' + stringpersp
+        perspective_video = gloss.add_perspective_video(request.user, vfile, stringpersp, recorded)
+        if settings.DEBUG_VIDEOS:
+            print('Perspective video created: ', str(perspective_video))
+        uploaded_video = str(perspective_video)
+    elif object_type == 'gloss_nmevideo':
+        gloss = Gloss.objects.filter(id=object_id).first()
+        if not gloss:
+            return redirect(redirect_url)
+        offset = form.cleaned_data['offset']
+        perspective = form.cleaned_data['nme_perspective']
+        fieldname += '_' + str(offset) + '_' + str(perspective)
+        nmevideo = gloss.add_nme_video(request.user, vfile, offset, recorded, perspective)
+        translation_languages = gloss.lemma.dataset.translation_languages.all()
+        descriptions = dict()
+        for language in translation_languages:
+            form_field = 'description_' + language.language_code_2char
+            form_value = form.cleaned_data[form_field]
+            descriptions[language.language_code_2char] = form_value.strip()
+        nmevideo.add_descriptions(descriptions)
+        nmevideo.perspective = perspective
+        nmevideo.save()
+        uploaded_video = str(nmevideo.videofile)
+    elif object_type == 'morpheme_video':
+        morpheme = Morpheme.objects.filter(id=object_id).first()
+        if not morpheme:
+            return redirect(redirect_url)
+        morpheme.add_video(request.user, vfile, recorded)
+        # return here, since morphemes do not have a revision history
+        return redirect(redirect_url)
+    elif object_type == 'annotated_video':
+        eaf_file = form.cleaned_data['eaffile']
+        annotated_sentence = AnnotatedSentence.objects.create()
+
+        gloss = Gloss.objects.filter(id=object_id).first()
+        annotations = form.cleaned_data['feedbackdata']
+        annotations = json.loads(annotations)
+        annotated_sentence.add_annotations(annotations, gloss)
+
+        translations = form.cleaned_data['translations']
+        if translations:
+            annotated_sentence.add_translations(json.loads(translations))
+
+        contexts = form.cleaned_data['contexts']
+        if contexts:
+            annotated_sentence.add_contexts(json.loads(contexts))
+
+        source = form.cleaned_data['source_id']
+        url = form.cleaned_data['url']
+        annotated_video = annotated_sentence.add_video(request.user, vfile, eaf_file, source, url)
+
+        if annotated_video is None:
+            messages.add_message(request, messages.ERROR, _('Annotated sentence upload went wrong. Please try again.'))
+            annotated_sentence.delete()
             return redirect(redirect_url)
 
+        uploaded_video = str(annotated_video)
+
+        annotated_sentence.save()
+
+    if gloss and uploaded_video:
         revision = GlossRevision(old_value='', new_value=uploaded_video,
                                  field_name=fieldname,
                                  gloss=gloss, user=request.user, time=DT.datetime.now(tz=get_current_timezone()))
         revision.save()
 
-        return redirect(redirect_url)
-0
+    return redirect(redirect_url)
+
 
 def find_non_overlapping_annotated_glosses(timeslots, annotations_tier_1, annotations_tier_2):
     non_overlapping_glosses = []

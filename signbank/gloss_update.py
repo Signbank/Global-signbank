@@ -7,6 +7,7 @@ from django.db import models, DatabaseError, IntegrityError
 from django.utils.translation import gettext_lazy as _, activate, gettext
 from django.utils.timezone import get_current_timezone
 from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.http import require_http_methods
 from django.http import JsonResponse
 from django.core.exceptions import ObjectDoesNotExist, MultipleObjectsReturned, ValidationError
 from django.db.transaction import atomic, TransactionManagementError
@@ -172,23 +173,23 @@ def convert_string_to_dict_of_list_of_lists(input_string):
     try:
         dict_of_lists = ast.literal_eval(input_string)
     except (ValueError, SyntaxError):
-        return {}, "Sense input is not in the expected format. \nTry: '{\"en\":[[\"sense 1 keyword1\", \"sense 1 keyword2\"],[\"sense 2 keyword1\"]], \"nl\":[[\"sense 1 keyword1\"],[\"sense 2 keyword1\", \"sense 2 keyword2\"]]}'"
+        return {}, gettext("Sense input is not in the expected format. \nTry: '{\"en\":[[\"sense 1 keyword1\", \"sense 1 keyword2\"],[\"sense 2 keyword1\"]], \"nl\":[[\"sense 1 keyword1\"],[\"sense 2 keyword1\", \"sense 2 keyword2\"]]}'")
 
     # Verify if the result is a dictionary
     if isinstance(dict_of_lists, dict):
         lengths = set()
         for key, value in dict_of_lists.items():
             if not isinstance(value, list):
-                return {}, f"The value associated with key '{key}' is not a list."
+                return {}, gettext("The value associated with key {key} is not a list.").format(key=key)
             lengths.add(len(value))
             for item in value:
                 if not isinstance(item, list):
-                    return {}, f"The value associated with key '{key}' contains a non-list element."
+                    return {}, gettext("The value associated with key {key} contains a non-list element.").format(key=key)
         if len(lengths) > 1:
-            return {}, "Lists within the dictionary have different lengths."
+            return {}, gettext("Lists within the dictionary have different lengths.")
         return dict_of_lists, None
     else:
-        return {}, "Input is not a dictionary."
+        return {}, gettext("Input is not a dictionary.")
 
 
 def collect_revision_history_for_senses(gloss):
@@ -421,7 +422,7 @@ def check_constraints_on_gloss_language_fields(gloss, language_code, value_dict)
     existing_lemmas = []
     for language, lemmas in lemmas_per_language_translation.items():
         if lemmas.count():
-            e5 = gettext("Lemma ID Gloss") + " (" + language.name + ") " + gettext("already exists.")
+            e5 = gettext("Lemma ID Gloss ({language}) already exists.").format(language=language.name)
             errors.append(e5)
             if lemmas.first().lemma.pk not in existing_lemmas:
                 existing_lemmas.append(lemmas.first().lemma.pk)
@@ -442,8 +443,7 @@ def check_constraints_on_gloss_language_fields(gloss, language_code, value_dict)
             this_annotation = annotations.first()
             if this_annotation.id not in existing_glosses and this_annotation.id != gloss.id:
                 existing_glosses.append(this_annotation.id)
-                e7 = gettext('Annotation ID Gloss') + " (" + language.name + ') ' + gettext(
-                    'already exists.')
+                e7 = gettext("Annotation ID Gloss ({language}) already exists.").format(language=language.name)
                 errors.append(e7)
     if len(existing_glosses) > 1:
         e6 = gettext("Annotation translations refer to different already existing glosses.")
@@ -748,7 +748,7 @@ def api_update_gloss(request, datasetid, glossid, language_code='en'):
         return JsonResponse(results, status=400)
 
     results['errors'] = {}
-    results['updatestatus'] = "Gloss successfully updated."
+    results['updatestatus'] = gettext("Gloss successfully updated.")
 
     return JsonResponse(results, status=201)
 
@@ -758,7 +758,7 @@ def check_confirmed(value_dict):
     errors = dict()
     for field in value_dict.keys():
         if field not in ['confirmed', 'Confirmed'] or value_dict[field] not in ['true', 'True', 'TRUE']:
-            errors[field] = _("Gloss operation not confirmed")
+            errors[field] = gettext("Gloss operation not confirmed")
     return errors
 
 
@@ -1418,11 +1418,9 @@ def api_delete_gloss_nmevideo(request, datasetid, glossid, videoid):
 
 
 @csrf_exempt
+@require_http_methods(["POST"])
 @put_api_user_in_request
 def api_create_annotated_sentence(request, datasetid):
-
-    if not request.method == 'POST': 
-        return JsonResponse({"error": "POST method required."}, status=400)
 
     try:
         dataset_id = int(datasetid)
@@ -1498,7 +1496,7 @@ def api_create_annotated_sentence(request, datasetid):
         return JsonResponse({"error": gettext("Annotated video not found.")}, status=400)
 
     if len(labels_not_found) > 0:
-        return JsonResponse({"success": "Sentence was added successfully. However, some labels were not found in Signbank: " + ', '.join(labels_not_found)}, status=201)
+        return JsonResponse({"success": gettext("Sentence was added successfully. However, some labels were not found in Signbank: {labels}").format(labels=', '.join(labels_not_found))}, status=201)
     return JsonResponse({"success": gettext("Sentence was added successfully.")}, status=201)
 
 
@@ -1587,7 +1585,7 @@ def api_delete_annotated_sentence(request, datasetid, annotatedsentenceid):
 
     dataset = Dataset.objects.filter(id=dataset_id).first()
     if not dataset:
-        return JsonResponse({"error": "Dataset with given id does not exist."}, status=400)
+        return JsonResponse({"error": gettext("Dataset with given id does not exist.")}, status=400)
 
     change_permit_datasets = get_objects_for_user(request.user, 'change_dataset', Dataset)
     if dataset not in change_permit_datasets:
