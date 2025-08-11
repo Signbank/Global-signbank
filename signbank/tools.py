@@ -18,7 +18,7 @@ from django.views.decorators.csrf import csrf_exempt
 from django.utils.dateformat import format
 from django.core.exceptions import ObjectDoesNotExist, EmptyResultSet
 from django.contrib.auth.models import User
-from django.http import JsonResponse
+from django.http import JsonResponse, HttpResponse
 from django.shortcuts import render
 from django.template.loader import get_template
 
@@ -2429,3 +2429,12 @@ def find_duplicate_lemmas(lemma):
             duplicate_to_me.append(duplicate_translation.lemma.id)
     duplicate_lemma = list(set(duplicate_to_me))
     return duplicate_lemma
+
+
+def generate_response(values):
+    """ Used by update methods to format a list of return values into a tabbed string.
+    The tabbed strings are used in the editable templates where the updates are shown by javascript.
+    """
+    str_values = map(str, values)
+    content = '\t'.join(str_values)
+    return HttpResponse(content, content_type='text/plain')
