@@ -1443,7 +1443,7 @@ def update_signlanguage(gloss, field, values):
     # To accommodate this in the interactive user interface for Editting a Gloss, two values are returned
 
     # The dialects value is set to the current dialects value
-    dialects_value = ", ".join([str(d.signlanguage.name) + '/' + str(d.name) for d in gloss.dialect.all()])
+    dialects_value = ", ".join([f'{d.signlanguage.name}/{d.name}' for d in gloss.dialect.all()])
     current_signlanguages = gloss.signlanguage.all()
     current_signlanguage_name = ''
     for lang in current_signlanguages:
@@ -1497,7 +1497,7 @@ def update_dialect(gloss, field, values):
 
         # The signlanguage value is set to the currect sign languages value
         signlanguage_value = ", ".join([str(g) for g in gloss.signlanguage.all()])
-        new_dialects_value = ", ".join([str(d.signlanguage.name) + '/' + str(d.name) for d in gloss.dialect.all()])
+        new_dialects_value = ", ".join([f'{d.signlanguage.name}/{d.name}' for d in gloss.dialect.all()])
     except ObjectDoesNotExist:
         return HttpResponseBadRequest("Dialect %s does not match Sign Language of Gloss" % error_string_values,
                                       {'content-type': 'text/plain'})
@@ -1992,11 +1992,10 @@ def add_morpheme_definition(request, glossid):
     except ObjectDoesNotExist:
 
         # The user has tried to type in a name rather than select from the list.
-        messages.add_message(request, messages.ERROR,
-                             _('Simultaneuous morphology: no morpheme found with identifier {}.'.format(morph_id)))
+        feedback_message = gettext('Simultaneuous morphology: no morpheme found with identifier {morphid}.'.format(morphid=morph_id))
+        messages.add_message(request, messages.ERROR, feedback_message)
 
-        return HttpResponseRedirect(
-            reverse('dictionary:admin_gloss_view', kwargs={'pk': thisgloss.id}) + '?editmorphdef')
+        return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': thisgloss.id}) + '?editmorphdef')
 
     original_simultaneous = thisgloss.get_morpheme_display()
 
@@ -2357,7 +2356,7 @@ def add_othermedia(request):
 
     # use '+' to concatinate
     # if the source filename is right to left, the extension is at the end
-    destination_filename = filename_base + '.' + extension
+    destination_filename = f'{filename_base}.{extension}'
     goal_path = os.path.join(goal_directory, destination_filename)
 
     if os.path.exists(goal_path):
@@ -2370,7 +2369,7 @@ def add_othermedia(request):
     # to accommodate large files, the Other Media data is first stored in the database
     # if something goes wrong this object is deleted again
     # Save the database record
-    other_media_path = str(gloss_or_morpheme.pk) + '/' + destination_filename
+    other_media_path = f'{gloss_or_morpheme.pk}/{destination_filename}'
     newothermedia = OtherMedia(path=other_media_path,
                                alternative_gloss=request.POST['alternative_gloss'],
                                type=othermediatype,
@@ -2387,11 +2386,11 @@ def add_othermedia(request):
         filename_plus_extension = destination_filename
     except (UnicodeEncodeError, IOError, OSError):
         quoted_filename = urllib.parse.quote(filename_base, safe='')
-        filename_plus_extension = quoted_filename + '.' + extension
+        filename_plus_extension = f'{quoted_filename}.{extension}'
         goal_location_str = os.path.join(goal_directory, filename_plus_extension)
         if os.path.exists(goal_location_str):
             messages.add_message(request, messages.ERROR,
-                                 _("The other media filename is already in use. Please use a different filename."))
+                                 _("The other media filename {filename} is already in use. Please use a different filename.").format(filename=filename_plus_extension))
             return HttpResponseRedirect(reverse(reverse_url, kwargs={'pk': request.POST['gloss']}))
         # we need to use a quoted filename instead, update the other media object
         other_media_path = request.POST['gloss'] + '/' + filename_plus_extension
@@ -3461,11 +3460,11 @@ def upload_eaf_files(request):
     # We're using it here during upload in the database manager template because it's already implemented
     (eaf_paths_dict, duplicates) = documents_paths_dictionary(dataset_acronym)
 
-    # if this is the first time eaf files are uploadd to the system, create the folder
+    # if this is the first time eaf files are uploaded to the system, create the folder
     if not os.path.isdir(WRITABLE_FOLDER + DATASET_EAF_DIRECTORY):
         os.mkdir(WRITABLE_FOLDER + DATASET_EAF_DIRECTORY, mode=0o755)
 
-    # if this is the first time eaf files are uploadd for the dataset, create a dataset folder
+    # if this is the first time eaf files are uploaded for the dataset, create a dataset folder
     dataset_eaf_folder = os.path.join(WRITABLE_FOLDER,DATASET_EAF_DIRECTORY,dataset_acronym)
     if not os.path.isdir(dataset_eaf_folder):
         os.mkdir(dataset_eaf_folder, mode=0o755)
@@ -3475,13 +3474,13 @@ def upload_eaf_files(request):
         # this could have a side effect of creating an empty folder
         # at a later step the files are checked to be eaf files
         # incorrectly typed files are removed after creation, but not the folder
-        dataset_eaf_folder = os.path.join(dataset_eaf_folder,folder)
+        dataset_eaf_folder = os.path.join(str(dataset_eaf_folder) , str(folder))
         if not os.path.isdir(dataset_eaf_folder):
             os.mkdir(dataset_eaf_folder, mode=0o755)
 
     # move uploaded files to appropriate location
     for f in request.FILES.getlist('file'):
-        next_eaf_file = os.path.join(dataset_eaf_folder,f.name)
+        next_eaf_file = os.path.join(str(dataset_eaf_folder), str(f.name))
         f_handle = open(next_eaf_file, mode='wb+')
         for chunk in f.chunks():
             f_handle.write(chunk)
@@ -3511,7 +3510,7 @@ def upload_eaf_files(request):
             wrong_format = (extension.lower() != 'eaf')
 
         # Get full paths
-        destination_location = os.path.join(dataset_eaf_folder,new_file)
+        destination_location = os.path.join(str(dataset_eaf_folder), str(new_file))
         file_basename = os.path.basename(new_file)
         basename = os.path.splitext(file_basename)[0]
 
@@ -3535,16 +3534,16 @@ def upload_eaf_files(request):
 
     # Any problems encountered? Add error messages
     if ignored_files:
-        message_string = ", ".join(ignored_files)
-        messages.add_message(request, messages.ERROR, _('Non-EAF file(s) ignored: ')+message_string)
+        ignored = ", ".join(ignored_files)
+        messages.add_message(request, messages.ERROR, _('Non-EAF file(s) ignored: {files}').format(files=ignored))
 
     if import_twice:
-        message_string = ", ".join(import_twice)
-        messages.add_message(request, messages.WARNING, _('File(s) encountered twice: ')+message_string)
+        twice = ", ".join(import_twice)
+        messages.add_message(request, messages.WARNING, _('File(s) encountered twice: {files}').format(files=twice))
 
     if duplicate_files:
-        message_string = ", ".join(duplicate_files)
-        messages.add_message(request, messages.INFO, _('Already imported to different folder: ')+message_string)
+        duplicates = ", ".join(duplicate_files)
+        messages.add_message(request, messages.INFO, _('Already imported to a different folder: {files}').format(files=duplicates))
 
     return HttpResponseRedirect(reverse('admin_dataset_manager'))
 
@@ -3692,7 +3691,7 @@ def assign_lemma_dataset_to_gloss(request, glossid):
         # check that user can write to the dataset
         datasets_user_can_change = get_objects_for_user(request.user, 'change_dataset', Dataset)
         if dataset_of_dummy not in datasets_user_can_change:
-            failure_message = _('You do not have change permission for') + ' ' + dummy_lemma.dataset.name
+            failure_message = _('You do not have change permission for dataset {dataset}').format(dataset=dummy_lemma.dataset.name)
             return HttpResponse(json.dumps({'glossid': str(glossid),
                                             'datasetname': str(failure_message)}), {'content-type': 'application/json'})
 
@@ -3704,7 +3703,7 @@ def assign_lemma_dataset_to_gloss(request, glossid):
         return HttpResponse(json.dumps({'glossid': str(glossid),
                                         'datasetname': str(failure_message)}), {'content-type': 'application/json'})
 
-    success_message = _('Gloss saved to dataset') + ' ' + dummy_lemma.dataset.name
+    success_message = _('Gloss saved to dataset {dataset}').format(dataset=dummy_lemma.dataset.name)
 
     return HttpResponse(json.dumps({'glossid': str(gloss.id),
                                     'datasetname': str(success_message)}), {'content-type': 'application/json'})

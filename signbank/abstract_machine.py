@@ -171,9 +171,9 @@ def check_value_dict_create_gloss(dataset, language_code, value_dict):
     errors = []
     if 'dataset' not in value_dict.keys():
         available_keys = list(value_dict.keys())
-        e0 = ', '.join(available_keys)
-        e00 = dataset.acronym
-        errors.append(gettext('Key dataset missing: ') + e0 + ' ' + e00)
+        e2 = gettext("Key dataset missing: {available_keys} {acronym}").format(available_keys=', '.join(available_keys),
+                                                                               acronym=dataset.acronym)
+        errors.append(e2)
         return errors
 
     dataset_acronym = value_dict['dataset']
@@ -182,7 +182,7 @@ def check_value_dict_create_gloss(dataset, language_code, value_dict):
         e1 = gettext('Dataset is empty.')
         errors.append(e1)
     elif dataset_acronym != dataset.acronym:
-        e2 = gettext('Dataset acronym does not match dataset ') + dataset.acronym + '.'
+        e2 = gettext("Dataset acronym does not match dataset {acronym}.").format(acronym=dataset.acronym)
         errors.append(e2)
 
     lemmaidglosstranslations = {}
@@ -191,7 +191,7 @@ def check_value_dict_create_gloss(dataset, language_code, value_dict):
         if lemma_id_gloss:
             lemmaidglosstranslations[language] = lemma_id_gloss
         else:
-            e3 = gettext('Lemma ID Gloss') + " (" + language.name + ")" + gettext(' is empty.')
+            e3 = gettext("Lemma ID Gloss ({language}) is empty.").format(language=language.name)
             errors.append(e3)
 
     annotationidglosstranslations = {}
@@ -200,7 +200,7 @@ def check_value_dict_create_gloss(dataset, language_code, value_dict):
         if annotation_id_gloss:
             annotationidglosstranslations[language] = annotation_id_gloss
         else:
-            e4 = gettext("Annotation ID Gloss") + " (" + language.name + ")" + gettext(" is empty.")
+            e4 = gettext("Annotation ID Gloss ({language}) is empty.").format(language=language.name)
             errors.append(e4)
 
     senses = {}
@@ -224,7 +224,7 @@ def check_value_dict_create_gloss(dataset, language_code, value_dict):
     existing_lemmas = []
     for language, lemmas in lemmas_per_language_translation.items():
         if lemmas.count():
-            e5 = gettext("Lemma ID Gloss") + " (" + language.name + ") " + gettext("already exists.")
+            e5 = gettext("Lemma ID Gloss ({language}) already exists.").format(language=language.name)
             errors.append(e5)
             if lemmas.first().lemma.pk not in existing_lemmas:
                 existing_lemmas.append(lemmas.first().lemma.pk)
@@ -238,7 +238,8 @@ def check_value_dict_create_gloss(dataset, language_code, value_dict):
             gloss__lemma__dataset=dataset, language=language, text__exact=annotationidglosstranslation_text)
 
         if annotationtranslation_for_this_text_language.count():
-            e7 = gettext('Annotation ID Gloss') + " (" + language.name + ') ' + gettext('already exists') + ': ' + annotationidglosstranslation_text
+            e7 = gettext("Annotation ID Gloss ({language}) already exists: {annotation}.").format(language=language.name,
+                                                                                                  annotation=annotationidglosstranslation_text)
             errors.append(e7)
 
     # check if lengths of senses is same in every language
@@ -344,7 +345,7 @@ def create_gloss(user, dataset, value_dict):
             results['createstatus'] = "Success"
             return results
     except (DatabaseError, KeyError, TransactionManagementError):
-        results['errors'] = ["Error creating new gloss."]
+        results['errors'] = [gettext("Error creating new gloss.")]
         results['createstatus'] = "Failed"
         results['glossid'] = ""
         return results
@@ -375,7 +376,7 @@ def api_create_gloss(request, datasetid, language_code='en'):
 
     change_permit_datasets = get_objects_for_user(request.user, 'change_dataset', Dataset)
     if dataset not in change_permit_datasets:
-        results['errors'] = [gettext("No permission to change dataset for user ") + str(request.user)]
+        results['errors'] = [gettext("No permission to change dataset for user {user}.").format(user=str(request.user))]
         return JsonResponse(results, safe=False, status=400)
 
     if not request.user.has_perm('dictionary.change_gloss'):
