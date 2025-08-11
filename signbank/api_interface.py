@@ -39,7 +39,7 @@ def check_api_dataset_manager_permissions(request, datasetid):
 
     group_manager = Group.objects.filter(name='Dataset_Manager').first()
     if not group_manager:
-        return None, {"error": "No group Dataset Manager found."}, 400
+        return None, {"error": gettext("No group Dataset Manager found.")}, 400
 
     groups_of_user = request.user.groups.all()
     if group_manager not in groups_of_user:
@@ -60,7 +60,7 @@ def check_api_file_storage(dataset):
     import_folder = os.path.join(WRITABLE_FOLDER, API_VIDEO_ARCHIVES)
     import_folder_exists = os.path.exists(import_folder)
     if not import_folder_exists:
-        return {"error": "Upload zip archive: The folder API_VIDEO_ARCHIVES is missing."}, 400
+        return {"error": gettext("Upload zip archive: The folder API_VIDEO_ARCHIVES is missing.")}, 400
 
     # Create the TEMP folder if needed
     temp_goal_directory = os.path.join(WRITABLE_FOLDER, API_VIDEO_ARCHIVES, 'TEMP')
@@ -68,7 +68,7 @@ def check_api_file_storage(dataset):
         try:
             os.mkdir(temp_goal_directory, mode=0o775)
         except (OSError, PermissionError):
-            return {"error": "Upload zip archive: The folder API_VIDEO_ARCHIVES/TEMP is missing."}, 400
+            return {"error": gettext("Upload zip archive: The folder API_VIDEO_ARCHIVES/TEMP is missing.")}, 400
 
     dataset_folder = os.path.join(WRITABLE_FOLDER, API_VIDEO_ARCHIVES, dataset.acronym)
     dataset_folder_exists = os.path.exists(dataset_folder)
@@ -76,11 +76,11 @@ def check_api_file_storage(dataset):
         try:
             os.mkdir(dataset_folder, mode=0o775)
         except (OSError, PermissionError):
-            return {"error": f"Upload zip archive: The folder API_VIDEO_ARCHIVES/{dataset.acronym} cannot be created."}, 400
+            return {"error": gettext("Upload zip archive: The folder API_VIDEO_ARCHIVES/{acronym} cannot be created.").format(acronym=dataset.acronym)}, 400
 
     import_folder_exists = os.path.exists(VIDEOS_TO_IMPORT_FOLDER)
     if not import_folder_exists:
-        return {"error": "Upload zip archive: The folder VIDEOS_TO_IMPORT_FOLDER is missing."}, 400
+        return {"error": gettext("Upload zip archive: The folder VIDEOS_TO_IMPORT_FOLDER is missing.")}, 400
 
     lang3charcodes = [language.language_code_3char for language in dataset.translation_languages.all()]
 
@@ -470,7 +470,7 @@ def upload_zipped_videos_archive(request, datasetid):
 
     file_key = gettext("File")
     if file_key not in value_dict.keys():
-        return JsonResponse({"error": "Error processing the zip file."}, status=400)
+        return JsonResponse({"error": gettext("Error processing the zip file.")}, status=400)
 
     zip_file = value_dict[file_key]
     file_name = zip_file.name
@@ -480,30 +480,30 @@ def upload_zipped_videos_archive(request, datasetid):
     try:
         shutil.move(zip_file.name, str(goal_zipped_file))
     except (OSError, PermissionError):
-        return JsonResponse({"error": "Could not copy the zip file to the destination folder."}, status=400)
+        return JsonResponse({"error": gettext("Could not copy the zip file to the destination folder.")}, status=400)
 
     if not zipfile.is_zipfile(goal_zipped_file):
         # unrecognised file type has been uploaded
-        return JsonResponse({"error": "Upload zip archive: The file is not a zip file."}, status=400)
+        return JsonResponse({"error": gettext("Upload zip archive: The file is not a zip file.")}, status=400)
 
     norm_filename = os.path.normpath(goal_zipped_file)
     split_norm_filename = norm_filename.split('.')
 
     if len(split_norm_filename) == 1:
         # file has no extension
-        return JsonResponse({"error": "Upload zip archive: The file has no extension."}, status=400)
+        return JsonResponse({"error": gettext("Upload zip archive: The file has no extension.")}, status=400)
 
     filenames = get_filenames(goal_zipped_file)
     video_paths_okay = check_subfolders_for_unzipping_ids(dataset.acronym, filenames)
     if not video_paths_okay:
-        return JsonResponse({"error": f"The zip archive has the wrong structure. It should be: {dataset.acronym}/GLOSSID.mp4"}, status=400)
+        return JsonResponse({"error": gettext("The zip archive has the wrong structure. It should be: {acronym}/GLOSSID.mp4").format(acronym=dataset.acronym)}, status=400)
 
     with atomic():
         unzip_video_files_ids(dataset, goal_zipped_file, API_VIDEO_ARCHIVES)
 
     unzipped_files = uploaded_video_files(dataset, useid=True)
 
-    return JsonResponse({"success": f"Zip archive {basename} uploaded successfully.",
+    return JsonResponse({"success": gettext("Zip archive {basename} uploaded successfully.").format(basename=basename),
                          "unzippedvideos": unzipped_files}, status=200, safe=False)
 
 
@@ -677,7 +677,7 @@ def api_add_video(request, gloss_id):
 
     for label in request.FILES.keys():
         if label not in CENTER_VIDEO_LABELS and label not in LEFT_VIDEO_LABELS and label not in RIGHT_VIDEO_LABELS:
-            return JsonResponse({'error': f"Unrecognized file label '{label}'. Use 'file', 'center', 'left' or 'right'."}, status=400)
+            return JsonResponse({'error': gettext("Unrecognized file label '{label}'. Use 'file', 'center', 'left' or 'right'.").format(label=label)}, status=400)
 
     dataset = gloss.lemma.dataset
     nr_of_videos = 0
@@ -712,7 +712,7 @@ def api_add_video(request, gloss_id):
         add_gloss_update_to_revision_history(request.user, gloss, 'gloss_perspectivevideo_right', '', str(right_perspective_video))
         nr_of_videos += 1
 
-    return JsonResponse({'message': f'Uploaded {nr_of_videos} videos to dataset {dataset}.'}, status=200)
+    return JsonResponse({'message': gettext("Uploaded {nr_of_videos} videos to dataset {dataset}.").format(nr_of_videos=nr_of_videos, dataset=dataset)}, status=200)
 
 
 @csrf_exempt
@@ -745,13 +745,13 @@ def api_add_image(request, gloss_id):
         try:
             os.makedirs(goal_path)
         except OSError as ose:
-            return JsonResponse({'error': f'Failed to create directory {goal_path}: {ose}'}, status=500)
+            return JsonResponse({'error': gettext("Failed to create directory {goal_path}: {ose}").format(goal_path=goal_path, ose=ose)}, status=500)
 
     # Save the file
     try:
         destination = File(open(goal_location.encode(sys.getfilesystemencoding()), 'wb+'))
     except (SystemError, OSError, IOError):
-        return JsonResponse({'error': f'Failed to open file {goal_location} for writing.'}, status=500)
+        return JsonResponse({'error': gettext("Failed to open file {goal_location} for writing.").format(goal_location=goal_location)}, status=500)
 
     for chunk in image_file.chunks():
         destination.write(chunk)
