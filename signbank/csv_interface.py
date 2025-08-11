@@ -19,7 +19,6 @@ from signbank.dictionary.models import (Dataset, Gloss,
                                         Sense, GlossSense, SenseTranslation, ExampleSentenceTranslation)
 from signbank.dictionary.consistency_senses import check_consistency_senses
 from signbank.dictionary.update_senses_mapping import add_sense_to_revision_history
-from signbank.dictionary.adminviews import Echo
 
 from tagging.models import Tag, TaggedItem
 
@@ -1266,6 +1265,7 @@ def export_csv_template(request):
     csv_rows = [header_row, empty_row]
     # this is based on an example in the Django 4.2 documentation
 
+    from signbank.dictionary.adminviews import Echo
     pseudo_buffer = Echo()
     new_writer = csv.writer(pseudo_buffer)
     return StreamingHttpResponse(
