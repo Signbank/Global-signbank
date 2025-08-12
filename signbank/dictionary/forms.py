@@ -26,7 +26,7 @@ from signbank.dictionary.models import (Gloss, Morpheme, Definition, Relation, R
                                         QueryParameterFieldChoice, SearchHistory, QueryParameter,
                                         QueryParameterMultilingual, QueryParameterHandshape, SemanticFieldTranslation,
                                         ExampleSentence, Affiliation, AffiliatedUser, AffiliatedGloss, GlossSense,
-                                        SenseTranslation, AnnotatedGloss, GlossProvenance)
+                                        SenseTranslation, AnnotatedGloss, GlossProvenance, Dialect)
 from signbank.dictionary.translate_choice_list import choicelist_queryset_to_translated_dict
 from signbank.tools import get_selected_datasets_for_user
 
@@ -64,7 +64,8 @@ class GlossCreateForm(forms.ModelForm):
     class Meta:
         model = Gloss
         fields = ['handedness', 'domhndsh', 'subhndsh',
-                  'domhndsh_number', 'domhndsh_letter', 'subhndsh_number', 'subhndsh_letter']
+                  'domhndsh_number', 'domhndsh_letter', 'subhndsh_number', 'subhndsh_letter',
+                  'release_information', 'semField']
 
     def __init__(self, queryDict, *args, **kwargs):
         self.languages = kwargs.pop('languages')
@@ -108,8 +109,15 @@ class GlossCreateForm(forms.ModelForm):
                                                     required=False)
         for boolean_field in ['domhndsh_letter', 'domhndsh_number', 'subhndsh_letter', 'subhndsh_number']:
             self.fields[boolean_field].choices = [(0, '-'), (2, _('True')), (3, _('False'))]
+        self.fields['release_information'] = forms.CharField(label=_('Release Information'), widget=forms.TextInput(), required=False)
+        dialects = [(str(dialect.id), dialect.signlanguage.name + "/" + dialect.name) for dialect in
+                           Dialect.objects.filter(signlanguage__dataset=self.last_used_dataset)
+                           .prefetch_related('signlanguage').distinct()]
+        # self.fields['dialect'] = forms.ChoiceField(label=_("Region"), choices=dialects, widget=forms.Select(attrs=ATTRS_FOR_FORMS), required=False)
 
-
+        self.fields['dialect'] = forms.MultipleChoiceField(label=_('Region'),
+                                                           widget=forms.CheckboxSelectMultiple,
+                                                           choices=dialects)
 class MorphemeCreateForm(forms.ModelForm):
     """Form for creating a new morpheme from scratch"""
 
