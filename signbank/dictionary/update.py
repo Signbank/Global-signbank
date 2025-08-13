@@ -177,8 +177,8 @@ def add_gloss(request):
         elif item in ['release_information']:
             obligatory_fields_dict[item] = value.strip()
         elif item in ['dialect']:
-            obligatory_fields_dict[item] = value
-            print('dialect: ', value, type(value))
+            values = request.POST.getlist('dialect')
+            obligatory_fields_dict[item] = values
         else:
             obligatory_fields_dict[item] = int(value)
 
@@ -238,6 +238,12 @@ def add_gloss(request):
             if field not in OBLIGATORY_FIELDS or field not in obligatory_fields_dict.keys():
                 continue
             setattr(gloss, field, obligatory_fields_dict['release_information'])
+        for field in ['dialect']:
+            if field not in OBLIGATORY_FIELDS or field not in obligatory_fields_dict.keys():
+                continue
+            for dialect_id in obligatory_fields_dict['dialect']:
+                dialect = Dialect.objects.get(id=dialect_id)
+                gloss.dialect.add(dialect)
 
         gloss.save()
         gloss.creator.add(request.user)

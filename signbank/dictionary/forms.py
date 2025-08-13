@@ -109,15 +109,15 @@ class GlossCreateForm(forms.ModelForm):
                                                     required=False)
         for boolean_field in ['domhndsh_letter', 'domhndsh_number', 'subhndsh_letter', 'subhndsh_number']:
             self.fields[boolean_field].choices = [(0, '-'), (2, _('True')), (3, _('False'))]
-        self.fields['release_information'] = forms.CharField(label=_('Release Information'), widget=forms.TextInput(), required=False)
+        self.fields['release_information'] = forms.CharField(label=_('Source'), widget=forms.TextInput(), required=False)
         dialects = [(str(dialect.id), dialect.signlanguage.name + "/" + dialect.name) for dialect in
                            Dialect.objects.filter(signlanguage__dataset=self.last_used_dataset)
                            .prefetch_related('signlanguage').distinct()]
-        # self.fields['dialect'] = forms.ChoiceField(label=_("Region"), choices=dialects, widget=forms.Select(attrs=ATTRS_FOR_FORMS), required=False)
-
-        self.fields['dialect'] = forms.MultipleChoiceField(label=_('Region'),
+        self.fields['dialect'] = forms.MultipleChoiceField(label=_('Geographical Region'),
                                                            widget=forms.CheckboxSelectMultiple,
                                                            choices=dialects)
+
+
 class MorphemeCreateForm(forms.ModelForm):
     """Form for creating a new morpheme from scratch"""
 
