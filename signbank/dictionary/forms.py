@@ -111,7 +111,7 @@ class GlossCreateForm(forms.ModelForm):
             self.fields[boolean_field].choices = [(0, '-'), (2, _('True')), (3, _('False'))]
         self.fields['release_information'] = forms.CharField(label=_('Source'), widget=forms.TextInput(), required=False)
         dialects = [(str(dialect.id), dialect.signlanguage.name + "/" + dialect.name) for dialect in
-                           Dialect.objects.filter(signlanguage__dataset=self.last_used_dataset)
+                           Dialect.objects.filter(signlanguage__dataset__acronym=self.last_used_dataset)
                            .prefetch_related('signlanguage').distinct()]
         self.fields['dialect'] = forms.MultipleChoiceField(label=_('Geographical Region'),
                                                            widget=forms.CheckboxSelectMultiple,

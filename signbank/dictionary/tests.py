@@ -41,7 +41,8 @@ from signbank.dictionary.models import (Dataset, Language, Gloss, Morpheme, Hand
                                         SemanticFieldTranslation, Definition, Translation, AnnotationIdglossTranslation,
                                         OtherMedia, GlossRevision, fieldname_to_kind_table,
                                         GlossFrequency, Document, Speaker, Corpus,
-                                        UserProfile, LemmaIdgloss, LemmaIdglossTranslation, get_default_language_id)
+                                        UserProfile, LemmaIdgloss, LemmaIdglossTranslation, get_default_language_id,
+                                        Dialect)
 from signbank.dictionary.forms import GlossCreateForm, FieldChoiceForm, LemmaCreateForm
 from signbank.dictionary.views import gloss_api_get_sign_name_and_media_info
 from signbank.frequency import (import_corpus_speakers, configure_corpus_documents_for_dataset,
@@ -4055,6 +4056,10 @@ def create_gloss_data(dataset, gloss_text):
     handedness_fieldchoice_2 = FieldChoice.objects.filter(field='Handedness', machine_value__gt=1).last()
     domhndsh_1 = Handshape.objects.filter(machine_value__gt=1).first()
     subhndsh_1 = Handshape.objects.filter(machine_value__gt=1).last()
+    semfield_1 = SemanticField.objects.filter(machine_value__gt=1).first()
+    semfield_2 = SemanticField.objects.filter(machine_value__gt=1).last()
+    dialect_1 = Dialect.objects.filter(signlanguage__dataset=dataset).first()
+    dialect_2 = Dialect.objects.filter(signlanguage__dataset=dataset).last()
 
     # Construct the Create Gloss form data
     create_gloss_form_data = {'dataset': dataset.id, 'select_or_new_lemma': "new"}
@@ -4075,5 +4080,10 @@ def create_gloss_data(dataset, gloss_text):
 
     if 'videofile' in OBLIGATORY_FIELDS:
         create_gloss_form_data['videofile'] = generate_file()
-
+    if 'dialect' in OBLIGATORY_FIELDS:
+        create_gloss_form_data['dialect'] = [str(dialect_1.id), str(dialect_2.id)]
+    if 'semField' in OBLIGATORY_FIELDS:
+        create_gloss_form_data['semField'] = [str(semfield_1.machine_value), str(semfield_2.machine_value)]
+    if 'release_information' in OBLIGATORY_FIELDS:
+        create_gloss_form_data['release_information'] = "Create Gloss Obligatory Fields"
     return create_gloss_form_data
