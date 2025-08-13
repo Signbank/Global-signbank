@@ -469,10 +469,11 @@ table {
 
 .tt-hint {
   color: var(--typeahead-color);
+  background: 1px solid var(--typeahead-background);
 }
 
 .tt-dropdown-menu {
-  width: 460px;
+  width: 600px;
   max-height: 300px;
   overflow-y: scroll;
   margin-top: 0px;
@@ -481,6 +482,7 @@ table {
   border: 1px solid var(--typeahead-color);
   color: 1px solid var(--typeahead-color);
   background: 1px solid var(--typeahead-background);
+  background-color: var(--typeahead-background);
   opacity: 0.99;
   z-index: 9999;
   -webkit-border-radius: 8px;
@@ -1448,9 +1450,9 @@ span ::placeholder {
 }
 */
 .form-control-dark {
-    background-color: var(--button-default) !important;
+    background-color: var(--text-input-field) !important;
     color: white !important;
-    border-color: var(--button-default) !important;
+    border-color: var(--text-input-border) !important;
 }
 .btn-group-dark {
     color: inherit !important;

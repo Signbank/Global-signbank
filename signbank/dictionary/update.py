@@ -179,6 +179,9 @@ def add_gloss(request):
         elif item in ['dialect']:
             values = request.POST.getlist('dialect')
             obligatory_fields_dict[item] = values
+        elif item in ['semField']:
+            values = request.POST.getlist('semField')
+            obligatory_fields_dict[item] = values
         else:
             obligatory_fields_dict[item] = int(value)
 
@@ -244,6 +247,12 @@ def add_gloss(request):
             for dialect_id in obligatory_fields_dict['dialect']:
                 dialect = Dialect.objects.get(id=dialect_id)
                 gloss.dialect.add(dialect)
+        for field in ['semField']:
+            if field not in OBLIGATORY_FIELDS or field not in obligatory_fields_dict.keys():
+                continue
+            for semField_machine_value in obligatory_fields_dict['semField']:
+                semField = SemanticField.objects.get(machine_value=semField_machine_value)
+                gloss.semField.add(semField)
 
         gloss.save()
         gloss.creator.add(request.user)

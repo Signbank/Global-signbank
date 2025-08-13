@@ -116,6 +116,11 @@ class GlossCreateForm(forms.ModelForm):
         self.fields['dialect'] = forms.MultipleChoiceField(label=_('Geographical Region'),
                                                            widget=forms.CheckboxSelectMultiple,
                                                            choices=dialects)
+        semantic_fields = [(str(semfield.machine_value), semfield.name)
+                            for semfield in SemanticField.objects.filter(machine_value__gt=1).order_by('name')]
+        self.fields['semField'] = forms.MultipleChoiceField(label=_('Semantic Field'),
+                                                           widget=forms.CheckboxSelectMultiple,
+                                                           choices=semantic_fields)
 
 
 class MorphemeCreateForm(forms.ModelForm):
