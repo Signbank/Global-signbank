@@ -9,6 +9,7 @@ import copy
 import codecs
 import datetime as DT
 from datetime import date
+from collections import defaultdict
 
 from django.db import models
 from django.db.models.functions import Lower
@@ -1840,120 +1841,50 @@ def gloss_handshape_fields():
     return fields_list
 
 
+def fields_with_choices(fields):
+    """
+    Returns a dict that maps the field choice categories to the fields of a model that have the category
+    """
+    fields_dict = defaultdict(list)
+    for field in fields:
+        if isinstance(field, FieldChoiceForeignKey) and hasattr(field, 'field_choice_category'):
+            fields_dict[field.field_choice_category].append(field.name)
+    return fields_dict
+
+
 def fields_with_choices_glosses():
     # return a dict that maps the field choice categories to the fields of Gloss that have the category
+    return fields_with_choices(Gloss._meta.fields)
 
-    fields_dict = {}
-
-    for fieldname in Gloss.get_field_names():
-        field = Gloss.get_field(fieldname)
-        if hasattr(field, 'field_choice_category') and isinstance(field, FieldChoiceForeignKey):
-            # field has choices
-            field_category = field.field_choice_category
-            if field_category in fields_dict.keys():
-                fields_dict[field_category].append(field.name)
-            else:
-                fields_dict[field_category] = [field.name]
-    return fields_dict
 
 def fields_with_choices_handshapes():
     # return a dict that maps the field choice categories to the fields of Handshape that have the category
+    return fields_with_choices(Handshape._meta.fields)
 
-    fields_dict = {}
-
-    for fieldname in Handshape.get_field_names():
-        field = Handshape.get_field(fieldname)
-        if hasattr(field, 'field_choice_category') and isinstance(field, FieldChoiceForeignKey):
-            # field has choices
-            field_category = field.field_choice_category
-            if field_category in fields_dict.keys():
-                fields_dict[field_category].append(field.name)
-            else:
-                fields_dict[field_category] = [field.name]
-    return fields_dict
 
 def fields_with_choices_examplesentences():
     # return a dict that maps the field choice categories to the fields of Handshape that have the category
+    return fields_with_choices(ExampleSentence._meta.fields)
 
-    fields_dict = {}
-
-    for fieldname in ExampleSentence.get_field_names():
-        field = ExampleSentence.get_field(fieldname)
-        if hasattr(field, 'field_choice_category') and isinstance(field, FieldChoiceForeignKey):
-            # field has choices
-            field_category = field.field_choice_category
-            if field_category in fields_dict.keys():
-                fields_dict[field_category].append(field.name)
-            else:
-                fields_dict[field_category] = [field.name]
-    return fields_dict
 
 def fields_with_choices_definition():
     # return a dict that maps the field choice categories to the fields of Definition that have the category
+    return fields_with_choices(Definition._meta.fields)
 
-    fields_dict = {}
-
-    for fieldname in Definition.get_field_names():
-        field = Definition.get_field(fieldname)
-        if hasattr(field, 'field_choice_category') and isinstance(field, FieldChoiceForeignKey):
-            # field has choices
-            field_category = field.field_choice_category
-            if field_category in fields_dict.keys():
-                fields_dict[field_category].append(field.name)
-            else:
-                fields_dict[field_category] = [field.name]
-    return fields_dict
 
 def fields_with_choices_morphology_definition():
     # return a dict that maps the field choice categories to the fields of MorphologyDefinition that have the category
+    return fields_with_choices(MorphologyDefinition._meta.fields)
 
-    fields_dict = {}
-
-    for fieldname in MorphologyDefinition.get_field_names():
-        field = MorphologyDefinition.get_field(fieldname)
-        if hasattr(field, 'field_choice_category') and isinstance(field, FieldChoiceForeignKey):
-            # field has choices
-            field_category = field.field_choice_category
-            if field_category in fields_dict.keys():
-                fields_dict[field_category].append(field.name)
-            else:
-                fields_dict[field_category] = [field.name]
-    return fields_dict
 
 def fields_with_choices_other_media_type():
     # return a dict that maps the field choice categories to the fields of OtherMediaType that have the category
+    return fields_with_choices(OtherMedia._meta.fields)
 
-    fields_dict = {}
-
-    for fieldname in OtherMedia.get_field_names():
-        field = OtherMedia.get_field(fieldname)
-        if hasattr(field, 'field_choice_category') and isinstance(field, FieldChoiceForeignKey):
-            # field has choices
-            field_category = field.field_choice_category
-            if field_category in fields_dict.keys():
-                fields_dict[field_category].append(field.name)
-            else:
-                fields_dict[field_category] = [field.name]
-    return fields_dict
 
 def fields_with_choices_morpheme_type():
     # return a dict that maps the field choice categories to the fields of MorphemeType that have the category
-
-    fields_dict = {}
-
-    for fieldname in Morpheme.get_field_names():
-        if fieldname in Gloss.get_field_names():
-            # skip fields that are also in superclass Gloss
-            continue
-        field = Morpheme.get_field(fieldname)
-        if hasattr(field, 'field_choice_category') and isinstance(field, FieldChoiceForeignKey):
-            # field has choices
-            field_category = field.field_choice_category
-            if field_category in fields_dict.keys():
-                fields_dict[field_category].append(field.name)
-            else:
-                fields_dict[field_category] = [field.name]
-    return fields_dict
+    return fields_with_choices(list(set(Morpheme._meta.fields) - set(Gloss._meta.fields)))
 
 
 def write_ecv_files_for_all_datasets():
