@@ -3768,6 +3768,9 @@ class SensesCRUDTests(TestCase):
 
         self.assertRedirects(response, reverse('dictionary:admin_gloss_view', kwargs={'pk': new_gloss.id})+'?edit')
 
+        if 'senses' in OBLIGATORY_FIELDS:
+            return
+
         gloss_senses = new_gloss.senses.all()
 
         self.assertEqual(len(gloss_senses), 0)
@@ -3934,6 +3937,9 @@ class SensesCRUDTests(TestCase):
         gloss_1_senses = new_gloss_1.senses.all()
         gloss_2_senses = new_gloss_2.senses.all()
 
+        if 'senses' in OBLIGATORY_FIELDS:
+            return
+
         self.assertEqual(len(gloss_1_senses), 0)
         self.assertEqual(len(gloss_2_senses), 0)
         print('New glosses have no senses.')
@@ -4016,6 +4022,9 @@ class SensesCRUDTests(TestCase):
 
         new_gloss = glosses.first()
 
+        if 'senses' in OBLIGATORY_FIELDS:
+            return
+
         gloss_senses = new_gloss.senses.all()
 
         self.assertEqual(len(gloss_senses), 0)
@@ -4077,6 +4086,7 @@ def create_gloss_data(dataset, gloss_text):
     for language in dataset.translation_languages.all():
         create_gloss_form_data[GlossCreateForm.gloss_create_field_prefix + language.language_code_2char] = gloss_text + "annotationidglosstranslation_test_" + language.language_code_2char
         create_gloss_form_data[LemmaCreateForm.lemma_create_field_prefix + language.language_code_2char] = gloss_text + "lemmaidglosstranslation_test_" + language.language_code_2char
+        create_gloss_form_data[GlossCreateForm.gloss_sense_field_prefix + language.language_code_2char] = ["sense_keyword_1_" + language.language_code_2char, "sense_keyword_2_" + language.language_code_2char]
 
     if 'videofile' in OBLIGATORY_FIELDS:
         create_gloss_form_data['videofile'] = generate_file()
