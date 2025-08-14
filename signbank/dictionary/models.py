@@ -2743,6 +2743,16 @@ class Gloss(MetaModelMixin, models.Model):
         from tagging.models import Tag
         return Tag.objects.get_for_object(self)
 
+
+    handshape_fields_list = None
+
+    @staticmethod
+    def handshape_fields():
+        if not Gloss.handshape_fields_list:
+            Gloss.handshape_fields_list = [field.name for field in Gloss._meta.fields
+                                           if isinstance(field, models.ForeignKey) and field.related_model == Handshape]
+        return Gloss.handshape_fields_list
+
 # register Gloss for tags
 try:
     tagging.register(Gloss)

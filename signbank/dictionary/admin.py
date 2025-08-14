@@ -28,7 +28,7 @@ from signbank.dictionary.models import (Dataset, Gloss, Translation, LemmaIdglos
                                         GlossRevision, DeletedGlossOrMedia,
                                         UserProfile, Affiliation, AffiliatedUser,
                                         SearchHistory,
-                                        QueryParameterMultilingual,  QueryParameterSemanticField,
+                                        QueryParameterMultilingual, QueryParameterSemanticField,
                                         QueryParameterDerivationHistory,
                                         QueryParameterBoolean, QueryParameterFieldChoice, QueryParameterHandshape)
 from signbank.dictionary.forms import (FieldChoiceForm, SemanticFieldForm, HandshapeForm,
@@ -462,9 +462,8 @@ class HandshapeAdmin(VersionAdmin, TranslationAdmin):
             return gloss_count
         else:
             machine_value = int(obj.machine_value)
-            from signbank.tools import gloss_handshape_fields
 
-            gloss_handshape_fields = gloss_handshape_fields()
+            gloss_handshape_fields = Gloss.handshape_fields()
             for field_name in gloss_handshape_fields:
                 queries = [Q(**{field_name + '__machine_value': machine_value})]
                 query = queries.pop()
@@ -508,9 +507,7 @@ class HandshapeAdmin(VersionAdmin, TranslationAdmin):
         if handshapes_with_same_machine_value > 1:
             return True
 
-        from signbank.tools import gloss_handshape_fields
-
-        gloss_handshape_fields = gloss_handshape_fields()
+        gloss_handshape_fields = Gloss.handshape_fields()
         for field_name in gloss_handshape_fields:
             queries = [Q(**{field_name + '__machine_value': machine_value})]
             query = queries.pop()

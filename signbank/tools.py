@@ -1829,17 +1829,6 @@ def get_default_annotationidglosstranslation(gloss):
     return annotationidglosstranslations.first().text
 
 
-def gloss_handshape_fields():
-    # returns a list of fields that are Handshape ForeignKeys
-    fields_list = []
-
-    for gloss_fieldname in Gloss.get_field_names():
-        gloss_field = Gloss.get_field(gloss_fieldname)
-        if isinstance(gloss_field, models.ForeignKey) and gloss_field.related_model == Handshape:
-            fields_list.append(gloss_field.name)
-    return fields_list
-
-
 def fields_with_choices_glosses():
     # return a dict that maps the field choice categories to the fields of Gloss that have the category
 

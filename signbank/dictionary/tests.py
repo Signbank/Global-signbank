@@ -53,7 +53,7 @@ from signbank.frequency import (import_corpus_speakers, configure_corpus_documen
                                 get_gloss_tokNo, get_gloss_tokNoSgnr, update_corpus_document_counts)
 from signbank.dictionary.admin import HandshapeAdmin, FieldChoiceAdmin
 
-from signbank.tools import (gloss_handshape_fields, fields_with_choices_glosses, fields_with_choices_handshapes,
+from signbank.tools import (fields_with_choices_glosses, fields_with_choices_handshapes,
                             fields_with_choices_definition, fields_with_choices_morphology_definition,
                             fields_with_choices_other_media_type, fields_with_choices_morpheme_type)
 
@@ -1723,7 +1723,7 @@ class HandshapeTests(TestCase):
 
     def test_delete_handshape(self):
 
-        handshape_fields = gloss_handshape_fields()
+        handshape_fields = Gloss.handshape_fields()
         # create a gloss with and without handshape choices
 
         # set the test dataset
