@@ -141,7 +141,7 @@ input[type="text"]:focus {
              {% for dataset_lang in dataset_languages %}
              <tr>
                  <th id="add_gloss_dataset_header_{{dataset_lang.language_code_2char}}">
-                     <label for="id_annotation_idgloss_{{dataset_lang.language_code_2char}}">{% trans "Annotation ID Gloss" %} ({{dataset_lang.name}})</label>
+                     <label for="glosscreate_{{dataset_lang.language_code_2char}}">{% trans "Annotation ID Gloss" %} ({{dataset_lang.name}})</label>
                  </th>
                  <td id="add_gloss_dataset_value_{{dataset_lang.language_code_2char}}" class='td td-light'>
                      <input id="glosscreate_{{dataset_lang.language_code_2char}}"
@@ -173,7 +173,7 @@ input[type="text"]:focus {
                              <div class="text-container" data-toggle="tooltip" data-placement="top" style="z-index:100;"
                                     title='{% trans "Type in the initial letters to see if the lemma already exists." %}' >
                              <input class='form-control form-control-light lemmatypeahead lemmatypeahead-light'
-                                    placeholder='{% trans "Select Existing Lemma" %}' size="50" />
+                                    placeholder='{% trans "Select Existing Lemma" %}' size="50" required="" />
                              <!-- Input that holds the lemma id the user chose from the type ahead -->
                              <input type='hidden' name='idgloss' value='confirmed' required="">
                              </div>
@@ -192,7 +192,7 @@ input[type="text"]:focus {
                              <td style="align:right;">
                                 <input id="{{lemma_create_field_prefix}}{{dataset_lang.language_code_2char}}"
                                        name="{{lemma_create_field_prefix}}{{dataset_lang.language_code_2char}}"
-                                       maxlength="30" type="text"
+                                       maxlength="30" type="text" required=""
                                        size="50" />
                             </td>
                             </tr>
@@ -206,6 +206,21 @@ input[type="text"]:focus {
                          <input type="hidden" id="select_or_new_lemma" name="select_or_new_lemma" value="select"/>
                      </td>
              </tr>
+             {% if 'senses' in OBLIGATORY_FIELDS %}
+             {% for dataset_lang in dataset_languages %}
+             <tr>
+                 <th id="senses_header_{{dataset_lang.language_code_2char}}">
+                     <label for="sense_{{dataset_lang.language_code_2char}}">{% trans "Senses" %} ({{dataset_lang.name}})</label>
+                 </th>
+                 <td id="senses_value_{{dataset_lang.language_code_2char}}" class='td td-light'>
+                     <input id="sense_{{dataset_lang.language_code_2char}}"
+                            name="sense_{{dataset_lang.language_code_2char}}"
+                            required="" maxlength="30" type="text"
+                            size="50" />
+                 </td>
+             </tr>
+             {% endfor %}
+            {% endif %}
             {% if 'videofile' in OBLIGATORY_FIELDS %}
             <tr>
              {% csrf_token %}

@@ -47,6 +47,7 @@ class GlossCreateForm(forms.ModelForm):
     """Form for creating a new gloss from scratch"""
 
     gloss_create_field_prefix = "glosscreate_"
+    gloss_sense_field_prefix = "sense_"
     languages = None  # Languages to use for annotation idgloss translations
     user = None
     last_used_dataset = None
@@ -65,7 +66,7 @@ class GlossCreateForm(forms.ModelForm):
         model = Gloss
         fields = ['handedness', 'domhndsh', 'subhndsh',
                   'domhndsh_number', 'domhndsh_letter', 'subhndsh_number', 'subhndsh_letter',
-                  'release_information', 'semField']
+                  'release_information', 'dialect', 'semField']
 
     def __init__(self, queryDict, *args, **kwargs):
         self.languages = kwargs.pop('languages')
@@ -78,10 +79,14 @@ class GlossCreateForm(forms.ModelForm):
             self.fields['dataset'].initial = queryDict['dataset']
 
         for language in self.languages:
-            glosscreate_field_name = self.gloss_create_field_prefix + language.language_code_2char
-            self.fields[glosscreate_field_name] = forms.CharField(label=_("Gloss")+(" (%s)" % language.name))
-            if glosscreate_field_name in queryDict:
-                self.fields[glosscreate_field_name].value = queryDict[glosscreate_field_name]
+            gloss_create_field_name = self.gloss_create_field_prefix + language.language_code_2char
+            self.fields[gloss_create_field_name] = forms.CharField(label=_("Gloss")+(" (%s)" % language.name), required=True)
+            if gloss_create_field_name in queryDict:
+                self.fields[gloss_create_field_name].value = queryDict[gloss_create_field_name]
+            glosssense_create_field_name = self.gloss_sense_field_prefix + language.language_code_2char
+            self.fields[glosssense_create_field_name] = forms.CharField(label=_("Sense")+(" (%s)" % language.name))
+            if glosssense_create_field_name in queryDict:
+                self.fields[glosssense_create_field_name].value = queryDict[glosssense_create_field_name]
 
         self.fields['handedness'] = forms.ChoiceField(label=_('Handedness'),
                                                       choices = choicelist_queryset_to_translated_dict(
