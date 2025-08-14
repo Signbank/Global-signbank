@@ -21,6 +21,20 @@
     placement: top !important;
     bottom: 100%;
 }
+input[type="text"] {
+    background-color: rgba(50,50,50,15%);
+    border: none;
+}
+input[type="text"]:focus {
+    border: 1px solid red;
+}
+.tt-input {
+    background-color: rgba(50,50,50,15%) !important;
+    border: none;
+}
+.tt-input:active {
+    border: 1px solid red;
+}
 </style>
 {% endblock %}
 
@@ -29,7 +43,7 @@
     <script type="text/javascript">
         var dark_mode = '{{request.session.dark_mode}}';
         var dark_mode_django = '{{dark_mode}}';
-        var url = '{{ PREFIX_URL }}';
+        var url = '{{PREFIX_URL}}';
         var language_code = '{{LANGUAGE_CODE}}';
         var saving_str = '{{saving_str|escapejs}}';
         var permission = 0;
@@ -50,16 +64,16 @@
 
     </script>
 
-    <script type="text/javascript" src="{{ STATIC_URL }}js/jquery.jeditable.mini_colors.js"></script>
-    <script type="text/javascript" src="{{ STATIC_URL }}js/jquery.jeditable.checkbox.js"></script>
-    <script type="text/javascript" src="{{ STATIC_URL }}js/typeahead.bundle.min.js"></script>
-    <script type="text/javascript" src="{{ STATIC_URL }}js/gloss_add.js"></script>
-    <script type='text/javascript' src="{{ STATIC_URL }}js/lemma_typeahead.js"></script>
+    <script type="text/javascript" src="{{STATIC_URL}}js/jquery.jeditable.mini_colors.js"></script>
+    <script type="text/javascript" src="{{STATIC_URL}}js/jquery.jeditable.checkbox.js"></script>
+    <script type="text/javascript" src="{{STATIC_URL}}js/typeahead.bundle.min.js"></script>
+    <script type="text/javascript" src="{{STATIC_URL}}js/gloss_add.js"></script>
+    <script type='text/javascript' src="{{STATIC_URL}}js/lemma_typeahead.js"></script>
     <script type="text/javascript" src="{{STATIC_URL}}js/drag_drop_files.js"></script>
     <script type="text/javascript" src="{{STATIC_URL}}js/recordscript.js"></script>
 
     <script type="text/javascript">
-    var lemma_create_field_prefix = "{{ lemma_create_field_prefix }}";
+    var lemma_create_field_prefix = "{{lemma_create_field_prefix}}";
     var lookahead_initial_language = "{{default_dataset_lang}}";
 
     $(document).ready(function(){
@@ -114,11 +128,11 @@
                          {% get_obj_perms request.user for s_dataset as "dataset_perms" %}
                          {% if "change_dataset" in dataset_perms %}
                          {% if last_used_dataset and last_used_dataset == s_dataset.acronym %}
-                         <option value="{{ s_dataset.id }}" selected="selected"
-                                 dataset_languages="{% for dataset_lang in s_dataset.translation_languages.all %}{{ dataset_lang.language_code_2char }}{% if not forloop.last %},{% endif %}{% endfor %}">{{ s_dataset.acronym }}</option>
+                         <option value="{{s_dataset.id}}" selected="selected"
+                                 dataset_languages="{% for dataset_lang in s_dataset.translation_languages.all %}{{dataset_lang.language_code_2char}}{% if not forloop.last %},{% endif %}{% endfor %}">{{s_dataset.acronym}}</option>
                          {% else %}
-                         <option value="{{ s_dataset.id }}"
-                                 dataset_languages="{% for dataset_lang in s_dataset.translation_languages.all %}{{ dataset_lang.language_code_2char }}{% if not forloop.last %},{% endif %}{% endfor %}">{{ s_dataset.acronym }}</option>
+                         <option value="{{s_dataset.id}}"
+                                 dataset_languages="{% for dataset_lang in s_dataset.translation_languages.all %}{{dataset_lang.language_code_2char}}{% if not forloop.last %},{% endif %}{% endfor %}">{{s_dataset.acronym}}</option>
                          {% endif %}
                          {% endif %}
                          {% endfor %}
@@ -126,12 +140,12 @@
              </tr>
              {% for dataset_lang in dataset_languages %}
              <tr>
-                 <th id="add_gloss_dataset_header_{{ dataset_lang.language_code_2char }}">
-                     <label for="id_annotation_idgloss_{{dataset_lang.language_code_2char}}">{% trans "Annotation ID Gloss" %} ({{ dataset_lang.name }})</label>
+                 <th id="add_gloss_dataset_header_{{dataset_lang.language_code_2char}}">
+                     <label for="glosscreate_{{dataset_lang.language_code_2char}}">{% trans "Annotation ID Gloss" %} ({{dataset_lang.name}})</label>
                  </th>
-                 <td id="add_gloss_dataset_value_{{ dataset_lang.language_code_2char }}">
-                     <input id="glosscreate_{{ dataset_lang.language_code_2char }}"
-                            name="glosscreate_{{ dataset_lang.language_code_2char }}"
+                 <td id="add_gloss_dataset_value_{{dataset_lang.language_code_2char}}" class='td td-light'>
+                     <input id="glosscreate_{{dataset_lang.language_code_2char}}"
+                            name="glosscreate_{{dataset_lang.language_code_2char}}"
                             required="" maxlength="30" type="text"
                             size="50" />
                  </td>
@@ -139,18 +153,18 @@
              {% endfor %}
              <tr>
                  <th><label for='id_idgloss'>{% trans "Lemma ID Gloss" %}</label></th>
-                 <td>
+                 <td class='td td-light'>
                          <div id="lemma_select">
                              <div><label>{% trans "Select Existing Lemma" %}</label>&nbsp;
                              <label><a href="#" onclick="return toggleAddLemma()">{% trans "Create New Lemma" %}</a></label>
                              </div>
-                             <label for="id_lemma_language_select">
+                             <label for="selected_lemma_language">
                              <span id="selected_lemma_language" value="{{default_dataset_lang}}">
                              {% for dataset_lang in dataset_languages %}
-                                 <input id="lemma_language_{{ dataset_lang.language_code_2char }}"
+                                 <input id="lemma_language_{{dataset_lang.language_code_2char}}"
                                         type="radio" name="lemma_language" onclick="do_set_lemma_language(this)"
-                                        value="{{ dataset_lang.language_code_2char }}"/>
-                                 <label id="lemma_language_label_{{ dataset_lang.language_code_2char }}">{{dataset_lang.name}}</label>
+                                        value="{{dataset_lang.language_code_2char}}"/>
+                                 <label id="lemma_language_label_{{dataset_lang.language_code_2char}}">{{dataset_lang.name}}</label>
                              {% endfor %}
                              </span>
                              </label>
@@ -159,7 +173,7 @@
                              <div class="text-container" data-toggle="tooltip" data-placement="top" style="z-index:100;"
                                     title='{% trans "Type in the initial letters to see if the lemma already exists." %}' >
                              <input class='form-control form-control-light lemmatypeahead lemmatypeahead-light'
-                                    placeholder='{% trans "Select Existing Lemma" %}' size="50" />
+                                    placeholder='{% trans "Select Existing Lemma" %}' size="50" required="" />
                              <!-- Input that holds the lemma id the user chose from the type ahead -->
                              <input type='hidden' name='idgloss' value='confirmed' required="">
                              </div>
@@ -172,13 +186,13 @@
                             {% for dataset_lang in dataset_languages %}
                              <tr>
                              <td style="width:100px;">
-                             <span id="{{ lemma_create_field_prefix }}_header_{{ dataset_lang.language_code_2char }}"
-                                   style="line-height:30px;">{{ dataset_lang.name }}</span>
+                             <span id="{{lemma_create_field_prefix}}_header_{{dataset_lang.language_code_2char}}"
+                                   style="line-height:30px;">{{dataset_lang.name}}</span>
                              </td>
                              <td style="align:right;">
-                                <input id="{{ lemma_create_field_prefix }}{{ dataset_lang.language_code_2char }}"
-                                       name="{{ lemma_create_field_prefix }}{{ dataset_lang.language_code_2char }}"
-                                       maxlength="30" type="text"
+                                <input id="{{lemma_create_field_prefix}}{{dataset_lang.language_code_2char}}"
+                                       name="{{lemma_create_field_prefix}}{{dataset_lang.language_code_2char}}"
+                                       maxlength="30" type="text" required=""
                                        size="50" />
                             </td>
                             </tr>
@@ -192,6 +206,21 @@
                          <input type="hidden" id="select_or_new_lemma" name="select_or_new_lemma" value="select"/>
                      </td>
              </tr>
+             {% if 'senses' in OBLIGATORY_FIELDS %}
+             {% for dataset_lang in dataset_languages %}
+             <tr>
+                 <th id="senses_header_{{dataset_lang.language_code_2char}}">
+                     <label for="sense_{{dataset_lang.language_code_2char}}">{% trans "Senses" %} ({{dataset_lang.name}})</label>
+                 </th>
+                 <td id="senses_value_{{dataset_lang.language_code_2char}}" class='td td-light'>
+                     <input id="sense_{{dataset_lang.language_code_2char}}"
+                            name="sense_{{dataset_lang.language_code_2char}}"
+                            required="" maxlength="30" type="text"
+                            size="50" />
+                 </td>
+             </tr>
+             {% endfor %}
+            {% endif %}
             {% if 'videofile' in OBLIGATORY_FIELDS %}
             <tr>
              {% csrf_token %}
@@ -225,7 +254,7 @@
              {% if 'handedness' in OBLIGATORY_FIELDS %}
              <tr>
                  {% with add_gloss_form.fields|get_item:'handedness' as handedness_field %}
-                 <th><label for="id_handedness">{{handedness_field.label}}</label></th>
+                 <th><label for="handedness">{{handedness_field.label}}</label></th>
                  <td class='td td-light'>
                     <select name="handedness" id="handedness">
                         {% for value, text in handedness_field.choices %}
@@ -238,7 +267,7 @@
              {% if 'domhndsh' in OBLIGATORY_FIELDS %}
              <tr>
                  {% with add_gloss_form.fields|get_item:'domhndsh' as domhndsh_field %}
-                 <th><label for="id_domhndsh">{{domhndsh_field.label}}</label></th>
+                 <th><label for="domhndsh">{{domhndsh_field.label}}</label></th>
                  <td class='td td-light'>
                     <select name="domhndsh" id="domhndsh">
                         {% for value, text in domhndsh_field.choices %}
@@ -251,7 +280,7 @@
              {% if 'domhndsh_letter' in OBLIGATORY_FIELDS %}
              <tr>
                  {% with add_gloss_form.fields|get_item:'domhndsh_letter' as domhndsh_letter_field %}
-                 <th><label for="id_domhndsh_letter">{{domhndsh_letter_field.label}}</label></th>
+                 <th><label for="domhndsh_letter">{{domhndsh_letter_field.label}}</label></th>
                  <td class='td td-light'>
                     <select name="domhndsh_letter" id="domhndsh_letter">
                         {% for value, text in domhndsh_letter_field.choices %}
@@ -264,7 +293,7 @@
              {% if 'domhndsh_number' in OBLIGATORY_FIELDS %}
              <tr>
                  {% with add_gloss_form.fields|get_item:'domhndsh_number' as domhndsh_number_field %}
-                 <th><label for="id_domhndsh_number">{{domhndsh_number_field.label}}</label></th>
+                 <th><label for="domhndsh_number">{{domhndsh_number_field.label}}</label></th>
                  <td class='td td-light'>
                     <select name="domhndsh_number" id="domhndsh_number">
                         {% for value, text in domhndsh_number_field.choices %}
@@ -277,7 +306,7 @@
              {% if 'subhndsh' in OBLIGATORY_FIELDS %}
              <tr>
                  {% with add_gloss_form.fields|get_item:'subhndsh' as subhndsh_field %}
-                 <th><label for="id_subhndsh">{{subhndsh_field.label}}</label></th>
+                 <th><label for="subhndsh">{{subhndsh_field.label}}</label></th>
                  <td class='td td-light'>
                     <select name="subhndsh" id="subhndsh">
                         {% for value, text in subhndsh_field.choices %}
@@ -290,7 +319,7 @@
              {% if 'subhndsh_letter' in OBLIGATORY_FIELDS %}
              <tr>
                  {% with add_gloss_form.fields|get_item:'subhndsh_letter' as subhndsh_letter_field %}
-                 <th><label for="id_subhndsh_letter">{{subhndsh_letter_field.label}}</label></th>
+                 <th><label for="subhndsh_letter">{{subhndsh_letter_field.label}}</label></th>
                  <td class='td td-light'>
                     <select name="subhndsh_letter" id="subhndsh_letter">
                         {% for value, text in subhndsh_letter_field.choices %}
@@ -303,13 +332,42 @@
              {% if 'subhndsh_number' in OBLIGATORY_FIELDS %}
              <tr>
                  {% with add_gloss_form.fields|get_item:'subhndsh_number' as subhndsh_number_field %}
-                 <th><label for="id_subhndsh_number">{{subhndsh_number_field.label}}</label></th>
+                 <th><label for="subhndsh_number">{{subhndsh_number_field.label}}</label></th>
                  <td class='td td-light'>
                     <select name="subhndsh_number" id="subhndsh_number">
                         {% for value, text in subhndsh_number_field.choices %}
                         <option value={{value}}>{{text}}</option>
                         {% endfor %}
                     </select></td>
+                 {% endwith %}
+             </tr>
+             {% endif %}
+             {% if 'release_information' in OBLIGATORY_FIELDS %}
+             <tr>
+                 {% with add_gloss_form.fields|get_item:'release_information' as release_information_field %}
+                 <th><label for="release_information">{{release_information_field.label}}</label></th>
+                 <td class='td td-light'><input style="width:100%" name="release_information" id="release_information"
+                                                value="{{release_information_field.value}}" maxlength="128" type="text"/></td>
+                 {% endwith %}
+             </tr>
+             {% endif %}
+             {% if 'dialect' in OBLIGATORY_FIELDS %}
+             <tr>
+                 {% with add_gloss_form.fields|get_item:'dialect' as dialect_field %}
+                 <th><label for="id_dialect">{{dialect_field.label}}</label></th>
+                 <td class='td td-light'>{{add_gloss_form.dialect}}</td>
+                 {% endwith %}
+             </tr>
+             {% endif %}
+             {% if 'semField' in OBLIGATORY_FIELDS %}
+             <tr>
+                 {% with add_gloss_form.fields|get_item:'semField' as semField_field %}
+                 <th><label for="id_semField">{{semField_field.label}}</label></th>
+                 <td class='td td-light checkbox-inline'>
+                     <div style="column-count:3;column-width:200px;">
+                     {{add_gloss_form.semField}}
+                     </div>
+                 </td>
                  {% endwith %}
              </tr>
              {% endif %}
