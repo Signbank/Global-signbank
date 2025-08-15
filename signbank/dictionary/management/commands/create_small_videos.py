@@ -1,10 +1,9 @@
 """Create small videos for GlossVideos that have no small version."""
 
 import os
-import shutil
 import magic
 from django.core.management.base import BaseCommand
-from django.core.exceptions import *
+from django.core.exceptions import ObjectDoesNotExist
 from signbank.settings.server_specific import WRITABLE_FOLDER
 from signbank.dictionary.models import Dataset
 from signbank.video.models import GlossVideo
@@ -44,4 +43,5 @@ class Command(BaseCommand):
                             print('GlossVideo file not found: ', filepath)
                 except ObjectDoesNotExist as e:
                     print("Dataset '{}' not found.".format(dataset_acronym), e)
+                    continue
 
