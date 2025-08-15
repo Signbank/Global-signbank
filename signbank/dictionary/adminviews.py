@@ -5567,14 +5567,15 @@ def gloss_ajax_complete(request, prefix):
               annotationidglosstranslation__language=interface_language)
     qs = Gloss.objects.filter(lemma__dataset=dataset, archived__exact=False).filter(query).distinct()
 
-    for g in qs:
+    for gloss in qs:
         try:
-            annotationidglosstranslation = g.annotationidglosstranslation_set.get(language=interface_language)
+            annotationidglosstranslation = gloss.annotationidglosstranslation_set.get(language=interface_language)
             default_annotationidglosstranslation = annotationidglosstranslation.text
         except ObjectDoesNotExist:
-            annotationidglosstranslation = g.annotationidglosstranslation_set.get(language=default_language)
+            annotationidglosstranslation = gloss.annotationidglosstranslation_set.get(language=default_language)
             default_annotationidglosstranslation = annotationidglosstranslation.text
-        result.append({'annotation_idgloss': default_annotationidglosstranslation, 'idgloss': g.idgloss, 'sn': g.sn, 'pk': "%s" % g.id})
+        result.append({'annotation_idgloss': f'{gloss.pk}: {str(gloss)}',
+                       'idgloss': gloss.idgloss, 'sn': gloss.sn, 'pk': "%s" % gloss.id})
 
     sorted_result = sorted(result, key=lambda x : (x['annotation_idgloss'], len(x['annotation_idgloss'])))
 

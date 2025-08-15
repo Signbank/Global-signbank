@@ -875,7 +875,14 @@ class Gloss(MetaModelMixin, models.Model):
                        )
 
     def __str__(self):
-        return self.idgloss
+        translations = []
+        count_dataset_languages = self.lemma.dataset.translation_languages.all().count() if self.lemma and self.lemma.dataset else 0
+        for translation in self.annotationidglosstranslation_set.all():
+            if settings.SHOW_DATASET_INTERFACE_OPTIONS and count_dataset_languages > 1:
+                translations.append("{}: {}".format(translation.language, translation.text))
+            else:
+                translations.append("{}".format(translation.text))
+        return ", ".join(translations)
 
     def display_handedness(self):
         return self.handedness.name if self.handedness else self.handedness
