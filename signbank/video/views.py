@@ -1,28 +1,24 @@
 import datetime as DT
 import os
 import json
+import mimetypes
 
 from django.utils.timezone import get_current_timezone
-
 from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth.decorators import login_required
 from django.views.decorators.http import require_http_methods
 from django.contrib import messages
-from django.http import HttpResponse
+from django.http import HttpResponse, JsonResponse
 from django.conf import settings
 from django.core.exceptions import ObjectDoesNotExist
 from django.utils.translation import gettext as _
 
 from signbank.video.models import GlossVideo, ExampleVideo, GlossVideoHistory, ExampleVideoHistory, GlossVideoNME, GlossVideoPerspective
+from signbank.video.forms import VideoUploadForObjectForm
 from signbank.dictionary.models import (Gloss, DeletedGlossOrMedia, ExampleSentence, Morpheme, AnnotatedSentence,
                                         Dataset, GlossRevision, AnnotationIdglossTranslation)
-
-from signbank.video.forms import VideoUploadForObjectForm
-from django.http import JsonResponse
-
 from signbank.tools import generate_still_image, get_default_annotationidglosstranslation
 
-import magic
 from pympi.Elan import Eaf
 
 
@@ -221,7 +217,7 @@ def process_eaffile(request):
         check_gloss_label = request.POST.get('check_gloss_label', '')
         dataset_acronym = request.POST.get('dataset', '')
         uploaded_file = request.FILES['eaffile']
-        file_type = magic.from_buffer(open(uploaded_file.temporary_file_path(), "rb").read(2040), mime=True)
+        file_type, encoding = mimetypes.guess_type(uploaded_file.temporary_file_path(), strict=True)
         if not (uploaded_file.name.endswith('.eaf') and file_type == 'text/xml'):
             return JsonResponse({'error': _('Invalid file. Please try again.')})
 
