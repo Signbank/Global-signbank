@@ -23,7 +23,6 @@ numpy==1.26.2
 py==1.11.0
 pympi-ling==1.70.2
 python-dateutil==2.8.2
-python-magic==0.4.27
 pytz==2022.7
 six==1.16.0
 sqlparse==0.5.0
