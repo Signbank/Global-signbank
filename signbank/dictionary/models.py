@@ -3153,7 +3153,7 @@ class OtherMedia(MetaModelMixin, models.Model):
                 # check whether the file exists in the writable folder
                 # NOTE: Here is a discrepancy with the setting OTHER_MEDIA_DIRECTORY, it ends with a /
                 # os.path.exists needs a path, not a string of a path
-                writable_location = f'{WRITABLE_FOLDER}/othermedia/{self.path}'
+                writable_location = os.path.join(WRITABLE_FOLDER, 'othermedia', str(self.path))
                 try:
                     imagefile_path_exists = os.path.exists(writable_location)
                 except (UnicodeEncodeError, IOError, OSError):
