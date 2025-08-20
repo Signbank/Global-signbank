@@ -84,7 +84,8 @@ from signbank.dictionary.forms import (AnnotatedSentenceSearchForm, GlossSearchF
 from signbank.tools import (write_ecv_file_for_dataset, find_duplicate_lemmas,
                             construct_scrollbar, get_dataset_languages, get_datasets_with_public_glosses,
                             searchform_panels, map_search_results_to_gloss_list,
-                            get_interface_language_and_default_language_codes, get_default_annotationidglosstranslation)
+                            get_interface_language_and_default_language_codes, get_default_annotationidglosstranslation,
+                            ensure_synonym_transitivity)
 from signbank.csv_interface import (csv_gloss_to_row, csv_header_row_glosslist, csv_header_row_morphemelist,
                                     csv_morpheme_to_row, csv_header_row_handshapelist, csv_handshape_to_row,
                                     csv_header_row_lemmalist, csv_lemma_to_row,
@@ -1169,6 +1170,10 @@ class GlossDetailView(DetailView):
             # the senses and their translation objects are renumbered so orderIndex matches sense number
             # somehow this gets mis-matched
             reorder_senses(self.object)
+
+        # make sure synonym objects are also related to this gloss
+        ensure_synonym_transitivity(self.object)
+
         context = self.get_context_data(object=self.object)
         return self.render_to_response(context)
 
@@ -1882,8 +1887,8 @@ class GlossRelationsDetailView(DetailView):
         otherrelations = []
 
         if gl.relation_sources:
-            for oth_rel in gl.relation_sources.filter(target__archived__exact=False,
-                                                      source__archived__exact=False):
+            for oth_rel in gl.relation_sources.all().filter(target__archived__exact=False,
+                                                            source__archived__exact=False):
                 if oth_rel.source.id == oth_rel.target.id:
                     print('circular relation found: ', gl, ' (', str(gl.id), ') ', oth_rel, oth_rel.role)
                     continue

@@ -1794,11 +1794,23 @@ class Gloss(MetaModelMixin, models.Model):
 
     def synonyms_count(self):
 
-        synonyms_count = self.relation_sources.filter(target__archived__exact=False,
-                                                      source__archived__exact=False,
-                                                      role='synonym').exclude(target=self).count()
+        synonyms_source_count = self.relation_sources.filter(target__archived__exact=False,
+                                                             source__archived__exact=False,
+                                                             role='synonym').exclude(target=self).count()
+        synonyms_target_count = self.relation_targets.filter(target__archived__exact=False,
+                                                             source__archived__exact=False,
+                                                             role='synonym').exclude(target=self).count()
+        return synonyms_source_count + synonyms_target_count
 
-        return synonyms_count
+    def get_synonyms(self):
+        synonym_relations_using_sources = self.relation_sources.all().filter(target__archived__exact=False,
+                                                                              source__archived__exact=False,
+                                                                              role='synonym')
+        synonym_relations_using_targets = self.relation_targets.all().filter(target__archived__exact=False,
+                                                                              source__archived__exact=False,
+                                                                              role='synonym')
+        synonym_relations = [rel.target for rel in synonym_relations_using_sources] + [rel.source for rel in synonym_relations_using_targets]
+        return set(synonym_relations)
 
     def antonyms_count(self):
 
