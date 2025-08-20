@@ -5579,7 +5579,7 @@ def gloss_ajax_complete(request, prefix):
         except ObjectDoesNotExist:
             annotationidglosstranslation = gloss.annotationidglosstranslation_set.get(language=default_language)
             default_annotationidglosstranslation = annotationidglosstranslation.text
-        result.append({'annotation_idgloss': f'{gloss.pk}: {str(gloss)}',
+        result.append({'annotation_idgloss': f'{gloss.pk}: {gloss.to_string()}',
                        'idgloss': gloss.idgloss, 'sn': gloss.sn, 'pk': "%s" % gloss.id})
 
     sorted_result = sorted(result, key=lambda x : (x['annotation_idgloss'], len(x['annotation_idgloss'])))

@@ -875,6 +875,9 @@ class Gloss(MetaModelMixin, models.Model):
                        )
 
     def __str__(self):
+        return self.idgloss
+
+    def to_string(self):
         translations = []
         count_dataset_languages = self.lemma.dataset.translation_languages.all().count() if self.lemma and self.lemma.dataset else 0
         for translation in self.annotationidglosstranslation_set.all():
