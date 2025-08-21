@@ -3,7 +3,7 @@ import json
 import re
 import datetime as DT
 import urllib.parse
-import mimetypes
+import magic
 
 from django.http import (HttpResponse, HttpResponseRedirect, HttpResponseForbidden, HttpResponseBadRequest,
                          JsonResponse, Http404)
@@ -3527,7 +3527,7 @@ def upload_eaf_files(request):
             already_seen.append(basename)
 
         # Maybe the file is not an eaf file or is missing an extension
-        file_type, encoding = mimetypes.guess_type(destination_location, strict=True)
+        file_type = magic.from_buffer(open(destination_location, "rb").read(2040), mime=True)
         if file_type != 'text/xml' or wrong_format:
             ignored_files.append(new_file)
             os.remove(destination_location)

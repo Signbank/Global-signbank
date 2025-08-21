@@ -2,7 +2,7 @@
 
 import os
 import shutil
-import mimetypes
+import magic
 
 from django.core.management.base import BaseCommand
 from django.core.exceptions import ObjectDoesNotExist
@@ -27,7 +27,7 @@ class Command(BaseCommand):
                         # create a small version.
                         filepath = os.path.join(WRITABLE_FOLDER, OTHER_MEDIA_DIRECTORY, om.path)
                         if os.path.exists(filepath.encode('utf-8')):
-                            file_type, encoding = mimetypes.guess_type(filepath, strict=True)
+                            file_type = magic.from_buffer(open(filepath, "rb").read(2040), mime=True)
                             media_type = file_type.split('/')[0] if file_type else None
                             if media_type != 'video':
                                 # skip

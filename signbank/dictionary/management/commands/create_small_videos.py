@@ -1,7 +1,7 @@
 """Create small videos for GlossVideos that have no small version."""
 
 import os
-import mimetypes
+import magic
 from django.core.management.base import BaseCommand
 from django.core.exceptions import ObjectDoesNotExist
 from signbank.settings.server_specific import WRITABLE_FOLDER
@@ -25,7 +25,7 @@ class Command(BaseCommand):
                         # create a small version.
                         filepath = os.path.join(WRITABLE_FOLDER, gv.videofile.name)
                         if os.path.exists(filepath.encode('utf-8')):
-                            file_type, encoding = mimetypes.guess_type(filepath, strict=True)
+                            file_type = magic.from_buffer(open(filepath, "rb").read(2040), mime=True)
                             video_type = file_type.split('/')[0] if file_type else None
                             if video_type != 'video':
                                 print('File is not a video: ', filepath)

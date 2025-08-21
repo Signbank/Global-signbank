@@ -1,7 +1,7 @@
 import datetime as DT
 import os
 import json
-import mimetypes
+import magic
 
 from django.utils.timezone import get_current_timezone
 from django.shortcuts import render, get_object_or_404, redirect
@@ -217,7 +217,7 @@ def process_eaffile(request):
         check_gloss_label = request.POST.get('check_gloss_label', '')
         dataset_acronym = request.POST.get('dataset', '')
         uploaded_file = request.FILES['eaffile']
-        file_type, encoding = mimetypes.guess_type(uploaded_file.temporary_file_path(), strict=True)
+        file_type = magic.from_buffer(open(uploaded_file.temporary_file_path(), "rb").read(2040), mime=True)
         if not (uploaded_file.name.endswith('.eaf') and file_type == 'text/xml'):
             return JsonResponse({'error': _('Invalid file. Please try again.')})
 
