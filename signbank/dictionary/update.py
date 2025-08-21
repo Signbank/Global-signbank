@@ -210,7 +210,7 @@ def add_gloss(request):
             annotationidglosstranslation.save()
 
         gloss.creationDate = DT.datetime.now()
-        gloss.excludeFromEcv = True
+        gloss.excludeFromEcv = False
         gloss.lemma = lemmaidgloss
 
         gloss_fields = [Gloss.get_field(fname) for fname in Gloss.get_field_names()]
