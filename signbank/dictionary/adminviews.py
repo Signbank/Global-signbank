@@ -6161,8 +6161,12 @@ class LemmaListView(ListView):
             if get_key.startswith(LemmaSearchForm.lemma_search_field_prefix) and get_value:
                 language_code_2char = get_key[len(LemmaSearchForm.lemma_search_field_prefix):]
                 language = Language.objects.get(language_code_2char=language_code_2char)
-                qs = qs.filter(lemmaidglosstranslation__text__icontains=get_value,
-                               lemmaidglosstranslation__language=language)
+                if USE_REGULAR_EXPRESSIONS:
+                    qs = qs.filter(lemmaidglosstranslation__text__iregex=get_value,
+                                   lemmaidglosstranslation__language=language)
+                else:
+                    qs = qs.filter(lemmaidglosstranslation__text__icontains=get_value,
+                                   lemmaidglosstranslation__language=language)
 
         if len(get) == 0:
             return qs
