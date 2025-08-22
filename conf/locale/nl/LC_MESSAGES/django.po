@@ -153,7 +153,7 @@ msgstr "Dataset veld is leeg."
 #: signbank/abstract_machine.py:185
 #, python-brace-format
 msgid "Dataset acronym does not match dataset {acronym}."
-msgstr "Dataset afkorting komt niet overeen met dataset {dataset}."
+msgstr "Dataset afkorting komt niet overeen met dataset {acronym}."
 
 #: signbank/abstract_machine.py:194
 #, python-brace-format
@@ -169,7 +169,7 @@ msgstr "Annotatie-ID-Glos ({language}) is leeg."
 #: signbank/gloss_update.py:425
 #, python-brace-format
 msgid "Lemma ID Gloss ({language}) already exists."
-msgstr ""
+msgstr "Lemma-ID-Glos ({language}) bestaat al in de database."
 
 #: signbank/abstract_machine.py:232 signbank/dictionary/batch_edit.py:236
 #: signbank/gloss_update.py:430
@@ -179,7 +179,7 @@ msgstr "Lemmavertalingen verwijzen naar verschillende reeds bestaande lemma's."
 #: signbank/abstract_machine.py:241
 #, python-brace-format
 msgid "Annotation ID Gloss ({language}) already exists: {annotation}."
-msgstr ""
+msgstr "Annotatie-ID-Glos ({language}) bestaat al: {annotation}."
 
 #: signbank/abstract_machine.py:254
 msgid "Sense arrays are not the same length."
@@ -380,12 +380,12 @@ msgstr "Geen bestand geüpload"
 #, python-brace-format
 msgid ""
 "Unrecognized file label '{label}'. Use 'file', 'center', 'left' or 'right'."
-msgstr ""
+msgstr "Onbekend json-bestandsnaam-label '{label}'. Gebruik 'file', 'center', 'left' or 'right'."
 
 #: signbank/api_interface.py:715
 #, python-brace-format
 msgid "Uploaded {nr_of_videos} videos to dataset {dataset}."
-msgstr ""
+msgstr "{nr_of_videos} video's zijn geüpload naar dataset {dataset}."
 
 #: signbank/api_interface.py:736 signbank/dictionary/views.py:1818
 #: signbank/dictionary/views.py:1936
@@ -396,12 +396,12 @@ msgstr ""
 #: signbank/api_interface.py:748
 #, python-brace-format
 msgid "Failed to create directory {goal_path}: {ose}"
-msgstr ""
+msgstr "Het is mislukt de folder aan te maken: {goal_path}: {ose}"
 
 #: signbank/api_interface.py:754
 #, python-brace-format
 msgid "Failed to open file {goal_location} for writing."
-msgstr ""
+msgstr "Het is mislukt het bestand {goal_location} te creëren en openen voor schrijven."
 
 #: signbank/api_interface.py:761
 msgid "Image upload successful."
@@ -417,11 +417,11 @@ msgstr "Uw autorisatietoken komt met niets overeen."
 
 #: signbank/attachments/templates/list.html:33
 msgid "File attachments:"
-msgstr ""
+msgstr "Bestandsbijlagen:"
 
 #: signbank/attachments/templates/list.html:36
 msgid "File link"
-msgstr ""
+msgstr "Bestand link"
 
 #: signbank/attachments/templates/list.html:36 signbank/pages/admin.py:15
 #: signbank/pages/models.py:10
@@ -476,7 +476,7 @@ msgstr "Meer dan een"
 
 #: signbank/dictionary/admin.py:613
 msgid "The derivation history name is required"
-msgstr ""
+msgstr "De soortnaam van de derivatieachtergrond is verplicht"
 
 #: signbank/dictionary/admin.py:685 signbank/dictionary/models.py:3434
 #: signbank/dictionary/templates/dictionary/gloss_revision_history.html:93
@@ -682,11 +682,11 @@ msgstr "Handvorm niet geconfigureerd."
 
 #: signbank/dictionary/adminviews.py:2388
 msgid "SemanticField not configured for this machine value."
-msgstr ""
+msgstr "SemanticField is niet geconfigureerd voor deze machinewaarde."
 
 #: signbank/dictionary/adminviews.py:2477
 msgid "DerivationHistory not configured for this machine value."
-msgstr ""
+msgstr "DerivationHistory is niet geconfigureerd voor deze machinewaarde."
 
 #: signbank/dictionary/adminviews.py:2603
 msgid "Please select a single dataset to view minimal pairs."
@@ -718,12 +718,12 @@ msgstr "Geen dataset gevonden."
 
 #: signbank/dictionary/adminviews.py:3778
 msgid "Dataset must have at least one owner."
-msgstr ""
+msgstr "Dataset moet tenminste een eigenaar."
 
 #: signbank/dictionary/adminviews.py:3791
 #: signbank/dictionary/adminviews.py:4143
 msgid "View permission for user successfully granted."
-msgstr ""
+msgstr "Lees-toestemming voor gebruiker zijn succesvol toegekend."
 
 #: signbank/dictionary/adminviews.py:3795
 msgid "View permission for user requested."
@@ -731,7 +731,7 @@ msgstr "Lees-toestemming voor gebruiker aangevraagd."
 
 #: signbank/dictionary/adminviews.py:3799
 msgid "You can already view this dataset."
-msgstr ""
+msgstr "Je kunt deze dataset al bekijken."
 
 #: signbank/dictionary/adminviews.py:3887
 msgid "No dataset found with that acronym."
@@ -739,11 +739,11 @@ msgstr "Geen dataset gevonden."
 
 #: signbank/dictionary/adminviews.py:3900
 msgid "The dataset is empty, export ECV is not available."
-msgstr ""
+msgstr "De dataset is leeg, export ECV is niet beschikbaar."
 
 #: signbank/dictionary/adminviews.py:3909
 msgid "No ECV created for the dataset."
-msgstr ""
+msgstr "Er is geen ECV aangemaakt voor de dataset."
 
 #: signbank/dictionary/adminviews.py:4016
 #: signbank/dictionary/adminviews.py:4370
@@ -760,12 +760,13 @@ msgstr "Je moet in groep Dataset Manager zijn om deze dataset te wijzigen."
 
 #: signbank/dictionary/adminviews.py:4029
 msgid "No permission to modify dataset permissions."
-msgstr ""
+msgstr "Geen toestemming om de datasetpermissies te wijzigen."
 
 #: signbank/dictionary/adminviews.py:4066
 msgid ""
 "Username must be non-empty. Please make a selection using the drop-down list."
-msgstr ""
+msgstr "Gebruikersnaam mag niet leeg zijn. Maak alstublieft een keuze "
+"met de keuzelijst."
 
 #: signbank/dictionary/adminviews.py:4072
 #: signbank/dictionary/adminviews.py:4502
@@ -775,7 +776,7 @@ msgstr "Geen gebruikers met username gevonden."
 #: signbank/dictionary/adminviews.py:4095
 #, python-brace-format
 msgid "The default language of {acronym} is set to {language}."
-msgstr ""
+msgstr "De standaardtaal van {acronym} is ingesteld op {language}."
 
 #: signbank/dictionary/adminviews.py:4099
 #, python-brace-format
@@ -834,33 +835,39 @@ msgstr "Fout bij het toewijzen van de wijzigingsmachtiging voor de dataset "
 msgid ""
 "User has view permission for this dataset as staff or superuser. This cannot "
 "be modified here."
-msgstr ""
+msgstr "De gebruiker heeft kijkrechten voor deze dataset als personeel "
+"of supergebruiker. Dit kan hier niet worden gewijzigd."
 
 #: signbank/dictionary/adminviews.py:4229
 msgid "View (and change) permission for user successfully revoked."
-msgstr ""
+msgstr "Lees-toestemming (en wijzigingsrechten) voor de gebruiker "
+"succesvol ingetrokken."
 
 #: signbank/dictionary/adminviews.py:4232
 msgid "Error revoking view dataset permission for user."
-msgstr ""
+msgstr "Fout bij het intrekken van de permissies voor het "
+"bekijken van de dataset voor de gebruiker."
 
 #: signbank/dictionary/adminviews.py:4236
 msgid "User currently has no permission to view this dataset."
-msgstr ""
+msgstr "De gebruiker heeft momenteel geen toestemming om deze "
+"dataset te bekijken."
 
 #: signbank/dictionary/adminviews.py:4245
 msgid ""
 "User has change permission for this dataset as staff or superuser. This "
 "cannot be modified here."
-msgstr ""
+msgstr "De gebruiker heeft wijzigingsrechten voor deze dataset als "
+"personeel of supergebruiker. Dit kan hier niet worden gewijzigd."
 
 #: signbank/dictionary/adminviews.py:4261
 msgid "Change permission for user successfully revoked."
-msgstr ""
+msgstr "Verander toestemming voor gebruiker succesvol ingetrokken."
 
 #: signbank/dictionary/adminviews.py:4264
 msgid "Error revoking change dataset permission for user."
-msgstr ""
+msgstr "Fout bij het intrekken van de permissies voor het "
+"wijzigingsdataset voor de gebruiker."
 
 #: signbank/dictionary/adminviews.py:4268
 msgid "User currently has no permission to change this dataset."
@@ -868,7 +875,7 @@ msgstr "Gebruiker heeft geen rechten om de geselecteerde dataset te wijzigen."
 
 #: signbank/dictionary/adminviews.py:4273
 msgid "Unrecognised argument to dataset manager url."
-msgstr ""
+msgstr "Onherkenbaar argument voor de datasetbeheer URL."
 
 #: signbank/dictionary/adminviews.py:4375
 #: signbank/dictionary/adminviews.py:4701
@@ -890,16 +897,17 @@ msgstr "Gebruikersnaam is leeg."
 
 #: signbank/dictionary/adminviews.py:4512
 msgid "User successfully made (co-)owner of this dataset."
-msgstr ""
+msgstr "De gebruiker is succesvol (mede)eigenaar geworden "
+"van deze dataset."
 
 #: signbank/dictionary/adminviews.py:4722
 #: signbank/dictionary/adminviews.py:4795
 msgid "Please login to use the requested functionality."
-msgstr ""
+msgstr "Log alstublieft in om de gevraagde functionaliteit te gebruiken."
 
 #: signbank/dictionary/adminviews.py:4823
 msgid "You do not have permission to view this corpus."
-msgstr ""
+msgstr "Je hebt geen toestemming om deze verzameling te bekijken."
 
 #: signbank/dictionary/adminviews.py:4890
 msgid "Modified"
@@ -1220,7 +1228,8 @@ msgstr "Onjuiste verwijderingscode."
 msgid ""
 "You do not have change permission on the dataset of the lemma you are "
 "attempting to delete."
-msgstr ""
+msgstr "Je hebt geen wijzigingsrecht op de dataset van de lemma die je "
+"probeert te verwijderen."
 
 #: signbank/dictionary/adminviews.py:6376
 msgid "Lemma ID Gloss is not unique for that language."
@@ -7615,27 +7624,27 @@ msgstr "Arabisch"
 #: signbank/tools.py:214
 #, python-brace-format
 msgid "Row {row} has an empty {column_name}"
-msgstr ""
+msgstr "Rij {row} heeft een lege {column_name}"
 
 #: signbank/tools.py:253
 #, python-brace-format
 msgid "Duplicate Annotation ID Gloss found for {language}: {annotation}"
-msgstr ""
+msgstr "Dubbele Annotatie-ID-Glos gevonden voor {language}: {annotation}"
 
 #: signbank/tools.py:283
 #, python-brace-format
 msgid "Row {row} is a duplicate gloss creation."
-msgstr ""
+msgstr "Rij {row} is een duplicaat van glosscreatie."
 
 #: signbank/tools.py:308
 #, python-brace-format
 msgid "Could not find gloss for ID {glossid}."
-msgstr ""
+msgstr "Kon geen glos vinden voor ID {glossid}."
 
 #: signbank/tools.py:313
 #, python-brace-format
 msgid "Signbank ID {glossid} found in multiple rows (Row {row})."
-msgstr ""
+msgstr "Signbank-ID {glossid} gevonden in meerdere rijen (Rij {row})."
 
 #: signbank/tools.py:375
 #, python-brace-format
@@ -7700,7 +7709,8 @@ msgstr ""
 
 #: signbank/tools.py:844
 msgid "HINT: Try exporting a CSV file to see what column names can be used."
-msgstr ""
+msgstr "TIP: Probeer een CSV-bestand te exporteren om te zien welke kolomnamen "
+"kunnen worden gebruikt."
 
 #: signbank/tools.py:866 signbank/tools.py:881
 #, python-brace-format
@@ -7803,7 +7813,8 @@ msgstr ""
 #: signbank/tools.py:1354
 msgid ""
 "See the available Tags in the table on the Import CSV Update Glosses page."
-msgstr ""
+msgstr "Bekijk de beschikbare tags in de tabel op de pagina "
+"Import CSV Update Glosses."
 
 #: signbank/tools.py:1378
 #, python-brace-format
@@ -7970,11 +7981,12 @@ msgstr "Glos-video met perspectief"
 
 #: signbank/video/views.py:127
 msgid "Annotated sentence upload went wrong. Please try again."
-msgstr ""
+msgstr "Het uploaden van de voorbeeldzin is misgegaan. "
+"Probeer het alstublieft opnieuw."
 
 #: signbank/video/views.py:228
 msgid "Invalid file. Please try again."
-msgstr ""
+msgstr "Ongeldig bestand. Probeer het opnieuw."
 
 #: templates/ASL-templates/baselayout.html:50
 msgid "The ASL Signbank</span> is licensed under a "
