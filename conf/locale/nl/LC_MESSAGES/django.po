@@ -6775,45 +6775,46 @@ msgstr "Rij {row}: Dataset {acronym} bestaat niet."
 msgid ""
 "Row {row}: contains an already existing Annotation ID Gloss for {language}: "
 "{annotation}"
-msgstr ""
+msgstr "Rij {row}: bevat een reeds bestaand Annotatie-ID-Gloss voor {language}: "
+"{annotation}"
 
 #: signbank/dictionary/views.py:700
 #, python-brace-format
 msgid "Row {row}: Existing Lemma ID Gloss ({language}): {lemmatext}"
-msgstr ""
+msgstr "Rij {row}: Reeds bestaande Lemma-ID-Glos ({language}): {lemmatext}"
 
 #: signbank/dictionary/views.py:709
 #, python-brace-format
 msgid "Row {row}: Lemma ID Gloss ({language}): is empty."
-msgstr ""
+msgstr "Rij {row}: Lemma-ID-Glos ({language}): is leeg."
 
 #: signbank/dictionary/views.py:716
 #, python-brace-format
 msgid "Row {row}: New Lemma ID Gloss ({language}): {lemmatext}"
-msgstr ""
+msgstr "Rij {row}: Nieuw Lemma-ID-Glos ({language}): {lemmatext}"
 
 #: signbank/dictionary/views.py:721
-#, fuzzy, python-brace-format
-#| msgid "Lemma translations refer to different already existing lemmas."
+#, python-brace-format
 msgid "Row {row}: The Lemma translations refer to different lemmas."
-msgstr "Lemmavertalingen verwijzen naar verschillende reeds bestaande lemma's."
+msgstr "Rij {row}: De lemmavertalingen verwijzen naar verschillende lemma's."
 
 #: signbank/dictionary/views.py:724
 #, python-brace-format
 msgid ""
 "Row {row}: Exactly one lemma matches, but one of the translations in the csv "
 "is empty."
-msgstr ""
+msgstr "Rij {row}: Enkel een lemma komt overeen, maar een van de vertalingen in "
+"het CSV-betand is leeg."
 
 #: signbank/dictionary/views.py:727
 #, python-brace-format
 msgid "Row {row}: Combination of existing and new lemma translations."
-msgstr ""
+msgstr "Rij {row}: Combinatie van bestaand en nieuw lemma vertalingen."
 
 #: signbank/dictionary/views.py:730
 #, python-brace-format
 msgid "Row {row}: No lemma translations provided."
-msgstr ""
+msgstr "Rij {row}: Geen lemma vertalingen."
 
 #: signbank/dictionary/views.py:786
 #, python-brace-format
@@ -6827,6 +6828,9 @@ msgid ""
 "translations should either refer to an existing Lemma ID Gloss or make up a "
 "completely new Lemma ID gloss."
 msgstr ""
+"Om glossen aan te maken in dataset {acronym}, de combinatie van Lemma-ID-Glos "
+"vertalingen moeten verwijzen naar een reeds bestaande Lemma-ID-Glos, of "
+"bestaan uit een volledig nieuwe combinatie voor een nieuw Lemma-ID-Glos."
 
 #: signbank/dictionary/views.py:997 signbank/dictionary/views.py:1521
 #, python-brace-format
@@ -6839,10 +6843,9 @@ msgid "The header row of the csv file looks like this: {columns}"
 msgstr "De koprij van het bestand zou zo eruit moeten zien: {columns}"
 
 #: signbank/dictionary/views.py:1001 signbank/dictionary/views.py:1525
-#, fuzzy, python-brace-format
-#| msgid "Some required column headers are missing: "
+#, python-brace-format
 msgid "Some required column headers are missing: {columns}"
-msgstr "Sommige vereiste kolomkoppen ontbreken: "
+msgstr "Sommige vereiste kolomkoppen ontbreken: {columns}"
 
 #: signbank/dictionary/views.py:1024
 msgid "The Signbank ID column is required."
@@ -6866,26 +6869,22 @@ msgid ""
 msgstr ""
 
 #: signbank/dictionary/views.py:1152
-#, fuzzy, python-brace-format
-#| msgid ""
-#| "Attempt to update Lemma translations. Use Import CSV Lemma Update instead."
+#, python-brace-format
 msgid ""
 "Row {row}: Attempt to update Lemma translations for Signbank ID {glossid}. "
 "Use Import CSV Lemma Update instead."
 msgstr ""
-"Poging om Lemma bij te werken. Gebruik in plaats daarvan: Import CSV Update "
-"Lemma."
+"Rij {row}: Poging om Lemma bij te werken voor Signbank ID {glossid}. "
+"Gebruik in plaats daarvan: Import CSV Update Lemma."
 
 #: signbank/dictionary/views.py:1215
-#, fuzzy, python-brace-format
-#| msgid ""
-#| "Attempt to update Lemma translations. Use Import CSV Lemma Update instead."
+#, python-brace-format
 msgid ""
 "Attempt to update Lemma translations: {new_value}. Use Import CSV Lemma "
 "Update instead."
 msgstr ""
-"Poging om Lemma bij te werken. Gebruik in plaats daarvan: Import CSV Update "
-"Lemma."
+"Poging om Lemma bij te werken: {new_value}. Gebruik in plaats daarvan: "
+"Import CSV Update Lemma."
 
 #: signbank/dictionary/views.py:1455
 msgid "Please select a single dataset for which you have change permission."
@@ -6948,10 +6947,9 @@ msgid "Dataset name empty."
 msgstr "Datasetnaam is leeg."
 
 #: signbank/dictionary/views.py:2695
-#, fuzzy, python-brace-format
-#| msgid "The header row of the csv file looks like this: "
+#, python-brace-format
 msgid "The header row of the csv file has extra keys: {extrakeys}"
-msgstr "De koprij van het bestand zou zo eruit moeten zien: "
+msgstr "De koprij van het CSV-bestand heeft extra kolommen: {extrakeys}"
 
 #: signbank/dictionary/views.py:2786
 msgid "You can only create sentences for one dataset at a time."
@@ -7326,10 +7324,8 @@ msgid "Lists within the dictionary have different lengths."
 msgstr ""
 
 #: signbank/gloss_update.py:192
-#, fuzzy
-#| msgid "In the Web dictionary"
 msgid "Input is not a dictionary."
-msgstr "In het woordenboek"
+msgstr "Input is geen json-dictionary."
 
 #: signbank/gloss_update.py:361 signbank/gloss_update.py:368
 #: signbank/gloss_update.py:373 signbank/gloss_update.py:376
@@ -7346,10 +7342,8 @@ msgid "Transaction management error."
 msgstr "Fout bij transactiebeheer."
 
 #: signbank/gloss_update.py:751
-#, fuzzy
-#| msgid "Corpus successfully updated."
 msgid "Gloss successfully updated."
-msgstr "Corpus met succes bijgewerkt."
+msgstr "Glos met succes bijgewerkt."
 
 #: signbank/gloss_update.py:761
 msgid "Gloss operation not confirmed"
@@ -7452,12 +7446,12 @@ msgid "Upload zip archive: The file has an unknown type."
 msgstr "Zip-archief uploaden: Het bestand heeft een onbekend type."
 
 #: signbank/manage_videos.py:104
-#, fuzzy, python-brace-format
-#| msgid "The zip archive has the wrong structure. It should be: "
+#, python-brace-format
 msgid ""
 "The zip archive has the wrong structure. It should be: {acronym}/"
 "{language3char}/annotation.mp4"
 msgstr "Het zip-archief heeft een verkeerde structuur: Dat moet als volgt: "
+"{acronym}/{language3char}/annotation.mp4"
 
 #: signbank/manage_videos.py:111
 msgid "Upload zipped videos media was successful."
@@ -7649,12 +7643,9 @@ msgid "Signbank ID {glossid} key value already exists: '{column}': '{value}'"
 msgstr ""
 
 #: signbank/tools.py:404
-#, fuzzy, python-brace-format
-#| msgid "Attempt to update Lemma translations. Use Import CSV Lemma Update."
+#, python-brace-format
 msgid "Attempt to update Lemma translations: '{column}'"
-msgstr ""
-"Poging om Lemma bij te werken. Gebruik in plaats daarvan: Import CSV Update "
-"Lemma."
+msgstr "Poging om Lemma bij te werken: '{column}'"
 
 #: signbank/tools.py:415
 #, python-brace-format
@@ -8231,30 +8222,3 @@ msgstr "vind alle strings in dit veld"
 #: templates/global-templates/tooltip.html:25
 msgid "use backslash to find <br/>special characters in field"
 msgstr "gebruik backslash om <br/>speciale karakters te zoeken"
-
-#~ msgid " is empty."
-#~ msgstr " is leeg."
-
-#~ msgid "already exists."
-#~ msgstr "bestaat al."
-
-#~ msgid "already exists"
-#~ msgstr "bestaat al"
-
-#~ msgid "Language "
-#~ msgstr "Taal "
-
-#~ msgid "There must be at least one translation for this lemma."
-#~ msgstr "Er moet minstens één vertaling zijn voor het lemma."
-
-#~ msgid "Please choose a type description when uploading other media."
-#~ msgstr "Kies een soort beschrijving bij het uploaden van media."
-
-#~ msgid "You do not have change permission for"
-#~ msgstr "U hebt geen wijzigingsrechten voor"
-
-#~ msgid "Please select or create a lemma."
-#~ msgstr "Selecteer of maak een lemma."
-
-#~ msgid "Missing File argument."
-#~ msgstr "Bestand ontbreekt."
