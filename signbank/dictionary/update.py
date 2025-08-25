@@ -61,7 +61,7 @@ from signbank.dictionary.translate_choice_list import machine_value_to_translate
 from signbank.dictionary.context_data import get_selected_datasets
 
 from signbank.tools import gloss_from_identifier, get_default_annotationidglosstranslation, \
-    copy_missing_lemmaidglosstranslation_from_annotationidglosstranslation, ensure_synonym_transitivity, remove_transitive_synonym
+    copy_missing_lemmaidglosstranslation_from_annotationidglosstranslation
 from signbank.frequency import document_identifiers_from_paths, documents_paths_dictionary
 from signbank.dictionary.update_senses_mapping import (mapping_edit_keywords, mapping_group_keywords,
                                                        mapping_add_keyword,
@@ -79,6 +79,7 @@ from signbank.dictionary.update_glosses import (mapping_toggle_relOriLoc, mappin
                                                 batch_edit_create_sense)
 from signbank.dictionary.batch_edit import batch_edit_update_gloss, add_gloss_update_to_revision_history
 from signbank.dictionary.adminviews import show_warning
+from signbank.relation_tools import ensure_synonym_transitivity, remove_transitive_synonym
 
 
 # this method is called as dictionary:add_gloss from the template for /signs/add/

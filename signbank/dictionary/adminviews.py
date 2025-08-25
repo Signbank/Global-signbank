@@ -84,8 +84,7 @@ from signbank.dictionary.forms import (AnnotatedSentenceSearchForm, GlossSearchF
 from signbank.tools import (write_ecv_file_for_dataset, find_duplicate_lemmas,
                             construct_scrollbar, get_dataset_languages, get_datasets_with_public_glosses,
                             searchform_panels, map_search_results_to_gloss_list,
-                            get_interface_language_and_default_language_codes, get_default_annotationidglosstranslation,
-                            ensure_synonym_transitivity)
+                            get_interface_language_and_default_language_codes, get_default_annotationidglosstranslation)
 from signbank.csv_interface import (csv_gloss_to_row, csv_header_row_glosslist, csv_header_row_morphemelist,
                                     csv_morpheme_to_row, csv_header_row_handshapelist, csv_handshape_to_row,
                                     csv_header_row_lemmalist, csv_lemma_to_row,
@@ -129,6 +128,7 @@ from signbank.dictionary.related_objects import (morpheme_is_related_to, gloss_i
                                                  transitive_related_objects)
 from signbank.manage_videos import listing_uploaded_videos
 from signbank.zip_interface import uploaded_zip_archives
+from signbank.relation_tools import ensure_synonym_transitivity
 
 
 def order_annotatedsentence_queryset_by_sort_order(get, qs, queryset_language_codes):
