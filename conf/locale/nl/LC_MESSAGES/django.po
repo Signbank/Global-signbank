@@ -1882,7 +1882,7 @@ msgstr "Bestandsnaam heeft fouten"
 #: signbank/dictionary/models.py:4366
 #: signbank/dictionary/templates/dictionary/gloss_detail.html:2974
 msgid "Method"
-msgstr ""
+msgstr "Methode"
 
 #: signbank/dictionary/gloss_revision.py:97
 msgid "Upload Primary Video"
@@ -2452,7 +2452,7 @@ msgstr "Valence"
 
 #: signbank/dictionary/models.py:1206
 msgid "Concepticon Concept Set"
-msgstr ""
+msgstr "Concepticon-conceptset"
 
 #: signbank/dictionary/models.py:1209
 msgid "Number of Occurrences"
@@ -3230,7 +3230,7 @@ msgstr ""
 
 #: signbank/dictionary/templates/dictionary/admin_configure_derivationhistory.html:19
 msgid "You do not have permission to configure Derivation Histories."
-msgstr ""
+msgstr "U heeft geen toestemming om afleidingsgeschiedenissen te configureren."
 
 #: signbank/dictionary/templates/dictionary/admin_configure_derivationhistory.html:21
 msgid "No choices found for Derivation History in FieldChoice."
@@ -3238,13 +3238,14 @@ msgstr "Geen keuzes gevonden voor Derivatieachtergrond in FieldChoice."
 
 #: signbank/dictionary/templates/dictionary/admin_configure_derivationhistory.html:24
 msgid "Derivation History has already been configured."
-msgstr ""
+msgstr "De afleidingsgeschiedenis is al geconfigureerd."
 
 #: signbank/dictionary/templates/dictionary/admin_configure_derivationhistory.html:26
 msgid ""
 "The following field choices have been set up for derivation histories. They "
 "can be modified in Admin."
-msgstr ""
+msgstr "De volgende veldkeuzes zijn ingesteld voor afleidingsgeschiedenissen. "
+"Deze kunnen worden gewijzigd in Admin."
 
 #: signbank/dictionary/templates/dictionary/admin_configure_derivationhistory.html:31
 #: signbank/dictionary/templates/dictionary/admin_configure_handshapes.html:32
@@ -3261,7 +3262,7 @@ msgstr "Handvormen wordt niet ondersteund door uw Signbank-configuratie."
 
 #: signbank/dictionary/templates/dictionary/admin_configure_handshapes.html:20
 msgid "You do not have permission to configure Handshapes."
-msgstr ""
+msgstr "U heeft geen toestemming om Handshapes te configureren."
 
 #: signbank/dictionary/templates/dictionary/admin_configure_handshapes.html:22
 msgid "No choices found for Handshape in FieldChoice."
@@ -3275,7 +3276,8 @@ msgstr "Handvormen zijn al geconfigureerd."
 msgid ""
 "The following field choices have been set up for handshapes. They can be "
 "modified in Admin."
-msgstr ""
+msgstr "Voor handvormen zijn de volgende veldkeuzes ingesteld. "
+"Deze kunnen worden gewijzigd in Admin."
 
 #: signbank/dictionary/templates/dictionary/admin_dataset_list.html:9
 msgid "Signbank: Available Datasets"
@@ -3340,7 +3342,7 @@ msgstr ""
 #: signbank/dictionary/templates/dictionary/admin_dataset_list.html:78
 #: signbank/dictionary/templates/dictionary/admin_dataset_list.html:90
 msgid "Request View Access"
-msgstr ""
+msgstr "Vraag weergavetoegang aan"
 
 #: signbank/dictionary/templates/dictionary/admin_dataset_list.html:86
 msgid "Motivation"
@@ -3376,7 +3378,7 @@ msgstr "Datasets beheren"
 
 #: signbank/dictionary/templates/dictionary/admin_dataset_manager.html:70
 msgid "Exclude field choices for datasets"
-msgstr ""
+msgstr "Veldkeuzes voor datasets uitsluiten"
 
 #: signbank/dictionary/templates/dictionary/admin_dataset_manager.html:76
 msgid "Users who can View Dataset (Group permissions excluded)"
@@ -3606,7 +3608,7 @@ msgstr "Aantal gebaren"
 
 #: signbank/dictionary/templates/dictionary/admin_dataset_videos_list.html:293
 msgid "Number of video objects matching query"
-msgstr ""
+msgstr "Aantal video-objecten dat aan de query voldoet"
 
 #: signbank/dictionary/templates/dictionary/admin_dataset_videos_list.html:298
 msgid "Gloss Primary Video Objects"
@@ -3674,7 +3676,7 @@ msgstr "Back-upvideo objecten"
 
 #: signbank/dictionary/templates/dictionary/admin_dataset_videos_list.html:434
 msgid "# Backups"
-msgstr ""
+msgstr "# Back-ups"
 
 #: signbank/dictionary/templates/dictionary/admin_dataset_videos_list.html:437
 #: signbank/dictionary/templates/dictionary/dataset_video_storage.html:355
@@ -3979,7 +3981,8 @@ msgstr "U bevindt zich in de weergave Trefwoordentoewijzin."
 
 #: signbank/dictionary/templates/dictionary/admin_keyword_list.html:346
 msgid "If you wish to edit the gloss or add example sentences, switch to"
-msgstr ""
+msgstr "Als u de glos wilt bewerken of voorbeeldzinnen wilt toevoegen, "
+"schakelt u over naar"
 
 #: signbank/dictionary/templates/dictionary/admin_keyword_list.html:348
 msgid "Gloss Detail View"
@@ -4014,10 +4017,16 @@ msgid ""
 "empty senses.</p>\n"
 "                        "
 msgstr ""
+"\n"
+"                        <p>Hier kunt u trefwoorden bijwerken en vertalingen "
+"aan betekenissen toevoegen.</p>\n"
+"                        <p>De updateknop werkt trefwoorden bij en verwijdert "
+"lege betekenissen.</p>\n"
+"                        "
 
 #: signbank/dictionary/templates/dictionary/admin_keyword_list.html:503
 msgid "Gloss Keywords Mapping to Senses"
-msgstr ""
+msgstr "Glos-trefwoorden koppelen aan betekenissen"
 
 #: signbank/dictionary/templates/dictionary/admin_keyword_list.html:504
 msgid ""
@@ -4030,6 +4039,14 @@ msgid ""
 "                        <p>You can also remove empty senses there.</p>\n"
 "                        "
 msgstr ""
+"\n"
+"                        <p>Hier kunt u trefwoorden bewerken en ze hergroeperen naar "
+"een andere betekenis door het betekenisnummer te wijzigen.</p>\n"
+"                        <p>Als er een betekenis zonder trefwoorden wordt weergegeven, "
+"schakelt u over naar de pop-up betekenismatrix om\n"
+"                           alle talen te bekijken.</p>\n"
+"                        <p>Ook lege betekenissen kun je daar verwijderen.</p>\n"
+"                        "
 
 #: signbank/dictionary/templates/dictionary/admin_keyword_list.html:563
 msgid "Regroup Kewords"
@@ -4055,7 +4072,7 @@ msgstr "Aantal gearchiveerd gebaren"
 
 #: signbank/dictionary/templates/dictionary/admin_lemma_list.html:242
 msgid "Constraints"
-msgstr ""
+msgstr "Beperkingen"
 
 #: signbank/dictionary/templates/dictionary/admin_lemma_list.html:289
 #: signbank/dictionary/templates/dictionary/update_lemma.html:174
@@ -4080,7 +4097,7 @@ msgstr ""
 
 #: signbank/dictionary/templates/dictionary/admin_lemma_list.html:385
 msgid "You have chosen to delete"
-msgstr "U hebt ervoor gekozen om"
+msgstr "U heeft ervoor gekozen om"
 
 #: signbank/dictionary/templates/dictionary/admin_lemma_list.html:385
 msgid "lemmas."
@@ -4143,7 +4160,7 @@ msgstr "Ander gebaar"
 #: signbank/dictionary/templates/dictionary/admin_minimalpairs_list.html:417
 msgid ""
 "No results. Please choose one of the options above or refine your filter."
-msgstr ""
+msgstr "Geen resultaten. Kies een van de bovenstaande opties of verfijn uw filter."
 
 #: signbank/dictionary/templates/dictionary/admin_morpheme_list.html:9
 msgid "Signbank: Search Morphemes"
@@ -4243,7 +4260,7 @@ msgstr ""
 
 #: signbank/dictionary/templates/dictionary/admin_query_list.html:581
 msgid "Gloss List Fields"
-msgstr ""
+msgstr "Gloslijstvelden"
 
 #: signbank/dictionary/templates/dictionary/admin_query_list.html:592
 msgid "Query Parameter Fields"
@@ -4470,7 +4487,7 @@ msgstr "Eigenaar toevoegen"
 
 #: signbank/dictionary/templates/dictionary/dataset_detail.html:139
 msgid "Set Prominent Media Type"
-msgstr ""
+msgstr "Prominent mediatype instellen"
 
 #: signbank/dictionary/templates/dictionary/dataset_detail.html:150
 msgid "Sign language"
@@ -4500,7 +4517,7 @@ msgstr "Copyright verklaring"
 #: signbank/dictionary/templates/dictionary/dataset_detail.html:171
 #: signbank/dictionary/templates/dictionary/dataset_detail.html:173
 msgid "Reference"
-msgstr ""
+msgstr "Referentie"
 
 #: signbank/dictionary/templates/dictionary/dataset_detail.html:176
 msgid "Use Provenance Model"
@@ -4559,7 +4576,7 @@ msgstr ""
 
 #: signbank/dictionary/templates/dictionary/dataset_field_choices.html:96
 msgid "Field Choice [Frequency in Selected Managed Datasets]"
-msgstr ""
+msgstr "Veldkeuze [Frequentie in geselecteerde beheerde datasets]"
 
 #: signbank/dictionary/templates/dictionary/dataset_frequency.html:109
 msgid "Signbank: Corpus Overview"
@@ -5074,7 +5091,8 @@ msgstr "Kopieer glos"
 msgid ""
 "This gloss is already a duplicate. Please modify the annotation fields "
 "before creating a new duplicate."
-msgstr ""
+msgstr "Deze glos is reeds een duplicaat. "
+"Wijzig de annotatievelden voordat u een nieuw duplicaat maakt."
 
 #: signbank/dictionary/templates/dictionary/gloss_detail.html:821
 msgid "This will create a new gloss with identical phonology."
@@ -6309,6 +6327,13 @@ msgid ""
 "make the translations distinct.</p>\n"
 "            "
 msgstr ""
+"\n"
+"            <p>Er is nog een lemma dat overlapt met dit lemma.</p>\n"
+"            <p>Als dit kopieën van hetzelfde lemma zijn, kun je een glos "
+"naar een ander lemma verplaatsen in de glosbewerkingsweergave.</p>\n"
+"            <p>Als het inderdaad om afzonderlijke lemma's gaat, kunt u de tekst bewerken "
+"om de vertalingen afzonderlijk te maken.</p>\n"
+"            "
 
 #: signbank/dictionary/templates/dictionary/update_lemma.html:189
 msgid ""
@@ -6316,6 +6341,9 @@ msgid ""
 "            <p>This lemma has no glosses and can be deleted.</p>\n"
 "            "
 msgstr ""
+"\n"
+"            <p>Dit lemma heeft geen glossen en kan worden verwijderd.</p>\n"
+"            "
 
 #: signbank/dictionary/templates/dictionary/update_lemma.html:204
 msgid "Lemmas with Overlapping Translations"
