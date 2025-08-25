@@ -2431,7 +2431,7 @@ def find_duplicate_lemmas(lemma):
     return duplicate_lemma
 
 
-def generate_response(values):
+def generate_tabbed_text_response(values):
     """ Used by update methods to format a list of return values into a tabbed string.
     The tabbed strings are used in the editable templates where the updates are shown by javascript.
     """

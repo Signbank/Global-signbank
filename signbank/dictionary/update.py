@@ -61,7 +61,7 @@ from signbank.dictionary.translate_choice_list import machine_value_to_translate
 from signbank.dictionary.context_data import get_selected_datasets
 
 from signbank.tools import (gloss_from_identifier, get_default_annotationidglosstranslation,
-    copy_missing_lemmaidglosstranslation_from_annotationidglosstranslation, generate_response)
+    copy_missing_lemmaidglosstranslation_from_annotationidglosstranslation, generate_tabbed_text_response)
 from signbank.frequency import document_identifiers_from_paths, documents_paths_dictionary
 from signbank.dictionary.update_senses_mapping import (mapping_edit_keywords, mapping_group_keywords,
                                                        mapping_add_keyword,
@@ -1184,7 +1184,7 @@ def update_gloss(request, glossid):
                              time=DT.datetime.now(tz=get_current_timezone()))
     revision.save()
     # The machine_value (value) representation is also returned to accommodate Hyperlinks to Handshapes in gloss_edit.js
-    return generate_response([original_value, newvalue, value, category_value, lemma_gloss_group, input_value])
+    return generate_tabbed_text_response([original_value, newvalue, value, category_value, lemma_gloss_group, input_value])
 
 
 def update_keywords(gloss, field, value):
@@ -2150,7 +2150,7 @@ def update_handshape(request, handshapeid):
     else:
         category_value = 'fieldChoice'
 
-    return generate_response([original_value, newvalue, category_value, newPattern])
+    return generate_tabbed_text_response([original_value, newvalue, category_value, newPattern])
 
 
 def add_annotated_media(request, glossid):
@@ -2810,7 +2810,7 @@ def update_morpheme(request, morphemeid):
             morpheme.__setattr__(field, value)
             morpheme.save()
 
-    return generate_response([original_value, newvalue, value, category_value, lemma_gloss_group, input_value])
+    return generate_tabbed_text_response([original_value, newvalue, value, category_value, lemma_gloss_group, input_value])
 
 
 def update_morpheme_definition(gloss, field, value):
@@ -2834,7 +2834,7 @@ def update_morpheme_definition(gloss, field, value):
         definition.__setattr__('role', value)
         definition.save()
 
-        return generate_response([original_value, newvalue, value, category_value])
+        return generate_tabbed_text_response([original_value, newvalue, value, category_value])
 
     else:
         return HttpResponseBadRequest("Unknown form field '%s'" % field, {'content-type': 'text/plain'})
@@ -2861,7 +2861,7 @@ def update_blend_definition(gloss, field, value):
         original_value = getattr(definition, 'role')
         definition.__setattr__('role', value)
         definition.save()
-        return generate_response([original_value, newvalue, value, category_value])
+        return generate_tabbed_text_response([original_value, newvalue, value, category_value])
 
     else:
         return HttpResponseBadRequest("Unknown form field '%s'" % field, {'content-type': 'text/plain'})
@@ -3117,12 +3117,12 @@ def update_dataset(request, datasetid):
         value = value.strip()
         setattr(dataset, field, value)
         dataset.save()
-        return generate_response([original_value, value])
+        return generate_tabbed_text_response([original_value, value])
     elif field in ['is_public', 'use_provenance']:
         original_value = getattr(dataset, field)
         setattr(dataset, field, value == 'True')
         dataset.save()
-        return generate_response([original_value, value])
+        return generate_tabbed_text_response([original_value, value])
     elif field == 'add_owner':
         update_owner(dataset, field, value)
     elif field == 'default_language':
@@ -3135,7 +3135,7 @@ def update_dataset(request, datasetid):
         except ObjectDoesNotExist:
             # ignore input value since it does not exist
             value = original_value
-        return generate_response([original_value, value])
+        return generate_tabbed_text_response([original_value, value])
     elif field not in Dataset.get_field_names():
         return HttpResponseBadRequest("Unknown field", {'content-type': 'text/plain'})
 
