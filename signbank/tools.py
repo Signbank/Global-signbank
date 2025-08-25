@@ -34,7 +34,7 @@ from signbank.dictionary.models import (Dataset, Gloss, Morpheme, Dialect, SignL
                                         SemanticField, DeletedGlossOrMedia, UserProfile, get_default_language_id,
                                         Handshape, LemmaIdgloss, FieldChoiceForeignKey, Definition,
                                         LemmaIdglossTranslation, MorphologyDefinition, AnnotatedSentenceTranslation,
-                                        ExampleSentence, OtherMedia)
+                                        ExampleSentence, OtherMedia, Relation)
 from signbank.csv_interface import (sense_translations_for_language, update_senses_parse,
                                     update_sentences_parse, sense_examplesentences_for_language, get_sense_numbers,
                                     parse_sentence_row, get_senses_to_sentences, csv_sentence_tuples_list_compare,
