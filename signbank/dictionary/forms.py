@@ -26,7 +26,7 @@ from signbank.dictionary.models import (Gloss, Morpheme, Definition, Relation, R
                                         QueryParameterFieldChoice, SearchHistory, QueryParameter,
                                         QueryParameterMultilingual, QueryParameterHandshape, SemanticFieldTranslation,
                                         ExampleSentence, Affiliation, AffiliatedUser, AffiliatedGloss, GlossSense,
-                                        SenseTranslation, AnnotatedGloss, GlossProvenance)
+                                        SenseTranslation, AnnotatedGloss, GlossProvenance, Dialect)
 from signbank.dictionary.translate_choice_list import choicelist_queryset_to_translated_dict
 from signbank.tools import get_selected_datasets_for_user
 
@@ -47,6 +47,7 @@ class GlossCreateForm(forms.ModelForm):
     """Form for creating a new gloss from scratch"""
 
     gloss_create_field_prefix = "glosscreate_"
+    gloss_sense_field_prefix = "sense_"
     languages = None  # Languages to use for annotation idgloss translations
     user = None
     last_used_dataset = None
@@ -64,7 +65,8 @@ class GlossCreateForm(forms.ModelForm):
     class Meta:
         model = Gloss
         fields = ['handedness', 'domhndsh', 'subhndsh',
-                  'domhndsh_number', 'domhndsh_letter', 'subhndsh_number', 'subhndsh_letter']
+                  'domhndsh_number', 'domhndsh_letter', 'subhndsh_number', 'subhndsh_letter',
+                  'release_information', 'dialect', 'semField']
 
     def __init__(self, queryDict, *args, **kwargs):
         self.languages = kwargs.pop('languages')
@@ -77,10 +79,14 @@ class GlossCreateForm(forms.ModelForm):
             self.fields['dataset'].initial = queryDict['dataset']
 
         for language in self.languages:
-            glosscreate_field_name = self.gloss_create_field_prefix + language.language_code_2char
-            self.fields[glosscreate_field_name] = forms.CharField(label=_("Gloss")+(" (%s)" % language.name))
-            if glosscreate_field_name in queryDict:
-                self.fields[glosscreate_field_name].value = queryDict[glosscreate_field_name]
+            gloss_create_field_name = self.gloss_create_field_prefix + language.language_code_2char
+            self.fields[gloss_create_field_name] = forms.CharField(label=_("Gloss")+(" (%s)" % language.name), required=True)
+            if gloss_create_field_name in queryDict:
+                self.fields[gloss_create_field_name].value = queryDict[gloss_create_field_name]
+            glosssense_create_field_name = self.gloss_sense_field_prefix + language.language_code_2char
+            self.fields[glosssense_create_field_name] = forms.CharField(label=_("Sense")+(" (%s)" % language.name))
+            if glosssense_create_field_name in queryDict:
+                self.fields[glosssense_create_field_name].value = queryDict[glosssense_create_field_name]
 
         self.fields['handedness'] = forms.ChoiceField(label=_('Handedness'),
                                                       choices = choicelist_queryset_to_translated_dict(
@@ -108,6 +114,18 @@ class GlossCreateForm(forms.ModelForm):
                                                     required=False)
         for boolean_field in ['domhndsh_letter', 'domhndsh_number', 'subhndsh_letter', 'subhndsh_number']:
             self.fields[boolean_field].choices = [(0, '-'), (2, _('True')), (3, _('False'))]
+        self.fields['release_information'] = forms.CharField(label=_('Source'), widget=forms.TextInput(), required=False)
+        dialects = [(str(dialect.id), dialect.signlanguage.name + "/" + dialect.name) for dialect in
+                           Dialect.objects.filter(signlanguage__dataset__acronym=self.last_used_dataset)
+                           .prefetch_related('signlanguage').distinct()]
+        self.fields['dialect'] = forms.MultipleChoiceField(label=_('Geographical Region'),
+                                                           widget=forms.CheckboxSelectMultiple,
+                                                           choices=dialects)
+        semantic_fields = [(str(semfield.machine_value), semfield.name)
+                            for semfield in SemanticField.objects.filter(machine_value__gt=1).order_by('name')]
+        self.fields['semField'] = forms.MultipleChoiceField(label=_('Semantic Field'),
+                                                           widget=forms.CheckboxSelectMultiple,
+                                                           choices=semantic_fields)
 
 
 class MorphemeCreateForm(forms.ModelForm):
