@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-03-13 12:47+0100\n"
+"POT-Creation-Date: 2025-08-21 15:08+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -17,93 +17,93 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 
-#: signbank/registration/forms.py:51
+#: signbank/registration/forms.py:50
 msgid "Username"
 msgstr ""
 
-#: signbank/registration/forms.py:54
+#: signbank/registration/forms.py:53
 msgid "First Name"
 msgstr ""
 
-#: signbank/registration/forms.py:57
+#: signbank/registration/forms.py:56
 msgid "Last Name"
 msgstr ""
 
-#: signbank/registration/forms.py:59
+#: signbank/registration/forms.py:58
 msgid "Your Email Address"
 msgstr ""
 
-#: signbank/registration/forms.py:61 signbank/registration/forms.py:231
+#: signbank/registration/forms.py:60 signbank/registration/forms.py:230
 msgid "Password"
 msgstr ""
 
-#: signbank/registration/forms.py:63
+#: signbank/registration/forms.py:62
 msgid "Password (again)"
 msgstr ""
 
-#: signbank/registration/forms.py:77
+#: signbank/registration/forms.py:76
 msgid "Requested Datasets"
 msgstr ""
 
-#: signbank/registration/forms.py:82
+#: signbank/registration/forms.py:81
 msgid "Motivation"
 msgstr ""
 
-#: signbank/registration/forms.py:89
+#: signbank/registration/forms.py:88
 msgid ""
 "Please explain why you would like to get access to this dataset. What are "
 "the purposes for which you wish to use it?"
 msgstr ""
 
-#: signbank/registration/forms.py:106
+#: signbank/registration/forms.py:105
 msgid "Usernames should not have special characters."
 msgstr ""
 
-#: signbank/registration/forms.py:111
+#: signbank/registration/forms.py:110
 msgid "This username is already taken. Please choose another."
 msgstr ""
 
-#: signbank/registration/forms.py:121
+#: signbank/registration/forms.py:120
 msgid "You must type the same password each time"
 msgstr ""
 
-#: signbank/registration/forms.py:130
+#: signbank/registration/forms.py:129
 msgid "Please provide motivation for your request"
 msgstr ""
 
-#: signbank/registration/forms.py:139
+#: signbank/registration/forms.py:138
 msgid "Please consider the Terms of Service."
 msgstr ""
 
-#: signbank/registration/forms.py:180
+#: signbank/registration/forms.py:179
 msgid "I have read and agree to the Terms of Service"
 msgstr ""
 
-#: signbank/registration/forms.py:189
+#: signbank/registration/forms.py:188
 msgid "You must agree to the terms to register"
 msgstr ""
 
-#: signbank/registration/forms.py:208
+#: signbank/registration/forms.py:207
 msgid ""
 "This email address is already in use. Please supply a different email "
 "address."
 msgstr ""
 
-#: signbank/registration/forms.py:230
+#: signbank/registration/forms.py:229
 msgid "Email"
 msgstr ""
 
-#: signbank/registration/forms.py:251
+#: signbank/registration/forms.py:250
 msgid ""
 "Please enter a correct email and password. Note that password is case-"
 "sensitive."
 msgstr ""
 
-#: signbank/registration/forms.py:253
+#: signbank/registration/forms.py:252
 msgid "This account is inactive."
 msgstr ""
 
-#: signbank/registration/forms.py:258
+#: signbank/registration/forms.py:257
 msgid ""
 "Your Web browser doesn't appear to have cookies enabled. Cookies are "
 "required for logging in."
