@@ -417,7 +417,7 @@ function configure_edit() {
          params : { a: 0 },
          type      : 'multiselect',
          data      : dialects,
-		 callback : update_view_and_remember_original_value
+		 callback : update_sign_language_dialects
      });
      $('.edit_semanticfield').editable(edit_post_url, {
          params : { a: 0 },
@@ -595,28 +595,21 @@ function hide_other_forms(focus_field) {
     };
 };
 
+function update_sign_language_dialects(dialects)
+{
+    if (dialects) {
+        $('#dialect').html(dialects);
+    } else {
+        $('#dialect').html("------");
+    }
+}
+
 function update_view_and_remember_original_value(change_summary)
 {
 	split_values_count = change_summary.split('\t').length - 1;
+	console.log('update_view_and_remember_original_value: '+change_summary)
 	if (split_values_count > 0)
 	{
-	    if (split_values_count < 3) {
-//	        # updates to Sign Language or Dialect returns two values
-            split_values = change_summary.split('\t');
-            language = split_values[0];
-            dialect = split_values[1];
-            if (language) {
-                $('#signlanguage').html(language);
-            } else {
-                $('#signlanguage').html("------");
-            }
-            if (dialect) {
-                $('#dialect').html(dialect);
-            } else {
-                $('#dialect').html("------");
-            }
-	        return
-	    }
         split_values = change_summary.split('\t');
         original_value = split_values[0];
         new_value = split_values[1];

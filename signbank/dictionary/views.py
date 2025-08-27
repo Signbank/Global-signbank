@@ -47,7 +47,7 @@ from signbank.dictionary.models import (Dataset, Language, Gloss, Morpheme, Lemm
                                         get_default_language_id, CATEGORY_MODELS_MAPPING)
 from signbank.dictionary.forms import (LemmaCreateForm, GlossCreateForm, MorphemeCreateForm, ImageUploadForHandshapeForm,
                                        ImageUploadForGlossForm, CSVUploadForm)
-from signbank.dictionary.update import (update_signlanguage, update_dialect)
+from signbank.dictionary.update import update_dialect
 from signbank.dictionary.update_csv import (update_simultaneous_morphology, update_blend_morphology,
                                             update_sequential_morphology, subst_relations, subst_foreignrelations,
                                             update_tags, subst_notes, subst_semanticfield)
@@ -1259,10 +1259,10 @@ def import_csv_update(request):
 
             if fieldname == 'SignLanguages':
 
-                new_human_value_list = [v.strip() for v in new_value.split(',')]
-
-                update_signlanguage(gloss,'signlanguage',new_human_value_list)
-                gloss.save()
+                # new_human_value_list = [v.strip() for v in new_value.split(',')]
+                #
+                # update_signlanguage(gloss,'signlanguage',new_human_value_list)
+                # gloss.save()
                 continue
 
             if fieldname == 'Dialects':
@@ -1277,23 +1277,23 @@ def import_csv_update(request):
 
                 # this has already been checked for existence and permission in the previous step
                 # get dataset identifier
-                if new_value == 'None':
-                    # don't allow the user to erase the current dataset, this should have already been caught
-                    print('csv import make changes error: gloss ', gloss.id, ' attempt to set dataset to empty')
-                    continue
-                else:
-                    # the existence of the new dataset should have already been tested
-                    new_dataset = Dataset.objects.get(acronym=new_value)
-                try:
-                    gloss_lemma = gloss.lemma
-                except KeyError:
-                    # this error should not happen
-                    print('csv import make changes error: gloss ', gloss.id, ' gloss.lemma is empty, cannot set dataset')
-                    continue
-
-                # this could have an unwanted side effect on the Lemma translations?
-                gloss_lemma.dataset = new_dataset
-                gloss_lemma.save()
+                # if new_value == 'None':
+                #     # don't allow the user to erase the current dataset, this should have already been caught
+                #     print('csv import make changes error: gloss ', gloss.id, ' attempt to set dataset to empty')
+                #     continue
+                # else:
+                #     # the existence of the new dataset should have already been tested
+                #     new_dataset = Dataset.objects.get(acronym=new_value)
+                # try:
+                #     gloss_lemma = gloss.lemma
+                # except KeyError:
+                #     # this error should not happen
+                #     print('csv import make changes error: gloss ', gloss.id, ' gloss.lemma is empty, cannot set dataset')
+                #     continue
+                #
+                # # this could have an unwanted side effect on the Lemma translations?
+                # gloss_lemma.dataset = new_dataset
+                # gloss_lemma.save()
                 continue
 
             if fieldname == 'Sequential Morphology':

@@ -803,7 +803,7 @@ def update_gloss(request, glossid):
 
     field = request.POST.get('id', '')
     value = request.POST.get('value', '')
-
+    print('update gloss, ', field, value)
     original_value = ''  # will in most cases be set later, but can't be empty in case it is not set
     category_value = ''
     field_category = ''
@@ -888,10 +888,13 @@ def update_gloss(request, glossid):
     elif field == 'signlanguage':
         # expecting possibly multiple values
 
-        return update_signlanguage(gloss, field, values)
+        # return update_signlanguage(gloss, field, values)
+        original_signlanguage_value = ", ".join([str(g) for g in gloss.signlanguage.all()])
+        return HttpResponse(original_signlanguage_value, {'content-type': 'text/plain'})
 
     elif field == 'dialect':
         # expecting possibly multiple values
+        print('update dialect: ', gloss, field, values)
 
         return update_dialect(gloss, field, values)
 
@@ -1049,7 +1052,7 @@ def update_gloss(request, glossid):
         # - tags
 
         gloss_fields = [Gloss.get_field(fname) for fname in Gloss.get_field_names()]
-
+        print('original value: ', original_value, type(original_value))
         # Translate the value if a boolean
         # Language values are needed here!
         newvalue = value
@@ -1070,6 +1073,7 @@ def update_gloss(request, glossid):
                 value = {'1': None, '2': True, '3': False}[value]
 
             elif field in ['domhndsh_letter', 'domhndsh_number', 'subhndsh_letter', 'subhndsh_number']:
+                print('field in letter, number: ', value)
                 newvalue = value
                 value = (value in ['letter', 'number'])
             else:
@@ -1431,44 +1435,43 @@ def update_perspectivevideo(user, gloss, field, value):
     return HttpResponse(value, {'content-type': 'text/plain'})
 
 
-def update_signlanguage(gloss, field, values):
-    # expecting possibly multiple values
-
-    # Sign Language and Dialect are interdependent
-    # When updated in Gloss Details, checks are made to insure consistency
-    # Because we use Ajax calls to update the data, two values need to be returned in order to also have a side effect
-    # on the other field. I.e., Changing the Sign Language may cause Dialects to be removed, and changing the Dialect
-    # may cause the Sign Language to be filled in if not already set, with that of the new Dialect
-    # To accommodate this in the interactive user interface for Editting a Gloss, two values are returned
-
-    # The dialects value is set to the current dialects value
-    dialects_value = ", ".join([f'{d.signlanguage.name}/{d.name}' for d in gloss.dialect.all()])
-    current_signlanguages = gloss.signlanguage.all()
-    current_signlanguage_name = ''
-    for lang in current_signlanguages:
-        # this looks strange, is this a convenience for a singleton set
-        current_signlanguage_name = lang.name
-
-    try:
-        gloss.signlanguage.clear()
-        for value in values:
-            lang = SignLanguage.objects.get(name=value)
-            gloss.signlanguage.add(lang)
-            if value != current_signlanguage_name:
-                gloss.dialect.clear()
-                # Has a side effect that the Dialects value is cleared, this will be passed back to the user interface
-                dialects_value = ''
-        gloss.save()
-        new_signlanguage_value = ", ".join([str(g) for g in gloss.signlanguage.all()])
-    except ObjectDoesNotExist:
-        return HttpResponseBadRequest("Unknown Language %s" % values, {'content-type': 'text/plain'})
-
-    return HttpResponse(str(new_signlanguage_value) + '\t' + str(dialects_value), {'content-type': 'text/plain'})
+# def update_signlanguage(gloss, field, values):
+#     # expecting possibly multiple values
+#
+#     # Sign Language and Dialect are interdependent
+#     # When updated in Gloss Details, checks are made to insure consistency
+#     # Because we use Ajax calls to update the data, two values need to be returned in order to also have a side effect
+#     # on the other field. I.e., Changing the Sign Language may cause Dialects to be removed, and changing the Dialect
+#     # may cause the Sign Language to be filled in if not already set, with that of the new Dialect
+#     # To accommodate this in the interactive user interface for Editting a Gloss, two values are returned
+#
+#     # The dialects value is set to the current dialects value
+#     dialects_value = ", ".join([f'{d.signlanguage.name}/{d.name}' for d in gloss.dialect.all()])
+#     current_signlanguages = gloss.signlanguage.all()
+#     current_signlanguage_name = ''
+#     for lang in current_signlanguages:
+#         # this looks strange, is this a convenience for a singleton set
+#         current_signlanguage_name = lang.name
+#
+#     try:
+#         gloss.signlanguage.clear()
+#         for value in values:
+#             lang = SignLanguage.objects.get(name=value)
+#             gloss.signlanguage.add(lang)
+#             if value != current_signlanguage_name:
+#                 gloss.dialect.clear()
+#                 # Has a side effect that the Dialects value is cleared, this will be passed back to the user interface
+#                 dialects_value = ''
+#         gloss.save()
+#         new_signlanguage_value = ", ".join([str(g) for g in gloss.signlanguage.all()])
+#     except ObjectDoesNotExist:
+#         return HttpResponseBadRequest("Unknown Language %s" % values, {'content-type': 'text/plain'})
+#
+#     return HttpResponse(str(new_signlanguage_value) + '\t' + str(dialects_value), {'content-type': 'text/plain'})
 
 
 def update_dialect(gloss, field, values):
     # expecting possibly multiple values
-
     dialect_choices = json.loads(gloss.dialect_choices())
     numerical_values_converted_to_dialects = [dialect_choices[int(value)] for value in values]
     error_string_values = ', '.join(numerical_values_converted_to_dialects)
@@ -1494,14 +1497,12 @@ def update_dialect(gloss, field, values):
             gloss.dialect.add(lang)
         gloss.save()
 
-        # The signlanguage value is set to the currect sign languages value
-        signlanguage_value = ", ".join([str(g) for g in gloss.signlanguage.all()])
         new_dialects_value = ", ".join([f'{d.signlanguage.name}/{d.name}' for d in gloss.dialect.all()])
     except ObjectDoesNotExist:
         return HttpResponseBadRequest("Dialect %s does not match Sign Language of Gloss" % error_string_values,
                                       {'content-type': 'text/plain'})
 
-    return HttpResponse(str(signlanguage_value) + '\t' + str(new_dialects_value), {'content-type': 'text/plain'})
+    return HttpResponse(new_dialects_value, {'content-type': 'text/plain'})
 
 
 def update_semanticfield(request, gloss, field, values):
@@ -1509,7 +1510,7 @@ def update_semanticfield(request, gloss, field, values):
     # expecting possibly multiple values
     # values is a list of strings
     new_semanticfields_to_save = []
-
+    print('update_semanticfield: ', gloss, values, field)
     # fetch all the valid semantic field choices
     # create a lookup dictionary mapping names to objects
     # the name is a unique field in the model
@@ -1540,7 +1541,7 @@ def update_semanticfield(request, gloss, field, values):
                              field_name='semField',
                              gloss=gloss, user=request.user, time=DT.datetime.now(tz=get_current_timezone()))
     revision.save()
-
+    print(str(new_semanticfield_value))
     return HttpResponse(str(new_semanticfield_value), {'content-type': 'text/plain'})
 
 
@@ -2631,7 +2632,10 @@ def update_morpheme(request, morphemeid):
     elif field == 'signlanguage':
         # expecting possibly multiple values
 
-        return update_signlanguage(morpheme, field, values)
+        # return update_signlanguage(morpheme, field, values)
+        original_signlanguage_value = ", ".join([str(g) for g in morpheme.signlanguage.all()])
+
+        return HttpResponse(original_signlanguage_value, {'content-type': 'text/plain'})
 
     elif field == 'dialect':
         # expecting possibly multiple values
