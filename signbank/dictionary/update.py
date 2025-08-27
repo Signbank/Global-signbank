@@ -886,9 +886,7 @@ def update_gloss(request, glossid):
         return update_other_media(gloss, field, value)
 
     elif field == 'signlanguage':
-        # expecting possibly multiple values
 
-        # return update_signlanguage(gloss, field, values)
         original_signlanguage_value = ", ".join([str(g) for g in gloss.signlanguage.all()])
         return HttpResponse(original_signlanguage_value, {'content-type': 'text/plain'})
 
@@ -1433,41 +1431,6 @@ def update_perspectivevideo(user, gloss, field, value):
     else:
         print('unknown nme video update field: ', field)
     return HttpResponse(value, {'content-type': 'text/plain'})
-
-
-# def update_signlanguage(gloss, field, values):
-#     # expecting possibly multiple values
-#
-#     # Sign Language and Dialect are interdependent
-#     # When updated in Gloss Details, checks are made to insure consistency
-#     # Because we use Ajax calls to update the data, two values need to be returned in order to also have a side effect
-#     # on the other field. I.e., Changing the Sign Language may cause Dialects to be removed, and changing the Dialect
-#     # may cause the Sign Language to be filled in if not already set, with that of the new Dialect
-#     # To accommodate this in the interactive user interface for Editting a Gloss, two values are returned
-#
-#     # The dialects value is set to the current dialects value
-#     dialects_value = ", ".join([f'{d.signlanguage.name}/{d.name}' for d in gloss.dialect.all()])
-#     current_signlanguages = gloss.signlanguage.all()
-#     current_signlanguage_name = ''
-#     for lang in current_signlanguages:
-#         # this looks strange, is this a convenience for a singleton set
-#         current_signlanguage_name = lang.name
-#
-#     try:
-#         gloss.signlanguage.clear()
-#         for value in values:
-#             lang = SignLanguage.objects.get(name=value)
-#             gloss.signlanguage.add(lang)
-#             if value != current_signlanguage_name:
-#                 gloss.dialect.clear()
-#                 # Has a side effect that the Dialects value is cleared, this will be passed back to the user interface
-#                 dialects_value = ''
-#         gloss.save()
-#         new_signlanguage_value = ", ".join([str(g) for g in gloss.signlanguage.all()])
-#     except ObjectDoesNotExist:
-#         return HttpResponseBadRequest("Unknown Language %s" % values, {'content-type': 'text/plain'})
-#
-#     return HttpResponse(str(new_signlanguage_value) + '\t' + str(dialects_value), {'content-type': 'text/plain'})
 
 
 def update_dialect(gloss, field, values):
@@ -2630,11 +2593,8 @@ def update_morpheme(request, morphemeid):
         return update_other_media(morpheme, field, value)
 
     elif field == 'signlanguage':
-        # expecting possibly multiple values
 
-        # return update_signlanguage(morpheme, field, values)
         original_signlanguage_value = ", ".join([str(g) for g in morpheme.signlanguage.all()])
-
         return HttpResponse(original_signlanguage_value, {'content-type': 'text/plain'})
 
     elif field == 'dialect':

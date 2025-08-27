@@ -5859,13 +5859,17 @@ def glosslist_ajax_complete(request, gloss_id):
 
     column_values = []
     for fieldname in display_fields:
-        if fieldname in ['semField', 'derivHist', 'dialect', 'signlanguage',
+        if fieldname in ['semField', 'derivHist', 'dialect',
                          'definitionRole', 'hasothermedia', 'hasComponentOfType',
                          'mrpType', 'isablend', 'ispartofablend', 'morpheme', 'relation',
                          'hasRelationToForeignSign', 'relationToForeignSign']:
             display_method = 'get_' + fieldname + '_display'
             field_value = getattr(this_gloss, display_method)()
             column_values.append((fieldname, field_value))
+        elif fieldname in ['signlanguage']:
+            display_method = 'get_' + fieldname + '_display'
+            field_value = getattr(this_gloss.lemma.dataset, 'signlanguage')
+            column_values.append((fieldname, field_value.name if field_value else '-'))
         elif fieldname == 'hasRelation':
             # this field has a list of roles as a parameter
             if query_fields_parameters:
