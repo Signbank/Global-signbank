@@ -1147,7 +1147,7 @@ class Gloss(MetaModelMixin, models.Model):
 
     mouthG = models.CharField(_("Mouth Gesture"), max_length=50, blank=True)
     mouthing = models.CharField(_("Mouthing"), max_length=50, blank=True)
-    phonetVar = models.CharField(_("Phonetic Variation"), max_length=50, blank=True, )
+    phonetVar = models.CharField(_("Phonetic Variation"), max_length=50, blank=True)
 
     locPrimLH = FieldChoiceForeignKey(FieldChoice, on_delete=models.SET_NULL, null=True,
                                           limit_choices_to={'field': FieldChoice.LOCATION},

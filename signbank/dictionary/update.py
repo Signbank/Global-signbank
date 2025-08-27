@@ -892,18 +892,14 @@ def update_gloss(request, glossid):
 
     elif field == 'dialect':
         # expecting possibly multiple values
-        print('update dialect: ', gloss, field, values)
-
         return update_dialect(gloss, field, values)
 
     elif field == 'semanticfield':
         # expecting possibly multiple values
-
         return update_semanticfield(request, gloss, field, values)
 
     elif field == 'derivationhistory':
         # expecting possibly multiple values
-
         return update_derivationhistory(request, gloss, field, values)
 
     elif field == 'dataset':
@@ -963,6 +959,7 @@ def update_gloss(request, glossid):
                 newvalue = value
 
     elif field in 'inWeb':
+        print('field branch: ', field)
         # only modify if we have publish permission
         original_value = getattr(gloss, field)
         if request.user.has_perm('dictionary.can_publish'):
@@ -975,6 +972,7 @@ def update_gloss(request, glossid):
             newvalue = _('No')
 
     elif field in 'isNew':
+        print('field branch: ', field)
         original_value = getattr(gloss, field)
         # only modify if we have publish permission
         gloss.isNew = value.lower() in [_('Yes').lower(), 'true', True, 1]
@@ -985,6 +983,7 @@ def update_gloss(request, glossid):
         else:
             newvalue = _('No')
     elif field in 'excludeFromEcv':
+        print('field branch: ', field)
         original_value = getattr(gloss, field)
 
         # only modify if we have publish permission
@@ -1055,6 +1054,7 @@ def update_gloss(request, glossid):
         # Language values are needed here!
         newvalue = value
         if isinstance(Gloss.get_field(field), BooleanField):
+            print('update gloss boolean field: ', field, value)
             # value is the html 'value' received during editing
             # value gets converted to a Boolean by the following statement
             if field in ['weakdrop', 'weakprop']:
@@ -1075,22 +1075,17 @@ def update_gloss(request, glossid):
                 newvalue = value
                 value = (value in ['letter', 'number'])
             else:
+                print('checkbox: ', field, value, type(value))
                 value = (value.lower() in [_('Yes').lower(), 'true', True, 1])
                 if value:
                     newvalue = _('Yes')
                 else:
                     newvalue = _('No')
-        # special value of 'notset' or -1 means remove the value
+
         fieldnames = FIELDS['main'] + FIELDS['phonology'] + FIELDS['semantics'] + ['inWeb', 'isNew', 'excludeFromEcv']
         fieldchoiceforeignkey_fields = [f.name for f in gloss_fields
                                         if f.name in fieldnames
                                         and isinstance(f, FieldChoiceForeignKey)]
-        fields_empty_null = [f.name for f in gloss_fields
-                             if f.name in fieldnames and f.null and f.name not in fieldchoiceforeignkey_fields]
-
-        char_fields_not_null = [f.name for f in gloss_fields
-                                if f.name in fieldnames and f.__class__.__name__ == 'CharField'
-                                and f.name not in fieldchoiceforeignkey_fields and not f.null]
 
         char_fields = [f.name for f in gloss_fields
                        if f.name in fieldnames and f.__class__.__name__ == 'CharField'
@@ -1099,19 +1094,25 @@ def update_gloss(request, glossid):
         text_fields = [f.name for f in gloss_fields
                        if f.name in fieldnames and f.__class__.__name__ == 'TextField']
 
-        text_fields_not_null = [f.name for f in gloss_fields
-                                if f.name in fieldnames and f.__class__.__name__ == 'TextField' and not f.null]
-
         # The following code relies on the order of if else testing
         # The updates ignore Placeholder empty fields of '-' and '------'
         # The Placeholders are needed in the template Edit view so the user can "see" something to edit
+
+        if field in (char_fields + text_fields):
+            if value in ['-', '------']:
+                newvalue = ''
+            else:
+                newvalue = value.strip()
+            gloss.__setattr__(field, newvalue)
+            gloss.save()
+            return HttpResponse(newvalue, {'content-type': 'text/plain'})
+
         if field in ['domhndsh', 'subhndsh', 'final_domhndsh', 'final_subhndsh']:
             gloss_field = Gloss.get_field(field)
             try:
-                handshape = Handshape.objects.get(machine_value=value)
+                handshape = Handshape.objects.get(machine_value=int(value))
             except (ObjectDoesNotExist, MultipleObjectsReturned):
-                print('Update handshape no unique machine value found: ', gloss_field.name, value)
-                print('Setting to machine value 0')
+                # if the handshape field has not been set yet, it is set to the empty handshape object
                 handshape = Handshape.objects.get(machine_value=0)
             gloss.__setattr__(field, handshape)
             gloss.save()
@@ -1130,23 +1131,10 @@ def update_gloss(request, glossid):
             gloss.__setattr__(field, fieldchoice)
             gloss.save()
             newvalue = fieldchoice.name
-        elif value in ['notset', '', '-', '------'] and field in fields_empty_null:
-            gloss.__setattr__(field, None)
-            gloss.save()
-            newvalue = ''
-        elif (field in char_fields or field in text_fields_not_null) and (value == '-' or value == '------'):
-            value = ''
-            gloss.__setattr__(field, value)
-            gloss.save()
-            newvalue = ''
-        elif field in text_fields and (value == '-' or value == '------'):
-            # this is to take care of legacy code where some values were set to the empty field display hint
-            gloss.__setattr__(field, None)
-            gloss.save()
-            newvalue = ''
+
         # Regular field updating
         else:
-
+            print('fall through update gloss: ', field, value, type(value))
             # Alert: Note that if field is idgloss, the following code updates it
             gloss.__setattr__(field, value)
             gloss.save()
@@ -1618,18 +1606,18 @@ def update_relationtoforeignsign(gloss, field, value):
         rel.save()
 
     elif what == 'relationforeign_other_lang':
-        rel.other_lang = value
+        rel.other_lang = value.strip()
         rel.save()
 
     elif what == 'relationforeign_other_lang_gloss':
-        rel.other_lang_gloss = value
+        rel.other_lang_gloss = value.strip()
         rel.save()
 
     else:
 
         return HttpResponseBadRequest("Unknown form field '%s'" % field, {'content-type': 'text/plain'})
 
-    return HttpResponse(str(value), {'content-type': 'text/plain'})
+    return HttpResponse(value, {'content-type': 'text/plain'})
 
 
 def morph_from_identifier(value):
@@ -2807,7 +2795,7 @@ def update_morpheme_definition(gloss, field, value):
 def update_blend_definition(gloss, field, value):
     """Update the morpheme definition for this gloss"""
 
-    newvalue = value
+    newvalue = value.strip()
     category_value = 'blend_morphology'
     (what, blend_id) = field.split('_')
     what = what.replace('-', '_')
@@ -2823,9 +2811,9 @@ def update_blend_definition(gloss, field, value):
     elif what == 'blend_definition_role':
         definition = BlendMorphology.objects.get(id=blend_id)
         original_value = getattr(definition, 'role')
-        definition.__setattr__('role', value)
+        definition.__setattr__('role', newvalue)
         definition.save()
-        return generate_tabbed_text_response([original_value, newvalue, value, category_value])
+        return generate_tabbed_text_response([original_value, newvalue, category_value])
 
     else:
         return HttpResponseBadRequest("Unknown form field '%s'" % field, {'content-type': 'text/plain'})

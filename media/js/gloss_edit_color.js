@@ -381,7 +381,7 @@ function configure_edit() {
      $('.edit_text').editable(edit_post_url, {
          params : { a: 0, field: $(this).attr('id') },
          type      : 'text',
-		 callback : update_view_and_remember_original_value
+		 callback : update_text_area
 	 });
      $('.edit_int').editable(edit_post_url, {
          params : { a: 0 },
@@ -396,7 +396,7 @@ function configure_edit() {
      $('.edit_area').editable(edit_post_url, {
          params : { a: 0 },
          type      : 'textarea',
-		 callback : update_view_and_remember_original_value,
+		 callback : update_text_area,
          onerror : function(settings, original, xhr){
                alert(xhr.responseText);
                original.reset();
@@ -601,6 +601,16 @@ function update_sign_language_dialects(dialects)
         $('#dialect').html(dialects);
     } else {
         $('#dialect').html("------");
+    }
+}
+
+function update_text_area(newtext)
+{
+    var id = $(this).attr('id');
+    if (newtext) {
+        $(this).html(newtext);
+    } else {
+        $(this).html("");
     }
 }
 
