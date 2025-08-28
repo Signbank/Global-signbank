@@ -128,6 +128,7 @@ from signbank.dictionary.related_objects import (morpheme_is_related_to, gloss_i
                                                  transitive_related_objects)
 from signbank.manage_videos import listing_uploaded_videos
 from signbank.zip_interface import uploaded_zip_archives
+from signbank.relation_tools import ensure_synonym_transitivity
 
 
 def order_annotatedsentence_queryset_by_sort_order(get, qs, queryset_language_codes):
@@ -1169,6 +1170,10 @@ class GlossDetailView(DetailView):
             # the senses and their translation objects are renumbered so orderIndex matches sense number
             # somehow this gets mis-matched
             reorder_senses(self.object)
+
+        # make sure synonym objects are also related to this gloss
+        ensure_synonym_transitivity(self.object)
+
         context = self.get_context_data(object=self.object)
         return self.render_to_response(context)
 
@@ -1882,8 +1887,8 @@ class GlossRelationsDetailView(DetailView):
         otherrelations = []
 
         if gl.relation_sources:
-            for oth_rel in gl.relation_sources.filter(target__archived__exact=False,
-                                                      source__archived__exact=False):
+            for oth_rel in gl.relation_sources.all().filter(target__archived__exact=False,
+                                                            source__archived__exact=False):
                 if oth_rel.source.id == oth_rel.target.id:
                     print('circular relation found: ', gl, ' (', str(gl.id), ') ', oth_rel, oth_rel.role)
                     continue
@@ -5567,14 +5572,15 @@ def gloss_ajax_complete(request, prefix):
               annotationidglosstranslation__language=interface_language)
     qs = Gloss.objects.filter(lemma__dataset=dataset, archived__exact=False).filter(query).distinct()
 
-    for g in qs:
+    for gloss in qs:
         try:
-            annotationidglosstranslation = g.annotationidglosstranslation_set.get(language=interface_language)
+            annotationidglosstranslation = gloss.annotationidglosstranslation_set.get(language=interface_language)
             default_annotationidglosstranslation = annotationidglosstranslation.text
         except ObjectDoesNotExist:
-            annotationidglosstranslation = g.annotationidglosstranslation_set.get(language=default_language)
+            annotationidglosstranslation = gloss.annotationidglosstranslation_set.get(language=default_language)
             default_annotationidglosstranslation = annotationidglosstranslation.text
-        result.append({'annotation_idgloss': default_annotationidglosstranslation, 'idgloss': g.idgloss, 'sn': g.sn, 'pk': "%s" % g.id})
+        result.append({'annotation_idgloss': f'{gloss.pk}: {gloss.to_string()}',
+                       'idgloss': gloss.idgloss, 'sn': gloss.sn, 'pk': "%s" % gloss.id})
 
     sorted_result = sorted(result, key=lambda x : (x['annotation_idgloss'], len(x['annotation_idgloss'])))
 
