@@ -1271,25 +1271,6 @@ def import_csv_update(request):
 
             if fieldname == 'Dataset':
 
-                # this has already been checked for existence and permission in the previous step
-                # get dataset identifier
-                # if new_value == 'None':
-                #     # don't allow the user to erase the current dataset, this should have already been caught
-                #     print('csv import make changes error: gloss ', gloss.id, ' attempt to set dataset to empty')
-                #     continue
-                # else:
-                #     # the existence of the new dataset should have already been tested
-                #     new_dataset = Dataset.objects.get(acronym=new_value)
-                # try:
-                #     gloss_lemma = gloss.lemma
-                # except KeyError:
-                #     # this error should not happen
-                #     print('csv import make changes error: gloss ', gloss.id, ' gloss.lemma is empty, cannot set dataset')
-                #     continue
-                #
-                # # this could have an unwanted side effect on the Lemma translations?
-                # gloss_lemma.dataset = new_dataset
-                # gloss_lemma.save()
                 continue
 
             if fieldname == 'Sequential Morphology':

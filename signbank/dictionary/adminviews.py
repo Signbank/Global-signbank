@@ -1391,10 +1391,6 @@ class GlossDetailView(DetailView):
         context['gloss_phonology'] = FIELDS['phonology']
         context['phonology_list_kinds'] = get_phonology_list_kinds()
 
-        context['frequency_fields'] = []
-        for f_field in FIELDS['frequency']:
-            context['frequency_fields'].append([getattr(gl, f_field), f_field, labels[f_field], 'IntegerField'])
-
         context['publication_fields'] = []
         # field excludeFromEcv is added here in order to show it in Gloss Edit
         for p_field in FIELDS['publication'] + ['excludeFromEcv']:
