@@ -5869,7 +5869,6 @@ def glosslist_ajax_complete(request, gloss_id):
             field_value = getattr(this_gloss, display_method)()
             column_values.append((fieldname, field_value))
         elif fieldname in ['signlanguage']:
-            display_method = 'get_' + fieldname + '_display'
             field_value = getattr(this_gloss.lemma.dataset, 'signlanguage')
             column_values.append((fieldname, field_value.name if field_value else '-'))
         elif fieldname == 'hasRelation':

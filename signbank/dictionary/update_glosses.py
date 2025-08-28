@@ -6,7 +6,8 @@ from django.utils.translation import gettext
 from tagging.models import TaggedItem, Tag
 
 from signbank.dictionary.models import (GlossSense, Handshape, SemanticField, FieldChoice)
-from signbank.dictionary.batch_edit import add_gloss_update_to_revision_history, create_empty_sense
+from signbank.dictionary.batch_edit import create_empty_sense
+from signbank.tools import add_gloss_update_to_revision_history
 
 
 @permission_required('dictionary.change_gloss')

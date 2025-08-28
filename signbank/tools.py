@@ -17,6 +17,7 @@ from collections import Counter
 from django.utils.translation import override, activate, gettext, gettext_lazy as _
 from django.views.decorators.csrf import csrf_exempt
 from django.utils.dateformat import format
+from django.utils.timezone import get_current_timezone
 from django.core.exceptions import ObjectDoesNotExist, EmptyResultSet
 from django.contrib.auth.models import User
 from django.http import JsonResponse, HttpResponse
@@ -35,7 +36,7 @@ from signbank.dictionary.models import (Dataset, Gloss, Morpheme, Dialect, SignL
                                         SemanticField, DeletedGlossOrMedia, UserProfile, get_default_language_id,
                                         Handshape, LemmaIdgloss, FieldChoiceForeignKey, Definition,
                                         LemmaIdglossTranslation, MorphologyDefinition, AnnotatedSentenceTranslation,
-                                        ExampleSentence, OtherMedia, Relation)
+                                        ExampleSentence, OtherMedia, Relation, GlossRevision)
 from signbank.csv_interface import (sense_translations_for_language, update_senses_parse,
                                     update_sentences_parse, sense_examplesentences_for_language, get_sense_numbers,
                                     parse_sentence_row, get_senses_to_sentences, csv_sentence_tuples_list_compare,
@@ -2440,8 +2441,17 @@ def generate_tabbed_text_response(values):
     content = '\t'.join(str_values)
     return HttpResponse(content, content_type='text/plain')
 
+def add_gloss_update_to_revision_history(user, gloss, field, oldvalue, newvalue):
 
-def update_boolean_checkbox(gloss, field, value):
+    revision = GlossRevision(old_value=oldvalue,
+                             new_value=newvalue,
+                             field_name=field,
+                             gloss=gloss,
+                             user=user,
+                             time=DT.datetime.now(tz=get_current_timezone()))
+    revision.save()
+
+def update_boolean_checkbox(user, gloss, field, value):
     assert isinstance(gloss, Gloss), TypeError("Not a Gloss object")
     assert isinstance(Gloss.get_field(field), BooleanField), TypeError("Not a BooleanField")
 
@@ -2461,6 +2471,8 @@ def update_boolean_checkbox(gloss, field, value):
     gloss.save()
 
     display_value = _('Yes') if boolean_value else _('No')
+
+    add_gloss_update_to_revision_history(user, gloss, field, original_value, str(boolean_value))
 
     # results = {'boolean_value': boolean_value,
     #            'display_value': display_value,

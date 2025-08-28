@@ -127,17 +127,6 @@ def get_gloss_language_fields(gloss):
     return language_fields_dict
 
 
-def add_gloss_update_to_revision_history(user, gloss, field, oldvalue, newvalue):
-
-    revision = GlossRevision(old_value=oldvalue,
-                             new_value=newvalue,
-                             field_name=field,
-                             gloss=gloss,
-                             user=user,
-                             time=DT.datetime.now(tz=get_current_timezone()))
-    revision.save()
-
-
 def update_scroll_bar(request, glossid, annotation):
 
     if 'search_results' not in request.session.keys():

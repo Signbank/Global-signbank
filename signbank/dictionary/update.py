@@ -61,7 +61,8 @@ from signbank.dictionary.translate_choice_list import machine_value_to_translate
 from signbank.dictionary.context_data import get_selected_datasets
 
 from signbank.tools import (gloss_from_identifier, get_default_annotationidglosstranslation,
-    copy_missing_lemmaidglosstranslation_from_annotationidglosstranslation, generate_tabbed_text_response, update_boolean_checkbox)
+    copy_missing_lemmaidglosstranslation_from_annotationidglosstranslation, generate_tabbed_text_response,
+                            update_boolean_checkbox, add_gloss_update_to_revision_history)
 from signbank.frequency import document_identifiers_from_paths, documents_paths_dictionary
 from signbank.dictionary.update_senses_mapping import (mapping_edit_keywords, mapping_group_keywords,
                                                        mapping_add_keyword,
@@ -77,7 +78,7 @@ from signbank.dictionary.update_glosses import (mapping_toggle_relOriLoc, mappin
                                                 mapping_toggle_handedness, mapping_toggle_tag, mapping_toggle_wordclass,
                                                 mapping_toggle_contType, mapping_toggle_movDir, mapping_toggle_movSh,
                                                 batch_edit_create_sense)
-from signbank.dictionary.batch_edit import batch_edit_update_gloss, add_gloss_update_to_revision_history
+from signbank.dictionary.batch_edit import batch_edit_update_gloss
 from signbank.dictionary.adminviews import show_warning
 from signbank.relation_tools import ensure_synonym_transitivity, remove_transitive_synonym
 
@@ -833,26 +834,27 @@ def update_gloss(request, glossid):
     # value is a valid value for field
 
     if field == 'deletegloss':
-        if value == 'confirmed':
-            # delete the gloss and redirect back to gloss list
+        if value != 'confirmed':
+            feedback_message = _('Gloss deletion was not confirmed.')
+            return show_warning(request, feedback_message, selected_datasets)
 
-            related_objects = gloss_related_objects(gloss)
+        # archive the gloss and redirect back to gloss list
+        related_objects = gloss_related_objects(gloss)
 
-            if GUARDED_GLOSS_DELETE and related_objects:
-                reverse_url = 'dictionary:admin_gloss_view'
-                messages.add_message(request, messages.INFO,
-                                     _("GUARDED_GLOSS_DELETE is set to True. The gloss has relations to other glosses and was not deleted."))
-                return HttpResponseRedirect(reverse(reverse_url, kwargs={'pk': gloss.id}))
+        if GUARDED_GLOSS_DELETE and related_objects:
+            reverse_url = 'dictionary:admin_gloss_view'
+            messages.add_message(request, messages.INFO,
+                                 _("GUARDED_GLOSS_DELETE is set to True. The gloss has relations to other glosses and was not deleted."))
+            return HttpResponseRedirect(reverse(reverse_url, kwargs={'pk': gloss.id}))
 
-            # gloss.delete()
-            gloss.archived = True
-            gloss.save(update_fields=['archived'])
+        gloss.archived = True
+        gloss.save(update_fields=['archived'])
 
-            annotation = get_default_annotationidglosstranslation(gloss)
-            add_gloss_update_to_revision_history(request.user, gloss, 'archived', annotation,
-                                                 annotation)
+        annotation = get_default_annotationidglosstranslation(gloss)
+        add_gloss_update_to_revision_history(request.user, gloss, 'archived', annotation,
+                                             annotation)
 
-            return HttpResponseRedirect(reverse('dictionary:admin_gloss_list'))
+        return HttpResponseRedirect(reverse('dictionary:admin_gloss_list'))
 
     if field.startswith('definition'):
 
@@ -893,7 +895,7 @@ def update_gloss(request, glossid):
 
     elif field == 'dialect':
         # expecting possibly multiple values
-        return update_dialect(gloss, field, values)
+        return update_dialect(request.user, gloss, field, values)
 
     elif field == 'semanticfield':
         # expecting possibly multiple values
@@ -908,7 +910,7 @@ def update_gloss(request, glossid):
         if field == 'inWeb' and not request.user.has_perm('dictionary.can_publish'):
             return HttpResponseBadRequest(_("You do not have permission to publish glosses."), {'content-type': 'text/plain'})
 
-        return update_boolean_checkbox(gloss, field, value)
+        return update_boolean_checkbox(request.user, gloss, field, value)
 
     elif field.startswith('annotation_idgloss'):
 
@@ -989,7 +991,7 @@ def update_gloss(request, glossid):
                 newvalue = value
                 value = (value in ['letter', 'number'])
             else:
-                return update_boolean_checkbox(gloss, field, value)
+                return update_boolean_checkbox(request.user, gloss, field, value)
 
         fieldnames = FIELDS['main'] + FIELDS['phonology'] + FIELDS['semantics'] + ['inWeb', 'isNew', 'excludeFromEcv']
         fieldchoiceforeignkey_fields = [f.name for f in gloss_fields
@@ -1014,6 +1016,8 @@ def update_gloss(request, glossid):
                 newvalue = value.strip()
             gloss.__setattr__(field, newvalue)
             gloss.save()
+            add_gloss_update_to_revision_history(request.user, gloss, field, original_value, newvalue)
+
             return HttpResponse(newvalue, {'content-type': 'text/plain'})
 
         if field in ['domhndsh', 'subhndsh', 'final_domhndsh', 'final_subhndsh']:
@@ -1330,8 +1334,9 @@ def update_perspectivevideo(user, gloss, field, value):
     return HttpResponse(value, {'content-type': 'text/plain'})
 
 
-def update_dialect(gloss, field, values):
+def update_dialect(user, gloss, field, values):
     # expecting possibly multiple values
+    original_dialects_value = ", ".join([f'{d.signlanguage.name}/{d.name}' for d in gloss.dialect.all()])
     dialect_choices = json.loads(gloss.dialect_choices())
     numerical_values_converted_to_dialects = [dialect_choices[int(value)] for value in values]
     error_string_values = ', '.join(numerical_values_converted_to_dialects)
@@ -1358,6 +1363,8 @@ def update_dialect(gloss, field, values):
         gloss.save()
 
         new_dialects_value = ", ".join([f'{d.signlanguage.name}/{d.name}' for d in gloss.dialect.all()])
+        add_gloss_update_to_revision_history(user, gloss, field, original_dialects_value, new_dialects_value)
+
     except ObjectDoesNotExist:
         return HttpResponseBadRequest("Dialect %s does not match Sign Language of Gloss" % error_string_values,
                                       {'content-type': 'text/plain'})
@@ -2464,17 +2471,20 @@ def update_morpheme(request, morphemeid):
     # value is a valid value for field
 
     if field == 'deletemorpheme':
-        if value == 'confirmed':
-            # delete the morpheme and redirect back to morpheme list
-            related_objects = morpheme_related_objects(morpheme)
+        if value != 'confirmed':
+            feedback_message = _('Morpheme deletion was not confirmed.')
+            return show_warning(request, feedback_message, selected_datasets)
 
-            if GUARDED_MORPHEME_DELETE or related_objects:
-                reverse_url = 'dictionary:admin_morpheme_view'
-                messages.add_message(request, messages.INFO,
-                                     _("GUARDED_MORPHEME_DELETE is set to True or the morpheme has relations to other glosses and was not deleted."))
-                return HttpResponseRedirect(reverse(reverse_url, kwargs={'pk': morpheme.id}))
-            morpheme.delete()
-            return HttpResponseRedirect(reverse('dictionary:admin_morpheme_list'))
+        # delete the morpheme and redirect back to morpheme list
+        related_objects = morpheme_related_objects(morpheme)
+
+        if GUARDED_MORPHEME_DELETE or related_objects:
+            reverse_url = 'dictionary:admin_morpheme_view'
+            messages.add_message(request, messages.INFO,
+                                 _("GUARDED_MORPHEME_DELETE is set to True or the morpheme has relations to other glosses and was not deleted."))
+            return HttpResponseRedirect(reverse(reverse_url, kwargs={'pk': morpheme.id}))
+        morpheme.delete()
+        return HttpResponseRedirect(reverse('dictionary:admin_morpheme_list'))
 
     if field.startswith('definition'):
 

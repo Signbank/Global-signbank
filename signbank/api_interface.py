@@ -21,8 +21,7 @@ from signbank.settings.server_specific import (WRITABLE_FOLDER, API_VIDEO_ARCHIV
 from signbank.settings.base import SUPPORTED_CITATION_IMAGE_EXTENSIONS
 
 from signbank.dictionary.models import (Dataset, Gloss, AnnotatedSentence)
-from signbank.tools import get_two_letter_dir, api_fields
-from signbank.dictionary.batch_edit import add_gloss_update_to_revision_history
+from signbank.tools import get_two_letter_dir, api_fields, add_gloss_update_to_revision_history
 from signbank.api_token import put_api_user_in_request
 from signbank.abstract_machine import get_interface_language_api, retrieve_language_code_from_header
 from signbank.zip_interface import (check_subfolders_for_unzipping_ids, get_filenames, check_subfolders_for_unzipping,
