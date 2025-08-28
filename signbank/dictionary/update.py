@@ -79,6 +79,7 @@ from signbank.dictionary.update_glosses import (mapping_toggle_relOriLoc, mappin
                                                 batch_edit_create_sense)
 from signbank.dictionary.batch_edit import batch_edit_update_gloss, add_gloss_update_to_revision_history, create_empty_sense
 from signbank.dictionary.adminviews import show_warning
+from signbank.relation_tools import ensure_synonym_transitivity, remove_transitive_synonym
 
 
 # this method is called as dictionary:add_gloss from the template for /signs/add/
@@ -1653,14 +1654,23 @@ def update_relation(gloss, field, value):
     if not rel.source == gloss:
         return HttpResponseBadRequest("Relation doesn't match gloss", {'content-type': 'text/plain'})
 
-    if what == 'relationdelete':
+    if what == 'relationdelete' and rel.role == 'synonym':
+        # special case for symmetric transitive relation
+        remove_transitive_synonym(rel)
+        return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': gloss.id}) + '?editrel')
+
+    elif what == 'relationdelete':
+        rel_source = rel.source
+        rel_target = rel.target
+        rel_role = Relation.get_reverse_role(rel.role)
         rel.delete()
 
         # Also delete the reverse relation
-        reverse_relations = Relation.objects.filter(source=rel.target, target=rel.source,
-                                                    role=Relation.get_reverse_role(rel.role))
+        reverse_relations = Relation.objects.filter(source=rel_target, target=rel_source,
+                                                    role=rel_role)
         if reverse_relations.count() > 0:
-            reverse_relations[0].delete()
+            for revrel in reverse_relations:
+                revrel.delete()
 
         return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': gloss.id}) + '?editrel')
     elif what == 'relationrole':
@@ -1873,12 +1883,14 @@ def add_relation(request):
     except ObjectDoesNotExist:
         return HttpResponseBadRequest("Target gloss not found.", {'content-type': 'text/plain'})
 
-    rel = Relation(source=source, target=target, role=role)
+    rel, created = Relation.objects.get_or_create(source=source, target=target, role=role)
     rel.save()
 
     # Also add the reverse relation
-    reverse_relation = Relation(source=target, target=source, role=Relation.get_reverse_role(role))
+    reverse_relation, created = Relation.objects.get_or_create(source=target, target=source, role=Relation.get_reverse_role(role))
     reverse_relation.save()
+
+    ensure_synonym_transitivity(source)
 
     return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': source.id}) + '?editrel')
 
