@@ -735,7 +735,7 @@ def api_add_image(request, gloss_id):
     if file_extension not in SUPPORTED_CITATION_IMAGE_EXTENSIONS:
         return JsonResponse({'error': gettext('File extension not supported! Please convert to png or jpg')}, status=400)
 
-    image_file.name = f'{gloss.sn}{file_extension}' if gloss.sn is not None else f'{gloss.idgloss}-{gloss.pk}{file_extension}'
+    image_file.name = f'{gloss.idgloss}-{gloss.pk}{file_extension}'
 
     # Prepare the file's new path and name
     goal_path = os.path.join(WRITABLE_FOLDER, GLOSS_IMAGE_DIRECTORY, gloss.lemma.dataset.acronym, get_two_letter_dir(gloss.idgloss))

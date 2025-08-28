@@ -903,62 +903,6 @@ def update_gloss(request, glossid):
         # expecting possibly multiple values
         return update_derivationhistory(request, gloss, field, values)
 
-    elif field == 'dataset':
-        original_value = getattr(gloss, field)
-
-        # in case somebody tries an empty or non-existent dataset name
-        try:
-            ds = Dataset.objects.get(name=value)
-        except ObjectDoesNotExist:
-            return HttpResponse(str(original_value), {'content-type': 'text/plain'})
-
-        if ds.is_public:
-            print('dataset is public')
-            newvalue = value
-            setattr(gloss, field, ds)
-            gloss.save()
-
-            request.session['last_used_dataset'] = ds.acronym
-
-            return HttpResponse(str(newvalue), {'content-type': 'text/plain'})
-
-        if ds in get_objects_for_user(request.user, ['view_dataset'],
-                                      Dataset, any_perm=True):
-            newvalue = value
-            setattr(gloss, field, ds)
-            gloss.save()
-
-            request.session['last_used_dataset'] = ds.acronym
-
-            return HttpResponse(str(newvalue), {'content-type': 'text/plain'})
-
-        print('no permission for chosen dataset')
-        newvalue = original_value
-        return HttpResponse(str(newvalue), {'content-type': 'text/plain'})
-
-    elif field == "sn":
-        # sign number must be unique, return error message if this SN is
-        # already taken
-
-        if value == '':
-            gloss.__setattr__(field, None)
-            gloss.save()
-            newvalue = ''
-        else:
-            try:
-                value = int(value)
-            except ValueError:
-                return HttpResponseBadRequest("SN value must be integer", {'content-type': 'text/plain'})
-
-            existing_gloss = Gloss.objects.filter(sn__exact=value)
-            if existing_gloss.count() > 0:
-                g = existing_gloss[0].idgloss
-                return HttpResponseBadRequest("SN value already taken for gloss %s" % g, {'content-type': 'text/plain'})
-            else:
-                gloss.sn = value
-                gloss.save()
-                newvalue = value
-
     elif field in ['excludeFromEcv', 'isNew', 'inWeb']:
 
         if field == 'inWeb' and not request.user.has_perm('dictionary.can_publish'):

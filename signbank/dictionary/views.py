@@ -1805,12 +1805,8 @@ def add_image(request):
 
         return redirect(url)
 
-    # construct a filename for the image, use sn
-    # if present, otherwise use idgloss+gloss id
-    if gloss.sn is not None:
-        imagefile.name = str(gloss.sn) + extension
-    else:
-        imagefile.name = gloss.idgloss + "-" + str(gloss.pk) + extension
+    # construct a filename for the image, use idgloss+gloss id
+    imagefile.name = gloss.idgloss + "-" + str(gloss.pk) + extension
 
     redirect_url = form.cleaned_data['redirect']
 
