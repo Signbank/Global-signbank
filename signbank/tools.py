@@ -12,8 +12,9 @@ from datetime import date
 
 from django.db import models
 from django.db.models.functions import Lower
+from django.db.models.fields import BooleanField
 from collections import Counter
-from django.utils.translation import override, activate, gettext
+from django.utils.translation import override, activate, gettext, gettext_lazy as _
 from django.views.decorators.csrf import csrf_exempt
 from django.utils.dateformat import format
 from django.core.exceptions import ObjectDoesNotExist, EmptyResultSet
@@ -2438,3 +2439,31 @@ def generate_tabbed_text_response(values):
     str_values = map(str, values)
     content = '\t'.join(str_values)
     return HttpResponse(content, content_type='text/plain')
+
+
+def update_boolean_checkbox(gloss, field, value):
+    assert isinstance(gloss, Gloss), TypeError("Not a Gloss object")
+    assert isinstance(Gloss.get_field(field), BooleanField), TypeError("Not a BooleanField")
+
+    if field in FIELDS['phonology']:
+        category_value = 'phonology'
+    elif field in ['inWeb', 'isNew', 'excludeFromEcv']:
+        category_value = 'publication'
+    else:
+        category_value = ''
+
+    print('update_boolean_checkbox function: ', gloss, field, value, type(value))
+    original_value = getattr(gloss, field)
+
+    boolean_value = value.lower() in [_('Yes').lower(), 'true', True, 1]
+
+    gloss.__setattr__(field, boolean_value)
+    gloss.save()
+
+    display_value = _('Yes') if boolean_value else _('No')
+
+    # results = {'boolean_value': boolean_value,
+    #            'display_value': display_value,
+    #            'category_value': category_value}
+    # return JsonResponse(results)
+    return HttpResponse(f'{boolean_value}\t{display_value}\t{category_value}', content_type='text/plain')

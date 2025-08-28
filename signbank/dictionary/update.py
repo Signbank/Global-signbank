@@ -61,7 +61,7 @@ from signbank.dictionary.translate_choice_list import machine_value_to_translate
 from signbank.dictionary.context_data import get_selected_datasets
 
 from signbank.tools import (gloss_from_identifier, get_default_annotationidglosstranslation,
-    copy_missing_lemmaidglosstranslation_from_annotationidglosstranslation, generate_tabbed_text_response)
+    copy_missing_lemmaidglosstranslation_from_annotationidglosstranslation, generate_tabbed_text_response, update_boolean_checkbox)
 from signbank.frequency import document_identifiers_from_paths, documents_paths_dictionary
 from signbank.dictionary.update_senses_mapping import (mapping_edit_keywords, mapping_group_keywords,
                                                        mapping_add_keyword,
@@ -958,43 +958,12 @@ def update_gloss(request, glossid):
                 gloss.save()
                 newvalue = value
 
-    elif field in 'inWeb':
-        print('field branch: ', field)
-        # only modify if we have publish permission
-        original_value = getattr(gloss, field)
-        if request.user.has_perm('dictionary.can_publish'):
-            gloss.inWeb = value.lower() in [_('Yes').lower(), 'true', True, 1]
-            gloss.save()
+    elif field in ['excludeFromEcv', 'isNew', 'inWeb']:
 
-        if gloss.inWeb:
-            newvalue = _('Yes')
-        else:
-            newvalue = _('No')
+        if field == 'inWeb' and not request.user.has_perm('dictionary.can_publish'):
+            return HttpResponseBadRequest(_("You do not have permission to publish glosses."), {'content-type': 'text/plain'})
 
-    elif field in 'isNew':
-        print('field branch: ', field)
-        original_value = getattr(gloss, field)
-        # only modify if we have publish permission
-        gloss.isNew = value.lower() in [_('Yes').lower(), 'true', True, 1]
-        gloss.save()
-
-        if gloss.isNew:
-            newvalue = _('Yes')
-        else:
-            newvalue = _('No')
-    elif field in 'excludeFromEcv':
-        print('field branch: ', field)
-        original_value = getattr(gloss, field)
-
-        # only modify if we have publish permission
-
-        gloss.excludeFromEcv = value.lower() in [_('Yes').lower(), 'true', True, 1]
-        gloss.save()
-
-        if gloss.excludeFromEcv:
-            newvalue = _('Yes')
-        else:
-            newvalue = _('No')
+        return update_boolean_checkbox(gloss, field, value)
 
     elif field.startswith('annotation_idgloss'):
 
@@ -1075,12 +1044,7 @@ def update_gloss(request, glossid):
                 newvalue = value
                 value = (value in ['letter', 'number'])
             else:
-                print('checkbox: ', field, value, type(value))
-                value = (value.lower() in [_('Yes').lower(), 'true', True, 1])
-                if value:
-                    newvalue = _('Yes')
-                else:
-                    newvalue = _('No')
+                return update_boolean_checkbox(gloss, field, value)
 
         fieldnames = FIELDS['main'] + FIELDS['phonology'] + FIELDS['semantics'] + ['inWeb', 'isNew', 'excludeFromEcv']
         fieldchoiceforeignkey_fields = [f.name for f in gloss_fields

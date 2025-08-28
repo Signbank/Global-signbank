@@ -435,7 +435,7 @@ function configure_edit() {
          params : { a: 0 },
          type      : 'checkbox',
          checkbox: { trueValue: yes_str, falseValue: no_str },
-		 callback : update_view_and_remember_original_value
+		 callback : update_checkbox_tabbed
      });
      $('.edit_WD').click(function()
 	 {
@@ -595,6 +595,22 @@ function hide_other_forms(focus_field) {
     };
 };
 
+function auto_advance(id) {
+    var index_of_modified_field = gloss_phonology.indexOf(id);
+    var next_field_index = index_of_modified_field+1;
+    if (next_field_index < gloss_phonology.length) {
+        var next_field = gloss_phonology[next_field_index];
+        var next_field_ref = '#'+next_field;
+        $(next_field_ref).clearQueue();
+        if (phonology_list_kinds.includes(next_field)) {
+            // for lists, do custom event instead of click
+            $(next_field_ref).triggerHandler("customEvent"); //.focus().click().click();
+        } else {
+            $(next_field_ref).click();
+        };
+    }
+}
+
 function update_sign_language_dialects(dialects)
 {
     if (dialects) {
@@ -611,6 +627,46 @@ function update_text_area(newtext)
         $(this).html(newtext);
     } else {
         $(this).html("");
+    }
+}
+
+function update_checkbox_tabbed(change_summary) {
+    var id = $(this).attr('id');
+    var split_values = change_summary.split('\t');
+    var boolean_value = split_values[0];
+    var display_value = split_values[1];
+    var category_value = split_values[2];
+    $(this).attr("value", boolean_value);
+    $(this).html(display_value);
+    if (boolean_value == 'True') {
+        $(this).parent().removeClass('empty_row');
+    } else {
+        $(this).parent().addClass('empty_row');
+    }
+    if (category_value == 'phonology') {
+        auto_advance(id);
+    }
+}
+
+function update_checkbox(data)
+{
+    var id = $(this).attr('id');
+    if ($.isEmptyObject(data)) {
+        $(this).html("");
+        return;
+    };
+    var boolean_value = data.boolean_value;
+    $(this).attr("value", boolean_value);
+    var display_value = data.display_value;
+    $(this).html(display_value);
+    if (boolean_value) {
+        $(this).parent().removeClass('empty_row');
+    } else {
+        $(this).parent().addClass('empty_row');
+    }
+    var category_value = data.category_value;
+    if (category_value == 'phonology') {
+        auto_advance(id);
     }
 }
 
@@ -678,19 +734,7 @@ function update_view_and_remember_original_value(change_summary)
             if (id != 'weakprop' && id != 'weakdrop') {
                 $(this).attr("value", new_value);
             }
-            var index_of_modified_field = gloss_phonology.indexOf(id);
-            var next_field_index = index_of_modified_field+1;
-            if (next_field_index < gloss_phonology.length) {
-                var next_field = gloss_phonology[next_field_index];
-                var next_field_ref = '#'+next_field;
-                $(next_field_ref).clearQueue();
-                if (phonology_list_kinds.includes(next_field)) {
-                    // for lists, do custom event instead of click
-                    $(next_field_ref).triggerHandler("customEvent"); //.focus().click().click();
-                } else {
-                    $(next_field_ref).click();
-                };
-            }
+            auto_advance(id);
         }
     }
 }
