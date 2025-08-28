@@ -880,6 +880,16 @@ class Gloss(MetaModelMixin, models.Model):
     def __str__(self):
         return self.idgloss
 
+    def to_string(self):
+        translations = []
+        count_dataset_languages = self.lemma.dataset.translation_languages.all().count() if self.lemma and self.lemma.dataset else 0
+        for translation in self.annotationidglosstranslation_set.all():
+            if settings.SHOW_DATASET_INTERFACE_OPTIONS and count_dataset_languages > 1:
+                translations.append("{}: {}".format(translation.language, translation.text))
+            else:
+                translations.append("{}".format(translation.text))
+        return ", ".join(translations)
+
     def display_handedness(self):
         return self.handedness.name if self.handedness else self.handedness
 
@@ -1792,8 +1802,12 @@ class Gloss(MetaModelMixin, models.Model):
         synonyms_count = self.relation_sources.filter(target__archived__exact=False,
                                                       source__archived__exact=False,
                                                       role='synonym').exclude(target=self).count()
-
         return synonyms_count
+
+    def get_synonyms(self):
+        filters = dict(target__archived=False, source__archived=False, role='synonym')
+        synonyms = (rel.target for rel in self.relation_sources.all().filter(**filters).exclude(target=self))
+        return set(synonyms)
 
     def antonyms_count(self):
 
