@@ -1,16 +1,18 @@
+import os
+import time
+import signal
+import shutil
+import stat
 
 from django.core.files.uploadedfile import UploadedFile
 from django.forms.utils import ValidationError
 from django import forms
 from django.conf import settings
-import sys, os, time, signal
+from django.core.mail import EmailMessage
+
 from subprocess import Popen, PIPE
 from tempfile import mkstemp
 from signbank.log import debug
-import shutil, stat
-
-from django.core.mail import mail_admins, EmailMessage
-from signbank.video.convertvideo import convert_video
 
 from logging import debug
 
@@ -122,7 +124,6 @@ class VideoUploadToFLVField(forms.FileField):
         # if convert_video(sourcefile, targetfile):
         # move the uploaded file instead of converting
 
-        import os
         try:
             os.rename(sourcefile, targetfile)
             return True

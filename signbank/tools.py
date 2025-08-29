@@ -1829,7 +1829,7 @@ def get_default_annotationidglosstranslation(gloss):
     return annotationidglosstranslations.first().text
 
 
-def gloss_handshape_fields():
+def get_gloss_handshape_fields():
     # returns a list of fields that are Handshape ForeignKeys
     fields_list = []
 
@@ -1840,7 +1840,7 @@ def gloss_handshape_fields():
     return fields_list
 
 
-def fields_with_choices_glosses():
+def get_fields_with_choices_glosses():
     # return a dict that maps the field choice categories to the fields of Gloss that have the category
 
     fields_dict = {}
@@ -1856,7 +1856,7 @@ def fields_with_choices_glosses():
                 fields_dict[field_category] = [field.name]
     return fields_dict
 
-def fields_with_choices_handshapes():
+def get_fields_with_choices_handshapes():
     # return a dict that maps the field choice categories to the fields of Handshape that have the category
 
     fields_dict = {}
@@ -1872,7 +1872,7 @@ def fields_with_choices_handshapes():
                 fields_dict[field_category] = [field.name]
     return fields_dict
 
-def fields_with_choices_examplesentences():
+def get_fields_with_choices_examplesentences():
     # return a dict that maps the field choice categories to the fields of Handshape that have the category
 
     fields_dict = {}
@@ -1888,7 +1888,7 @@ def fields_with_choices_examplesentences():
                 fields_dict[field_category] = [field.name]
     return fields_dict
 
-def fields_with_choices_definition():
+def get_fields_with_choices_definition():
     # return a dict that maps the field choice categories to the fields of Definition that have the category
 
     fields_dict = {}
@@ -1904,7 +1904,7 @@ def fields_with_choices_definition():
                 fields_dict[field_category] = [field.name]
     return fields_dict
 
-def fields_with_choices_morphology_definition():
+def get_fields_with_choices_morphology_definition():
     # return a dict that maps the field choice categories to the fields of MorphologyDefinition that have the category
 
     fields_dict = {}
@@ -1920,7 +1920,7 @@ def fields_with_choices_morphology_definition():
                 fields_dict[field_category] = [field.name]
     return fields_dict
 
-def fields_with_choices_other_media_type():
+def get_fields_with_choices_other_media_type():
     # return a dict that maps the field choice categories to the fields of OtherMediaType that have the category
 
     fields_dict = {}
@@ -1936,7 +1936,7 @@ def fields_with_choices_other_media_type():
                 fields_dict[field_category] = [field.name]
     return fields_dict
 
-def fields_with_choices_morpheme_type():
+def get_fields_with_choices_morpheme_type():
     # return a dict that maps the field choice categories to the fields of MorphemeType that have the category
 
     fields_dict = {}

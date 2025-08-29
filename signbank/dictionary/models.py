@@ -1,14 +1,20 @@
 from colorfield.fields import ColorField
 import datetime as DT
+import re
+import copy
+import os
+import json
+import tagging
+
 from django.utils.timezone import get_current_timezone
-from django.db.models import Q
+from django.db.models import Q, When, Case, IntegerField
 from django.db import models
 from django.conf import settings
 from django.utils.encoding import escape_uri_path
 from django.contrib.auth.models import User
 from django.dispatch import receiver
 from django.db.models.signals import post_save, pre_delete, m2m_changed
-from django.utils.translation import gettext_noop, gettext_lazy as _, gettext
+from django.utils.translation import gettext_noop, gettext_lazy as _, gettext, activate
 from django.forms.utils import ValidationError
 from django.forms.models import model_to_dict
 from django.core.exceptions import ObjectDoesNotExist, MultipleObjectsReturned
@@ -17,11 +23,8 @@ from django.db.transaction import TransactionManagementError
 from django.core.files import File
 from tagging.models import TaggedItem, Tag
 
-import re
-import copy
+from guardian.shortcuts import get_users_with_perms
 
-import os
-import json
 from collections import OrderedDict
 from datetime import datetime, date
 from urllib.parse import urlparse, unquote
@@ -131,7 +134,7 @@ class FieldChoice(models.Model):
     field_color = ColorField(default='ffffff')
 
     def __str__(self):
-        name = self.field + ': ' + self.name + ' (' + str(self.machine_value) + ')'
+        name = f'{self.field}: {self.name} ({self.machine_value})'
         return name
 
     class Meta:
@@ -377,7 +380,7 @@ class Handshape(MetaModelMixin, models.Model):
     ufP = models.BooleanField(_("Pu"), null=True, default=False)
 
     def __str__(self):
-        name = 'Handshape: ' + self.name + ' (' + str(self.machine_value) + ')'
+        name = f'Handshape: {self.name} ({self.machine_value})'
         return name
 
     def field_labels(self):
@@ -1318,7 +1321,7 @@ class Gloss(MetaModelMixin, models.Model):
         return ", ".join([str(sf.name) for sf in self.derivHist.all()])
 
     def get_dialect_display(self):
-        return ", ".join([str(d.signlanguage.name) + '/' + str(d.name) for d in self.dialect.all()])
+        return ", ".join([f'{d.signlanguage.name}/{d.name}' for d in self.dialect.all()])
 
     def get_signlanguage_display(self):
         return ", ".join([str(sl.name) for sl in self.signlanguage.all()])
@@ -1406,8 +1409,7 @@ class Gloss(MetaModelMixin, models.Model):
 
     def get_fields_dict(self, fieldnames, language_code, include_checksums=False):
 
-        from django.utils import translation
-        translation.activate(language_code)
+        activate(language_code)
 
         # TO DO include other gloss relations in the fieldnames (e.g., simultaneous morphology, below)
         # a way to determine w/o hard-coding if a fieldname is for a related model
@@ -1879,7 +1881,7 @@ class Gloss(MetaModelMixin, models.Model):
 
         # Build query
         # the stems are language, text pairs
-        # the variant patterns to be searched for have alternative "-<letter> or "-<number>" patterns.
+        # the variant patterns to be searched for have alternative "-<letter>" or "-<number>" patterns.
         this_sign_stems = self.get_stems()
 
         this_sign_dataset = self.lemma.dataset
@@ -2105,8 +2107,6 @@ class Gloss(MetaModelMixin, models.Model):
                 id__in=finger_spelling_glosses).exclude(id=self.id).filter(q).exclude(q_empty).exclude(q_number_or_letter)
 
         minimal_pairs_fields = settings.MINIMAL_PAIRS_FIELDS
-
-        from django.db.models import When, Case, IntegerField
 
         zipped_tuples = zip(minimal_pairs_fields, focus_gloss_values_tuple)
 
@@ -2711,24 +2711,15 @@ class Gloss(MetaModelMixin, models.Model):
     def dialect_choices(self):
         """Return JSON for dialect choices"""
 
-        try:
-            dataset = self.lemma.dataset
-            try:
-                signlanguage = dataset.signlanguage
-            except:
-                signlanguage = None
-        except:
-            dataset = None
+        if not (hasattr(self, 'lemma') and hasattr(self.lemma, 'dataset') and hasattr(self.lemma.dataset, 'signlanguage')):
+            return json.dumps([])
 
-        if signlanguage:
-            possible_dialects = Dialect.objects.filter(signlanguage=signlanguage)
-        elif dataset:
-            possible_dialects = []
-        else:
-            possible_dialects = Dialect.objects.all()
+        signlanguages = self.signlanguage.all()
+        possible_dialects = Dialect.objects.filter(signlanguage__in=signlanguages)
+
         d = dict()
         for l in possible_dialects:
-            dialect_name = l.signlanguage.name + "/" + l.name
+            dialect_name = f'{l.signlanguage.name}/{l.name}'
             d[dialect_name] = dialect_name
 
         dict_list = list(d.items())
@@ -2975,7 +2966,7 @@ class Morpheme(Gloss):
         for sim_morph in other_glosses_that_point_to_morpheme:
             gloss = sim_morph.parent_gloss
             translated_word_class = gloss.wordClass.name if gloss.wordClass else '-'
-            appears_in.append(translated_word_class + ': ' + gloss.idgloss)
+            appears_in.append(f'{translated_word_class}: {gloss.idgloss}')
         return ', '.join(appears_in)
 
     def admin_next_morpheme(self):
@@ -3154,18 +3145,16 @@ class OtherMedia(MetaModelMixin, models.Model):
         """Returns a tuple (media_okay, path, filename) """
         # handles paths stored in OtherMedia objects created by legacy code that may have the wrong folder
         media_okay = True
-        this_path = self.path
-        import os
-        norm_path = os.path.normpath(this_path)
+        norm_path = os.path.normpath(str(self.path))
         split_norm_path = norm_path.split(os.sep)
         if len(split_norm_path) == 1:
             # other media path is a filename
-            path = '/dictionary/protected_media/othermedia/' + self.path
+            path = f'/dictionary/protected_media/othermedia/{self.path}'
             media_okay = False
             other_media_filename = self.path
         elif len(split_norm_path) == 2 and split_norm_path[0] == str(gloss_id):
             # other media path is gloss_id / filename
-            path = '/dictionary/protected_media/othermedia/' + self.path
+            path = f'/dictionary/protected_media/othermedia/{self.path}'
             other_media_filename = split_norm_path[-1]
         else:
             # other media path is not a filename and not the correct folder, do not prefix it
@@ -3178,7 +3167,7 @@ class OtherMedia(MetaModelMixin, models.Model):
                 # check whether the file exists in the writable folder
                 # NOTE: Here is a discrepancy with the setting OTHER_MEDIA_DIRECTORY, it ends with a /
                 # os.path.exists needs a path, not a string of a path
-                writable_location = os.path.join(WRITABLE_FOLDER, 'othermedia', self.path)
+                writable_location = os.path.join(WRITABLE_FOLDER, 'othermedia', str(self.path))
                 try:
                     imagefile_path_exists = os.path.exists(writable_location)
                 except (UnicodeEncodeError, IOError, OSError):
@@ -3251,7 +3240,7 @@ class Dataset(MetaModelMixin, models.Model):
 
     def get_metadata_path(self, check_existence=True):
         """Returns the path within the writable and static folder"""
-        metafile_name = self.acronym + '_metadata.csv'
+        metafile_name = f'{self.acronym}_metadata.csv'
 
         goal_string = WRITABLE_FOLDER + DATASET_METADATA_DIRECTORY + '/' + metafile_name
 
@@ -3301,7 +3290,6 @@ class Dataset(MetaModelMixin, models.Model):
         all_users = User.objects.all().order_by('first_name')
 
         users_who_can_view_dataset = []
-        from guardian.shortcuts import get_users_with_perms
         users_who_can_access_me = get_users_with_perms(self, attach_perms=True, with_superusers=False,
                                                        with_group_users=False)
         for user in all_users:
@@ -3316,7 +3304,6 @@ class Dataset(MetaModelMixin, models.Model):
         all_users = User.objects.all().order_by('first_name')
 
         users_who_can_change_dataset = []
-        from guardian.shortcuts import get_users_with_perms
         users_who_can_access_me = get_users_with_perms(self, attach_perms=True, with_superusers=False,
                                                        with_group_users=False)
         for user in all_users:
@@ -3708,14 +3695,14 @@ class Speaker(models.Model):
     def __str__(self):
         try:
             (participant, corpus) = self.identifier.rsplit('_', 1)
-        except:
+        except (AttributeError, TypeError):
             participant = self.identifier
         return participant
 
     def participant(self):
         try:
             (participant, corpus) = self.identifier.rsplit('_', 1)
-        except:
+        except (AttributeError, TypeError):
             participant = self.identifier
         return participant
 
@@ -4197,7 +4184,6 @@ class AnnotatedSentence(models.Model):
 
                 excluded = False
                 if start_cut >= 0 and end_cut >= 0:
-                    # If completely outside of the cut, exclude it
                     if starttime >= end_cut or endtime <= 0:
                         excluded = True
                     elif (min(endtime, end_cut) - max(starttime, start_cut)) < 100:

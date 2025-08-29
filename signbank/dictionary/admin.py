@@ -34,7 +34,10 @@ from signbank.dictionary.models import (Dataset, Gloss, Translation, LemmaIdglos
 from signbank.dictionary.forms import (FieldChoiceForm, SemanticFieldForm, HandshapeForm,
                                        QueryParameterFieldChoiceForm, SearchHistoryForm, QueryParameterBooleanForm,
                                        QueryParameterMultilingualForm, QueryParameterHandshapeForm)
-
+from signbank.tools import (get_fields_with_choices_glosses, get_fields_with_choices_handshapes,
+    get_fields_with_choices_definition, get_fields_with_choices_morphology_definition,
+    get_fields_with_choices_other_media_type, get_fields_with_choices_morpheme_type,
+    get_fields_with_choices_examplesentences, get_gloss_handshape_fields)
 
 class DatasetAdmin(GuardedModelAdmin):
     model = Dataset
@@ -462,9 +465,8 @@ class HandshapeAdmin(VersionAdmin, TranslationAdmin):
             return gloss_count
         else:
             machine_value = int(obj.machine_value)
-            from signbank.tools import gloss_handshape_fields
 
-            gloss_handshape_fields = gloss_handshape_fields()
+            gloss_handshape_fields = get_gloss_handshape_fields()
             for field_name in gloss_handshape_fields:
                 queries = [Q(**{field_name + '__machine_value': machine_value})]
                 query = queries.pop()
@@ -508,9 +510,7 @@ class HandshapeAdmin(VersionAdmin, TranslationAdmin):
         if handshapes_with_same_machine_value > 1:
             return True
 
-        from signbank.tools import gloss_handshape_fields
-
-        gloss_handshape_fields = gloss_handshape_fields()
+        gloss_handshape_fields = get_gloss_handshape_fields()
         for field_name in gloss_handshape_fields:
             queries = [Q(**{field_name + '__machine_value': machine_value})]
             query = queries.pop()
@@ -900,12 +900,7 @@ class FieldChoiceAdmin(VersionAdmin, TranslationAdmin):
         if fieldchoices_with_same_machine_value > 1:
             return True
 
-        from signbank.tools import fields_with_choices_glosses, fields_with_choices_handshapes, \
-            fields_with_choices_definition, fields_with_choices_morphology_definition, \
-            fields_with_choices_other_media_type, fields_with_choices_morpheme_type, \
-            fields_with_choices_examplesentences
-
-        fields_with_choices_glosses = fields_with_choices_glosses()
+        fields_with_choices_glosses = get_fields_with_choices_glosses()
         if field_value in fields_with_choices_glosses.keys():
             queries = [Q(**{field_name + '__machine_value': field_machine_value})
                        for field_name in fields_with_choices_glosses[field_value]]
@@ -915,7 +910,7 @@ class FieldChoiceAdmin(VersionAdmin, TranslationAdmin):
             count_in_use = Gloss.objects.filter(query).count()
             return not count_in_use
 
-        fields_with_choices_handshapes = fields_with_choices_handshapes()
+        fields_with_choices_handshapes = get_fields_with_choices_handshapes()
         if field_value in fields_with_choices_handshapes.keys():
             queries_h = [Q(**{field_name + '__machine_value': field_machine_value})
                          for field_name in fields_with_choices_handshapes[field_value]]
@@ -925,7 +920,7 @@ class FieldChoiceAdmin(VersionAdmin, TranslationAdmin):
             count_in_use = Handshape.objects.filter(query_h).count()
             return not count_in_use
 
-        fields_with_choices_examplesentences = fields_with_choices_examplesentences()
+        fields_with_choices_examplesentences = get_fields_with_choices_examplesentences()
         if field_value in fields_with_choices_examplesentences.keys():
             queries_h = [Q(**{field_name + '__machine_value': field_machine_value})
                          for field_name in fields_with_choices_examplesentences[field_value]]
@@ -935,7 +930,7 @@ class FieldChoiceAdmin(VersionAdmin, TranslationAdmin):
             count_in_use = ExampleSentence.objects.filter(query_h).count()
             return not count_in_use
 
-        fields_with_choices_definition = fields_with_choices_definition()
+        fields_with_choices_definition = get_fields_with_choices_definition()
         if field_value in fields_with_choices_definition.keys():
             queries_d = [Q(**{field_name + '__machine_value': field_machine_value})
                          for field_name in fields_with_choices_definition[field_value]]
@@ -945,7 +940,7 @@ class FieldChoiceAdmin(VersionAdmin, TranslationAdmin):
             count_in_use = Definition.objects.filter(query_d).count()
             return not count_in_use
 
-        fields_with_choices_morphology_definition = fields_with_choices_morphology_definition()
+        fields_with_choices_morphology_definition = get_fields_with_choices_morphology_definition()
         if field_value in fields_with_choices_morphology_definition.keys():
             queries_d = [Q(**{field_name + '__machine_value': field_machine_value})
                          for field_name in fields_with_choices_morphology_definition[field_value]]
@@ -955,7 +950,7 @@ class FieldChoiceAdmin(VersionAdmin, TranslationAdmin):
             count_in_use = MorphologyDefinition.objects.filter(query_d).count()
             return not count_in_use
 
-        fields_with_choices_other_media_type = fields_with_choices_other_media_type()
+        fields_with_choices_other_media_type = get_fields_with_choices_other_media_type()
         if field_value in fields_with_choices_other_media_type.keys():
             queries_d = [Q(**{field_name + '__machine_value': field_machine_value})
                          for field_name in fields_with_choices_other_media_type[field_value]]
@@ -965,7 +960,7 @@ class FieldChoiceAdmin(VersionAdmin, TranslationAdmin):
             count_in_use = OtherMedia.objects.filter(query_d).count()
             return not count_in_use
 
-        fields_with_choices_morpheme_type = fields_with_choices_morpheme_type()
+        fields_with_choices_morpheme_type = get_fields_with_choices_morpheme_type()
         if field_value in fields_with_choices_morpheme_type.keys():
             queries_d = [Q(**{field_name + '__machine_value': field_machine_value})
                          for field_name in fields_with_choices_morpheme_type[field_value]]
@@ -979,7 +974,7 @@ class FieldChoiceAdmin(VersionAdmin, TranslationAdmin):
         print('ADMIN, field choices, has_delete_permission: fall through on: ', field_value)
         opts = self.opts
         codename = get_permission_codename('delete', opts)
-        # note that this delete option only checks whether the user is allowed, not if there are other uses of the field
+        # note that this deletes option only checks whether the user is allowed, not if there are other uses of the field
         # this would be the case for fields that are in the model and used by other signbanks
         return request.user.has_perm("%s.%s" % (opts.app_label, codename))
 
