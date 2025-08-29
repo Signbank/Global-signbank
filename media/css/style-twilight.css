@@ -1452,7 +1452,7 @@ span ::placeholder {
 .form-control-dark {
     background-color: var(--text-input-field) !important;
     color: white !important;
-    border-color: var(--text-input-field) !important;
+    border-color: var(--text-input-border) !important;
 }
 .btn-group-dark {
     color: inherit !important;
