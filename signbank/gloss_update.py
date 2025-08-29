@@ -25,11 +25,11 @@ from signbank.dictionary.models import (Dataset, Gloss, Language, AnnotationIdgl
                                         CATEGORY_MODELS_MAPPING)
 from signbank.video.models import GlossVideoDescription, GlossVideoNME, AnnotatedVideo, NME_PERSPECTIVE_CHOICES
 from signbank.video.views import get_glosses_from_eaf
-from signbank.tools import get_default_annotationidglosstranslation
+from signbank.tools import get_default_annotationidglosstranslation, add_gloss_update_to_revision_history
 from signbank.csv_interface import normalize_field_choice, normalize_boolean
 from signbank.api_token import put_api_user_in_request
 from signbank.abstract_machine import retrieve_language_code_from_header
-from signbank.dictionary.batch_edit import add_gloss_update_to_revision_history
+
 
 PERSPECTIVE_VIDEO_LABELS = {}
 PERSPECTIVE_VIDEO_LABELS['center'] = ['center', 'centered', 'mid', 'default', 'file', 'video']

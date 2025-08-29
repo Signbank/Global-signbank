@@ -60,8 +60,9 @@ from signbank.dictionary.forms import (RelationForm, VariantsForm, RelationToFor
 from signbank.dictionary.translate_choice_list import machine_value_to_translated_human_value
 from signbank.dictionary.context_data import get_selected_datasets
 
-from signbank.tools import gloss_from_identifier, get_default_annotationidglosstranslation, \
-    copy_missing_lemmaidglosstranslation_from_annotationidglosstranslation
+from signbank.tools import (gloss_from_identifier, get_default_annotationidglosstranslation,
+    copy_missing_lemmaidglosstranslation_from_annotationidglosstranslation, generate_tabbed_text_response,
+                            update_boolean_checkbox, add_gloss_update_to_revision_history)
 from signbank.frequency import document_identifiers_from_paths, documents_paths_dictionary
 from signbank.dictionary.update_senses_mapping import (mapping_edit_keywords, mapping_group_keywords,
                                                        mapping_add_keyword,
@@ -77,7 +78,7 @@ from signbank.dictionary.update_glosses import (mapping_toggle_relOriLoc, mappin
                                                 mapping_toggle_handedness, mapping_toggle_tag, mapping_toggle_wordclass,
                                                 mapping_toggle_contType, mapping_toggle_movDir, mapping_toggle_movSh,
                                                 batch_edit_create_sense)
-from signbank.dictionary.batch_edit import batch_edit_update_gloss, add_gloss_update_to_revision_history, create_empty_sense
+from signbank.dictionary.batch_edit import batch_edit_update_gloss, create_empty_sense
 from signbank.dictionary.adminviews import show_warning
 from signbank.relation_tools import ensure_synonym_transitivity, remove_transitive_synonym
 
@@ -858,7 +859,7 @@ def update_gloss(request, glossid):
 
     field = request.POST.get('id', '')
     value = request.POST.get('value', '')
-
+    print('update gloss, ', field, value)
     original_value = ''  # will in most cases be set later, but can't be empty in case it is not set
     category_value = ''
     field_category = ''
@@ -887,26 +888,29 @@ def update_gloss(request, glossid):
     # value is a valid value for field
 
     if field == 'deletegloss':
-        if value == 'confirmed':
-            # delete the gloss and redirect back to gloss list
+        if value != 'confirmed':
+            # the confirmed value is a hidden field in the form in the template
+            selected_datasets = get_selected_datasets(request)
+            feedback_message = _('Gloss deletion was not confirmed.')
+            return show_warning(request, feedback_message, selected_datasets)
 
-            related_objects = gloss_related_objects(gloss)
+        # archive the gloss and redirect back to gloss list
+        related_objects = gloss_related_objects(gloss)
 
-            if GUARDED_GLOSS_DELETE and related_objects:
-                reverse_url = 'dictionary:admin_gloss_view'
-                messages.add_message(request, messages.INFO,
-                                     _("GUARDED_GLOSS_DELETE is set to True. The gloss has relations to other glosses and was not deleted."))
-                return HttpResponseRedirect(reverse(reverse_url, kwargs={'pk': gloss.id}))
+        if GUARDED_GLOSS_DELETE and related_objects:
+            reverse_url = 'dictionary:admin_gloss_view'
+            messages.add_message(request, messages.INFO,
+                                 _("GUARDED_GLOSS_DELETE is set to True. The gloss has relations to other glosses and was not deleted."))
+            return HttpResponseRedirect(reverse(reverse_url, kwargs={'pk': gloss.id}))
 
-            # gloss.delete()
-            gloss.archived = True
-            gloss.save(update_fields=['archived'])
+        gloss.archived = True
+        gloss.save(update_fields=['archived'])
 
-            annotation = get_default_annotationidglosstranslation(gloss)
-            add_gloss_update_to_revision_history(request.user, gloss, 'archived', annotation,
-                                                 annotation)
+        annotation = get_default_annotationidglosstranslation(gloss)
+        add_gloss_update_to_revision_history(request.user, gloss, 'archived', annotation,
+                                             annotation)
 
-            return HttpResponseRedirect(reverse('dictionary:admin_gloss_list'))
+        return HttpResponseRedirect(reverse('dictionary:admin_gloss_list'))
 
     if field.startswith('definition'):
 
@@ -941,115 +945,28 @@ def update_gloss(request, glossid):
         return update_other_media(gloss, field, value)
 
     elif field == 'signlanguage':
-        # expecting possibly multiple values
 
-        return update_signlanguage(gloss, field, values)
+        original_signlanguage_value = ", ".join([str(g) for g in gloss.signlanguage.all()])
+        return HttpResponse(original_signlanguage_value, {'content-type': 'text/plain'})
 
     elif field == 'dialect':
         # expecting possibly multiple values
-
-        return update_dialect(gloss, field, values)
+        return update_dialect(request.user, gloss, field, values)
 
     elif field == 'semanticfield':
         # expecting possibly multiple values
-
         return update_semanticfield(request, gloss, field, values)
 
     elif field == 'derivationhistory':
         # expecting possibly multiple values
-
         return update_derivationhistory(request, gloss, field, values)
 
-    elif field == 'dataset':
-        original_value = getattr(gloss, field)
+    elif field in ['excludeFromEcv', 'isNew', 'inWeb']:
 
-        # in case somebody tries an empty or non-existent dataset name
-        try:
-            ds = Dataset.objects.get(name=value)
-        except ObjectDoesNotExist:
-            return HttpResponse(str(original_value), {'content-type': 'text/plain'})
+        if field == 'inWeb' and not request.user.has_perm('dictionary.can_publish'):
+            return HttpResponseBadRequest(_("You do not have permission to publish glosses."), {'content-type': 'text/plain'})
 
-        if ds.is_public:
-            print('dataset is public')
-            newvalue = value
-            setattr(gloss, field, ds)
-            gloss.save()
-
-            request.session['last_used_dataset'] = ds.acronym
-
-            return HttpResponse(str(newvalue), {'content-type': 'text/plain'})
-
-        if ds in get_objects_for_user(request.user, ['view_dataset'],
-                                      Dataset, any_perm=True):
-            newvalue = value
-            setattr(gloss, field, ds)
-            gloss.save()
-
-            request.session['last_used_dataset'] = ds.acronym
-
-            return HttpResponse(str(newvalue), {'content-type': 'text/plain'})
-
-        print('no permission for chosen dataset')
-        newvalue = original_value
-        return HttpResponse(str(newvalue), {'content-type': 'text/plain'})
-
-    elif field == "sn":
-        # sign number must be unique, return error message if this SN is
-        # already taken
-
-        if value == '':
-            gloss.__setattr__(field, None)
-            gloss.save()
-            newvalue = ''
-        else:
-            try:
-                value = int(value)
-            except ValueError:
-                return HttpResponseBadRequest("SN value must be integer", {'content-type': 'text/plain'})
-
-            existing_gloss = Gloss.objects.filter(sn__exact=value)
-            if existing_gloss.count() > 0:
-                g = existing_gloss[0].idgloss
-                return HttpResponseBadRequest("SN value already taken for gloss %s" % g, {'content-type': 'text/plain'})
-            else:
-                gloss.sn = value
-                gloss.save()
-                newvalue = value
-
-    elif field in 'inWeb':
-        # only modify if we have publish permission
-        original_value = getattr(gloss, field)
-        if request.user.has_perm('dictionary.can_publish'):
-            gloss.inWeb = value.lower() in [_('Yes').lower(), 'true', True, 1]
-            gloss.save()
-
-        if gloss.inWeb:
-            newvalue = _('Yes')
-        else:
-            newvalue = _('No')
-
-    elif field in 'isNew':
-        original_value = getattr(gloss, field)
-        # only modify if we have publish permission
-        gloss.isNew = value.lower() in [_('Yes').lower(), 'true', True, 1]
-        gloss.save()
-
-        if gloss.isNew:
-            newvalue = _('Yes')
-        else:
-            newvalue = _('No')
-    elif field in 'excludeFromEcv':
-        original_value = getattr(gloss, field)
-
-        # only modify if we have publish permission
-
-        gloss.excludeFromEcv = value.lower() in [_('Yes').lower(), 'true', True, 1]
-        gloss.save()
-
-        if gloss.excludeFromEcv:
-            newvalue = _('Yes')
-        else:
-            newvalue = _('No')
+        return update_boolean_checkbox(request.user, gloss, field, value)
 
     elif field.startswith('annotation_idgloss'):
 
@@ -1104,11 +1021,12 @@ def update_gloss(request, glossid):
         # - tags
 
         gloss_fields = [Gloss.get_field(fname) for fname in Gloss.get_field_names()]
-
+        print('original value: ', original_value, type(original_value))
         # Translate the value if a boolean
         # Language values are needed here!
         newvalue = value
         if isinstance(Gloss.get_field(field), BooleanField):
+            print('update gloss boolean field: ', field, value)
             # value is the html 'value' received during editing
             # value gets converted to a Boolean by the following statement
             if field in ['weakdrop', 'weakprop']:
@@ -1125,25 +1043,16 @@ def update_gloss(request, glossid):
                 value = {'1': None, '2': True, '3': False}[value]
 
             elif field in ['domhndsh_letter', 'domhndsh_number', 'subhndsh_letter', 'subhndsh_number']:
+                print('field in letter, number: ', value)
                 newvalue = value
                 value = (value in ['letter', 'number'])
             else:
-                value = (value.lower() in [_('Yes').lower(), 'true', True, 1])
-                if value:
-                    newvalue = _('Yes')
-                else:
-                    newvalue = _('No')
-        # special value of 'notset' or -1 means remove the value
+                return update_boolean_checkbox(request.user, gloss, field, value)
+
         fieldnames = FIELDS['main'] + FIELDS['phonology'] + FIELDS['semantics'] + ['inWeb', 'isNew', 'excludeFromEcv']
         fieldchoiceforeignkey_fields = [f.name for f in gloss_fields
                                         if f.name in fieldnames
                                         and isinstance(f, FieldChoiceForeignKey)]
-        fields_empty_null = [f.name for f in gloss_fields
-                             if f.name in fieldnames and f.null and f.name not in fieldchoiceforeignkey_fields]
-
-        char_fields_not_null = [f.name for f in gloss_fields
-                                if f.name in fieldnames and f.__class__.__name__ == 'CharField'
-                                and f.name not in fieldchoiceforeignkey_fields and not f.null]
 
         char_fields = [f.name for f in gloss_fields
                        if f.name in fieldnames and f.__class__.__name__ == 'CharField'
@@ -1152,19 +1061,27 @@ def update_gloss(request, glossid):
         text_fields = [f.name for f in gloss_fields
                        if f.name in fieldnames and f.__class__.__name__ == 'TextField']
 
-        text_fields_not_null = [f.name for f in gloss_fields
-                                if f.name in fieldnames and f.__class__.__name__ == 'TextField' and not f.null]
-
         # The following code relies on the order of if else testing
         # The updates ignore Placeholder empty fields of '-' and '------'
         # The Placeholders are needed in the template Edit view so the user can "see" something to edit
+
+        if field in (char_fields + text_fields):
+            if value in ['-', '------']:
+                newvalue = ''
+            else:
+                newvalue = value.strip()
+            gloss.__setattr__(field, newvalue)
+            gloss.save()
+            add_gloss_update_to_revision_history(request.user, gloss, field, original_value, newvalue)
+
+            return HttpResponse(newvalue, {'content-type': 'text/plain'})
+
         if field in ['domhndsh', 'subhndsh', 'final_domhndsh', 'final_subhndsh']:
             gloss_field = Gloss.get_field(field)
             try:
-                handshape = Handshape.objects.get(machine_value=value)
+                handshape = Handshape.objects.get(machine_value=int(value))
             except (ObjectDoesNotExist, MultipleObjectsReturned):
-                print('Update handshape no unique machine value found: ', gloss_field.name, value)
-                print('Setting to machine value 0')
+                # if the handshape field has not been set yet, it is set to the empty handshape object
                 handshape = Handshape.objects.get(machine_value=0)
             gloss.__setattr__(field, handshape)
             gloss.save()
@@ -1183,23 +1100,10 @@ def update_gloss(request, glossid):
             gloss.__setattr__(field, fieldchoice)
             gloss.save()
             newvalue = fieldchoice.name
-        elif value in ['notset', '', '-', '------'] and field in fields_empty_null:
-            gloss.__setattr__(field, None)
-            gloss.save()
-            newvalue = ''
-        elif (field in char_fields or field in text_fields_not_null) and (value == '-' or value == '------'):
-            value = ''
-            gloss.__setattr__(field, value)
-            gloss.save()
-            newvalue = ''
-        elif field in text_fields and (value == '-' or value == '------'):
-            # this is to take care of legacy code where some values were set to the empty field display hint
-            gloss.__setattr__(field, None)
-            gloss.save()
-            newvalue = ''
+
         # Regular field updating
         else:
-
+            print('fall through update gloss: ', field, value, type(value))
             # Alert: Note that if field is idgloss, the following code updates it
             gloss.__setattr__(field, value)
             gloss.save()
@@ -1239,8 +1143,7 @@ def update_gloss(request, glossid):
                              time=DT.datetime.now(tz=get_current_timezone()))
     revision.save()
     # The machine_value (value) representation is also returned to accommodate Hyperlinks to Handshapes in gloss_edit.js
-    return HttpResponse(str(original_value) + '\t' + str(newvalue) + '\t' + str(value) + '\t' + category_value
-                        + '\t' + str(lemma_gloss_group) + '\t' + input_value, {'content-type': 'text/plain'})
+    return generate_tabbed_text_response([original_value, newvalue, value, category_value, lemma_gloss_group, input_value])
 
 
 def update_keywords(gloss, field, value):
@@ -1293,14 +1196,14 @@ def update_annotation_idgloss(request, gloss, field, value):
         language = Language.objects.filter(language_code_2char=language_code_2char).first()
     except ObjectDoesNotExist:
         # the language does not exist
-        feedback_message = getattr("The translation language does not exist.")
+        feedback_message = gettext("The translation language does not exist.")
         return HttpResponseBadRequest(feedback_message, {'content-type': 'text/plain'})
 
     value = value.strip()
 
     if not value:
         # don't allow user to set Annotation ID Gloss to empty
-        feedback_message = getattr("The annotation for the translation language cannot be empty.")
+        feedback_message = gettext("The annotation for the translation language cannot be empty.")
         return HttpResponseBadRequest(feedback_message, {'content-type': 'text/plain'})
 
     try:
@@ -1487,44 +1390,9 @@ def update_perspectivevideo(user, gloss, field, value):
     return HttpResponse(value, {'content-type': 'text/plain'})
 
 
-def update_signlanguage(gloss, field, values):
+def update_dialect(user, gloss, field, values):
     # expecting possibly multiple values
-
-    # Sign Language and Dialect are interdependent
-    # When updated in Gloss Details, checks are made to insure consistency
-    # Because we use Ajax calls to update the data, two values need to be returned in order to also have a side effect
-    # on the other field. I.e., Changing the Sign Language may cause Dialects to be removed, and changing the Dialect
-    # may cause the Sign Language to be filled in if not already set, with that of the new Dialect
-    # To accommodate this in the interactive user interface for Editting a Gloss, two values are returned
-
-    # The dialects value is set to the current dialects value
-    dialects_value = ", ".join([f'{d.signlanguage.name}/{d.name}' for d in gloss.dialect.all()])
-    current_signlanguages = gloss.signlanguage.all()
-    current_signlanguage_name = ''
-    for lang in current_signlanguages:
-        # this looks strange, is this a convenience for a singleton set
-        current_signlanguage_name = lang.name
-
-    try:
-        gloss.signlanguage.clear()
-        for value in values:
-            lang = SignLanguage.objects.get(name=value)
-            gloss.signlanguage.add(lang)
-            if value != current_signlanguage_name:
-                gloss.dialect.clear()
-                # Has a side effect that the Dialects value is cleared, this will be passed back to the user interface
-                dialects_value = ''
-        gloss.save()
-        new_signlanguage_value = ", ".join([str(g) for g in gloss.signlanguage.all()])
-    except ObjectDoesNotExist:
-        return HttpResponseBadRequest("Unknown Language %s" % values, {'content-type': 'text/plain'})
-
-    return HttpResponse(str(new_signlanguage_value) + '\t' + str(dialects_value), {'content-type': 'text/plain'})
-
-
-def update_dialect(gloss, field, values):
-    # expecting possibly multiple values
-
+    original_dialects_value = ", ".join([f'{d.signlanguage.name}/{d.name}' for d in gloss.dialect.all()])
     dialect_choices = json.loads(gloss.dialect_choices())
     numerical_values_converted_to_dialects = [dialect_choices[int(value)] for value in values]
     error_string_values = ', '.join(numerical_values_converted_to_dialects)
@@ -1550,14 +1418,14 @@ def update_dialect(gloss, field, values):
             gloss.dialect.add(lang)
         gloss.save()
 
-        # The signlanguage value is set to the currect sign languages value
-        signlanguage_value = ", ".join([str(g) for g in gloss.signlanguage.all()])
         new_dialects_value = ", ".join([f'{d.signlanguage.name}/{d.name}' for d in gloss.dialect.all()])
+        add_gloss_update_to_revision_history(user, gloss, field, original_dialects_value, new_dialects_value)
+
     except ObjectDoesNotExist:
         return HttpResponseBadRequest("Dialect %s does not match Sign Language of Gloss" % error_string_values,
                                       {'content-type': 'text/plain'})
 
-    return HttpResponse(str(signlanguage_value) + '\t' + str(new_dialects_value), {'content-type': 'text/plain'})
+    return HttpResponse(new_dialects_value, {'content-type': 'text/plain'})
 
 
 def update_semanticfield(request, gloss, field, values):
@@ -1565,7 +1433,7 @@ def update_semanticfield(request, gloss, field, values):
     # expecting possibly multiple values
     # values is a list of strings
     new_semanticfields_to_save = []
-
+    print('update_semanticfield: ', gloss, values, field)
     # fetch all the valid semantic field choices
     # create a lookup dictionary mapping names to objects
     # the name is a unique field in the model
@@ -1596,7 +1464,7 @@ def update_semanticfield(request, gloss, field, values):
                              field_name='semField',
                              gloss=gloss, user=request.user, time=DT.datetime.now(tz=get_current_timezone()))
     revision.save()
-
+    print(str(new_semanticfield_value))
     return HttpResponse(str(new_semanticfield_value), {'content-type': 'text/plain'})
 
 
@@ -1719,18 +1587,18 @@ def update_relationtoforeignsign(gloss, field, value):
         rel.save()
 
     elif what == 'relationforeign_other_lang':
-        rel.other_lang = value
+        rel.other_lang = value.strip()
         rel.save()
 
     elif what == 'relationforeign_other_lang_gloss':
-        rel.other_lang_gloss = value
+        rel.other_lang_gloss = value.strip()
         rel.save()
 
     else:
 
         return HttpResponseBadRequest("Unknown form field '%s'" % field, {'content-type': 'text/plain'})
 
-    return HttpResponse(str(value), {'content-type': 'text/plain'})
+    return HttpResponse(value, {'content-type': 'text/plain'})
 
 
 def morph_from_identifier(value):
@@ -2217,9 +2085,7 @@ def update_handshape(request, handshapeid):
     else:
         category_value = 'fieldChoice'
 
-    return HttpResponse(
-        str(original_value) + '\t' + str(newvalue) + '\t' + str(category_value) + '\t' + str(newPattern),
-        {'content-type': 'text/plain'})
+    return generate_tabbed_text_response([original_value, newvalue, category_value, newPattern])
 
 
 def add_annotated_media(request, glossid):
@@ -2661,17 +2527,22 @@ def update_morpheme(request, morphemeid):
     # value is a valid value for field
 
     if field == 'deletemorpheme':
-        if value == 'confirmed':
-            # delete the morpheme and redirect back to morpheme list
-            related_objects = morpheme_related_objects(morpheme)
+        if value != 'confirmed':
+            # the confirmed value is a hidden field in the form in the template
+            selected_datasets = get_selected_datasets(request)
+            feedback_message = _('Morpheme deletion was not confirmed.')
+            return show_warning(request, feedback_message, selected_datasets)
 
-            if GUARDED_MORPHEME_DELETE or related_objects:
-                reverse_url = 'dictionary:admin_morpheme_view'
-                messages.add_message(request, messages.INFO,
-                                     _("GUARDED_MORPHEME_DELETE is set to True or the morpheme has relations to other glosses and was not deleted."))
-                return HttpResponseRedirect(reverse(reverse_url, kwargs={'pk': morpheme.id}))
-            morpheme.delete()
-            return HttpResponseRedirect(reverse('dictionary:admin_morpheme_list'))
+        # delete the morpheme and redirect back to morpheme list
+        related_objects = morpheme_related_objects(morpheme)
+
+        if GUARDED_MORPHEME_DELETE or related_objects:
+            reverse_url = 'dictionary:admin_morpheme_view'
+            messages.add_message(request, messages.INFO,
+                                 _("GUARDED_MORPHEME_DELETE is set to True or the morpheme has relations to other glosses and was not deleted."))
+            return HttpResponseRedirect(reverse(reverse_url, kwargs={'pk': morpheme.id}))
+        morpheme.delete()
+        return HttpResponseRedirect(reverse('dictionary:admin_morpheme_list'))
 
     if field.startswith('definition'):
 
@@ -2698,9 +2569,9 @@ def update_morpheme(request, morphemeid):
         return update_other_media(morpheme, field, value)
 
     elif field == 'signlanguage':
-        # expecting possibly multiple values
 
-        return update_signlanguage(morpheme, field, values)
+        original_signlanguage_value = ", ".join([str(g) for g in morpheme.signlanguage.all()])
+        return HttpResponse(original_signlanguage_value, {'content-type': 'text/plain'})
 
     elif field == 'dialect':
         # expecting possibly multiple values
@@ -2716,63 +2587,6 @@ def update_morpheme(request, morphemeid):
         # expecting possibly multiple values
 
         return update_derivationhistory(request, morpheme, field, values)
-
-    elif field == 'dataset':
-        # this has been hidden
-        original_value = getattr(morpheme, field)
-
-        # in case somebody tries an empty or non-existent dataset name
-        try:
-            ds = Dataset.objects.get(name=value)
-        except ObjectDoesNotExist:
-            return HttpResponse(str(original_value), {'content-type': 'text/plain'})
-
-        if ds.is_public:
-            newvalue = value
-            setattr(morpheme, field, ds)
-            morpheme.save()
-
-            request.session['last_used_dataset'] = ds.acronym
-
-            return HttpResponse(str(newvalue), {'content-type': 'text/plain'})
-
-        if ds in get_objects_for_user(request.user, ['view_dataset'],
-                                      Dataset, any_perm=True):
-            newvalue = value
-            setattr(morpheme, field, ds)
-            morpheme.save()
-
-            request.session['last_used_dataset'] = ds.acronym
-
-            return HttpResponse(str(newvalue), {'content-type': 'text/plain'})
-
-        print('no permission for chosen dataset')
-        newvalue = original_value
-        return HttpResponse(str(newvalue), {'content-type': 'text/plain'})
-
-    elif field == "sn":
-        # sign number must be unique, return error message if this SN is
-        # already taken
-
-        if value == '':
-            morpheme.__setattr__(field, None)
-            morpheme.save()
-            newvalue = ''
-        else:
-            try:
-                value = int(value)
-            except IntegerField:
-                return HttpResponseBadRequest("SN value must be integer", {'content-type': 'text/plain'})
-
-            existing_morpheme = Morpheme.objects.filter(sn__exact=value)
-            if existing_morpheme.count() > 0:
-                g = existing_morpheme[0].idgloss
-                return HttpResponseBadRequest("SN value already taken for morpheme %s" % g,
-                                              {'content-type': 'text/plain'})
-            else:
-                morpheme.sn = value
-                morpheme.save()
-                newvalue = str(value)
 
     elif field == 'inWeb':
         # only modify if we have publish permission
@@ -2799,10 +2613,10 @@ def update_morpheme(request, morphemeid):
                 morpheme.lemma = lemma
                 morpheme.save()
             else:
-                messages.add_message(messages.ERROR,
+                messages.add_message(request, messages.ERROR,
                                      _("The dataset of the morpheme is not the same as that of the lemma."))
         except ObjectDoesNotExist:
-            messages.add_message(messages.ERROR, _("The specified lemma does not exist."))
+            messages.add_message(request, messages.ERROR, _("The specified lemma does not exist."))
         return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
 
     else:
@@ -2879,8 +2693,7 @@ def update_morpheme(request, morphemeid):
             morpheme.__setattr__(field, value)
             morpheme.save()
 
-    return HttpResponse(str(original_value) + '\t' + str(newvalue) + '\t' + str(value) + '\t' + category_value
-                        + '\t' + str(lemma_gloss_group) + '\t' + input_value, {'content-type': 'text/plain'})
+    return generate_tabbed_text_response([original_value, newvalue, value, category_value, lemma_gloss_group, input_value])
 
 
 def update_morpheme_definition(gloss, field, value):
@@ -2903,9 +2716,9 @@ def update_morpheme_definition(gloss, field, value):
         original_value = getattr(definition, 'role')
         definition.__setattr__('role', value)
         definition.save()
-        return HttpResponse(
-            str(original_value) + '\t' + str(newvalue) + '\t' + str(value) + str('\t') + str(category_value),
-            {'content-type': 'text/plain'})
+
+        return generate_tabbed_text_response([original_value, newvalue, value, category_value])
+
     else:
         return HttpResponseBadRequest("Unknown form field '%s'" % field, {'content-type': 'text/plain'})
 
@@ -2913,7 +2726,7 @@ def update_morpheme_definition(gloss, field, value):
 def update_blend_definition(gloss, field, value):
     """Update the morpheme definition for this gloss"""
 
-    newvalue = value
+    newvalue = value.strip()
     category_value = 'blend_morphology'
     (what, blend_id) = field.split('_')
     what = what.replace('-', '_')
@@ -2929,11 +2742,10 @@ def update_blend_definition(gloss, field, value):
     elif what == 'blend_definition_role':
         definition = BlendMorphology.objects.get(id=blend_id)
         original_value = getattr(definition, 'role')
-        definition.__setattr__('role', value)
+        definition.__setattr__('role', newvalue)
         definition.save()
-        return HttpResponse(
-            str(original_value) + '\t' + str(newvalue) + '\t' + str(value) + str('\t') + str(category_value),
-            {'content-type': 'text/plain'})
+        return generate_tabbed_text_response([original_value, newvalue, category_value])
+
     else:
         return HttpResponseBadRequest("Unknown form field '%s'" % field, {'content-type': 'text/plain'})
 
@@ -3182,84 +2994,35 @@ def update_dataset(request, datasetid):
 
     field = request.POST.get('id', '')
     value = request.POST.get('value', '')
-    original_value = ''
 
-    if field == 'description':
-        original_value = getattr(dataset,field)
+    if field in ['description', 'copyright', 'reference', 'conditions_of_use', 'acronym']:
+        original_value = getattr(dataset, field)
+        value = value.strip()
         setattr(dataset, field, value)
         dataset.save()
-        return HttpResponse(str(original_value) + str('\t') + str(value), {'content-type': 'text/plain'})
-    elif field == 'copyright':
+        return generate_tabbed_text_response([original_value, value])
+    elif field in ['is_public', 'use_provenance']:
         original_value = getattr(dataset, field)
-        setattr(dataset, field, value)
+        setattr(dataset, field, value == 'True')
         dataset.save()
-        return HttpResponse(str(original_value) + str('\t') + str(value), {'content-type': 'text/plain'})
-    elif field == 'reference':
-        original_value = getattr(dataset, field)
-        setattr(dataset, field, value)
-        dataset.save()
-        return HttpResponse(str(original_value) + str('\t') + str(value), {'content-type': 'text/plain'})
-    elif field == 'conditions_of_use':
-        original_value = getattr(dataset, field)
-        setattr(dataset, field, value)
-        dataset.save()
-        return HttpResponse(str(original_value) + str('\t') + str(value), {'content-type': 'text/plain'})
-    elif field == 'acronym':
-        original_value = getattr(dataset, field)
-        setattr(dataset, field, value)
-        dataset.save()
-        return HttpResponse(str(original_value) + str('\t') + str(value), {'content-type': 'text/plain'})
-    elif field == 'is_public':
-        original_value = getattr(dataset, field)
-        dataset.is_public = value == 'True'
-        dataset.save()
-        if dataset.is_public:
-            newvalue = True
-        else:
-            newvalue = False
-        return HttpResponse(str(original_value) + str('\t') + str(newvalue), {'content-type': 'text/plain'})
-    elif field == 'use_provenance':
-        original_value = getattr(dataset, field)
-        dataset.use_provenance = value == 'True'
-        dataset.save()
-        if dataset.use_provenance:
-            newvalue = True
-        else:
-            newvalue = False
-        return HttpResponse(str(original_value) + str('\t') + str(newvalue), {'content-type': 'text/plain'})
+        return generate_tabbed_text_response([original_value, value])
     elif field == 'add_owner':
         update_owner(dataset, field, value)
     elif field == 'default_language':
         original_value = getattr(dataset, field)
-        # variable original_value is used for feedback to the interface
         original_value = original_value.name if original_value else '-'
-        if value == '-':
-            # this option is not offered by the interface, value must be one of the translation languages (not empty '-')
-            # this code is here if we want to user to be able to "unset" the default language in the interface
-            setattr(dataset, field, None)
+        try:
+            new_default_language = Language.objects.get(name=value)
+            setattr(dataset, field, new_default_language)
             dataset.save()
-        else:
-            try:
-                new_default_language = Language.objects.get(name=value)
-                setattr(dataset, field, new_default_language)
-                dataset.save()
-            except ObjectDoesNotExist:
-                value = original_value
-        return HttpResponse(str(original_value) + str('\t') + str(value), {'content-type': 'text/plain'})
-    else:
+        except ObjectDoesNotExist:
+            # ignore input value since it does not exist
+            value = original_value
+        return generate_tabbed_text_response([original_value, value])
+    elif field not in Dataset.get_field_names():
+        return HttpResponseBadRequest("Unknown field", {'content-type': 'text/plain'})
 
-        if field not in Dataset.get_field_names():
-            return HttpResponseBadRequest("Unknown field", {'content-type': 'text/plain'})
-
-        value = value.strip()
-        original_value = getattr(dataset,field)
-
-    #This is because you cannot concat none to a string in py3
-    if original_value is None:
-        original_value = ''
-
-    # The machine_value (value) representation is also returned to accommodate Hyperlinks to Handshapes in gloss_edit.js
-    return HttpResponse(str(original_value) + str('\t') + str(value), {'content-type': 'text/plain'})
+    return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
 
 
 @require_http_methods(["POST"])
@@ -4205,6 +3968,8 @@ def update_provenance(request, gloss, field, value):
         prov.save()
         newvalue = prov.method.name
         new_history_value = newvalue
+    else:
+        return HttpResponseRedirect(reverse(reverse_url, kwargs={'pk': gloss_or_morpheme.id}) + '?editprovenance')
 
     add_gloss_update_to_revision_history(request.user, gloss_or_morpheme, what, original_value, new_history_value)
 
