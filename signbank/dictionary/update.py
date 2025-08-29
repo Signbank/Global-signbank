@@ -889,6 +889,8 @@ def update_gloss(request, glossid):
 
     if field == 'deletegloss':
         if value != 'confirmed':
+            # the confirmed value is a hidden field in the form in the template
+            selected_datasets = get_selected_datasets(request)
             feedback_message = _('Gloss deletion was not confirmed.')
             return show_warning(request, feedback_message, selected_datasets)
 
@@ -1194,14 +1196,14 @@ def update_annotation_idgloss(request, gloss, field, value):
         language = Language.objects.filter(language_code_2char=language_code_2char).first()
     except ObjectDoesNotExist:
         # the language does not exist
-        feedback_message = getattr("The translation language does not exist.")
+        feedback_message = gettext("The translation language does not exist.")
         return HttpResponseBadRequest(feedback_message, {'content-type': 'text/plain'})
 
     value = value.strip()
 
     if not value:
         # don't allow user to set Annotation ID Gloss to empty
-        feedback_message = getattr("The annotation for the translation language cannot be empty.")
+        feedback_message = gettext("The annotation for the translation language cannot be empty.")
         return HttpResponseBadRequest(feedback_message, {'content-type': 'text/plain'})
 
     try:
@@ -2526,6 +2528,8 @@ def update_morpheme(request, morphemeid):
 
     if field == 'deletemorpheme':
         if value != 'confirmed':
+            # the confirmed value is a hidden field in the form in the template
+            selected_datasets = get_selected_datasets(request)
             feedback_message = _('Morpheme deletion was not confirmed.')
             return show_warning(request, feedback_message, selected_datasets)
 
@@ -2584,63 +2588,6 @@ def update_morpheme(request, morphemeid):
 
         return update_derivationhistory(request, morpheme, field, values)
 
-    elif field == 'dataset':
-        # this has been hidden
-        original_value = getattr(morpheme, field)
-
-        # in case somebody tries an empty or non-existent dataset name
-        try:
-            ds = Dataset.objects.get(name=value)
-        except ObjectDoesNotExist:
-            return HttpResponse(str(original_value), {'content-type': 'text/plain'})
-
-        if ds.is_public:
-            newvalue = value
-            setattr(morpheme, field, ds)
-            morpheme.save()
-
-            request.session['last_used_dataset'] = ds.acronym
-
-            return HttpResponse(str(newvalue), {'content-type': 'text/plain'})
-
-        if ds in get_objects_for_user(request.user, ['view_dataset'],
-                                      Dataset, any_perm=True):
-            newvalue = value
-            setattr(morpheme, field, ds)
-            morpheme.save()
-
-            request.session['last_used_dataset'] = ds.acronym
-
-            return HttpResponse(str(newvalue), {'content-type': 'text/plain'})
-
-        print('no permission for chosen dataset')
-        newvalue = original_value
-        return HttpResponse(str(newvalue), {'content-type': 'text/plain'})
-
-    elif field == "sn":
-        # sign number must be unique, return error message if this SN is
-        # already taken
-
-        if value == '':
-            morpheme.__setattr__(field, None)
-            morpheme.save()
-            newvalue = ''
-        else:
-            try:
-                value = int(value)
-            except IntegerField:
-                return HttpResponseBadRequest("SN value must be integer", {'content-type': 'text/plain'})
-
-            existing_morpheme = Morpheme.objects.filter(sn__exact=value)
-            if existing_morpheme.count() > 0:
-                g = existing_morpheme[0].idgloss
-                return HttpResponseBadRequest("SN value already taken for morpheme %s" % g,
-                                              {'content-type': 'text/plain'})
-            else:
-                morpheme.sn = value
-                morpheme.save()
-                newvalue = str(value)
-
     elif field == 'inWeb':
         # only modify if we have publish permission
         if request.user.has_perm('dictionary.can_publish'):
@@ -2666,10 +2613,10 @@ def update_morpheme(request, morphemeid):
                 morpheme.lemma = lemma
                 morpheme.save()
             else:
-                messages.add_message(messages.ERROR,
+                messages.add_message(request, messages.ERROR,
                                      _("The dataset of the morpheme is not the same as that of the lemma."))
         except ObjectDoesNotExist:
-            messages.add_message(messages.ERROR, _("The specified lemma does not exist."))
+            messages.add_message(request, messages.ERROR, _("The specified lemma does not exist."))
         return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
 
     else:
@@ -4021,6 +3968,8 @@ def update_provenance(request, gloss, field, value):
         prov.save()
         newvalue = prov.method.name
         new_history_value = newvalue
+    else:
+        return HttpResponseRedirect(reverse(reverse_url, kwargs={'pk': gloss_or_morpheme.id}) + '?editprovenance')
 
     add_gloss_update_to_revision_history(request.user, gloss_or_morpheme, what, original_value, new_history_value)
 
