@@ -71,6 +71,40 @@ var morpheme_idgloss = '{{morpheme_idgloss|safe}}';
 var gloss_fields_to_populate = {{gloss_fields_to_populate|safe}};
 var gloss_fields_to_populate_keys = {{gloss_fields_to_populate_keys|safe}};
 
+function sanitizeInput(input) {
+  return input
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#x27;");
+}
+
+function validateForm(formId) {
+{% for dataset_lang in dataset_languages %}
+    var targetAnnotationObjectId ='id_annotation_idgloss_{{dataset_lang.language_code_2char}}';
+    var input_annotation_value = document.forms[formId][targetAnnotationObjectId].value;
+    var sanitized = sanitizeInput(input_annotation_value);
+    var target_annotation_object = document.getElementById(targetAnnotationObjectId);
+    target_annotation_object.setAttribute("value", sanitized);
+    target_annotation_object.value = sanitized;
+
+    var targetLemmaObjectId = 'id_lemma_{{dataset_lang.language_code_2char}}';
+    var input_lemma_value = document.forms[formId][targetLemmaObjectId].value;
+    var sanitized = sanitizeInput(input_lemma_value);
+    var target_lemma_object = document.getElementById(targetLemmaObjectId);
+    target_lemma_object.setAttribute("value", sanitized);
+    target_lemma_object.value = sanitized;
+
+    var targetKeywordObjectId = 'id_keyword_{{dataset_lang.language_code_2char}}';
+    var input_keyword_value = document.forms[formId][targetKeywordObjectId].value;
+    var sanitized = sanitizeInput(input_keyword_value);
+    var target_keyword_object = document.getElementById(targetKeywordObjectId);
+    target_keyword_object.setAttribute("value", sanitized);
+    target_keyword_object.value = sanitized;
+{% endfor %}
+}
+
 $(document).ready(function() {
 
     $('[data-toggle="tooltip"]').tooltip();
@@ -450,6 +484,7 @@ function do_sort_column(field_name, action, frmName) {
  * @returns {void}
  */
 function do_adminsearch(el) {
+ validateForm("adminsearch");
  var sSearchType = $(el).attr('value');
   switch(sSearchType) {
     case "sign":
@@ -665,7 +700,8 @@ function do_toggle_language(el) {
 {{ form.media.css }}
 {{ form.media.js }}
 
-<form id='adminsearch' class="search-form search-form-light" method='get' action='{{PREFIX_URL}}/signs/search'>
+<form id='adminsearch' class="search-form search-form-light" method='get'
+      action='{{PREFIX_URL}}/signs/search'>
 {% csrf_token %}
 <div class="panel panel-default panel-light">
     <input type='hidden' id='export_format' name='export_format' value="">
