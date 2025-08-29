@@ -78,7 +78,7 @@ from signbank.dictionary.update_glosses import (mapping_toggle_relOriLoc, mappin
                                                 mapping_toggle_handedness, mapping_toggle_tag, mapping_toggle_wordclass,
                                                 mapping_toggle_contType, mapping_toggle_movDir, mapping_toggle_movSh,
                                                 batch_edit_create_sense)
-from signbank.dictionary.batch_edit import batch_edit_update_gloss
+from signbank.dictionary.batch_edit import batch_edit_update_gloss, create_empty_sense
 from signbank.dictionary.adminviews import show_warning
 from signbank.relation_tools import ensure_synonym_transitivity, remove_transitive_synonym
 
@@ -118,22 +118,22 @@ def add_gloss(request):
     elif 'videofile' not in OBLIGATORY_FIELDS:
         vfile = None
     else:
-        messages.add_message(request, messages.ERROR, _("A video file is required."))
-        return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
+        feedback_message = gettext("A video file is required.")
+        return show_warning(request, feedback_message, selected_datasets)
 
     if request.POST['select_or_new_lemma'] == 'new':
         new_lemma = True
         lemma_form = LemmaCreateForm(request.POST, languages=dataset_languages, user=request.user,
                                      last_used_dataset=dataset)
         if not lemma_form.is_valid():
-            messages.add_message(request, messages.ERROR, _("The new lemma form is not valid."))
-            return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
+            feedback_message = gettext("The new lemma form is not valid.")
+            return show_warning(request, feedback_message, selected_datasets)
         try:
             lemmaidgloss = lemma_form.save()
         except ValidationError as e:
             feedback_message = getattr(e, 'message', repr(e))
-            messages.add_message(request, messages.ERROR, feedback_message)
-            return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
+            return show_warning(request, feedback_message, selected_datasets)
+
     else:
         lemmaidgloss_id = request.POST['idgloss']
         new_lemma = False
@@ -141,13 +141,13 @@ def add_gloss(request):
             # if the user has typed in an identifier instead of selecting from the Lemma lookahead list
             # or if the user has gone to the previous page and not selected the lemma again
             # in this case, the original template value 'confirmed' has bot been replaced with a lemma id
-            messages.add_message(request, messages.ERROR, _("The given Lemma Idgloss is a string, not a Lemma."))
-            return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
+            feedback_message = gettext("The given Lemma Idgloss is a string, not a Lemma.")
+            return show_warning(request, feedback_message, selected_datasets)
         try:
             lemmaidgloss = LemmaIdgloss.objects.get(id=lemmaidgloss_id)
         except (ObjectDoesNotExist, IntegerField, ValueError, TypeError):
-            messages.add_message(request, messages.ERROR, _("The given Lemma Idgloss ID is unknown."))
-            return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
+            feedback_message = gettext("The given Lemma Idgloss ID is unknown.")
+            return show_warning(request, feedback_message, selected_datasets)
 
     obligatory_fields_dict = dict()
     if vfile:
@@ -166,26 +166,48 @@ def add_gloss(request):
             if glosses_for_this_language_and_annotation_idgloss.count() > 0:
                 if new_lemma:
                     lemmaidgloss.delete()
-                messages.add_message(request, messages.ERROR, _('Annotation ID Gloss not unique.'))
-                return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
+                feedback_message = gettext('Annotation ID Gloss not unique.')
+                return show_warning(request, feedback_message, selected_datasets)
         elif item.startswith('lemmacreate_'):
             continue
+        elif item.startswith('sense_'):
+            if not value.strip():
+                continue
+            keywords_list_split = value.split(', ')
+            keywords_list = [kw.strip() for kw in keywords_list_split]
+            obligatory_fields_dict[item] = keywords_list
         elif item in ['csrfmiddlewaretoken', 'dataset', 'lemma_language', 'idgloss', 'select_or_new_lemma']:
             continue
         elif item in ['videofile']:
             continue
         elif item in ['domhndsh_letter', 'domhndsh_number', 'subhndsh_letter', 'subhndsh_number']:
             obligatory_fields_dict[item] = value == '2'
+        elif item in ['release_information']:
+            if not value.strip():
+                continue
+            obligatory_fields_dict[item] = value.strip()
+        elif item in ['dialect']:
+            values = request.POST.getlist('dialect')
+            obligatory_fields_dict[item] = values
+        elif item in ['semField']:
+            values = request.POST.getlist('semField')
+            obligatory_fields_dict[item] = values
         else:
+            # item is a choice
             obligatory_fields_dict[item] = int(value)
 
     for obligatory_field in OBLIGATORY_FIELDS:
-        if obligatory_field not in obligatory_fields_dict.keys():
+        if obligatory_field == 'senses':
+            for language in dataset_languages:
+                glosssense_create_field_name = 'sense_' + language.language_code_2char
+                if glosssense_create_field_name not in obligatory_fields_dict.keys():
+                    error_message = gettext("Field {field} is required.".format(field=obligatory_field))
+                    return show_warning(request, error_message, selected_datasets)
+        elif obligatory_field not in obligatory_fields_dict.keys():
             if new_lemma:
                 lemmaidgloss.delete()
             error_message = gettext("Field {field} is required.".format(field=obligatory_field))
-            messages.add_message(request, messages.ERROR, error_message)
-            return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
+            return show_warning(request, error_message, selected_datasets)
 
     gloss = Gloss()
     gloss.save()
@@ -204,8 +226,7 @@ def add_gloss(request):
                 feedback_message = gettext(
                     "Gloss with id {glossid} has more than one annotation for language {language}".format(
                         glossid=existing_gloss.pk, language=language.name))
-                messages.add_message(request, messages.ERROR, feedback_message)
-                return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
+                return show_warning(request, feedback_message, selected_datasets)
 
             annotationidglosstranslation = AnnotationIdglossTranslation(gloss=gloss, language=language,
                                                                         text=annotation_idgloss_text)
@@ -231,6 +252,40 @@ def add_gloss(request):
         for field in ['domhndsh_letter', 'domhndsh_number', 'subhndsh_letter', 'subhndsh_number']:
             if field in obligatory_fields_dict.keys() and obligatory_fields_dict[field]:
                 setattr(gloss, field, True)
+        for field in ['release_information']:
+            if field not in OBLIGATORY_FIELDS or field not in obligatory_fields_dict.keys():
+                continue
+            setattr(gloss, field, obligatory_fields_dict['release_information'])
+        for field in ['dialect']:
+            if field not in OBLIGATORY_FIELDS or field not in obligatory_fields_dict.keys():
+                continue
+            for dialect_id in obligatory_fields_dict['dialect']:
+                dialect = Dialect.objects.get(id=dialect_id)
+                gloss.dialect.add(dialect)
+        for field in ['semField']:
+            if field not in OBLIGATORY_FIELDS or field not in obligatory_fields_dict.keys():
+                continue
+            for semField_machine_value in obligatory_fields_dict['semField']:
+                semField = SemanticField.objects.get(machine_value=semField_machine_value)
+                gloss.semField.add(semField)
+        if 'senses' in OBLIGATORY_FIELDS:
+            # the existence of all languages has been checked above
+            sense_for_gloss, sense_translations = create_empty_sense(gloss, 1)
+
+            for language in dataset_languages:
+                glosssense_create_field_name = 'sense_' + language.language_code_2char
+                language = Language.objects.get(language_code_2char=language.language_code_2char)
+                keywords = obligatory_fields_dict[glosssense_create_field_name]
+                gloss_sense_translation = sense_translations[language]
+                for inx, keyword in enumerate(keywords, 1):
+                    (keyword_object, created) = Keyword.objects.get_or_create(text=keyword)
+                    translation = Translation.objects.create(gloss=gloss,
+                                                             language=language,
+                                                             orderIndex=1,
+                                                             translation=keyword_object,
+                                                             index=inx)
+                    translation.save()
+                    gloss_sense_translation.translations.add(translation)
 
         gloss.save()
         gloss.creator.add(request.user)
@@ -243,11 +298,10 @@ def add_gloss(request):
             gloss.add_video(request.user, obligatory_fields_dict['videofile'], False)
     except (ValidationError, TypeError, Keyword) as e:
         feedback_message = getattr(e, 'message', repr(e))
-        messages.add_message(request, messages.ERROR, feedback_message)
         if new_lemma:
             lemmaidgloss.delete()
         gloss.delete()
-        return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
+        return show_warning(request, feedback_message, selected_datasets)
 
     # new gloss created successfully, go to GlossDetailView
     return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': gloss.id}) + '?edit')
