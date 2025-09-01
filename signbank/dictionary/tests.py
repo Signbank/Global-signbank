@@ -1093,10 +1093,10 @@ class AjaxTests(TestCase):
         session.save()
 
         #The actual test
-        response = client.get('/dictionary/ajax/gloss/'+str(test_dataset.pk)+'/we')
+        response = client.get('/dictionary/ajax/gloss/we')
         self.assertNotContains(response,NAME)
 
-        response = client.get('/dictionary/ajax/gloss/'+str(test_dataset.pk)+'/th')
+        response = client.get('/dictionary/ajax/gloss/th')
         print(response.content)
         self.assertContains(response,NAME)
 
