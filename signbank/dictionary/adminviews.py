@@ -536,6 +536,7 @@ class GlossListView(ListView):
     search_form_data = QueryDict(mutable=True)
     search_form = GlossSearchForm()
     public = False
+    page_get_parameters = ""
 
     def get_template_names(self):
         return ['dictionary/admin_gloss_list.html']
@@ -597,6 +598,8 @@ class GlossListView(ListView):
         this_paginator = context['page_obj'].paginator
 
         list_of_objects = self.object_list
+
+        context['page_get_parameters'] = self.page_get_parameters
 
         # construct scroll bar
         # the following retrieves language code for English (or DEFAULT LANGUAGE)
@@ -790,6 +793,8 @@ class GlossListView(ListView):
         if USE_REGULAR_EXPRESSIONS and not valid_regex:
             error_message_regular_expression(self.request, search_fields, field_values)
             qs = Gloss.objects.none()
+            # fill page parameters
+            self.page_get_parameters = ""
             return qs
 
         # Get the initial selection
@@ -825,6 +830,13 @@ class GlossListView(ListView):
                 qs = qs.filter(query).distinct()
 
             sorted_qs = order_queryset_by_sort_order(self.request.GET, qs, self.queryset_language_codes)
+            # fill page parameters
+            self.page_get_parameters = ""
+            for key, value in get.items():
+                if key != 'page' and key in self.query_parameters.keys():
+                    self.page_get_parameters = self.page_get_parameters + f'&{key}={value}'
+                if key not in self.search_form.fields.keys():
+                    self.page_get_parameters = self.page_get_parameters + f'&{key}={value}'
             return sorted_qs
 
         # No filters or 'show_all' specified? show nothing
@@ -838,6 +850,11 @@ class GlossListView(ListView):
         if self.show_all:
             # sort the results
             sorted_qs = order_queryset_by_sort_order(self.request.GET, qs, self.queryset_language_codes)
+            # fill page parameters
+            self.page_get_parameters = ""
+            for key, value in get.items():
+                if key not in self.search_form.fields.keys():
+                    self.page_get_parameters = self.page_get_parameters + f'&{key}={value}'
             return sorted_qs
 
         # this is a temporary query_parameters variable
@@ -863,6 +880,13 @@ class GlossListView(ListView):
             self.query_parameters = query_parameters
 
             sorted_qs = order_queryset_by_sort_order(self.request.GET, qs, self.queryset_language_codes)
+            # fill page parameters
+            self.page_get_parameters = ""
+            for key, value in get.items():
+                if key != 'page' and key in self.query_parameters.keys():
+                    self.page_get_parameters = self.page_get_parameters + f'&{key}={value}'
+                if key not in self.search_form.fields.keys():
+                    self.page_get_parameters = self.page_get_parameters + f'&{key}={value}'
             return sorted_qs
 
         if 'translation' in get and get['translation']:
@@ -880,6 +904,13 @@ class GlossListView(ListView):
             self.query_parameters = query_parameters
 
             sorted_qs = order_queryset_by_sort_order(self.request.GET, qs, self.queryset_language_codes)
+            # fill page parameters
+            self.page_get_parameters = ""
+            for key, value in get.items():
+                if key != 'page' and key in self.query_parameters.keys():
+                    self.page_get_parameters = self.page_get_parameters + f'&{key}={value}'
+                if key not in self.search_form.fields.keys():
+                    self.page_get_parameters = self.page_get_parameters + f'&{key}={value}'
             return sorted_qs
 
         if self.search_type != 'sign':
@@ -905,6 +936,14 @@ class GlossListView(ListView):
 
         if 'last_used_dataset' not in self.request.session.keys():
             self.request.session['last_used_dataset'] = self.last_used_dataset
+
+        # fill page parameters
+        self.page_get_parameters = ""
+        for key,value in get.items():
+            if key != 'page' and key in self.query_parameters.keys():
+                self.page_get_parameters = self.page_get_parameters + f'&{key}={value}'
+            if key not in self.search_form.fields.keys():
+                self.page_get_parameters = self.page_get_parameters + f'&{key}={value}'
 
         # Return the resulting filtered and sorted queryset
         return sorted_qs

@@ -1146,7 +1146,7 @@ function do_toggle_language(el) {
 
              {% if p < page_obj.number|add:"10" and  p > page_obj.number|add:"-10" %}
              <li {% if p == page_obj.number %}class='active'{% endif %}>
-             <a href="?page={{ p }}{% for key,value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">{% if p == 0 %}Start{% else %}{{p}}{% endif %}</a>
+             <a href="?page={{p}}{{page_get_parameters}}">{% if p == 0 %}Start{% else %}{{p}}{% endif %}</a>
              </li>
              {% endif %}
 
@@ -1155,12 +1155,12 @@ function do_toggle_language(el) {
           {% if page_obj.paginator.num_pages > page_obj.number|add:"10" %}
             <li><a>...</a></li>
             <li>
-            <a href="?page={{ page_obj.paginator.num_pages }}{% for key,value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">{{page_obj.paginator.num_pages}}</a>
+            <a href="?page={{page_obj.paginator.num_pages}}{{page_get_parameters}}">{{page_obj.paginator.num_pages}}</a>
             </li>
           {% endif %}
 
         {% if page_obj.has_next %}
-            <li><a href="?page={{ page_obj.next_page_number }}{% for key,value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">&raquo;</a></li>
+            <li><a href="?page={{ page_obj.next_page_number }}{{page_get_parameters}}">&raquo;</a></li>
 
 
       </ul>
