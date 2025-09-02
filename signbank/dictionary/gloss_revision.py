@@ -1,4 +1,4 @@
-from django.db.models import Q
+from django.db.models import Q, BooleanField
 from django.utils.translation import gettext, gettext_lazy as _
 
 from django.contrib.auth.decorators import permission_required
@@ -6,7 +6,7 @@ from django.http import JsonResponse
 
 from django.conf import settings
 
-from signbank.dictionary.models import Gloss, GlossRevision, Language, FieldChoice, Handshape
+from signbank.dictionary.models import Gloss, GlossRevision, Language, FieldChoice, Handshape, FieldChoiceForeignKey
 from signbank.dictionary.update import okay_to_update_gloss
 from signbank.csv_interface import normalize_field_choice
 
@@ -243,6 +243,20 @@ def cleanup(request, glossid):
     tuple_updates = []
     tuple_update_already_seen = []
     for revision in revisions:
+        if revision.field_name in Gloss.get_field_names():
+            field = Gloss.get_field(revision.field_name)
+            if isinstance(field, BooleanField):
+                # patches for original storage of revisions, type mismatch
+                if revision.old_value in ['False'] and revision.new_value in ['False', 'No', 'Nee']:
+                    empty_revisions.append(revision)
+                    continue
+                if revision.old_value in ['True'] and revision.new_value in ['Yes', 'yes', 'ja', 'Ja', '是', 'true', 'True', True, 1]:
+                    empty_revisions.append(revision)
+                    continue
+            elif isinstance(field, FieldChoiceForeignKey):
+                if revision.old_value == revision.new_value:
+                    empty_revisions.append(revision)
+                    continue
         if revision.old_value in ['', '-'] and revision.new_value in ['', '-']:
             empty_revisions.append(revision)
             continue
