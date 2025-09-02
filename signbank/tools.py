@@ -2361,6 +2361,19 @@ def get_checksum_for_path(file_path):
         return None
 
 
+def get_page_parameters_for_listview(search_form, request_get_parameters, query_parameters):
+    # fill page parameters
+    page_get_parameters = ""
+    for key, value in request_get_parameters.items():
+        if key == 'page':
+            continue
+        if key in query_parameters.keys():
+            page_get_parameters = page_get_parameters + f'&{key}={value}'
+        if key not in search_form.fields.keys():
+            page_get_parameters = page_get_parameters + f'&{key}={value}'
+    return page_get_parameters
+
+
 def get_lemma_translation_violations(dataset):
     # for use in a command to check all the lemma's of a dataset for constraint violations
     # the "none" case is legacy data, so not necessarily a constraint violation, but they cannot be empty if updated

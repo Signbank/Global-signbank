@@ -84,7 +84,8 @@ from signbank.dictionary.forms import (AnnotatedSentenceSearchForm, GlossSearchF
 from signbank.tools import (write_ecv_file_for_dataset, find_duplicate_lemmas,
                             construct_scrollbar, get_dataset_languages, get_datasets_with_public_glosses,
                             searchform_panels, map_search_results_to_gloss_list,
-                            get_interface_language_and_default_language_codes, get_default_annotationidglosstranslation)
+                            get_interface_language_and_default_language_codes, get_default_annotationidglosstranslation,
+                            get_page_parameters_for_listview)
 from signbank.csv_interface import (csv_gloss_to_row, csv_header_row_glosslist, csv_header_row_morphemelist,
                                     csv_morpheme_to_row, csv_header_row_handshapelist, csv_handshape_to_row,
                                     csv_header_row_lemmalist, csv_lemma_to_row,
@@ -794,7 +795,8 @@ class GlossListView(ListView):
             error_message_regular_expression(self.request, search_fields, field_values)
             qs = Gloss.objects.none()
             # fill page parameters
-            self.page_get_parameters = ""
+            self.page_get_parameters = get_page_parameters_for_listview(self.search_form, get, self.query_parameters)
+
             return qs
 
         # Get the initial selection
@@ -831,12 +833,7 @@ class GlossListView(ListView):
 
             sorted_qs = order_queryset_by_sort_order(self.request.GET, qs, self.queryset_language_codes)
             # fill page parameters
-            self.page_get_parameters = ""
-            for key, value in get.items():
-                if key != 'page' and key in self.query_parameters.keys():
-                    self.page_get_parameters = self.page_get_parameters + f'&{key}={value}'
-                if key not in self.search_form.fields.keys():
-                    self.page_get_parameters = self.page_get_parameters + f'&{key}={value}'
+            self.page_get_parameters = get_page_parameters_for_listview(self.search_form, get, self.query_parameters)
             return sorted_qs
 
         # No filters or 'show_all' specified? show nothing
@@ -851,10 +848,7 @@ class GlossListView(ListView):
             # sort the results
             sorted_qs = order_queryset_by_sort_order(self.request.GET, qs, self.queryset_language_codes)
             # fill page parameters
-            self.page_get_parameters = ""
-            for key, value in get.items():
-                if key not in self.search_form.fields.keys():
-                    self.page_get_parameters = self.page_get_parameters + f'&{key}={value}'
+            self.page_get_parameters = get_page_parameters_for_listview(self.search_form, get, self.query_parameters)
             return sorted_qs
 
         # this is a temporary query_parameters variable
@@ -881,12 +875,7 @@ class GlossListView(ListView):
 
             sorted_qs = order_queryset_by_sort_order(self.request.GET, qs, self.queryset_language_codes)
             # fill page parameters
-            self.page_get_parameters = ""
-            for key, value in get.items():
-                if key != 'page' and key in self.query_parameters.keys():
-                    self.page_get_parameters = self.page_get_parameters + f'&{key}={value}'
-                if key not in self.search_form.fields.keys():
-                    self.page_get_parameters = self.page_get_parameters + f'&{key}={value}'
+            self.page_get_parameters = get_page_parameters_for_listview(self.search_form, get, self.query_parameters)
             return sorted_qs
 
         if 'translation' in get and get['translation']:
@@ -905,12 +894,7 @@ class GlossListView(ListView):
 
             sorted_qs = order_queryset_by_sort_order(self.request.GET, qs, self.queryset_language_codes)
             # fill page parameters
-            self.page_get_parameters = ""
-            for key, value in get.items():
-                if key != 'page' and key in self.query_parameters.keys():
-                    self.page_get_parameters = self.page_get_parameters + f'&{key}={value}'
-                if key not in self.search_form.fields.keys():
-                    self.page_get_parameters = self.page_get_parameters + f'&{key}={value}'
+            self.page_get_parameters = get_page_parameters_for_listview(self.search_form, get, self.query_parameters)
             return sorted_qs
 
         if self.search_type != 'sign':
@@ -938,14 +922,8 @@ class GlossListView(ListView):
             self.request.session['last_used_dataset'] = self.last_used_dataset
 
         # fill page parameters
-        self.page_get_parameters = ""
-        for key,value in get.items():
-            if key != 'page' and key in self.query_parameters.keys():
-                self.page_get_parameters = self.page_get_parameters + f'&{key}={value}'
-            if key not in self.search_form.fields.keys():
-                self.page_get_parameters = self.page_get_parameters + f'&{key}={value}'
+        self.page_get_parameters = get_page_parameters_for_listview(self.search_form, get, self.query_parameters)
 
-        # Return the resulting filtered and sorted queryset
         return sorted_qs
 
 
