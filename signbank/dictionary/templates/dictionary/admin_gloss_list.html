@@ -103,6 +103,36 @@ function validateForm(formId) {
     target_keyword_object.setAttribute("value", sanitized);
     target_keyword_object.value = sanitized;
 {% endfor %}
+    var menubar_search_id = 'menubar-search';
+    var input_menubar_search = document.forms['frmSearch'][menubar_search_id].value;
+    var sanitized = sanitizeInput(input_menubar_search);
+    var target_menubar_search_object = document.getElementById(menubar_search_id);
+    target_menubar_search_object.setAttribute("value", sanitized);
+    target_menubar_search_object.value = sanitized;
+
+    var menubar_translation_id = 'menubar-translation';
+    var input_menubar_translation = document.forms['frmSearch'][menubar_translation_id].value;
+    var sanitized = sanitizeInput(input_menubar_translation);
+    var target_menubar_translation_object = document.getElementById(menubar_translation_id);
+    target_menubar_translation_object.setAttribute("value", sanitized);
+    target_menubar_translation_object.value = sanitized;
+{% for text_field in text_fields_of_gloss_search %}
+    var targetTextObjectId ='id_{{text_field}}';
+    console.log('target: '+targetTextObjectId);
+    var input_text_field = document.forms[formId][targetTextObjectId];
+    var input_text_value = input_text_field.value;
+    var sanitized = sanitizeInput(input_text_value);
+    var target_text_object = document.getElementById(targetTextObjectId);
+    target_text_object.setAttribute("value", sanitized);
+    target_text_object.value = sanitized;
+{% endfor %}
+    var morphemme_lookahead = 'morphemeidgloss';
+    var morpheme_field = document.forms[formId][morphemme_lookahead];
+    var input_morpheme_lookahead_value = morpheme_field.value;
+    var sanitized = sanitizeInput(input_morpheme_lookahead_value);
+    var target_morpheme_object = document.getElementById(morphemme_lookahead);
+    target_morpheme_object.setAttribute("value", sanitized);
+    target_morpheme_object.value = sanitized;
 }
 
 $(document).ready(function() {

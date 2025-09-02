@@ -50,28 +50,28 @@
     </script>
     <script type="text/javascript">
         function focusFunction() {
-            var search_text = document.getElementById("tooltip-search").value;
+            var search_text = document.getElementById("menubar-search").value;
             if (!search_text) {
-                document.getElementById("tooltip-search").style.background = "#E8E8E8";
+                document.getElementById("menubar-search").style.background = "#E8E8E8";
             }
         }
         function focusFunction2() {
-            var search_text = document.getElementById("tooltip-translation").value;
+            var search_text = document.getElementById("menubar-translation").value;
             if (!search_text) {
-                document.getElementById("tooltip-translation").style.background = "#E8E8E8";
+                document.getElementById("menubar-translation").style.background = "#E8E8E8";
             }
         }
         function blurFunction() {
-            document.getElementById("tooltip-search").style.background = "white";
+            document.getElementById("menubar-search").style.background = "white";
         }
         function blurFunction2() {
-            document.getElementById("tooltip-translation").style.background = "white";
+            document.getElementById("menubar-translation").style.background = "white";
         }
         function clickFunction() {
-            $("#tooltip-translation").val('');
+            $("#menubar-translation").val('');
         }
         function clickFunction2() {
-            $("#tooltip-search").val('');
+            $("#menubar-search").val('');
         }
     </script>
 
@@ -116,7 +116,7 @@
     	});
     	navbarHeight = Math.round($('#signbank-bar').outerHeight());
         $('#wrap').css({'padding-top': navbarHeight});
-        $('[data-toggle="tooltip-menubar"]').tooltip();
+        $('[data-toggle="menubar-menubar"]').tooltip();
 
         if (dark_mode_setting == "True") {
             toggle_dark_mode();
