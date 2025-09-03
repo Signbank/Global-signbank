@@ -118,21 +118,24 @@ function validateForm(formId) {
     target_menubar_translation_object.value = sanitized;
 {% for text_field in text_fields_of_gloss_search %}
     var targetTextObjectId ='id_{{text_field}}';
-    console.log('target: '+targetTextObjectId);
     var input_text_field = document.forms[formId][targetTextObjectId];
-    var input_text_value = input_text_field.value;
-    var sanitized = sanitizeInput(input_text_value);
-    var target_text_object = document.getElementById(targetTextObjectId);
-    target_text_object.setAttribute("value", sanitized);
-    target_text_object.value = sanitized;
+    if (input_text_field != undefined) {
+        var input_text_value = input_text_field.value;
+        var sanitized = sanitizeInput(input_text_value);
+        var target_text_object = document.getElementById(targetTextObjectId);
+        target_text_object.setAttribute("value", sanitized);
+        target_text_object.value = sanitized;
+    }
 {% endfor %}
     var morphemme_lookahead = 'morphemeidgloss';
     var morpheme_field = document.forms[formId][morphemme_lookahead];
-    var input_morpheme_lookahead_value = morpheme_field.value;
-    var sanitized = sanitizeInput(input_morpheme_lookahead_value);
-    var target_morpheme_object = document.getElementById(morphemme_lookahead);
-    target_morpheme_object.setAttribute("value", sanitized);
-    target_morpheme_object.value = sanitized;
+    if (input_text_field != undefined) {
+        var input_morpheme_lookahead_value = morpheme_field.value;
+        var sanitized = sanitizeInput(input_morpheme_lookahead_value);
+        var target_morpheme_object = document.getElementById(morphemme_lookahead);
+        target_morpheme_object.setAttribute("value", sanitized);
+        target_morpheme_object.value = sanitized;
+    }
 }
 
 $(document).ready(function() {
