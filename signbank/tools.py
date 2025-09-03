@@ -2443,6 +2443,9 @@ def generate_tabbed_text_response(values):
 
 def add_gloss_update_to_revision_history(user, gloss, field, oldvalue, newvalue):
 
+    if oldvalue == newvalue:
+        return
+
     revision = GlossRevision(old_value=oldvalue,
                              new_value=newvalue,
                              field_name=field,
@@ -2462,7 +2465,6 @@ def update_boolean_checkbox(user, gloss, field, value):
     else:
         category_value = ''
 
-    print('update_boolean_checkbox function: ', gloss, field, value, type(value))
     original_value = getattr(gloss, field)
 
     boolean_value = value.lower() in [_('Yes').lower(), 'true', True, 1]
@@ -2472,7 +2474,7 @@ def update_boolean_checkbox(user, gloss, field, value):
 
     display_value = _('Yes') if boolean_value else _('No')
 
-    add_gloss_update_to_revision_history(user, gloss, field, original_value, str(boolean_value))
+    add_gloss_update_to_revision_history(user, gloss, field, str(original_value), str(boolean_value))
 
     # results = {'boolean_value': boolean_value,
     #            'display_value': display_value,

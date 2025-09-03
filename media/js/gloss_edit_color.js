@@ -622,11 +622,12 @@ function update_sign_language_dialects(dialects)
 
 function update_text_area(newtext)
 {
-    var id = $(this).attr('id');
-    if (newtext) {
-        $(this).html(newtext);
+    $(this).html(newtext);
+    $(this).attr("value", newtext);
+    if (newtext == '') {
+        $(this).parent().addClass('empty_row');
     } else {
-        $(this).html("");
+        $(this).parent().removeClass('empty_row');
     }
 }
 

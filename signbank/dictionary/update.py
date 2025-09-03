@@ -1007,6 +1007,9 @@ def update_gloss(request, glossid):
 
         value = value.strip()
         original_value = getattr(gloss,field)
+        if field in ['useInstr']:
+            # get rid of hidden space characters, this is a text area field
+            original_value = original_value.replace('\r', ' ').replace('\n', ' ').replace('\t', ' ')
         if field in ['domhndsh', 'subhndsh', 'final_domhndsh', 'final_subhndsh']:
             original_value = original_value.name if original_value else original_value
 
@@ -1062,6 +1065,12 @@ def update_gloss(request, glossid):
         # The Placeholders are needed in the template Edit view so the user can "see" something to edit
 
         if field in (char_fields + text_fields):
+            # clear stored value first in case of space characters
+            gloss.__setattr__(field, '')
+            gloss.save()
+            if field in ['useInstr']:
+                # get rid of hidden space characters, this is a text area field
+                value = value.replace('\r', ' ').replace('\n', ' ').replace('\t', ' ')
             if value in ['-', '------']:
                 newvalue = ''
             else:
