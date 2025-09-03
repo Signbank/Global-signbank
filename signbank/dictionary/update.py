@@ -1009,10 +1009,6 @@ def update_gloss(request, glossid):
         original_value = getattr(gloss,field)
         if field in ['domhndsh', 'subhndsh', 'final_domhndsh', 'final_subhndsh']:
             original_value = original_value.name if original_value else original_value
-        if field == 'idgloss' and value == '':
-            # don't allow user to set Lemma ID Gloss to empty
-            # return HttpResponse(str(original_value), {'content-type': 'text/plain'})
-            value = str(original_value)
 
         # special cases
         # - Foreign Key fields (Language, Dialect)
