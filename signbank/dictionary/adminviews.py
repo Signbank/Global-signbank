@@ -5607,7 +5607,7 @@ def morph_ajax_complete(request, prefix):
         datasetid = request.session['datasetid']
     elif Dataset.objects.all().count() == 1:
         # if there is no session variable set, and only one dataset, use that one
-        datasetid = DEFAULT_DATASET_ID
+        datasetid = Dataset.objects.first().pk
     else:
         return JsonResponse(result, safe=False)
 
