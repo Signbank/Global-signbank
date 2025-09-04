@@ -25,6 +25,7 @@ from signbank.dictionary.forms import GlossSearchForm, SentenceForm
 from signbank.dictionary.field_choices import fields_to_fieldcategory_dict
 from signbank.dictionary.translate_choice_list import choicelist_queryset_to_translated_dict
 from signbank.tools import get_dataset_languages
+from signbank.dictionary.context_data import get_selected_datasets
 
 from easy_select2.widgets import Select2
 
@@ -923,7 +924,6 @@ def set_up_language_fields(model, view, form):
     :form: GlossSearchForm, MorphemeSearchForm, FocusGlossSearchForm, LemmaSearchForm, AnnotatedSentenceForm
     :view: GlossListView, MorphemeListView, SenseListView, MinimalPairsListView, LemmaListView, AnnotatedSentenceListView
     """
-    from signbank.dictionary.context_data import get_selected_datasets
     selected_datasets = get_selected_datasets(view.request)
     dataset_languages = get_dataset_languages(selected_datasets)
     interface_language = [view.request.LANGUAGE_CODE]
@@ -973,7 +973,6 @@ def set_up_signlanguage_dialects_fields(view, form):
     :form: GlossSearchForm
     :view: GlossListView, SenseListView
     """
-    from signbank.dictionary.context_data import get_selected_datasets
     selected_datasets = get_selected_datasets(view.request)
     field_label_signlanguage = gettext("Sign Language")
     field_label_dialects = gettext("Dialect")

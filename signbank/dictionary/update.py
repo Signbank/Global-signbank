@@ -3596,8 +3596,8 @@ def upload_eaf_files(request):
             already_seen.append(basename)
 
         # Maybe the file is not an eaf file or is missing an extension
-        magic_file_type = magic.from_buffer(open(destination_location, "rb").read(2040), mime=True)
-        if magic_file_type != 'text/xml' or wrong_format:
+        file_type = magic.from_buffer(open(destination_location, "rb").read(2040), mime=True)
+        if file_type != 'text/xml' or wrong_format:
             ignored_files.append(new_file)
             os.remove(destination_location)
 
