@@ -13,6 +13,17 @@
 
 {% load guardian_tags %}
 
+<noscript>
+    <p>You do not have javascript enabled. Please enable it to use this site.</p>
+    <style type="text/css">
+        #main {display: none;}
+        #definitionblock {display: none};
+        .navbar {display: none};
+        #maincontent {display: none};
+        #wrap {display: none};
+    </style>
+</noscript>
+
 {% block extrajs %}
 <script type="text/javascript">
     var url = '{{PREFIX_URL}}';
