@@ -1,28 +1,25 @@
 import datetime as DT
-from django.utils.timezone import get_current_timezone
+import os
+import json
+import magic
 
+from django.utils.timezone import get_current_timezone
 from django.shortcuts import render, get_object_or_404, redirect
-from django.template import Context, RequestContext
 from django.contrib.auth.decorators import login_required
 from django.views.decorators.http import require_http_methods
 from django.contrib import messages
-from django.http import HttpResponse
+from django.http import HttpResponse, JsonResponse
 from django.conf import settings
 from django.core.exceptions import ObjectDoesNotExist
 from django.utils.translation import gettext as _
-from django.forms.utils import ValidationError
 
 from signbank.video.models import GlossVideo, ExampleVideo, GlossVideoHistory, ExampleVideoHistory, GlossVideoNME, GlossVideoPerspective
-from signbank.dictionary.models import Gloss, DeletedGlossOrMedia, ExampleSentence, Morpheme, AnnotatedSentence, Dataset, GlossRevision, AnnotatedSentenceSource
 from signbank.video.forms import VideoUploadForObjectForm
-from django.http import JsonResponse
-# from django.contrib.auth.models import User
-# from datetime import datetime as DT
-import os
-import json
-
-from signbank.settings.base import WRITABLE_FOLDER
+from signbank.dictionary.models import (Gloss, DeletedGlossOrMedia, ExampleSentence, Morpheme, AnnotatedSentence,
+                                        Dataset, GlossRevision, AnnotationIdglossTranslation)
 from signbank.tools import generate_still_image, get_default_annotationidglosstranslation
+
+from pympi.Elan import Eaf
 
 
 @require_http_methods(["POST"])
@@ -162,7 +159,6 @@ def find_non_overlapping_annotated_glosses(timeslots, annotations_tier_1, annota
 
 
 def get_glosses_from_eaf(eaf, dataset_acronym):
-    from signbank.dictionary.models import AnnotationIdglossTranslation
     glosses, labels_not_found, sentences = [], [], []
     sentence_dict = {}
 
@@ -216,8 +212,6 @@ def get_glosses_from_eaf(eaf, dataset_acronym):
 
 
 def process_eaffile(request):
-    import magic
-    from pympi.Elan import Eaf
 
     if request.method == 'POST':
         check_gloss_label = request.POST.get('check_gloss_label', '')
