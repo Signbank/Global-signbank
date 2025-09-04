@@ -101,7 +101,8 @@ from signbank.query_parameters import (convert_query_parameters_to_filter, prett
                                        set_up_signlanguage_dialects_fields,
                                        queryset_glosssense_from_get, query_parameters_from_get,
                                        queryset_sentences_from_get, query_parameters_toggle_fields,
-                                       queryset_annotatedgloss_from_get, convert_query_parameters_to_annotatedgloss_filter)
+                                       queryset_annotatedgloss_from_get, convert_query_parameters_to_annotatedgloss_filter,
+                                       make_harmless_querydict)
 from signbank.search_history import (available_query_parameters_in_search_history, languages_in_query, display_parameters,
     get_query_parameters, save_query_parameters, fieldnames_from_query_parameters)
 from signbank.frequency import (import_corpus_speakers, configure_corpus_documents_for_dataset, update_corpus_counts,
@@ -749,8 +750,7 @@ class GlossListView(ListView):
         )
 
     def get_queryset(self):
-        get = self.request.GET
-
+        get = make_harmless_querydict(self.request)
         self.show_all = self.kwargs.get('show_all', self.show_all)
         self.search_type = self.request.GET.get('search_type', 'sign')
         setattr(self.request.session, 'search_type', self.search_type)
@@ -792,7 +792,6 @@ class GlossListView(ListView):
             set_up_signlanguage_dialects_fields(self, self.search_form)
 
         valid_regex, search_fields, field_values = check_language_fields(self.search_form, GlossSearchForm, get, dataset_languages)
-
         if USE_REGULAR_EXPRESSIONS and not valid_regex:
             error_message_regular_expression(self.request, search_fields, field_values)
             qs = Gloss.objects.none()
@@ -833,7 +832,7 @@ class GlossListView(ListView):
             if query:
                 qs = qs.filter(query).distinct()
 
-            sorted_qs = order_queryset_by_sort_order(self.request.GET, qs, self.queryset_language_codes)
+            sorted_qs = order_queryset_by_sort_order(get, qs, self.queryset_language_codes)
             # fill page parameters
             self.page_get_parameters = get_page_parameters_for_listview(self.search_form, get, self.query_parameters)
             return sorted_qs
@@ -848,7 +847,7 @@ class GlossListView(ListView):
         # If we wanted to get everything, we're done now
         if self.show_all:
             # sort the results
-            sorted_qs = order_queryset_by_sort_order(self.request.GET, qs, self.queryset_language_codes)
+            sorted_qs = order_queryset_by_sort_order(get, qs, self.queryset_language_codes)
             # fill page parameters
             self.page_get_parameters = get_page_parameters_for_listview(self.search_form, get, self.query_parameters)
             return sorted_qs
@@ -875,7 +874,7 @@ class GlossListView(ListView):
             self.request.session.modified = True
             self.query_parameters = query_parameters
 
-            sorted_qs = order_queryset_by_sort_order(self.request.GET, qs, self.queryset_language_codes)
+            sorted_qs = order_queryset_by_sort_order(get, qs, self.queryset_language_codes)
             # fill page parameters
             self.page_get_parameters = get_page_parameters_for_listview(self.search_form, get, self.query_parameters)
             return sorted_qs
@@ -894,7 +893,7 @@ class GlossListView(ListView):
             self.request.session.modified = True
             self.query_parameters = query_parameters
 
-            sorted_qs = order_queryset_by_sort_order(self.request.GET, qs, self.queryset_language_codes)
+            sorted_qs = order_queryset_by_sort_order(get, qs, self.queryset_language_codes)
             # fill page parameters
             self.page_get_parameters = get_page_parameters_for_listview(self.search_form, get, self.query_parameters)
             return sorted_qs
@@ -915,7 +914,7 @@ class GlossListView(ListView):
         qs = qs.select_related('lemma')
 
         # Sort the queryset by the parameters given
-        sorted_qs = order_queryset_by_sort_order(self.request.GET, qs, self.queryset_language_codes)
+        sorted_qs = order_queryset_by_sort_order(get, qs, self.queryset_language_codes)
 
         self.request.session['search_type'] = self.search_type
         self.request.session['web_search'] = self.web_search

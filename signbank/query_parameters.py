@@ -1318,3 +1318,28 @@ def query_parameters_from_get(searchform, GET, query_parameters):
             query_parameters[get_key] = get_value
     return query_parameters
 
+
+def make_harmless(request):
+
+    parameters_list = []
+    for key, value in request.GET.items():
+        harmless_value = value.replace('&', "&amp;").replace('<', "&lt;").replace('>', "&gt;").replace('\"', "&quot;").replace("'", "&#x27;")
+        parameters_list.append(f'{key}={harmless_value}')
+    parameters_string = '&'.join(parameters_list)
+    return parameters_string
+
+def make_harmless_querydict(request):
+
+    parameters = dict()
+    for key in request.GET.keys():
+        if key.endswith('[]'):
+            values = request.GET.getlist(key)
+            parameters[key] = values
+        else:
+            value = request.GET.get(key)
+            harmless_value = value.replace('&', "&amp;").replace('<', "&lt;").replace('>', "&gt;").replace('\"',
+                                                                                                           "&quot;").replace(
+                "'", "&#x27;")
+            parameters[key] = harmless_value
+
+    return parameters
