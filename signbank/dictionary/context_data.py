@@ -14,7 +14,6 @@ from signbank.tools import get_selected_datasets_for_user, get_dataset_languages
 
 from signbank.dictionary.field_choices import fields_to_fieldcategory_dict
 from signbank.dictionary.translate_choice_list import choicelist_queryset_to_field_colors, choicelist_choicelist_to_field_colors
-from signbank.query_parameters import search_fields_from_get
 
 
 def get_web_search(request):
@@ -161,6 +160,7 @@ def get_context_data_for_gloss_search_form(request, listview, search_form, kwarg
     context['MULTIPLE_SELECT_GLOSS_FIELDS'] = multiple_select_gloss_fields
     context['field_colors'] = get_choices_colors(fields_with_choices)
 
+    from signbank.query_parameters import search_fields_from_get
     populate_keys, populate_fields = search_fields_from_get(search_form, request.GET)
     context['gloss_fields_to_populate'] = json.dumps(populate_fields)
     context['gloss_fields_to_populate_keys'] = json.dumps(populate_keys)

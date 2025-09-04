@@ -54,9 +54,9 @@ from signbank.frequency import (import_corpus_speakers, configure_corpus_documen
                                 get_gloss_tokNo, get_gloss_tokNoSgnr, update_corpus_document_counts)
 from signbank.dictionary.admin import HandshapeAdmin, FieldChoiceAdmin
 
-from signbank.tools import (gloss_handshape_fields, fields_with_choices_glosses, fields_with_choices_handshapes,
-                            fields_with_choices_definition, fields_with_choices_morphology_definition,
-                            fields_with_choices_other_media_type, fields_with_choices_morpheme_type)
+from signbank.tools import (get_gloss_handshape_fields, get_fields_with_choices_glosses, get_fields_with_choices_handshapes,
+                            get_fields_with_choices_definition, get_fields_with_choices_morphology_definition,
+                            get_fields_with_choices_other_media_type, get_fields_with_choices_morpheme_type)
 
 from xml.etree import ElementTree
 
@@ -1724,7 +1724,7 @@ class HandshapeTests(TestCase):
 
     def test_delete_handshape(self):
 
-        handshape_fields = gloss_handshape_fields()
+        handshape_fields = get_gloss_handshape_fields()
         # create a gloss with and without handshape choices
 
         # set the test dataset
@@ -1925,7 +1925,7 @@ class FieldChoiceTests(TestCase):
         self.fieldchoice_admin = FieldChoiceAdmin(model=FieldChoice, admin_site=AdminSite())
 
     def test_update_field_choice(self):
-        fields_with_choices = fields_with_choices_glosses()
+        fields_with_choices = get_fields_with_choices_glosses()
 
         client = Client(enforce_csrf_checks=False)
         client.login(username='test-user', password='test-user')
@@ -2016,7 +2016,7 @@ class FieldChoiceTests(TestCase):
 
     def test_delete_fieldchoice_gloss(self):
 
-        fields_with_choices = fields_with_choices_glosses()
+        fields_with_choices = get_fields_with_choices_glosses()
         # create a gloss with and without field choices
 
         # set the test dataset
@@ -2079,7 +2079,7 @@ class FieldChoiceTests(TestCase):
 
     def test_delete_fieldchoice_handshape(self):
 
-        field_choices_handshapes = fields_with_choices_handshapes()
+        field_choices_handshapes = get_fields_with_choices_handshapes()
 
         # Create the handshape
         new_handshape = Handshape(name="thisisatemporarytesthandshape")
@@ -2150,7 +2150,7 @@ class FieldChoiceTests(TestCase):
 
         # delete fieldchoice for NoteType
 
-        fields_with_choices = fields_with_choices_definition()
+        fields_with_choices = get_fields_with_choices_definition()
         # create a gloss with and without field choices
 
         # set the test dataset
@@ -2229,7 +2229,7 @@ class FieldChoiceTests(TestCase):
 
         # delete fieldchoice for morphology definition
 
-        fields_with_choices = fields_with_choices_morphology_definition()
+        fields_with_choices = get_fields_with_choices_morphology_definition()
 
         # create a gloss with and without field choices
         # a second gloss is created to be the morpheme of the new morphology definition
@@ -2315,7 +2315,7 @@ class FieldChoiceTests(TestCase):
 
         # delete fieldchoice for OtherMediaType
 
-        fields_with_choices = fields_with_choices_other_media_type()
+        fields_with_choices = get_fields_with_choices_other_media_type()
 
         # create a gloss with and without field choices
 
@@ -2390,7 +2390,7 @@ class FieldChoiceTests(TestCase):
 
         # delete fieldchoice for morpheme type
 
-        fields_with_choices = fields_with_choices_morpheme_type()
+        fields_with_choices = get_fields_with_choices_morpheme_type()
         # create a gloss with and without field choices
 
         # set the test dataset
