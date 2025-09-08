@@ -859,7 +859,6 @@ def update_gloss(request, glossid):
 
     field = request.POST.get('id', '')
     value = request.POST.get('value', '')
-    print('update gloss, ', field, value)
     original_value = ''  # will in most cases be set later, but can't be empty in case it is not set
     category_value = ''
     field_category = ''
@@ -1020,7 +1019,6 @@ def update_gloss(request, glossid):
         # - tags
 
         gloss_fields = [Gloss.get_field(fname) for fname in Gloss.get_field_names()]
-        print('original value: ', original_value, type(original_value))
         # Translate the value if a boolean
         # Language values are needed here!
         newvalue = value
@@ -1065,6 +1063,7 @@ def update_gloss(request, glossid):
         # The Placeholders are needed in the template Edit view so the user can "see" something to edit
 
         if field in (char_fields + text_fields):
+            original_value = '' if original_value is None else original_value
             # clear stored value first in case of space characters
             gloss.__setattr__(field, '')
             gloss.save()
