@@ -1224,20 +1224,23 @@ def update_gloss(request, glossid):
         # store a boolean in the Revision History rather than a human value
         # as for the template (e.g., 'letter' or 'number')
         glossrevision_newvalue = value
+    elif isinstance(value, bool):
+        # field is a checkbox in the interface
+        glossrevision_newvalue = value
     else:
         # this takes care of a problem with None not being allowed as a value in GlossRevision
         # the weakdrop and weakprop fields make use of three-valued logic and None is a legitimate value aka Neutral
         if newvalue is None:
             newvalue = ''
         glossrevision_newvalue = newvalue
-
-    revision = GlossRevision(old_value=original_human_value,
-                             new_value=glossrevision_newvalue,
-                             field_name=field,
-                             gloss=gloss,
-                             user=request.user,
-                             time=DT.datetime.now(tz=get_current_timezone()))
-    revision.save()
+    if original_human_value != glossrevision_newvalue:
+        revision = GlossRevision(old_value=original_human_value,
+                                 new_value=glossrevision_newvalue,
+                                 field_name=field,
+                                 gloss=gloss,
+                                 user=request.user,
+                                 time=DT.datetime.now(tz=get_current_timezone()))
+        revision.save()
     # The machine_value (value) representation is also returned to accommodate Hyperlinks to Handshapes in gloss_edit.js
     return HttpResponse(str(original_value) + '\t' + str(newvalue) + '\t' + str(value) + '\t' + category_value
                         + '\t' + str(lemma_gloss_group) + '\t' + input_value, {'content-type': 'text/plain'})
