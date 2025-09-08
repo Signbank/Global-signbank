@@ -442,7 +442,6 @@ def convert_query_parameters_to_annotatedgloss_filter(query_parameters):
 
     query_list = []
     for get_key, get_value in query_parameters.items():
-        print(get_key, get_value)
         if get_key in ['isRepresentative'] and get_value:
             if get_value == 'yes':
                 annotatedglosses = AnnotatedGloss.objects.filter(isRepresentative__exact=True).distinct()
@@ -756,8 +755,7 @@ def search_fields_from_get(searchform, GET):
         if get_value in ['', '0']:
             continue
         if get_key.endswith('[]'):
-            vals = GET.getlist(get_key)
-            search_fields_to_populate[get_key] = vals
+            search_fields_to_populate[get_key] = get_value
             search_keys.append(get_key)
         elif get_key in ['translation', 'search']:
             print(get_key, html.escape(get_value))
@@ -786,25 +784,24 @@ def queryset_from_get(formclass, searchform, GET, qs):
             if not get_value:
                 continue
             # multiple select
-            vals = GET.getlist(get_key)
             field = get_key[:-2]
-            if not vals:
+            if not get_value:
                 continue
             if field in ['dialect', 'signlanguage', 'semField', 'derivHist']:
                 query_filter = field + '__in'
                 qs = qs.filter(**{query_filter: get_value})
             elif field in ['definitionRole']:
-                definitions_with_this_role = Definition.objects.filter(role__machine_value__in=vals)
+                definitions_with_this_role = Definition.objects.filter(role__machine_value__in=get_value)
                 pks_for_glosses_with_these_definitions = [definition.gloss.pk for definition in definitions_with_this_role]
                 qs = qs.filter(pk__in=pks_for_glosses_with_these_definitions)
             elif field in ['tags']:
-                values = [int(v) for v in vals]
+                values = [int(v) for v in get_value]
                 morphemes_with_tag = list(
                     TaggedItem.objects.filter(tag__id__in=values).values_list('object_id', flat=True))
                 qs = qs.filter(id__in=morphemes_with_tag)
             else:
                 query_filter = field + '__machine_value__in'
-                qs = qs.filter(**{query_filter: vals})
+                qs = qs.filter(**{query_filter: get_value})
         elif get_key not in searchform.fields.keys() \
                 or get_value in ['', '0']:
             continue
@@ -1018,43 +1015,42 @@ def queryset_glosssense_from_get(model, formclass, searchform, GET, qs):
             if not get_value:
                 continue
             # multiple select
-            vals = GET.getlist(get_key)
-            if not vals:
+            if not get_value:
                 continue
             field = get_key[:-2]
             if field in ['sentenceType']:
                 continue
             if field in ['dialect', 'signlanguage', 'semField', 'derivHist']:
                 query_filter = gloss_prefix + field + '__in'
-                qs = qs.filter(**{query_filter: vals}).distinct()
+                qs = qs.filter(**{query_filter: get_value}).distinct()
             elif field in ['definitionRole']:
-                definitions_with_this_role = Definition.objects.filter(role__machine_value__in=vals)
+                definitions_with_this_role = Definition.objects.filter(role__machine_value__in=get_value)
                 pks_for_glosses_with_these_definitions = [definition.gloss.pk for definition in definitions_with_this_role]
                 query_filter = gloss_prefix + 'pk__in'
                 qs = qs.filter(**{query_filter: pks_for_glosses_with_these_definitions})
             elif field in ['hasComponentOfType']:
-                morphdefs_with_correct_role = MorphologyDefinition.objects.filter(role__machine_value__in=vals)
+                morphdefs_with_correct_role = MorphologyDefinition.objects.filter(role__machine_value__in=get_value)
                 pks_for_glosses_with_morphdefs = [morphdef.parent_gloss.pk for morphdef in morphdefs_with_correct_role]
                 query_filter = gloss_prefix + 'pk__in'
                 qs = qs.filter(**{query_filter: pks_for_glosses_with_morphdefs})
             elif field in ['mrpType']:
-                target_morphemes = [m.id for m in Morpheme.objects.filter(mrpType__machine_value__in=vals)]
+                target_morphemes = [m.id for m in Morpheme.objects.filter(mrpType__machine_value__in=get_value)]
                 query_filter = gloss_prefix + 'id__in'
                 qs = qs.filter(**{query_filter: target_morphemes})
             elif field in ['hasRelation']:
-                relations_with_this_role = Relation.objects.filter(role__in=vals)
+                relations_with_this_role = Relation.objects.filter(role__in=get_value)
                 pks_for_glosses_with_correct_relation = [relation.source.pk for relation in relations_with_this_role]
                 query_filter = gloss_prefix + 'pk__in'
                 qs = qs.filter(**{query_filter: pks_for_glosses_with_correct_relation})
             elif field in ['tags']:
-                values = [int(v) for v in vals]
+                values = [int(v) for v in get_value]
                 morphemes_with_tag = list(
                     TaggedItem.objects.filter(tag__id__in=values).values_list('object_id', flat=True))
                 query_filter = gloss_prefix + 'id__in'
                 qs = qs.filter(**{query_filter: morphemes_with_tag})
             else:
                 query_filter = gloss_prefix + field + '__machine_value__in'
-                qs = qs.filter(**{query_filter: vals})
+                qs = qs.filter(**{query_filter: get_value})
         elif not legitimate_search_form_url_parameter(searchform, get_key):
             continue
         elif get_key.startswith(formclass.gloss_search_field_prefix):
@@ -1231,11 +1227,10 @@ def queryset_sentences_from_get(searchform, GET, qs):
             if not get_value:
                 continue
             # multiple select
-            vals = GET.getlist(get_key)
-            if not vals:
+            if not get_value:
                 continue
             if get_key in ['sentenceType[]']:
-                sentences_with_this_type = ExampleSentence.objects.filter(sentenceType__machine_value__in=vals)
+                sentences_with_this_type = ExampleSentence.objects.filter(sentenceType__machine_value__in=get_value)
                 qs = qs.filter(sense__exampleSentences__in=sentences_with_this_type).distinct()
         elif get_key not in searchform.fields.keys() \
                 or get_value in ['', '0']:
@@ -1307,10 +1302,9 @@ def query_parameters_from_get(searchform, GET, query_parameters):
         if get_value in ['', '0']:
             continue
         if get_key.endswith('[]'):
-            vals = GET.getlist(get_key)
-            if not vals:
+            if not get_value:
                 continue
-            query_parameters[get_key] = vals
+            query_parameters[get_key] = get_value
         elif get_key not in search_form_fields:
             # skip csrf_token and page
             continue
