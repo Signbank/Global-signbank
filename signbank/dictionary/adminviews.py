@@ -5545,19 +5545,14 @@ def annotatedsentence_ajax_search_results(request):
     else:
         return JsonResponse([], safe=False)
 
-def gloss_ajax_complete(request, prefix):
+def gloss_ajax_complete(request, datasetid, prefix):
     """Return a list of glosses matching the search term
     as a JSON structure suitable for typeahead."""
 
     result = []
-
-    if 'datasetid' in request.session.keys():
-        datasetid = request.session['datasetid']
-    else:
+    dataset = Dataset.objects.filter(id=datasetid).first()
+    if not dataset:
         return JsonResponse(result, safe=False)
-
-    dataset = Dataset.objects.get(id=datasetid)
-    default_language = dataset.default_language
 
     if request.LANGUAGE_CODE in dict(LANGUAGES_LANGUAGE_CODE_3CHAR).keys():
         interface_language_3char = dict(LANGUAGES_LANGUAGE_CODE_3CHAR)[request.LANGUAGE_CODE]
@@ -5565,6 +5560,11 @@ def gloss_ajax_complete(request, prefix):
         # this assumes the default language (LANGUAGE_CODE) in included in the LANGUAGES_LANGUAGE_CODE_3CHAR setting
         interface_language_3char = dict(LANGUAGES_LANGUAGE_CODE_3CHAR)[LANGUAGE_CODE]
     interface_language = Language.objects.get(language_code_3char=interface_language_3char)
+    activate(interface_language.language_code_2char)
+
+    default_language = dataset.default_language
+    if interface_language not in dataset.translation_languages.all():
+        interface_language = default_language
 
     # language is not empty
     # the following query only retrieves annotations for the language that match the prefix
@@ -5605,6 +5605,9 @@ def morph_ajax_complete(request, prefix):
 
     if 'datasetid' in request.session.keys():
         datasetid = request.session['datasetid']
+    elif Dataset.objects.all().count() == 1:
+        # if there is no session variable set, and only one dataset, use that one
+        datasetid = Dataset.objects.first().pk
     else:
         return JsonResponse(result, safe=False)
 

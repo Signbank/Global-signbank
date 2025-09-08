@@ -536,7 +536,7 @@ function update_view_and_remember_original_value(change_summary)
 var gloss_bloodhound = new Bloodhound({
       datumTokenizer: function(d) { return d.tokens; },
       queryTokenizer: Bloodhound.tokenizers.whitespace,
-      remote: url+'/dictionary/ajax/gloss/%QUERY'
+      remote: url+'/dictionary/ajax/gloss/'+gloss_dataset_id+'/%QUERY'
     });
 
 gloss_bloodhound.initialize();
