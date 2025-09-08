@@ -1,4 +1,5 @@
 from django.db.models import Q, BooleanField
+from django.db.models.fields import TextField, CharField
 from django.utils.translation import gettext, gettext_lazy as _
 
 from django.contrib.auth.decorators import permission_required
@@ -205,6 +206,9 @@ def pretty_print_revisions(gloss):
             elif field.name in ['domhndsh', 'subhndsh', 'final_domhndsh', 'final_subhndsh']:
                 display_old_value = get_handshape_from_name(revision.field_name, revision.old_value, language_codes)
                 display_new_value = get_handshape_from_name(revision.field_name, revision.new_value, language_codes)
+            elif isinstance(field, TextField) or isinstance(field, CharField):
+                display_old_value = revision.old_value.replace('\n', '\\n')
+                display_new_value = revision.new_value.replace('\n', '\\n')
             else:
                 display_old_value = check_value_to_translated_human_value(revision.field_name, revision.old_value)
                 display_new_value = check_value_to_translated_human_value(revision.field_name, revision.new_value)
@@ -245,12 +249,15 @@ def cleanup(request, glossid):
     for revision in revisions:
         if revision.field_name in Gloss.get_field_names():
             field = Gloss.get_field(revision.field_name)
+            if field.name == 'useInstr':
+                print(revision.field_name, 'old value: "', revision.old_value, '"')
+                print('new value: "', revision.new_value, '"')
             if isinstance(field, BooleanField):
                 # patches for original storage of revisions, type mismatch
-                if revision.old_value in ['False'] and revision.new_value in ['False', 'No', 'Nee']:
-                    empty_revisions.append(revision)
-                    continue
-                if revision.old_value in ['True'] and revision.new_value in ['Yes', 'yes', 'ja', 'Ja', '是', 'true', 'True', True, 1]:
+                TRUE_VALUES = ['True', 'true', 'Yes', 'yes', 'ja', 'Ja', '是', True, 1]
+                FALSE_VALUES = ['False', 'false', 'No', 'no', 'Nee', 'nee', '否', False, 0]
+                if ((revision.old_value in ['False'] and revision.new_value in FALSE_VALUES)
+                        or (revision.old_value in ['True'] and revision.new_value in TRUE_VALUES)):
                     empty_revisions.append(revision)
                     continue
             elif isinstance(field, FieldChoiceForeignKey):
