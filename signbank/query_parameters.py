@@ -1331,9 +1331,8 @@ def make_harmless_querydict(request):
             parameters[key] = values
         else:
             value = request.GET.get(key)
-            harmless_value = value.replace('&', "&amp;").replace('<', "&lt;").replace('>', "&gt;").replace('\"',
-                                                                                                           "&quot;").replace(
-                "'", "&#x27;")
+            harmless_value = value.replace('&', "&amp;").replace('<', "&lt;").replace('>', "&gt;").replace(
+                '\"', "&quot;").replace("'", "&#x27;").replace("%3C", "&lt;").replace("%3E", "&gt;").replace(
+                "%26", "&amp;").replace("%22", "&quot;").replace("%27", "&#x27;").replace("/", "&#47;").replace("=", "&#61;").replace("alert", "goblin")
             parameters[key] = harmless_value
-
     return parameters

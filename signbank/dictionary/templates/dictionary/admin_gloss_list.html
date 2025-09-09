@@ -72,12 +72,13 @@ var gloss_fields_to_populate = {{gloss_fields_to_populate|safe}};
 var gloss_fields_to_populate_keys = {{gloss_fields_to_populate_keys|safe}};
 
 function sanitizeInput(input) {
-  return input
-    .replace(/&/g, "&amp;")
+  var copyinput = input;
+  copyinput = copyinput.replace(/&/g, "&amp;")
     .replace(/</g, "&lt;")
     .replace(/>/g, "&gt;")
     .replace(/"/g, "&quot;")
     .replace(/'/g, "&#x27;");
+  return copyinput;
 }
 
 function validateForm(formId) {

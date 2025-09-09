@@ -563,6 +563,10 @@ class GlossListView(ListView):
 
         context = get_context_data_for_gloss_search_form(self.request, self, self.search_form, self.kwargs, context)
 
+        populate_keys, populate_fields = search_fields_from_get(self.search_form, self.query_parameters)
+        context['gloss_fields_to_populate'] = json.dumps(populate_fields)
+        context['gloss_fields_to_populate_keys'] = json.dumps(populate_keys)
+
         # it is necessary to sort the object list by lemma_id in order for all glosses with the same lemma to be grouped
         # correctly in the template
         list_of_object_ids = [g.id for g in self.object_list]
@@ -751,6 +755,7 @@ class GlossListView(ListView):
 
     def get_queryset(self):
         get = make_harmless_querydict(self.request)
+        print(get)
         self.show_all = self.kwargs.get('show_all', self.show_all)
         self.search_type = self.request.GET.get('search_type', 'sign')
         setattr(self.request.session, 'search_type', self.search_type)
@@ -859,6 +864,8 @@ class GlossListView(ListView):
         if 'search' in get and get['search']:
             # menu bar gloss search, return the results
             val = get['search']
+            print('search: ', val)
+            print('search: ', html.escape(val))
             query_parameters['search'] = html.escapejs(val)
             if USE_REGULAR_EXPRESSIONS:
                 query = Q(annotationidglosstranslation__text__iregex=val)

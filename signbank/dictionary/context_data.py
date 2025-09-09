@@ -160,11 +160,6 @@ def get_context_data_for_gloss_search_form(request, listview, search_form, kwarg
     context['MULTIPLE_SELECT_GLOSS_FIELDS'] = multiple_select_gloss_fields
     context['field_colors'] = get_choices_colors(fields_with_choices)
 
-    from signbank.query_parameters import search_fields_from_get
-    populate_keys, populate_fields = search_fields_from_get(search_form, request.GET)
-    context['gloss_fields_to_populate'] = json.dumps(populate_fields)
-    context['gloss_fields_to_populate_keys'] = json.dumps(populate_keys)
-
     context['SHOW_DATASET_INTERFACE_OPTIONS'] = SHOW_DATASET_INTERFACE_OPTIONS
     context['USE_REGULAR_EXPRESSIONS'] = USE_REGULAR_EXPRESSIONS
 
