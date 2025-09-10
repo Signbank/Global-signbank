@@ -1023,10 +1023,10 @@ def update_gloss(request, glossid):
         # Language values are needed here!
         newvalue = value
         if isinstance(Gloss.get_field(field), BooleanField):
-            print('update gloss boolean field: ', field, value)
             # value is the html 'value' received during editing
             # value gets converted to a Boolean by the following statement
             if field in ['weakdrop', 'weakprop']:
+                # the weakdrop and weakprop fields make use of three-valued logic and None is a legitimate value aka Neutral
                 NEUTRALBOOLEANCHOICES = {None: '1', True: '2', False: '3'}
                 category_value = 'phonology'
                 if value not in ['1', '2', '3']:
@@ -1036,13 +1036,23 @@ def update_gloss(request, glossid):
                     else:
                         # something is wrong, set to None
                         value = '1'
-                newvalue = {'1': '&nbsp;', '2': '+WD', '3': '-WD'}[value]
-                value = {'1': None, '2': True, '3': False}[value]
-
+                display_value = {'1': '&nbsp;', '2': '+WD', '3': '-WD'}[value]
+                boolean_value = {'1': None, '2': True, '3': False}[value]
+                gloss.__setattr__(field, boolean_value)
+                gloss.save()
+                if original_value != boolean_value:
+                    add_gloss_update_to_revision_history(request.user, gloss, field, str(original_value), display_value)
+                return HttpResponse(f'{boolean_value}\t{display_value}\t{category_value}', {'content-type': 'text/plain'})
             elif field in ['domhndsh_letter', 'domhndsh_number', 'subhndsh_letter', 'subhndsh_number']:
-                print('field in letter, number: ', value)
-                newvalue = value
-                value = (value in ['letter', 'number'])
+                category_value = 'phonology'
+                original_value = False if original_value is None else original_value
+                display_value = value
+                boolean_value = (value in ['letter', 'number'])
+                gloss.__setattr__(field, boolean_value)
+                gloss.save()
+                if original_value != boolean_value:
+                    add_gloss_update_to_revision_history(request.user, gloss, field, str(original_value), display_value)
+                return HttpResponse(f'{boolean_value}\t{display_value}\t{category_value}', {'content-type': 'text/plain'})
             else:
                 return update_boolean_checkbox(request.user, gloss, field, value)
 
@@ -1112,44 +1122,19 @@ def update_gloss(request, glossid):
             gloss.__setattr__(field, value)
             gloss.save()
 
-            # If the value is not a Boolean, get the human readable value
-            if not isinstance(value, bool):
-                # if we get to here, field is a valid field of Gloss
-                newvalue = value
-
     if field in FIELDS['phonology']:
         category_value = 'phonology'
 
     # the gloss has been updated, now prepare values for saving to GlossHistory and display in template
-    # This is because you cannot concat none to a string in py3
-    if original_value is None:
-        original_value = ''
-
-    # if choice_list is empty, the original_value is returned by the called function
-    # Remember this change for the history books
+    original_value = '' if original_value is None else original_value
     original_human_value = original_value.name if isinstance(original_value, FieldChoice) else original_value
-    if isinstance(value, bool) and field in HANDSHAPE_ETYMOLOGY_FIELDS + HANDEDNESS_ARTICULATION_FIELDS:
-        # store a boolean in the Revision History rather than a human value
-        # as for the template (e.g., 'letter' or 'number')
-        glossrevision_newvalue = value
-    elif isinstance(value, bool):
-        # field is a checkbox in the interface
-        glossrevision_newvalue = value
-    else:
-        # this takes care of a problem with None not being allowed as a value in GlossRevision
-        # the weakdrop and weakprop fields make use of three-valued logic and None is a legitimate value aka Neutral
-        if newvalue is None:
-            newvalue = ''
-        glossrevision_newvalue = newvalue
-    if original_human_value != glossrevision_newvalue:
-        revision = GlossRevision(old_value=original_human_value,
-                                 new_value=glossrevision_newvalue,
-                                 field_name=field,
-                                 gloss=gloss,
-                                 user=request.user,
-                                 time=DT.datetime.now(tz=get_current_timezone()))
-        revision.save()
-    # The machine_value (value) representation is also returned to accommodate Hyperlinks to Handshapes in gloss_edit.js
+    # None is not  allowed as a value in GlossRevision
+    newvalue = '' if newvalue is None else newvalue
+
+    if original_human_value != newvalue:
+        add_gloss_update_to_revision_history(request.user, gloss, field, original_human_value, newvalue)
+
+    # The machine_value (value) representation is also returned to accommodate Hyperlinks to Handshapes
     return generate_tabbed_text_response([original_value, newvalue, value, category_value, lemma_gloss_group, input_value])
 
 

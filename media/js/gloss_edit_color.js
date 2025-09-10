@@ -457,7 +457,7 @@ function configure_edit() {
 		                choices: handedness_weak_choices },
 		     type      : 'select',
 		     data    : handedness_weak_choices,
-			 callback : update_view_and_remember_original_value
+			 callback : update_articulation
 		 });
      });
      $('.edit_WP').click(function()
@@ -480,20 +480,20 @@ function configure_edit() {
 		                choices: handedness_weak_choices },
 		     type      : 'select',
 		     data    : handedness_weak_choices,
-			 callback : update_view_and_remember_original_value
+			 callback : update_articulation
 		 });
      });
      $('.edit_letter').editable(edit_post_url, {
          params : { a: 0 },
          type      : 'checkbox',
          checkbox: { trueValue: 'letter', falseValue: '&nbsp;' },
-		 callback : update_view_and_remember_original_value
+		 callback : update_checkbox_tabbed
      });
      $('.edit_number').editable(edit_post_url, {
          params : { a: 0 },
          type      : 'checkbox',
          checkbox: { trueValue: 'number', falseValue: '&nbsp;' },
-		 callback : update_view_and_remember_original_value
+		 callback : update_checkbox_tabbed
      });
      $('.edit_relation_target').editable(edit_post_url, {
          params : { a: 0 },
@@ -671,6 +671,24 @@ function update_checkbox(data)
     }
 }
 
+function update_articulation(change_summary) {
+    var id = $(this).attr('id');
+    var split_values = change_summary.split('\t');
+    var boolean_value = split_values[0];
+    var display_value = split_values[1];
+    var category_value = split_values[2];
+    $(this).attr("value", boolean_value);
+    $(this).html(display_value);
+    if (boolean_value == 'True') {
+        $(this).parent().removeClass('empty_row');
+    } else {
+        $(this).parent().addClass('empty_row');
+    }
+    if (category_value == 'phonology') {
+        auto_advance(id);
+    }
+}
+
 function update_view_and_remember_original_value(change_summary)
 {
 	split_values_count = change_summary.split('\t').length - 1;
@@ -690,51 +708,25 @@ function update_view_and_remember_original_value(change_summary)
             input_value = split_values[5];
             $(this).attr('data-value', input_value);
         }
-
         id = $(this).attr('id');
         $(this).html(new_value);
 
         new_values_for_changes_made[id] = machine_value;
-        if (new_value == '&nbsp;') {
-            new_value = 'False';
-        }
 
         if ($.isEmptyObject(original_values_for_changes_made[id]))
         {
             original_values_for_changes_made[id] = original_value;
             $(this).parent().removeClass('empty_row');
-            if (id == 'weakprop' || id == 'weakdrop' || id == 'domhndsh_letter' || id == 'domhndsh_number' || id == 'subhndsh_letter' || id == 'subhndsh_number') {
-                $(this).attr("value", machine_value);
-                if (new_value == '&nbsp;') {
-                    $(this).html("------");
-                }
-            }
-            else {
-                $(this).attr("value", new_value);
-            }
+            $(this).attr("value", new_value);
         }
         if (new_value == '-' || new_value == ' ' || new_value == '' || new_value == 'None' ||
                         new_value == 'False' || new_value == 0 || new_value == '&nbsp;')
         {
-            if (id == 'weakprop' || id == 'weakdrop' || id == 'domhndsh_letter' || id == 'domhndsh_number' || id == 'subhndsh_letter' || id == 'subhndsh_number') {
-                $(this).html("------");
-            }
-            else {
-                if (id == 'idgloss') {
-//                the user tried to erase the Lemma ID Gloss field, reset it in the template to what it was
-                    $(this).html(original_value);
-                    lemma_group = original_lemma_group;
-                } else {
-                    $(this).parent().addClass('empty_row');
-                    $(this).attr("value", machine_value);
-                    $(this).html("------");
-                }
-            }
+            $(this).parent().addClass('empty_row');
+            $(this).attr("value", machine_value);
+            $(this).html("------");
         }
         if (category_value == 'phonology') {
-            if (id != 'weakprop' && id != 'weakdrop') {
-                $(this).attr("value", new_value);
-            }
             auto_advance(id);
         }
     }
