@@ -2467,7 +2467,7 @@ def update_boolean_checkbox(user, gloss, field, value):
 
     original_value = getattr(gloss, field)
 
-    boolean_value = value.lower() in [_('Yes').lower(), 'true', True, 1]
+    boolean_value = value.lower() in [_('Yes').lower(), 'true', 'True', True, 1]
 
     gloss.__setattr__(field, boolean_value)
     gloss.save()
