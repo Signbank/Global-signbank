@@ -6,7 +6,7 @@ from signbank.settings.base import DISABLE_MOVING_THUMBNAILS_ABOVE_NR_OF_GLOSSES
 from signbank.settings.server_specific import (FIELDS, HANDSHAPE_ETYMOLOGY_FIELDS, HANDEDNESS_ARTICULATION_FIELDS,
                                                SEARCH_BY, USE_DERIVATIONHISTORY, LANGUAGE_CODE, DEFAULT_DATASET_ACRONYM,
                                                SHOW_DATASET_INTERFACE_OPTIONS, USE_REGULAR_EXPRESSIONS,
-                                               SHOW_MORPHEME_SEARCH, GLOSS_LIST_DISPLAY_FIELDS)
+                                               SHOW_MORPHEME_SEARCH, GLOSS_LIST_DISPLAY_FIELDS, VIEW_TYPES, SEARCH_TYPES)
 from signbank.dictionary.models import (Dataset, Gloss, Morpheme, SignLanguage, Dialect,
                                         FieldChoice, CATEGORY_MODELS_MAPPING)
 from signbank.dictionary.forms import GlossSearchForm, GlossCreateForm, LemmaCreateForm
@@ -48,12 +48,15 @@ def get_context_data_for_list_view(request, listview, kwargs, context={}):
     Creates basic context data for several ListViews (e.g. GlossListView, SenseListView)
     """
     context['show_all'] = kwargs.get('show_all', False)
-    context['view_type'] = request.GET.get('view_type', listview.view_type)
+    view_type = request.GET.get('view_type')
+    # erase a potentially dangerous view_type in the url parameter with the view default
+    context['view_type'] = view_type if view_type in VIEW_TYPES else listview.view_type
     context['menu_bar_search'] = html.escape(request.GET['search']) if 'search' in request.GET else ''
     context['web_search'] = get_web_search(request)
 
     search_type = request.GET.get('search_type')
-    context['search_type'] = search_type if search_type else listview.search_type
+    # replace a potentially dangerous search_type in the url with the view default
+    context['search_type'] = search_type if search_type in SEARCH_TYPES else listview.search_type
     if 'search_type' not in request.session.keys():
         request.session['search_type'] = search_type
 
