@@ -1160,7 +1160,7 @@ class Gloss(MetaModelMixin, models.Model):
 
     mouthG = models.CharField(_("Mouth Gesture"), max_length=50, blank=True)
     mouthing = models.CharField(_("Mouthing"), max_length=50, blank=True)
-    phonetVar = models.CharField(_("Phonetic Variation"), max_length=50, blank=True, )
+    phonetVar = models.CharField(_("Phonetic Variation"), max_length=50, blank=True)
 
     locPrimLH = FieldChoiceForeignKey(FieldChoice, on_delete=models.SET_NULL, null=True,
                                           limit_choices_to={'field': FieldChoice.LOCATION},
@@ -3043,7 +3043,7 @@ def generate_fieldname_to_kind_table():
         temp_field_to_kind_table[fieldname] = 'list'
     for f in Gloss._meta.fields:
         f_internal_type = f.get_internal_type()
-        if f_internal_type in ['BooleanField', 'BooleanField']:
+        if f_internal_type in ['BooleanField']:
             temp_field_to_kind_table[f.name] = 'check'
         elif f_internal_type in ['CharField', 'TextField']:
             temp_field_to_kind_table[f.name] = 'text'
@@ -3057,7 +3057,7 @@ def generate_fieldname_to_kind_table():
             temp_field_to_kind_table[f.name] = f_internal_type
     for f in Morpheme._meta.fields:
         f_internal_type = f.get_internal_type()
-        if f_internal_type in ['BooleanField', 'BooleanField']:
+        if f_internal_type in ['BooleanField']:
             temp_field_to_kind_table[f.name] = 'check'
         elif f_internal_type in ['CharField', 'TextField']:
             temp_field_to_kind_table[f.name] = 'text'
@@ -3072,7 +3072,7 @@ def generate_fieldname_to_kind_table():
     for h in Handshape._meta.fields:
         h_internal_type = h.get_internal_type()
         if h.name not in temp_field_to_kind_table.keys():
-            if h_internal_type in ['BooleanField', 'BooleanField']:
+            if h_internal_type in ['BooleanField']:
                 temp_field_to_kind_table[h.name] = 'check'
             elif h_internal_type in ['CharField', 'TextField']:
                 temp_field_to_kind_table[h.name] = 'text'

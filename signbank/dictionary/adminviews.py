@@ -1391,10 +1391,6 @@ class GlossDetailView(DetailView):
         context['gloss_phonology'] = FIELDS['phonology']
         context['phonology_list_kinds'] = get_phonology_list_kinds()
 
-        context['frequency_fields'] = []
-        for f_field in FIELDS['frequency']:
-            context['frequency_fields'].append([getattr(gl, f_field), f_field, labels[f_field], 'IntegerField'])
-
         context['publication_fields'] = []
         # field excludeFromEcv is added here in order to show it in Gloss Edit
         for p_field in FIELDS['publication'] + ['excludeFromEcv']:
@@ -5580,7 +5576,7 @@ def gloss_ajax_complete(request, datasetid, prefix):
             annotationidglosstranslation = gloss.annotationidglosstranslation_set.get(language=default_language)
             default_annotationidglosstranslation = annotationidglosstranslation.text
         result.append({'annotation_idgloss': f'{gloss.pk}: {gloss.to_string()}',
-                       'idgloss': gloss.idgloss, 'sn': gloss.sn, 'pk': "%s" % gloss.id})
+                       'idgloss': gloss.idgloss, 'pk': f'{gloss.pk}'})
 
     sorted_result = sorted(result, key=lambda x : (x['annotation_idgloss'], len(x['annotation_idgloss'])))
 
@@ -5868,13 +5864,16 @@ def glosslist_ajax_complete(request, gloss_id):
 
     column_values = []
     for fieldname in display_fields:
-        if fieldname in ['semField', 'derivHist', 'dialect', 'signlanguage',
+        if fieldname in ['semField', 'derivHist', 'dialect',
                          'definitionRole', 'hasothermedia', 'hasComponentOfType',
                          'mrpType', 'isablend', 'ispartofablend', 'morpheme', 'relation',
                          'hasRelationToForeignSign', 'relationToForeignSign']:
             display_method = 'get_' + fieldname + '_display'
             field_value = getattr(this_gloss, display_method)()
             column_values.append((fieldname, field_value))
+        elif fieldname in ['signlanguage']:
+            field_value = getattr(this_gloss.lemma.dataset, 'signlanguage')
+            column_values.append((fieldname, field_value.name if field_value else '-'))
         elif fieldname == 'hasRelation':
             # this field has a list of roles as a parameter
             if query_fields_parameters:
