@@ -5,7 +5,7 @@ from django.utils.translation import gettext, gettext_lazy as _
 from django.contrib.auth.decorators import permission_required
 from django.http import JsonResponse
 
-from django.conf import settings
+from signbank.settings.server_specific import HANDEDNESS_ARTICULATION_FIELDS, MODELTRANSLATION_LANGUAGES
 
 from signbank.dictionary.models import Gloss, GlossRevision, Language, FieldChoice, Handshape, FieldChoiceForeignKey
 from signbank.dictionary.update import okay_to_update_gloss
@@ -25,9 +25,9 @@ def check_value_to_translated_human_value(field_name, check_value):
     # the value is a Boolean or it might not be set
     # if it's weakdrop or weakprop, it has a value Neutral when it's not set
     # look for aliases for empty to account for legacy data
-    if field_name not in settings.HANDEDNESS_ARTICULATION_FIELDS:
+    if field_name not in HANDEDNESS_ARTICULATION_FIELDS:
         # This accounts for legacy values stored in the revision history
-        if check_value == '' or check_value in ['False', 'No', 'Nee', '&nbsp;']:
+        if check_value == '' or check_value in ['False', 'None', 'No', 'Nee', '&nbsp;']:
             translated_value = _('No')
             return translated_value
         elif check_value in ['True', 'Yes', 'Ja', '1', 'letter', 'number']:
@@ -36,7 +36,7 @@ def check_value_to_translated_human_value(field_name, check_value):
         else:
             return check_value
     else:
-        # field is in settings.HANDEDNESS_ARTICULATION_FIELDS
+        # field is in HANDEDNESS_ARTICULATION_FIELDS
         # use the abbreviation that appears in the template
         value_abbreviation = 'WD' if field_name == 'weakdrop' else 'WP'
         if check_value in ['True', '+WD', '+WP', '1']:
@@ -88,7 +88,7 @@ def get_handshape_from_name(fieldname, value, language_codes):
 def pretty_print_revisions(gloss):
     # set up all the various translation fields for the interface languages
     language_codes = ['name_en']
-    for interface_language_code in settings.MODELTRANSLATION_LANGUAGES:
+    for interface_language_code in MODELTRANSLATION_LANGUAGES:
         name_languagecode = 'name_' + interface_language_code.replace('-', '_')
         if name_languagecode not in language_codes:
             language_codes.append(name_languagecode)
@@ -232,6 +232,32 @@ def pretty_print_revisions(gloss):
     return revisions
 
 
+def identical_booleans(field_name, value1, value2):
+
+    # these are internal and display representations of the 3-valued Booleans, including possible legacy storage
+    NEUTRAL_VALUES = ['None', '', 'Neutral', '&nbsp;']
+    PLUS_VALUES = ['True', '+WD', '+WP', '1', 'ja', 'Ja', '是']
+    MINUS_VALUES = ['False', '-WD', '-WP', '0', 'No', 'Nee', '否']
+
+    # these are internal and display representations of the traditional Boolean values, not the 3-valued ones
+    TRUE_VALUES = ['True', 'true', 'Yes', 'yes', 'ja', 'Ja', '是', 'letter', 'number']
+    FALSE_VALUES = ['False', 'false', 'No', 'no', 'Nee', 'nee', '否', 'None', '&nbsp;', '']
+    if field_name in HANDEDNESS_ARTICULATION_FIELDS:
+        if value1 in NEUTRAL_VALUES and value2 in NEUTRAL_VALUES:
+            return True
+        if value1 in PLUS_VALUES and value2 in PLUS_VALUES:
+            return True
+        if value1 in MINUS_VALUES and value2 in MINUS_VALUES:
+            return True
+        return False
+
+    if value1 in TRUE_VALUES and value2 in TRUE_VALUES:
+        return True
+    if value1 in FALSE_VALUES and value2 in FALSE_VALUES:
+        return True
+    return False
+
+
 @permission_required('dictionary.change_gloss')
 def cleanup(request, glossid):
 
@@ -249,16 +275,11 @@ def cleanup(request, glossid):
     for revision in revisions:
         if revision.field_name in Gloss.get_field_names():
             field = Gloss.get_field(revision.field_name)
-            if field.name == 'useInstr':
-                print(revision.field_name, 'old value: "', revision.old_value, '"')
-                print('new value: "', revision.new_value, '"')
             if isinstance(field, BooleanField):
-                # patches for original storage of revisions, type mismatch
-                TRUE_VALUES = ['True', 'true', 'Yes', 'yes', 'ja', 'Ja', '是', True, 1]
-                FALSE_VALUES = ['False', 'false', 'No', 'no', 'Nee', 'nee', '否', False, 0]
-                if ((revision.old_value in ['False'] and revision.new_value in FALSE_VALUES)
-                        or (revision.old_value in ['True'] and revision.new_value in TRUE_VALUES)):
+                if identical_booleans(revision.field_name, revision.old_value, revision.new_value):
                     empty_revisions.append(revision)
+                    continue
+                else:
                     continue
             elif isinstance(field, FieldChoiceForeignKey):
                 if revision.old_value == revision.new_value:
