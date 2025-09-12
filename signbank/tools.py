@@ -2361,6 +2361,44 @@ def get_checksum_for_path(file_path):
         return None
 
 
+def get_page_parameters_for_listview(search_form, request_get_parameters, query_parameters):
+    # fill page parameters
+    page_get_parameters = ""
+    for key, value in request_get_parameters.items():
+        if key == 'page':
+            continue
+        if key in query_parameters.keys():
+            page_get_parameters = page_get_parameters + f'&{key}={value}'
+        if key not in search_form.fields.keys():
+            page_get_parameters = page_get_parameters + f'&{key}={value}'
+    return page_get_parameters
+
+
+def get_text_input_fields_for_search_form(search_form):
+    gloss_fields = [Gloss.get_field(fname) for fname in Gloss.get_field_names()]
+    fieldnames = FIELDS['main'] + FIELDS['phonology'] + FIELDS['semantics'] + ['inWeb', 'isNew', 'excludeFromEcv']
+    char_fields = [f.name for f in gloss_fields
+                   if f.name in fieldnames and f.__class__.__name__ == 'CharField']
+    text_fields = [f.name for f in gloss_fields
+                   if f.name in fieldnames and f.__class__.__name__ == 'TextField']
+
+    search_form_fields = search_form.fields.keys()
+    search_form_text_fields = []
+    for key in search_form_fields:
+        # ignore field names already validated using element ids of form of template
+        if key in char_fields + text_fields:
+            continue
+        if key.startswith('keyword_') or key.startswith('lemma_') or key.startswith('glosssearch_'):
+            continue
+        if key in ['search', 'translation', 'sortOrder', 'morpheme']:
+            continue
+        if hasattr(search_form.fields[key].widget, 'input_type'):
+            widget_input_type = search_form.fields[key].widget.input_type
+            if widget_input_type == 'text':
+                search_form_text_fields.append(key)
+    return char_fields + text_fields + search_form_text_fields
+
+
 def get_lemma_translation_violations(dataset):
     # for use in a command to check all the lemma's of a dataset for constraint violations
     # the "none" case is legacy data, so not necessarily a constraint violation, but they cannot be empty if updated
