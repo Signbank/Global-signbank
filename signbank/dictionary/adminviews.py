@@ -52,7 +52,7 @@ from signbank.settings.server_specific import (URL, PREFIX_URL, LANGUAGE_CODE, L
                                                MORPHEME_CHOICE_FIELDS, MORPHEME_DISPLAY_FIELDS, SEARCH_BY,
                                                MINIMAL_PAIRS_SEARCH_FIELDS,
                                                PUBLIC_PHONOLOGY_FIELDS, PUBLIC_SEMANTICS_FIELDS, PUBLIC_MAIN_FIELDS,
-                                               DEBUG_SENSES, DEBUG_EMAILS_ON, SEPARATE_ENGLISH_IDGLOSS_FIELD)
+                                               DEBUG_SENSES, DEBUG_EMAILS_ON, SEPARATE_ENGLISH_IDGLOSS_FIELD, VIEW_TYPES, SEARCH_TYPES)
 from signbank.video.forms import VideoUploadForObjectForm
 from signbank.video.convertvideo import get_folder_name
 from signbank.dictionary.models import (Dataset, UserProfile, AffiliatedUser, AffiliatedGloss,
@@ -757,10 +757,17 @@ class GlossListView(ListView):
         get = make_harmless_querydict(self.request)
         print(get)
         self.show_all = self.kwargs.get('show_all', self.show_all)
-        self.search_type = self.request.GET.get('search_type', 'sign')
+
+        search_type = self.request.GET.get('search_type')
+        # replace a potentially dangerous search_type in the url with the view default
+        self.search_type = search_type if search_type in SEARCH_TYPES else 'sign'
         setattr(self.request.session, 'search_type', self.search_type)
-        self.view_type = self.request.GET.get('view_type', 'gloss_list')
+
+        view_type = self.request.GET.get('view_type')
+        # erase a potentially dangerous view_type in the url parameter with the view default
+        self.view_type = view_type if view_type in VIEW_TYPES else 'gloss_list'
         setattr(self.request, 'view_type', self.view_type)
+
         self.web_search = get_web_search(self.request)
         setattr(self.request, 'web_search', self.web_search)
 
@@ -908,7 +915,7 @@ class GlossListView(ListView):
         if self.search_type != 'sign':
             query_parameters['search_type'] = self.search_type
         qs = queryset_glosssense_from_get('Gloss', GlossSearchForm, self.search_form, get, qs)
-        query_parameters = query_parameters_from_get(self.search_form, get, query_parameters)
+        query_parameters = query_parameters_from_get(self, self.search_form, get, query_parameters)
         qs = apply_language_filters_to_results('Gloss', qs, query_parameters)
         qs = qs.distinct()
         qs = apply_video_filters_to_results('Gloss', qs, query_parameters)
@@ -1021,12 +1028,18 @@ class SenseListView(ListView):
         return paginate_by
 
     def get_queryset(self):
-        get = self.request.GET
+        get = make_harmless_querydict(self.request)
 
-        self.search_type = self.request.GET.get('search_type', 'sense')
+        search_type = self.request.GET.get('search_type')
+        # replace a potentially dangerous search_type in the url with the view default
+        self.search_type = search_type if search_type in SEARCH_TYPES else 'sense'
         setattr(self.request.session, 'search_type', self.search_type)
-        self.view_type = self.request.GET.get('view_type', 'sense_list')
+
+        view_type = self.request.GET.get('view_type')
+        # erase a potentially dangerous view_type in the url parameter with the view default
+        self.view_type = view_type if view_type in VIEW_TYPES else 'sense_list'
         setattr(self.request, 'view_type', self.view_type)
+
         self.web_search = get_web_search(self.request)
         setattr(self.request, 'web_search', self.web_search)
 
@@ -1092,7 +1105,7 @@ class SenseListView(ListView):
         # this is a temporary query_parameters variable
         query_parameters = dict()
         # it is saved to self.query_parameters after the parameters are processed
-        query_parameters = query_parameters_from_get(self.search_form, get, query_parameters)
+        query_parameters = query_parameters_from_get(self, self.search_form, get, query_parameters)
         qs = apply_video_filters_to_results('GlossSense', qs, query_parameters)
         qs = apply_nmevideo_filters_to_results('GlossSense', qs, query_parameters)
 
@@ -1100,7 +1113,7 @@ class SenseListView(ListView):
             query_parameters['search_type'] = self.search_type
 
         qs = queryset_sentences_from_get(self.sentence_search_form, get, qs)
-        query_parameters = query_parameters_from_get(self.sentence_search_form, get, query_parameters)
+        query_parameters = query_parameters_from_get(self, self.sentence_search_form, get, query_parameters)
 
         # save the query parameters to a session variable
         self.request.session['query_parameters'] = json.dumps(query_parameters)
@@ -2069,7 +2082,7 @@ class MorphemeListView(ListView):
         context['searchform'] = self.search_form
 
         # use these to fill the form fields of a just done query
-        populate_keys, populate_fields = search_fields_from_get(self.search_form, self.request.GET)
+        populate_keys, populate_fields = search_fields_from_get(self.search_form, self.query_parameters)
         context['populate_fields'] = json.dumps(populate_fields)
         context['populate_fields_keys'] = json.dumps(populate_keys)
 
@@ -2669,7 +2682,7 @@ class MinimalPairsListView(ListView):
 
         # pass these to the template to populate the search form with the search parameters
         # of a just done query
-        populate_keys, populate_fields = search_fields_from_get(self.search_form, self.request.GET)
+        populate_keys, populate_fields = search_fields_from_get(self.search_form, self.query_parameters)
         context['gloss_fields_to_populate'] = json.dumps(populate_fields)
         context['gloss_fields_to_populate_keys'] = json.dumps(populate_keys)
 
@@ -4710,11 +4723,10 @@ class DatasetFieldChoiceView(ListView):
         # get query terms from self.request
         get = self.request.GET
 
-        # Then check what kind of stuff we want
-        if 'dataset_acronym' in get:
+        all_datasets_acronyms = [ds.acronym for ds in Dataset.objects.all()]
+        if 'dataset_acronym' in get and get['dataset_acronym'] in all_datasets_acronyms:
+            # use temp variable in case the user put garbage in the url
             self.dataset_acronym = get['dataset_acronym']
-        # otherwise the default dataset_acronym DEFAULT_DATASET_ACRONYM is used
-
         setattr(self.request, 'dataset_acronym', self.dataset_acronym)
 
         if user.is_authenticated:
@@ -6133,6 +6145,8 @@ class LemmaListView(ListView):
     show_all = False
     search_type = 'lemma'
     search_form = LemmaSearchForm()
+    query_parameters = dict()
+    page_get_parameters = ""
 
     def __int__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -6154,9 +6168,14 @@ class LemmaListView(ListView):
             # is not available to the __init__ method
             set_up_language_fields(LemmaIdgloss, self, self.search_form)
 
-        get = self.request.GET
+        get = make_harmless_querydict(self.request)
+        print(get)
+        self.show_all = self.kwargs.get('show_all', self.show_all)
 
-        page_number = self.request.GET.get("page", 1)
+        setattr(self.request.session, 'search_type', self.search_type)
+
+        self.query_parameters = query_parameters_from_get(self, self.search_form, get, dict())
+        self.page_get_parameters = get_page_parameters_for_listview(self.search_form, get, self.query_parameters)
 
         # this view accommodates both Show All Lemmas and Lemma Search
         # the show_all argument is True for Show All Lemmas
@@ -6234,7 +6253,7 @@ class LemmaListView(ListView):
         context['dataset_languages'] = dataset_languages
 
         # use these to fill the form fields of a just done query
-        populate_keys, populate_fields = search_fields_from_get(self.search_form, self.request.GET)
+        populate_keys, populate_fields = search_fields_from_get(self.search_form, self.query_parameters)
         context['populate_fields'] = json.dumps(populate_fields)
         context['populate_fields_keys'] = json.dumps(populate_keys)
 
@@ -6284,7 +6303,7 @@ class LemmaListView(ListView):
 
         items = construct_scrollbar(results, self.search_type, lang_attr_name)
         self.request.session['search_results'] = items
-
+        context['page_get_parameters'] = self.page_get_parameters
         return context
 
     def render_to_response(self, context, **response_kwargs):
@@ -7297,6 +7316,7 @@ class AnnotatedGlossListView(ListView):
     template_name = 'dictionary/admin_annotatedgloss_list.html'
     search_form = GlossSearchForm()
     sentence_search_form = AnnotatedGlossForm()
+    page_get_parameters = ""
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -7341,15 +7361,20 @@ class AnnotatedGlossListView(ListView):
         items = construct_scrollbar(self.object_list, self.search_type, lang_attr_name)
         self.request.session['search_results'] = items
 
+        context['page_get_parameters'] = self.page_get_parameters
+
         return context
 
     def get_queryset(self):
-        get = self.request.GET
+        get = make_harmless_querydict(self.request)
+        print(get)
 
-        self.view_type = self.request.GET.get('view_type', 'gloss_list')
+        setattr(self.request.session, 'search_type', self.search_type)
+
+        view_type = self.request.GET.get('view_type')
+        # erase a potentially dangerous view_type in the url parameter with the view default
+        self.view_type = view_type if view_type in VIEW_TYPES else 'gloss_list'
         setattr(self.request, 'view_type', self.view_type)
-        self.web_search = get_web_search(self.request)
-        setattr(self.request, 'web_search', self.web_search)
 
         selected_datasets = get_selected_datasets(self.request)
         dataset_languages = get_dataset_languages(selected_datasets)
@@ -7390,6 +7415,7 @@ class AnnotatedGlossListView(ListView):
         if USE_REGULAR_EXPRESSIONS and not valid_regex:
             error_message_regular_expression(self.request, search_fields, field_values)
             qs = AnnotatedGloss.objects.none()
+            self.page_get_parameters = get_page_parameters_for_listview(self.search_form, get, self.query_parameters)
             return qs
 
         if 'query_parameters' in self.request.session.keys() \
@@ -7436,6 +7462,7 @@ class AnnotatedGlossListView(ListView):
                     list_annotatedglossids.append(id)
             qs = qs.filter(id__in=list_annotatedglossids).order_by('gloss__id', 'annotatedsentence__id')
             qs = order_queryset_by_annotatedgloss(qs, order_by)
+            self.page_get_parameters = get_page_parameters_for_listview(self.search_form, get, self.query_parameters)
             return qs
         else:
             qs = AnnotatedGloss.objects.none()
@@ -7447,14 +7474,14 @@ class AnnotatedGlossListView(ListView):
         # this is a temporary query_parameters variable
         query_parameters = dict()
         # it is saved to self.query_parameters after the parameters are processed
-        query_parameters = query_parameters_from_get(self.search_form, get, query_parameters)
+        query_parameters = query_parameters_from_get(self, self.search_form, get, query_parameters)
         qs = apply_video_filters_to_results('AnnotatedGloss', qs, query_parameters)
         qs = apply_nmevideo_filters_to_results('AnnotatedGloss', qs, query_parameters)
 
         query_parameters['search_type'] = self.search_type
 
         qs = queryset_annotatedgloss_from_get(self.sentence_search_form, get, qs)
-        query_parameters = query_parameters_from_get(self.sentence_search_form, get, query_parameters)
+        query_parameters = query_parameters_from_get(self, self.sentence_search_form, get, query_parameters)
 
         # save the query parameters to a session variable
         self.request.session['query_parameters'] = json.dumps(query_parameters)
@@ -7476,6 +7503,7 @@ class AnnotatedGlossListView(ListView):
                 list_annotatedglossids.append(id)
         qs = qs.filter(id__in=list_annotatedglossids).order_by('gloss__id', 'annotatedsentence__id')
         qs = order_queryset_by_annotatedgloss(qs, order_by)
+        self.page_get_parameters = get_page_parameters_for_listview(self.search_form, get, self.query_parameters)
         return qs
 
 

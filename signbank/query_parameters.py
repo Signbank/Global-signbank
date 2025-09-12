@@ -1287,9 +1287,10 @@ def queryset_annotatedgloss_from_get(searchform, GET, qs):
     return qs
 
 
-def query_parameters_from_get(searchform, GET, query_parameters):
+def query_parameters_from_get(view, searchform, GET, query_parameters):
     """
     Function to collect non-empty search fields from GET
+    The make_harmless_querydict function has already been applied
     Called from get_queryset
     :form: GlossSearchForm, SentenceForm
     :view: GlossListView, SenseListView
@@ -1297,17 +1298,25 @@ def query_parameters_from_get(searchform, GET, query_parameters):
     """
     if not searchform:
         return query_parameters
-    search_form_fields = searchform.fields.keys()
     for get_key, get_value in GET.items():
+        if get_key == 'search_type' and hasattr(view, get_key) and view.__class__.__name__ == 'LemmaListView':
+            query_parameters[get_key] = getattr(view, get_key)
+            continue
+        if hasattr(view, get_key) and get_key in ['view_type', 'search_type', 'web_search', 'show_all']:
+            # the view attributes are set by the software, not the user, in spite of appearing in the url
+            print('attribute of view: ', get_key)
+            query_parameters[get_key] = getattr(view, get_key)
+            continue
+        # print('get qps from get: ', get_key, get_value)
+        if get_key not in searchform.fields.keys():
+            # skip csrf_token and page
+            continue
         if get_value in ['', '0']:
             continue
         if get_key.endswith('[]'):
             if not get_value:
                 continue
             query_parameters[get_key] = get_value
-        elif get_key not in search_form_fields:
-            # skip csrf_token and page
-            continue
         else:
             query_parameters[get_key] = get_value
     return query_parameters
@@ -1326,4 +1335,5 @@ def make_harmless_querydict(request):
                 '\"', "&quot;").replace("'", "&#x27;").replace("%3C", "&lt;").replace("%3E", "&gt;").replace(
                 "%26", "&amp;").replace("%22", "&quot;").replace("%27", "&#x27;").replace("/", "&#47;").replace("=", "&#61;")
             parameters[key] = harmless_value
+    print('make harmless: ', parameters)
     return parameters
