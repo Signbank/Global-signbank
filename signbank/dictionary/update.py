@@ -859,6 +859,7 @@ def update_gloss(request, glossid):
 
     field = request.POST.get('id', '')
     value = request.POST.get('value', '')
+    print('update gloss: field, value: ', field, value)
     original_value = ''  # will in most cases be set later, but can't be empty in case it is not set
     category_value = ''
     field_category = ''
@@ -879,12 +880,14 @@ def update_gloss(request, glossid):
 
     values = request.POST.getlist('value[]')  # in case we need multiple values
 
-    # this variable may or may not be needed, depending on what field is being changed
-    # initialize it to empty
-    choice_list = []
     # validate
     # field is a valid field
     # value is a valid value for field
+
+    fieldnames = FIELDS['main'] + FIELDS['phonology'] + FIELDS['semantics'] + ['inWeb', 'isNew', 'excludeFromEcv', 'release_information']
+    gloss_fields = [Gloss.get_field(fname) for fname in Gloss.get_field_names()]
+    text_fields = [f.name for f in gloss_fields
+                   if f.name in fieldnames and f.__class__.__name__ in ['CharField', 'TextField']]
 
     if field == 'deletegloss':
         if value != 'confirmed':
@@ -980,147 +983,141 @@ def update_gloss(request, glossid):
         return update_perspectivevideo(request.user, gloss, field, value)
 
     elif field.startswith('lemmaidgloss'):
-        # Set new lemmaidgloss for this gloss
-        # First check whether the gloss dataset is the same as the lemma dataset
+        # Set new lemma obtained from lemma lookahead in the Gloss Edit template
         try:
-            dataset = gloss.dataset
             lemma = LemmaIdgloss.objects.get(pk=value)
-            if dataset is None or dataset == lemma.dataset:
-                gloss.lemma = lemma
-                gloss.save(update_fields=['lemma'])
-            else:
-                messages.add_message(request, messages.ERROR,
-                                     _("The dataset of the gloss is not the same as that of the lemma."))
         except ObjectDoesNotExist:
             messages.add_message(request, messages.ERROR, _("The specified lemma does not exist."))
+            return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
+        if gloss.lemma.dataset != lemma.dataset:
+            messages.add_message(request, messages.ERROR,
+                                 _("The dataset of the gloss is not the same as that of the lemma."))
+            return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
+
+        gloss.lemma = lemma
+        gloss.save(update_fields=['lemma'])
+
         return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
 
-    elif field == Gloss.release_information.field.name:
-        gloss.release_information = newvalue = value
-        gloss.save()
-
-    else:
-
-        if field not in Gloss.get_field_names():
-            return HttpResponseBadRequest("Unknown field", {'content-type': 'text/plain'})
-
-        value = value.strip()
+    elif field in ['domhndsh', 'subhndsh', 'final_domhndsh', 'final_subhndsh']:
+        category_value = 'phonology'
         original_value = getattr(gloss,field)
+        original_human_value = original_value.name if original_value else ''
+        gloss_field = Gloss.get_field(field)
+        try:
+            handshape = Handshape.objects.get(machine_value=int(value))
+        except (ObjectDoesNotExist, MultipleObjectsReturned):
+            # if the handshape field has not been set yet, it is set to the empty handshape object
+            handshape = Handshape.objects.get(machine_value=0)
+        gloss.__setattr__(field, handshape)
+        gloss.save()
+        newvalue = handshape.name
+
+        if original_human_value != newvalue:
+            add_gloss_update_to_revision_history(request.user, gloss, field, original_human_value, newvalue)
+
+        # The machine_value (value) representation is also returned to accommodate Hyperlinks to Handshapes
+        return generate_tabbed_text_response(
+            [original_value, newvalue, value, category_value, lemma_gloss_group, input_value])
+
+    elif field in text_fields:
+        original_value = '' if original_value is None else original_value
+        # clear stored value first in case of space characters
+        gloss.__setattr__(field, '')
+        gloss.save()
         if field in ['useInstr']:
             # get rid of hidden space characters, this is a text area field
+            value = value.replace('\r', ' ').replace('\n', ' ').replace('\t', ' ')
             original_value = original_value.replace('\r', ' ').replace('\n', ' ').replace('\t', ' ')
-        if field in ['domhndsh', 'subhndsh', 'final_domhndsh', 'final_subhndsh']:
-            original_value = original_value.name if original_value else original_value
-
-        # special cases
-        # - Foreign Key fields (Language, Dialect)
-        # - keywords
-        # - videos
-        # - tags
-
-        gloss_fields = [Gloss.get_field(fname) for fname in Gloss.get_field_names()]
-        # Translate the value if a boolean
-        # Language values are needed here!
-        newvalue = value
-        if isinstance(Gloss.get_field(field), BooleanField):
-            # value is the html 'value' received during editing
-            # value gets converted to a Boolean by the following statement
-            if field in ['weakdrop', 'weakprop']:
-                # the weakdrop and weakprop fields make use of three-valued logic and None is a legitimate value aka Neutral
-                NEUTRALBOOLEANCHOICES = {None: '1', True: '2', False: '3'}
-                category_value = 'phonology'
-                if value not in ['1', '2', '3']:
-                    # this code is for the case the user has not selected a value in the list
-                    if value in [None, True, False]:
-                        value = NEUTRALBOOLEANCHOICES[value]
-                    else:
-                        # something is wrong, set to None
-                        value = '1'
-                display_value = {'1': '&nbsp;', '2': '+WD', '3': '-WD'}[value]
-                boolean_value = {'1': None, '2': True, '3': False}[value]
-                gloss.__setattr__(field, boolean_value)
-                gloss.save()
-                if original_value != boolean_value:
-                    add_gloss_update_to_revision_history(request.user, gloss, field, str(original_value), display_value)
-                return HttpResponse(f'{boolean_value}\t{display_value}\t{category_value}', {'content-type': 'text/plain'})
-            elif field in ['domhndsh_letter', 'domhndsh_number', 'subhndsh_letter', 'subhndsh_number']:
-                category_value = 'phonology'
-                original_value = False if original_value is None else original_value
-                display_value = value
-                boolean_value = (value in ['letter', 'number'])
-                gloss.__setattr__(field, boolean_value)
-                gloss.save()
-                if original_value != boolean_value:
-                    add_gloss_update_to_revision_history(request.user, gloss, field, str(original_value), display_value)
-                return HttpResponse(f'{boolean_value}\t{display_value}\t{category_value}', {'content-type': 'text/plain'})
-            else:
-                return update_boolean_checkbox(request.user, gloss, field, value)
-
-        fieldnames = FIELDS['main'] + FIELDS['phonology'] + FIELDS['semantics'] + ['inWeb', 'isNew', 'excludeFromEcv']
-        fieldchoiceforeignkey_fields = [f.name for f in gloss_fields
-                                        if f.name in fieldnames
-                                        and isinstance(f, FieldChoiceForeignKey)]
-
-        char_fields = [f.name for f in gloss_fields
-                       if f.name in fieldnames and f.__class__.__name__ == 'CharField'
-                       and f.name not in fieldchoiceforeignkey_fields]
-
-        text_fields = [f.name for f in gloss_fields
-                       if f.name in fieldnames and f.__class__.__name__ == 'TextField']
-
-        # The following code relies on the order of if else testing
-        # The updates ignore Placeholder empty fields of '-' and '------'
-        # The Placeholders are needed in the template Edit view so the user can "see" something to edit
-
-        if field in (char_fields + text_fields):
-            original_value = '' if original_value is None else original_value
-            # clear stored value first in case of space characters
-            gloss.__setattr__(field, '')
-            gloss.save()
-            if field in ['useInstr']:
-                # get rid of hidden space characters, this is a text area field
-                value = value.replace('\r', ' ').replace('\n', ' ').replace('\t', ' ')
-            if value in ['-', '------']:
-                newvalue = ''
-            else:
-                newvalue = value.strip()
-            gloss.__setattr__(field, newvalue)
-            gloss.save()
-            add_gloss_update_to_revision_history(request.user, gloss, field, original_value, newvalue)
-
-            return HttpResponse(newvalue, {'content-type': 'text/plain'})
-
-        if field in ['domhndsh', 'subhndsh', 'final_domhndsh', 'final_subhndsh']:
-            gloss_field = Gloss.get_field(field)
-            try:
-                handshape = Handshape.objects.get(machine_value=int(value))
-            except (ObjectDoesNotExist, MultipleObjectsReturned):
-                # if the handshape field has not been set yet, it is set to the empty handshape object
-                handshape = Handshape.objects.get(machine_value=0)
-            gloss.__setattr__(field, handshape)
-            gloss.save()
-            newvalue = handshape.name
-        elif field in fieldchoiceforeignkey_fields:
-            if value == '':
-                value = 0
-            gloss_field = Gloss.get_field(field)
-            try:
-                fieldchoice = FieldChoice.objects.get(field=gloss_field.field_choice_category, machine_value=value)
-            except (ObjectDoesNotExist, MultipleObjectsReturned):
-                print('Update field choice no unique machine value found: ', gloss_field.name,
-                      gloss_field.field_choice_category, value)
-                print('Setting to machine value 0')
-                fieldchoice = FieldChoice.objects.get(field=gloss_field.field_choice_category, machine_value=0)
-            gloss.__setattr__(field, fieldchoice)
-            gloss.save()
-            newvalue = fieldchoice.name
-
-        # Regular field updating
+        if value in ['-', '------']:
+            newvalue = ''
         else:
-            print('fall through update gloss: ', field, value, type(value))
-            # Alert: Note that if field is idgloss, the following code updates it
-            gloss.__setattr__(field, value)
+            newvalue = value.strip()
+        gloss.__setattr__(field, newvalue)
+        gloss.save()
+        add_gloss_update_to_revision_history(request.user, gloss, field, original_value, newvalue)
+
+        return HttpResponse(newvalue, {'content-type': 'text/plain'})
+
+    elif field not in Gloss.get_field_names():
+        return HttpResponseBadRequest("Unknown field", {'content-type': 'text/plain'})
+
+    elif isinstance(Gloss.get_field(field), BooleanField):
+        # value is the html 'value' received during editing
+        if field in ['weakdrop', 'weakprop']:
+            # the weakdrop and weakprop fields make use of three-valued logic and None is a legitimate value aka Neutral
+            NEUTRALBOOLEANCHOICES = {None: '1', True: '2', False: '3'}
+            category_value = 'phonology'
+            if value not in ['1', '2', '3']:
+                # this code is for the case the user has not selected a value in the list
+                if value in [None, True, False]:
+                    value = NEUTRALBOOLEANCHOICES[value]
+                else:
+                    # something is wrong, set to None
+                    value = '1'
+            display_value = {'1': '&nbsp;', '2': '+WD', '3': '-WD'}[value]
+            boolean_value = {'1': None, '2': True, '3': False}[value]
+            gloss.__setattr__(field, boolean_value)
             gloss.save()
+            if original_value != boolean_value:
+                add_gloss_update_to_revision_history(request.user, gloss, field, str(original_value), display_value)
+            return HttpResponse(f'{boolean_value}\t{display_value}\t{category_value}', {'content-type': 'text/plain'})
+        elif field in ['domhndsh_letter', 'domhndsh_number', 'subhndsh_letter', 'subhndsh_number']:
+            category_value = 'phonology'
+            original_value = False if original_value is None else original_value
+            display_value = value
+            boolean_value = (value in ['letter', 'number'])
+            gloss.__setattr__(field, boolean_value)
+            gloss.save()
+            if original_value != boolean_value:
+                add_gloss_update_to_revision_history(request.user, gloss, field, str(original_value), display_value)
+            return HttpResponse(f'{boolean_value}\t{display_value}\t{category_value}', {'content-type': 'text/plain'})
+        else:
+            return update_boolean_checkbox(request.user, gloss, field, value)
+
+    # Field Choice fields and and other fields not handled above remain
+
+    value = value.strip()
+    original_value = getattr(gloss,field)
+
+    # special cases
+    # - Foreign Key fields (Language, Dialect)
+    # - keywords
+    # - videos
+    # - tags
+
+    # Translate the value if a boolean
+    # Language values are needed here!
+    newvalue = value
+
+    fieldchoiceforeignkey_fields = [f.name for f in gloss_fields
+                                    if f.name in fieldnames
+                                    and isinstance(f, FieldChoiceForeignKey)]
+
+    # The updates ignore Placeholder empty fields of '-' and '------'
+    # The Placeholders are needed in the template Edit view so the user can "see" something to edit
+
+    if field in fieldchoiceforeignkey_fields:
+        if value == '':
+            value = 0
+        gloss_field = Gloss.get_field(field)
+        try:
+            fieldchoice = FieldChoice.objects.get(field=gloss_field.field_choice_category, machine_value=value)
+        except (ObjectDoesNotExist, MultipleObjectsReturned):
+            print('Update field choice no unique machine value found: ', gloss_field.name,
+                  gloss_field.field_choice_category, value)
+            print('Setting to machine value 0')
+            fieldchoice = FieldChoice.objects.get(field=gloss_field.field_choice_category, machine_value=0)
+        gloss.__setattr__(field, fieldchoice)
+        gloss.save()
+        newvalue = fieldchoice.name
+
+    # Regular field updating
+    else:
+        print('fall through update gloss: ', field, value, type(value))
+        # Alert: Note that if field is idgloss, the following code updates it
+        gloss.__setattr__(field, value)
+        gloss.save()
 
     if field in FIELDS['phonology']:
         category_value = 'phonology'
