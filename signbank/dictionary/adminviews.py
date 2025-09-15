@@ -2626,6 +2626,7 @@ class MinimalPairsListView(ListView):
     filter = False
     show_all = False
     search_form = FocusGlossSearchForm()
+    query_parameters = dict()
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -2751,7 +2752,7 @@ class MinimalPairsListView(ListView):
             # is not available to the __init__ method
             set_up_language_fields(Gloss, self, self.search_form)
 
-        get = self.request.GET
+        get = make_harmless_querydict(self.request)
 
         if not get:
             # to speed things up, don't show anything on initial visit
@@ -3630,7 +3631,7 @@ class HandshapeListView(ListView):
         for fname in Handshape.get_field_names():
             handshape_fields[fname] = Handshape.get_field(fname)
 
-        get = self.request.GET
+        get = make_harmless_querydict(self.request)
 
         self.show_all = self.kwargs.get('show_all', self.show_all)
         self.search_type = self.request.GET.get('search_type', self.search_type)
