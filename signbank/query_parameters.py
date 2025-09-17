@@ -330,7 +330,10 @@ def convert_query_parameters_to_filter(query_parameters):
             query_list.append(Q(dialect__in=get_value))
 
         elif get_key == 'tags[]':
-            values = [int(v) for v in get_value]
+            try:
+                values = [int(v) for v in get_value]
+            except ValueError:
+                values = []
             pks_for_glosses_with_tags = list(
                 TaggedItem.objects.filter(tag__id__in=values).values_list('object_id', flat=True))
             query_list.append(Q(pk__in=pks_for_glosses_with_tags))
@@ -383,7 +386,7 @@ def convert_query_parameters_to_filter(query_parameters):
                 selected_morpheme = Morpheme.objects.get(pk=int(get_value))
                 potential_pks = [appears.parent_gloss.pk for appears in SimultaneousMorphologyDefinition.objects.filter(morpheme=selected_morpheme)]
                 query_list.append(Q(pk__in=potential_pks))
-            except ObjectDoesNotExist:
+            except (ObjectDoesNotExist, ValueError):
                 # This error should not occur, the input search form requires the selection of a morpheme from a list
                 # If the user attempts to input a string, it is ignored by the gloss list search form
                 print("convert_query_parameters_to_filter: Morpheme not found: ", get_value)
@@ -647,7 +650,7 @@ def pretty_print_query_values(dataset_languages, query_parameters):
             try:
                 morpheme_object = Gloss.objects.get(pk=int(query_parameters[key]))
                 query_dict[key] = morpheme_object.idgloss
-            except (ObjectDoesNotExist, MultipleObjectsReturned):
+            except (ObjectDoesNotExist, MultipleObjectsReturned, ValueError):
                 query_dict[key] = query_parameters[key]
         elif key in ['createdBefore', 'createdAfter']:
             created_date = DT.datetime.strptime(query_parameters[key], DATE_FORMAT).date()
@@ -758,7 +761,6 @@ def search_fields_from_get(searchform, GET):
             search_fields_to_populate[get_key] = get_value
             search_keys.append(get_key)
         elif get_key in ['translation', 'search']:
-            print(get_key, html.escape(get_value))
             search_fields_to_populate[get_key] = html.escape(get_value)
         elif get_key not in search_form_fields:
             # skip csrf_token and page
@@ -795,7 +797,10 @@ def queryset_from_get(formclass, searchform, GET, qs):
                 pks_for_glosses_with_these_definitions = [definition.gloss.pk for definition in definitions_with_this_role]
                 qs = qs.filter(pk__in=pks_for_glosses_with_these_definitions)
             elif field in ['tags']:
-                values = [int(v) for v in get_value]
+                try:
+                    values = [int(v) for v in get_value]
+                except ValueError:
+                    values = []
                 morphemes_with_tag = list(
                     TaggedItem.objects.filter(tag__id__in=values).values_list('object_id', flat=True))
                 qs = qs.filter(id__in=morphemes_with_tag)
@@ -1043,7 +1048,10 @@ def queryset_glosssense_from_get(model, formclass, searchform, GET, qs):
                 query_filter = gloss_prefix + 'pk__in'
                 qs = qs.filter(**{query_filter: pks_for_glosses_with_correct_relation})
             elif field in ['tags']:
-                values = [int(v) for v in get_value]
+                try:
+                    values = [int(v) for v in get_value]
+                except ValueError:
+                    values = []
                 morphemes_with_tag = list(
                     TaggedItem.objects.filter(tag__id__in=values).values_list('object_id', flat=True))
                 query_filter = gloss_prefix + 'id__in'
@@ -1085,10 +1093,10 @@ def queryset_glosssense_from_get(model, formclass, searchform, GET, qs):
                 # Filter all glosses that contain this morpheme in their simultaneous morphology
                 try:
                     selected_morpheme = Morpheme.objects.get(pk=int(get_value))
+                    potential_pks = [appears.parent_gloss.pk for appears
+                                     in SimultaneousMorphologyDefinition.objects.filter(morpheme=selected_morpheme)]
                 except (ObjectDoesNotExist, ValueError):
-                    continue
-                potential_pks = [appears.parent_gloss.pk for appears
-                                 in SimultaneousMorphologyDefinition.objects.filter(morpheme=selected_morpheme)]
+                    potential_pks = []
                 query_filter = gloss_prefix + 'pk__in'
                 qs = qs.filter(**{query_filter: potential_pks})
             elif get_key in ['definitionContains']:
@@ -1304,10 +1312,8 @@ def query_parameters_from_get(view, searchform, GET, query_parameters):
             continue
         if hasattr(view, get_key) and get_key in ['view_type', 'search_type', 'web_search', 'show_all']:
             # the view attributes are set by the software, not the user, in spite of appearing in the url
-            print('attribute of view: ', get_key)
             query_parameters[get_key] = getattr(view, get_key)
             continue
-        # print('get qps from get: ', get_key, get_value)
         if get_key not in searchform.fields.keys():
             # skip csrf_token and page
             continue
@@ -1335,5 +1341,4 @@ def make_harmless_querydict(request):
                 '\"', "&quot;").replace("'", "&#x27;").replace("%3C", "&lt;").replace("%3E", "&gt;").replace(
                 "%26", "&amp;").replace("%22", "&quot;").replace("%27", "&#x27;").replace("/", "&#47;").replace("=", "&#61;")
             parameters[key] = harmless_value
-    print('make harmless: ', parameters)
     return parameters

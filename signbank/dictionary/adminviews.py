@@ -2043,6 +2043,8 @@ class MorphemeListView(ListView):
     paginate_by = 25
     queryset_language_codes = []
     search_form = MorphemeSearchForm()
+    query_parameters = dict()
+    page_get_parameters = ""
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -2164,6 +2166,8 @@ class MorphemeListView(ListView):
         else:
             context['search_by_publication_fields'] = []
 
+        context['page_get_parameters'] = self.page_get_parameters
+
         return context
 
     def get_paginate_by(self, queryset):
@@ -2174,7 +2178,7 @@ class MorphemeListView(ListView):
 
     def get_queryset(self):
         # get query terms from self.request
-        get = self.request.GET
+        get = make_harmless_querydict(self.request)
 
         self.show_all = self.kwargs.get('show_all', self.show_all)
         setattr(self.request.session, 'search_type', self.search_type)
@@ -2196,6 +2200,7 @@ class MorphemeListView(ListView):
         if USE_REGULAR_EXPRESSIONS and not valid_regex:
             error_message_regular_expression(self.request, search_fields, field_values)
             qs = Morpheme.objects.none()
+            self.page_get_parameters = get_page_parameters_for_listview(self.search_form, get, self.query_parameters)
             return qs
 
         if len(get) > 0 or self.show_all:
@@ -2207,14 +2212,15 @@ class MorphemeListView(ListView):
             qs = qs.filter(inWeb__exact=True)
 
         if self.show_all:
-            qs = order_queryset_by_sort_order(self.request.GET, qs, self.queryset_language_codes)
+            qs = order_queryset_by_sort_order(get, qs, self.queryset_language_codes)
+            self.page_get_parameters = get_page_parameters_for_listview(self.search_form, get, self.query_parameters)
             return qs
 
         qs = queryset_from_get(MorphemeSearchForm, self.search_form, get, qs)
         qs = qs.distinct()
 
         # Sort the queryset by the parameters given
-        qs = order_queryset_by_sort_order(self.request.GET, qs, self.queryset_language_codes)
+        qs = order_queryset_by_sort_order(get, qs, self.queryset_language_codes)
 
         self.request.session['search_type'] = 'morpheme'
 
@@ -2222,6 +2228,7 @@ class MorphemeListView(ListView):
             self.request.session['last_used_dataset'] = self.last_used_dataset
 
         # Return the resulting filtered and sorted queryset
+        self.page_get_parameters = get_page_parameters_for_listview(self.search_form, get, self.query_parameters)
         return qs
 
     def render_to_response(self, context, **response_kwargs):
