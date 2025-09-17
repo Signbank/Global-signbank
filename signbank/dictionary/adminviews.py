@@ -2632,6 +2632,7 @@ class MinimalPairsListView(ListView):
     show_all = False
     search_form = FocusGlossSearchForm()
     query_parameters = dict()
+    page_get_parameters = ""
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -2698,6 +2699,8 @@ class MinimalPairsListView(ListView):
 
         context['paginate_by'] = self.request.GET.get('paginate_by', self.paginate_by)
 
+        context['page_get_parameters'] = self.page_get_parameters
+
         return context
 
     def get_paginate_by(self, queryset):
@@ -2759,11 +2762,19 @@ class MinimalPairsListView(ListView):
 
         get = make_harmless_querydict(self.request)
 
+        query_parameters = query_parameters_from_get(self, self.search_form, get, query_parameters)
+
+        # save the query parameters to a session variable
+        self.request.session['query_parameters'] = json.dumps(query_parameters)
+        self.request.session.modified = True
+        self.query_parameters = query_parameters
+
         if not get:
             # to speed things up, don't show anything on initial visit
             qs = Gloss.objects.none()
             self.request.session['search_results'] = []
             self.request.session.modified = True
+            self.page_get_parameters = get_page_parameters_for_listview(self.search_form, get, self.query_parameters)
             return qs
 
         selected_datasets = get_selected_datasets(self.request)
@@ -2776,6 +2787,7 @@ class MinimalPairsListView(ListView):
             qs = Gloss.objects.none()
             self.request.session['search_results'] = []
             self.request.session.modified = True
+            self.page_get_parameters = get_page_parameters_for_listview(self.search_form, get, self.query_parameters)
             return qs
 
         # grab gloss ids for finger spelling glosses, identified by text #.
@@ -2818,6 +2830,7 @@ class MinimalPairsListView(ListView):
 
         qs = qs.select_related('lemma')
 
+        self.page_get_parameters = get_page_parameters_for_listview(self.search_form, get, self.query_parameters)
         return qs
 
 
