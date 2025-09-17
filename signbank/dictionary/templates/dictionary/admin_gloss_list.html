@@ -130,7 +130,7 @@ function validateForm(formId) {
 {% endfor %}
     var morphemme_lookahead = 'morphemeidgloss';
     var morpheme_field = document.forms[formId][morphemme_lookahead];
-    if (input_text_field != undefined) {
+    if (morpheme_field != undefined) {
         var input_morpheme_lookahead_value = morpheme_field.value;
         var sanitized = sanitizeInput(input_morpheme_lookahead_value);
         var target_morpheme_object = document.getElementById(morphemme_lookahead);

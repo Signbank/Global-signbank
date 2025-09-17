@@ -755,7 +755,7 @@ class GlossListView(ListView):
 
     def get_queryset(self):
         get = make_harmless_querydict(self.request)
-        print(get)
+
         self.show_all = self.kwargs.get('show_all', self.show_all)
 
         search_type = self.request.GET.get('search_type')
@@ -871,8 +871,6 @@ class GlossListView(ListView):
         if 'search' in get and get['search']:
             # menu bar gloss search, return the results
             val = get['search']
-            print('search: ', val)
-            print('search: ', html.escape(val))
             query_parameters['search'] = html.escapejs(val)
             if USE_REGULAR_EXPRESSIONS:
                 query = Q(annotationidglosstranslation__text__iregex=val)
@@ -6170,7 +6168,7 @@ class LemmaListView(ListView):
             set_up_language_fields(LemmaIdgloss, self, self.search_form)
 
         get = make_harmless_querydict(self.request)
-        print(get)
+
         self.show_all = self.kwargs.get('show_all', self.show_all)
 
         setattr(self.request.session, 'search_type', self.search_type)
@@ -7368,7 +7366,6 @@ class AnnotatedGlossListView(ListView):
 
     def get_queryset(self):
         get = make_harmless_querydict(self.request)
-        print(get)
 
         setattr(self.request.session, 'search_type', self.search_type)
 
