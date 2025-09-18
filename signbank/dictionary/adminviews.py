@@ -6705,6 +6705,8 @@ class KeywordListView(ListView):
     paginate_by = 100
     search_type = 'sign'
     query_parameters = dict()
+    page_get_parameters = ""
+    search_form = KeyMappingSearchForm()
 
     def get(self, request, *args, **kwargs):
         return super(KeywordListView, self).get(request, *args, **kwargs)
@@ -6725,9 +6727,7 @@ class KeywordListView(ListView):
         new_text_labels = {str(lang.id): lang.name + ' ' + gettext("Text") for lang in dataset_languages}
         context['new_text_labels'] = new_text_labels
 
-        search_form = KeyMappingSearchForm(self.request.GET, languages=dataset_languages)
-
-        context['searchform'] = search_form
+        context['searchform'] = self.search_form
 
         context['search_type'] = self.search_type
 
@@ -6742,6 +6742,7 @@ class KeywordListView(ListView):
         context['SHOW_DATASET_INTERFACE_OPTIONS'] = SHOW_DATASET_INTERFACE_OPTIONS
         context['USE_REGULAR_EXPRESSIONS'] = USE_REGULAR_EXPRESSIONS
 
+        context['page_get_parameters'] = self.page_get_parameters
         return context
 
     def get_queryset(self):
@@ -6779,10 +6780,13 @@ class KeywordListView(ListView):
 
         glosses_of_datasets = object_list
 
-        get = self.request.GET
+        get = make_harmless_querydict(self.request)
 
         # this needs to be sorted for jquery purposes
         dataset_languages = get_dataset_languages(selected_datasets)
+
+        if not self.search_form.is_bound:
+            self.search_form = KeyMappingSearchForm(get)
 
         # exclude morphemes
         if not glosses_of_datasets:
@@ -6791,10 +6795,13 @@ class KeywordListView(ListView):
             return []
 
         if 'tags[]' in get:
-            vals = get.getlist('tags[]')
+            vals = get['tags[]']
             if vals:
                 self.query_parameters['tags[]'] = vals
-                values = [int(v) for v in vals]
+                try:
+                    values = [int(v) for v in vals]
+                except ValueError:
+                    values = []
                 glosses_with_tag = list(
                     TaggedItem.objects.filter(tag__id__in=values).values_list('object_id', flat=True))
                 glosses_of_datasets = glosses_of_datasets.filter(id__in=glosses_with_tag)
@@ -6803,6 +6810,8 @@ class KeywordListView(ListView):
 
         (interface_language, interface_language_code,
          default_language, default_language_code) = get_interface_language_and_default_language_codes(self.request)
+
+        self.page_get_parameters = get_page_parameters_for_listview(self.search_form, get, self.query_parameters)
 
         dataset_display_languages = []
         for lang in dataset_languages:
@@ -6908,6 +6917,8 @@ class BatchEditView(ListView):
     paginate_by = 25
     search_type = 'sign'
     query_parameters = dict()
+    search_form = KeyMappingSearchForm()
+    page_get_parameters = ""
 
     def get(self, request, *args, **kwargs):
         return super(BatchEditView, self).get(request, *args, **kwargs)
@@ -6928,9 +6939,7 @@ class BatchEditView(ListView):
         language_2chars = [str(language.language_code_2char) for language in dataset_languages]
         context['language_2chars'] = language_2chars
 
-        search_form = KeyMappingSearchForm(self.request.GET, languages=dataset_languages)
-
-        context['searchform'] = search_form
+        context['searchform'] = self.search_form
 
         multiple_select_gloss_fields = ['tags']
         context['MULTIPLE_SELECT_GLOSS_FIELDS'] = multiple_select_gloss_fields
@@ -7024,7 +7033,7 @@ class BatchEditView(ListView):
 
         context['SHOW_DATASET_INTERFACE_OPTIONS'] = SHOW_DATASET_INTERFACE_OPTIONS
         context['USE_REGULAR_EXPRESSIONS'] = USE_REGULAR_EXPRESSIONS
-
+        context['page_get_parameters'] = self.page_get_parameters
         return context
 
     def get_queryset(self):
@@ -7034,6 +7043,8 @@ class BatchEditView(ListView):
             self.query_parameters = json.loads(session_query_parameters)
 
         selected_datasets = get_selected_datasets(self.request)
+
+        self.page_get_parameters = ""
 
         if not selected_datasets or selected_datasets.count() > 1:
             feedback_message = _('Please select a single dataset to use Batch Edit.')
@@ -7062,7 +7073,7 @@ class BatchEditView(ListView):
 
         glosses_of_dataset = object_list
 
-        get = self.request.GET
+        get = make_harmless_querydict(self.request)
 
         if not get:
             return glosses_of_dataset
@@ -7071,10 +7082,13 @@ class BatchEditView(ListView):
             return glosses_of_dataset
 
         if 'tags[]' in get:
-            vals = get.getlist('tags[]')
+            vals = get['tags[]']
             if vals:
                 self.query_parameters['tags[]'] = vals
-                values = [int(v) for v in vals]
+                try:
+                    values = [int(v) for v in vals]
+                except ValueError:
+                    values = []
                 glosses_with_tag = list(
                     TaggedItem.objects.filter(tag__id__in=values).values_list('object_id', flat=True))
                 glosses_of_dataset = glosses_of_dataset.filter(id__in=glosses_with_tag)
@@ -7104,6 +7118,7 @@ class BatchEditView(ListView):
 
         self.request.session['query_parameters'] = json.dumps(self.query_parameters)
         self.request.session.modified = True
+        self.page_get_parameters = get_page_parameters_for_listview(self.search_form, get, self.query_parameters)
 
         return glosses_of_dataset
 
@@ -7115,6 +7130,8 @@ class ToggleListView(ListView):
     paginate_by = 25
     search_type = 'sign'
     query_parameters = dict()
+    search_form = KeyMappingSearchForm()
+    page_get_parameters = ""
 
     def get(self, request, *args, **kwargs):
         return super(ToggleListView, self).get(request, *args, **kwargs)
@@ -7132,9 +7149,7 @@ class ToggleListView(ListView):
 
         context['dataset_languages'] = dataset_languages
 
-        search_form = KeyMappingSearchForm(self.request.GET, languages=dataset_languages)
-
-        context['searchform'] = search_form
+        context['searchform'] = self.search_form
 
         multiple_select_gloss_fields = ['tags']
         context['MULTIPLE_SELECT_GLOSS_FIELDS'] = multiple_select_gloss_fields
@@ -7177,7 +7192,7 @@ class ToggleListView(ListView):
 
         items = construct_scrollbar(list_of_objects, self.search_type, lang_attr_name)
         self.request.session['search_results'] = items
-
+        context['page_get_parameters'] = self.page_get_parameters
         return context
 
     def get_queryset(self):
@@ -7191,7 +7206,7 @@ class ToggleListView(ListView):
             # the query set is a list of tuples (gloss, keyword_translations, senses_groups)
             return []
 
-        get = self.request.GET
+        get = make_harmless_querydict(self.request)
 
         # multilingual
         # this needs to be sorted for jquery purposes
@@ -7210,10 +7225,13 @@ class ToggleListView(ListView):
         query_parameters = dict()
 
         if 'tags[]' in get:
-            vals = get.getlist('tags[]')
+            vals = get['tags[]']
             if vals:
                 query_parameters['tags[]'] = vals
-                values = [int(v) for v in vals]
+                try:
+                    values = [int(v) for v in vals]
+                except ValueError:
+                    values = []
                 glosses_with_tag = list(
                     TaggedItem.objects.filter(tag__id__in=values).values_list('object_id', flat=True))
                 glosses_of_datasets = glosses_of_datasets.filter(id__in=glosses_with_tag,
@@ -7230,7 +7248,7 @@ class ToggleListView(ListView):
         self.request.session['query_parameters'] = json.dumps(query_parameters)
         self.request.session.modified = True
         self.query_parameters = query_parameters
-
+        self.page_get_parameters = get_page_parameters_for_listview(self.search_form, get, self.query_parameters)
         return glosses_of_datasets
 
 
