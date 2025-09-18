@@ -2443,6 +2443,10 @@ def generate_tabbed_text_response(values):
 
 def add_gloss_update_to_revision_history(user, gloss, field, oldvalue, newvalue):
 
+    assert user is not None, "user parameter must not be None"
+    assert gloss is not None, "gloss parameter must not be None"
+    assert field is not None, "field parameter must not be None"
+
     if oldvalue == newvalue:
         return
 
@@ -2455,8 +2459,8 @@ def add_gloss_update_to_revision_history(user, gloss, field, oldvalue, newvalue)
     revision.save()
 
 def update_boolean_checkbox(user, gloss, field, value):
-    assert isinstance(gloss, Gloss), TypeError("Not a Gloss object")
-    assert isinstance(Gloss.get_field(field), BooleanField), TypeError("Not a BooleanField")
+    assert isinstance(gloss, Gloss), "Not a Gloss object"
+    assert isinstance(Gloss.get_field(field), BooleanField), "Not a BooleanField"
 
     if field in FIELDS['phonology']:
         category_value = 'phonology'

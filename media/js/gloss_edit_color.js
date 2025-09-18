@@ -692,7 +692,6 @@ function update_articulation(change_summary) {
 function update_view_and_remember_original_value(change_summary)
 {
 	split_values_count = change_summary.split('\t').length - 1;
-	console.log('update_view_and_remember_original_value: '+change_summary)
 	if (split_values_count > 0)
 	{
         split_values = change_summary.split('\t');
@@ -983,7 +982,6 @@ function update_affiliation_delete(data)
         return;
     };
     var affiliation_id = data.affiliation;
-    console.log('update affiliation after delete: '+affiliation_id)
     var gloss_affilication_tag = '#gloss_affiliation_' + affiliation_id;
     $(gloss_affilication_tag).remove();
 }

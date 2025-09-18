@@ -1104,9 +1104,6 @@ def update_gloss(request, glossid):
         try:
             fieldchoice = FieldChoice.objects.get(field=gloss_field.field_choice_category, machine_value=value)
         except (ObjectDoesNotExist, MultipleObjectsReturned):
-            print('Update field choice no unique machine value found: ', gloss_field.name,
-                  gloss_field.field_choice_category, value)
-            print('Setting to machine value 0')
             fieldchoice = FieldChoice.objects.get(field=gloss_field.field_choice_category, machine_value=0)
         gloss.__setattr__(field, fieldchoice)
         gloss.save()
@@ -1114,7 +1111,6 @@ def update_gloss(request, glossid):
 
     # Regular field updating
     else:
-        print('fall through update gloss: ', field, value, type(value))
         # Alert: Note that if field is idgloss, the following code updates it
         gloss.__setattr__(field, value)
         gloss.save()
@@ -1422,7 +1418,6 @@ def update_semanticfield(request, gloss, field, values):
     # expecting possibly multiple values
     # values is a list of strings
     new_semanticfields_to_save = []
-    print('update_semanticfield: ', gloss, values, field)
     # fetch all the valid semantic field choices
     # create a lookup dictionary mapping names to objects
     # the name is a unique field in the model
@@ -1453,7 +1448,6 @@ def update_semanticfield(request, gloss, field, values):
                              field_name='semField',
                              gloss=gloss, user=request.user, time=DT.datetime.now(tz=get_current_timezone()))
     revision.save()
-    print(str(new_semanticfield_value))
     return HttpResponse(str(new_semanticfield_value), {'content-type': 'text/plain'})
 
 
