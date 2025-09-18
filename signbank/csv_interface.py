@@ -680,7 +680,7 @@ def required_csv_columns(dataset_languages, create_or_update='create_gloss'):
     fieldnames = FIELDS['main'] + FIELDS['phonology'] + FIELDS['semantics'] + ['inWeb', 'isNew']
     fields = [Gloss.get_field(fname) for fname in fieldnames if fname in Gloss.get_field_names()]
     gloss_fields = [f.verbose_name.encode('ascii', 'ignore').decode() for f in fields]
-    extra_columns = ['SignLanguages', 'Dialects', 'Sequential Morphology', 'Simultaneous Morphology',
+    extra_columns = ['Dialects', 'Sequential Morphology', 'Simultaneous Morphology',
                      'Blend Morphology', 'Relations to other signs', 'Relations to foreign signs', 'Tags', 'Notes']
     required_columns = []
     language_fields = []
@@ -730,7 +730,7 @@ def csv_header_row_glosslist(dataset_languages):
     activate(LANGUAGES[0][0])
     header = ['Signbank ID', 'Dataset'] + lemmaidglosstranslation_fields + annotationidglosstranslation_fields \
         + keyword_fields + sentence_fields + [f.verbose_name.encode('ascii', 'ignore').decode() for f in fields]
-    for extra_column in ['SignLanguages', 'Dialects', 'Sequential Morphology', 'Simultaneous Morphology',
+    for extra_column in ['Dialects', 'Sequential Morphology', 'Simultaneous Morphology',
                          'Blend Morphology',
                          'Relations to other signs', 'Relations to foreign signs', 'Tags', 'Notes']:
         header.append(extra_column)
@@ -814,10 +814,6 @@ def csv_gloss_to_row(gloss, dataset_languages, fields):
             # this is needed for csv
             value = str(value)
         row.append(value)
-
-    # get languages
-    signlanguages = gloss.get_signlanguage_display()
-    row.append(signlanguages)
 
     # get dialects
     dialects = gloss.get_dialect_display()

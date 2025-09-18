@@ -21,8 +21,7 @@ from signbank.settings.server_specific import (WRITABLE_FOLDER, API_VIDEO_ARCHIV
 from signbank.settings.base import SUPPORTED_CITATION_IMAGE_EXTENSIONS
 
 from signbank.dictionary.models import (Dataset, Gloss, AnnotatedSentence)
-from signbank.tools import get_two_letter_dir, api_fields
-from signbank.dictionary.batch_edit import add_gloss_update_to_revision_history
+from signbank.tools import get_two_letter_dir, api_fields, add_gloss_update_to_revision_history
 from signbank.api_token import put_api_user_in_request
 from signbank.abstract_machine import get_interface_language_api, retrieve_language_code_from_header
 from signbank.zip_interface import (check_subfolders_for_unzipping_ids, get_filenames, check_subfolders_for_unzipping,
@@ -735,7 +734,7 @@ def api_add_image(request, gloss_id):
     if file_extension not in SUPPORTED_CITATION_IMAGE_EXTENSIONS:
         return JsonResponse({'error': gettext('File extension not supported! Please convert to png or jpg')}, status=400)
 
-    image_file.name = f'{gloss.sn}{file_extension}' if gloss.sn is not None else f'{gloss.idgloss}-{gloss.pk}{file_extension}'
+    image_file.name = f'{gloss.idgloss}-{gloss.pk}{file_extension}'
 
     # Prepare the file's new path and name
     goal_path = os.path.join(WRITABLE_FOLDER, GLOSS_IMAGE_DIRECTORY, gloss.lemma.dataset.acronym, get_two_letter_dir(gloss.idgloss))

@@ -381,7 +381,7 @@ function configure_edit() {
      $('.edit_text').editable(edit_post_url, {
          params : { a: 0, field: $(this).attr('id') },
          type      : 'text',
-		 callback : update_view_and_remember_original_value
+		 callback : update_text_area
 	 });
      $('.edit_int').editable(edit_post_url, {
          params : { a: 0 },
@@ -396,7 +396,7 @@ function configure_edit() {
      $('.edit_area').editable(edit_post_url, {
          params : { a: 0 },
          type      : 'textarea',
-		 callback : update_view_and_remember_original_value,
+		 callback : update_text_area,
          onerror : function(settings, original, xhr){
                alert(xhr.responseText);
                original.reset();
@@ -417,7 +417,7 @@ function configure_edit() {
          params : { a: 0 },
          type      : 'multiselect',
          data      : dialects,
-		 callback : update_view_and_remember_original_value
+		 callback : update_sign_language_dialects
      });
      $('.edit_semanticfield').editable(edit_post_url, {
          params : { a: 0 },
@@ -435,7 +435,7 @@ function configure_edit() {
          params : { a: 0 },
          type      : 'checkbox',
          checkbox: { trueValue: yes_str, falseValue: no_str },
-		 callback : update_view_and_remember_original_value
+		 callback : update_checkbox_tabbed
      });
      $('.edit_WD').click(function()
 	 {
@@ -457,7 +457,7 @@ function configure_edit() {
 		                choices: handedness_weak_choices },
 		     type      : 'select',
 		     data    : handedness_weak_choices,
-			 callback : update_view_and_remember_original_value
+			 callback : update_articulation
 		 });
      });
      $('.edit_WP').click(function()
@@ -480,20 +480,20 @@ function configure_edit() {
 		                choices: handedness_weak_choices },
 		     type      : 'select',
 		     data    : handedness_weak_choices,
-			 callback : update_view_and_remember_original_value
+			 callback : update_articulation
 		 });
      });
      $('.edit_letter').editable(edit_post_url, {
          params : { a: 0 },
          type      : 'checkbox',
          checkbox: { trueValue: 'letter', falseValue: '&nbsp;' },
-		 callback : update_view_and_remember_original_value
+		 callback : update_checkbox_tabbed
      });
      $('.edit_number').editable(edit_post_url, {
          params : { a: 0 },
          type      : 'checkbox',
          checkbox: { trueValue: 'number', falseValue: '&nbsp;' },
-		 callback : update_view_and_remember_original_value
+		 callback : update_checkbox_tabbed
      });
      $('.edit_relation_target').editable(edit_post_url, {
          params : { a: 0 },
@@ -595,28 +595,105 @@ function hide_other_forms(focus_field) {
     };
 };
 
+function auto_advance(id) {
+    var index_of_modified_field = gloss_phonology.indexOf(id);
+    var next_field_index = index_of_modified_field+1;
+    if (next_field_index < gloss_phonology.length) {
+        var next_field = gloss_phonology[next_field_index];
+        var next_field_ref = '#'+next_field;
+        $(next_field_ref).clearQueue();
+        if (phonology_list_kinds.includes(next_field)) {
+            // for lists, do custom event instead of click
+            $(next_field_ref).triggerHandler("customEvent"); //.focus().click().click();
+        } else {
+            $(next_field_ref).click();
+        };
+    }
+}
+
+function update_sign_language_dialects(dialects)
+{
+    if (dialects) {
+        $('#dialect').html(dialects);
+    } else {
+        $('#dialect').html("------");
+    }
+}
+
+function update_text_area(newtext)
+{
+    $(this).html(newtext);
+    $(this).attr("value", newtext);
+    if (newtext == '') {
+        $(this).parent().addClass('empty_row');
+    } else {
+        $(this).parent().removeClass('empty_row');
+    }
+}
+
+function update_checkbox_tabbed(change_summary) {
+    var id = $(this).attr('id');
+    var split_values = change_summary.split('\t');
+    var boolean_value = split_values[0];
+    var display_value = split_values[1];
+    var category_value = split_values[2];
+    $(this).attr("value", boolean_value);
+    $(this).html(display_value);
+    if (boolean_value == 'True') {
+        $(this).parent().removeClass('empty_row');
+    } else {
+        $(this).parent().addClass('empty_row');
+    }
+    if (category_value == 'phonology') {
+        auto_advance(id);
+    }
+}
+
+function update_checkbox(data)
+{
+    var id = $(this).attr('id');
+    if ($.isEmptyObject(data)) {
+        $(this).html("");
+        return;
+    };
+    var boolean_value = data.boolean_value;
+    $(this).attr("value", boolean_value);
+    var display_value = data.display_value;
+    $(this).html(display_value);
+    if (boolean_value) {
+        $(this).parent().removeClass('empty_row');
+    } else {
+        $(this).parent().addClass('empty_row');
+    }
+    var category_value = data.category_value;
+    if (category_value == 'phonology') {
+        auto_advance(id);
+    }
+}
+
+function update_articulation(change_summary) {
+    var id = $(this).attr('id');
+    var split_values = change_summary.split('\t');
+    var boolean_value = split_values[0];
+    var display_value = split_values[1];
+    var category_value = split_values[2];
+    $(this).attr("value", boolean_value);
+    $(this).html(display_value);
+    if (boolean_value == 'True') {
+        $(this).parent().removeClass('empty_row');
+    } else {
+        $(this).parent().addClass('empty_row');
+    }
+    if (category_value == 'phonology') {
+        auto_advance(id);
+    }
+}
+
 function update_view_and_remember_original_value(change_summary)
 {
 	split_values_count = change_summary.split('\t').length - 1;
 	if (split_values_count > 0)
 	{
-	    if (split_values_count < 3) {
-//	        # updates to Sign Language or Dialect returns two values
-            split_values = change_summary.split('\t');
-            language = split_values[0];
-            dialect = split_values[1];
-            if (language) {
-                $('#signlanguage').html(language);
-            } else {
-                $('#signlanguage').html("------");
-            }
-            if (dialect) {
-                $('#dialect').html(dialect);
-            } else {
-                $('#dialect').html("------");
-            }
-	        return
-	    }
         split_values = change_summary.split('\t');
         original_value = split_values[0];
         new_value = split_values[1];
@@ -630,64 +707,26 @@ function update_view_and_remember_original_value(change_summary)
             input_value = split_values[5];
             $(this).attr('data-value', input_value);
         }
-
         id = $(this).attr('id');
         $(this).html(new_value);
 
         new_values_for_changes_made[id] = machine_value;
-        if (new_value == '&nbsp;') {
-            new_value = 'False';
-        }
 
         if ($.isEmptyObject(original_values_for_changes_made[id]))
         {
             original_values_for_changes_made[id] = original_value;
             $(this).parent().removeClass('empty_row');
-            if (id == 'weakprop' || id == 'weakdrop' || id == 'domhndsh_letter' || id == 'domhndsh_number' || id == 'subhndsh_letter' || id == 'subhndsh_number') {
-                $(this).attr("value", machine_value);
-                if (new_value == '&nbsp;') {
-                    $(this).html("------");
-                }
-            }
-            else {
-                $(this).attr("value", new_value);
-            }
+            $(this).attr("value", new_value);
         }
         if (new_value == '-' || new_value == ' ' || new_value == '' || new_value == 'None' ||
                         new_value == 'False' || new_value == 0 || new_value == '&nbsp;')
         {
-            if (id == 'weakprop' || id == 'weakdrop' || id == 'domhndsh_letter' || id == 'domhndsh_number' || id == 'subhndsh_letter' || id == 'subhndsh_number') {
-                $(this).html("------");
-            }
-            else {
-                if (id == 'idgloss') {
-//                the user tried to erase the Lemma ID Gloss field, reset it in the template to what it was
-                    $(this).html(original_value);
-                    lemma_group = original_lemma_group;
-                } else {
-                    $(this).parent().addClass('empty_row');
-                    $(this).attr("value", machine_value);
-                    $(this).html("------");
-                }
-            }
+            $(this).parent().addClass('empty_row');
+            $(this).attr("value", machine_value);
+            $(this).html("------");
         }
         if (category_value == 'phonology') {
-            if (id != 'weakprop' && id != 'weakdrop') {
-                $(this).attr("value", new_value);
-            }
-            var index_of_modified_field = gloss_phonology.indexOf(id);
-            var next_field_index = index_of_modified_field+1;
-            if (next_field_index < gloss_phonology.length) {
-                var next_field = gloss_phonology[next_field_index];
-                var next_field_ref = '#'+next_field;
-                $(next_field_ref).clearQueue();
-                if (phonology_list_kinds.includes(next_field)) {
-                    // for lists, do custom event instead of click
-                    $(next_field_ref).triggerHandler("customEvent"); //.focus().click().click();
-                } else {
-                    $(next_field_ref).click();
-                };
-            }
+            auto_advance(id);
         }
     }
 }
@@ -943,7 +982,6 @@ function update_affiliation_delete(data)
         return;
     };
     var affiliation_id = data.affiliation;
-    console.log('update affiliation after delete: '+affiliation_id)
     var gloss_affilication_tag = '#gloss_affiliation_' + affiliation_id;
     $(gloss_affilication_tag).remove();
 }

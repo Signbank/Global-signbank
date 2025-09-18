@@ -3,7 +3,7 @@
 from signbank.dictionary.models import (Gloss, Relation)
 
 def ensure_synonym_transitivity(gloss):
-    assert isinstance(gloss, Gloss), TypeError("Not a Gloss object.")
+    assert isinstance(gloss, Gloss), "Not a Gloss object."
 
     synonym_relations_using_sources = gloss.relation_sources.all().filter(target__archived__exact=False,
                                                                           source__archived__exact=False, role='synonym')
@@ -50,7 +50,7 @@ def ensure_synonym_transitivity(gloss):
         revrel.save()
 
 def remove_transitive_synonym(rel):
-    assert isinstance(rel, Relation), TypeError("Not a Relation object.")
+    assert isinstance(rel, Relation), "Not a Relation object."
 
     transitive_synonyms = rel.target.get_synonyms()
     trans_relations = []
