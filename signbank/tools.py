@@ -22,6 +22,7 @@ from django.http import JsonResponse
 from django.shortcuts import render
 from django.template.loader import get_template
 
+from urllib.parse import urlencode
 from guardian.shortcuts import get_objects_for_user
 
 from signbank.settings.server_specific import (FIELDS, DEFAULT_LANGUAGE_HEADER_COLUMN, WRITABLE_FOLDER, LANGUAGE_CODE,
@@ -2363,14 +2364,17 @@ def get_checksum_for_path(file_path):
 
 def get_page_parameters_for_listview(search_form, request_get_parameters, query_parameters):
     # fill page parameters
+    page_params_list = []
     page_get_parameters = ""
     for key, value in request_get_parameters.items():
         if key == 'page':
             continue
-        if key in query_parameters.keys():
-            page_get_parameters = page_get_parameters + f'&{key}={value}'
-        if key not in search_form.fields.keys():
-            page_get_parameters = page_get_parameters + f'&{key}={value}'
+        if isinstance(value, list):
+            page_params_list.extend((key, x) for x in value)
+        else:
+            page_params_list.append((key, value))
+    if page_params_list:
+        page_get_parameters = f'&{urlencode(page_params_list)}'
     return page_get_parameters
 
 

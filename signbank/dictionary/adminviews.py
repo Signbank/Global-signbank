@@ -400,6 +400,8 @@ class AnnotatedSentenceListView(ListView):
     search_type = 'annotatedsentence'
     search_form = AnnotatedSentenceSearchForm()
     queryset_language_codes = []
+    query_parameters = dict()
+    page_get_parameters = ""
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -422,7 +424,7 @@ class AnnotatedSentenceListView(ListView):
             # is not available to the __init__ method
             set_up_language_fields(AnnotatedSentence, self, self.search_form)
 
-        get = self.request.GET
+        get = make_harmless_querydict(self.request)
 
         valid_regex, search_fields, field_values = check_language_fields_annotatedsentence(
             self.search_form, AnnotatedSentenceSearchForm, get, dataset_languages
@@ -458,7 +460,7 @@ class AnnotatedSentenceListView(ListView):
                 self.queryset_language_codes.append(lang.language_code_2char)
         if not self.queryset_language_codes:
             self.queryset_language_codes = [default_dataset.default_language.language_code_2char]
-        qs = order_annotatedsentence_queryset_by_sort_order(self.request.GET, qs, self.queryset_language_codes)
+        qs = order_annotatedsentence_queryset_by_sort_order(get, qs, self.queryset_language_codes)
 
         if get.get('show_all_annotatedsentences') == '1':
             self.show_all = True
@@ -484,6 +486,7 @@ class AnnotatedSentenceListView(ListView):
                     annotated_sentence_translations__text__icontains=get_value,
                     annotated_sentence_translations__language=language
                 )
+        self.page_get_parameters = get_page_parameters_for_listview(self.search_form, get, self.query_parameters)
 
         return qs
 
@@ -501,12 +504,15 @@ class AnnotatedSentenceListView(ListView):
         ).filter(dataset__in=selected_datasets).count()
         results = self.get_queryset()
 
-        get = self.request.GET
+        get = make_harmless_querydict(self.request)
+        print(get)
         query_parameters_dict = {}
         query_parameters_keys = []
         for key in list(get.keys()):
             query_parameters_dict[key] = get.get(key)
             query_parameters_keys.append(key)
+        print(query_parameters_keys)
+        print(query_parameters_dict)
         context['sort_order'] = str(get.get('sortOrder'))
         context['language_query_keys'] = [language.language_code_2char for language in dataset_languages]
         context['query_parameters_dict'] = query_parameters_dict
@@ -518,7 +524,7 @@ class AnnotatedSentenceListView(ListView):
         context['show_all'] = self.show_all
         context['search_type'] = self.search_type
         context['search_matches'] = results.count()
-
+        context['page_get_parameters'] = self.page_get_parameters
         return context
 
 
@@ -808,8 +814,7 @@ class GlossListView(ListView):
             error_message_regular_expression(self.request, search_fields, field_values)
             qs = Gloss.objects.none()
             # fill page parameters
-            self.page_get_parameters = get_page_parameters_for_listview(self.search_form, get, self.query_parameters)
-
+            self.page_get_parameters = ""
             return qs
 
         # Get the initial selection
@@ -913,7 +918,7 @@ class GlossListView(ListView):
         if self.search_type != 'sign':
             query_parameters['search_type'] = self.search_type
         qs = queryset_glosssense_from_get('Gloss', GlossSearchForm, self.search_form, get, qs)
-        query_parameters = query_parameters_from_get(self, self.search_form, get, query_parameters)
+        query_parameters = query_parameters_from_get(self, self.search_form, get, query_parameters, [])
         qs = apply_language_filters_to_results('Gloss', qs, query_parameters)
         qs = qs.distinct()
         qs = apply_video_filters_to_results('Gloss', qs, query_parameters)
@@ -955,6 +960,7 @@ class SenseListView(ListView):
     template_name = 'dictionary/admin_senses_list.html'
     search_form = GlossSearchForm()
     sentence_search_form = SentenceForm()
+    page_get_parameters = ""
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -1006,6 +1012,8 @@ class SenseListView(ListView):
                 context['paginate_by'] = self.request.session['paginate_by']
             else:
                 context['paginate_by'] = self.paginate_by
+
+        context['page_get_parameters'] = self.page_get_parameters
 
         return context
 
@@ -1069,6 +1077,7 @@ class SenseListView(ListView):
         if USE_REGULAR_EXPRESSIONS and not valid_regex:
             error_message_regular_expression(self.request, search_fields, field_values)
             qs = GlossSense.objects.none()
+            self.page_get_parameters = ""
             return qs
 
         # Get the initial selection
@@ -1091,6 +1100,7 @@ class SenseListView(ListView):
                 gloss_query = gloss_query.filter(query).distinct()
             qs = GlossSense.objects.filter(gloss__in=gloss_query)
             qs = qs.order_by('gloss__id', 'order')
+            self.page_get_parameters = get_page_parameters_for_listview(self.search_form, get, self.query_parameters)
             return qs
 
         else:
@@ -1101,9 +1111,8 @@ class SenseListView(ListView):
 
         qs = queryset_glosssense_from_get('GlossSense', GlossSearchForm, self.search_form, get, qs)
         # this is a temporary query_parameters variable
-        query_parameters = dict()
         # it is saved to self.query_parameters after the parameters are processed
-        query_parameters = query_parameters_from_get(self, self.search_form, get, query_parameters)
+        query_parameters = query_parameters_from_get(self, self.search_form, get, {}, [])
         qs = apply_video_filters_to_results('GlossSense', qs, query_parameters)
         qs = apply_nmevideo_filters_to_results('GlossSense', qs, query_parameters)
 
@@ -1111,7 +1120,7 @@ class SenseListView(ListView):
             query_parameters['search_type'] = self.search_type
 
         qs = queryset_sentences_from_get(self.sentence_search_form, get, qs)
-        query_parameters = query_parameters_from_get(self, self.sentence_search_form, get, query_parameters)
+        query_parameters = query_parameters_from_get(self, self.sentence_search_form, get, query_parameters, [])
 
         # save the query parameters to a session variable
         self.request.session['query_parameters'] = json.dumps(query_parameters)
@@ -1124,6 +1133,7 @@ class SenseListView(ListView):
         if 'last_used_dataset' not in self.request.session.keys():
             self.request.session['last_used_dataset'] = self.last_used_dataset
 
+        self.page_get_parameters = get_page_parameters_for_listview(self.search_form, get, self.query_parameters)
         # Return the resulting filtered (not sorted) queryset
         return qs
 
@@ -2762,20 +2772,19 @@ class MinimalPairsListView(ListView):
 
         get = make_harmless_querydict(self.request)
 
-        query_parameters = query_parameters_from_get(self, self.search_form, get, query_parameters)
-
-        # save the query parameters to a session variable
-        self.request.session['query_parameters'] = json.dumps(query_parameters)
-        self.request.session.modified = True
-        self.query_parameters = query_parameters
-
         if not get:
             # to speed things up, don't show anything on initial visit
             qs = Gloss.objects.none()
             self.request.session['search_results'] = []
             self.request.session.modified = True
-            self.page_get_parameters = get_page_parameters_for_listview(self.search_form, get, self.query_parameters)
+            self.page_get_parameters = ""
             return qs
+
+        view_specific_query_parameters = ['search_type', 'search_minimal_pairs', 'show_all_minimal_pairs', 'format', 'reset']
+        self.query_parameters = query_parameters_from_get(self, self.search_form, get, {}, view_specific_query_parameters)
+        # save the query parameters to a session variable
+        self.request.session['query_parameters'] = json.dumps(self.query_parameters)
+        self.request.session.modified = True
 
         selected_datasets = get_selected_datasets(self.request)
         dataset_languages = get_dataset_languages(selected_datasets)
@@ -2787,7 +2796,7 @@ class MinimalPairsListView(ListView):
             qs = Gloss.objects.none()
             self.request.session['search_results'] = []
             self.request.session.modified = True
-            self.page_get_parameters = get_page_parameters_for_listview(self.search_form, get, self.query_parameters)
+            self.page_get_parameters = ""
             return qs
 
         # grab gloss ids for finger spelling glosses, identified by text #.
@@ -6193,7 +6202,7 @@ class LemmaListView(ListView):
 
         setattr(self.request.session, 'search_type', self.search_type)
 
-        self.query_parameters = query_parameters_from_get(self, self.search_form, get, dict())
+        self.query_parameters = query_parameters_from_get(self, self.search_form, get, dict(), [])
         self.page_get_parameters = get_page_parameters_for_listview(self.search_form, get, self.query_parameters)
 
         # this view accommodates both Show All Lemmas and Lemma Search
@@ -7490,16 +7499,15 @@ class AnnotatedGlossListView(ListView):
 
         qs = queryset_glosssense_from_get('AnnotatedGloss', GlossSearchForm, self.search_form, get, qs)
         # this is a temporary query_parameters variable
-        query_parameters = dict()
         # it is saved to self.query_parameters after the parameters are processed
-        query_parameters = query_parameters_from_get(self, self.search_form, get, query_parameters)
+        query_parameters = query_parameters_from_get(self, self.search_form, get, {}, [])
         qs = apply_video_filters_to_results('AnnotatedGloss', qs, query_parameters)
         qs = apply_nmevideo_filters_to_results('AnnotatedGloss', qs, query_parameters)
 
         query_parameters['search_type'] = self.search_type
 
         qs = queryset_annotatedgloss_from_get(self.sentence_search_form, get, qs)
-        query_parameters = query_parameters_from_get(self, self.sentence_search_form, get, query_parameters)
+        query_parameters = query_parameters_from_get(self, self.sentence_search_form, get, query_parameters, [])
 
         # save the query parameters to a session variable
         self.request.session['query_parameters'] = json.dumps(query_parameters)

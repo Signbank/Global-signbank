@@ -1019,31 +1019,32 @@ def queryset_glosssense_from_get(model, formclass, searchform, GET, qs):
         if get_key.endswith('[]'):
             if not get_value:
                 continue
-            # multiple select
-            if not get_value:
-                continue
+            try:
+                values = [int(v) for v in get_value]
+            except ValueError:
+                values = []
             field = get_key[:-2]
             if field in ['sentenceType']:
                 continue
             if field in ['dialect', 'signlanguage', 'semField', 'derivHist']:
                 query_filter = gloss_prefix + field + '__in'
-                qs = qs.filter(**{query_filter: get_value}).distinct()
+                qs = qs.filter(**{query_filter: values}).distinct()
             elif field in ['definitionRole']:
-                definitions_with_this_role = Definition.objects.filter(role__machine_value__in=get_value)
+                definitions_with_this_role = Definition.objects.filter(role__machine_value__in=values)
                 pks_for_glosses_with_these_definitions = [definition.gloss.pk for definition in definitions_with_this_role]
                 query_filter = gloss_prefix + 'pk__in'
                 qs = qs.filter(**{query_filter: pks_for_glosses_with_these_definitions})
             elif field in ['hasComponentOfType']:
-                morphdefs_with_correct_role = MorphologyDefinition.objects.filter(role__machine_value__in=get_value)
+                morphdefs_with_correct_role = MorphologyDefinition.objects.filter(role__machine_value__in=values)
                 pks_for_glosses_with_morphdefs = [morphdef.parent_gloss.pk for morphdef in morphdefs_with_correct_role]
                 query_filter = gloss_prefix + 'pk__in'
                 qs = qs.filter(**{query_filter: pks_for_glosses_with_morphdefs})
             elif field in ['mrpType']:
-                target_morphemes = [m.id for m in Morpheme.objects.filter(mrpType__machine_value__in=get_value)]
+                target_morphemes = [m.id for m in Morpheme.objects.filter(mrpType__machine_value__in=values)]
                 query_filter = gloss_prefix + 'id__in'
                 qs = qs.filter(**{query_filter: target_morphemes})
             elif field in ['hasRelation']:
-                relations_with_this_role = Relation.objects.filter(role__in=get_value)
+                relations_with_this_role = Relation.objects.filter(role__in=values)
                 pks_for_glosses_with_correct_relation = [relation.source.pk for relation in relations_with_this_role]
                 query_filter = gloss_prefix + 'pk__in'
                 qs = qs.filter(**{query_filter: pks_for_glosses_with_correct_relation})
@@ -1058,7 +1059,7 @@ def queryset_glosssense_from_get(model, formclass, searchform, GET, qs):
                 qs = qs.filter(**{query_filter: morphemes_with_tag})
             else:
                 query_filter = gloss_prefix + field + '__machine_value__in'
-                qs = qs.filter(**{query_filter: get_value})
+                qs = qs.filter(**{query_filter: values})
         elif not legitimate_search_form_url_parameter(searchform, get_key):
             continue
         elif get_key.startswith(formclass.gloss_search_field_prefix):
@@ -1295,7 +1296,7 @@ def queryset_annotatedgloss_from_get(searchform, GET, qs):
     return qs
 
 
-def query_parameters_from_get(view, searchform, GET, query_parameters):
+def query_parameters_from_get(view, searchform, GET, query_parameters, non_form_query_parameters):
     """
     Function to collect non-empty search fields from GET
     The make_harmless_querydict function has already been applied
@@ -1314,15 +1315,15 @@ def query_parameters_from_get(view, searchform, GET, query_parameters):
             # the view attributes are set by the software, not the user, in spite of appearing in the url
             query_parameters[get_key] = getattr(view, get_key)
             continue
-        if get_key not in searchform.fields.keys():
-            # skip csrf_token and page
-            continue
         if get_value in ['', '0']:
             continue
         if get_key.endswith('[]'):
-            if not get_value:
+            field = get_key[:-2]
+            if not get_value or field not in searchform.fields.keys():
                 continue
             query_parameters[get_key] = get_value
+        elif get_key not in non_form_query_parameters and get_key not in searchform.fields.keys():
+            continue
         else:
             query_parameters[get_key] = get_value
     return query_parameters
@@ -1331,14 +1332,13 @@ def query_parameters_from_get(view, searchform, GET, query_parameters):
 def make_harmless_querydict(request):
 
     parameters = dict()
-    for key in request.GET.keys():
+    for key, value in request.GET.items():
         if key.endswith('[]'):
             values = request.GET.getlist(key)
             parameters[key] = values
         else:
-            value = request.GET.get(key)
             harmless_value = value.replace('&', "&amp;").replace('<', "&lt;").replace('>', "&gt;").replace(
                 '\"', "&quot;").replace("'", "&#x27;").replace("%3C", "&lt;").replace("%3E", "&gt;").replace(
-                "%26", "&amp;").replace("%22", "&quot;").replace("%27", "&#x27;").replace("/", "&#47;").replace("=", "&#61;")
+                "%26", "&amp;")
             parameters[key] = harmless_value
     return parameters
