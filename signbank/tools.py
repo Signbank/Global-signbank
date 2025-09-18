@@ -12,13 +12,15 @@ from datetime import date
 
 from django.db import models
 from django.db.models.functions import Lower
+from django.db.models.fields import BooleanField
 from collections import Counter
-from django.utils.translation import override, activate, gettext
+from django.utils.translation import override, activate, gettext, gettext_lazy as _
 from django.views.decorators.csrf import csrf_exempt
 from django.utils.dateformat import format
+from django.utils.timezone import get_current_timezone
 from django.core.exceptions import ObjectDoesNotExist, EmptyResultSet
 from django.contrib.auth.models import User
-from django.http import JsonResponse
+from django.http import JsonResponse, HttpResponse
 from django.shortcuts import render
 from django.template.loader import get_template
 
@@ -34,7 +36,7 @@ from signbank.dictionary.models import (Dataset, Gloss, Morpheme, Dialect, SignL
                                         SemanticField, DeletedGlossOrMedia, UserProfile, get_default_language_id,
                                         Handshape, LemmaIdgloss, FieldChoiceForeignKey, Definition,
                                         LemmaIdglossTranslation, MorphologyDefinition, AnnotatedSentenceTranslation,
-                                        ExampleSentence, OtherMedia, Relation)
+                                        ExampleSentence, OtherMedia, Relation, GlossRevision)
 from signbank.csv_interface import (sense_translations_for_language, update_senses_parse,
                                     update_sentences_parse, sense_examplesentences_for_language, get_sense_numbers,
                                     parse_sentence_row, get_senses_to_sentences, csv_sentence_tuples_list_compare,
@@ -2429,3 +2431,57 @@ def find_duplicate_lemmas(lemma):
             duplicate_to_me.append(duplicate_translation.lemma.id)
     duplicate_lemma = list(set(duplicate_to_me))
     return duplicate_lemma
+
+
+def generate_tabbed_text_response(values):
+    """ Used by update methods to format a list of return values into a tabbed string.
+    The tabbed strings are used in the editable templates where the updates are shown by javascript.
+    """
+    str_values = map(str, values)
+    content = '\t'.join(str_values)
+    return HttpResponse(content, content_type='text/plain')
+
+def add_gloss_update_to_revision_history(user, gloss, field, oldvalue, newvalue):
+
+    assert user is not None, "user parameter must not be None"
+    assert gloss is not None, "gloss parameter must not be None"
+    assert field is not None, "field parameter must not be None"
+
+    if oldvalue == newvalue:
+        return
+
+    revision = GlossRevision(old_value=oldvalue,
+                             new_value=newvalue,
+                             field_name=field,
+                             gloss=gloss,
+                             user=user,
+                             time=DT.datetime.now(tz=get_current_timezone()))
+    revision.save()
+
+def update_boolean_checkbox(user, gloss, field, value):
+    assert isinstance(gloss, Gloss), "Not a Gloss object"
+    assert isinstance(Gloss.get_field(field), BooleanField), "Not a BooleanField"
+
+    if field in FIELDS['phonology']:
+        category_value = 'phonology'
+    elif field in ['inWeb', 'isNew', 'excludeFromEcv']:
+        category_value = 'publication'
+    else:
+        category_value = ''
+
+    original_value = getattr(gloss, field)
+
+    boolean_value = value.lower() in [_('Yes').lower(), 'true', 'True', True, 1]
+
+    gloss.__setattr__(field, boolean_value)
+    gloss.save()
+
+    display_value = _('Yes') if boolean_value else _('No')
+
+    add_gloss_update_to_revision_history(user, gloss, field, str(original_value), str(boolean_value))
+
+    # results = {'boolean_value': boolean_value,
+    #            'display_value': display_value,
+    #            'category_value': category_value}
+    # return JsonResponse(results)
+    return HttpResponse(f'{boolean_value}\t{display_value}\t{category_value}', content_type='text/plain')

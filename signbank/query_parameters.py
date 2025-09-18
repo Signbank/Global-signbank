@@ -336,7 +336,7 @@ def convert_query_parameters_to_filter(query_parameters):
             query_list.append(Q(pk__in=pks_for_glosses_with_tags))
 
         elif get_key == 'signlanguage[]':
-            query_list.append(Q(signlanguage__in=get_value))
+            query_list.append(Q(lemma__dataset__signlanguage__in=get_value))
         elif get_key == 'definitionRole[]':
             # Find all definitions with this role
             definitions_with_this_role = Definition.objects.filter(role__machine_value__in=get_value)
@@ -686,6 +686,8 @@ def query_parameters_toggle_fields(query_parameters):
             continue
         if qp_key == 'hasRelation[]':
             query_fields_parameters.append(query_parameters[qp_key])
+        if qp_key == 'signlanguage':
+            query_fields_parameters.append(query_parameters[qp_key])
         if qp_key[-2:] == '[]':
             query_fields_focus.append(qp_key[:-2])
         else:
@@ -711,6 +713,8 @@ def query_parameters_toggle_fields(query_parameters):
                                       GlossSearchForm.get_field(query_field).label.encode('utf-8').decode())
         elif query_field == 'dialect':
             toggle_query_parameter = (query_field, _("Dialect"))
+        elif query_field == 'signlanguage':
+            toggle_query_parameter = (query_field, _("Sign Language"))
         elif query_field == 'sentenceType':
             toggle_query_parameter = (query_field, _("Sentence Type"))
         elif query_field == 'negative':
@@ -790,8 +794,11 @@ def queryset_from_get(formclass, searchform, GET, qs):
             field = get_key[:-2]
             if not vals:
                 continue
-            if field in ['dialect', 'signlanguage', 'semField', 'derivHist']:
+            if field in ['dialect', 'semField', 'derivHist']:
                 query_filter = field + '__in'
+                qs = qs.filter(**{query_filter: get_value})
+            elif field in ['signlanguage']:
+                query_filter = 'lemma__dataset__signlanguage__in'
                 qs = qs.filter(**{query_filter: get_value})
             elif field in ['definitionRole']:
                 definitions_with_this_role = Definition.objects.filter(role__machine_value__in=vals)
@@ -1024,8 +1031,11 @@ def queryset_glosssense_from_get(model, formclass, searchform, GET, qs):
             field = get_key[:-2]
             if field in ['sentenceType']:
                 continue
-            if field in ['dialect', 'signlanguage', 'semField', 'derivHist']:
+            if field in ['dialect', 'semField', 'derivHist']:
                 query_filter = gloss_prefix + field + '__in'
+                qs = qs.filter(**{query_filter: vals}).distinct()
+            elif field in ['signlanguage']:
+                query_filter = gloss_prefix + 'lemma__dataset__signlanguage__in'
                 qs = qs.filter(**{query_filter: vals}).distinct()
             elif field in ['definitionRole']:
                 definitions_with_this_role = Definition.objects.filter(role__machine_value__in=vals)

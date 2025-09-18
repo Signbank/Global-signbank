@@ -189,10 +189,6 @@ ANON_SAFE_SEARCH = False
 # do we show the tag based search for anonymous users?
 ANON_TAG_SEARCH = False
 
-
-# do we display the previous/next links to signs, requires gloss.sn to be used consistently
-SIGN_NAVIGATION = False
-
 # location and URL for uploaded files
 UPLOAD_ROOT = MEDIA_ROOT + "upload/"
 UPLOAD_URL = MEDIA_URL + "upload/"

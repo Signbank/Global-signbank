@@ -2858,6 +2858,10 @@ class RevisionHistoryTests(TestCase):
         # Create a new lemma in the test dataset
         dataset_name = DEFAULT_DATASET
         test_dataset = Dataset.objects.get(name=dataset_name)
+
+        client = Client()
+        client.login(username='test-user', password='test-user')
+
         new_lemma = LemmaIdgloss(dataset=test_dataset)
         new_lemma.save()
 
@@ -2872,7 +2876,6 @@ class RevisionHistoryTests(TestCase):
         new_gloss.lemma = new_lemma
         new_gloss.save()
 
-        gloss_update_phonology_data = []
         gloss_fields = FIELDS['phonology']+FIELDS['semantics']+FIELDS['main']+['inWeb', 'isNew', 'excludeFromEcv']
 
         mapped_categories = []
@@ -2907,13 +2910,13 @@ class RevisionHistoryTests(TestCase):
                 this_handshape.save()
             elif f == 'SemField':
                 new_machine_value = 500
-                new_human_value = 'semfield_500'
+                new_human_value = 'semField_500'
                 this_semfield = SemanticField(machine_value=new_machine_value,
                                               name=new_human_value)
                 this_semfield.save()
             elif f == 'derivHist':
                 new_machine_value = 500
-                new_human_value = 'derivhist_500'
+                new_human_value = 'derivHist_500'
                 this_derivhist = DerivationHistory(machine_value=new_machine_value,
                                                    name=new_human_value)
                 this_derivhist.save()
@@ -2925,18 +2928,22 @@ class RevisionHistoryTests(TestCase):
                                                 name=new_human_value)
                 this_field_choice.save()
 
+        gloss_update_phonology_data = []
+        gloss_update_phonology_keys = []
+
         # because semantic fields and derivation histories are multiselect, they use different identifiers for update
         # rather than the gloss model field name
-        gloss_update_phonology_keys = []
         for f in gloss_fields:
             gloss_field = Gloss.get_field(f)
             if f == 'semField':
-                new_machine_value_string = '_500'
-                gloss_update_phonology_data.append({'id' : 'semanticfield', 'value' : new_machine_value_string})
+                new_machine_value_string = f + '_500'
+                gloss_update_phonology_data.append({'id' : 'semanticfield', 'value' : new_machine_value_string,
+                                                    'value[]': [new_machine_value_string]})
                 gloss_update_phonology_keys.append(f)
             elif f == 'derivHist':
                 new_machine_value_string = '_500'
-                gloss_update_phonology_data.append({'id' : 'derivationhistory', 'value' : new_machine_value_string})
+                gloss_update_phonology_data.append({'id' : 'derivationhistory', 'value' : new_machine_value_string,
+                                                    'value[]': [new_machine_value_string]})
                 gloss_update_phonology_keys.append(f)
             elif isinstance(gloss_field, models.ForeignKey) and gloss_field.related_model == Handshape:
                 new_machine_value_string = '_500'
@@ -2951,7 +2958,7 @@ class RevisionHistoryTests(TestCase):
                 gloss_update_phonology_data.append({'id' : f, 'value' : new_machine_value_string})
                 gloss_update_phonology_keys.append(f)
             elif f in HANDSHAPE_ETYMOLOGY_FIELDS:
-                new_machine_value_string = 'true'
+                new_machine_value_string = 'letter' if f in ['domhndsh_letter', 'subhndsh_letter'] else 'number'
                 gloss_update_phonology_data.append({'id' : f, 'value' : new_machine_value_string})
                 gloss_update_phonology_keys.append(f)
             elif f in HANDEDNESS_ARTICULATION_FIELDS:
@@ -2959,12 +2966,9 @@ class RevisionHistoryTests(TestCase):
                 gloss_update_phonology_data.append({'id': f, 'value': new_machine_value_string})
                 gloss_update_phonology_keys.append(f)
             elif isinstance(gloss_field, BooleanField):
-                new_machine_value_string = 'true'
+                new_machine_value_string = 'True'
                 gloss_update_phonology_data.append({'id' : f, 'value' : new_machine_value_string})
                 gloss_update_phonology_keys.append(f)
-
-        client = Client()
-        client.login(username='test-user', password='test-user')
 
         for update_data in gloss_update_phonology_data:
             client.post('/dictionary/update/gloss/' + str(new_gloss.pk), update_data)
