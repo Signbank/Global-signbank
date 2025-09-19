@@ -505,14 +505,13 @@ class AnnotatedSentenceListView(ListView):
         results = self.get_queryset()
 
         get = make_harmless_querydict(self.request)
-        print(get)
+
         query_parameters_dict = {}
         query_parameters_keys = []
         for key in list(get.keys()):
             query_parameters_dict[key] = get.get(key)
             query_parameters_keys.append(key)
-        print(query_parameters_keys)
-        print(query_parameters_dict)
+
         context['sort_order'] = str(get.get('sortOrder'))
         context['language_query_keys'] = [language.language_code_2char for language in dataset_languages]
         context['query_parameters_dict'] = query_parameters_dict
@@ -813,7 +812,7 @@ class GlossListView(ListView):
         if USE_REGULAR_EXPRESSIONS and not valid_regex:
             error_message_regular_expression(self.request, search_fields, field_values)
             qs = Gloss.objects.none()
-            # fill page parameters
+            # no page parameters
             self.page_get_parameters = ""
             return qs
 
@@ -850,7 +849,6 @@ class GlossListView(ListView):
                 qs = qs.filter(query).distinct()
 
             sorted_qs = order_queryset_by_sort_order(get, qs, self.queryset_language_codes)
-            # fill page parameters
             self.page_get_parameters = get_page_parameters_for_listview(self.search_form, get, self.query_parameters)
             return sorted_qs
 
@@ -865,7 +863,6 @@ class GlossListView(ListView):
         if self.show_all:
             # sort the results
             sorted_qs = order_queryset_by_sort_order(get, qs, self.queryset_language_codes)
-            # fill page parameters
             self.page_get_parameters = get_page_parameters_for_listview(self.search_form, get, self.query_parameters)
             return sorted_qs
 
@@ -892,7 +889,6 @@ class GlossListView(ListView):
             self.query_parameters = query_parameters
 
             sorted_qs = order_queryset_by_sort_order(get, qs, self.queryset_language_codes)
-            # fill page parameters
             self.page_get_parameters = get_page_parameters_for_listview(self.search_form, get, self.query_parameters)
             return sorted_qs
 
@@ -911,7 +907,6 @@ class GlossListView(ListView):
             self.query_parameters = query_parameters
 
             sorted_qs = order_queryset_by_sort_order(get, qs, self.queryset_language_codes)
-            # fill page parameters
             self.page_get_parameters = get_page_parameters_for_listview(self.search_form, get, self.query_parameters)
             return sorted_qs
 
@@ -939,7 +934,6 @@ class GlossListView(ListView):
         if 'last_used_dataset' not in self.request.session.keys():
             self.request.session['last_used_dataset'] = self.last_used_dataset
 
-        # fill page parameters
         self.page_get_parameters = get_page_parameters_for_listview(self.search_form, get, self.query_parameters)
 
         return sorted_qs
@@ -3518,15 +3512,15 @@ class HandshapeListView(ListView):
     template_name = 'dictionary/admin_handshape_list.html'
     search_type = 'handshape'
     show_all = False
+    search_form = HandshapeSearchForm()
+    sortOrder = 'machine_value'
 
     def get_context_data(self, **kwargs):
         # Call the base implementation first to get a context
         context = super(HandshapeListView, self).get_context_data(**kwargs)
         # Add in a QuerySet of all the books
 
-        search_form = HandshapeSearchForm(self.request.GET)
-
-        context['searchform'] = search_form
+        context['searchform'] = self.search_form
 
         self.search_type = self.request.GET.get('search_type', self.search_type)
         context['search_type'] = self.search_type
@@ -3655,10 +3649,17 @@ class HandshapeListView(ListView):
             handshape_fields[fname] = Handshape.get_field(fname)
 
         get = make_harmless_querydict(self.request)
-
         self.show_all = self.kwargs.get('show_all', self.show_all)
-        self.search_type = self.request.GET.get('search_type', self.search_type)
+
+        # replace a potentially nonsense search_type in the url with the view default
+        self.search_type = get['search_type'] if 'search_type' in get.keys() and get['search_type'] in SEARCH_TYPES else 'handshape'
         setattr(self.request.session, 'search_type', self.search_type)
+
+        if ('sortOrder' in get and get['sortOrder'] not in Handshape.get_field_names()
+                and get['sortOrder'] not in [f'-{name}' for name in Handshape.get_field_names()]):
+            self.sortOrder = 'machine_value'
+        else:
+            self.sortOrder = get['sortOrder']
 
         if not self.show_all and not get or 'reset' in get:
             qs = Handshape.objects.none()
@@ -3677,9 +3678,9 @@ class HandshapeListView(ListView):
         qs = Handshape.objects.filter(machine_value__gt=1).order_by('machine_value')
 
         if self.show_all:
-            if 'sortOrder' in get and get['sortOrder'] != 'machine_value':
+            if self.sortOrder != 'machine_value':
                 # User has toggled the sort order for the column
-                qs = order_handshape_queryset_by_sort_order(self.request.GET, qs)
+                qs = order_handshape_queryset_by_sort_order(get, qs)
             else:
                 # The default is to order the signs alphabetically by whether there is an angle bracket
                 qs = order_handshape_by_angle(qs)
@@ -3724,26 +3725,36 @@ class HandshapeListView(ListView):
                                                         output_field=IntegerField())).filter(Q(count_fs1__exact=5) | Q(**{query_hsNumSel:val}))
 
                 if isinstance(Handshape.get_field(fieldname), BooleanField):
+                    val = 'False' if val not in ['False', 'True'] else val
                     val = {'0': False, '1': True, 'True': True, 'False': False, 'None': '', '': ''}[val]
+
+                if isinstance(Handshape.get_field(fieldname), FieldChoiceForeignKey):
+                    # make sure the value in the url is a number
+                    try:
+                        coerced_to_int = int(val)
+                    except ValueError:
+                        val = '0'
 
                 if fieldname == 'name' and val:
                     query = Q(name__iregex=val)
                     qs = qs.filter(query)
 
-                if val not in ['', '0', False] and fieldname not in ['hsNumSel', 'name']:
-                    if isinstance(Handshape.get_field(fieldname), FieldChoiceForeignKey):
-                        key = fieldname + '__machine_value'
-                        kwargs = {key: int(val)}
-                        qs = qs.filter(**kwargs)
-                    else:
-                        # is boolean
-                        key = fieldname + '__exact'
-                        kwargs = {key: val}
-                        qs = qs.filter(**kwargs)
+                if val in ['', '0', False] or fieldname in ['hsNumSel', 'name']:
+                    continue
 
-        if 'sortOrder' in get and get['sortOrder'] != 'machine_value':
+                if isinstance(Handshape.get_field(fieldname), FieldChoiceForeignKey):
+                    key = fieldname + '__machine_value'
+                    kwargs = {key: int(val)}
+                    qs = qs.filter(**kwargs)
+                else:
+                    # is boolean
+                    key = fieldname + '__exact'
+                    kwargs = {key: val}
+                    qs = qs.filter(**kwargs)
+
+        if self.sortOrder != 'machine_value':
             # User has toggled the sort order for the column
-            qs = order_handshape_queryset_by_sort_order(self.request.GET, qs)
+            qs = order_handshape_queryset_by_sort_order(get, qs)
         else:
             # The default is to order the signs alphabetically by whether there is an angle bracket
             qs = order_handshape_by_angle(qs)
