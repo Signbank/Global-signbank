@@ -2041,7 +2041,7 @@ class MorphemeListView(ListView):
 
         # use these to fill the form fields of a just done query
         populate_keys, populate_fields = search_fields_from_get(self.search_form, self.request.GET)
-        context['populate_fields'] = json.dumps(populate_fields)
+        context['populate_fields'] = populate_fields
         context['populate_fields_keys'] = json.dumps(populate_keys)
 
         context['glosscount'] = Morpheme.objects.filter(lemma__dataset__in=selected_datasets).count()
