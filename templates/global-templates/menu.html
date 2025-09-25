@@ -83,13 +83,13 @@
     <form class="navbar-form navbar-form-light navbar-left" role="search" id="frmSearch" name="frmSearch" method="get" action="{{PREFIX_URL}}/signs/search/">
         {% csrf_token %}
             <div class="text-container text-container-light {% if USE_REGULAR_EXPRESSIONS %}hasTooltip{% endif %}">
-                <input class='form-control' placeholder='{% trans "Search Gloss" %}' type="text" name="search" id="tooltip-search"
+                <input class='form-control' placeholder='{% trans "Search Gloss" %}' type="text" name="search" id="menubar-search"
                                                onfocus="focusFunction()" onblur="blurFunction()" onclick="clickFunction()"
                                                value="" maxlength="60" size="36" />
 				{% if USE_REGULAR_EXPRESSIONS %}{% include "tooltip.html" with include_tags=True %}{% endif %}
             </div>
             <div class="text-container text-container-light {% if USE_REGULAR_EXPRESSIONS %}hasTooltip{% endif %}">
-                <input class='form-control' placeholder='{% trans "Search Sense" %}' type="text" name="translation" id="tooltip-translation"
+                <input class='form-control' placeholder='{% trans "Search Sense" %}' type="text" name="translation" id="menubar-translation"
                                                onfocus="focusFunction2()" onblur="blurFunction2()" onclick="clickFunction2()"
                                                value="" maxlength="60" size="36" />
 				{% if USE_REGULAR_EXPRESSIONS %}{% include "tooltip.html" with include_tags=True %}{% endif %}

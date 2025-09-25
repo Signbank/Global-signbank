@@ -203,6 +203,9 @@ MINIMAL_PAIRS_CHOICE_FIELDS = ['handedness', 'domhndsh', 'subhndsh', 'handCh', '
 # Display these fields as columns in the list view
 GLOSS_LIST_DISPLAY_FIELDS = ['handedness', 'domhndsh', 'subhndsh', 'locprim']
 
+VIEW_TYPES = ['gloss_list', 'lemma_groups', 'sense_list', 'percentage']
+SEARCH_TYPES = ['sign', 'lemma', 'handshape', 'sign_handshape', 'morpheme', 'annotatedsentence', 'sign_or_morpheme', 'sense']
+
 # These are fields in the Search forms by panel
 SEARCH_BY = {}
 # the ordering of the list of publication fields is important for the Gloss Search template
