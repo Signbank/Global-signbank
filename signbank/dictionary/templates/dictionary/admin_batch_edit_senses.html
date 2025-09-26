@@ -17,14 +17,14 @@
 <script type="text/javascript" src="{{ STATIC_URL }}js/jquery.jeditable.mini_colors.js"></script>
 <link href="//cdnjs.cloudflare.com/ajax/libs/select2/4.0.0/css/select2.css" rel="stylesheet"/>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.5/js/select2.full.js"></script>
-
+{{ query_parameters|json_script:"query_parameters" }}
 <script type='text/javascript'>
 var url = '{{ PREFIX_URL }}';
 var saving_str = '{{saving_str|escapejs}}';
 var csrf_token = '{{csrf_token}}';
 var multiple_select_fields = {{MULTIPLE_SELECT_GLOSS_FIELDS|safe}};
 var query_parameters_keys = {{query_parameters_keys|safe}};
-var query_parameters_dict = {{query_parameters|safe}};
+var query_parameters_dict = JSON.parse(document.getElementById('query_parameters').textContent);
 var new_text_labels = {{new_text_labels|safe}};
 </script>
 

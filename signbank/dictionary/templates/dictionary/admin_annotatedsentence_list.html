@@ -12,13 +12,13 @@
 
 {% block extrajs %}
 <script type="text/javascript" src="{{STATIC_URL}}js/jquery.jeditable.mini.js"></script>
-
+{{ query_parameters_dict|json_script:"query_parameters_dict" }}
 <script type='text/javascript'>
 var show_dataset_interface_options = {{ SHOW_DATASET_INTERFACE_OPTIONS|yesno:"true,false" }};
 var csrf_token = '{{csrf_token}}';
 var paginate_by = '{{paginate_by}}';
 var page_number = {{page_obj.number}};
-var query_parameters_dict = {{ query_parameters_dict|safe }};
+var query_parameters_dict = JSON.parse(document.getElementById('query_parameters_dict').textContent);
 var query_parameters_keys = {{ query_parameters_keys|safe }};
 var language_query_keys = {{ language_query_keys|safe }};
 

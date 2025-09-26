@@ -147,7 +147,7 @@ def get_context_data_for_gloss_search_form(request, listview, search_form, kwarg
     query_parameters = json.loads(query_parameters_in_session) \
         if not context['show_all'] and query_parameters_in_session not in ['', '{}'] \
         else listview.query_parameters
-    context['query_parameters'] = json.dumps(query_parameters)
+    context['query_parameters'] = query_parameters
     context['query_parameters_keys'] = json.dumps(list(query_parameters.keys()))
 
     context['searchform'] = search_form

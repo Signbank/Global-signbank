@@ -39,13 +39,14 @@
 <script type="text/javascript" src="{{STATIC_URL}}js/gloss_add.js"></script>
 <link href="//cdnjs.cloudflare.com/ajax/libs/select2/4.0.0/css/select2.css" rel="stylesheet"/>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.5/js/select2.full.js"></script>
+{{ populate_fields|json_script:"populate_fields" }}
 <script type='text/javascript'>
 var show_dataset_interface_options = {{SHOW_DATASET_INTERFACE_OPTIONS|yesno:"true,false"}};
 var user_can_add_morpheme = {{perms.dictionary.add_morpheme|yesno:"true,false"}};
 var multiple_select_fields = {{MULTIPLE_SELECT_MORPHEME_FIELDS|safe}};
 var field_colors = {{field_colors|safe}};
 var populate_fields_keys = {{populate_fields_keys|safe}};
-var populate_fields = {{populate_fields|safe}};
+var populate_fields = JSON.parse(document.getElementById('populate_fields').textContent);
 
 var csrf_token = '{{csrf_token}}';
 
