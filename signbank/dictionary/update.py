@@ -4,6 +4,7 @@ import re
 import datetime as DT
 import urllib.parse
 import magic
+import subprocess
 
 from django.http import (HttpResponse, HttpResponseRedirect, HttpResponseForbidden, HttpResponseBadRequest,
                          JsonResponse, Http404)
@@ -859,7 +860,6 @@ def update_gloss(request, glossid):
 
     field = request.POST.get('id', '')
     value = request.POST.get('value', '')
-    print('update gloss: field, value: ', field, value)
     original_value = ''  # will in most cases be set later, but can't be empty in case it is not set
     category_value = ''
     field_category = ''
@@ -1689,6 +1689,9 @@ def update_other_media(gloss, field, value):
         return HttpResponseBadRequest("OtherMedia doesn't match gloss", {'content-type': 'text/plain'})
 
     if action_or_fieldname == 'other-media-delete':
+        file_location = os.path.join(OTHER_MEDIA_DIRECTORY, other_media.path)
+        if os.path.exists(file_location):
+            os.remove(file_location)
         other_media.delete()
         return HttpResponseRedirect(reverse(reverse_url,
                                             kwargs={'pk': gloss_or_morpheme.pk}) + '?editothermedia')
@@ -2263,14 +2266,12 @@ def add_othermedia(request):
     filename_base = '.'.join(split_norm_filename[:-1])
 
     if filetype == 'video/mp4':
-        # handle 'm4v' extension, this overwrites an extension that does not match the filetype for mp4
+        # handle 'm4v' extension, this may overwrite an extension to normalise it to mp4
         extension = 'mp4'
 
     if not os.path.isdir(goal_directory):
         os.mkdir(goal_directory)
 
-    # use '+' to concatinate
-    # if the source filename is right to left, the extension is at the end
     destination_filename = f'{filename_base}.{extension}'
     goal_path = os.path.join(goal_directory, destination_filename)
 
@@ -2326,8 +2327,17 @@ def add_othermedia(request):
         destination.write(chunk)
     destination.close()
 
-    destination_location = os.path.join(goal_directory, filename_plus_extension)
-
+    original_destination_location = os.path.join(goal_directory, filename_plus_extension)
+    if filetype.startswith('video') and filetype not in ['video/mp4']:
+        (filename_without_extension, extension) = os.path.splitext(filename_plus_extension)
+        converted_destination_location = os.path.join(goal_directory, f'{filename_without_extension}.mp4')
+        # subprocess.run(["ffmpeg", "-i", original_destination_location, converted_destination_location])
+        convert_video(original_destination_location, converted_destination_location)
+        other_media_path = request.POST['gloss'] + f'/{filename_without_extension}.mp4'
+        newothermedia.path = other_media_path
+        newothermedia.save()
+        if os.path.exists(original_destination_location):
+            os.remove(original_destination_location)
     return HttpResponseRedirect(reverse(reverse_url, kwargs={'pk': request.POST['gloss']})+'?editothermedia')
 
 

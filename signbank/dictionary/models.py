@@ -3149,12 +3149,12 @@ class OtherMedia(MetaModelMixin, models.Model):
         split_norm_path = norm_path.split(os.sep)
         if len(split_norm_path) == 1:
             # other media path is a filename
-            path = f'/dictionary/protected_media/othermedia/{self.path}'
+            path = f'othermedia/{self.path}'
             media_okay = False
             other_media_filename = self.path
         elif len(split_norm_path) == 2 and split_norm_path[0] == str(gloss_id):
             # other media path is gloss_id / filename
-            path = f'/dictionary/protected_media/othermedia/{self.path}'
+            path = f'othermedia/{self.path}'
             other_media_filename = split_norm_path[-1]
         else:
             # other media path is not a filename and not the correct folder, do not prefix it

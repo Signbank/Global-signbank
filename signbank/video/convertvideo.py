@@ -282,6 +282,9 @@ def convert_video(sourcefile, targetfile, force=False):
         # ffmpeg copy video channel to new file with .mp4 extension
         FFMPEG_COPY_OPTIONS = ["-c", "copy", "-an"]
         b = run_ffmpeg(sourcefile, targetfile, options=FFMPEG_COPY_OPTIONS)
+    elif 'webm' in format or 'matroska' in format:
+        FFMPEG_COPY_OPTIONS = ["-c:v", "lbx264", "-an"]
+        b = run_ffmpeg(sourcefile, targetfile, options=FFMPEG_COPY_OPTIONS)
     else: 
         # convert the video
         RAW_OPTIONS = ["-f", "rawvideo", "-vcodec", "h264"]
