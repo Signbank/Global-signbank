@@ -330,7 +330,10 @@ def convert_query_parameters_to_filter(query_parameters):
             query_list.append(Q(dialect__in=get_value))
 
         elif get_key == 'tags[]':
-            values = [int(v) for v in get_value]
+            try:
+                values = [int(v) for v in get_value]
+            except ValueError:
+                values = []
             pks_for_glosses_with_tags = list(
                 TaggedItem.objects.filter(tag__id__in=values).values_list('object_id', flat=True))
             query_list.append(Q(pk__in=pks_for_glosses_with_tags))
@@ -383,7 +386,7 @@ def convert_query_parameters_to_filter(query_parameters):
                 selected_morpheme = Morpheme.objects.get(pk=int(get_value))
                 potential_pks = [appears.parent_gloss.pk for appears in SimultaneousMorphologyDefinition.objects.filter(morpheme=selected_morpheme)]
                 query_list.append(Q(pk__in=potential_pks))
-            except ObjectDoesNotExist:
+            except (ObjectDoesNotExist, ValueError):
                 # This error should not occur, the input search form requires the selection of a morpheme from a list
                 # If the user attempts to input a string, it is ignored by the gloss list search form
                 print("convert_query_parameters_to_filter: Morpheme not found: ", get_value)
@@ -442,7 +445,6 @@ def convert_query_parameters_to_annotatedgloss_filter(query_parameters):
 
     query_list = []
     for get_key, get_value in query_parameters.items():
-        print(get_key, get_value)
         if get_key in ['isRepresentative'] and get_value:
             if get_value == 'yes':
                 annotatedglosses = AnnotatedGloss.objects.filter(isRepresentative__exact=True).distinct()
@@ -648,7 +650,7 @@ def pretty_print_query_values(dataset_languages, query_parameters):
             try:
                 morpheme_object = Gloss.objects.get(pk=int(query_parameters[key]))
                 query_dict[key] = morpheme_object.idgloss
-            except (ObjectDoesNotExist, MultipleObjectsReturned):
+            except (ObjectDoesNotExist, MultipleObjectsReturned, ValueError):
                 query_dict[key] = query_parameters[key]
         elif key in ['createdBefore', 'createdAfter']:
             created_date = DT.datetime.strptime(query_parameters[key], DATE_FORMAT).date()
@@ -764,7 +766,6 @@ def search_fields_from_get(searchform, GET):
             search_fields_to_populate[get_key] = vals
             search_keys.append(get_key)
         elif get_key in ['translation', 'search']:
-            print(get_key, html.escape(get_value))
             search_fields_to_populate[get_key] = html.escape(get_value)
         elif get_key not in search_form_fields:
             # skip csrf_token and page
@@ -794,24 +795,27 @@ def queryset_from_get(formclass, searchform, GET, qs):
             field = get_key[:-2]
             if not vals:
                 continue
+            try:
+                values = [int(v) for v in vals]
+            except ValueError:
+                values = []
             if field in ['dialect', 'semField', 'derivHist']:
                 query_filter = field + '__in'
-                qs = qs.filter(**{query_filter: get_value})
+                qs = qs.filter(**{query_filter: values})
             elif field in ['signlanguage']:
                 query_filter = 'lemma__dataset__signlanguage__in'
-                qs = qs.filter(**{query_filter: get_value})
+                qs = qs.filter(**{query_filter: values})
             elif field in ['definitionRole']:
-                definitions_with_this_role = Definition.objects.filter(role__machine_value__in=vals)
+                definitions_with_this_role = Definition.objects.filter(role__machine_value__in=values)
                 pks_for_glosses_with_these_definitions = [definition.gloss.pk for definition in definitions_with_this_role]
                 qs = qs.filter(pk__in=pks_for_glosses_with_these_definitions)
             elif field in ['tags']:
-                values = [int(v) for v in vals]
                 morphemes_with_tag = list(
                     TaggedItem.objects.filter(tag__id__in=values).values_list('object_id', flat=True))
                 qs = qs.filter(id__in=morphemes_with_tag)
             else:
                 query_filter = field + '__machine_value__in'
-                qs = qs.filter(**{query_filter: vals})
+                qs = qs.filter(**{query_filter: values})
         elif get_key not in searchform.fields.keys() \
                 or get_value in ['', '0']:
             continue
@@ -1028,43 +1032,46 @@ def queryset_glosssense_from_get(model, formclass, searchform, GET, qs):
             vals = GET.getlist(get_key)
             if not vals:
                 continue
+            try:
+                values = [int(v) for v in vals]
+            except ValueError:
+                values = []
             field = get_key[:-2]
             if field in ['sentenceType']:
                 continue
             if field in ['dialect', 'semField', 'derivHist']:
                 query_filter = gloss_prefix + field + '__in'
-                qs = qs.filter(**{query_filter: vals}).distinct()
+                qs = qs.filter(**{query_filter: values}).distinct()
             elif field in ['signlanguage']:
                 query_filter = gloss_prefix + 'lemma__dataset__signlanguage__in'
-                qs = qs.filter(**{query_filter: vals}).distinct()
+                qs = qs.filter(**{query_filter: values}).distinct()
             elif field in ['definitionRole']:
-                definitions_with_this_role = Definition.objects.filter(role__machine_value__in=vals)
+                definitions_with_this_role = Definition.objects.filter(role__machine_value__in=values)
                 pks_for_glosses_with_these_definitions = [definition.gloss.pk for definition in definitions_with_this_role]
                 query_filter = gloss_prefix + 'pk__in'
                 qs = qs.filter(**{query_filter: pks_for_glosses_with_these_definitions})
             elif field in ['hasComponentOfType']:
-                morphdefs_with_correct_role = MorphologyDefinition.objects.filter(role__machine_value__in=vals)
+                morphdefs_with_correct_role = MorphologyDefinition.objects.filter(role__machine_value__in=values)
                 pks_for_glosses_with_morphdefs = [morphdef.parent_gloss.pk for morphdef in morphdefs_with_correct_role]
                 query_filter = gloss_prefix + 'pk__in'
                 qs = qs.filter(**{query_filter: pks_for_glosses_with_morphdefs})
             elif field in ['mrpType']:
-                target_morphemes = [m.id for m in Morpheme.objects.filter(mrpType__machine_value__in=vals)]
+                target_morphemes = [m.id for m in Morpheme.objects.filter(mrpType__machine_value__in=values)]
                 query_filter = gloss_prefix + 'id__in'
                 qs = qs.filter(**{query_filter: target_morphemes})
             elif field in ['hasRelation']:
-                relations_with_this_role = Relation.objects.filter(role__in=vals)
+                relations_with_this_role = Relation.objects.filter(role__in=values)
                 pks_for_glosses_with_correct_relation = [relation.source.pk for relation in relations_with_this_role]
                 query_filter = gloss_prefix + 'pk__in'
                 qs = qs.filter(**{query_filter: pks_for_glosses_with_correct_relation})
             elif field in ['tags']:
-                values = [int(v) for v in vals]
                 morphemes_with_tag = list(
                     TaggedItem.objects.filter(tag__id__in=values).values_list('object_id', flat=True))
                 query_filter = gloss_prefix + 'id__in'
                 qs = qs.filter(**{query_filter: morphemes_with_tag})
             else:
                 query_filter = gloss_prefix + field + '__machine_value__in'
-                qs = qs.filter(**{query_filter: vals})
+                qs = qs.filter(**{query_filter: values})
         elif not legitimate_search_form_url_parameter(searchform, get_key):
             continue
         elif get_key.startswith(formclass.gloss_search_field_prefix):
@@ -1099,10 +1106,10 @@ def queryset_glosssense_from_get(model, formclass, searchform, GET, qs):
                 # Filter all glosses that contain this morpheme in their simultaneous morphology
                 try:
                     selected_morpheme = Morpheme.objects.get(pk=int(get_value))
+                    potential_pks = [appears.parent_gloss.pk for appears
+                                     in SimultaneousMorphologyDefinition.objects.filter(morpheme=selected_morpheme)]
                 except (ObjectDoesNotExist, ValueError):
-                    continue
-                potential_pks = [appears.parent_gloss.pk for appears
-                                 in SimultaneousMorphologyDefinition.objects.filter(morpheme=selected_morpheme)]
+                    potential_pks = []
                 query_filter = gloss_prefix + 'pk__in'
                 qs = qs.filter(**{query_filter: potential_pks})
             elif get_key in ['definitionContains']:
@@ -1244,8 +1251,12 @@ def queryset_sentences_from_get(searchform, GET, qs):
             vals = GET.getlist(get_key)
             if not vals:
                 continue
+            try:
+                values = [int(v) for v in vals]
+            except ValueError:
+                values = []
             if get_key in ['sentenceType[]']:
-                sentences_with_this_type = ExampleSentence.objects.filter(sentenceType__machine_value__in=vals)
+                sentences_with_this_type = ExampleSentence.objects.filter(sentenceType__machine_value__in=values)
                 qs = qs.filter(sense__exampleSentences__in=sentences_with_this_type).distinct()
         elif get_key not in searchform.fields.keys() \
                 or get_value in ['', '0']:
