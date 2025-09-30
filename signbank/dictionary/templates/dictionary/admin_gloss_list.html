@@ -71,74 +71,6 @@ var morpheme_idgloss = '{{morpheme_idgloss|safe}}';
 var gloss_fields_to_populate = {{gloss_fields_to_populate|safe}};
 var gloss_fields_to_populate_keys = {{gloss_fields_to_populate_keys|safe}};
 
-function sanitizeInput(input) {
-  var copyinput = input;
-  copyinput = copyinput.replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#x27;");
-  return copyinput;
-}
-
-function validateForm(formId) {
-{% for dataset_lang in dataset_languages %}
-    var targetAnnotationObjectId ='id_annotation_idgloss_{{dataset_lang.language_code_2char}}';
-    var input_annotation_value = document.forms[formId][targetAnnotationObjectId].value;
-    var sanitized = sanitizeInput(input_annotation_value);
-    var target_annotation_object = document.getElementById(targetAnnotationObjectId);
-    target_annotation_object.setAttribute("value", sanitized);
-    target_annotation_object.value = sanitized;
-
-    var targetLemmaObjectId = 'id_lemma_{{dataset_lang.language_code_2char}}';
-    var input_lemma_value = document.forms[formId][targetLemmaObjectId].value;
-    var sanitized = sanitizeInput(input_lemma_value);
-    var target_lemma_object = document.getElementById(targetLemmaObjectId);
-    target_lemma_object.setAttribute("value", sanitized);
-    target_lemma_object.value = sanitized;
-
-    var targetKeywordObjectId = 'id_keyword_{{dataset_lang.language_code_2char}}';
-    var input_keyword_value = document.forms[formId][targetKeywordObjectId].value;
-    var sanitized = sanitizeInput(input_keyword_value);
-    var target_keyword_object = document.getElementById(targetKeywordObjectId);
-    target_keyword_object.setAttribute("value", sanitized);
-    target_keyword_object.value = sanitized;
-{% endfor %}
-    var menubar_search_id = 'menubar-search';
-    var input_menubar_search = document.forms['frmSearch'][menubar_search_id].value;
-    var sanitized = sanitizeInput(input_menubar_search);
-    var target_menubar_search_object = document.getElementById(menubar_search_id);
-    target_menubar_search_object.setAttribute("value", sanitized);
-    target_menubar_search_object.value = sanitized;
-
-    var menubar_translation_id = 'menubar-translation';
-    var input_menubar_translation = document.forms['frmSearch'][menubar_translation_id].value;
-    var sanitized = sanitizeInput(input_menubar_translation);
-    var target_menubar_translation_object = document.getElementById(menubar_translation_id);
-    target_menubar_translation_object.setAttribute("value", sanitized);
-    target_menubar_translation_object.value = sanitized;
-{% for text_field in text_fields_of_gloss_search %}
-    var targetTextObjectId ='id_{{text_field}}';
-    var input_text_field = document.forms[formId][targetTextObjectId];
-    if (input_text_field != undefined) {
-        var input_text_value = input_text_field.value;
-        var sanitized = sanitizeInput(input_text_value);
-        var target_text_object = document.getElementById(targetTextObjectId);
-        target_text_object.setAttribute("value", sanitized);
-        target_text_object.value = sanitized;
-    }
-{% endfor %}
-    var morphemme_lookahead = 'morphemeidgloss';
-    var morpheme_field = document.forms[formId][morphemme_lookahead];
-    if (morpheme_field != undefined) {
-        var input_morpheme_lookahead_value = morpheme_field.value;
-        var sanitized = sanitizeInput(input_morpheme_lookahead_value);
-        var target_morpheme_object = document.getElementById(morphemme_lookahead);
-        target_morpheme_object.setAttribute("value", sanitized);
-        target_morpheme_object.value = sanitized;
-    }
-}
-
 $(document).ready(function() {
 
     $('[data-toggle="tooltip"]').tooltip();
@@ -518,7 +450,6 @@ function do_sort_column(field_name, action, frmName) {
  * @returns {void}
  */
 function do_adminsearch(el) {
- validateForm("adminsearch");
  var sSearchType = $(el).attr('value');
   switch(sSearchType) {
     case "sign":
