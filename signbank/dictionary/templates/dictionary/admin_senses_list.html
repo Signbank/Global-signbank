@@ -67,6 +67,8 @@
 <script type="text/javascript" src="{{ STATIC_URL }}js/typeahead.bundle.min.js"></script>
 <link href="//cdnjs.cloudflare.com/ajax/libs/select2/4.0.0/css/select2.css" rel="stylesheet"/>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.5/js/select2.full.js"></script>
+{{ query_parameters|json_script:"query_parameters" }}
+{{ gloss_fields_to_populate|json_script:"gloss_fields_to_populate" }}
 <script type='text/javascript'>
 var show_dataset_interface_options = {{ SHOW_DATASET_INTERFACE_OPTIONS|yesno:"true,false" }};
 var multiple_select_fields = {{MULTIPLE_SELECT_GLOSS_FIELDS|safe}};
@@ -77,11 +79,11 @@ var objects_on_this_page = {{objects_on_page|safe}};
 var view_type = '{{view_type}}';
 var paginate_by = '{{paginate_by}}';
 var query_parameters_keys = {{query_parameters_keys|safe}};
-var query_parameters_dict = {{query_parameters|safe}};
+var query_parameters_dict = JSON.parse(document.getElementById('query_parameters').textContent);
 
 var other_parameters_keys = {{other_parameters_keys|safe}};
 var language_query_keys = {{language_query_keys|safe}};
-var gloss_fields_to_populate = {{gloss_fields_to_populate|safe}};
+var gloss_fields_to_populate = JSON.parse(document.getElementById('gloss_fields_to_populate').textContent);
 var gloss_fields_to_populate_keys = {{gloss_fields_to_populate_keys|safe}};
 
 $(document).ready(function() {
