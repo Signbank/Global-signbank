@@ -6,7 +6,7 @@ from signbank.settings.base import DISABLE_MOVING_THUMBNAILS_ABOVE_NR_OF_GLOSSES
 from signbank.settings.server_specific import (FIELDS, HANDSHAPE_ETYMOLOGY_FIELDS, HANDEDNESS_ARTICULATION_FIELDS,
                                                SEARCH_BY, USE_DERIVATIONHISTORY, LANGUAGE_CODE, DEFAULT_DATASET_ACRONYM,
                                                SHOW_DATASET_INTERFACE_OPTIONS, USE_REGULAR_EXPRESSIONS,
-                                               SHOW_MORPHEME_SEARCH, GLOSS_LIST_DISPLAY_FIELDS)
+                                               SHOW_MORPHEME_SEARCH, GLOSS_LIST_DISPLAY_FIELDS, VIEW_TYPES, SEARCH_TYPES)
 from signbank.dictionary.models import (Dataset, Gloss, Morpheme, SignLanguage, Dialect,
                                         FieldChoice, CATEGORY_MODELS_MAPPING)
 from signbank.dictionary.forms import GlossSearchForm, GlossCreateForm, LemmaCreateForm
@@ -48,12 +48,15 @@ def get_context_data_for_list_view(request, listview, kwargs, context={}):
     Creates basic context data for several ListViews (e.g. GlossListView, SenseListView)
     """
     context['show_all'] = kwargs.get('show_all', False)
-    context['view_type'] = request.GET.get('view_type', listview.view_type)
+    view_type = request.GET.get('view_type')
+    # erase a potentially dangerous view_type in the url parameter with the view default
+    context['view_type'] = view_type if view_type in VIEW_TYPES else listview.view_type
     context['menu_bar_search'] = html.escape(request.GET['search']) if 'search' in request.GET else ''
     context['web_search'] = get_web_search(request)
 
     search_type = request.GET.get('search_type')
-    context['search_type'] = search_type if search_type else listview.search_type
+    # replace a potentially dangerous search_type in the url with the view default
+    context['search_type'] = search_type if search_type in SEARCH_TYPES else listview.search_type
     if 'search_type' not in request.session.keys():
         request.session['search_type'] = search_type
 
@@ -96,7 +99,7 @@ def get_other_parameter_keys():
     # other parameters are in the GlossSearchForm in the template that are not initialised
     # via multiselect or language fields, plus semantics and phonology fields with text types
     other_parameters = ['sortOrder'] + SEARCH_BY['publication'] + FIELDS['phonology'] + \
-                       FIELDS['semantics'] + FIELDS['morpheme']
+                       FIELDS['semantics'] + FIELDS['morpheme'] + FIELDS['main']
     fieldnames = FIELDS['main'] + FIELDS['phonology'] + FIELDS['semantics'] + ['inWeb', 'isNew']
     fields_with_choices = fields_to_fieldcategory_dict()
     multiple_select_gloss_fields = [fieldname for fieldname in fieldnames if fieldname in fields_with_choices.keys()]
@@ -159,11 +162,6 @@ def get_context_data_for_gloss_search_form(request, listview, search_form, kwarg
     multiple_select_gloss_fields.extend(['definitionRole', 'hasComponentOfType', 'mrpType', 'hasRelation'])
     context['MULTIPLE_SELECT_GLOSS_FIELDS'] = multiple_select_gloss_fields
     context['field_colors'] = get_choices_colors(fields_with_choices)
-
-    from signbank.query_parameters import search_fields_from_get
-    populate_keys, populate_fields = search_fields_from_get(search_form, request.GET)
-    context['gloss_fields_to_populate'] = json.dumps(populate_fields)
-    context['gloss_fields_to_populate_keys'] = json.dumps(populate_keys)
 
     context['SHOW_DATASET_INTERFACE_OPTIONS'] = SHOW_DATASET_INTERFACE_OPTIONS
     context['USE_REGULAR_EXPRESSIONS'] = USE_REGULAR_EXPRESSIONS

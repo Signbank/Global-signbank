@@ -52,7 +52,7 @@ from signbank.settings.server_specific import (URL, PREFIX_URL, LANGUAGE_CODE, L
                                                MORPHEME_CHOICE_FIELDS, MORPHEME_DISPLAY_FIELDS, SEARCH_BY,
                                                MINIMAL_PAIRS_SEARCH_FIELDS,
                                                PUBLIC_PHONOLOGY_FIELDS, PUBLIC_SEMANTICS_FIELDS, PUBLIC_MAIN_FIELDS,
-                                               DEBUG_SENSES, DEBUG_EMAILS_ON, SEPARATE_ENGLISH_IDGLOSS_FIELD)
+                                               DEBUG_SENSES, DEBUG_EMAILS_ON, SEPARATE_ENGLISH_IDGLOSS_FIELD, VIEW_TYPES, SEARCH_TYPES)
 from signbank.video.forms import VideoUploadForObjectForm
 from signbank.video.convertvideo import get_folder_name
 from signbank.dictionary.models import (Dataset, UserProfile, AffiliatedUser, AffiliatedGloss,
@@ -84,7 +84,8 @@ from signbank.dictionary.forms import (AnnotatedSentenceSearchForm, GlossSearchF
 from signbank.tools import (write_ecv_file_for_dataset, find_duplicate_lemmas,
                             construct_scrollbar, get_dataset_languages, get_datasets_with_public_glosses,
                             searchform_panels, map_search_results_to_gloss_list,
-                            get_interface_language_and_default_language_codes, get_default_annotationidglosstranslation)
+                            get_interface_language_and_default_language_codes, get_default_annotationidglosstranslation,
+                            get_page_parameters_for_listview, get_text_input_fields_for_search_form)
 from signbank.csv_interface import (csv_gloss_to_row, csv_header_row_glosslist, csv_header_row_morphemelist,
                                     csv_morpheme_to_row, csv_header_row_handshapelist, csv_handshape_to_row,
                                     csv_header_row_lemmalist, csv_lemma_to_row,
@@ -100,7 +101,8 @@ from signbank.query_parameters import (convert_query_parameters_to_filter, prett
                                        set_up_signlanguage_dialects_fields,
                                        queryset_glosssense_from_get, query_parameters_from_get,
                                        queryset_sentences_from_get, query_parameters_toggle_fields,
-                                       queryset_annotatedgloss_from_get, convert_query_parameters_to_annotatedgloss_filter)
+                                       queryset_annotatedgloss_from_get, convert_query_parameters_to_annotatedgloss_filter,
+                                       make_harmless_querydict)
 from signbank.search_history import (available_query_parameters_in_search_history, languages_in_query, display_parameters,
     get_query_parameters, save_query_parameters, fieldnames_from_query_parameters)
 from signbank.frequency import (import_corpus_speakers, configure_corpus_documents_for_dataset, update_corpus_counts,
@@ -398,6 +400,8 @@ class AnnotatedSentenceListView(ListView):
     search_type = 'annotatedsentence'
     search_form = AnnotatedSentenceSearchForm()
     queryset_language_codes = []
+    query_parameters = dict()
+    page_get_parameters = ""
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -420,7 +424,7 @@ class AnnotatedSentenceListView(ListView):
             # is not available to the __init__ method
             set_up_language_fields(AnnotatedSentence, self, self.search_form)
 
-        get = self.request.GET
+        get = make_harmless_querydict(self.request)
 
         valid_regex, search_fields, field_values = check_language_fields_annotatedsentence(
             self.search_form, AnnotatedSentenceSearchForm, get, dataset_languages
@@ -456,7 +460,7 @@ class AnnotatedSentenceListView(ListView):
                 self.queryset_language_codes.append(lang.language_code_2char)
         if not self.queryset_language_codes:
             self.queryset_language_codes = [default_dataset.default_language.language_code_2char]
-        qs = order_annotatedsentence_queryset_by_sort_order(self.request.GET, qs, self.queryset_language_codes)
+        qs = order_annotatedsentence_queryset_by_sort_order(get, qs, self.queryset_language_codes)
 
         if get.get('show_all_annotatedsentences') == '1':
             self.show_all = True
@@ -482,6 +486,7 @@ class AnnotatedSentenceListView(ListView):
                     annotated_sentence_translations__text__icontains=get_value,
                     annotated_sentence_translations__language=language
                 )
+        self.page_get_parameters = get_page_parameters_for_listview(self.search_form, get, self.query_parameters)
 
         return qs
 
@@ -499,12 +504,14 @@ class AnnotatedSentenceListView(ListView):
         ).filter(dataset__in=selected_datasets).count()
         results = self.get_queryset()
 
-        get = self.request.GET
+        get = make_harmless_querydict(self.request)
+
         query_parameters_dict = {}
         query_parameters_keys = []
         for key in list(get.keys()):
             query_parameters_dict[key] = get.get(key)
             query_parameters_keys.append(key)
+
         context['sort_order'] = str(get.get('sortOrder'))
         context['language_query_keys'] = [language.language_code_2char for language in dataset_languages]
         context['query_parameters_dict'] = query_parameters_dict
@@ -516,7 +523,7 @@ class AnnotatedSentenceListView(ListView):
         context['show_all'] = self.show_all
         context['search_type'] = self.search_type
         context['search_matches'] = results.count()
-
+        context['page_get_parameters'] = self.page_get_parameters
         return context
 
 
@@ -536,6 +543,7 @@ class GlossListView(ListView):
     search_form_data = QueryDict(mutable=True)
     search_form = GlossSearchForm()
     public = False
+    page_get_parameters = ""
 
     def get_template_names(self):
         return ['dictionary/admin_gloss_list.html']
@@ -559,6 +567,10 @@ class GlossListView(ListView):
         self.show_all = context['show_all']
 
         context = get_context_data_for_gloss_search_form(self.request, self, self.search_form, self.kwargs, context)
+
+        populate_keys, populate_fields = search_fields_from_get(self.search_form, self.query_parameters)
+        context['gloss_fields_to_populate'] = json.dumps(populate_fields)
+        context['gloss_fields_to_populate_keys'] = json.dumps(populate_keys)
 
         # it is necessary to sort the object list by lemma_id in order for all glosses with the same lemma to be grouped
         # correctly in the template
@@ -597,6 +609,8 @@ class GlossListView(ListView):
         this_paginator = context['page_obj'].paginator
 
         list_of_objects = self.object_list
+
+        context['page_get_parameters'] = self.page_get_parameters
 
         # construct scroll bar
         # the following retrieves language code for English (or DEFAULT LANGUAGE)
@@ -637,6 +651,8 @@ class GlossListView(ListView):
             field_label = Gloss.get_field(fieldname).verbose_name
             column_headers.append((fieldname, field_label))
         context['column_headers'] = column_headers
+
+        context['text_fields_of_gloss_search'] = get_text_input_fields_for_search_form(self.search_form)
 
         return context
 
@@ -743,13 +759,20 @@ class GlossListView(ListView):
         )
 
     def get_queryset(self):
-        get = self.request.GET
+        get = make_harmless_querydict(self.request)
 
         self.show_all = self.kwargs.get('show_all', self.show_all)
-        self.search_type = self.request.GET.get('search_type', 'sign')
+
+        search_type = self.request.GET.get('search_type')
+        # replace a potentially dangerous search_type in the url with the view default
+        self.search_type = search_type if search_type in SEARCH_TYPES else 'sign'
         setattr(self.request.session, 'search_type', self.search_type)
-        self.view_type = self.request.GET.get('view_type', 'gloss_list')
+
+        view_type = self.request.GET.get('view_type')
+        # erase a potentially dangerous view_type in the url parameter with the view default
+        self.view_type = view_type if view_type in VIEW_TYPES else 'gloss_list'
         setattr(self.request, 'view_type', self.view_type)
+
         self.web_search = get_web_search(self.request)
         setattr(self.request, 'web_search', self.web_search)
 
@@ -786,10 +809,11 @@ class GlossListView(ListView):
             set_up_signlanguage_dialects_fields(self, self.search_form)
 
         valid_regex, search_fields, field_values = check_language_fields(self.search_form, GlossSearchForm, get, dataset_languages)
-
         if USE_REGULAR_EXPRESSIONS and not valid_regex:
             error_message_regular_expression(self.request, search_fields, field_values)
             qs = Gloss.objects.none()
+            # no page parameters
+            self.page_get_parameters = ""
             return qs
 
         # Get the initial selection
@@ -824,7 +848,8 @@ class GlossListView(ListView):
             if query:
                 qs = qs.filter(query).distinct()
 
-            sorted_qs = order_queryset_by_sort_order(self.request.GET, qs, self.queryset_language_codes)
+            sorted_qs = order_queryset_by_sort_order(get, qs, self.queryset_language_codes)
+            self.page_get_parameters = get_page_parameters_for_listview(self.search_form, get, self.query_parameters)
             return sorted_qs
 
         # No filters or 'show_all' specified? show nothing
@@ -837,7 +862,8 @@ class GlossListView(ListView):
         # If we wanted to get everything, we're done now
         if self.show_all:
             # sort the results
-            sorted_qs = order_queryset_by_sort_order(self.request.GET, qs, self.queryset_language_codes)
+            sorted_qs = order_queryset_by_sort_order(get, qs, self.queryset_language_codes)
+            self.page_get_parameters = get_page_parameters_for_listview(self.search_form, get, self.query_parameters)
             return sorted_qs
 
         # this is a temporary query_parameters variable
@@ -862,7 +888,8 @@ class GlossListView(ListView):
             self.request.session.modified = True
             self.query_parameters = query_parameters
 
-            sorted_qs = order_queryset_by_sort_order(self.request.GET, qs, self.queryset_language_codes)
+            sorted_qs = order_queryset_by_sort_order(get, qs, self.queryset_language_codes)
+            self.page_get_parameters = get_page_parameters_for_listview(self.search_form, get, self.query_parameters)
             return sorted_qs
 
         if 'translation' in get and get['translation']:
@@ -879,13 +906,14 @@ class GlossListView(ListView):
             self.request.session.modified = True
             self.query_parameters = query_parameters
 
-            sorted_qs = order_queryset_by_sort_order(self.request.GET, qs, self.queryset_language_codes)
+            sorted_qs = order_queryset_by_sort_order(get, qs, self.queryset_language_codes)
+            self.page_get_parameters = get_page_parameters_for_listview(self.search_form, get, self.query_parameters)
             return sorted_qs
 
         if self.search_type != 'sign':
             query_parameters['search_type'] = self.search_type
         qs = queryset_glosssense_from_get('Gloss', GlossSearchForm, self.search_form, get, qs)
-        query_parameters = query_parameters_from_get(self.search_form, get, query_parameters)
+        query_parameters = query_parameters_from_get(self, self.search_form, get, query_parameters, [])
         qs = apply_language_filters_to_results('Gloss', qs, query_parameters)
         qs = qs.distinct()
         qs = apply_video_filters_to_results('Gloss', qs, query_parameters)
@@ -898,7 +926,7 @@ class GlossListView(ListView):
         qs = qs.select_related('lemma')
 
         # Sort the queryset by the parameters given
-        sorted_qs = order_queryset_by_sort_order(self.request.GET, qs, self.queryset_language_codes)
+        sorted_qs = order_queryset_by_sort_order(get, qs, self.queryset_language_codes)
 
         self.request.session['search_type'] = self.search_type
         self.request.session['web_search'] = self.web_search
@@ -906,7 +934,8 @@ class GlossListView(ListView):
         if 'last_used_dataset' not in self.request.session.keys():
             self.request.session['last_used_dataset'] = self.last_used_dataset
 
-        # Return the resulting filtered and sorted queryset
+        self.page_get_parameters = get_page_parameters_for_listview(self.search_form, get, self.query_parameters)
+
         return sorted_qs
 
 
@@ -925,6 +954,7 @@ class SenseListView(ListView):
     template_name = 'dictionary/admin_senses_list.html'
     search_form = GlossSearchForm()
     sentence_search_form = SentenceForm()
+    page_get_parameters = ""
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -977,6 +1007,8 @@ class SenseListView(ListView):
             else:
                 context['paginate_by'] = self.paginate_by
 
+        context['page_get_parameters'] = self.page_get_parameters
+
         return context
 
     def get_paginate_by(self, queryset):
@@ -996,12 +1028,18 @@ class SenseListView(ListView):
         return paginate_by
 
     def get_queryset(self):
-        get = self.request.GET
+        get = make_harmless_querydict(self.request)
 
-        self.search_type = self.request.GET.get('search_type', 'sense')
+        search_type = self.request.GET.get('search_type')
+        # replace a potentially dangerous search_type in the url with the view default
+        self.search_type = search_type if search_type in SEARCH_TYPES else 'sense'
         setattr(self.request.session, 'search_type', self.search_type)
-        self.view_type = self.request.GET.get('view_type', 'sense_list')
+
+        view_type = self.request.GET.get('view_type')
+        # erase a potentially dangerous view_type in the url parameter with the view default
+        self.view_type = view_type if view_type in VIEW_TYPES else 'sense_list'
         setattr(self.request, 'view_type', self.view_type)
+
         self.web_search = get_web_search(self.request)
         setattr(self.request, 'web_search', self.web_search)
 
@@ -1033,6 +1071,7 @@ class SenseListView(ListView):
         if USE_REGULAR_EXPRESSIONS and not valid_regex:
             error_message_regular_expression(self.request, search_fields, field_values)
             qs = GlossSense.objects.none()
+            self.page_get_parameters = ""
             return qs
 
         # Get the initial selection
@@ -1055,6 +1094,7 @@ class SenseListView(ListView):
                 gloss_query = gloss_query.filter(query).distinct()
             qs = GlossSense.objects.filter(gloss__in=gloss_query)
             qs = qs.order_by('gloss__id', 'order')
+            self.page_get_parameters = get_page_parameters_for_listview(self.search_form, get, self.query_parameters)
             return qs
 
         else:
@@ -1065,9 +1105,8 @@ class SenseListView(ListView):
 
         qs = queryset_glosssense_from_get('GlossSense', GlossSearchForm, self.search_form, get, qs)
         # this is a temporary query_parameters variable
-        query_parameters = dict()
         # it is saved to self.query_parameters after the parameters are processed
-        query_parameters = query_parameters_from_get(self.search_form, get, query_parameters)
+        query_parameters = query_parameters_from_get(self, self.search_form, get, {}, [])
         qs = apply_video_filters_to_results('GlossSense', qs, query_parameters)
         qs = apply_nmevideo_filters_to_results('GlossSense', qs, query_parameters)
 
@@ -1075,7 +1114,7 @@ class SenseListView(ListView):
             query_parameters['search_type'] = self.search_type
 
         qs = queryset_sentences_from_get(self.sentence_search_form, get, qs)
-        query_parameters = query_parameters_from_get(self.sentence_search_form, get, query_parameters)
+        query_parameters = query_parameters_from_get(self, self.sentence_search_form, get, query_parameters, [])
 
         # save the query parameters to a session variable
         self.request.session['query_parameters'] = json.dumps(query_parameters)
@@ -1088,6 +1127,7 @@ class SenseListView(ListView):
         if 'last_used_dataset' not in self.request.session.keys():
             self.request.session['last_used_dataset'] = self.last_used_dataset
 
+        self.page_get_parameters = get_page_parameters_for_listview(self.search_form, get, self.query_parameters)
         # Return the resulting filtered (not sorted) queryset
         return qs
 
@@ -2003,6 +2043,8 @@ class MorphemeListView(ListView):
     paginate_by = 25
     queryset_language_codes = []
     search_form = MorphemeSearchForm()
+    query_parameters = dict()
+    page_get_parameters = ""
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -2040,7 +2082,7 @@ class MorphemeListView(ListView):
         context['searchform'] = self.search_form
 
         # use these to fill the form fields of a just done query
-        populate_keys, populate_fields = search_fields_from_get(self.search_form, self.request.GET)
+        populate_keys, populate_fields = search_fields_from_get(self.search_form, self.query_parameters)
         context['populate_fields'] = json.dumps(populate_fields)
         context['populate_fields_keys'] = json.dumps(populate_keys)
 
@@ -2124,6 +2166,8 @@ class MorphemeListView(ListView):
         else:
             context['search_by_publication_fields'] = []
 
+        context['page_get_parameters'] = self.page_get_parameters
+
         return context
 
     def get_paginate_by(self, queryset):
@@ -2134,7 +2178,7 @@ class MorphemeListView(ListView):
 
     def get_queryset(self):
         # get query terms from self.request
-        get = self.request.GET
+        get = make_harmless_querydict(self.request)
 
         self.show_all = self.kwargs.get('show_all', self.show_all)
         setattr(self.request.session, 'search_type', self.search_type)
@@ -2156,6 +2200,7 @@ class MorphemeListView(ListView):
         if USE_REGULAR_EXPRESSIONS and not valid_regex:
             error_message_regular_expression(self.request, search_fields, field_values)
             qs = Morpheme.objects.none()
+            self.page_get_parameters = get_page_parameters_for_listview(self.search_form, get, self.query_parameters)
             return qs
 
         if len(get) > 0 or self.show_all:
@@ -2167,14 +2212,15 @@ class MorphemeListView(ListView):
             qs = qs.filter(inWeb__exact=True)
 
         if self.show_all:
-            qs = order_queryset_by_sort_order(self.request.GET, qs, self.queryset_language_codes)
+            qs = order_queryset_by_sort_order(get, qs, self.queryset_language_codes)
+            self.page_get_parameters = get_page_parameters_for_listview(self.search_form, get, self.query_parameters)
             return qs
 
         qs = queryset_from_get(MorphemeSearchForm, self.search_form, get, qs)
         qs = qs.distinct()
 
         # Sort the queryset by the parameters given
-        qs = order_queryset_by_sort_order(self.request.GET, qs, self.queryset_language_codes)
+        qs = order_queryset_by_sort_order(get, qs, self.queryset_language_codes)
 
         self.request.session['search_type'] = 'morpheme'
 
@@ -2182,6 +2228,7 @@ class MorphemeListView(ListView):
             self.request.session['last_used_dataset'] = self.last_used_dataset
 
         # Return the resulting filtered and sorted queryset
+        self.page_get_parameters = get_page_parameters_for_listview(self.search_form, get, self.query_parameters)
         return qs
 
     def render_to_response(self, context, **response_kwargs):
@@ -2584,6 +2631,8 @@ class MinimalPairsListView(ListView):
     filter = False
     show_all = False
     search_form = FocusGlossSearchForm()
+    query_parameters = dict()
+    page_get_parameters = ""
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -2640,7 +2689,7 @@ class MinimalPairsListView(ListView):
 
         # pass these to the template to populate the search form with the search parameters
         # of a just done query
-        populate_keys, populate_fields = search_fields_from_get(self.search_form, self.request.GET)
+        populate_keys, populate_fields = search_fields_from_get(self.search_form, self.query_parameters)
         context['gloss_fields_to_populate'] = json.dumps(populate_fields)
         context['gloss_fields_to_populate_keys'] = json.dumps(populate_keys)
 
@@ -2649,6 +2698,8 @@ class MinimalPairsListView(ListView):
         context['objects_on_page'] = [g.id for g in context['page_obj'].object_list]
 
         context['paginate_by'] = self.request.GET.get('paginate_by', self.paginate_by)
+
+        context['page_get_parameters'] = self.page_get_parameters
 
         return context
 
@@ -2709,14 +2760,21 @@ class MinimalPairsListView(ListView):
             # is not available to the __init__ method
             set_up_language_fields(Gloss, self, self.search_form)
 
-        get = self.request.GET
+        get = make_harmless_querydict(self.request)
 
         if not get:
             # to speed things up, don't show anything on initial visit
             qs = Gloss.objects.none()
             self.request.session['search_results'] = []
             self.request.session.modified = True
+            self.page_get_parameters = ""
             return qs
+
+        view_specific_query_parameters = ['search_type', 'search_minimal_pairs', 'show_all_minimal_pairs', 'format', 'reset']
+        self.query_parameters = query_parameters_from_get(self, self.search_form, get, {}, view_specific_query_parameters)
+        # save the query parameters to a session variable
+        self.request.session['query_parameters'] = json.dumps(self.query_parameters)
+        self.request.session.modified = True
 
         selected_datasets = get_selected_datasets(self.request)
         dataset_languages = get_dataset_languages(selected_datasets)
@@ -2728,6 +2786,7 @@ class MinimalPairsListView(ListView):
             qs = Gloss.objects.none()
             self.request.session['search_results'] = []
             self.request.session.modified = True
+            self.page_get_parameters = ""
             return qs
 
         # grab gloss ids for finger spelling glosses, identified by text #.
@@ -2770,6 +2829,7 @@ class MinimalPairsListView(ListView):
 
         qs = qs.select_related('lemma')
 
+        self.page_get_parameters = get_page_parameters_for_listview(self.search_form, get, self.query_parameters)
         return qs
 
 
@@ -3452,15 +3512,15 @@ class HandshapeListView(ListView):
     template_name = 'dictionary/admin_handshape_list.html'
     search_type = 'handshape'
     show_all = False
+    search_form = HandshapeSearchForm()
+    sortOrder = 'machine_value'
 
     def get_context_data(self, **kwargs):
         # Call the base implementation first to get a context
         context = super(HandshapeListView, self).get_context_data(**kwargs)
         # Add in a QuerySet of all the books
 
-        search_form = HandshapeSearchForm(self.request.GET)
-
-        context['searchform'] = search_form
+        context['searchform'] = self.search_form
 
         self.search_type = self.request.GET.get('search_type', self.search_type)
         context['search_type'] = self.search_type
@@ -3588,11 +3648,18 @@ class HandshapeListView(ListView):
         for fname in Handshape.get_field_names():
             handshape_fields[fname] = Handshape.get_field(fname)
 
-        get = self.request.GET
-
+        get = make_harmless_querydict(self.request)
         self.show_all = self.kwargs.get('show_all', self.show_all)
-        self.search_type = self.request.GET.get('search_type', self.search_type)
+
+        # replace a potentially nonsense search_type in the url with the view default
+        self.search_type = get['search_type'] if 'search_type' in get.keys() and get['search_type'] in SEARCH_TYPES else 'handshape'
         setattr(self.request.session, 'search_type', self.search_type)
+
+        if ('sortOrder' in get and get['sortOrder'] not in Handshape.get_field_names()
+                and get['sortOrder'] not in [f'-{name}' for name in Handshape.get_field_names()]):
+            self.sortOrder = 'machine_value'
+        else:
+            self.sortOrder = get['sortOrder']
 
         if not self.show_all and not get or 'reset' in get:
             qs = Handshape.objects.none()
@@ -3611,9 +3678,9 @@ class HandshapeListView(ListView):
         qs = Handshape.objects.filter(machine_value__gt=1).order_by('machine_value')
 
         if self.show_all:
-            if 'sortOrder' in get and get['sortOrder'] != 'machine_value':
+            if self.sortOrder != 'machine_value':
                 # User has toggled the sort order for the column
-                qs = order_handshape_queryset_by_sort_order(self.request.GET, qs)
+                qs = order_handshape_queryset_by_sort_order(get, qs)
             else:
                 # The default is to order the signs alphabetically by whether there is an angle bracket
                 qs = order_handshape_by_angle(qs)
@@ -3658,26 +3725,36 @@ class HandshapeListView(ListView):
                                                         output_field=IntegerField())).filter(Q(count_fs1__exact=5) | Q(**{query_hsNumSel:val}))
 
                 if isinstance(Handshape.get_field(fieldname), BooleanField):
+                    val = 'False' if val not in ['False', 'True'] else val
                     val = {'0': False, '1': True, 'True': True, 'False': False, 'None': '', '': ''}[val]
+
+                if isinstance(Handshape.get_field(fieldname), FieldChoiceForeignKey):
+                    # make sure the value in the url is a number
+                    try:
+                        coerced_to_int = int(val)
+                    except ValueError:
+                        val = '0'
 
                 if fieldname == 'name' and val:
                     query = Q(name__iregex=val)
                     qs = qs.filter(query)
 
-                if val not in ['', '0', False] and fieldname not in ['hsNumSel', 'name']:
-                    if isinstance(Handshape.get_field(fieldname), FieldChoiceForeignKey):
-                        key = fieldname + '__machine_value'
-                        kwargs = {key: int(val)}
-                        qs = qs.filter(**kwargs)
-                    else:
-                        # is boolean
-                        key = fieldname + '__exact'
-                        kwargs = {key: val}
-                        qs = qs.filter(**kwargs)
+                if val in ['', '0', False] or fieldname in ['hsNumSel', 'name']:
+                    continue
 
-        if 'sortOrder' in get and get['sortOrder'] != 'machine_value':
+                if isinstance(Handshape.get_field(fieldname), FieldChoiceForeignKey):
+                    key = fieldname + '__machine_value'
+                    kwargs = {key: int(val)}
+                    qs = qs.filter(**kwargs)
+                else:
+                    # is boolean
+                    key = fieldname + '__exact'
+                    kwargs = {key: val}
+                    qs = qs.filter(**kwargs)
+
+        if self.sortOrder != 'machine_value':
             # User has toggled the sort order for the column
-            qs = order_handshape_queryset_by_sort_order(self.request.GET, qs)
+            qs = order_handshape_queryset_by_sort_order(get, qs)
         else:
             # The default is to order the signs alphabetically by whether there is an angle bracket
             qs = order_handshape_by_angle(qs)
@@ -4681,11 +4758,10 @@ class DatasetFieldChoiceView(ListView):
         # get query terms from self.request
         get = self.request.GET
 
-        # Then check what kind of stuff we want
-        if 'dataset_acronym' in get:
+        all_datasets_acronyms = [ds.acronym for ds in Dataset.objects.all()]
+        if 'dataset_acronym' in get and get['dataset_acronym'] in all_datasets_acronyms:
+            # use temp variable in case the user put garbage in the url
             self.dataset_acronym = get['dataset_acronym']
-        # otherwise the default dataset_acronym DEFAULT_DATASET_ACRONYM is used
-
         setattr(self.request, 'dataset_acronym', self.dataset_acronym)
 
         if user.is_authenticated:
@@ -6107,6 +6183,8 @@ class LemmaListView(ListView):
     show_all = False
     search_type = 'lemma'
     search_form = LemmaSearchForm()
+    query_parameters = dict()
+    page_get_parameters = ""
 
     def __int__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -6128,9 +6206,14 @@ class LemmaListView(ListView):
             # is not available to the __init__ method
             set_up_language_fields(LemmaIdgloss, self, self.search_form)
 
-        get = self.request.GET
+        get = make_harmless_querydict(self.request)
 
-        page_number = self.request.GET.get("page", 1)
+        self.show_all = self.kwargs.get('show_all', self.show_all)
+
+        setattr(self.request.session, 'search_type', self.search_type)
+
+        self.query_parameters = query_parameters_from_get(self, self.search_form, get, dict(), [])
+        self.page_get_parameters = get_page_parameters_for_listview(self.search_form, get, self.query_parameters)
 
         # this view accommodates both Show All Lemmas and Lemma Search
         # the show_all argument is True for Show All Lemmas
@@ -6208,7 +6291,7 @@ class LemmaListView(ListView):
         context['dataset_languages'] = dataset_languages
 
         # use these to fill the form fields of a just done query
-        populate_keys, populate_fields = search_fields_from_get(self.search_form, self.request.GET)
+        populate_keys, populate_fields = search_fields_from_get(self.search_form, self.query_parameters)
         context['populate_fields'] = json.dumps(populate_fields)
         context['populate_fields_keys'] = json.dumps(populate_keys)
 
@@ -6258,7 +6341,7 @@ class LemmaListView(ListView):
 
         items = construct_scrollbar(results, self.search_type, lang_attr_name)
         self.request.session['search_results'] = items
-
+        context['page_get_parameters'] = self.page_get_parameters
         return context
 
     def render_to_response(self, context, **response_kwargs):
@@ -6632,6 +6715,8 @@ class KeywordListView(ListView):
     paginate_by = 100
     search_type = 'sign'
     query_parameters = dict()
+    page_get_parameters = ""
+    search_form = KeyMappingSearchForm()
 
     def get(self, request, *args, **kwargs):
         return super(KeywordListView, self).get(request, *args, **kwargs)
@@ -6652,9 +6737,7 @@ class KeywordListView(ListView):
         new_text_labels = {str(lang.id): lang.name + ' ' + gettext("Text") for lang in dataset_languages}
         context['new_text_labels'] = new_text_labels
 
-        search_form = KeyMappingSearchForm(self.request.GET, languages=dataset_languages)
-
-        context['searchform'] = search_form
+        context['searchform'] = self.search_form
 
         context['search_type'] = self.search_type
 
@@ -6669,6 +6752,7 @@ class KeywordListView(ListView):
         context['SHOW_DATASET_INTERFACE_OPTIONS'] = SHOW_DATASET_INTERFACE_OPTIONS
         context['USE_REGULAR_EXPRESSIONS'] = USE_REGULAR_EXPRESSIONS
 
+        context['page_get_parameters'] = self.page_get_parameters
         return context
 
     def get_queryset(self):
@@ -6706,10 +6790,13 @@ class KeywordListView(ListView):
 
         glosses_of_datasets = object_list
 
-        get = self.request.GET
+        get = make_harmless_querydict(self.request)
 
         # this needs to be sorted for jquery purposes
         dataset_languages = get_dataset_languages(selected_datasets)
+
+        if not self.search_form.is_bound:
+            self.search_form = KeyMappingSearchForm(get)
 
         # exclude morphemes
         if not glosses_of_datasets:
@@ -6718,10 +6805,13 @@ class KeywordListView(ListView):
             return []
 
         if 'tags[]' in get:
-            vals = get.getlist('tags[]')
+            vals = get['tags[]']
             if vals:
                 self.query_parameters['tags[]'] = vals
-                values = [int(v) for v in vals]
+                try:
+                    values = [int(v) for v in vals]
+                except ValueError:
+                    values = []
                 glosses_with_tag = list(
                     TaggedItem.objects.filter(tag__id__in=values).values_list('object_id', flat=True))
                 glosses_of_datasets = glosses_of_datasets.filter(id__in=glosses_with_tag)
@@ -6730,6 +6820,8 @@ class KeywordListView(ListView):
 
         (interface_language, interface_language_code,
          default_language, default_language_code) = get_interface_language_and_default_language_codes(self.request)
+
+        self.page_get_parameters = get_page_parameters_for_listview(self.search_form, get, self.query_parameters)
 
         dataset_display_languages = []
         for lang in dataset_languages:
@@ -6835,6 +6927,8 @@ class BatchEditView(ListView):
     paginate_by = 25
     search_type = 'sign'
     query_parameters = dict()
+    search_form = KeyMappingSearchForm()
+    page_get_parameters = ""
 
     def get(self, request, *args, **kwargs):
         return super(BatchEditView, self).get(request, *args, **kwargs)
@@ -6855,9 +6949,7 @@ class BatchEditView(ListView):
         language_2chars = [str(language.language_code_2char) for language in dataset_languages]
         context['language_2chars'] = language_2chars
 
-        search_form = KeyMappingSearchForm(self.request.GET, languages=dataset_languages)
-
-        context['searchform'] = search_form
+        context['searchform'] = self.search_form
 
         multiple_select_gloss_fields = ['tags']
         context['MULTIPLE_SELECT_GLOSS_FIELDS'] = multiple_select_gloss_fields
@@ -6951,7 +7043,7 @@ class BatchEditView(ListView):
 
         context['SHOW_DATASET_INTERFACE_OPTIONS'] = SHOW_DATASET_INTERFACE_OPTIONS
         context['USE_REGULAR_EXPRESSIONS'] = USE_REGULAR_EXPRESSIONS
-
+        context['page_get_parameters'] = self.page_get_parameters
         return context
 
     def get_queryset(self):
@@ -6961,6 +7053,8 @@ class BatchEditView(ListView):
             self.query_parameters = json.loads(session_query_parameters)
 
         selected_datasets = get_selected_datasets(self.request)
+
+        self.page_get_parameters = ""
 
         if not selected_datasets or selected_datasets.count() > 1:
             feedback_message = _('Please select a single dataset to use Batch Edit.')
@@ -6989,7 +7083,7 @@ class BatchEditView(ListView):
 
         glosses_of_dataset = object_list
 
-        get = self.request.GET
+        get = make_harmless_querydict(self.request)
 
         if not get:
             return glosses_of_dataset
@@ -6998,10 +7092,13 @@ class BatchEditView(ListView):
             return glosses_of_dataset
 
         if 'tags[]' in get:
-            vals = get.getlist('tags[]')
+            vals = get['tags[]']
             if vals:
                 self.query_parameters['tags[]'] = vals
-                values = [int(v) for v in vals]
+                try:
+                    values = [int(v) for v in vals]
+                except ValueError:
+                    values = []
                 glosses_with_tag = list(
                     TaggedItem.objects.filter(tag__id__in=values).values_list('object_id', flat=True))
                 glosses_of_dataset = glosses_of_dataset.filter(id__in=glosses_with_tag)
@@ -7031,6 +7128,7 @@ class BatchEditView(ListView):
 
         self.request.session['query_parameters'] = json.dumps(self.query_parameters)
         self.request.session.modified = True
+        self.page_get_parameters = get_page_parameters_for_listview(self.search_form, get, self.query_parameters)
 
         return glosses_of_dataset
 
@@ -7042,6 +7140,8 @@ class ToggleListView(ListView):
     paginate_by = 25
     search_type = 'sign'
     query_parameters = dict()
+    search_form = KeyMappingSearchForm()
+    page_get_parameters = ""
 
     def get(self, request, *args, **kwargs):
         return super(ToggleListView, self).get(request, *args, **kwargs)
@@ -7059,9 +7159,7 @@ class ToggleListView(ListView):
 
         context['dataset_languages'] = dataset_languages
 
-        search_form = KeyMappingSearchForm(self.request.GET, languages=dataset_languages)
-
-        context['searchform'] = search_form
+        context['searchform'] = self.search_form
 
         multiple_select_gloss_fields = ['tags']
         context['MULTIPLE_SELECT_GLOSS_FIELDS'] = multiple_select_gloss_fields
@@ -7104,7 +7202,7 @@ class ToggleListView(ListView):
 
         items = construct_scrollbar(list_of_objects, self.search_type, lang_attr_name)
         self.request.session['search_results'] = items
-
+        context['page_get_parameters'] = self.page_get_parameters
         return context
 
     def get_queryset(self):
@@ -7118,7 +7216,7 @@ class ToggleListView(ListView):
             # the query set is a list of tuples (gloss, keyword_translations, senses_groups)
             return []
 
-        get = self.request.GET
+        get = make_harmless_querydict(self.request)
 
         # multilingual
         # this needs to be sorted for jquery purposes
@@ -7137,10 +7235,13 @@ class ToggleListView(ListView):
         query_parameters = dict()
 
         if 'tags[]' in get:
-            vals = get.getlist('tags[]')
+            vals = get['tags[]']
             if vals:
                 query_parameters['tags[]'] = vals
-                values = [int(v) for v in vals]
+                try:
+                    values = [int(v) for v in vals]
+                except ValueError:
+                    values = []
                 glosses_with_tag = list(
                     TaggedItem.objects.filter(tag__id__in=values).values_list('object_id', flat=True))
                 glosses_of_datasets = glosses_of_datasets.filter(id__in=glosses_with_tag,
@@ -7157,7 +7258,7 @@ class ToggleListView(ListView):
         self.request.session['query_parameters'] = json.dumps(query_parameters)
         self.request.session.modified = True
         self.query_parameters = query_parameters
-
+        self.page_get_parameters = get_page_parameters_for_listview(self.search_form, get, self.query_parameters)
         return glosses_of_datasets
 
 
@@ -7271,6 +7372,7 @@ class AnnotatedGlossListView(ListView):
     template_name = 'dictionary/admin_annotatedgloss_list.html'
     search_form = GlossSearchForm()
     sentence_search_form = AnnotatedGlossForm()
+    page_get_parameters = ""
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -7315,15 +7417,19 @@ class AnnotatedGlossListView(ListView):
         items = construct_scrollbar(self.object_list, self.search_type, lang_attr_name)
         self.request.session['search_results'] = items
 
+        context['page_get_parameters'] = self.page_get_parameters
+
         return context
 
     def get_queryset(self):
-        get = self.request.GET
+        get = make_harmless_querydict(self.request)
 
-        self.view_type = self.request.GET.get('view_type', 'gloss_list')
+        setattr(self.request.session, 'search_type', self.search_type)
+
+        view_type = self.request.GET.get('view_type')
+        # erase a potentially dangerous view_type in the url parameter with the view default
+        self.view_type = view_type if view_type in VIEW_TYPES else 'gloss_list'
         setattr(self.request, 'view_type', self.view_type)
-        self.web_search = get_web_search(self.request)
-        setattr(self.request, 'web_search', self.web_search)
 
         selected_datasets = get_selected_datasets(self.request)
         dataset_languages = get_dataset_languages(selected_datasets)
@@ -7364,6 +7470,7 @@ class AnnotatedGlossListView(ListView):
         if USE_REGULAR_EXPRESSIONS and not valid_regex:
             error_message_regular_expression(self.request, search_fields, field_values)
             qs = AnnotatedGloss.objects.none()
+            self.page_get_parameters = get_page_parameters_for_listview(self.search_form, get, self.query_parameters)
             return qs
 
         if 'query_parameters' in self.request.session.keys() \
@@ -7410,6 +7517,7 @@ class AnnotatedGlossListView(ListView):
                     list_annotatedglossids.append(id)
             qs = qs.filter(id__in=list_annotatedglossids).order_by('gloss__id', 'annotatedsentence__id')
             qs = order_queryset_by_annotatedgloss(qs, order_by)
+            self.page_get_parameters = get_page_parameters_for_listview(self.search_form, get, self.query_parameters)
             return qs
         else:
             qs = AnnotatedGloss.objects.none()
@@ -7419,16 +7527,15 @@ class AnnotatedGlossListView(ListView):
 
         qs = queryset_glosssense_from_get('AnnotatedGloss', GlossSearchForm, self.search_form, get, qs)
         # this is a temporary query_parameters variable
-        query_parameters = dict()
         # it is saved to self.query_parameters after the parameters are processed
-        query_parameters = query_parameters_from_get(self.search_form, get, query_parameters)
+        query_parameters = query_parameters_from_get(self, self.search_form, get, {}, [])
         qs = apply_video_filters_to_results('AnnotatedGloss', qs, query_parameters)
         qs = apply_nmevideo_filters_to_results('AnnotatedGloss', qs, query_parameters)
 
         query_parameters['search_type'] = self.search_type
 
         qs = queryset_annotatedgloss_from_get(self.sentence_search_form, get, qs)
-        query_parameters = query_parameters_from_get(self.sentence_search_form, get, query_parameters)
+        query_parameters = query_parameters_from_get(self, self.sentence_search_form, get, query_parameters, [])
 
         # save the query parameters to a session variable
         self.request.session['query_parameters'] = json.dumps(query_parameters)
@@ -7450,6 +7557,7 @@ class AnnotatedGlossListView(ListView):
                 list_annotatedglossids.append(id)
         qs = qs.filter(id__in=list_annotatedglossids).order_by('gloss__id', 'annotatedsentence__id')
         qs = order_queryset_by_annotatedgloss(qs, order_by)
+        self.page_get_parameters = get_page_parameters_for_listview(self.search_form, get, self.query_parameters)
         return qs
 
 
