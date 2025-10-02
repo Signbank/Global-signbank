@@ -12,7 +12,7 @@
 
 {% block extrajs %}
 <script type="text/javascript" src="{{STATIC_URL}}js/jquery.jeditable.mini.js"></script>
-
+{{ populate_fields|json_script:"populate_fields" }}
 <script type='text/javascript'>
 var url = '{{PREFIX_URL}}';
 var csrf_token = '{{csrf_token}}';
@@ -21,7 +21,7 @@ var page_number = {{ page_number }};
 var paginate_by = '{{paginate_by}}';
 var page_number = {{page_obj.number}};
 var populate_fields_keys = {{populate_fields_keys|safe}};
-var populate_fields = {{populate_fields|safe}};
+var populate_fields = JSON.parse(document.getElementById('populate_fields').textContent);
 </script>
 
 <script type='text/javascript' src="{{ STATIC_URL }}js/lemmas_toggle_edit.js"></script>

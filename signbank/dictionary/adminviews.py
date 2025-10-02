@@ -2063,7 +2063,7 @@ class MorphemeListView(ListView):
 
         # use these to fill the form fields of a just done query
         populate_keys, populate_fields = search_fields_from_get(self.search_form, self.request.GET)
-        context['populate_fields'] = json.dumps(populate_fields)
+        context['populate_fields'] = populate_fields
         context['populate_fields_keys'] = json.dumps(populate_keys)
 
         context['glosscount'] = Morpheme.objects.filter(lemma__dataset__in=selected_datasets).count()
@@ -2670,7 +2670,7 @@ class MinimalPairsListView(ListView):
         # pass these to the template to populate the search form with the search parameters
         # of a just done query
         populate_keys, populate_fields = search_fields_from_get(self.search_form, self.request.GET)
-        context['gloss_fields_to_populate'] = json.dumps(populate_fields)
+        context['gloss_fields_to_populate'] = populate_fields
         context['gloss_fields_to_populate_keys'] = json.dumps(populate_keys)
 
         context['page_number'] = context['page_obj'].number
@@ -6252,7 +6252,7 @@ class LemmaListView(ListView):
 
         # use these to fill the form fields of a just done query
         populate_keys, populate_fields = search_fields_from_get(self.search_form, self.request.GET)
-        context['populate_fields'] = json.dumps(populate_fields)
+        context['populate_fields'] = populate_fields
         context['populate_fields_keys'] = json.dumps(populate_keys)
 
         context['paginate_by'] = self.paginate_by

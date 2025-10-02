@@ -7,7 +7,7 @@ from django.utils.safestring import mark_safe
 from django.views.decorators.csrf import csrf_protect
 
 from signbank.dictionary.context_data import get_selected_datasets
-
+from signbank.settings.server_specific import USE_REGULAR_EXPRESSIONS
 
 DEFAULT_TEMPLATE = 'pages/default.html'
 
@@ -70,6 +70,7 @@ def page(request, url='/'):
     response = HttpResponse(t.render({'page': f,
                                       'dataset_languages': dataset_languages,
                                       'selected_datasets': selected_datasets,
-                                      'SHOW_DATASET_INTERFACE_OPTIONS': settings.SHOW_DATASET_INTERFACE_OPTIONS
+                                      'SHOW_DATASET_INTERFACE_OPTIONS': settings.SHOW_DATASET_INTERFACE_OPTIONS,
+                                      'USE_REGULAR_EXPRESSIONS': USE_REGULAR_EXPRESSIONS,
                                       },request))
     return response
