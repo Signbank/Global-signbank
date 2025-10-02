@@ -180,19 +180,20 @@ def apply_nmevideo_filters_to_results(model, qs, query_parameters):
 
 
 def convert_query_parameters_to_filter(query_parameters):
-    # this function maps the query parameters to a giant Q expression
-    # the code follows that of get_queryset of GlossListView
-    # note that only non-empty fields are stored in query_parameters
-    # use these to idenfiy language based fields
+    """
+    Maps the query parameters to a giant Q expression
+    :view: GlossListView, AnnotatedGlossListView, SenseListView
+    :model: Gloss
+    """
     glosssearch = "glosssearch_"
     lemmasearch = "lemma_"
     keywordsearch = "keyword_"
     text_filter = 'iregex' if USE_REGULAR_EXPRESSIONS else 'icontains'
-
     gloss_fields = {}
     for fname in Gloss.get_field_names():
         gloss_fields[fname] = Gloss.get_field(fname)
 
+    # the following initialises fields_with_choices to default Gloss fields: FIELDS['main'] + FIELDS['phonology'] + FIELDS['semantics']
     fields_with_choices = fields_to_fieldcategory_dict()
     multiple_select_gloss_fields = [fieldname + '[]' for fieldname in Gloss.get_field_names()
                                     if fieldname in fields_with_choices.keys()]
@@ -438,11 +439,13 @@ def convert_query_parameters_to_filter(query_parameters):
 
 
 def convert_query_parameters_to_annotatedgloss_filter(query_parameters):
-    # this function maps the query parameters to a giant Q expression
-
+    """
+    Maps the query parameters to a giant Q expression
+    :view: AnnotatedGlossListView
+    :model: AnnotatedGloss
+    """
     query_list = []
     for get_key, get_value in query_parameters.items():
-        print(get_key, get_value)
         if get_key in ['isRepresentative'] and get_value:
             if get_value == 'yes':
                 annotatedglosses = AnnotatedGloss.objects.filter(isRepresentative__exact=True).distinct()
@@ -761,6 +764,9 @@ def search_fields_from_get(searchform, GET):
             continue
         if get_key.endswith('[]'):
             vals = GET.getlist(get_key)
+            field = get_key[:-2]
+            if field not in search_form_fields or not vals:
+                continue
             search_fields_to_populate[get_key] = vals
             search_keys.append(get_key)
         elif get_key in ['translation', 'search']:
@@ -792,7 +798,7 @@ def queryset_from_get(formclass, searchform, GET, qs):
             # multiple select
             vals = GET.getlist(get_key)
             field = get_key[:-2]
-            if not vals:
+            if field not in searchform.fields.keys() or not vals:
                 continue
             if field in ['dialect', 'semField', 'derivHist']:
                 query_filter = field + '__in'
@@ -1025,10 +1031,10 @@ def queryset_glosssense_from_get(model, formclass, searchform, GET, qs):
             if not get_value:
                 continue
             # multiple select
-            vals = GET.getlist(get_key)
-            if not vals:
-                continue
             field = get_key[:-2]
+            vals = GET.getlist(get_key)
+            if field not in searchform.fields.keys() or not vals:
+                continue
             if field in ['sentenceType']:
                 continue
             if field in ['dialect', 'semField', 'derivHist']:
@@ -1317,8 +1323,9 @@ def query_parameters_from_get(searchform, GET, query_parameters):
         if get_value in ['', '0']:
             continue
         if get_key.endswith('[]'):
+            field = get_key[:-2]
             vals = GET.getlist(get_key)
-            if not vals:
+            if field not in search_form_fields or not vals:
                 continue
             query_parameters[get_key] = vals
         elif get_key not in search_form_fields:
