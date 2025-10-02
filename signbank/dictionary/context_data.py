@@ -96,7 +96,7 @@ def get_other_parameter_keys():
     # other parameters are in the GlossSearchForm in the template that are not initialised
     # via multiselect or language fields, plus semantics and phonology fields with text types
     other_parameters = ['sortOrder'] + SEARCH_BY['publication'] + FIELDS['phonology'] + \
-                       FIELDS['semantics'] + FIELDS['morpheme']
+                       FIELDS['semantics'] + FIELDS['morpheme'] + FIELDS['main']
     fieldnames = FIELDS['main'] + FIELDS['phonology'] + FIELDS['semantics'] + ['inWeb', 'isNew']
     fields_with_choices = fields_to_fieldcategory_dict()
     multiple_select_gloss_fields = [fieldname for fieldname in fieldnames if fieldname in fields_with_choices.keys()]
@@ -147,7 +147,7 @@ def get_context_data_for_gloss_search_form(request, listview, search_form, kwarg
     query_parameters = json.loads(query_parameters_in_session) \
         if not context['show_all'] and query_parameters_in_session not in ['', '{}'] \
         else listview.query_parameters
-    context['query_parameters'] = json.dumps(query_parameters)
+    context['query_parameters'] = query_parameters
     context['query_parameters_keys'] = json.dumps(list(query_parameters.keys()))
 
     context['searchform'] = search_form
