@@ -1057,6 +1057,7 @@ def queryset_glosssense_from_get(model, formclass, searchform, GET, qs):
             # multiple select
             vals = GET.getlist(get_key)
             field = get_key[:-2]
+            values = convert_getlist_values_to_machine_values_list(model, searchform, field, vals)
             if field in ['sentenceType']:
                 continue
             if field in ['dialect', 'semField', 'derivHist']:
