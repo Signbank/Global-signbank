@@ -4384,3 +4384,13 @@ class GlossProvenance(models.Model):
 
     def provenance_tuple(self):
         return self.get_method_display(), self.provenance_text()
+
+
+FOREIGN_KEY_MODEL_MAPPING = {
+    'Gloss': Gloss,
+    'Morpheme': Morpheme,
+    'AnnotatedGloss': AnnotatedGloss,
+    'AnnotatedSentence': AnnotatedSentence,
+    'GlossSense': GlossSense,
+    'ExampleSentence': ExampleSentence
+}
