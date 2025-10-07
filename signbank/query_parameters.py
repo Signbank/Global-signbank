@@ -450,6 +450,8 @@ def convert_query_parameters_to_filter(query_parameters):
 
             if isinstance(field_obj, BooleanField):
                 q_value = {'0': '', '1': None, '2': True, '3': False}.get(get_value, '')
+                if q_value == '':
+                    continue
             else:
                 q_value = get_value
             kwargs = {q_filter: q_value}
