@@ -3656,13 +3656,13 @@ class HandshapeListView(ListView):
                                                         output_field=IntegerField())).filter(Q(count_fs1__exact=5) | Q(**{query_hsNumSel:val}))
 
                 if isinstance(Handshape.get_field(fieldname), BooleanField):
-                    val = {'0': False, '1': True, 'True': True, 'False': False, 'None': '', '': ''}[val]
+                    val = {'0': False, '1': True, 'True': True, 'False': False, 'None': '', '': ''}.get(val, '')
 
                 if fieldname == 'name' and val:
                     query = Q(name__iregex=val)
                     qs = qs.filter(query)
 
-                if val not in ['', '0', False] and fieldname not in ['hsNumSel', 'name']:
+                if val not in ['', '0'] and fieldname not in ['hsNumSel', 'name']:
                     if isinstance(Handshape.get_field(fieldname), FieldChoiceForeignKey):
                         try:
                             value = int(val)
@@ -6723,10 +6723,7 @@ class KeywordListView(ListView):
             vals = get.getlist('tags[]')
             if vals:
                 self.query_parameters['tags[]'] = vals
-                try:
-                    values = [int(v) for v in vals]
-                except ValueError:
-                    values = []
+                values = coerce_values_to_numbers(vals)
                 glosses_with_tag = list(
                     TaggedItem.objects.filter(tag__id__in=values).values_list('object_id', flat=True))
                 glosses_of_datasets = glosses_of_datasets.filter(id__in=glosses_with_tag)
@@ -7006,10 +7003,7 @@ class BatchEditView(ListView):
             vals = get.getlist('tags[]')
             if vals:
                 self.query_parameters['tags[]'] = vals
-                try:
-                    values = [int(v) for v in vals]
-                except ValueError:
-                    values = []
+                values = coerce_values_to_numbers(vals)
                 glosses_with_tag = list(
                     TaggedItem.objects.filter(tag__id__in=values).values_list('object_id', flat=True))
                 glosses_of_dataset = glosses_of_dataset.filter(id__in=glosses_with_tag)
@@ -7148,10 +7142,7 @@ class ToggleListView(ListView):
             vals = get.getlist('tags[]')
             if vals:
                 query_parameters['tags[]'] = vals
-                try:
-                    values = [int(v) for v in vals]
-                except ValueError:
-                    values = []
+                values = coerce_values_to_numbers(vals)
                 glosses_with_tag = list(
                     TaggedItem.objects.filter(tag__id__in=values).values_list('object_id', flat=True))
                 glosses_of_datasets = glosses_of_datasets.filter(id__in=glosses_with_tag,

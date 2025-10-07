@@ -364,10 +364,7 @@ def convert_query_parameters_to_filter(query_parameters):
             query_list.append(Q(dialect__in=get_value))
 
         elif get_key == 'tags[]':
-            try:
-                values = [int(v) for v in get_value]
-            except ValueError:
-                values = []
+            values = coerce_values_to_numbers(get_value)
             pks_for_glosses_with_tags = list(
                 TaggedItem.objects.filter(tag__id__in=values).values_list('object_id', flat=True))
             query_list.append(Q(pk__in=pks_for_glosses_with_tags))
