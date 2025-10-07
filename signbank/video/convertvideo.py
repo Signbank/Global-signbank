@@ -235,6 +235,27 @@ def extension_on_filename(filename):
     return '.mp4'
 
 
+def video_file_extension(file_path):
+    filename, extension = os.path.splitext(file_path)
+    filetype_output = subprocess.run(["file", file_path], stdout=subprocess.PIPE)
+    filetype = str(filetype_output.stdout)
+    if 'MOV' in filetype:
+        video_extension = 'mov'
+    elif 'M4V' in filetype:
+        video_extension = 'm4v'
+    elif 'MP4' in filetype:
+        video_extension = 'mp4'
+    elif 'Matroska' in filetype:
+        video_extension = 'webm'
+    elif 'MKV' in filetype:
+        video_extension = 'mkv'
+    elif 'MPEG-2' in filetype:
+        video_extension = 'm2v'
+    else:
+        video_extension = extension
+    return video_extension
+
+
 def video_file_type_extension(video_file_full_path):
 
     if not video_file_full_path or 'glossvideo' not in str(video_file_full_path):
@@ -275,25 +296,17 @@ def convert_video(sourcefile, targetfile, force=False):
     else:
         format = 'force'
 
-    if format == "h264":
-        # just do a copy of the file
-        shutil.copy(sourcefile, targetfile)
-    elif "h264" in format:
-        # ffmpeg copy video channel to new file with .mp4 extension
-        FFMPEG_COPY_OPTIONS = ["-c", "copy", "-an"]
-        b = run_ffmpeg(sourcefile, targetfile, options=FFMPEG_COPY_OPTIONS)
-    elif 'webm' in format or 'matroska' in format:
-        FFMPEG_COPY_OPTIONS = ["-c:v", "lbx264", "-an"]
-        b = run_ffmpeg(sourcefile, targetfile, options=FFMPEG_COPY_OPTIONS)
-    else: 
-        # convert the video
-        RAW_OPTIONS = ["-f", "rawvideo", "-vcodec", "h264"]
-        # RAW_OPTIONS = ["-vcodec", "libx264", "-an"]
-        print('convert small video: ', RAW_OPTIONS)
-        b = run_ffmpeg(sourcefile, targetfile, options=RAW_OPTIONS)
-        print(b)
+    basename, extension = os.path.splitext(sourcefile)
+
+    print('convert_video sourcefile has probe format: ', format)
+
+    if format.startswith('h264') and extension == "mp4":
+        return True
+
+    subprocess.run(["ffmpeg", "-i", "-y", sourcefile, targetfile])
 
     format = probe_format(targetfile)
+    print('converted probe format: ', format)
     if format.startswith('h264'):
         # the output of ffmpeg includes extra information following h264, so only check the prefix
         return True

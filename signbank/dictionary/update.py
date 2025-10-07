@@ -32,7 +32,7 @@ from dateutil.relativedelta import relativedelta
 from signbank.video.forms import VideoUploadForObjectForm
 from signbank.video.models import (AnnotatedVideo, GlossVideoNME, GlossVideoDescription, GlossVideoHistory,
                                    GlossVideoPerspective, get_annotated_video_file_path)
-from signbank.video.convertvideo import convert_video
+from signbank.video.convertvideo import convert_video, probe_format, video_file_extension
 
 from signbank.settings.server_specific import (WRITABLE_FOLDER, PREFIX_URL, USE_REGULAR_EXPRESSIONS,
                                                SHOW_DATASET_INTERFACE_OPTIONS, OBLIGATORY_FIELDS,
@@ -2329,17 +2329,21 @@ def add_othermedia(request):
 
     orig_path = os.path.join(goal_directory, filename_plus_extension)
 
-    if filetype.startswith('video') and filetype != 'video/mp4':
+    file_format = probe_format(orig_path)
+    print(file_format)
+    filetype_extension = video_file_extension(orig_path)
+    print(filetype_extension)
+    if filetype.startswith('video') and (filetype != 'video/mp4' and extension != 'mp4') or filetype_extension != 'mp4':
         name, _ = os.path.splitext(filename_plus_extension)
         # the commented out one does not convert them correctly, it yields JVT NAL instead of MP4
-        # convert_video(orig_path, f'{goal_directory}/{name}.mp4')
-        subprocess.run(["ffmpeg", "-i", orig_path, f'{goal_directory}/{name}.mp4'])
+        convert_video(orig_path, f'{goal_directory}/{name}.mp4')
+        # subprocess.run(["ffmpeg", "-i", orig_path, f'{goal_directory}/{name}.mp4'])
 
         newothermedia.path = f'{request.POST['gloss']}/{name}.mp4'
         newothermedia.save()
 
-        if os.path.exists(orig_path):
-            os.remove(orig_path)
+        # if os.path.exists(orig_path):
+        #     os.remove(orig_path)
 
     return HttpResponseRedirect(reverse(reverse_url, kwargs={'pk': request.POST['gloss']})+'?editothermedia')
 
