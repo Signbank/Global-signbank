@@ -1,9 +1,7 @@
 import re
 import datetime as DT
-from curses.ascii import isdigit
 from pathlib import Path
 
-from django.utils import html
 from django import forms
 from django.db.models.functions import Concat
 from django.core.exceptions import ObjectDoesNotExist, MultipleObjectsReturned
@@ -57,7 +55,7 @@ def convert_getlist_values_to_machine_values_list(model, search_form, field, val
     numerical_values = []
     coerced_values = []
     for v in values_list:
-        if not re.match("[1-9]\d*$", v):
+        if not re.match(r"[1-9]\d*$", v):
             # weed out non-numbers
             continue
         numerical_values.append(v)
@@ -71,7 +69,12 @@ def convert_getlist_values_to_machine_values_list(model, search_form, field, val
 
 
 def coerce_values_to_numbers(vals):
-    values = [int(v) for v in vals if re.match("[1-9]\d*$", v)]
+    values = [int(v) for v in vals if re.match(r"[1-9]\d*$", v)]
+    return values
+
+
+def filter_values_on_domain(vals, domain):
+    values = [v for v in vals if re.match(r"[1-9]\d*$", v) and v in domain]
     return values
 
 
@@ -782,6 +785,7 @@ def search_fields_from_get(searchform, GET):
     if not searchform:
         return search_keys, search_fields_to_populate
     search_form_fields = searchform.fields.keys()
+    model = type(searchform.instance)
     for get_key, get_value in GET.items():
         if get_key in ['filter']:
             continue
@@ -789,10 +793,16 @@ def search_fields_from_get(searchform, GET):
             continue
         if get_key.endswith('[]'):
             vals = GET.getlist(get_key)
-            search_fields_to_populate[get_key] = vals
+            field = get_key[:-2]
+            if not vals:
+                continue
+            values = convert_getlist_values_to_machine_values_list(model, searchform, field, vals, coerce=False)
+            if not values:
+                continue
+            search_fields_to_populate[get_key] = values
             search_keys.append(get_key)
         elif get_key in ['translation', 'search']:
-            search_fields_to_populate[get_key] = html.escape(get_value)
+            search_fields_to_populate[get_key] = get_value
         elif get_key not in search_form_fields:
             # skip csrf_token and page
             continue

@@ -100,7 +100,8 @@ from signbank.query_parameters import (convert_query_parameters_to_filter, prett
                                        set_up_signlanguage_dialects_fields,
                                        queryset_glosssense_from_get, query_parameters_from_get,
                                        queryset_sentences_from_get, query_parameters_toggle_fields,
-                                       queryset_annotatedgloss_from_get, convert_query_parameters_to_annotatedgloss_filter)
+                                       queryset_annotatedgloss_from_get, convert_query_parameters_to_annotatedgloss_filter,
+                                       coerce_values_to_numbers, filter_values_on_domain)
 from signbank.search_history import (available_query_parameters_in_search_history, languages_in_query, display_parameters,
     get_query_parameters, save_query_parameters, fieldnames_from_query_parameters)
 from signbank.frequency import (import_corpus_speakers, configure_corpus_documents_for_dataset, update_corpus_counts,
@@ -815,10 +816,10 @@ class GlossListView(ListView):
             else:
                 qs = Gloss.none_morpheme_objects().prefetch_related('lemma').filter(lemma__dataset__in=selected_datasets)
 
-            qs = apply_language_filters_to_results('Gloss', qs, self.query_parameters)
+            qs = apply_language_filters_to_results(Gloss, qs, self.query_parameters)
             qs = qs.distinct()
-            qs = apply_video_filters_to_results('Gloss', qs, self.query_parameters)
-            qs = apply_nmevideo_filters_to_results('Gloss', qs, self.query_parameters)
+            qs = apply_video_filters_to_results(Gloss, qs, self.query_parameters)
+            qs = apply_nmevideo_filters_to_results(Gloss, qs, self.query_parameters)
 
             query = convert_query_parameters_to_filter(self.query_parameters)
             if query:
@@ -1039,10 +1040,10 @@ class SenseListView(ListView):
         elif self.query_parameters and 'query' in self.request.GET:
             gloss_query = Gloss.objects.all().prefetch_related('lemma').filter(lemma__dataset__in=selected_datasets,
                                                                                archived__exact=False)
-            gloss_query = apply_language_filters_to_results('Gloss', gloss_query, self.query_parameters)
+            gloss_query = apply_language_filters_to_results(Gloss, gloss_query, self.query_parameters)
             gloss_query = gloss_query.distinct()
-            gloss_query = apply_video_filters_to_results('Gloss', gloss_query, self.query_parameters)
-            gloss_query = apply_nmevideo_filters_to_results('Gloss', gloss_query, self.query_parameters)
+            gloss_query = apply_video_filters_to_results(Gloss, gloss_query, self.query_parameters)
+            gloss_query = apply_nmevideo_filters_to_results(Gloss, gloss_query, self.query_parameters)
             gloss_query = gloss_query.distinct()
 
             query = convert_query_parameters_to_filter(self.query_parameters)
@@ -6721,6 +6722,8 @@ class KeywordListView(ListView):
 
         if 'tags[]' in get:
             vals = get.getlist('tags[]')
+            possible_tags = [str(tag.id) for tag in Tag.objects.all()]
+            vals = filter_values_on_domain(vals, possible_tags)
             if vals:
                 self.query_parameters['tags[]'] = vals
                 values = coerce_values_to_numbers(vals)
@@ -7001,6 +7004,8 @@ class BatchEditView(ListView):
 
         if 'tags[]' in get:
             vals = get.getlist('tags[]')
+            possible_tags = [str(tag.id) for tag in Tag.objects.all()]
+            vals = filter_values_on_domain(vals, possible_tags)
             if vals:
                 self.query_parameters['tags[]'] = vals
                 values = coerce_values_to_numbers(vals)
@@ -7140,6 +7145,8 @@ class ToggleListView(ListView):
 
         if 'tags[]' in get:
             vals = get.getlist('tags[]')
+            possible_tags = [str(tag.id) for tag in Tag.objects.all()]
+            vals = filter_values_on_domain(vals, possible_tags)
             if vals:
                 query_parameters['tags[]'] = vals
                 values = coerce_values_to_numbers(vals)
@@ -7387,10 +7394,10 @@ class AnnotatedGlossListView(ListView):
         elif self.query_parameters and 'query' in self.request.GET:
             gloss_query = Gloss.objects.all().prefetch_related('lemma').filter(lemma__dataset__in=selected_datasets,
                                                                                archived__exact=False)
-            gloss_query = apply_language_filters_to_results('Gloss', gloss_query, self.query_parameters)
+            gloss_query = apply_language_filters_to_results(Gloss, gloss_query, self.query_parameters)
             gloss_query = gloss_query.distinct()
-            gloss_query = apply_video_filters_to_results('Gloss', gloss_query, self.query_parameters)
-            gloss_query = apply_nmevideo_filters_to_results('Gloss', gloss_query, self.query_parameters)
+            gloss_query = apply_video_filters_to_results(Gloss, gloss_query, self.query_parameters)
+            gloss_query = apply_nmevideo_filters_to_results(Gloss, gloss_query, self.query_parameters)
             gloss_query = gloss_query.distinct()
             query = convert_query_parameters_to_filter(self.query_parameters)
             if query:
