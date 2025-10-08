@@ -298,15 +298,27 @@ def convert_video(sourcefile, targetfile, force=False):
 
     basename, extension = os.path.splitext(sourcefile)
 
-    print('convert_video sourcefile has probe format: ', format)
+    filetype_extension = video_file_extension(sourcefile)
+
+    file_with_extension_matching_video_type = f'{basename}.{filetype_extension}'
 
     if format.startswith('h264') and extension == "mp4":
         return True
 
-    subprocess.run(["ffmpeg", "-i", "-y", sourcefile, targetfile])
+    # convert the video and use mp4 as the extension
+    if filetype_extension == 'mov':
+        # the file extension of the source does not match the type of video, rename it for conversion
+        os.rename(sourcefile, file_with_extension_matching_video_type)
+        subprocess.run(["ffmpeg", "-i", file_with_extension_matching_video_type,
+                        "-c:v", "libx264", "-an", "-vf", "format=yuv420p", targetfile], timeout=5, check=True)
+    elif extension != filetype_extension:
+        # the file extension of the source does not match the type of video, rename it for conversion
+        os.rename(sourcefile, file_with_extension_matching_video_type)
+        subprocess.run(["ffmpeg", "-i", file_with_extension_matching_video_type, targetfile])
+    else:
+        subprocess.run(["ffmpeg", "-i", sourcefile, targetfile])
 
     format = probe_format(targetfile)
-    print('converted probe format: ', format)
     if format.startswith('h264'):
         # the output of ffmpeg includes extra information following h264, so only check the prefix
         return True
