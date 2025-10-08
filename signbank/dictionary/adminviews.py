@@ -879,13 +879,13 @@ class GlossListView(ListView):
             return sorted_qs
 
         if self.search_type != 'sign':
-            query_parameters['search_type'] = self.search_type
-        qs = queryset_glosssense_from_get('Gloss', GlossSearchForm, self.search_form, get, qs)
-        self.query_parameters = query_parameters_from_get('Gloss', self.search_form, get, self.query_parameters)
-        qs = apply_language_filters_to_results('Gloss', qs, self.query_parameters)
+            self.query_parameters['search_type'] = self.search_type
+        qs = queryset_glosssense_from_get(Gloss, GlossSearchForm, self.search_form, get, qs)
+        self.query_parameters = query_parameters_from_get(Gloss, self.search_form, get, self.query_parameters)
+        qs = apply_language_filters_to_results(Gloss, qs, self.query_parameters)
         qs = qs.distinct()
-        qs = apply_video_filters_to_results('Gloss', qs, self.query_parameters)
-        qs = apply_nmevideo_filters_to_results('Gloss', qs, self.query_parameters)
+        qs = apply_video_filters_to_results(Gloss, qs, self.query_parameters)
+        qs = apply_nmevideo_filters_to_results(Gloss, qs, self.query_parameters)
 
         # save the query parameters to a session variable
         self.request.session['query_parameters'] = json.dumps(self.query_parameters)
@@ -1058,19 +1058,19 @@ class SenseListView(ListView):
         if not self.request.user.is_authenticated or not self.request.user.has_perm('dictionary.search_gloss'):
             qs = qs.filter(gloss__inWeb__exact=True)
 
-        qs = queryset_glosssense_from_get('GlossSense', GlossSearchForm, self.search_form, get, qs)
+        qs = queryset_glosssense_from_get(GlossSense, GlossSearchForm, self.search_form, get, qs)
         # this is a temporary query_parameters variable
         query_parameters = dict()
         # it is saved to self.query_parameters after the parameters are processed
-        query_parameters = query_parameters_from_get('GlossSense', self.search_form, get, query_parameters)
-        qs = apply_video_filters_to_results('GlossSense', qs, query_parameters)
-        qs = apply_nmevideo_filters_to_results('GlossSense', qs, query_parameters)
+        query_parameters = query_parameters_from_get(GlossSense, self.search_form, get, query_parameters)
+        qs = apply_video_filters_to_results(GlossSense, qs, query_parameters)
+        qs = apply_nmevideo_filters_to_results(GlossSense, qs, query_parameters)
 
         if self.search_type != 'sign':
             query_parameters['search_type'] = self.search_type
 
         qs = queryset_sentences_from_get(self.sentence_search_form, get, qs)
-        query_parameters = query_parameters_from_get('ExampleSentence', self.sentence_search_form, get, query_parameters)
+        query_parameters = query_parameters_from_get(ExampleSentence, self.sentence_search_form, get, query_parameters)
 
         # save the query parameters to a session variable
         self.request.session['query_parameters'] = json.dumps(query_parameters)
@@ -2761,7 +2761,7 @@ class MinimalPairsListView(ListView):
             return qs
 
         qs = glosses_with_phonology
-        qs = queryset_glosssense_from_get('Gloss', FocusGlossSearchForm, self.search_form, get, qs)
+        qs = queryset_glosssense_from_get(Gloss, FocusGlossSearchForm, self.search_form, get, qs)
 
         qs = qs.select_related('lemma')
 
@@ -7419,18 +7419,18 @@ class AnnotatedGlossListView(ListView):
         if not self.request.user.is_authenticated or not self.request.user.has_perm('dictionary.search_gloss'):
             qs = qs.filter(gloss__inWeb__exact=True)
 
-        qs = queryset_glosssense_from_get('AnnotatedGloss', GlossSearchForm, self.search_form, get, qs)
+        qs = queryset_glosssense_from_get(AnnotatedGloss, GlossSearchForm, self.search_form, get, qs)
         # this is a temporary query_parameters variable
         query_parameters = dict()
         # it is saved to self.query_parameters after the parameters are processed
-        query_parameters = query_parameters_from_get('AnnotatedGloss', self.search_form, get, query_parameters)
-        qs = apply_video_filters_to_results('AnnotatedGloss', qs, query_parameters)
-        qs = apply_nmevideo_filters_to_results('AnnotatedGloss', qs, query_parameters)
+        query_parameters = query_parameters_from_get(AnnotatedGloss, self.search_form, get, query_parameters)
+        qs = apply_video_filters_to_results(AnnotatedGloss, qs, query_parameters)
+        qs = apply_nmevideo_filters_to_results(AnnotatedGloss, qs, query_parameters)
 
         query_parameters['search_type'] = self.search_type
 
         qs = queryset_annotatedgloss_from_get(self.sentence_search_form, get, qs)
-        query_parameters = query_parameters_from_get('AnnotatedSentence', self.sentence_search_form, get, query_parameters)
+        query_parameters = query_parameters_from_get(AnnotatedSentence, self.sentence_search_form, get, query_parameters)
 
         # save the query parameters to a session variable
         self.request.session['query_parameters'] = json.dumps(query_parameters)

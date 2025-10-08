@@ -2863,7 +2863,7 @@ def fieldname_to_kind(fieldname):
     return field_kind
 
 
-class GlossSense(models.Model):
+class GlossSense(MetaModelMixin, models.Model):
     """A relation between a gloss and a sense to determine in what order to show the senses"""
     gloss = models.ForeignKey(Gloss, on_delete=models.CASCADE)
     sense = models.ForeignKey(Sense, on_delete=models.CASCADE)       
@@ -4384,13 +4384,3 @@ class GlossProvenance(models.Model):
 
     def provenance_tuple(self):
         return self.get_method_display(), self.provenance_text()
-
-
-FOREIGN_KEY_MODEL_MAPPING = {
-    'Gloss': Gloss,
-    'Morpheme': Morpheme,
-    'AnnotatedGloss': AnnotatedGloss,
-    'AnnotatedSentence': AnnotatedSentence,
-    'GlossSense': GlossSense,
-    'ExampleSentence': ExampleSentence
-}

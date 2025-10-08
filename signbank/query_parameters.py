@@ -1,5 +1,6 @@
 import re
 import datetime as DT
+from curses.ascii import isdigit
 from pathlib import Path
 
 from django.utils import html
@@ -20,8 +21,7 @@ from signbank.dictionary.models import (Language, SignLanguage, Dialect, Gloss, 
                                         Definition, FieldChoice, Handshape, SemanticField, DerivationHistory,
                                         AnnotatedGloss, OtherMedia, RelationToForeignSign, Relation,
                                         AnnotatedSentenceTranslation, ExampleSentenceTranslation,
-                                        BlendMorphology, MorphologyDefinition, SimultaneousMorphologyDefinition,
-                                        FOREIGN_KEY_MODEL_MAPPING)
+                                        BlendMorphology, MorphologyDefinition, SimultaneousMorphologyDefinition)
 from signbank.dictionary.forms import GlossSearchForm, SentenceForm
 from signbank.dictionary.field_choices import fields_to_fieldcategory_dict
 from signbank.dictionary.translate_choice_list import choicelist_queryset_to_translated_dict
@@ -46,10 +46,9 @@ def list_to_query(query_list):
     return or_query
 
 
-def convert_getlist_values_to_machine_values_list(model_name, seach_form, field, values_list, coerce=True):
-    model = FOREIGN_KEY_MODEL_MAPPING[model_name]
+def convert_getlist_values_to_machine_values_list(model, search_form, field, values_list, coerce=True):
     if field not in model.get_field_names():
-        if field not in seach_form.fields.keys():
+        if field not in search_form.fields.keys():
             return []
         return values_list
     model_field = model.get_field(field)
@@ -58,7 +57,7 @@ def convert_getlist_values_to_machine_values_list(model_name, seach_form, field,
     numerical_values = []
     coerced_values = []
     for v in values_list:
-        if not v.isdigit():
+        if not re.match("[1-9]\d*$", v):
             # weed out non-numbers
             continue
         numerical_values.append(v)
@@ -72,10 +71,7 @@ def convert_getlist_values_to_machine_values_list(model_name, seach_form, field,
 
 
 def coerce_values_to_numbers(vals):
-    try:
-        values = [int(v) for v in vals]
-    except ValueError:
-        values = []
+    values = [int(v) for v in vals if re.match("[1-9]\d*$", v)]
     return values
 
 
@@ -120,7 +116,7 @@ def apply_language_filters_to_results(model, qs, query_parameters):
     # in the case that more than one field has been filled in
     # Here the expressions and order matches that of get_queryset
     # the function convert_query_parameters_to_filter (below) creates the Q expression for filtering
-    gloss_prefix = 'gloss__' if model in ['GlossSense', 'AnnotatedGloss'] else ''
+    gloss_prefix = 'gloss__' if model in [GlossSense, AnnotatedGloss] else ''
 
     gloss_search_field_prefix = "glosssearch_"
     len_gloss_search_field_prefix = len(gloss_search_field_prefix)
@@ -165,9 +161,9 @@ def matching_file_exists(videofile):
 
 def apply_video_filters_to_results(model, qs, query_parameters):
     # The 'hasvideo' form field has these choices: [('0', '-'), ('2', _('Yes')), ('3', _('No'))]
-    gloss_prefix = 'gloss__' if model in ['GlossSense', 'AnnotatedGloss'] else ''
+    gloss_prefix = 'gloss__' if model in [GlossSense, AnnotatedGloss] else ''
     filter_id = gloss_prefix + 'id__in'
-    gloss_ids = [gl.id if model == 'Gloss' else gl.gloss.id for gl in qs]
+    gloss_ids = [gl.id if model == Gloss else gl.gloss.id for gl in qs]
     if 'hasvideo' not in query_parameters.keys() or query_parameters['hasvideo'] not in ['2', '3']:
         return qs
     glossvideo_queryset = GlossVideo.objects.filter(gloss__id__in=gloss_ids, glossvideonme=None, glossvideoperspective=None, version=0)
@@ -186,16 +182,16 @@ def apply_video_filters_to_results(model, qs, query_parameters):
         gloss_ids = [gv.gloss.id for gv in gloss_video_objects]
         # add glosses to results if the gloss has no gloss video at all
         null_videos = qs.filter(Q(**{gloss_prefix + 'glossvideo__isnull': True}))
-        gloss_ids_without_video = [gl.id if model == 'Gloss' else gl.gloss.id for gl in null_videos]
+        gloss_ids_without_video = [gl.id if model == Gloss else gl.gloss.id for gl in null_videos]
         gloss_ids = list(set(gloss_ids).union(gloss_ids_without_video))
     return qs.filter(Q(**{filter_id: gloss_ids}))
 
 
 def apply_nmevideo_filters_to_results(model, qs, query_parameters):
     # The 'hasnmevideo' form field has these choices: [('0', '-'), ('2', _('Yes')), ('3', _('No'))]
-    gloss_prefix = 'gloss__' if model in ['GlossSense', 'AnnotatedGloss'] else ''
+    gloss_prefix = 'gloss__' if model in [GlossSense, AnnotatedGloss] else ''
     filter_id = gloss_prefix + 'id__in'
-    gloss_ids = [gl.id if model == 'Gloss' else gl.gloss.id for gl in qs]
+    gloss_ids = [gl.id if model == Gloss else gl.gloss.id for gl in qs]
     if 'hasnmevideo' not in query_parameters.keys() or query_parameters['hasnmevideo'] not in ['2', '3']:
         return qs
     glossvideo_queryset = GlossVideoNME.objects.filter(gloss__id__in=gloss_ids, version=0)
@@ -823,7 +819,7 @@ def queryset_from_get(formclass, searchform, GET, qs):
             # multiple select
             vals = GET.getlist(get_key)
             field = get_key[:-2]
-            values = convert_getlist_values_to_machine_values_list('Morpheme', searchform, field, vals)
+            values = convert_getlist_values_to_machine_values_list(Morpheme, searchform, field, vals)
             if field in ['dialect', 'semField', 'derivHist']:
                 query_filter = field + '__in'
                 qs = qs.filter(**{query_filter: values})
@@ -1045,7 +1041,7 @@ def queryset_glosssense_from_get(model, formclass, searchform, GET, qs):
     """
     if not searchform:
         return qs
-    gloss_prefix = 'gloss__' if model in ['GlossSense', 'AnnotatedGloss'] else ''
+    gloss_prefix = 'gloss__' if model in [GlossSense, AnnotatedGloss] else ''
     text_filter = 'iregex' if USE_REGULAR_EXPRESSIONS else 'icontains'
     for get_key, get_value in GET.items():
         if get_value in ['', '0']:
@@ -1094,7 +1090,7 @@ def queryset_glosssense_from_get(model, formclass, searchform, GET, qs):
                 query_filter = gloss_prefix + 'id__in'
                 qs = qs.filter(**{query_filter: morphemes_with_tag})
             else:
-                values = convert_getlist_values_to_machine_values_list('Gloss', searchform, field, vals)
+                values = convert_getlist_values_to_machine_values_list(Gloss, searchform, field, vals)
                 query_filter = gloss_prefix + field + '__machine_value__in'
                 qs = qs.filter(**{query_filter: values})
         elif not legitimate_search_form_url_parameter(searchform, get_key):
@@ -1277,7 +1273,7 @@ def queryset_sentences_from_get(searchform, GET, qs):
             field = get_key[:-2]
             if field not in searchform.fields.keys() or not vals:
                 continue
-            values = convert_getlist_values_to_machine_values_list('GlossSense', searchform, field, vals)
+            values = convert_getlist_values_to_machine_values_list(GlossSense, searchform, field, vals)
             if field == 'sentenceType':
                 sentences_with_this_type = ExampleSentence.objects.filter(sentenceType__machine_value__in=values)
                 qs = qs.filter(sense__exampleSentences__in=sentences_with_this_type).distinct()
