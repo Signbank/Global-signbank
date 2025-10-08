@@ -1352,6 +1352,8 @@ def query_parameters_from_get(model, searchform, GET, query_parameters):
             if not vals:
                 continue
             values = convert_getlist_values_to_machine_values_list(model, searchform, field, vals, coerce=False)
+            if not values:
+                continue
             query_parameters[get_key] = values
         elif get_key not in search_form_fields:
             # skip csrf_token and page
