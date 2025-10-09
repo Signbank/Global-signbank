@@ -190,27 +190,20 @@ class GlossVideoListView(ListView):
 
         qs = Gloss.objects.filter(lemma__dataset=self.dataset, archived=False, morpheme=None).distinct()
 
-        # this is a temporary query_parameters variable
-        # it is saved to self.query_parameters after the parameters are processed
-        query_parameters = dict()
-
-        query_parameters = query_parameters_from_get(self.search_form, get, query_parameters)
-        qs = apply_language_filters_to_results('Gloss', qs, query_parameters)
+        self.query_parameters = query_parameters_from_get(Gloss, self.search_form, get, {})
+        qs = apply_language_filters_to_results(Gloss, qs, self.query_parameters)
         qs = qs.distinct()
 
-        # the active query parameters are passed to the context via self
-        self.query_parameters = query_parameters
-
-        if 'isPrimaryVideo' in query_parameters.keys() and query_parameters['isPrimaryVideo'] == '2':
+        if 'isPrimaryVideo' in self.query_parameters.keys() and self.query_parameters['isPrimaryVideo'] == '2':
             count_glossvideos = GlossVideo.objects.filter(gloss__in=qs, version=0,
                                                           glossvideonme=None, glossvideoperspective=None).distinct().count()
-        if 'isBackup' in query_parameters.keys() and query_parameters['isBackup'] == '2':
+        if 'isBackup' in self.query_parameters.keys() and self.query_parameters['isBackup'] == '2':
             count_glossbackupvideos = GlossVideo.objects.filter(gloss__in=qs, version__gt=0).distinct().count()
-        if 'isPerspectiveVideo' in query_parameters.keys() and query_parameters['isPerspectiveVideo'] == '2':
+        if 'isPerspectiveVideo' in self.query_parameters.keys() and self.query_parameters['isPerspectiveVideo'] == '2':
             count_glossperspvideos = GlossVideoPerspective.objects.filter(gloss__in=qs).distinct().count()
-        if 'isNMEVideo' in query_parameters.keys() and query_parameters['isNMEVideo'] == '2':
+        if 'isNMEVideo' in self.query_parameters.keys() and self.query_parameters['isNMEVideo'] == '2':
             count_glossnmevideos = GlossVideoNME.objects.filter(gloss__in=qs).distinct().count()
-        if 'wrongFilename' in query_parameters.keys() and query_parameters['wrongFilename'] == '2':
+        if 'wrongFilename' in self.query_parameters.keys() and self.query_parameters['wrongFilename'] == '2':
             all_gloss_video_objects = GlossVideo.objects.filter(gloss__in=qs).distinct()
             gloss_video_ids = wrong_filename_filter(all_gloss_video_objects)
             count_wrong_filename = len(gloss_video_ids)
@@ -229,16 +222,16 @@ class GlossVideoListView(ListView):
         # a single data structure is created that includes the various kinds of videos in a way suited to the display
         for gloss in qs:
             display_glossvideos, num_backup_videos, display_glossbackupvideos, display_perspvideos, display_nmevideos, display_wrong_videos = '', 0, '', '', '', ''
-            if 'isPrimaryVideo' in query_parameters.keys() and query_parameters['isPrimaryVideo'] == '2':
+            if 'isPrimaryVideo' in self.query_parameters.keys() and self.query_parameters['isPrimaryVideo'] == '2':
                 display_glossvideos = get_primary_videos_for_gloss(gloss)
-            if 'isBackup' in query_parameters.keys() and query_parameters['isBackup'] == '2':
+            if 'isBackup' in self.query_parameters.keys() and self.query_parameters['isBackup'] == '2':
                 # the number of backups for the gloss is displayed in the template
                 num_backup_videos, display_glossbackupvideos = get_backup_videos_for_gloss(gloss)
-            if 'isPerspectiveVideo' in query_parameters.keys() and query_parameters['isPerspectiveVideo'] == '2':
+            if 'isPerspectiveVideo' in self.query_parameters.keys() and self.query_parameters['isPerspectiveVideo'] == '2':
                 display_perspvideos = get_perspective_videos_for_gloss(gloss)
-            if 'isNMEVideo' in query_parameters.keys() and query_parameters['isNMEVideo'] == '2':
+            if 'isNMEVideo' in self.query_parameters.keys() and self.query_parameters['isNMEVideo'] == '2':
                 display_nmevideos = get_nme_videos_for_gloss(gloss)
-            if 'wrongFilename' in query_parameters.keys() and query_parameters['wrongFilename'] == '2':
+            if 'wrongFilename' in self.query_parameters.keys() and self.query_parameters['wrongFilename'] == '2':
                 display_wrong_videos = get_wrong_videos_for_gloss(gloss)
             if display_glossvideos or display_glossbackupvideos or display_perspvideos or display_nmevideos or display_wrong_videos:
                 gloss_videos.append((gloss, num_backup_videos, display_glossvideos,
