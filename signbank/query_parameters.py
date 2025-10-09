@@ -50,7 +50,7 @@ def get_date_range_from_date_input(get_value):
     except ValueError:
         # if the date isn't formatted as per the query form, use ineffective values
         created_before_date = EARLIEST_GLOSS_CREATION_DATE
-        created_after_date = DT.datetime.now()
+        created_after_date = DT.datetime.now().date()
     return created_before_date, created_after_date
 
 
