@@ -100,7 +100,8 @@ from signbank.query_parameters import (convert_query_parameters_to_filter, prett
                                        set_up_signlanguage_dialects_fields,
                                        queryset_glosssense_from_get, query_parameters_from_get,
                                        queryset_sentences_from_get, query_parameters_toggle_fields,
-                                       queryset_annotatedgloss_from_get, convert_query_parameters_to_annotatedgloss_filter)
+                                       queryset_annotatedgloss_from_get, convert_query_parameters_to_annotatedgloss_filter,
+                                       coerce_values_to_numbers, filter_values_on_domain)
 from signbank.search_history import (available_query_parameters_in_search_history, languages_in_query, display_parameters,
     get_query_parameters, save_query_parameters, fieldnames_from_query_parameters)
 from signbank.frequency import (import_corpus_speakers, configure_corpus_documents_for_dataset, update_corpus_counts,
@@ -815,10 +816,10 @@ class GlossListView(ListView):
             else:
                 qs = Gloss.none_morpheme_objects().prefetch_related('lemma').filter(lemma__dataset__in=selected_datasets)
 
-            qs = apply_language_filters_to_results('Gloss', qs, self.query_parameters)
+            qs = apply_language_filters_to_results(Gloss, qs, self.query_parameters)
             qs = qs.distinct()
-            qs = apply_video_filters_to_results('Gloss', qs, self.query_parameters)
-            qs = apply_nmevideo_filters_to_results('Gloss', qs, self.query_parameters)
+            qs = apply_video_filters_to_results(Gloss, qs, self.query_parameters)
+            qs = apply_nmevideo_filters_to_results(Gloss, qs, self.query_parameters)
 
             query = convert_query_parameters_to_filter(self.query_parameters)
             if query:
@@ -840,14 +841,12 @@ class GlossListView(ListView):
             sorted_qs = order_queryset_by_sort_order(self.request.GET, qs, self.queryset_language_codes)
             return sorted_qs
 
-        # this is a temporary query_parameters variable
-        # it is saved to self.query_parameters after the parameters are processed
-        query_parameters = dict()
+        self.query_parameters = dict()
 
         if 'search' in get and get['search']:
             # menu bar gloss search, return the results
             val = get['search']
-            query_parameters['search'] = html.escapejs(val)
+            self.query_parameters['search'] = val
             if USE_REGULAR_EXPRESSIONS:
                 query = Q(annotationidglosstranslation__text__iregex=val)
             else:
@@ -858,9 +857,8 @@ class GlossListView(ListView):
 
             qs = qs.filter(query).distinct()
 
-            self.request.session['query_parameters'] = json.dumps(query_parameters)
+            self.request.session['query_parameters'] = json.dumps(self.query_parameters)
             self.request.session.modified = True
-            self.query_parameters = query_parameters
 
             sorted_qs = order_queryset_by_sort_order(self.request.GET, qs, self.queryset_language_codes)
             return sorted_qs
@@ -868,33 +866,31 @@ class GlossListView(ListView):
         if 'translation' in get and get['translation']:
             # menu bar senses search, return the results
             val = get['translation']
-            query_parameters['translation'] = html.escapejs(val)
+            self.query_parameters['translation'] = val
             if USE_REGULAR_EXPRESSIONS:
                 query = Q(senses__senseTranslations__translations__translation__text__iregex=val)
             else:
                 query = Q(senses__senseTranslations__translations__translation__text__icontains=val)
             qs = qs.filter(query).distinct()
 
-            self.request.session['query_parameters'] = json.dumps(query_parameters)
+            self.request.session['query_parameters'] = json.dumps(self.query_parameters)
             self.request.session.modified = True
-            self.query_parameters = query_parameters
 
             sorted_qs = order_queryset_by_sort_order(self.request.GET, qs, self.queryset_language_codes)
             return sorted_qs
 
         if self.search_type != 'sign':
-            query_parameters['search_type'] = self.search_type
-        qs = queryset_glosssense_from_get('Gloss', GlossSearchForm, self.search_form, get, qs)
-        query_parameters = query_parameters_from_get(self.search_form, get, query_parameters)
-        qs = apply_language_filters_to_results('Gloss', qs, query_parameters)
+            self.query_parameters['search_type'] = self.search_type
+        qs = queryset_glosssense_from_get(Gloss, GlossSearchForm, self.search_form, get, qs)
+        self.query_parameters = query_parameters_from_get(Gloss, self.search_form, get, self.query_parameters)
+        qs = apply_language_filters_to_results(Gloss, qs, self.query_parameters)
         qs = qs.distinct()
-        qs = apply_video_filters_to_results('Gloss', qs, query_parameters)
-        qs = apply_nmevideo_filters_to_results('Gloss', qs, query_parameters)
+        qs = apply_video_filters_to_results(Gloss, qs, self.query_parameters)
+        qs = apply_nmevideo_filters_to_results(Gloss, qs, self.query_parameters)
 
         # save the query parameters to a session variable
-        self.request.session['query_parameters'] = json.dumps(query_parameters)
+        self.request.session['query_parameters'] = json.dumps(self.query_parameters)
         self.request.session.modified = True
-        self.query_parameters = query_parameters
         qs = qs.select_related('lemma')
 
         # Sort the queryset by the parameters given
@@ -1044,10 +1040,10 @@ class SenseListView(ListView):
         elif self.query_parameters and 'query' in self.request.GET:
             gloss_query = Gloss.objects.all().prefetch_related('lemma').filter(lemma__dataset__in=selected_datasets,
                                                                                archived__exact=False)
-            gloss_query = apply_language_filters_to_results('Gloss', gloss_query, self.query_parameters)
+            gloss_query = apply_language_filters_to_results(Gloss, gloss_query, self.query_parameters)
             gloss_query = gloss_query.distinct()
-            gloss_query = apply_video_filters_to_results('Gloss', gloss_query, self.query_parameters)
-            gloss_query = apply_nmevideo_filters_to_results('Gloss', gloss_query, self.query_parameters)
+            gloss_query = apply_video_filters_to_results(Gloss, gloss_query, self.query_parameters)
+            gloss_query = apply_nmevideo_filters_to_results(Gloss, gloss_query, self.query_parameters)
             gloss_query = gloss_query.distinct()
 
             query = convert_query_parameters_to_filter(self.query_parameters)
@@ -1063,19 +1059,19 @@ class SenseListView(ListView):
         if not self.request.user.is_authenticated or not self.request.user.has_perm('dictionary.search_gloss'):
             qs = qs.filter(gloss__inWeb__exact=True)
 
-        qs = queryset_glosssense_from_get('GlossSense', GlossSearchForm, self.search_form, get, qs)
+        qs = queryset_glosssense_from_get(GlossSense, GlossSearchForm, self.search_form, get, qs)
         # this is a temporary query_parameters variable
         query_parameters = dict()
         # it is saved to self.query_parameters after the parameters are processed
-        query_parameters = query_parameters_from_get(self.search_form, get, query_parameters)
-        qs = apply_video_filters_to_results('GlossSense', qs, query_parameters)
-        qs = apply_nmevideo_filters_to_results('GlossSense', qs, query_parameters)
+        query_parameters = query_parameters_from_get(GlossSense, self.search_form, get, query_parameters)
+        qs = apply_video_filters_to_results(GlossSense, qs, query_parameters)
+        qs = apply_nmevideo_filters_to_results(GlossSense, qs, query_parameters)
 
         if self.search_type != 'sign':
             query_parameters['search_type'] = self.search_type
 
         qs = queryset_sentences_from_get(self.sentence_search_form, get, qs)
-        query_parameters = query_parameters_from_get(self.sentence_search_form, get, query_parameters)
+        query_parameters = query_parameters_from_get(ExampleSentence, self.sentence_search_form, get, query_parameters)
 
         # save the query parameters to a session variable
         self.request.session['query_parameters'] = json.dumps(query_parameters)
@@ -2766,7 +2762,7 @@ class MinimalPairsListView(ListView):
             return qs
 
         qs = glosses_with_phonology
-        qs = queryset_glosssense_from_get('Gloss', FocusGlossSearchForm, self.search_form, get, qs)
+        qs = queryset_glosssense_from_get(Gloss, FocusGlossSearchForm, self.search_form, get, qs)
 
         qs = qs.select_related('lemma')
 
@@ -2778,6 +2774,7 @@ class QueryListView(ListView):
     model = Dataset
     template_name = 'dictionary/admin_query_list.html'
     search_type = 'sign'
+    query_parameters = dict()
 
     def get_context_data(self, **kwargs):
         # Call the base implementation first to get a context
@@ -2813,21 +2810,19 @@ class QueryListView(ListView):
         if 'query_parameters' in self.request.session.keys() and self.request.session['query_parameters'] not in ['', '{}']:
             # if the query parameters are available, convert them to a dictionary
             session_query_parameters = self.request.session.get('query_parameters', '{}')
-            query_parameters = json.loads(session_query_parameters)
+            self.query_parameters = json.loads(session_query_parameters)
         else:
-            # local query parameters
-            query_parameters = {}
             # save the default query parameters to the sessin variable
-            self.request.session['query_parameters'] = json.dumps(query_parameters)
+            self.request.session['query_parameters'] = json.dumps(self.query_parameters)
             self.request.session.modified = True
 
-        query_parameters_mapping = pretty_print_query_fields(dataset_languages, query_parameters.keys())
+        query_parameters_mapping = pretty_print_query_fields(dataset_languages, self.query_parameters.keys())
 
-        query_parameters_values_mapping = pretty_print_query_values(dataset_languages, query_parameters)
+        query_parameters_values_mapping = pretty_print_query_values(dataset_languages, self.query_parameters)
 
         query_fields_focus, query_fields_parameters, \
             toggle_gloss_list_display_fields, toggle_query_parameter_fields, toggle_publication_fields = \
-            query_parameters_toggle_fields(query_parameters)
+            query_parameters_toggle_fields(self.query_parameters)
 
         display_fields = GLOSS_LIST_DISPLAY_FIELDS
         for qpf in query_fields_focus:
@@ -2841,15 +2836,15 @@ class QueryListView(ListView):
         context['TOGGLE_QUERY_PARAMETER_FIELDS'] = toggle_query_parameter_fields
         context['TOGGLE_PUBLICATION_FIELDS'] = toggle_publication_fields
         context['TOGGLE_GLOSS_LIST_DISPLAY_FIELDS'] = toggle_gloss_list_display_fields
-        context['query_parameters'] = query_parameters
+        context['query_parameters'] = self.query_parameters
         context['query_parameters_mapping'] = query_parameters_mapping
         context['query_parameters_values_mapping'] = query_parameters_values_mapping
-        context['query_parameter_keys'] = query_parameters.keys()
+        context['query_parameter_keys'] = self.query_parameters.keys()
 
         available_parameters_to_save = available_query_parameters_in_search_history()
         context['available_query_parameters_in_search_history'] = available_parameters_to_save
         all_parameters_available_to_save = True
-        for param in query_parameters.keys():
+        for param in self.query_parameters.keys():
             if param not in available_parameters_to_save:
                 all_parameters_available_to_save = False
         context['all_parameters_available_to_save'] = all_parameters_available_to_save
@@ -3627,6 +3622,10 @@ class HandshapeListView(ListView):
             if fieldname in get:
                 val = get[fieldname]
                 if fieldname == 'hsNumSel' and val:
+                    try:
+                        value = int(val)
+                    except ValueError:
+                        continue
                     query_hsNumSel = field.name
                     with override('en'):
                         # the override is necessary in order to use the total fingers rather than each finger
@@ -3658,16 +3657,20 @@ class HandshapeListView(ListView):
                                                         output_field=IntegerField())).filter(Q(count_fs1__exact=5) | Q(**{query_hsNumSel:val}))
 
                 if isinstance(Handshape.get_field(fieldname), BooleanField):
-                    val = {'0': False, '1': True, 'True': True, 'False': False, 'None': '', '': ''}[val]
+                    val = {'0': False, '1': True, 'True': True, 'False': False, 'None': '', '': ''}.get(val, '')
 
                 if fieldname == 'name' and val:
                     query = Q(name__iregex=val)
                     qs = qs.filter(query)
 
-                if val not in ['', '0', False] and fieldname not in ['hsNumSel', 'name']:
+                if val not in ['', '0'] and fieldname not in ['hsNumSel', 'name']:
                     if isinstance(Handshape.get_field(fieldname), FieldChoiceForeignKey):
+                        try:
+                            value = int(val)
+                        except ValueError:
+                            continue
                         key = fieldname + '__machine_value'
-                        kwargs = {key: int(val)}
+                        kwargs = {key: value}
                         qs = qs.filter(**kwargs)
                     else:
                         # is boolean
@@ -5878,7 +5881,7 @@ def glosslist_ajax_complete(request, gloss_id):
             # this field has a list of roles as a parameter
             if query_fields_parameters:
                 # query_fields_parameters ends up being a list of list for this field
-                field_paramters = query_fields_parameters[0]
+                field_paramters = query_fields_parameters
                 relations_of_type = [r for r in this_gloss.relation_sources.filter(target__archived__exact=False,
                                                                                    source__archived__exact=False)
                                      if r.role in field_paramters]
@@ -6719,9 +6722,11 @@ class KeywordListView(ListView):
 
         if 'tags[]' in get:
             vals = get.getlist('tags[]')
+            possible_tags = [str(tag.id) for tag in Tag.objects.all()]
+            vals = filter_values_on_domain(vals, possible_tags)
             if vals:
                 self.query_parameters['tags[]'] = vals
-                values = [int(v) for v in vals]
+                values = coerce_values_to_numbers(vals)
                 glosses_with_tag = list(
                     TaggedItem.objects.filter(tag__id__in=values).values_list('object_id', flat=True))
                 glosses_of_datasets = glosses_of_datasets.filter(id__in=glosses_with_tag)
@@ -6999,9 +7004,11 @@ class BatchEditView(ListView):
 
         if 'tags[]' in get:
             vals = get.getlist('tags[]')
+            possible_tags = [str(tag.id) for tag in Tag.objects.all()]
+            vals = filter_values_on_domain(vals, possible_tags)
             if vals:
                 self.query_parameters['tags[]'] = vals
-                values = [int(v) for v in vals]
+                values = coerce_values_to_numbers(vals)
                 glosses_with_tag = list(
                     TaggedItem.objects.filter(tag__id__in=values).values_list('object_id', flat=True))
                 glosses_of_dataset = glosses_of_dataset.filter(id__in=glosses_with_tag)
@@ -7138,9 +7145,11 @@ class ToggleListView(ListView):
 
         if 'tags[]' in get:
             vals = get.getlist('tags[]')
+            possible_tags = [str(tag.id) for tag in Tag.objects.all()]
+            vals = filter_values_on_domain(vals, possible_tags)
             if vals:
                 query_parameters['tags[]'] = vals
-                values = [int(v) for v in vals]
+                values = coerce_values_to_numbers(vals)
                 glosses_with_tag = list(
                     TaggedItem.objects.filter(tag__id__in=values).values_list('object_id', flat=True))
                 glosses_of_datasets = glosses_of_datasets.filter(id__in=glosses_with_tag,
@@ -7385,10 +7394,10 @@ class AnnotatedGlossListView(ListView):
         elif self.query_parameters and 'query' in self.request.GET:
             gloss_query = Gloss.objects.all().prefetch_related('lemma').filter(lemma__dataset__in=selected_datasets,
                                                                                archived__exact=False)
-            gloss_query = apply_language_filters_to_results('Gloss', gloss_query, self.query_parameters)
+            gloss_query = apply_language_filters_to_results(Gloss, gloss_query, self.query_parameters)
             gloss_query = gloss_query.distinct()
-            gloss_query = apply_video_filters_to_results('Gloss', gloss_query, self.query_parameters)
-            gloss_query = apply_nmevideo_filters_to_results('Gloss', gloss_query, self.query_parameters)
+            gloss_query = apply_video_filters_to_results(Gloss, gloss_query, self.query_parameters)
+            gloss_query = apply_nmevideo_filters_to_results(Gloss, gloss_query, self.query_parameters)
             gloss_query = gloss_query.distinct()
             query = convert_query_parameters_to_filter(self.query_parameters)
             if query:
@@ -7417,18 +7426,18 @@ class AnnotatedGlossListView(ListView):
         if not self.request.user.is_authenticated or not self.request.user.has_perm('dictionary.search_gloss'):
             qs = qs.filter(gloss__inWeb__exact=True)
 
-        qs = queryset_glosssense_from_get('AnnotatedGloss', GlossSearchForm, self.search_form, get, qs)
+        qs = queryset_glosssense_from_get(AnnotatedGloss, GlossSearchForm, self.search_form, get, qs)
         # this is a temporary query_parameters variable
         query_parameters = dict()
         # it is saved to self.query_parameters after the parameters are processed
-        query_parameters = query_parameters_from_get(self.search_form, get, query_parameters)
-        qs = apply_video_filters_to_results('AnnotatedGloss', qs, query_parameters)
-        qs = apply_nmevideo_filters_to_results('AnnotatedGloss', qs, query_parameters)
+        query_parameters = query_parameters_from_get(AnnotatedGloss, self.search_form, get, query_parameters)
+        qs = apply_video_filters_to_results(AnnotatedGloss, qs, query_parameters)
+        qs = apply_nmevideo_filters_to_results(AnnotatedGloss, qs, query_parameters)
 
         query_parameters['search_type'] = self.search_type
 
         qs = queryset_annotatedgloss_from_get(self.sentence_search_form, get, qs)
-        query_parameters = query_parameters_from_get(self.sentence_search_form, get, query_parameters)
+        query_parameters = query_parameters_from_get(AnnotatedSentence, self.sentence_search_form, get, query_parameters)
 
         # save the query parameters to a session variable
         self.request.session['query_parameters'] = json.dumps(query_parameters)

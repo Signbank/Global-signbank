@@ -2863,7 +2863,7 @@ def fieldname_to_kind(fieldname):
     return field_kind
 
 
-class GlossSense(models.Model):
+class GlossSense(MetaModelMixin, models.Model):
     """A relation between a gloss and a sense to determine in what order to show the senses"""
     gloss = models.ForeignKey(Gloss, on_delete=models.CASCADE)
     sense = models.ForeignKey(Sense, on_delete=models.CASCADE)       
