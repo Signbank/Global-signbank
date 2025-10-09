@@ -52,14 +52,10 @@ def convert_getlist_values_to_machine_values_list(model, search_form, field, val
     model_field = model.get_field(field)
     if not hasattr(model_field, 'field_choice_category'):
         return values_list
-    numerical_values = []
-    coerced_values = []
-    for v in values_list:
-        if not re.match(r"[1-9]\d*$", v):
-            # weed out non-numbers
-            continue
-        numerical_values.append(v)
-        coerced_values.append(int(v))
+
+    numerical_values = [v for v in values_list if re.match(r"^[1-9]\d*$", v)]
+    coerced_values = list(map(int, numerical_values))
+
     machine_values_for_field = [fc.machine_value for fc in FieldChoice.objects.filter(field=model_field.field_choice_category)]
     if coerce:
         confirmed_values = [v for v in coerced_values if v in machine_values_for_field]
