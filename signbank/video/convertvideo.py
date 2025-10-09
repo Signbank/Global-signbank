@@ -111,18 +111,6 @@ def extract_frame(sourcefile, targetfile):
     err = run_ffmpeg(sourcefile, targetfile, options=options)
 
 
-def probe_format(file):
-    """Find the format of a video file via ffmpeg,
-    return a format name, eg mpeg4, h264"""
-
-    # for info, convert just one second to a null output format
-    info_options = ["-f", "null", "-t", "1"]
-    
-    b = run_ffmpeg(file, "tmp", options=info_options)
-    r = parse_ffmpeg_output(b)
-    return r['inputvideoformat']
-
-
 def get_folder_name(gloss):
     gloss_video_filename = gloss.idgloss + '-' + str(gloss.id)
     filename = gloss_video_filename.replace(' ', '_')
@@ -286,15 +274,10 @@ def video_file_type_extension(video_file_full_path):
     return desired_video_extension
 
 
-def convert_video(sourcefile, targetfile, force=False):
+def convert_video(sourcefile, targetfile):
     """convert a video to h264 format
     if force=True, do the conversion even if the video is already
     h264 encoded, if False, then just copy the file in this case"""
-    
-    if not force:
-        format = probe_format(sourcefile)
-    else:
-        format = 'force'
 
     basename, extension = os.path.splitext(sourcefile)
 
@@ -302,28 +285,16 @@ def convert_video(sourcefile, targetfile, force=False):
 
     file_with_extension_matching_video_type = f'{basename}.{filetype_extension}'
 
-    if format.startswith('h264') and extension == "mp4":
+    if extension == 'mp4' and filetype_extension == "mp4":
         return True
 
-    # convert the video and use mp4 as the extension
-    if filetype_extension == 'mov':
+    if extension != filetype_extension:
         # the file extension of the source does not match the type of video, rename it for conversion
         os.rename(sourcefile, file_with_extension_matching_video_type)
-        subprocess.run(["ffmpeg", "-i", file_with_extension_matching_video_type,
-                        "-c:v", "libx264", "-an", "-vf", "format=yuv420p", targetfile], timeout=5, check=True)
-    elif extension != filetype_extension:
-        # the file extension of the source does not match the type of video, rename it for conversion
-        os.rename(sourcefile, file_with_extension_matching_video_type)
-        subprocess.run(["ffmpeg", "-i", file_with_extension_matching_video_type, targetfile])
+        result = subprocess.run(["ffmpeg", "-i", file_with_extension_matching_video_type, targetfile])
     else:
-        subprocess.run(["ffmpeg", "-i", sourcefile, targetfile])
-
-    format = probe_format(targetfile)
-    if format.startswith('h264'):
-        # the output of ffmpeg includes extra information following h264, so only check the prefix
-        return True
-    else:
-        return False
+        result = subprocess.run(["ffmpeg", "-i", sourcefile, targetfile])
+    return result.returncode == 0
 
 
 if __name__ == '__main__':
