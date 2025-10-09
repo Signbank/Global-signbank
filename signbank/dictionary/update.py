@@ -2329,10 +2329,16 @@ def add_othermedia(request):
 
     orig_path = os.path.join(goal_directory, filename_plus_extension)
 
-    filetype_extension = video_file_extension(orig_path)
-    if filetype.startswith('video') and (filetype != 'video/mp4' and extension != 'mp4') or filetype_extension != 'mp4':
+    video_format_extension = video_file_extension(orig_path)
+
+    is_video = filetype.startswith('video')
+    is_not_mp4_type = filetype != 'video/mp4'
+    is_not_mp4_extension = extension != '.mp4'
+    is_not_mp4_video_format_extension = video_format_extension != '.mp4'
+    needs_conversion = (is_video and is_not_mp4_type and is_not_mp4_extension) or is_not_mp4_video_format_extension
+    if needs_conversion:
         name, _ = os.path.splitext(filename_plus_extension)
-        orig_path_with_extension_matching_video_type = f'{goal_directory}/{name}.{filetype_extension}'
+        orig_path_with_extension_matching_video_type = f'{goal_directory}/{name}{video_format_extension}'
         os.rename(orig_path, orig_path_with_extension_matching_video_type)
         convert_video(orig_path_with_extension_matching_video_type, f'{goal_directory}/{name}.mp4')
         newothermedia.path = f'{request.POST['gloss']}/{name}.mp4'

@@ -228,17 +228,17 @@ def video_file_extension(file_path):
     filetype_output = subprocess.run(["file", file_path], stdout=subprocess.PIPE)
     filetype = str(filetype_output.stdout)
     if 'MOV' in filetype:
-        video_extension = 'mov'
+        video_extension = '.mov'
     elif 'M4V' in filetype:
-        video_extension = 'm4v'
+        video_extension = '.m4v'
     elif 'MP4' in filetype:
-        video_extension = 'mp4'
+        video_extension = '.mp4'
     elif 'Matroska' in filetype:
-        video_extension = 'webm'
+        video_extension = '.webm'
     elif 'MKV' in filetype:
-        video_extension = 'mkv'
+        video_extension = '.mkv'
     elif 'MPEG-2' in filetype:
-        video_extension = 'm2v'
+        video_extension = '.m2v'
     else:
         video_extension = extension
     return video_extension
@@ -279,16 +279,15 @@ def convert_video(sourcefile, targetfile):
     if force=True, do the conversion even if the video is already
     h264 encoded, if False, then just copy the file in this case"""
 
-    basename, extension = os.path.splitext(sourcefile)
+    basename, source_file_extension = os.path.splitext(sourcefile)
 
-    filetype_extension = video_file_extension(sourcefile)
+    video_format_extension = video_file_extension(sourcefile)
+    file_with_extension_matching_video_type = f'{basename}{video_format_extension}'
 
-    file_with_extension_matching_video_type = f'{basename}.{filetype_extension}'
-
-    if extension == 'mp4' and filetype_extension == "mp4":
+    if source_file_extension == '.mp4' and video_format_extension == ".mp4":
         return True
 
-    if extension != filetype_extension:
+    if source_file_extension != video_format_extension:
         # the file extension of the source does not match the type of video, rename it for conversion
         os.rename(sourcefile, file_with_extension_matching_video_type)
         result = subprocess.run(["ffmpeg", "-i", file_with_extension_matching_video_type, targetfile])
