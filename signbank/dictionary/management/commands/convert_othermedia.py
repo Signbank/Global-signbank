@@ -49,8 +49,8 @@ class Command(BaseCommand):
                                     print('File could not be copied for backup. Skipping: ', filepath)
                                     continue
                                 # convert the video to h264
-                                success = convert_video(temp_filepath, filepath)
-                                if not success:
+                                okay = convert_video(temp_filepath, filepath)
+                                if not okay:
                                     print('Conversion to mp4 failed: ', filepath)
                                     continue
                         else:

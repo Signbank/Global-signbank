@@ -43,11 +43,4 @@ def convert_video_collection(sourcedir, destdir):
                 destfile = os.path.join(destpath, name+".mp4")
                 if not os.path.exists(destfile):
                     print(sourcefile, destfile)
-                    convert_video(sourcefile, destfile, force=True)
-
-                
-
-
-
-
-
+                    okay = convert_video(sourcefile, destfile)
