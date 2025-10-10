@@ -44,6 +44,16 @@ def list_to_query(query_list):
     return or_query
 
 
+def get_date_range_from_date_input(get_value):
+    try:
+        created_before_date = created_after_date = DT.datetime.strptime(get_value, DATE_FORMAT).date()
+    except ValueError:
+        # if the date isn't formatted as per the query form, use ineffective values
+        created_before_date = EARLIEST_GLOSS_CREATION_DATE
+        created_after_date = DT.datetime.now().date()
+    return created_before_date, created_after_date
+
+
 def convert_getlist_values_to_machine_values_list(model, search_form, field, values_list, coerce=True):
     if field not in model.get_field_names():
         if field not in search_form.fields.keys():
@@ -385,12 +395,12 @@ def convert_query_parameters_to_filter(query_parameters):
             query_list.append(Q(**{q_filter: get_value}))
         elif get_key == 'useInstr':
             query_list.append(Q(useInstr__icontains=get_value))
-        elif get_key == 'createdBefore':
-            created_before_date = DT.datetime.strptime(get_value, DATE_FORMAT).date()
-            query_list.append(Q(creationDate__range=(EARLIEST_GLOSS_CREATION_DATE, created_before_date)))
-        elif get_key == 'createdAfter':
-            created_after_date = DT.datetime.strptime(get_value, DATE_FORMAT).date()
-            query_list.append(Q(creationDate__range=(created_after_date, DT.datetime.now())))
+        elif get_key in ['createdBefore', 'createdAfter']:
+            created_before_date, created_after_date = get_date_range_from_date_input(get_value)
+            if get_key == 'createdBefore':
+                query_list.append(Q(creationDate__range=(EARLIEST_GLOSS_CREATION_DATE, created_before_date)))
+            elif get_key == 'createdAfter':
+                query_list.append(Q(creationDate__range=(created_after_date, DT.datetime.now())))
         elif get_key == 'createdBy':
             query_list.append(Q(**{'creator__first_name__icontains': get_value}) |
                               Q(**{'creator__last_name__icontains': get_value}))
@@ -682,8 +692,11 @@ def pretty_print_query_values(dataset_languages, query_parameters):
             except (ObjectDoesNotExist, MultipleObjectsReturned, ValueError):
                 query_dict[key] = query_parameters[key]
         elif key in ['createdBefore', 'createdAfter']:
-            created_date = DT.datetime.strptime(query_parameters[key], DATE_FORMAT).date()
-            query_dict[key] = created_date.strftime(DATE_FORMAT)
+            try:
+                created_date = DT.datetime.strptime(query_parameters[key], DATE_FORMAT).date()
+                query_dict[key] = created_date.strftime(DATE_FORMAT)
+            except ValueError:
+                query_dict[key] = query_parameters[key]
         else:
             # key can be keyword, just print the value
             # includes relationToForeignSign, relation
@@ -909,11 +922,10 @@ def queryset_from_get(formclass, searchform, GET, qs):
                 continue
 
         elif searchform.fields[get_key].widget.input_type in ['date']:
+            created_before_date, created_after_date = get_date_range_from_date_input(get_value)
             if get_key == 'createdBefore':
-                created_before_date = DT.datetime.strptime(get_value, DATE_FORMAT).date()
                 qs = qs.filter(creationDate__range=(EARLIEST_GLOSS_CREATION_DATE, created_before_date))
             elif get_key == 'createdAfter':
-                created_after_date = DT.datetime.strptime(get_value, DATE_FORMAT).date()
                 qs = qs.filter(creationDate__range=(created_after_date, DT.datetime.now()))
         elif searchform.fields[get_key].widget.input_type in ['select']:
             if get_key in ['inWeb', 'repeat', 'altern', 'isNew']:
@@ -1194,12 +1206,11 @@ def queryset_glosssense_from_get(model, formclass, searchform, GET, qs):
                 continue
 
         elif searchform.fields[get_key].widget.input_type in ['date']:
+            created_before_date, created_after_date = get_date_range_from_date_input(get_value)
             query_filter = gloss_prefix + 'creationDate__range'
             if get_key == 'createdBefore':
-                created_before_date = DT.datetime.strptime(get_value, DATE_FORMAT).date()
                 qs = qs.filter(**{query_filter: (EARLIEST_GLOSS_CREATION_DATE, created_before_date)})
             elif get_key == 'createdAfter':
-                created_after_date = DT.datetime.strptime(get_value, DATE_FORMAT).date()
                 qs = qs.filter(**{query_filter: (created_after_date, DT.datetime.now())})
         elif searchform.fields[get_key].widget.input_type in ['select']:
             if get_key in ['hasmultiplesenses']:
