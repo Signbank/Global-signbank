@@ -13,7 +13,7 @@ from tagging.models import TaggedItem, Tag
 
 from signbank.settings.base import EARLIEST_GLOSS_CREATION_DATE, DATE_FORMAT
 from signbank.settings.server_specific import (USE_REGULAR_EXPRESSIONS, WRITABLE_FOLDER,
-                                               GLOSS_LIST_DISPLAY_FIELDS, SEARCH_BY)
+                                               GLOSS_LIST_DISPLAY_FIELDS, SEARCH_BY, HANDEDNESS_ARTICULATION_FIELDS, HANDSHAPE_ETYMOLOGY_FIELDS)
 from signbank.video.models import GlossVideo, GlossVideoNME
 from signbank.dictionary.models import (Language, SignLanguage, Dialect, Gloss, Morpheme, GlossSense, ExampleSentence,
                                         Definition, FieldChoice, Handshape, SemanticField, DerivationHistory,
@@ -806,7 +806,21 @@ def search_fields_from_get(searchform, GET):
         elif get_key not in search_form_fields:
             # skip csrf_token and page
             continue
+        elif searchform.fields[get_key].widget.input_type == 'select':
+            search_form_choices = list(dict(searchform.fields[get_key].widget.choices).keys())
+            if get_key in HANDEDNESS_ARTICULATION_FIELDS + HANDSHAPE_ETYMOLOGY_FIELDS:
+                if not re.match(r"^[1-9]\d*$", get_value):
+                    continue
+                if int(get_value) not in search_form_choices:
+                    continue
+                search_fields_to_populate[get_key] = get_value
+            elif get_value not in search_form_choices:
+                continue
+            else:
+                search_fields_to_populate[get_key] = get_value
+            search_keys.append(get_key)
         else:
+            print('search fields from get fall through: ', get_key, get_value)
             search_fields_to_populate[get_key] = get_value
             search_keys.append(get_key)
 
@@ -847,6 +861,7 @@ def queryset_from_get(formclass, searchform, GET, qs):
                     TaggedItem.objects.filter(tag__id__in=values).values_list('object_id', flat=True))
                 qs = qs.filter(id__in=morphemes_with_tag)
             else:
+                print('queryset from get multiselect fall through: ', field, values)
                 query_filter = field + '__machine_value__in'
                 qs = qs.filter(**{query_filter: values})
         elif get_key not in searchform.fields.keys() \
@@ -888,6 +903,7 @@ def queryset_from_get(formclass, searchform, GET, qs):
                                   'translation__language': language})
             else:
                 # normal text field
+                print('queryset from get, text field fall-through: ', get_key, get_value)
                 query_filter = get_key + '__icontains'
                 qs = qs.filter(**{query_filter: get_value})
                 continue
@@ -912,7 +928,7 @@ def queryset_from_get(formclass, searchform, GET, qs):
             else:
                 print('Morpheme Search input type select fall through: ', get_key, get_value)
                 continue
-
+            print('queryset from get fall through select: ', key, val)
             kwargs = {key: val}
             qs = qs.filter(**kwargs)
         else:
@@ -1172,6 +1188,7 @@ def queryset_glosssense_from_get(model, formclass, searchform, GET, qs):
                 qs = qs.filter(Q(**{first_name: get_value}) | Q(**{last_name: get_value}))
             else:
                 # normal text field
+                print('normal text field: ', get_key, get_value)
                 query_filter = gloss_prefix + get_key + '__icontains'
                 qs = qs.filter(**{query_filter: get_value})
                 continue
@@ -1372,6 +1389,20 @@ def query_parameters_from_get(model, searchform, GET, query_parameters):
         elif get_key not in search_form_fields:
             # skip csrf_token and page
             continue
+        elif get_key not in model.get_field_names():
+            continue
+        elif searchform.fields[get_key].widget.input_type == 'select':
+            search_form_choices = list(dict(searchform.fields[get_key].widget.choices).keys())
+            if get_key in HANDEDNESS_ARTICULATION_FIELDS + HANDSHAPE_ETYMOLOGY_FIELDS:
+                if not re.match(r"^[1-9]\d*$", get_value):
+                    continue
+                if int(get_value) not in search_form_choices:
+                    continue
+                query_parameters[get_key] = get_value
+            elif get_value not in search_form_choices:
+                continue
+            else:
+                query_parameters[get_key] = get_value
         else:
             query_parameters[get_key] = get_value
     return query_parameters
