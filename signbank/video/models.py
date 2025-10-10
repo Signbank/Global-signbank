@@ -359,7 +359,7 @@ class ExampleVideo(models.Model):
         if ext == '.mov' or ext == '.webm':
             oldloc = self.videofile.path
             newloc = basename + ".mp4"
-            err = convert_video(oldloc, newloc)
+            okay = convert_video(oldloc, newloc)
             self.videofile.name = get_sentence_video_file_path(self, os.path.basename(newloc))
             os.remove(oldloc)
 
@@ -524,7 +524,7 @@ class AnnotatedVideo(models.Model):
         if ext == '.mov' or ext == '.webm':
             oldloc = self.videofile.path
             newloc = basename + ".mp4"
-            err = convert_video(oldloc, newloc)
+            okay = convert_video(oldloc, newloc)
             self.videofile.name = get_annotated_video_file_path(self, os.path.basename(newloc))
             os.remove(oldloc)
 
@@ -712,7 +712,7 @@ class GlossVideo(models.Model):
         if ext == '.mov' or ext == '.webm':
             oldloc = self.videofile.path
             newloc = basename + ".mp4"
-            err = convert_video(oldloc, newloc)
+            okay = convert_video(oldloc, newloc)
             self.videofile.name = get_video_file_path(self, os.path.basename(newloc))
             os.remove(oldloc)
 
@@ -979,7 +979,7 @@ class GlossVideoNME(GlossVideo):
         if ext == '.mov' or ext == '.webm':
             oldloc = self.videofile.path
             newloc = basename + ".mp4"
-            err = convert_video(oldloc, newloc)
+            okay = convert_video(oldloc, newloc)
             self.videofile.name = get_video_file_path(self, os.path.basename(newloc),
                                                       nmevideo=True, perspective='', offset=self.offset)
             os.remove(oldloc)

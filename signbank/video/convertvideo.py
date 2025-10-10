@@ -192,7 +192,7 @@ def make_thumbnail_video(sourcefile, targetfile):
         .run(quiet=True)
     )
     # convert the small video to mp4
-    convert_video(temp_target, targetfile)
+    okay = convert_video(temp_target, targetfile)
 
     # remove the temp files
     stills_pattern = temp_video_frames_folder+"/*.png"
@@ -223,7 +223,7 @@ def extension_on_filename(filename):
     return '.mp4'
 
 
-def video_file_extension(file_path):
+def detect_video_file_extension(file_path):
     filename, extension = os.path.splitext(file_path)
     filetype_output = subprocess.run(["file", file_path], stdout=subprocess.PIPE)
     filetype = str(filetype_output.stdout)
@@ -281,18 +281,18 @@ def convert_video(sourcefile, targetfile):
 
     basename, source_file_extension = os.path.splitext(sourcefile)
 
-    video_format_extension = video_file_extension(sourcefile)
+    video_format_extension = detect_video_file_extension(sourcefile)
     file_with_extension_matching_video_type = f'{basename}{video_format_extension}'
 
     if source_file_extension == '.mp4' and video_format_extension == ".mp4":
         return True
 
-    if source_file_extension != video_format_extension:
+    input_file = file_with_extension_matching_video_type if source_file_extension != video_format_extension else sourcefile
+    if input_file != sourcefile:
         # the file extension of the source does not match the type of video, rename it for conversion
-        os.rename(sourcefile, file_with_extension_matching_video_type)
-        result = subprocess.run(["ffmpeg", "-i", file_with_extension_matching_video_type, targetfile])
-    else:
-        result = subprocess.run(["ffmpeg", "-i", sourcefile, targetfile])
+        os.rename(sourcefile, input_file)
+
+    result = subprocess.run(["ffmpeg", "-i", input_file, targetfile])
     return result.returncode == 0
 
 
@@ -305,4 +305,4 @@ if __name__ == '__main__':
     sourcefile = sys.argv[1]
     targetfile = sys.argv[2]
     
-    convert_video(sourcefile, targetfile)
+    okay = convert_video(sourcefile, targetfile)

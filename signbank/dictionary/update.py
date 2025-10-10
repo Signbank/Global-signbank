@@ -32,7 +32,7 @@ from dateutil.relativedelta import relativedelta
 from signbank.video.forms import VideoUploadForObjectForm
 from signbank.video.models import (AnnotatedVideo, GlossVideoNME, GlossVideoDescription, GlossVideoHistory,
                                    GlossVideoPerspective, get_annotated_video_file_path)
-from signbank.video.convertvideo import convert_video, video_file_extension
+from signbank.video.convertvideo import convert_video, detect_video_file_extension
 
 from signbank.settings.server_specific import (WRITABLE_FOLDER, PREFIX_URL, USE_REGULAR_EXPRESSIONS,
                                                SHOW_DATASET_INTERFACE_OPTIONS, OBLIGATORY_FIELDS,
@@ -2329,7 +2329,7 @@ def add_othermedia(request):
 
     orig_path = os.path.join(goal_directory, filename_plus_extension)
 
-    video_format_extension = video_file_extension(orig_path)
+    video_format_extension = detect_video_file_extension(orig_path)
 
     is_video = filetype.startswith('video')
     is_not_mp4_type = filetype != 'video/mp4'
@@ -2340,7 +2340,7 @@ def add_othermedia(request):
         name, _ = os.path.splitext(filename_plus_extension)
         orig_path_with_extension_matching_video_type = f'{goal_directory}/{name}{video_format_extension}'
         os.rename(orig_path, orig_path_with_extension_matching_video_type)
-        convert_video(orig_path_with_extension_matching_video_type, f'{goal_directory}/{name}.mp4')
+        okay = convert_video(orig_path_with_extension_matching_video_type, f'{goal_directory}/{name}.mp4')
         newothermedia.path = f'{request.POST['gloss']}/{name}.mp4'
         newothermedia.save()
 
