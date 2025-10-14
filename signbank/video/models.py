@@ -25,7 +25,7 @@ from signbank.settings.server_specific import (WRITABLE_FOLDER, DEBUG_VIDEOS, DE
                                                GLOSS_VIDEO_DIRECTORY, GLOSS_IMAGE_DIRECTORY, FFMPEG_PROGRAM)
 from signbank.settings.base import MEDIA_ROOT, MEDIA_URL
 from signbank.video.convertvideo import (extract_frame, convert_video, make_thumbnail_video, generate_image_sequence,
-                                         remove_stills)
+                                         remove_stills, detect_video_file_extension)
 from signbank.dictionary.models import (Gloss, Morpheme, Dataset, Language, LemmaIdgloss, LemmaIdglossTranslation,
                                         ExampleSentence, AnnotatedSentence, AnnotatedSentenceSource)
 from signbank.tools import get_two_letter_dir, generate_still_image
@@ -351,17 +351,16 @@ class ExampleVideo(models.Model):
         """Ensure that the video file is an h264 format
         video, convert it if necessary"""
 
-        # convert video to use the right size and iphone/net friendly bitrate
-        # create a temporary copy in the new format
-        # then move it into place
+        if not os.path.exists(self.videofile.path):
+            return
 
+        video_format_extension = detect_video_file_extension(self.videofile.path)
         (basename, ext) = os.path.splitext(self.videofile.path)
-        if ext == '.mov' or ext == '.webm':
+        if ext != '.mp4' or video_format_extension != '.mp4':
             oldloc = self.videofile.path
             newloc = basename + ".mp4"
             okay = convert_video(oldloc, newloc)
             self.videofile.name = get_sentence_video_file_path(self, os.path.basename(newloc))
-            os.remove(oldloc)
 
     def ch_own_mod_video(self):
         """Change owner and permissions"""
@@ -520,13 +519,16 @@ class AnnotatedVideo(models.Model):
     def ensure_mp4(self):
         """Ensure that the video file is an h264 format
         video, convert it if necessary"""
+        if not os.path.exists(self.videofile.path):
+            return
+
+        video_format_extension = detect_video_file_extension(self.videofile.path)
         (basename, ext) = os.path.splitext(self.videofile.path)
-        if ext == '.mov' or ext == '.webm':
+        if ext != '.mp4' or video_format_extension != '.mp4':
             oldloc = self.videofile.path
             newloc = basename + ".mp4"
             okay = convert_video(oldloc, newloc)
             self.videofile.name = get_annotated_video_file_path(self, os.path.basename(newloc))
-            os.remove(oldloc)
 
     def ch_own_mod_video(self):
         """Change owner and permissions"""
@@ -704,17 +706,16 @@ class GlossVideo(models.Model):
         """Ensure that the video file is an h264 format
         video, convert it if necessary"""
 
-        # convert video to use the right size and iphone/net friendly bitrate
-        # create a temporary copy in the new format
-        # then move it into place
+        if not os.path.exists(self.videofile.path):
+            return
 
+        video_format_extension = detect_video_file_extension(self.videofile.path)
         (basename, ext) = os.path.splitext(self.videofile.path)
-        if ext == '.mov' or ext == '.webm':
+        if ext != '.mp4' or video_format_extension != '.mp4':
             oldloc = self.videofile.path
             newloc = basename + ".mp4"
             okay = convert_video(oldloc, newloc)
             self.videofile.name = get_video_file_path(self, os.path.basename(newloc))
-            os.remove(oldloc)
 
     def ch_own_mod_video(self):
         """Change owner and permissions"""
@@ -975,14 +976,17 @@ class GlossVideoNME(GlossVideo):
         # create a temporary copy in the new format
         # then move it into place
 
+        if not os.path.exists(self.videofile.path):
+            return
+
+        video_format_extension = detect_video_file_extension(self.videofile.path)
         (basename, ext) = os.path.splitext(self.videofile.path)
-        if ext == '.mov' or ext == '.webm':
+        if ext != '.mp4' or video_format_extension != '.mp4':
             oldloc = self.videofile.path
             newloc = basename + ".mp4"
             okay = convert_video(oldloc, newloc)
             self.videofile.name = get_video_file_path(self, os.path.basename(newloc),
                                                       nmevideo=True, perspective='', offset=self.offset)
-            os.remove(oldloc)
 
     def save(self, *args, **kwargs):
         super(GlossVideoNME, self).save(*args, **kwargs)

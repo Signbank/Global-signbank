@@ -225,6 +225,8 @@ def extension_on_filename(filename):
 
 def detect_video_file_extension(file_path):
     filename, extension = os.path.splitext(file_path)
+    if not os.path.exists(file_path):
+        return extension
     filetype_output = subprocess.run(["file", file_path], stdout=subprocess.PIPE)
     filetype = str(filetype_output.stdout)
     if 'MOV' in filetype:
@@ -278,6 +280,9 @@ def convert_video(sourcefile, targetfile):
     """convert a video to h264 format
     if force=True, do the conversion even if the video is already
     h264 encoded, if False, then just copy the file in this case"""
+
+    if not os.path.exists(sourcefile):
+        return False
 
     basename, source_file_extension = os.path.splitext(sourcefile)
 
