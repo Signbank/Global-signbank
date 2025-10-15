@@ -32,7 +32,7 @@ from dateutil.relativedelta import relativedelta
 from signbank.video.forms import VideoUploadForObjectForm
 from signbank.video.models import (AnnotatedVideo, GlossVideoNME, GlossVideoDescription, GlossVideoHistory,
                                    GlossVideoPerspective, get_annotated_video_file_path)
-from signbank.video.convertvideo import convert_video
+from signbank.video.convertvideo import convert_video, detect_video_file_extension
 
 from signbank.settings.server_specific import (WRITABLE_FOLDER, PREFIX_URL, USE_REGULAR_EXPRESSIONS,
                                                SHOW_DATASET_INTERFACE_OPTIONS, OBLIGATORY_FIELDS,
@@ -2327,17 +2327,23 @@ def add_othermedia(request):
         destination.write(chunk)
     destination.close()
 
-    original_destination_location = os.path.join(goal_directory, filename_plus_extension)
-    if filetype.startswith('video') and filetype not in ['video/mp4']:
-        (filename_without_extension, extension) = os.path.splitext(filename_plus_extension)
-        converted_destination_location = os.path.join(goal_directory, f'{filename_without_extension}.mp4')
-        # subprocess.run(["ffmpeg", "-i", original_destination_location, converted_destination_location])
-        convert_video(original_destination_location, converted_destination_location)
-        other_media_path = request.POST['gloss'] + f'/{filename_without_extension}.mp4'
-        newothermedia.path = other_media_path
+    orig_path = os.path.join(goal_directory, filename_plus_extension)
+
+    video_format_extension = detect_video_file_extension(orig_path)
+
+    is_video = filetype.startswith('video')
+    is_not_mp4_type = filetype != 'video/mp4'
+    is_not_mp4_extension = extension != '.mp4'
+    is_not_mp4_video_format_extension = video_format_extension != '.mp4'
+    needs_conversion = (is_video and is_not_mp4_type and is_not_mp4_extension) or is_not_mp4_video_format_extension
+    if needs_conversion:
+        name, _ = os.path.splitext(filename_plus_extension)
+        orig_path_with_extension_matching_video_type = f'{goal_directory}/{name}{video_format_extension}'
+        os.rename(orig_path, orig_path_with_extension_matching_video_type)
+        okay = convert_video(orig_path_with_extension_matching_video_type, f'{goal_directory}/{name}.mp4')
+        newothermedia.path = f'{request.POST['gloss']}/{name}.mp4'
         newothermedia.save()
-        if os.path.exists(original_destination_location):
-            os.remove(original_destination_location)
+
     return HttpResponseRedirect(reverse(reverse_url, kwargs={'pk': request.POST['gloss']})+'?editothermedia')
 
 
