@@ -111,18 +111,6 @@ def extract_frame(sourcefile, targetfile):
     err = run_ffmpeg(sourcefile, targetfile, options=options)
 
 
-def probe_format(file):
-    """Find the format of a video file via ffmpeg,
-    return a format name, eg mpeg4, h264"""
-
-    # for info, convert just one second to a null output format
-    info_options = ["-f", "null", "-t", "1"]
-    
-    b = run_ffmpeg(file, "tmp", options=info_options)
-    r = parse_ffmpeg_output(b)
-    return r['inputvideoformat']
-
-
 def get_folder_name(gloss):
     gloss_video_filename = gloss.idgloss + '-' + str(gloss.id)
     filename = gloss_video_filename.replace(' ', '_')
@@ -204,7 +192,7 @@ def make_thumbnail_video(sourcefile, targetfile):
         .run(quiet=True)
     )
     # convert the small video to mp4
-    convert_video(temp_target, targetfile)
+    okay = convert_video(temp_target, targetfile)
 
     # remove the temp files
     stills_pattern = temp_video_frames_folder+"/*.png"
@@ -233,6 +221,29 @@ def extension_on_filename(filename):
         return '.'+m.group(2)
     # Default if no file exists and the filename is invalid, allows to work on dev servers.
     return '.mp4'
+
+
+def detect_video_file_extension(file_path):
+    filename, extension = os.path.splitext(file_path)
+    if not os.path.exists(file_path):
+        return extension
+    filetype_output = subprocess.run(["file", file_path], stdout=subprocess.PIPE)
+    filetype = str(filetype_output.stdout)
+    if 'MOV' in filetype:
+        video_extension = '.mov'
+    elif 'M4V' in filetype:
+        video_extension = '.m4v'
+    elif 'MP4' in filetype:
+        video_extension = '.mp4'
+    elif 'Matroska' in filetype:
+        video_extension = '.webm'
+    elif 'MKV' in filetype:
+        video_extension = '.mkv'
+    elif 'MPEG-2' in filetype:
+        video_extension = '.m2v'
+    else:
+        video_extension = extension
+    return video_extension
 
 
 def video_file_type_extension(video_file_full_path):
@@ -265,40 +276,29 @@ def video_file_type_extension(video_file_full_path):
     return desired_video_extension
 
 
-def convert_video(sourcefile, targetfile, force=False):
+def convert_video(sourcefile, targetfile):
     """convert a video to h264 format
     if force=True, do the conversion even if the video is already
     h264 encoded, if False, then just copy the file in this case"""
-    
-    if not force:
-        format = probe_format(sourcefile)
-    else:
-        format = 'force'
 
-    if format == "h264":
-        # just do a copy of the file
-        shutil.copy(sourcefile, targetfile)
-    elif "h264" in format:
-        # ffmpeg copy video channel to new file with .mp4 extension
-        FFMPEG_COPY_OPTIONS = ["-c", "copy", "-an"]
-        b = run_ffmpeg(sourcefile, targetfile, options=FFMPEG_COPY_OPTIONS)
-    elif 'webm' in format or 'matroska' in format:
-        FFMPEG_COPY_OPTIONS = ["-c:v", "lbx264", "-an"]
-        b = run_ffmpeg(sourcefile, targetfile, options=FFMPEG_COPY_OPTIONS)
-    else: 
-        # convert the video
-        RAW_OPTIONS = ["-f", "rawvideo", "-vcodec", "h264"]
-        # RAW_OPTIONS = ["-vcodec", "libx264", "-an"]
-        print('convert small video: ', RAW_OPTIONS)
-        b = run_ffmpeg(sourcefile, targetfile, options=RAW_OPTIONS)
-        print(b)
-
-    format = probe_format(targetfile)
-    if format.startswith('h264'):
-        # the output of ffmpeg includes extra information following h264, so only check the prefix
-        return True
-    else:
+    if not os.path.exists(sourcefile):
         return False
+
+    basename, source_file_extension = os.path.splitext(sourcefile)
+
+    video_format_extension = detect_video_file_extension(sourcefile)
+    file_with_extension_matching_video_type = f'{basename}{video_format_extension}'
+
+    if source_file_extension == '.mp4' and video_format_extension == ".mp4":
+        return True
+
+    input_file = file_with_extension_matching_video_type if source_file_extension != video_format_extension else sourcefile
+    if input_file != sourcefile:
+        # the file extension of the source does not match the type of video, rename it for conversion
+        os.rename(sourcefile, input_file)
+
+    result = subprocess.run(["ffmpeg", "-i", input_file, targetfile])
+    return result.returncode == 0
 
 
 if __name__ == '__main__':
@@ -310,4 +310,4 @@ if __name__ == '__main__':
     sourcefile = sys.argv[1]
     targetfile = sys.argv[2]
     
-    convert_video(sourcefile, targetfile)
+    okay = convert_video(sourcefile, targetfile)
