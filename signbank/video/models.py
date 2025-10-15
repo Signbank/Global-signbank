@@ -353,6 +353,8 @@ class ExampleVideo(models.Model):
 
         if not os.path.exists(self.videofile.path):
             return
+        if self.version > 0:
+            return
 
         video_format_extension = detect_video_file_extension(self.videofile.path)
         (basename, ext) = os.path.splitext(self.videofile.path)
@@ -520,6 +522,8 @@ class AnnotatedVideo(models.Model):
         """Ensure that the video file is an h264 format
         video, convert it if necessary"""
         if not os.path.exists(self.videofile.path):
+            return
+        if self.version > 0:
             return
 
         video_format_extension = detect_video_file_extension(self.videofile.path)
@@ -707,6 +711,8 @@ class GlossVideo(models.Model):
         video, convert it if necessary"""
 
         if not os.path.exists(self.videofile.path):
+            return
+        if self.version > 0:
             return
 
         video_format_extension = detect_video_file_extension(self.videofile.path)
