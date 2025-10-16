@@ -4090,7 +4090,7 @@ CATEGORY_MODELS_MAPPING = {
 }
 
 
-class AnnotatedGloss(models.Model):
+class AnnotatedGloss(MetaModelMixin, models.Model):
     """An annotated gloss belongs to one annotated sentences"""
     gloss = models.ForeignKey("Gloss", on_delete=models.CASCADE)
     annotatedsentence = models.ForeignKey("AnnotatedSentence", on_delete=models.CASCADE, related_name='annotated_glosses')
@@ -4137,7 +4137,7 @@ class AnnotatedSentenceContext(models.Model):
     def __str__(self):
         return self.text
 
-class AnnotatedSentence(models.Model):
+class AnnotatedSentence(MetaModelMixin, models.Model):
     """An annotated sentence is linked to an annotatedvideo, annotatedgloss, annotatedsentencetranslation(s), and annotatedsentencecontext(s)"""
 
     def get_dataset(self):
