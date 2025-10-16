@@ -30,9 +30,17 @@
 .select2-selection__choice {
     color: black;
 }
-.sorting {
+.sort_button {
+    background-color:transparent;
+    outline: none;
+    padding: 0;
+    margin: 0;
+}
+.sort_button:hover {
     color: red;
-    background-color: blue;
+}
+.sort_button.active {
+    color: red;
 }
 </style>
 <link rel="stylesheet" href="{{STATIC_URL}}css/select2-dark-mode.css">
@@ -187,6 +195,30 @@ $(document).ready(function(){
             $(this_id).val(query_initial);
         }
      }
+     $('button[id^="sort_button_"]').each(function() {
+        console.log(this.id);
+        if (this.id.match("_del")) {
+            $(this).hide();
+        }
+     });
+
+     if (populate_fields_keys.includes('sortOrder')) {
+         var query_initial = populate_fields['sortOrder'];
+         var button_id = "#sort_button_";
+         var stop_button_id = "#sort_button_";
+         if (query_initial.startsWith("-")) {
+            query_initial = query_initial.substring(1);
+            button_id = button_id + query_initial + "_desc";
+            stop_button_id = stop_button_id + query_initial + "_del";
+         } else {
+            button_id = button_id + query_initial + "_asc";
+            stop_button_id = stop_button_id + query_initial + "_del";
+         }
+         $(button_id).addClass("active");
+         $(button_id).trigger('change');
+         $(stop_button_id).show();
+         $(stop_button_id).trigger('change');
+     };
 });
 
 </script>
@@ -258,8 +290,6 @@ function do_sort_column(field_name, action, frmName) {
     // "Deleting" (pressing 'x') the sort order of a column means: return to the default 'idgloss' sort order
     sOrder = '';
     }
-  var elementSortOrder = '#sort_column_' + field_name;
-  $(elementSortOrder).css('color', 'red');
 
   // Set the value of the [sortOrder] field defined in dictionary/forms.py::MorphemeSearchForm
   $("#" + frmName + " input[name='sortOrder']").val(sOrder);
@@ -622,66 +652,40 @@ function do_set_lemma_language(el) {
            <th style="width:255px;">{% trans "Tags" %}</th>
       </tr>
       <!-- EK: this second header row contains clickable sort-order buttons -->
-      {% with searchform.sortOrder as sortingOrder %}{{sortingOrder}}
       <tr>
           <th></th>
            {% for dataset_lang in dataset_languages %}
            {% with "annotationidglosstranslation_order_"|add:dataset_lang.language_code_2char as field %}
-           {% with minfield="-"|add:field %}
-              <th id="sort_column_{{field}}">
-               <button onclick="do_sort_column('{{field}}','asc', 'adminsearch')"
-                       {% if sortingOrder == field %}  class="sorting"  {% endif %} >
-                   &#x25B2;
-               </button>
-             <button onclick="do_sort_column('{{field}}','desc', 'adminsearch')"
-                     {% if sortingOrder == minfield %} class="sorting" {% endif %} >
-               &#x25BC;
-             </button>
-             <button onclick="do_sort_column('{{field}}','del', 'adminsearch')">x</button>
+            <th>
+             <button class="btn sort_button" onclick="do_sort_column('{{field}}','asc', 'adminsearch')" id="sort_button_annotationidglosstranslation_order_{{dataset_lang.language_code_2char}}_asc">&#x25B2;</button>
+             <button class="btn sort_button" onclick="do_sort_column('{{field}}','desc','adminsearch')" id="sort_button_annotationidglosstranslation_order_{{dataset_lang.language_code_2char}}_desc">&#x25BC;</button>
+             <button class="btn sort_button" onclick="do_sort_column('{{field}}','del', 'adminsearch')" id="sort_button_annotationidglosstranslation_order_{{dataset_lang.language_code_2char}}_del">x</button>
             </th>
-           {% endwith %}
            {% endwith %}
            {% endfor %}
             <th></th>
 
            {% for dataset_lang in dataset_languages %}
            {% with "translation_"|add:dataset_lang.language_code_2char as field %}
-           {% with minfield="-"|add:field %}
            <th>
-             <a href="#" onclick="do_sort_column('{{field}}','asc', 'adminsearch')">
-               {% if searchform.sortOrder and searchform.sortOrder.value == field %}<font color="red">&#x25B2;</font>{% else %}&#x25B2; {% endif %}
-             </a>
-             <a href="#" onclick="do_sort_column('{{field}}','desc', 'adminsearch')">
-               {% if searchform.sortOrder and searchform.sortOrder.value == minfield %}<font color="red">&#x25BC;</font>{% else %}&#x25BC;{% endif %}
-             </a>
-             {% if searchform.sortOrder and searchform.sortOrder.value == minfield or searchform.sortOrder and searchform.sortOrder.value == field  %}
-               <a href="#" onclick="do_sort_column('{{field}}','del', 'adminsearch')">x</a>
-             {% endif %}
+             <button class="btn sort_button" onclick="do_sort_column('{{field}}','asc', 'adminsearch')" id="sort_button_translation_{{dataset_lang.language_code_2char}}_asc">&#x25B2;</button>
+             <button class="btn sort_button" onclick="do_sort_column('{{field}}','desc','adminsearch')" id="sort_button_translation_{{dataset_lang.language_code_2char}}_desc">&#x25BC;</button>
+             <button class="btn sort_button" onclick="do_sort_column('{{field}}','del', 'adminsearch')" id="sort_button_translation_{{dataset_lang.language_code_2char}}_del">x</button>
            </th>
-           {% endwith %}
            {% endwith %}
            {% endfor %}
 
            {% with "handedness locprim" as head_fields %}
-           {% for field in head_fields.split  %}
-           {% with minfield="-"|add:field %}
+           {% for hl_field in head_fields.split  %}
            <th>
-             <a href="#" onclick="do_sort_column('{{field}}','asc', 'adminsearch')">
-               {% if searchform.sortOrder and searchform.sortOrder.value == field %}<font color="red">&#x25B2;</font>{% else %}&#x25B2; {% endif %}
-             </a>
-             <a href="#" onclick="do_sort_column('{{field}}','desc', 'adminsearch')">
-               {% if searchform.sortOrder and searchform.sortOrder.value == minfield %}<font color="red">&#x25BC;</font>{% else %}&#x25BC;{% endif %}
-             </a>
-             {% if searchform.sortOrder and searchform.sortOrder.value == minfield or searchform.sortOrder and searchform.sortOrder.value == field  %}
-               <a href="#" onclick="do_sort_column('{{field}}','del', 'adminsearch')">x</a>
-             {% endif %}
+             <button class="btn sort_button" onclick="do_sort_column('{{hl_field}}','asc', 'adminsearch')" id="sort_button_{{hl_field}}_asc">&#x25B2;</button>
+             <button class="btn sort_button" onclick="do_sort_column('{{hl_field}}','desc','adminsearch')" id="sort_button_{{hl_field}}_desc">&#x25BC;</button>
+             <button class="btn sort_button" onclick="do_sort_column('{{hl_field}}','del', 'adminsearch')" id="sort_button_{{hl_field}}_del">x</button>
            </th>
-           {% endwith %}
            {% endfor %}
            {% endwith %}
            <th style="width:255px;"></th>
       </tr>
-    {% endwith %}
     </thead>
     <tbody>
     {% for morpheme in object_list %}
