@@ -63,7 +63,7 @@ from signbank.dictionary.models import (Dataset, UserProfile, AffiliatedUser, Af
                                         SenseTranslation, SearchHistory, SemanticField,
                                         DerivationHistory, BlendMorphology, MorphologyDefinition, SimultaneousMorphologyDefinition,
                                         FieldChoice, FieldChoiceForeignKey, get_default_language_id, fieldname_to_kind,
-                                        CATEGORY_MODELS_MAPPING)
+                                        CATEGORY_MODELS_MAPPING, ExampleSentence)
 from signbank.dictionary.translate_choice_list import (machine_value_to_translated_human_value,
                                                        choicelist_queryset_to_translated_dict,
                                                        choicelist_queryset_to_machine_value_dict,
