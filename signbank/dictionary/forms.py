@@ -230,7 +230,7 @@ class GlossSearchForm(forms.ModelForm):
     use_required_attribute = False  # otherwise the html required attribute will show up on every form
 
     search = forms.CharField(label=_('Search Gloss'))
-    sortOrder = forms.CharField(label=_('Sort Order'))
+    sortOrder = forms.CharField(label=_('Sort Order'), initial="")
     translation = forms.CharField(label=_('Search Senses'))
     hasvideo = forms.ChoiceField(label=_('Has Video'), choices=[(0, '-')],
                                  widget=forms.Select(attrs=ATTRS_FOR_BOOLEAN_FORMS))
@@ -468,7 +468,7 @@ class MorphemeSearchForm(forms.ModelForm):
     use_required_attribute = False  # otherwise the html required attribute will show up on every form
 
     search = forms.CharField(label=_("Search Gloss"))
-    sortOrder = forms.CharField(label=_("Sort Order"))
+    sortOrder = forms.CharField(label=_("Sort Order"), initial="")
     tags = forms.ChoiceField(label=_('Tags'),
                              choices=[(0, '-')],
                              widget=forms.Select(attrs=ATTRS_FOR_FORMS))
@@ -875,7 +875,7 @@ class AnnotatedSentenceSearchForm(forms.ModelForm):
     use_required_attribute = False  # otherwise the html required attribute will show up on every form
 
     search = forms.CharField(label=_("Search"))
-    sortOrder = forms.CharField(label=_("Sort Order"))
+    sortOrder = forms.CharField(label=_("Sort Order"), initial="")
     no_glosses = forms.ChoiceField(label=_('Only show results without glosses'), choices=[],
                                    widget=forms.Select(attrs=ATTRS_FOR_BOOLEAN_FORMS))
     has_glosses = forms.ChoiceField(label=_('Only show results with glosses'), choices=[],
@@ -896,7 +896,7 @@ class LemmaSearchForm(forms.ModelForm):
     use_required_attribute = False  # otherwise the html required attribute will show up on every form
 
     search = forms.CharField(label=_("Lemma"))
-    sortOrder = forms.CharField(label=_("Sort Order"))
+    sortOrder = forms.CharField(label=_("Sort Order"), initial="")
     no_glosses = forms.ChoiceField(label=_('Only show results without glosses'), choices=[],
                                    widget=forms.Select(attrs=ATTRS_FOR_BOOLEAN_FORMS))
     has_glosses = forms.ChoiceField(label=_('Only show results with glosses'), choices=[],
@@ -1060,7 +1060,7 @@ class FocusGlossSearchForm(forms.ModelForm):
     use_required_attribute = False  # otherwise the html required attribute will show up on every form
 
     search = forms.CharField(label=_("Search Gloss"))
-    sortOrder = forms.CharField(label=_("Sort Order"))
+    sortOrder = forms.CharField(label=_("Sort Order"), initial="")
     translation = forms.CharField(label=_('Search Senses'))
 
     repeat = forms.ChoiceField(label=_('Repeating Movement'), choices=[('0', '-')],
