@@ -821,6 +821,17 @@ class HandshapeSearchForm(forms.ModelForm):
             self.fields[finger].widget.choices = [(True, _('Yes')), (False, _('No'))]
 
 
+def check_sortOrder_handshapes(request):
+    sortOrder = request.GET.get('sortOrder', '')
+    if not sortOrder:
+        return 'machine_value'
+    field = sortOrder[1:] if sortOrder.startswith('-') else sortOrder
+    if field not in ['name', 'hsFingSel', 'hsFingConf', 'hsFingSel2', 'hsFingConf2',
+                         'hsNumSel', 'hsThumb', 'hsFingUnsel', 'hsFingUnsel', 'hsSpread', 'hsAperture']:
+        return 'machine_value'
+    return sortOrder
+
+
 def check_multilingual_fields(ClassModel, queryDict, languages):
     # this function inspects the name field of HandshapeSearchForm looking for occurrences of special characters
     language_fields_okay = True

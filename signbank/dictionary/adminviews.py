@@ -80,7 +80,7 @@ from signbank.dictionary.forms import (AnnotatedSentenceSearchForm, GlossSearchF
                                        GlossMorphologyForm, GlossBlendForm, DefinitionForm, GlossMorphemeForm,
                                        SemanticFieldTranslationForm, ZippedVideosForm,
                                        check_language_fields, check_multilingual_fields, SentenceForm,
-                                       check_language_fields_annotatedsentence, GlossProvenanceForm)
+                                       check_language_fields_annotatedsentence, GlossProvenanceForm, check_sortOrder_handshapes)
 from signbank.tools import (write_ecv_file_for_dataset, find_duplicate_lemmas,
                             construct_scrollbar, get_dataset_languages, get_datasets_with_public_glosses,
                             searchform_panels, map_search_results_to_gloss_list,
@@ -3447,6 +3447,7 @@ class HandshapeListView(ListView):
     template_name = 'dictionary/admin_handshape_list.html'
     search_type = 'handshape'
     show_all = False
+    sortOrder = 'machine_value'
 
     def get_context_data(self, **kwargs):
         # Call the base implementation first to get a context
@@ -3461,6 +3462,8 @@ class HandshapeListView(ListView):
         context['search_type'] = self.search_type
         setattr(self.request.session, 'search_type', self.search_type)
         context['show_all'] = self.kwargs.get('show_all', self.show_all)
+
+        context['sortOrder'] = self.sortOrder
 
         context['handshapefieldchoicecount'] = Handshape.objects.filter(machine_value__gt=1).count()
 
@@ -3605,8 +3608,10 @@ class HandshapeListView(ListView):
 
         qs = Handshape.objects.filter(machine_value__gt=1).order_by('machine_value')
 
+        self.sortOrder = check_sortOrder_handshapes(self.request)
+
         if self.show_all:
-            if 'sortOrder' in get and get['sortOrder'] != 'machine_value':
+            if self.sortOrder != 'machine_value':
                 # User has toggled the sort order for the column
                 qs = order_handshape_queryset_by_sort_order(self.request.GET, qs)
             else:
@@ -3678,7 +3683,7 @@ class HandshapeListView(ListView):
                         kwargs = {key: val}
                         qs = qs.filter(**kwargs)
 
-        if 'sortOrder' in get and get['sortOrder'] != 'machine_value':
+        if self.sortOrder != 'machine_value':
             # User has toggled the sort order for the column
             qs = order_handshape_queryset_by_sort_order(self.request.GET, qs)
         else:
