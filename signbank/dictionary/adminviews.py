@@ -2797,7 +2797,7 @@ class MinimalPairsListView(ListView):
 
         qs = glosses_with_phonology
 
-        self.query_parameters = query_parameters_from_get(self.search_form, get, dict())
+        self.query_parameters = query_parameters_from_get(Gloss, self.search_form, get, dict())
 
         qs = queryset_glosssense_from_get(Gloss, FocusGlossSearchForm, self.search_form, get, qs)
 
@@ -6180,7 +6180,7 @@ class LemmaListView(ListView):
         # if it is missing, a Lemma Search is being done and starts with no results
         self.show_all = self.kwargs.get('show_all', False)
 
-        self.query_parameters = query_parameters_from_get(self.search_form, get, dict())
+        self.query_parameters = query_parameters_from_get(LemmaIdgloss, self.search_form, get, dict())
         self.page_get_parameters = get_page_parameters_for_listview(self.search_form, get, self.query_parameters)
 
         selected_datasets = get_selected_datasets(self.request)
