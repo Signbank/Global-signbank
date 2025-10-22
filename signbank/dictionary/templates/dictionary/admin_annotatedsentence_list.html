@@ -33,11 +33,11 @@ $(document).ready(function() {
             $sentencetranslation_search.val(translation_input);
         }
     }
-    if (query_parameters_dict['no_glosses'] != "0") {
+    if (query_parameters_keys.includes('no_glosses') && query_parameters_dict['no_glosses'] != '0') {
         var $noGlossesSelect = $("#id_no_glosses"); // jQuery selector for the select field
         $noGlossesSelect.val('1'); // Set the select field to 'true' or another desired value
     }
-    if (query_parameters_dict['has_glosses'] != "0") {
+    if (query_parameters_keys.includes('has_glosses') && query_parameters_dict['has_glosses'] != '0') {
         var $hasGlossesSelect = $("#id_has_glosses"); // jQuery selector for the select field
         $hasGlossesSelect.val('1'); // Set the select field to 'true' or another desired value
     }
@@ -120,7 +120,7 @@ function do_sort_column(field_name, action, frmName) {
         <div id='query-area' class='collapse {% if request.GET|length == 0 %} in {% endif %}'>
             <div id='searchformwell' class='well well-light search-results-collapsable'>
                 <div class="hidden">
-                    <input name='sortOrder' class='form-control' value='{{ sort_order }}' type='hidden'>
+                    <input name='sortOrder' class='form-control' value='' type='hidden'>
                 </div>
                 <div>
                     <table class='table table-condensed table-condensed-light' id='searchfields' style="width:65%;">

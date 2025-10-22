@@ -399,6 +399,7 @@ class AnnotatedSentenceListView(ListView):
     search_type = 'annotatedsentence'
     search_form = AnnotatedSentenceSearchForm()
     queryset_language_codes = []
+    query_parameters = dict()
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -432,7 +433,12 @@ class AnnotatedSentenceListView(ListView):
             qs = AnnotatedSentence.objects.none()
             return qs
 
-        if get.get('reset') == '1':
+        self.query_parameters = {}
+        for key in list(get.keys()):
+            self.query_parameters[key] = get.get(key, '')
+
+        if self.query_parameters.get('reset', '') == 'reset':
+            self.query_parameters = {}
             qs = AnnotatedSentence.objects.none()
             return qs
         
@@ -459,15 +465,24 @@ class AnnotatedSentenceListView(ListView):
             self.queryset_language_codes = [default_dataset.default_language.language_code_2char]
         qs = order_annotatedsentence_queryset_by_sort_order(self.request.GET, qs, self.queryset_language_codes)
 
-        if get.get('show_all_annotatedsentences') == '1':
-            self.show_all = True
+        self.show_all = self.query_parameters.get('show_all_annotatedsentences', '') == 'True'
 
-        if get.get('no_glosses') == '1':
+        if self.show_all:
+            for key, value in self.query_parameters.items():
+                if key.startswith('annotatedsentence_'):
+                    self.query_parameters[key] = ''
+                elif key in ['no_glosses', 'has_glosses']:
+                    self.query_parameters[key] = '0'
+                else:
+                    self.query_parameters[key] = ''
+            return qs
+
+        if self.query_parameters.get('no_glosses', '0') == '1':
             qs = qs.annotate(
                 num_annotated_glosses=Count('annotated_glosses')
             ).filter(num_annotated_glosses=0)
 
-        if get.get('has_glosses') == '1':
+        if self.query_parameters.get('has_glosses', '0') == '1':
             qs = qs.annotate(
                 num_annotated_glosses=Count('annotated_glosses')
             ).filter(num_annotated_glosses__gt=0)
@@ -475,7 +490,7 @@ class AnnotatedSentenceListView(ListView):
         if not self.show_all and not get:
             qs = AnnotatedSentence.objects.none()
 
-        for get_key, get_value in get.items():
+        for get_key, get_value in self.query_parameters.items():
             if get_key.startswith(AnnotatedSentenceSearchForm.annotatedsentence_search_field_prefix) and get_value:
                 language_code_2char = get_key[len(AnnotatedSentenceSearchForm.annotatedsentence_search_field_prefix):]
                 language = Language.objects.get(language_code_2char=language_code_2char)
@@ -498,25 +513,18 @@ class AnnotatedSentenceListView(ListView):
                 ).values('gloss__lemma__dataset')[:1]
             )
         ).filter(dataset__in=selected_datasets).count()
-        results = self.get_queryset()
 
-        get = self.request.GET
-        query_parameters_dict = {}
-        query_parameters_keys = []
-        for key in list(get.keys()):
-            query_parameters_dict[key] = get.get(key)
-            query_parameters_keys.append(key)
-        context['sort_order'] = str(get.get('sortOrder'))
+        context['sort_order'] = self.query_parameters.get('sortOrder', '')
         context['language_query_keys'] = [language.language_code_2char for language in dataset_languages]
-        context['query_parameters_dict'] = query_parameters_dict
-        context['query_parameters_keys'] = query_parameters_keys
+        context['query_parameters_dict'] = self.query_parameters
+        context['query_parameters_keys'] = list(self.query_parameters.keys())
         context['annotatedsentence_count'] = nr_sentences_in_dataset
         context['dataset_languages'] = dataset_languages
         context['USE_REGULAR_EXPRESSIONS'] = USE_REGULAR_EXPRESSIONS
         context['searchform'] = self.search_form
         context['show_all'] = self.show_all
         context['search_type'] = self.search_type
-        context['search_matches'] = results.count()
+        context['search_matches'] = self.object_list.count()
 
         return context
 

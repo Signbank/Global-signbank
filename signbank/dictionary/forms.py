@@ -901,7 +901,8 @@ class AnnotatedSentenceSearchForm(forms.ModelForm):
         super(AnnotatedSentenceSearchForm, self).__init__(*args, **kwargs)
 
         for boolean_field in ['no_glosses', 'has_glosses']:
-            self.fields[boolean_field].choices = [(0, _('No')), (1, _('Yes'))]
+            self.fields[boolean_field].choices = [('0', _('No')), ('1', _('Yes'))]
+            self.fields[boolean_field].initial = '0'
 
 class LemmaSearchForm(forms.ModelForm):
     use_required_attribute = False  # otherwise the html required attribute will show up on every form
