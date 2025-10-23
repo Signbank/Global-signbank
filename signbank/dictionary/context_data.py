@@ -164,7 +164,10 @@ def get_context_data_for_gloss_search_form(request, listview, search_form, kwarg
     populate_keys, populate_fields = search_fields_from_get(search_form, request.GET)
     context['gloss_fields_to_populate'] = json.dumps(populate_fields)
     context['gloss_fields_to_populate_keys'] = json.dumps(populate_keys)
-
+    populate_other_parameters = [k for k in other_parameter_keys if k in populate_keys and populate_fields[k]]
+    other_parameters_dict = { k: populate_fields[k] for k in populate_other_parameters}
+    context['populate_other_parameters'] = populate_other_parameters
+    context['other_parameters'] = other_parameters_dict
     context['SHOW_DATASET_INTERFACE_OPTIONS'] = SHOW_DATASET_INTERFACE_OPTIONS
     context['USE_REGULAR_EXPRESSIONS'] = USE_REGULAR_EXPRESSIONS
 

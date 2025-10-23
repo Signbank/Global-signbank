@@ -362,31 +362,6 @@ function clearForm() {
      $("input[name='search']").val('');
 }
 
- /**
- * @param {string} field_name - name of the field to sort on
- * @param {string} action     - one of: desc, asc, del
- * @param {string} frmName    - name of the <form ...> that contains the 'sortOrder' <input> field
- * @returns {void}
- */
-function do_sort_column(field_name, action, frmName) {
-  // Combine @field_name and @action into [sOrder]
-  var sOrder = field_name;
-  if (action == 'desc') {
-    // Descending sort order is signified by a '-' prefix
-    sOrder = '-' + sOrder;
-  } else if (action == 'del') {
-    // "Deleting" (pressing 'x') the sort order of a column means: return to the default 'idgloss' sort order
-    sOrder = '';
-  }
-  // Set the value of the [sortOrder] field defined in dictionary/forms.py::GlossSearchForm
-  $("#" + frmName + " input[name='sortOrder']").val(sOrder);
-
-  // Submit the form with the indicated name
-
-  $("#" + frmName).submit();
-
-}
-
 /**
  * @returns {void}
  */
