@@ -57,7 +57,6 @@ function update_view_and_remember_original_value(change_summary)
 
         if (new_value == '-' || new_value == ' ' || new_value == '' || new_value == 'None' || new_value == 0 )
         {
-            console.log("new value is empty, new value is: ", new_value);
             $(this).parent().attr("value", original_value);
             $(this).html(original_value);
         }
