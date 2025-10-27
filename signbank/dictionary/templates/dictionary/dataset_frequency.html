@@ -352,11 +352,9 @@ Participant&#9;Region&#9;Age&#9;Gender&#9;Handedness
     </table>
     </div>
         {% if duplicates %}
-        <div>
-            {% blocktrans %}
-            <p style="color:red;">Some eaf files have been uploaded to more than one location.
-                Please identify the unwanted copies in the list below.</p>
-            {% endblocktrans %}
+        <div style="color:red;">
+            <p>{% trans "Some eaf files have been uploaded to more than one location." %}</p>
+            <p>{% trans "Please identify the unwanted copies in the list below." %}</p>
         </div>
         {% endif %}
 

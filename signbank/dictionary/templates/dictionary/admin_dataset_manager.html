@@ -142,15 +142,10 @@ tr > td > form > input[type="submit"] {
                 {% with dataset.get_users_who_can_view_dataset as view_users %}
                 {% if view_users|length > 0 %}
                     {% with view_users|length as num_rows %}
-                    <list name="users_can_view"
                     {% if num_rows > 4 %}
-                    style="height:220px; overflow:auto;display:block;"
+                    <list name="users_can_view" style="height:220px; overflow:auto;display:block;">
                     {% else %}
-                    {% widthratio num_rows 1 50 as row_height %}
-                    {% blocktrans %}
-                    style="height:{{row_height}}px; overflow:auto;display:block;"
-                    {% endblocktrans %}
-                    />
+                    <list name="users_can_view" style="height:{% widthratio num_rows 1 50 %}px; overflow:auto;display:block;">
                     {% endif %}
                     {% for user_v in view_users %}
                             <ul name="{{user_v.username}}">
@@ -219,10 +214,7 @@ tr > td > form > input[type="submit"] {
                     {% if num_rows > 4 %}
                     <list name="users_can_change" style="height:220px; overflow:auto;display:block;">
                     {% else %}
-                    {% widthratio num_rows 1 50 as row_height %}
-                    {% blocktrans %}
-                    <list name="users_can_change" style="height:{{row_height}}px; overflow:auto;display:block;">
-                    {% endblocktrans %}
+                    <list name="users_can_change" style="height:{% widthratio num_rows 1 50 %}px; overflow:auto;display:block;">
                     {% endif %}
                 {% for user_c in change_users %}
                         <ul name="{{user_c.username}}">
