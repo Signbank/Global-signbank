@@ -10,36 +10,23 @@
 
 {% load guardian_tags %}
 
-
 {% block extrajs %}
 <script type='text/javascript'>
-    var url = '{{ PREFIX_URL }}';
+var url = '{{ PREFIX_URL }}';
+var language_code = '{{ LANGUAGE_CODE }}';
 
-    var language_code = '{{ LANGUAGE_CODE }}';
+{% trans "Edit" as edit_mode_str %}
+{% trans "Turn Off Edit Mode" as turn_off_edit_mode_str %}
 
-    {% trans "Edit" as edit_mode_str %}
-    {% trans "Turn Off Edit Mode" as turn_off_edit_mode_str %}
+var csrf_token = '{{csrf_token}}';
+var this_gloss_id = {{gloss.id}};
 
-    var csrf_token = '{{csrf_token}}';
-    var this_gloss_id = {{gloss.id}};
+var search_type = '{{search_type}}';
+var model_view = 'gloss';
+var active_id = '{{active_id}}';
+var search_results_url = '{% url 'dictionary:ajax_search_results' %}';
 
-    var search_type = '{{search_type}}';
-    var model_view = 'gloss';
-    var active_id = '{{active_id}}';
-    var search_results_url = '{% url 'dictionary:ajax_search_results' %}';
-
-    {% include "dictionary/search_result_bar.html" %}
-
-    function reloadVideo() {
-        console.log('reload video');
-        var video_player = document.getElementById("videoplayer");
-        video_player_src = video_player.src;
-        console.log('url is ' + video_player_src);
-        video_player_src = "";
-        video_player.src = video_player_src;
-        video_player.type = "video/mp4";
-        video_player.load();
-    }
+{% include "dictionary/search_result_bar.html" %}
 </script>
 
 <script type='text/javascript'>
@@ -51,11 +38,10 @@
 {% block extrahead %}
 <link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}css/tagmanager.css">
 <style>
-    #panel-expand-collapse-btn-group.affix {
-        position:fixed;
-    }
+#panel-expand-collapse-btn-group.affix {
+    position:fixed;
+}
 </style>
-
 {% endblock %}
 
 {% block content %}
@@ -107,8 +93,6 @@
         <div id="videocontainer">
             {% if gloss.has_video %}
 
-            <!-- {{ gloss.get_video }} -->
-
                 <div id="player">
                 <video id='videoplayer' src="{{protected_media_url}}{{gloss.get_video_url}}" controls autoplay muted></video>
                 </div>
@@ -117,7 +101,6 @@
             {% else %}
                 <div id='player'>
                     <img id='novideo' src='{{ STATIC_URL }}images/no-video-ngt.png'>
-                    <!-- {{ gloss.get_video }} -->
                 </div>
             {% endif %}
         </div>
