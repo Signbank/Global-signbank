@@ -273,15 +273,17 @@ $(document).ready(function() {
     }
 
      if (query_parameters_keys.includes('translation')) {
-        var $translation = $("input[name='translation']");
+        var $menu_bar_translation = $("input[name='translation']");
         var query_initial = query_parameters_dict['translation'];
-        $translation.val(query_initial);
+        $menu_bar_translation.val(query_initial);
+        $("#menu_bar_translation_mirror").val(query_initial);
     };
 
      if (gloss_fields_to_populate_keys.includes('translation')) {
-        var $translation = $("input[name='translation']");
+        var $menu_bar_translation = $("input[name='translation']");
         var query_initial = gloss_fields_to_populate['translation'];
-        $translation.val(query_initial);
+        $menu_bar_translation.val(query_initial);
+        $("#menu_bar_translation_mirror").val(query_initial);
     };
 
      if (query_parameters_keys.includes('search')) {
@@ -301,8 +303,8 @@ $(document).ready(function() {
      // Empty menu_bar_search_mirror
      $("#adminsearch :input").change(function() {
         $("#menu_bar_search_mirror").val("");
+        $("#menu_bar_translation_mirror").val("");
      });
-
 
     if (view_type == 'lemma_groups') {
         lookup = "#lemmalist_table";
@@ -391,7 +393,7 @@ function clearForm() {
 
       $('input').each(function() {
         var this_field = $(this).attr('name');
-        if (this_field == undefined) { return; };
+        if (this_field === undefined) { return; };
         if (this_field == 'morpheme') { $(this).attr('value', ""); return; };
         var this_type = $(this).attr('type');
         if (this_type == 'hidden' || this_type == 'submit' || this_type == 'radio' || this_type == 'button') { return; };
@@ -404,7 +406,7 @@ function clearForm() {
       $('#morphemeidgloss').val('');
       $('select').each(function() {
         var this_field = $(this).attr('name');
-        if (this_field == undefined) { return; };
+        if (this_field === undefined) { return; };
         var this_type = $(this).attr('type');
         if (this_type == 'hidden') { return; };
         if (this_field.endsWith('[]')) {
@@ -670,7 +672,6 @@ function do_toggle_language(el) {
 <form id='adminsearch' class="search-form search-form-light" method='get' action='{{PREFIX_URL}}/signs/search'>
 {% csrf_token %}
 <div class="panel panel-default panel-light">
-    <input type='hidden' id='export_format' name='export_format' value="">
 
     <!-- The element below adds an invisible submit option, so the 'button' above also works when enter is pressed -->
     <input type="submit" onclick="do_adminsearch(this);" name="search_type" value="sign"
@@ -694,6 +695,7 @@ function do_toggle_language(el) {
                     <input name='sortOrder' class='form-control' value='' type='hidden'>
                     <input name='search_type' class='form-control' value='{{search_type}}' type='hidden'>
                     <input id="menu_bar_search_mirror" type="hidden" name="search" class="form-control" value="{{menu_bar_search}}">
+                    <input id="menu_bar_translation_mirror" type="hidden" name="translation" class="form-control" value="{{menu_bar_translation}}">
                 </div>
                 <div>
                     <table class='table' id='searchfields'>

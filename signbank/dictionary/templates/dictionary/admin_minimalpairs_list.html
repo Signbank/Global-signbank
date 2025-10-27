@@ -137,18 +137,14 @@ $(document).ready(function() {
             datatype: "json",
             async: true,
             success : function(result) {
-                <!--console.log(result);-->
                 var elem = $(result);
                 var parsed = $.parseHTML(result);
-                <!--console.log(parsed);-->
                 $.each( parsed, function(i, el ) {
                     nodename = el.nodeName;
-                    <!--console.log(nodename);-->
                     if (nodename == 'TR') {
                         id_of_row = $(el).attr('id');
                         res = id_of_row.split("_");
                         id_of_gloss = res[1];
-                        <!--console.log(id_of_gloss);-->
                         focus_gloss_lookup = '#focusgloss_' + id_of_gloss;
                         $(lookup).find(focus_gloss_lookup).first().before(result).end().remove();
                     };
