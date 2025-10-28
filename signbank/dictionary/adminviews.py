@@ -850,7 +850,7 @@ class GlossListView(ListView):
         if self.show_all:
             # sort the results
             sorted_qs = order_queryset_by_sort_order(self.request.GET, qs, self.queryset_language_codes)
-            self.page_get_parameters = get_page_parameters_for_listview(get, self.query_parameters)
+            self.page_get_parameters = ""
             return sorted_qs
 
         self.query_parameters = dict()
@@ -7042,10 +7042,7 @@ class BatchEditView(ListView):
 
         get = self.request.GET
 
-        if not get:
-            return glosses_of_dataset
-
-        if not glosses_of_dataset:
+        if not get or not glosses_of_dataset:
             return glosses_of_dataset
 
         if 'tags[]' in get:
