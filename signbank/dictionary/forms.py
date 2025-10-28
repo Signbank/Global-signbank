@@ -822,14 +822,14 @@ class HandshapeSearchForm(forms.ModelForm):
 
 
 def check_sortOrder_handshapes(request):
-    sortOrder = request.GET.get('sortOrder', '')
-    if not sortOrder:
+    sort_order = request.GET.get('sortOrder', '')
+    if not sort_order:
         return 'machine_value'
-    field = sortOrder[1:] if sortOrder.startswith('-') else sortOrder
+    field = sort_order[1:] if sort_order.startswith('-') else sort_order
     if field not in ['name', 'hsFingSel', 'hsFingConf', 'hsFingSel2', 'hsFingConf2',
                          'hsNumSel', 'hsThumb', 'hsFingUnsel', 'hsSpread', 'hsAperture']:
         return 'machine_value'
-    return sortOrder
+    return sort_order
 
 
 def check_multilingual_fields(ClassModel, queryDict, languages):
