@@ -102,7 +102,7 @@ function clearForm() {
      $("input[name='search']").val('');
      $('#show_all_annotatedsentences').val('');
      $('#show_all').val('False');
-     $('#reset').val('reset');
+     $('#reset').val('1');
 }
 
 function do_adminsearch(el) {
@@ -161,7 +161,7 @@ function do_sort_column(field_name, action, frmName) {
         <div id='query-area' class='collapse {% if request.GET|length == 0 %} in {% endif %}'>
             <div id='searchformwell' class='well well-light search-results-collapsable'>
                 <div class="hidden">
-                    <input name='sortOrder' class='form-control' value='' type='hidden'>
+                    <input name='sortOrder' class='form-control' value='{{searchform.sortOrder.value}}' type='hidden'>
                 </div>
                 <div>
                     <table class='table table-condensed table-condensed-light' id='searchfields' style="width:65%;">

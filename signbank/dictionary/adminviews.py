@@ -437,7 +437,7 @@ class AnnotatedSentenceListView(ListView):
         for key in list(get.keys()):
             self.query_parameters[key] = get.get(key, '')
 
-        if self.query_parameters.get('reset', '') == 'reset':
+        if self.query_parameters.get('reset', '') == '1':
             self.query_parameters = {}
             qs = AnnotatedSentence.objects.none()
             return qs

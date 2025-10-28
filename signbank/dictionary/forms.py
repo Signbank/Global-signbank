@@ -827,7 +827,7 @@ def check_sortOrder_handshapes(request):
         return 'machine_value'
     field = sortOrder[1:] if sortOrder.startswith('-') else sortOrder
     if field not in ['name', 'hsFingSel', 'hsFingConf', 'hsFingSel2', 'hsFingConf2',
-                         'hsNumSel', 'hsThumb', 'hsFingUnsel', 'hsFingUnsel', 'hsSpread', 'hsAperture']:
+                         'hsNumSel', 'hsThumb', 'hsFingUnsel', 'hsSpread', 'hsAperture']:
         return 'machine_value'
     return sortOrder
 
