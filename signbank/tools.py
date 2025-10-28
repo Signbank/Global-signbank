@@ -2364,10 +2364,9 @@ def get_checksum_for_path(file_path):
         return None
 
 
-def get_page_parameters_for_listview(search_form, request_get_parameters, query_parameters):
+def get_page_parameters_for_listview(request_get_parameters, query_parameters):
     # fill page parameters
     page_params_list = []
-    page_get_parameters = ""
     if 'query' not in request_get_parameters:
         for key, value in query_parameters.items():
             # process explicitly saved query parameters first
@@ -2379,17 +2378,13 @@ def get_page_parameters_for_listview(search_form, request_get_parameters, query_
                 page_params_list.append((key, value))
     for key, value in request_get_parameters.items():
         # add other url parameters and ignore if processed above, this allows processing of multi-select parameters
-        if key == 'page':
-            continue
-        if key in query_parameters.keys():
+        if key == 'page' or key in query_parameters.keys():
             continue
         if isinstance(value, list):
             page_params_list.extend((key, x) for x in value)
         else:
             page_params_list.append((key, value))
-    if page_params_list:
-        page_get_parameters = f'&{urlencode(page_params_list)}'
-    return page_get_parameters
+    return f'&{urlencode(page_params_list)}' if page_params_list else ""
 
 
 def get_lemma_translation_violations(dataset):
