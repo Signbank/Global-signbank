@@ -98,6 +98,7 @@ function clearForm() {
      $("input[name='translation']").val('');
      $("input[name='search']").val('');
      $('#format').val('');
+     $('#reset').val('1');
 }
 
 function do_export_csv(e1) {
@@ -373,8 +374,9 @@ function do_adminsearch(el) {
     <input type='hidden' name='show_all' value="{{show_all}}">
     {% endif %}
 
-    <input class='btn btn-default' type='submit' name='reset'
-           onclick="clearForm();" value='{% trans "Reset" %}'>
+    <input class='btn btn-default' type='submit' onclick="clearForm();"
+       value='{% trans "Reset" %}'>
+    <input type='hidden' id="reset" name="reset" value="">
 </div>
 {% endif %}
 </form>

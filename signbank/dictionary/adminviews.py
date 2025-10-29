@@ -3599,8 +3599,7 @@ class HandshapeListView(ListView):
         self.show_all = self.kwargs.get('show_all', self.show_all)
         self.search_type = self.request.GET.get('search_type', self.search_type)
         setattr(self.request.session, 'search_type', self.search_type)
-
-        if not self.show_all and not get or 'reset' in get:
+        if not self.show_all and not get or ('reset' in get and get['reset']):
             qs = Handshape.objects.none()
             return qs
 
