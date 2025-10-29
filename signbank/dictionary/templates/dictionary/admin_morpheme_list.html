@@ -75,6 +75,17 @@ $(document).ready(function(){
         set_initial_language_lemma_lookahead(lookahead_initial_language);
     };
 
+    function setupSortOrderButtons(populate_fields) {
+        let query = populate_fields.sortOrder;
+        const base = query.startsWith('-') ? query.slice(1) : query;
+        const dir = query.startsWith('-') ? 'desc' : 'asc';
+        const button = `#sort_button_${base}_${dir}`;
+        const stopButton = `#sort_button_${base}_del`;
+
+        $(button).addClass("active").trigger('change');
+        $(stopButton).show().trigger('change');
+    }
+
     function selectColors(fieldId) {
         var target_pulldown = document.getElementById(fieldId);
         var pulldown_colors = field_colors[fieldId.substring(3)]; // skip the id_
@@ -202,21 +213,7 @@ $(document).ready(function(){
      });
 
      if (populate_fields_keys.includes('sortOrder')) {
-         var query_initial = populate_fields['sortOrder'];
-         var button_id = "#sort_button_";
-         var stop_button_id = "#sort_button_";
-         if (query_initial.startsWith("-")) {
-            query_initial = query_initial.substring(1);
-            button_id = button_id + query_initial + "_desc";
-            stop_button_id = stop_button_id + query_initial + "_del";
-         } else {
-            button_id = button_id + query_initial + "_asc";
-            stop_button_id = stop_button_id + query_initial + "_del";
-         }
-         $(button_id).addClass("active");
-         $(button_id).trigger('change');
-         $(stop_button_id).show();
-         $(stop_button_id).trigger('change');
+        setupSortOrderButtons(populate_fields);
      };
 });
 

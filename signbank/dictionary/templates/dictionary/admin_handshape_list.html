@@ -47,19 +47,13 @@ $(document).ready(function(){
      });
 
      if (sort_order != 'machine_value') {
-         var button_id = "#sort_button_";
-         var stop_button_id = "#sort_button_";
-         if (sort_order.startsWith("-")) {
-            button_id = button_id + sort_order.substring(1) + "_desc";
-            stop_button_id = stop_button_id + sort_order.substring(1) + "_del";
-         } else {
-            button_id = button_id + sort_order + "_asc";
-            stop_button_id = stop_button_id + sort_order + "_del";
-         }
-         $(button_id).addClass("active");
-         $(button_id).trigger('change');
-         $(stop_button_id).show();
-         $(stop_button_id).trigger('change');
+         const base = sort_order.startsWith('-') ? sort_order.slice(1) : sort_order;
+         const dir = sort_order.startsWith('-') ? 'desc' : 'asc';
+         const button = `#sort_button_${base}_${dir}`;
+         const stopButton = `#sort_button_${base}_del`;
+
+         $(button).addClass("active").trigger('change');
+         $(stopButton).show().trigger('change');
      };
 
 });
@@ -208,7 +202,7 @@ function do_adminsearch(el) {
                         <div id='finger_selection_1' class='panel-collapse collapse'>
                             <table class='table'>
                                 <tr>
-                                    <td/>
+                                    <td></td>
                                     <td>
                                         <div class='input-group input-group-light'>
                                         <label class='input-group-addon' for='id_fsT'>T</label>
@@ -250,7 +244,7 @@ function do_adminsearch(el) {
                     <div id='finger_selection_2' class='panel-collapse collapse'>
                         <table class='table'>
                             <tr>
-                                <td/>
+                                <td></td>
                                 <td>
                                     <div class='input-group input-group-light'>
                                     <label class='input-group-addon' for='id_fs2T'>T</label>
@@ -293,7 +287,7 @@ function do_adminsearch(el) {
                     <div id='unselected_fingers' class='panel-collapse collapse'>
                         <table class='table'>
                             <tr>
-                                <td/>
+                                <td></td>
                                 <td>
                                     <div class='input-group input-group-light'>
                                     <label class='input-group-addon' for='id_ufT'>T</label>
