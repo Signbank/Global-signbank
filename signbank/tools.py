@@ -43,6 +43,7 @@ from signbank.csv_interface import (sense_translations_for_language, update_sens
                                     parse_sentence_row, get_senses_to_sentences, csv_sentence_tuples_list_compare,
                                     required_csv_columns, trim_columns_in_row,
                                     normalize_field_choice)
+from signbank.dictionary.field_choices import fields_to_fieldcategory_dict
 
 from tagging.models import TaggedItem, Tag
 from CNGT_scripts.python.extractMiddleFrame import MiddleFrameExtracter
@@ -2364,8 +2365,18 @@ def get_checksum_for_path(file_path):
         return None
 
 
-def get_page_parameters_for_listview(request_get_parameters, query_parameters):
+def get_multiselect_fieldnames():
+    fieldnames = FIELDS['main'] + FIELDS['phonology'] + FIELDS['semantics'] + ['inWeb', 'isNew']
+    fields_with_choices = fields_to_fieldcategory_dict()
+    multiple_select_gloss_fields = [fieldname for fieldname in fieldnames if fieldname in fields_with_choices.keys()]
+    return multiple_select_gloss_fields
+
+
+def get_page_parameters_for_listview(search_form, request_get_parameters, query_parameters):
     # fill page parameters
+    search_form_fields = search_form.fields.keys()
+    model = type(search_form.instance)
+    multiselect_fields_of_form = [field for field in get_multiselect_fieldnames() if field in search_form_fields]
     page_params_list = []
     if 'query' not in request_get_parameters:
         for key, value in query_parameters.items():
@@ -2379,6 +2390,15 @@ def get_page_parameters_for_listview(request_get_parameters, query_parameters):
     for key, value in request_get_parameters.items():
         # add other url parameters and ignore if processed above, this allows processing of multi-select parameters
         if key == 'page' or key in query_parameters.keys():
+            continue
+        if key.endswith('[]') and key[:-2] not in multiselect_fields_of_form:
+            # this is a non-existent multiple choice field in the url
+            continue
+        if key in multiselect_fields_of_form:
+            # url parameter is a multiselect but appears in the url without the brackets
+            continue
+        if key not in search_form_fields and key not in ['view_type', 'search_type', 'format', 'show_all', 'csrfmiddlewaretoken']:
+            # key is not in  form and not an operational parameter
             continue
         if isinstance(value, list):
             page_params_list.extend((key, x) for x in value)

@@ -13,7 +13,7 @@ from tagging.models import TaggedItem, Tag
 
 from signbank.settings.base import EARLIEST_GLOSS_CREATION_DATE, DATE_FORMAT
 from signbank.settings.server_specific import (USE_REGULAR_EXPRESSIONS, WRITABLE_FOLDER,
-                                               GLOSS_LIST_DISPLAY_FIELDS, SEARCH_BY, HANDEDNESS_ARTICULATION_FIELDS, HANDSHAPE_ETYMOLOGY_FIELDS)
+                                               GLOSS_LIST_DISPLAY_FIELDS, SEARCH_BY, HANDEDNESS_ARTICULATION_FIELDS, HANDSHAPE_ETYMOLOGY_FIELDS, FIELDS)
 from signbank.video.models import GlossVideo, GlossVideoNME
 from signbank.dictionary.models import (Language, SignLanguage, Dialect, Gloss, Morpheme, GlossSense, ExampleSentence,
                                         Definition, FieldChoice, Handshape, SemanticField, DerivationHistory,
@@ -23,7 +23,7 @@ from signbank.dictionary.models import (Language, SignLanguage, Dialect, Gloss, 
 from signbank.dictionary.forms import GlossSearchForm, SentenceForm
 from signbank.dictionary.field_choices import fields_to_fieldcategory_dict
 from signbank.dictionary.translate_choice_list import choicelist_queryset_to_translated_dict
-from signbank.tools import get_dataset_languages
+from signbank.tools import get_dataset_languages, get_multiselect_fieldnames
 from signbank.dictionary.context_data import get_selected_datasets
 
 from easy_select2.widgets import Select2
@@ -799,6 +799,7 @@ def search_fields_from_get(searchform, GET):
         return search_keys, search_fields_to_populate
     search_form_fields = searchform.fields.keys()
     model = type(searchform.instance)
+    multiselect_fields_of_form = [field for field in get_multiselect_fieldnames() if field in search_form_fields]
     for get_key, get_value in GET.items():
         if get_key in ['filter']:
             continue
@@ -819,6 +820,9 @@ def search_fields_from_get(searchform, GET):
         elif get_key not in search_form_fields:
             # skip csrf_token and page
             continue
+        elif get_key in multiselect_fields_of_form:
+            # url parameter is a multiselect but appears in the url without the brackets
+            continue
         elif searchform.fields[get_key].widget.input_type == 'select':
             search_form_choices = list(dict(searchform.fields[get_key].widget.choices).keys())
             if get_key in HANDEDNESS_ARTICULATION_FIELDS + HANDSHAPE_ETYMOLOGY_FIELDS:
@@ -833,7 +837,7 @@ def search_fields_from_get(searchform, GET):
                 search_fields_to_populate[get_key] = get_value
             search_keys.append(get_key)
         else:
-            print('search fields from get fall through: ', get_key, get_value)
+            # includes sortOrder
             search_fields_to_populate[get_key] = get_value
             search_keys.append(get_key)
 
@@ -1200,7 +1204,6 @@ def queryset_glosssense_from_get(model, formclass, searchform, GET, qs):
                 qs = qs.filter(Q(**{first_name: get_value}) | Q(**{last_name: get_value}))
             else:
                 # normal text field
-                print('normal text field: ', get_key, get_value)
                 query_filter = gloss_prefix + get_key + '__icontains'
                 qs = qs.filter(**{query_filter: get_value})
                 continue
@@ -1281,6 +1284,9 @@ def queryset_glosssense_from_get(model, formclass, searchform, GET, qs):
                              'domhndsh_letter', 'domhndsh_number', 'subhndsh_letter', 'subhndsh_number']:
                 key = gloss_prefix + get_key + '__exact'
                 val = {'0': '', '1': None, '2': True, '3': False}.get(get_value, '')
+            elif get_key in get_multiselect_fieldnames():
+                # field can be a model field that is multiselect but without the brackets
+                continue
             else:
                 print('1102. Gloss/GlossSense Search input type select fall through: ', get_key, get_value)
                 continue
