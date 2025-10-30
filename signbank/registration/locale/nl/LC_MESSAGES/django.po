@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-08-21 15:08+0200\n"
+"POT-Creation-Date: 2025-10-23 12:57+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -223,10 +223,10 @@ msgstr "Zoek-geschiedenis"
 msgid "Error processing your request."
 msgstr ""
 
-#: signbank/registration/views.py:255
+#: signbank/registration/views.py:250
 msgid "This account has expired. Please contact w.stoop@let.ru.nl."
 msgstr ""
 
-#: signbank/registration/views.py:274
+#: signbank/registration/views.py:268
 msgid "The username or password is incorrect."
 msgstr ""
