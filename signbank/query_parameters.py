@@ -13,7 +13,7 @@ from tagging.models import TaggedItem, Tag
 
 from signbank.settings.base import EARLIEST_GLOSS_CREATION_DATE, DATE_FORMAT
 from signbank.settings.server_specific import (USE_REGULAR_EXPRESSIONS, WRITABLE_FOLDER,
-                                               GLOSS_LIST_DISPLAY_FIELDS, SEARCH_BY)
+                                               GLOSS_LIST_DISPLAY_FIELDS, SEARCH_BY, HANDEDNESS_ARTICULATION_FIELDS, HANDSHAPE_ETYMOLOGY_FIELDS, FIELDS)
 from signbank.video.models import GlossVideo, GlossVideoNME
 from signbank.dictionary.models import (Language, SignLanguage, Dialect, Gloss, Morpheme, GlossSense, ExampleSentence,
                                         Definition, FieldChoice, Handshape, SemanticField, DerivationHistory,
@@ -23,7 +23,7 @@ from signbank.dictionary.models import (Language, SignLanguage, Dialect, Gloss, 
 from signbank.dictionary.forms import GlossSearchForm, SentenceForm
 from signbank.dictionary.field_choices import fields_to_fieldcategory_dict
 from signbank.dictionary.translate_choice_list import choicelist_queryset_to_translated_dict
-from signbank.tools import get_dataset_languages
+from signbank.tools import get_dataset_languages, get_multiselect_fieldnames
 from signbank.dictionary.context_data import get_selected_datasets
 
 from easy_select2.widgets import Select2
@@ -219,19 +219,20 @@ def apply_nmevideo_filters_to_results(model, qs, query_parameters):
 
 
 def convert_query_parameters_to_filter(query_parameters):
-    # this function maps the query parameters to a giant Q expression
-    # the code follows that of get_queryset of GlossListView
-    # note that only non-empty fields are stored in query_parameters
-    # use these to idenfiy language based fields
+    """
+    Maps the query parameters to a giant Q expression
+    :view: GlossListView, AnnotatedGlossListView, SenseListView
+    :model: Gloss
+    """
     glosssearch = "glosssearch_"
     lemmasearch = "lemma_"
     keywordsearch = "keyword_"
     text_filter = 'iregex' if USE_REGULAR_EXPRESSIONS else 'icontains'
-
     gloss_fields = {}
     for fname in Gloss.get_field_names():
         gloss_fields[fname] = Gloss.get_field(fname)
 
+    # the following initialises fields_with_choices to default Gloss fields: FIELDS['main'] + FIELDS['phonology'] + FIELDS['semantics']
     fields_with_choices = fields_to_fieldcategory_dict()
     multiple_select_gloss_fields = [fieldname + '[]' for fieldname in Gloss.get_field_names()
                                     if fieldname in fields_with_choices.keys()]
@@ -479,8 +480,11 @@ def convert_query_parameters_to_filter(query_parameters):
 
 
 def convert_query_parameters_to_annotatedgloss_filter(query_parameters):
-    # this function maps the query parameters to a giant Q expression
-
+    """
+    Maps the query parameters to a giant Q expression
+    :view: AnnotatedGlossListView
+    :model: AnnotatedGloss
+    """
     query_list = []
     for get_key, get_value in query_parameters.items():
         if get_key in ['isRepresentative'] and get_value:
@@ -795,6 +799,7 @@ def search_fields_from_get(searchform, GET):
         return search_keys, search_fields_to_populate
     search_form_fields = searchform.fields.keys()
     model = type(searchform.instance)
+    multiselect_fields_of_form = [field for field in get_multiselect_fieldnames() if field in search_form_fields]
     for get_key, get_value in GET.items():
         if get_key in ['filter']:
             continue
@@ -803,7 +808,7 @@ def search_fields_from_get(searchform, GET):
         if get_key.endswith('[]'):
             vals = GET.getlist(get_key)
             field = get_key[:-2]
-            if not vals:
+            if field not in search_form_fields or not vals:
                 continue
             values = convert_getlist_values_to_machine_values_list(model, searchform, field, vals, coerce=False)
             if not values:
@@ -815,7 +820,24 @@ def search_fields_from_get(searchform, GET):
         elif get_key not in search_form_fields:
             # skip csrf_token and page
             continue
+        elif get_key in multiselect_fields_of_form:
+            # url parameter is a multiselect but appears in the url without the brackets
+            continue
+        elif searchform.fields[get_key].widget.input_type == 'select':
+            search_form_choices = list(dict(searchform.fields[get_key].widget.choices).keys())
+            if get_key in HANDEDNESS_ARTICULATION_FIELDS + HANDSHAPE_ETYMOLOGY_FIELDS:
+                if not re.match(r"^[1-9]\d*$", get_value):
+                    continue
+                if int(get_value) not in search_form_choices:
+                    continue
+                search_fields_to_populate[get_key] = get_value
+            elif get_value not in search_form_choices:
+                continue
+            else:
+                search_fields_to_populate[get_key] = get_value
+            search_keys.append(get_key)
         else:
+            # includes sortOrder
             search_fields_to_populate[get_key] = get_value
             search_keys.append(get_key)
 
@@ -838,6 +860,8 @@ def queryset_from_get(formclass, searchform, GET, qs):
             # multiple select
             vals = GET.getlist(get_key)
             field = get_key[:-2]
+            if field not in searchform.fields.keys() or not vals:
+                continue
             values = convert_getlist_values_to_machine_values_list(Morpheme, searchform, field, vals)
             if field in ['dialect', 'semField', 'derivHist']:
                 query_filter = field + '__in'
@@ -854,6 +878,7 @@ def queryset_from_get(formclass, searchform, GET, qs):
                     TaggedItem.objects.filter(tag__id__in=values).values_list('object_id', flat=True))
                 qs = qs.filter(id__in=morphemes_with_tag)
             else:
+                print('queryset from get multiselect fall through: ', field, values)
                 query_filter = field + '__machine_value__in'
                 qs = qs.filter(**{query_filter: values})
         elif get_key not in searchform.fields.keys() \
@@ -895,6 +920,7 @@ def queryset_from_get(formclass, searchform, GET, qs):
                                   'translation__language': language})
             else:
                 # normal text field
+                print('queryset from get, text field fall-through: ', get_key, get_value)
                 query_filter = get_key + '__icontains'
                 qs = qs.filter(**{query_filter: get_value})
                 continue
@@ -918,7 +944,7 @@ def queryset_from_get(formclass, searchform, GET, qs):
             else:
                 print('Morpheme Search input type select fall through: ', get_key, get_value)
                 continue
-
+            print('queryset from get fall through select: ', key, val)
             kwargs = {key: val}
             qs = qs.filter(**kwargs)
         else:
@@ -1068,8 +1094,10 @@ def queryset_glosssense_from_get(model, formclass, searchform, GET, qs):
             if not get_value:
                 continue
             # multiple select
-            vals = GET.getlist(get_key)
             field = get_key[:-2]
+            vals = GET.getlist(get_key)
+            if field not in searchform.fields.keys() or not vals:
+                continue
             values = convert_getlist_values_to_machine_values_list(model, searchform, field, vals)
             if field in ['sentenceType']:
                 continue
@@ -1256,6 +1284,9 @@ def queryset_glosssense_from_get(model, formclass, searchform, GET, qs):
                              'domhndsh_letter', 'domhndsh_number', 'subhndsh_letter', 'subhndsh_number']:
                 key = gloss_prefix + get_key + '__exact'
                 val = {'0': '', '1': None, '2': True, '3': False}.get(get_value, '')
+            elif get_key in get_multiselect_fieldnames():
+                # field can be a model field that is multiselect but without the brackets
+                continue
             else:
                 print('1102. Gloss/GlossSense Search input type select fall through: ', get_key, get_value)
                 continue
@@ -1286,8 +1317,8 @@ def queryset_sentences_from_get(searchform, GET, qs):
             if not get_value:
                 continue
             # multiple select
-            vals = GET.getlist(get_key)
             field = get_key[:-2]
+            vals = GET.getlist(get_key)
             if field not in searchform.fields.keys() or not vals:
                 continue
             values = convert_getlist_values_to_machine_values_list(GlossSense, searchform, field, vals)
@@ -1364,9 +1395,9 @@ def query_parameters_from_get(model, searchform, GET, query_parameters):
         if get_value in ['', '0']:
             continue
         if get_key.endswith('[]'):
-            vals = GET.getlist(get_key)
             field = get_key[:-2]
-            if not vals:
+            vals = GET.getlist(get_key)
+            if field not in search_form_fields or not vals:
                 continue
             values = convert_getlist_values_to_machine_values_list(model, searchform, field, vals, coerce=False)
             if not values:
@@ -1375,6 +1406,20 @@ def query_parameters_from_get(model, searchform, GET, query_parameters):
         elif get_key not in search_form_fields:
             # skip csrf_token and page
             continue
+        elif get_key not in model.get_field_names():
+            continue
+        elif searchform.fields[get_key].widget.input_type == 'select':
+            search_form_choices = list(dict(searchform.fields[get_key].widget.choices).keys())
+            if get_key in HANDEDNESS_ARTICULATION_FIELDS + HANDSHAPE_ETYMOLOGY_FIELDS:
+                if not re.match(r"^[1-9]\d*$", get_value):
+                    continue
+                if int(get_value) not in search_form_choices:
+                    continue
+                query_parameters[get_key] = get_value
+            elif get_value not in search_form_choices:
+                continue
+            else:
+                query_parameters[get_key] = get_value
         else:
             query_parameters[get_key] = get_value
     return query_parameters
