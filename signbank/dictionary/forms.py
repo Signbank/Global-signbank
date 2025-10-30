@@ -1046,9 +1046,8 @@ class KeyMappingSearchForm(forms.ModelForm):
         model = Gloss
         fields = MINIMAL_PAIRS_SEARCH_FIELDS
 
-    def __init__(self, queryDict, *args, **kwargs):
-        languages = kwargs.pop('languages')
-        super(KeyMappingSearchForm, self).__init__(queryDict, *args, **kwargs)
+    def __init__(self, *args, **kwargs):
+        super(KeyMappingSearchForm, self).__init__(*args, **kwargs)
 
         self.fields['tags'] = forms.ModelChoiceField(label=_('Tags'),
                                                      queryset=Tag.objects.all(), empty_label=None,
