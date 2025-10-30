@@ -45,14 +45,26 @@
     background-color: none;
     outline: none;
 }
+.sort_button {
+    background-color:transparent;
+    outline: none;
+    padding: 0;
+    margin: 0;
+}
+.sort_button:hover {
+    color: red;
+}
+.sort_button.active {
+    color: red;
+}
 </style>
 
 <script type="text/javascript" src="{{ STATIC_URL }}js/jquery.jeditable.mini.js"></script>
 <script type="text/javascript" src="{{ STATIC_URL }}js/jquery.jeditable.checkbox.js"></script>
 <script type="text/javascript" src="{{ STATIC_URL }}js/typeahead.bundle.min.js"></script>
 <script type="text/javascript" src="{{ STATIC_URL }}js/gloss_add.js"></script>
-<link href="//cdnjs.cloudflare.com/ajax/libs/select2/4.0.0/css/select2.css" rel="stylesheet"/>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.5/js/select2.full.js"></script>
+<link href="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/css/select2.css" rel="stylesheet"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/js/select2.full.js"></script>
 {{ query_parameters|json_script:"query_parameters" }}
 {{ gloss_fields_to_populate|json_script:"gloss_fields_to_populate" }}
 <script type='text/javascript'>
@@ -68,11 +80,12 @@ var query_parameters_keys = {{query_parameters_keys|safe}};
 var query_parameters_dict = JSON.parse(document.getElementById('query_parameters').textContent);
 
 var other_parameters_keys = {{other_parameters_keys|safe}};
+var other_parameters = {{other_parameters|safe}};
+var populate_other_parameters = {{populate_other_parameters|safe}};
 var language_query_keys = {{language_query_keys|safe}};
 var morpheme_idgloss = '{{morpheme_idgloss|safe}}';
 var gloss_fields_to_populate = JSON.parse(document.getElementById('gloss_fields_to_populate').textContent);
 var gloss_fields_to_populate_keys = {{gloss_fields_to_populate_keys|safe}};
-
 $(document).ready(function() {
 
     $('[data-toggle="tooltip"]').tooltip();
@@ -89,6 +102,17 @@ $(document).ready(function() {
          });
          set_initial_language_lemma_lookahead(lookahead_initial_language);
      }
+
+    function setupSortOrderButtons(populate_fields) {
+        let query = populate_fields.sortOrder;
+        const base = query.startsWith('-') ? query.slice(1) : query;
+        const dir = query.startsWith('-') ? 'desc' : 'asc';
+        const button = `#sort_button_${base}_${dir}`;
+        const stopButton = `#sort_button_${base}_del`;
+
+        $(button).addClass("active").trigger('change');
+        $(stopButton).show().trigger('change');
+    }
 
     function selectColors(fieldId) {
         var target_pulldown = document.getElementById(fieldId);
@@ -350,6 +374,15 @@ $(document).ready(function() {
                     var gloss_list_header = $(lookup).find('#glosslist_table_header')[0];
                     var gloss_list_header_dummy = $(gloss_list_header).find('#glosslist_table_header_dummy')[0];
                     $(gloss_list_header_dummy).replaceWith(result);
+
+                     $('button[id^="sort_button_"]').each(function() {
+                        if (this.id.match("_del")) {
+                            $(this).hide();
+                        }
+                     });
+                     if (populate_other_parameters.includes('sortOrder')) {
+                        setupSortOrderButtons(other_parameters);
+                     };
                 }
 
         });

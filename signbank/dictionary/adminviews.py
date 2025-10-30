@@ -80,7 +80,7 @@ from signbank.dictionary.forms import (AnnotatedSentenceSearchForm, GlossSearchF
                                        GlossMorphologyForm, GlossBlendForm, DefinitionForm, GlossMorphemeForm,
                                        SemanticFieldTranslationForm, ZippedVideosForm,
                                        check_language_fields, check_multilingual_fields, SentenceForm,
-                                       check_language_fields_annotatedsentence, GlossProvenanceForm)
+                                       check_language_fields_annotatedsentence, GlossProvenanceForm, check_sortOrder_handshapes)
 from signbank.tools import (write_ecv_file_for_dataset, find_duplicate_lemmas,
                             construct_scrollbar, get_dataset_languages, get_datasets_with_public_glosses,
                             searchform_panels, map_search_results_to_gloss_list,
@@ -435,7 +435,12 @@ class AnnotatedSentenceListView(ListView):
             qs = AnnotatedSentence.objects.none()
             return qs
 
-        if get.get('reset') == '1':
+        self.query_parameters = {}
+        for key in list(get.keys()):
+            self.query_parameters[key] = get.get(key, '')
+
+        if self.query_parameters.get('reset', '') == '1':
+            self.query_parameters = {}
             qs = AnnotatedSentence.objects.none()
             return qs
         
@@ -462,15 +467,24 @@ class AnnotatedSentenceListView(ListView):
             self.queryset_language_codes = [default_dataset.default_language.language_code_2char]
         qs = order_annotatedsentence_queryset_by_sort_order(self.request.GET, qs, self.queryset_language_codes)
 
-        if get.get('show_all_annotatedsentences') == '1':
-            self.show_all = True
+        self.show_all = self.query_parameters.get('show_all_annotatedsentences', '') == 'True'
 
-        if get.get('no_glosses') == '1':
+        if self.show_all:
+            for key, value in self.query_parameters.items():
+                if key.startswith('annotatedsentence_'):
+                    self.query_parameters[key] = ''
+                elif key in ['no_glosses', 'has_glosses']:
+                    self.query_parameters[key] = '0'
+                else:
+                    self.query_parameters[key] = ''
+            return qs
+
+        if self.query_parameters.get('no_glosses', '0') == '1':
             qs = qs.annotate(
                 num_annotated_glosses=Count('annotated_glosses')
             ).filter(num_annotated_glosses=0)
 
-        if get.get('has_glosses') == '1':
+        if self.query_parameters.get('has_glosses', '0') == '1':
             qs = qs.annotate(
                 num_annotated_glosses=Count('annotated_glosses')
             ).filter(num_annotated_glosses__gt=0)
@@ -478,12 +492,7 @@ class AnnotatedSentenceListView(ListView):
         if not self.show_all and not get:
             qs = AnnotatedSentence.objects.none()
 
-        get = self.request.GET
-        self.query_parameters = {}
-        for key in list(get.keys()):
-            self.query_parameters[key] = get.get(key)
-
-        for get_key, get_value in get.items():
+        for get_key, get_value in self.query_parameters.items():
             if get_key.startswith(AnnotatedSentenceSearchForm.annotatedsentence_search_field_prefix) and get_value:
                 language_code_2char = get_key[len(AnnotatedSentenceSearchForm.annotatedsentence_search_field_prefix):]
                 language = Language.objects.get(language_code_2char=language_code_2char)
@@ -507,11 +516,8 @@ class AnnotatedSentenceListView(ListView):
                 ).values('gloss__lemma__dataset')[:1]
             )
         ).filter(dataset__in=selected_datasets).count()
-        results = self.get_queryset()
 
-        get = self.request.GET
-
-        context['sort_order'] = get.get('sortOrder', '')
+        context['sort_order'] = self.query_parameters.get('sortOrder', '')
         context['language_query_keys'] = [language.language_code_2char for language in dataset_languages]
         context['query_parameters_dict'] = self.query_parameters
         context['query_parameters_keys'] = list(self.query_parameters.keys())
@@ -521,7 +527,7 @@ class AnnotatedSentenceListView(ListView):
         context['searchform'] = self.search_form
         context['show_all'] = self.show_all
         context['search_type'] = self.search_type
-        context['search_matches'] = results.count()
+        context['search_matches'] = self.object_list.count()
         context['page_get_parameters'] = self.page_get_parameters
         return context
 
@@ -3482,6 +3488,7 @@ class HandshapeListView(ListView):
     template_name = 'dictionary/admin_handshape_list.html'
     search_type = 'handshape'
     show_all = False
+    sortOrder = 'machine_value'
 
     def get_context_data(self, **kwargs):
         # Call the base implementation first to get a context
@@ -3496,6 +3503,8 @@ class HandshapeListView(ListView):
         context['search_type'] = self.search_type
         setattr(self.request.session, 'search_type', self.search_type)
         context['show_all'] = self.kwargs.get('show_all', self.show_all)
+
+        context['sortOrder'] = self.sortOrder
 
         context['handshapefieldchoicecount'] = Handshape.objects.filter(machine_value__gt=1).count()
 
@@ -3623,8 +3632,7 @@ class HandshapeListView(ListView):
         self.show_all = self.kwargs.get('show_all', self.show_all)
         self.search_type = self.request.GET.get('search_type', self.search_type)
         setattr(self.request.session, 'search_type', self.search_type)
-
-        if not self.show_all and not get or 'reset' in get:
+        if not self.show_all and not get or ('reset' in get and get['reset']):
             qs = Handshape.objects.none()
             return qs
 
@@ -3640,8 +3648,10 @@ class HandshapeListView(ListView):
 
         qs = Handshape.objects.filter(machine_value__gt=1).order_by('machine_value')
 
+        self.sortOrder = check_sortOrder_handshapes(self.request)
+
         if self.show_all:
-            if 'sortOrder' in get and get['sortOrder'] != 'machine_value':
+            if self.sortOrder != 'machine_value':
                 # User has toggled the sort order for the column
                 qs = order_handshape_queryset_by_sort_order(self.request.GET, qs)
             else:
@@ -3713,7 +3723,7 @@ class HandshapeListView(ListView):
                         kwargs = {key: val}
                         qs = qs.filter(**kwargs)
 
-        if 'sortOrder' in get and get['sortOrder'] != 'machine_value':
+        if self.sortOrder != 'machine_value':
             # User has toggled the sort order for the column
             qs = order_handshape_queryset_by_sort_order(self.request.GET, qs)
         else:
