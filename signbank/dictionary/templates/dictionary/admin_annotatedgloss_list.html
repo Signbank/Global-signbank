@@ -310,10 +310,10 @@ $(document).ready(function() {
                         $(lookup).find(focus_gloss_lookup).first().before(result).end().remove();
                         var video_lookup = '#glossvideo_' + id_of_annotatedgloss + ' ' + id_of_gloss;
                         var video_elt = $(lookup).find(video_lookup);
-                        video_elt.addClass("hover-shows-video");
+                        if (video_elt && video_elt.length) {video_elt.addClass("hover-shows-video");}
                         var video_lookup_gloss = '#glossvideo_' + id_of_gloss;
                         var video_elt_gloss = $(lookup).find(video_lookup_gloss);
-                        video_elt_gloss.addClass("hover-shows-video");
+                        if (video_elt_gloss && video_elt_gloss.length) {video_elt_gloss.addClass("hover-shows-video");}
                         ready_videos(video_elt);
                         ready_videos(video_elt_gloss);
                     };
@@ -333,7 +333,7 @@ function clearForm() {
 
       $('input').each(function() {
         var this_field = $(this).attr('name');
-        if (this_field == undefined) { return; };
+        if (this_field === undefined) { return; };
         var this_type = $(this).attr('type');
         if (this_type == 'hidden' || this_type == 'submit' || this_type == 'reset') { return; };
         if (this_type == 'date' || this_type == 'text') {
@@ -345,7 +345,7 @@ function clearForm() {
 
       $('select').each(function() {
         var this_field = $(this).attr('name');
-        if (this_field == undefined) { return; };
+        if (this_field === undefined) { return; };
         var this_type = $(this).attr('type');
         if (this_type == 'hidden') { return; };
         if (this_field.endsWith('[]')) {
@@ -360,31 +360,6 @@ function clearForm() {
      $('.js-example-basic-multiple').val(null).trigger('change');
      $("input[name='translation']").val('');
      $("input[name='search']").val('');
-}
-
- /**
- * @param {string} field_name - name of the field to sort on
- * @param {string} action     - one of: desc, asc, del
- * @param {string} frmName    - name of the <form ...> that contains the 'sortOrder' <input> field
- * @returns {void}
- */
-function do_sort_column(field_name, action, frmName) {
-  // Combine @field_name and @action into [sOrder]
-  var sOrder = field_name;
-  if (action == 'desc') {
-    // Descending sort order is signified by a '-' prefix
-    sOrder = '-' + sOrder;
-  } else if (action == 'del') {
-    // "Deleting" (pressing 'x') the sort order of a column means: return to the default 'idgloss' sort order
-    sOrder = '';
-  }
-  // Set the value of the [sortOrder] field defined in dictionary/forms.py::GlossSearchForm
-  $("#" + frmName + " input[name='sortOrder']").val(sOrder);
-
-  // Submit the form with the indicated name
-
-  $("#" + frmName).submit();
-
 }
 
 /**
@@ -402,7 +377,7 @@ function do_adminsearch(el) {
 }
 
 function ready_videos(el) {
-    console.log($(el).attr('id'));
+    if (!el) {return;}
     $(el).find('video').hide();
 
     $(el).mouseenter(function ()
@@ -883,12 +858,15 @@ function do_toggle_language(el) {
 {% endif %}
 {% endif %}
 
+{% if page_obj.has_other_pages %}
 <div class="pagination">
-    <span class="step-links">
-
+    <div class="step-links">
         <ul class='pagination pagination-sm'>
         {% if page_obj.has_previous %}
-            <li><a href="?page={{ page_obj.previous_page_number }}{% for key,value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">&laquo;</a></li>
+            {% if page_obj.number > 1 %}
+            <li><a href="?page=1{{page_get_parameters}}">&laquo;&laquo;</a></li>
+            {% endif %}
+            <li><a href="?page={{page_obj.previous_page_number}}{{page_get_parameters}}">&laquo;</a></li>
         {% endif %}
 
           {% if  page_obj.number > 10 %}
@@ -898,9 +876,13 @@ function do_toggle_language(el) {
           {% for p in page_obj.paginator.page_range %}
 
              {% if p < page_obj.number|add:"10" and  p > page_obj.number|add:"-10" %}
-             <li {% if p == page_obj.number %}class='active'{% endif %}>
-             <a href="?page={{ p }}{% for key,value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">{% if p == 0 %}Start{% else %}{{p}}{% endif %}</a>
-             </li>
+                {% if p == page_obj.number %}
+                     <li class='active'>
+                 {% else %}
+                    <li>
+                {% endif %}
+                     <a href="?page={{p}}{{page_get_parameters}}">{% if p == 0 %}Start{% else %}{{p}}{% endif %}</a>
+                     </li>
              {% endif %}
 
           {% endfor %}
@@ -908,19 +890,17 @@ function do_toggle_language(el) {
           {% if page_obj.paginator.num_pages > page_obj.number|add:"10" %}
             <li><a>...</a></li>
             <li>
-            <a href="?page={{ page_obj.paginator.num_pages }}{% for key,value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">{{page_obj.paginator.num_pages}}</a>
+            <a href="?page={{page_obj.paginator.num_pages}}{{page_get_parameters}}">{{page_obj.paginator.num_pages}}</a>
             </li>
           {% endif %}
 
         {% if page_obj.has_next %}
-            <li><a href="?page={{ page_obj.next_page_number }}{% for key,value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">&raquo;</a></li>
-
-
-      </ul>
-
-
+            <li><a href="?page={{page_obj.next_page_number}}{{page_get_parameters}}">&raquo;</a></li>
+            <li><a href="?page={{page_obj.paginator.num_pages}}{{page_get_parameters}}">&raquo;&raquo;</a></li>
         {% endif %}
-    </span>
+      </ul>
+    </div>
 </div>
+{% endif %}
 </div>
 {% endblock content %}

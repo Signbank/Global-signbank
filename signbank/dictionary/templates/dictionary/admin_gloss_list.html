@@ -45,14 +45,26 @@
     background-color: none;
     outline: none;
 }
+.sort_button {
+    background-color:transparent;
+    outline: none;
+    padding: 0;
+    margin: 0;
+}
+.sort_button:hover {
+    color: red;
+}
+.sort_button.active {
+    color: red;
+}
 </style>
 
 <script type="text/javascript" src="{{ STATIC_URL }}js/jquery.jeditable.mini.js"></script>
 <script type="text/javascript" src="{{ STATIC_URL }}js/jquery.jeditable.checkbox.js"></script>
 <script type="text/javascript" src="{{ STATIC_URL }}js/typeahead.bundle.min.js"></script>
 <script type="text/javascript" src="{{ STATIC_URL }}js/gloss_add.js"></script>
-<link href="//cdnjs.cloudflare.com/ajax/libs/select2/4.0.0/css/select2.css" rel="stylesheet"/>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.5/js/select2.full.js"></script>
+<link href="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/css/select2.css" rel="stylesheet"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/js/select2.full.js"></script>
 {{ query_parameters|json_script:"query_parameters" }}
 {{ gloss_fields_to_populate|json_script:"gloss_fields_to_populate" }}
 <script type='text/javascript'>
@@ -68,11 +80,12 @@ var query_parameters_keys = {{query_parameters_keys|safe}};
 var query_parameters_dict = JSON.parse(document.getElementById('query_parameters').textContent);
 
 var other_parameters_keys = {{other_parameters_keys|safe}};
+var other_parameters = {{other_parameters|safe}};
+var populate_other_parameters = {{populate_other_parameters|safe}};
 var language_query_keys = {{language_query_keys|safe}};
 var morpheme_idgloss = '{{morpheme_idgloss|safe}}';
 var gloss_fields_to_populate = JSON.parse(document.getElementById('gloss_fields_to_populate').textContent);
 var gloss_fields_to_populate_keys = {{gloss_fields_to_populate_keys|safe}};
-
 $(document).ready(function() {
 
     $('[data-toggle="tooltip"]').tooltip();
@@ -89,6 +102,17 @@ $(document).ready(function() {
          });
          set_initial_language_lemma_lookahead(lookahead_initial_language);
      }
+
+    function setupSortOrderButtons(populate_fields) {
+        let query = populate_fields.sortOrder;
+        const base = query.startsWith('-') ? query.slice(1) : query;
+        const dir = query.startsWith('-') ? 'desc' : 'asc';
+        const button = `#sort_button_${base}_${dir}`;
+        const stopButton = `#sort_button_${base}_del`;
+
+        $(button).addClass("active").trigger('change');
+        $(stopButton).show().trigger('change');
+    }
 
     function selectColors(fieldId) {
         var target_pulldown = document.getElementById(fieldId);
@@ -273,15 +297,17 @@ $(document).ready(function() {
     }
 
      if (query_parameters_keys.includes('translation')) {
-        var $translation = $("input[name='translation']");
+        var $menu_bar_translation = $("input[name='translation']");
         var query_initial = query_parameters_dict['translation'];
-        $translation.val(query_initial);
+        $menu_bar_translation.val(query_initial);
+        $("#menu_bar_translation_mirror").val(query_initial);
     };
 
      if (gloss_fields_to_populate_keys.includes('translation')) {
-        var $translation = $("input[name='translation']");
+        var $menu_bar_translation = $("input[name='translation']");
         var query_initial = gloss_fields_to_populate['translation'];
-        $translation.val(query_initial);
+        $menu_bar_translation.val(query_initial);
+        $("#menu_bar_translation_mirror").val(query_initial);
     };
 
      if (query_parameters_keys.includes('search')) {
@@ -301,8 +327,8 @@ $(document).ready(function() {
      // Empty menu_bar_search_mirror
      $("#adminsearch :input").change(function() {
         $("#menu_bar_search_mirror").val("");
+        $("#menu_bar_translation_mirror").val("");
      });
-
 
     if (view_type == 'lemma_groups') {
         lookup = "#lemmalist_table";
@@ -348,6 +374,15 @@ $(document).ready(function() {
                     var gloss_list_header = $(lookup).find('#glosslist_table_header')[0];
                     var gloss_list_header_dummy = $(gloss_list_header).find('#glosslist_table_header_dummy')[0];
                     $(gloss_list_header_dummy).replaceWith(result);
+
+                     $('button[id^="sort_button_"]').each(function() {
+                        if (this.id.match("_del")) {
+                            $(this).hide();
+                        }
+                     });
+                     if (populate_other_parameters.includes('sortOrder')) {
+                        setupSortOrderButtons(other_parameters);
+                     };
                 }
 
         });
@@ -391,7 +426,7 @@ function clearForm() {
 
       $('input').each(function() {
         var this_field = $(this).attr('name');
-        if (this_field == undefined) { return; };
+        if (this_field === undefined) { return; };
         if (this_field == 'morpheme') { $(this).attr('value', ""); return; };
         var this_type = $(this).attr('type');
         if (this_type == 'hidden' || this_type == 'submit' || this_type == 'radio' || this_type == 'button') { return; };
@@ -404,7 +439,7 @@ function clearForm() {
       $('#morphemeidgloss').val('');
       $('select').each(function() {
         var this_field = $(this).attr('name');
-        if (this_field == undefined) { return; };
+        if (this_field === undefined) { return; };
         var this_type = $(this).attr('type');
         if (this_type == 'hidden') { return; };
         if (this_field.endsWith('[]')) {
@@ -670,7 +705,6 @@ function do_toggle_language(el) {
 <form id='adminsearch' class="search-form search-form-light" method='get' action='{{PREFIX_URL}}/signs/search'>
 {% csrf_token %}
 <div class="panel panel-default panel-light">
-    <input type='hidden' id='export_format' name='export_format' value="">
 
     <!-- The element below adds an invisible submit option, so the 'button' above also works when enter is pressed -->
     <input type="submit" onclick="do_adminsearch(this);" name="search_type" value="sign"
@@ -694,6 +728,7 @@ function do_toggle_language(el) {
                     <input name='sortOrder' class='form-control' value='' type='hidden'>
                     <input name='search_type' class='form-control' value='{{search_type}}' type='hidden'>
                     <input id="menu_bar_search_mirror" type="hidden" name="search" class="form-control" value="{{menu_bar_search}}">
+                    <input id="menu_bar_translation_mirror" type="hidden" name="translation" class="form-control" value="{{menu_bar_translation}}">
                 </div>
                 <div>
                     <table class='table' id='searchfields'>
@@ -1096,12 +1131,15 @@ function do_toggle_language(el) {
 {% endif %}
 {% endif %}
 
+{% if page_obj.has_other_pages %}
 <div class="pagination">
-    <span class="step-links">
-
+    <div class="step-links">
         <ul class='pagination pagination-sm'>
         {% if page_obj.has_previous %}
-            <li><a href="?page={{ page_obj.previous_page_number }}{% for key,value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">&laquo;</a></li>
+            {% if page_obj.number > 1 %}
+            <li><a href="?page=1{{page_get_parameters}}">&laquo;&laquo;</a></li>
+            {% endif %}
+            <li><a href="?page={{page_obj.previous_page_number}}{{page_get_parameters}}">&laquo;</a></li>
         {% endif %}
 
           {% if  page_obj.number > 10 %}
@@ -1111,9 +1149,13 @@ function do_toggle_language(el) {
           {% for p in page_obj.paginator.page_range %}
 
              {% if p < page_obj.number|add:"10" and  p > page_obj.number|add:"-10" %}
-             <li {% if p == page_obj.number %}class='active'{% endif %}>
-             <a href="?page={{ p }}{% for key,value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">{% if p == 0 %}Start{% else %}{{p}}{% endif %}</a>
-             </li>
+                {% if p == page_obj.number %}
+                     <li class='active'>
+                 {% else %}
+                    <li>
+                {% endif %}
+                     <a href="?page={{p}}{{page_get_parameters}}">{% if p == 0 %}Start{% else %}{{p}}{% endif %}</a>
+                     </li>
              {% endif %}
 
           {% endfor %}
@@ -1121,19 +1163,17 @@ function do_toggle_language(el) {
           {% if page_obj.paginator.num_pages > page_obj.number|add:"10" %}
             <li><a>...</a></li>
             <li>
-            <a href="?page={{ page_obj.paginator.num_pages }}{% for key,value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">{{page_obj.paginator.num_pages}}</a>
+            <a href="?page={{page_obj.paginator.num_pages}}{{page_get_parameters}}">{{page_obj.paginator.num_pages}}</a>
             </li>
           {% endif %}
 
         {% if page_obj.has_next %}
-            <li><a href="?page={{ page_obj.next_page_number }}{% for key,value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">&raquo;</a></li>
-
-
-      </ul>
-
-
+            <li><a href="?page={{page_obj.next_page_number}}{{page_get_parameters}}">&raquo;</a></li>
+            <li><a href="?page={{page_obj.paginator.num_pages}}{{page_get_parameters}}">&raquo;&raquo;</a></li>
         {% endif %}
-    </span>
+      </ul>
+    </div>
 </div>
+{% endif %}
 </div>
 {% endblock content %}

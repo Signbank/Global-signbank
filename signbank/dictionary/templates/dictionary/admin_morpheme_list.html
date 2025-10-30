@@ -30,6 +30,18 @@
 .select2-selection__choice {
     color: black;
 }
+.sort_button {
+    background-color:transparent;
+    outline: none;
+    padding: 0;
+    margin: 0;
+}
+.sort_button:hover {
+    color: red;
+}
+.sort_button.active {
+    color: red;
+}
 </style>
 <link rel="stylesheet" href="{{STATIC_URL}}css/select2-dark-mode.css">
 
@@ -37,8 +49,8 @@
 <script type="text/javascript" src="{{STATIC_URL}}js/jquery.jeditable.checkbox.js"></script>
 <script type="text/javascript" src="{{STATIC_URL}}js/typeahead.bundle.min.js"></script>
 <script type="text/javascript" src="{{STATIC_URL}}js/gloss_add.js"></script>
-<link href="//cdnjs.cloudflare.com/ajax/libs/select2/4.0.0/css/select2.css" rel="stylesheet"/>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.5/js/select2.full.js"></script>
+<link href="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/css/select2.css" rel="stylesheet"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/js/select2.full.js"></script>
 {{ populate_fields|json_script:"populate_fields" }}
 <script type='text/javascript'>
 var show_dataset_interface_options = {{SHOW_DATASET_INTERFACE_OPTIONS|yesno:"true,false"}};
@@ -62,6 +74,17 @@ $(document).ready(function(){
         });
         set_initial_language_lemma_lookahead(lookahead_initial_language);
     };
+
+    function setupSortOrderButtons(populate_fields) {
+        let query = populate_fields.sortOrder;
+        const base = query.startsWith('-') ? query.slice(1) : query;
+        const dir = query.startsWith('-') ? 'desc' : 'asc';
+        const button = `#sort_button_${base}_${dir}`;
+        const stopButton = `#sort_button_${base}_del`;
+
+        $(button).addClass("active").trigger('change');
+        $(stopButton).show().trigger('change');
+    }
 
     function selectColors(fieldId) {
         var target_pulldown = document.getElementById(fieldId);
@@ -183,6 +206,15 @@ $(document).ready(function(){
             $(this_id).val(query_initial);
         }
      }
+     $('button[id^="sort_button_"]').each(function() {
+        if (this.id.match("_del")) {
+            $(this).hide();
+        }
+     });
+
+     if (populate_fields_keys.includes('sortOrder')) {
+        setupSortOrderButtons(populate_fields);
+     };
 });
 
 </script>
@@ -193,7 +225,7 @@ $(document).ready(function(){
 function clearForm() {
       $('input').each(function() {
         var this_field = $(this).attr('name');
-        if (this_field == undefined) { return; };
+        if (this_field === undefined) { return; };
         var this_type = $(this).attr('type');
         if (this_type == 'hidden' || this_type == 'submit' || this_type == 'radio') { return; };
         if (this_type == 'date' || this_type == 'text') {
@@ -205,7 +237,7 @@ function clearForm() {
 
       $('select').each(function() {
         var this_field = $(this).attr('name');
-        if (this_field == undefined) { return; };
+        if (this_field === undefined) { return; };
         var this_type = $(this).attr('type');
         if (this_type == 'hidden') { return; };
         if (this_field.endsWith('[]')) {
@@ -253,7 +285,7 @@ function do_sort_column(field_name, action, frmName) {
   } else if (action == 'del') {
     // "Deleting" (pressing 'x') the sort order of a column means: return to the default 'idgloss' sort order
     sOrder = '';
-  }
+    }
 
   // Set the value of the [sortOrder] field defined in dictionary/forms.py::MorphemeSearchForm
   $("#" + frmName + " input[name='sortOrder']").val(sOrder);
@@ -618,59 +650,34 @@ function do_set_lemma_language(el) {
       <!-- EK: this second header row contains clickable sort-order buttons -->
       <tr>
           <th></th>
-          {% for dataset_lang in dataset_languages %}
-          {% with "annotationidglosstranslation_order_"|add:dataset_lang.language_code_2char as field %}
-          {% with minfield="-"|add:field %}
-           <th>
-             <a href="#" onclick="do_sort_column('{{field}}','asc', 'adminsearch')">
-               {% if searchform.sortOrder and searchform.sortOrder.value == field %}<font color="red">&#x25B2;</font>{% else %}&#x25B2; {% endif %}
-             </a>
-             <a href="#" onclick="do_sort_column('{{field}}','desc', 'adminsearch')">
-               {% if searchform.sortOrder and searchform.sortOrder.value == minfield %}<font color="red">&#x25BC;</font>{% else %}&#x25BC;{% endif %}
-             </a>
-             {% if searchform.sortOrder and searchform.sortOrder.value == minfield or searchform.sortOrder and searchform.sortOrder.value == field  %}
-               <a href="#" onclick="do_sort_column('{{field}}','del', 'adminsearch')">x</a>
-             {% endif %}
-           </th>
+           {% for dataset_lang in dataset_languages %}
+           {% with "annotationidglosstranslation_order_"|add:dataset_lang.language_code_2char as field %}
+            <th>
+             <button class="btn sort_button" onclick="do_sort_column('{{field}}','asc', 'adminsearch')" id="sort_button_annotationidglosstranslation_order_{{dataset_lang.language_code_2char}}_asc">&#x25B2;</button>
+             <button class="btn sort_button" onclick="do_sort_column('{{field}}','desc','adminsearch')" id="sort_button_annotationidglosstranslation_order_{{dataset_lang.language_code_2char}}_desc">&#x25BC;</button>
+             <button class="btn sort_button" onclick="do_sort_column('{{field}}','del', 'adminsearch')" id="sort_button_annotationidglosstranslation_order_{{dataset_lang.language_code_2char}}_del">x</button>
+            </th>
            {% endwith %}
-           {% endwith %}
-          {% endfor %}
-
+           {% endfor %}
             <th></th>
 
            {% for dataset_lang in dataset_languages %}
            {% with "translation_"|add:dataset_lang.language_code_2char as field %}
-           {% with minfield="-"|add:field %}
            <th>
-             <a href="#" onclick="do_sort_column('{{field}}','asc', 'adminsearch')">
-               {% if searchform.sortOrder and searchform.sortOrder.value == field %}<font color="red">&#x25B2;</font>{% else %}&#x25B2; {% endif %}
-             </a>
-             <a href="#" onclick="do_sort_column('{{field}}','desc', 'adminsearch')">
-               {% if searchform.sortOrder and searchform.sortOrder.value == minfield %}<font color="red">&#x25BC;</font>{% else %}&#x25BC;{% endif %}
-             </a>
-             {% if searchform.sortOrder and searchform.sortOrder.value == minfield or searchform.sortOrder and searchform.sortOrder.value == field  %}
-               <a href="#" onclick="do_sort_column('{{field}}','del', 'adminsearch')">x</a>
-             {% endif %}
+             <button class="btn sort_button" onclick="do_sort_column('{{field}}','asc', 'adminsearch')" id="sort_button_translation_{{dataset_lang.language_code_2char}}_asc">&#x25B2;</button>
+             <button class="btn sort_button" onclick="do_sort_column('{{field}}','desc','adminsearch')" id="sort_button_translation_{{dataset_lang.language_code_2char}}_desc">&#x25BC;</button>
+             <button class="btn sort_button" onclick="do_sort_column('{{field}}','del', 'adminsearch')" id="sort_button_translation_{{dataset_lang.language_code_2char}}_del">x</button>
            </th>
-           {% endwith %}
            {% endwith %}
            {% endfor %}
 
            {% with "handedness locprim" as head_fields %}
-           {% for field in head_fields.split  %}
-           {% with minfield="-"|add:field %}
+           {% for hl_field in head_fields.split  %}
            <th>
-             <a href="#" onclick="do_sort_column('{{field}}','asc', 'adminsearch')">
-               {% if searchform.sortOrder and searchform.sortOrder.value == field %}<font color="red">&#x25B2;</font>{% else %}&#x25B2; {% endif %}
-             </a>
-             <a href="#" onclick="do_sort_column('{{field}}','desc', 'adminsearch')">
-               {% if searchform.sortOrder and searchform.sortOrder.value == minfield %}<font color="red">&#x25BC;</font>{% else %}&#x25BC;{% endif %}
-             </a>
-             {% if searchform.sortOrder and searchform.sortOrder.value == minfield or searchform.sortOrder and searchform.sortOrder.value == field  %}
-               <a href="#" onclick="do_sort_column('{{field}}','del', 'adminsearch')">x</a>
-             {% endif %}
+             <button class="btn sort_button" onclick="do_sort_column('{{hl_field}}','asc', 'adminsearch')" id="sort_button_{{hl_field}}_asc">&#x25B2;</button>
+             <button class="btn sort_button" onclick="do_sort_column('{{hl_field}}','desc','adminsearch')" id="sort_button_{{hl_field}}_desc">&#x25BC;</button>
+             <button class="btn sort_button" onclick="do_sort_column('{{hl_field}}','del', 'adminsearch')" id="sort_button_{{hl_field}}_del">x</button>
            </th>
-           {% endwith %}
            {% endfor %}
            {% endwith %}
            <th style="width:255px;"></th>
@@ -709,46 +716,50 @@ function do_set_lemma_language(el) {
   </tbody>
 </table>
 
+{% if page_obj.has_other_pages %}
 <div class="pagination">
-    <span class="step-links">
-
+    <div class="step-links">
         <ul class='pagination pagination-sm'>
         {% if page_obj.has_previous %}
-            <li><a href="?page={{page_obj.previous_page_number}}{% for key,value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">&laquo;</a></li>
+            {% if page_obj.number > 1 %}
+            <li><a href="?page=1{{page_get_parameters}}">&laquo;&laquo;</a></li>
+            {% endif %}
+            <li><a href="?page={{page_obj.previous_page_number}}{{page_get_parameters}}">&laquo;</a></li>
         {% endif %}
-          
+
           {% if  page_obj.number > 10 %}
             <li><a>...</a></li>
           {% endif %}
 
           {% for p in page_obj.paginator.page_range %}
-          
+
              {% if p < page_obj.number|add:"10" and  p > page_obj.number|add:"-10" %}
-             <li {% if p == page_obj.number %}class='active'{% endif %}>
-             <a href='?page={{p}}{% for key,value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}'>{% if p == 0 %}Start{% else %}{{p}}{% endif %}</a>
-             </li>
+                {% if p == page_obj.number %}
+                     <li class='active'>
+                 {% else %}
+                    <li>
+                {% endif %}
+                     <a href="?page={{p}}{{page_get_parameters}}">{% if p == 0 %}Start{% else %}{{p}}{% endif %}</a>
+                     </li>
              {% endif %}
-         
+
           {% endfor %}
-  
+
           {% if page_obj.paginator.num_pages > page_obj.number|add:"10" %}
             <li><a>...</a></li>
             <li>
-            <a href='?page={{page_obj.paginator.num_pages}}{% for key,value in request.GET.items %}{% if key != 'page' %}&{{key}}={{value}}{% endif %}{% endfor %}'>{{page_obj.paginator.num_pages}}</a>
+            <a href="?page={{page_obj.paginator.num_pages}}{{page_get_parameters}}">{{page_obj.paginator.num_pages}}</a>
             </li>
           {% endif %}
-      
+
         {% if page_obj.has_next %}
-            <li><a href="?page={{page_obj.next_page_number}}{% for key,value in request.GET.items %}{% if key != 'page' %}&{{key}}={{value}}{% endif %}{% endfor %}">&raquo;</a></li>
-
-            
-      </ul>
-
-
+            <li><a href="?page={{page_obj.next_page_number}}{{page_get_parameters}}">&raquo;</a></li>
+            <li><a href="?page={{page_obj.paginator.num_pages}}{{page_get_parameters}}">&raquo;&raquo;</a></li>
         {% endif %}
-    </span>
+      </ul>
+    </div>
 </div>
-
+{% endif %}
 
 {% endif %}
 </div>

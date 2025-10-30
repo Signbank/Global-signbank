@@ -230,7 +230,7 @@ class GlossSearchForm(forms.ModelForm):
     use_required_attribute = False  # otherwise the html required attribute will show up on every form
 
     search = forms.CharField(label=_('Search Gloss'))
-    sortOrder = forms.CharField(label=_('Sort Order'))
+    sortOrder = forms.CharField(label=_('Sort Order'), initial="")
     translation = forms.CharField(label=_('Search Senses'))
     hasvideo = forms.ChoiceField(label=_('Has Video'), choices=[(0, '-')],
                                  widget=forms.Select(attrs=ATTRS_FOR_BOOLEAN_FORMS))
@@ -468,7 +468,7 @@ class MorphemeSearchForm(forms.ModelForm):
     use_required_attribute = False  # otherwise the html required attribute will show up on every form
 
     search = forms.CharField(label=_("Search Gloss"))
-    sortOrder = forms.CharField(label=_("Sort Order"))
+    sortOrder = forms.CharField(label=_("Sort Order"), initial="")
     tags = forms.ChoiceField(label=_('Tags'),
                              choices=[(0, '-')],
                              widget=forms.Select(attrs=ATTRS_FOR_FORMS))
@@ -821,6 +821,17 @@ class HandshapeSearchForm(forms.ModelForm):
             self.fields[finger].widget.choices = [(True, _('Yes')), (False, _('No'))]
 
 
+def check_sortOrder_handshapes(request):
+    sort_order = request.GET.get('sortOrder', '')
+    if not sort_order:
+        return 'machine_value'
+    field = sort_order[1:] if sort_order.startswith('-') else sort_order
+    if field not in ['name', 'hsFingSel', 'hsFingConf', 'hsFingSel2', 'hsFingConf2',
+                         'hsNumSel', 'hsThumb', 'hsFingUnsel', 'hsSpread', 'hsAperture']:
+        return 'machine_value'
+    return sort_order
+
+
 def check_multilingual_fields(ClassModel, queryDict, languages):
     # this function inspects the name field of HandshapeSearchForm looking for occurrences of special characters
     language_fields_okay = True
@@ -875,7 +886,7 @@ class AnnotatedSentenceSearchForm(forms.ModelForm):
     use_required_attribute = False  # otherwise the html required attribute will show up on every form
 
     search = forms.CharField(label=_("Search"))
-    sortOrder = forms.CharField(label=_("Sort Order"))
+    sortOrder = forms.CharField(label=_("Sort Order"), initial="")
     no_glosses = forms.ChoiceField(label=_('Only show results without glosses'), choices=[],
                                    widget=forms.Select(attrs=ATTRS_FOR_BOOLEAN_FORMS))
     has_glosses = forms.ChoiceField(label=_('Only show results with glosses'), choices=[],
@@ -890,13 +901,14 @@ class AnnotatedSentenceSearchForm(forms.ModelForm):
         super(AnnotatedSentenceSearchForm, self).__init__(*args, **kwargs)
 
         for boolean_field in ['no_glosses', 'has_glosses']:
-            self.fields[boolean_field].choices = [(0, _('No')), (1, _('Yes'))]
+            self.fields[boolean_field].choices = [('0', _('No')), ('1', _('Yes'))]
+            self.fields[boolean_field].initial = '0'
 
 class LemmaSearchForm(forms.ModelForm):
     use_required_attribute = False  # otherwise the html required attribute will show up on every form
 
     search = forms.CharField(label=_("Lemma"))
-    sortOrder = forms.CharField(label=_("Sort Order"))
+    sortOrder = forms.CharField(label=_("Sort Order"), initial="")
     no_glosses = forms.ChoiceField(label=_('Only show results without glosses'), choices=[],
                                    widget=forms.Select(attrs=ATTRS_FOR_BOOLEAN_FORMS))
     has_glosses = forms.ChoiceField(label=_('Only show results with glosses'), choices=[],
@@ -1046,9 +1058,8 @@ class KeyMappingSearchForm(forms.ModelForm):
         model = Gloss
         fields = MINIMAL_PAIRS_SEARCH_FIELDS
 
-    def __init__(self, queryDict, *args, **kwargs):
-        languages = kwargs.pop('languages')
-        super(KeyMappingSearchForm, self).__init__(queryDict, *args, **kwargs)
+    def __init__(self, *args, **kwargs):
+        super(KeyMappingSearchForm, self).__init__(*args, **kwargs)
 
         self.fields['tags'] = forms.ModelChoiceField(label=_('Tags'),
                                                      queryset=Tag.objects.all(), empty_label=None,
@@ -1060,7 +1071,7 @@ class FocusGlossSearchForm(forms.ModelForm):
     use_required_attribute = False  # otherwise the html required attribute will show up on every form
 
     search = forms.CharField(label=_("Search Gloss"))
-    sortOrder = forms.CharField(label=_("Sort Order"))
+    sortOrder = forms.CharField(label=_("Sort Order"), initial="")
     translation = forms.CharField(label=_('Search Senses'))
 
     repeat = forms.ChoiceField(label=_('Repeating Movement'), choices=[('0', '-')],
