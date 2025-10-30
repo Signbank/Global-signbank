@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: \n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-10-30 11:41+0100\n"
+"POT-Creation-Date: 2025-10-30 12:11+0100\n"
 "PO-Revision-Date: 2018-03-08 18:54+0100\n"
 "Last-Translator: susanodd\n"
 "Language-Team: Dutch <LL@li.org>\n"
@@ -25,10 +25,10 @@ msgstr ""
 #: signbank/dictionary/templates/dictionary/add_gloss.html:144
 #: signbank/dictionary/templates/dictionary/add_morpheme.html:138
 #: signbank/dictionary/templates/dictionary/admin_batch_edit_senses.html:374
-#: signbank/dictionary/templates/dictionary/admin_gloss_list.html:1061
-#: signbank/dictionary/templates/dictionary/admin_handshape_list.html:523
-#: signbank/dictionary/templates/dictionary/admin_morpheme_list.html:514
-#: signbank/dictionary/templates/dictionary/admin_morpheme_list.html:604
+#: signbank/dictionary/templates/dictionary/admin_gloss_list.html:1094
+#: signbank/dictionary/templates/dictionary/admin_handshape_list.html:515
+#: signbank/dictionary/templates/dictionary/admin_morpheme_list.html:546
+#: signbank/dictionary/templates/dictionary/admin_morpheme_list.html:636
 #: signbank/dictionary/templates/dictionary/admin_query_list.html:550
 #: signbank/dictionary/templates/dictionary/admin_recently_added_glosses.html:143
 #: signbank/dictionary/templates/dictionary/annotatedglosslist_headerrow.html:11
@@ -80,9 +80,9 @@ msgstr "Annotatie-ID-Glos"
 #: signbank/dictionary/templates/dictionary/add_gloss.html:155
 #: signbank/dictionary/templates/dictionary/add_lemma.html:76
 #: signbank/dictionary/templates/dictionary/add_morpheme.html:98
-#: signbank/dictionary/templates/dictionary/admin_gloss_list.html:1057
+#: signbank/dictionary/templates/dictionary/admin_gloss_list.html:1090
 #: signbank/dictionary/templates/dictionary/admin_lemma_list.html:238
-#: signbank/dictionary/templates/dictionary/admin_morpheme_list.html:512
+#: signbank/dictionary/templates/dictionary/admin_morpheme_list.html:544
 #: signbank/dictionary/templates/dictionary/admin_query_list.html:560
 #: signbank/dictionary/templates/dictionary/admin_recently_added_glosses.html:142
 #: signbank/dictionary/templates/dictionary/gloss.html:319
@@ -111,9 +111,9 @@ msgstr "Lemma-ID-Glos"
 #: signbank/dictionary/templates/dictionary/add_gloss.html:213
 #: signbank/dictionary/templates/dictionary/admin_batch_edit_senses.html:386
 #: signbank/dictionary/templates/dictionary/admin_batch_edit_view.html:474
-#: signbank/dictionary/templates/dictionary/admin_gloss_list.html:1065
+#: signbank/dictionary/templates/dictionary/admin_gloss_list.html:1098
 #: signbank/dictionary/templates/dictionary/admin_query_list.html:570
-#: signbank/dictionary/templates/dictionary/admin_senses_list.html:796
+#: signbank/dictionary/templates/dictionary/admin_senses_list.html:771
 #: signbank/dictionary/templates/dictionary/gloss.html:359
 #: signbank/dictionary/templates/dictionary/gloss_detail.html:1460
 #: signbank/dictionary/templates/dictionary/glosslist_headerrow.html:20
@@ -286,7 +286,7 @@ msgid "No permission to change this gloss."
 msgstr "Geen toestemming om deze glos te wijzigen."
 
 #: signbank/api_interface.py:227
-#: signbank/dictionary/templates/dictionary/admin_annotatedsentence_list.html:208
+#: signbank/dictionary/templates/dictionary/admin_annotatedsentence_list.html:247
 #: signbank/gloss_update.py:1537
 msgid "Translation"
 msgstr "Vertaling"
@@ -431,12 +431,12 @@ msgstr "URL"
 #: signbank/csv_interface.py:1219 signbank/dictionary/forms.py:204
 #: signbank/dictionary/forms.py:298 signbank/dictionary/forms.py:358
 #: signbank/dictionary/forms.py:472 signbank/dictionary/forms.py:537
-#: signbank/dictionary/forms.py:1052 signbank/dictionary/models.py:1508
+#: signbank/dictionary/forms.py:1064 signbank/dictionary/models.py:1508
 #: signbank/dictionary/models.py:4032
 #: signbank/dictionary/templates/dictionary/admin_batch_edit_senses.html:272
 #: signbank/dictionary/templates/dictionary/admin_batch_edit_view.html:313
-#: signbank/dictionary/templates/dictionary/admin_gloss_list.html:1077
-#: signbank/dictionary/templates/dictionary/admin_morpheme_list.html:616
+#: signbank/dictionary/templates/dictionary/admin_gloss_list.html:1110
+#: signbank/dictionary/templates/dictionary/admin_morpheme_list.html:648
 #: signbank/dictionary/templates/dictionary/admin_toggle_view.html:220
 #: signbank/dictionary/templates/dictionary/admin_toggle_view.html:255
 #: signbank/dictionary/templates/dictionary/glosslist_headerrow.html:71
@@ -484,13 +484,13 @@ msgid "User"
 msgstr "Gebruiker"
 
 #: signbank/dictionary/admin.py:704 signbank/dictionary/models.py:3558
-#: signbank/dictionary/templates/dictionary/admin_annotatedsentence_list.html:206
+#: signbank/dictionary/templates/dictionary/admin_annotatedsentence_list.html:245
 #: signbank/dictionary/templates/dictionary/admin_frequency_list.html:247
-#: signbank/dictionary/templates/dictionary/admin_gloss_list.html:1058
-#: signbank/dictionary/templates/dictionary/admin_handshape_list.html:525
+#: signbank/dictionary/templates/dictionary/admin_gloss_list.html:1091
+#: signbank/dictionary/templates/dictionary/admin_handshape_list.html:517
 #: signbank/dictionary/templates/dictionary/admin_lemma_list.html:235
 #: signbank/dictionary/templates/dictionary/admin_minimalpairs_list.html:398
-#: signbank/dictionary/templates/dictionary/admin_morpheme_list.html:511
+#: signbank/dictionary/templates/dictionary/admin_morpheme_list.html:543
 #: signbank/dictionary/templates/dictionary/admin_query_list.html:607
 #: signbank/dictionary/templates/dictionary/admin_recently_added_glosses.html:141
 #: signbank/dictionary/templates/dictionary/dataset_frequency.html:123
@@ -559,15 +559,15 @@ msgstr ": Vanwege speciale tekens is een reguliere expressie vereist. "
 msgid "Please use a backslash before special characters: "
 msgstr "Plaats een backslash voor de speciale karakters."
 
-#: signbank/dictionary/adminviews.py:693 signbank/dictionary/adminviews.py:3796
-#: signbank/dictionary/adminviews.py:3912
-#: signbank/dictionary/adminviews.py:4048
-#: signbank/dictionary/adminviews.py:4515
-#: signbank/dictionary/adminviews.py:4987
-#: signbank/dictionary/adminviews.py:5025
-#: signbank/dictionary/adminviews.py:5064
-#: signbank/dictionary/adminviews.py:5686
-#: signbank/dictionary/adminviews.py:5725
+#: signbank/dictionary/adminviews.py:699 signbank/dictionary/adminviews.py:3806
+#: signbank/dictionary/adminviews.py:3922
+#: signbank/dictionary/adminviews.py:4058
+#: signbank/dictionary/adminviews.py:4525
+#: signbank/dictionary/adminviews.py:4997
+#: signbank/dictionary/adminviews.py:5035
+#: signbank/dictionary/adminviews.py:5074
+#: signbank/dictionary/adminviews.py:5696
+#: signbank/dictionary/adminviews.py:5735
 #: signbank/dictionary/templates/dictionary/dataset_frequency.html:118
 #: signbank/dictionary/update.py:2965 signbank/dictionary/update.py:3492
 #: signbank/dictionary/views.py:325 signbank/frequency.py:1141
@@ -575,244 +575,244 @@ msgstr "Plaats een backslash voor de speciale karakters."
 msgid "Please login to use this functionality."
 msgstr "Log alsjeblieft in om deze functionaliteit te gebruiken."
 
-#: signbank/dictionary/adminviews.py:701
+#: signbank/dictionary/adminviews.py:707
 msgid "No dataset with that name found."
 msgstr "Geen dataset gevonden."
 
-#: signbank/dictionary/adminviews.py:707 signbank/dictionary/adminviews.py:3933
+#: signbank/dictionary/adminviews.py:713 signbank/dictionary/adminviews.py:3943
 msgid "No permission to export dataset."
 msgstr "Geen toestemming om dataset te exporteren."
 
-#: signbank/dictionary/adminviews.py:714 signbank/dictionary/adminviews.py:3946
+#: signbank/dictionary/adminviews.py:720 signbank/dictionary/adminviews.py:3956
 msgid "ECV successfully updated."
 msgstr "ECV met succes bijgewerkt."
 
-#: signbank/dictionary/adminviews.py:716
+#: signbank/dictionary/adminviews.py:722
 msgid "No ECV created for dataset."
 msgstr "Geen ECV aangemaakt voor dataset."
 
-#: signbank/dictionary/adminviews.py:1144
-#: signbank/dictionary/adminviews.py:1705
-#: signbank/dictionary/adminviews.py:1817
-#: signbank/dictionary/adminviews.py:3173
+#: signbank/dictionary/adminviews.py:1150
+#: signbank/dictionary/adminviews.py:1711
+#: signbank/dictionary/adminviews.py:1823
+#: signbank/dictionary/adminviews.py:3179
 msgid "The requested gloss does not exist."
 msgstr "Aangevraagd glos bestaat niet."
 
-#: signbank/dictionary/adminviews.py:1148
-#: signbank/dictionary/adminviews.py:1709
-#: signbank/dictionary/adminviews.py:1821
-#: signbank/dictionary/adminviews.py:3177
+#: signbank/dictionary/adminviews.py:1154
+#: signbank/dictionary/adminviews.py:1715
+#: signbank/dictionary/adminviews.py:1827
+#: signbank/dictionary/adminviews.py:3183
 msgid "Requested gloss has no lemma or dataset."
 msgstr "Aangevraagd glos heeft geen lemma nog dataset."
 
-#: signbank/dictionary/adminviews.py:1154
+#: signbank/dictionary/adminviews.py:1160
 msgid "Requested dataset is not available for public viewing."
 msgstr "Aangevraagd dataset niet beschikbaar voor publiek."
 
-#: signbank/dictionary/adminviews.py:1158
+#: signbank/dictionary/adminviews.py:1164
 msgid "Requested gloss is not available for public viewing."
 msgstr "Aangevraagd glos niet beschikbaar voor publiek."
 
-#: signbank/dictionary/adminviews.py:1162
-#: signbank/dictionary/adminviews.py:1723
-#: signbank/dictionary/adminviews.py:1835
-#: signbank/dictionary/adminviews.py:3191
+#: signbank/dictionary/adminviews.py:1168
+#: signbank/dictionary/adminviews.py:1729
+#: signbank/dictionary/adminviews.py:1841
+#: signbank/dictionary/adminviews.py:3197
 msgid "The gloss you are trying to view is not in your selected datasets. "
 msgstr "De aangevraagde glos bevindt zich niet in de geselecteerde datasets. "
 
-#: signbank/dictionary/adminviews.py:1163
-#: signbank/dictionary/adminviews.py:1174
-#: signbank/dictionary/adminviews.py:1724
-#: signbank/dictionary/adminviews.py:1836
-#: signbank/dictionary/adminviews.py:3192
-#: signbank/dictionary/adminviews.py:6642
-#: signbank/dictionary/adminviews.py:6647
+#: signbank/dictionary/adminviews.py:1169
+#: signbank/dictionary/adminviews.py:1180
+#: signbank/dictionary/adminviews.py:1730
+#: signbank/dictionary/adminviews.py:1842
+#: signbank/dictionary/adminviews.py:3198
+#: signbank/dictionary/adminviews.py:6652
+#: signbank/dictionary/adminviews.py:6657
 #, python-brace-format
 msgid "It is in dataset {dataset}"
 msgstr "Hij behoort tot de dataset {dataset}"
 
-#: signbank/dictionary/adminviews.py:1173
+#: signbank/dictionary/adminviews.py:1179
 msgid "The gloss you are trying to view is not in a dataset you can view. "
 msgstr ""
 "De aangevraagde glos bevindt zich niet in een dataset die u kunt bekijken. "
 
-#: signbank/dictionary/adminviews.py:1641
-#: signbank/dictionary/adminviews.py:4830
+#: signbank/dictionary/adminviews.py:1647
+#: signbank/dictionary/adminviews.py:4840
 msgid "You must be superuser to use the requested functionality."
 msgstr "Je moet superuser zijn om deze functionaliteit te gebruiken."
 
-#: signbank/dictionary/adminviews.py:1649
+#: signbank/dictionary/adminviews.py:1655
 msgid "The target dataset has different translation languages."
 msgstr "De doel-dataset heeft andere vertaaltalen."
 
-#: signbank/dictionary/adminviews.py:1655
+#: signbank/dictionary/adminviews.py:1661
 msgid "A similar gloss already exists in the target dataset: "
 msgstr "Een vergelijkbare glos bestaat al in de doel-dataset: "
 
-#: signbank/dictionary/adminviews.py:1662
+#: signbank/dictionary/adminviews.py:1668
 msgid "A related gloss already exists in the target dataset: "
 msgstr "Een verwant gebaar bestaat al in de doel-dataset: "
 
-#: signbank/dictionary/adminviews.py:1679
+#: signbank/dictionary/adminviews.py:1685
 msgid "Error moving the gloss and related glosses to the requested dataset."
 msgstr ""
 "Fout bij het verplaatsen van de glans en gerelateerde glossen naar de "
 "opgevraagde dataset."
 
-#: signbank/dictionary/adminviews.py:1684
+#: signbank/dictionary/adminviews.py:1690
 #, python-brace-format
 msgid "Gloss moved to dataset {dataset}"
 msgstr "Glos verplaatst naar dataset {dataset}"
 
-#: signbank/dictionary/adminviews.py:1731
-#: signbank/dictionary/adminviews.py:1843
-#: signbank/dictionary/adminviews.py:3199
+#: signbank/dictionary/adminviews.py:1737
+#: signbank/dictionary/adminviews.py:1849
+#: signbank/dictionary/adminviews.py:3205
 msgid "The gloss you are trying to view is not in a dataset you can view."
 msgstr ""
 "De aangevraagde glos bevindt zich niet in een dataset die u kunt bekijken."
 
-#: signbank/dictionary/adminviews.py:2277
+#: signbank/dictionary/adminviews.py:2283
 msgid "Handshape not configured."
 msgstr "Handvorm niet geconfigureerd."
 
-#: signbank/dictionary/adminviews.py:2409
+#: signbank/dictionary/adminviews.py:2415
 msgid "SemanticField not configured for this machine value."
 msgstr "SemanticField is niet geconfigureerd voor deze machinewaarde."
 
-#: signbank/dictionary/adminviews.py:2498
+#: signbank/dictionary/adminviews.py:2504
 msgid "DerivationHistory not configured for this machine value."
 msgstr "DerivationHistory is niet geconfigureerd voor deze machinewaarde."
 
-#: signbank/dictionary/adminviews.py:2626
+#: signbank/dictionary/adminviews.py:2632
 msgid "Please select a single dataset to view minimal pairs."
 msgstr "Selecteer een enkel dataset om minimale paren te bekijken."
 
-#: signbank/dictionary/adminviews.py:2920
+#: signbank/dictionary/adminviews.py:2926
 msgid "Query View Save"
 msgstr "Opgeslagen in Query-weergave"
 
-#: signbank/dictionary/adminviews.py:3005
+#: signbank/dictionary/adminviews.py:3011
 #, python-brace-format
 msgid "Language {language} is missing from the selected datasets."
 msgstr "Taal {language} ontbreekt in de geselecteerde datasets."
 
-#: signbank/dictionary/adminviews.py:3804
-#: signbank/dictionary/adminviews.py:3920
-#: signbank/dictionary/adminviews.py:4084
-#: signbank/dictionary/adminviews.py:4995
-#: signbank/dictionary/adminviews.py:5033
-#: signbank/dictionary/adminviews.py:5072
+#: signbank/dictionary/adminviews.py:3814
+#: signbank/dictionary/adminviews.py:3930
+#: signbank/dictionary/adminviews.py:4094
+#: signbank/dictionary/adminviews.py:5005
+#: signbank/dictionary/adminviews.py:5043
+#: signbank/dictionary/adminviews.py:5082
 msgid "Dataset name must be non-empty."
 msgstr "Naam van de dataset mag niet leeg zijn."
 
-#: signbank/dictionary/adminviews.py:3810
-#: signbank/dictionary/adminviews.py:4090
+#: signbank/dictionary/adminviews.py:3820
+#: signbank/dictionary/adminviews.py:4100
 msgid "No dataset found with that name."
 msgstr "Geen dataset gevonden."
 
-#: signbank/dictionary/adminviews.py:3817
+#: signbank/dictionary/adminviews.py:3827
 msgid "Dataset must have at least one owner."
 msgstr "Dataset moet tenminste een eigenaar."
 
-#: signbank/dictionary/adminviews.py:3830
-#: signbank/dictionary/adminviews.py:4182
+#: signbank/dictionary/adminviews.py:3840
+#: signbank/dictionary/adminviews.py:4192
 msgid "View permission for user successfully granted."
 msgstr "Lees-toestemming voor gebruiker zijn succesvol toegekend."
 
-#: signbank/dictionary/adminviews.py:3834
+#: signbank/dictionary/adminviews.py:3844
 msgid "View permission for user requested."
 msgstr "Lees-toestemming voor gebruiker aangevraagd."
 
-#: signbank/dictionary/adminviews.py:3838
+#: signbank/dictionary/adminviews.py:3848
 msgid "You can already view this dataset."
 msgstr "Je kunt deze dataset al bekijken."
 
-#: signbank/dictionary/adminviews.py:3926
+#: signbank/dictionary/adminviews.py:3936
 msgid "No dataset found with that acronym."
 msgstr "Geen dataset gevonden."
 
-#: signbank/dictionary/adminviews.py:3939
+#: signbank/dictionary/adminviews.py:3949
 msgid "The dataset is empty, export ECV is not available."
 msgstr "De dataset is leeg, export ECV is niet beschikbaar."
 
-#: signbank/dictionary/adminviews.py:3948
+#: signbank/dictionary/adminviews.py:3958
 msgid "No ECV created for the dataset."
 msgstr "Er is geen ECV aangemaakt voor de dataset."
 
-#: signbank/dictionary/adminviews.py:4055
-#: signbank/dictionary/adminviews.py:4409
-#: signbank/dictionary/adminviews.py:4522
-#: signbank/dictionary/adminviews.py:4735 signbank/dictionary/update.py:2971
+#: signbank/dictionary/adminviews.py:4065
+#: signbank/dictionary/adminviews.py:4419
+#: signbank/dictionary/adminviews.py:4532
+#: signbank/dictionary/adminviews.py:4745 signbank/dictionary/update.py:2971
 #: signbank/manage_videos.py:30
 msgid "No group Dataset_Manager found."
 msgstr "Geen groep Dataset_Manager gevonden."
 
-#: signbank/dictionary/adminviews.py:4061
-#: signbank/dictionary/adminviews.py:4527
+#: signbank/dictionary/adminviews.py:4071
+#: signbank/dictionary/adminviews.py:4537
 msgid "You must be in group Dataset Manager to modify dataset permissions."
 msgstr "Je moet in groep Dataset Manager zijn om deze dataset te wijzigen."
 
-#: signbank/dictionary/adminviews.py:4068
+#: signbank/dictionary/adminviews.py:4078
 msgid "No permission to modify dataset permissions."
 msgstr "Geen toestemming om de datasetpermissies te wijzigen."
 
-#: signbank/dictionary/adminviews.py:4105
+#: signbank/dictionary/adminviews.py:4115
 msgid ""
 "Username must be non-empty. Please make a selection using the drop-down list."
 msgstr ""
 "Gebruikersnaam mag niet leeg zijn. Maak alstublieft een keuze met de "
 "keuzelijst."
 
-#: signbank/dictionary/adminviews.py:4111
-#: signbank/dictionary/adminviews.py:4541
+#: signbank/dictionary/adminviews.py:4121
+#: signbank/dictionary/adminviews.py:4551
 msgid "No user with that username found."
 msgstr "Geen gebruikers met username gevonden."
 
-#: signbank/dictionary/adminviews.py:4134
+#: signbank/dictionary/adminviews.py:4144
 #, python-brace-format
 msgid "The default language of {acronym} is set to {language}."
 msgstr "De standaardtaal van {acronym} is ingesteld op {language}."
 
-#: signbank/dictionary/adminviews.py:4138
+#: signbank/dictionary/adminviews.py:4148
 #, python-brace-format
 msgid "{language} is not in the set of languages of dataset {acronym}."
 msgstr "{language} staat niet in de set talen voor dataset {acronym}."
 
-#: signbank/dictionary/adminviews.py:4142
+#: signbank/dictionary/adminviews.py:4152
 #, python-brace-format
 msgid "Something went wrong setting the default language for {acronym}."
 msgstr ""
 "Er is iets misgegaan bij het instellen van de standaardtaal voor {acronym}."
 
-#: signbank/dictionary/adminviews.py:4173
+#: signbank/dictionary/adminviews.py:4183
 msgid ""
 "User already has view permission for this dataset as staff or superuser."
 msgstr ""
 "Gebruiker heeft al toestemming om deze dataset te bekijken als medewerker of "
 "supergebruiker"
 
-#: signbank/dictionary/adminviews.py:4176
+#: signbank/dictionary/adminviews.py:4186
 msgid "User already has view permission for this dataset."
 msgstr "De gebruiker heeft al weergaverechten voor deze dataset."
 
-#: signbank/dictionary/adminviews.py:4212
+#: signbank/dictionary/adminviews.py:4222
 msgid "Error assigning view dataset permission to user."
 msgstr ""
 "Fout bij het toewijzen van de toestemming om de dataset te bekijken aan de "
 "gebruiker."
 
-#: signbank/dictionary/adminviews.py:4221
+#: signbank/dictionary/adminviews.py:4231
 msgid ""
 "User already has change permission for this dataset as staff or superuser."
 msgstr ""
 "Gebruiker heeft al wijzigingsrechten voor deze dataset als medewerker of "
 "supergebruiker."
 
-#: signbank/dictionary/adminviews.py:4224
+#: signbank/dictionary/adminviews.py:4234
 msgid "User already has change permission for this dataset."
 msgstr "De gebruiker heeft al wijzigingsrechten voor deze dataset."
 
-#: signbank/dictionary/adminviews.py:4229
+#: signbank/dictionary/adminviews.py:4239
 msgid ""
 "User does not have view permission for this dataset. Please grant view "
 "permission first."
@@ -820,17 +820,17 @@ msgstr ""
 "Gebruiker heeft geen weergaverechten voor deze dataset. Geef eerst "
 "toestemming om de dataset te bekijken."
 
-#: signbank/dictionary/adminviews.py:4249
+#: signbank/dictionary/adminviews.py:4259
 msgid "Change permission for user successfully granted."
 msgstr "Wijzigingsrechten voor gebruiker zijn succesvol toegekend."
 
-#: signbank/dictionary/adminviews.py:4251
+#: signbank/dictionary/adminviews.py:4261
 msgid "Error assigning change dataset permission to user."
 msgstr ""
 "Fout bij het toewijzen van de wijzigingsmachtiging voor de dataset aan de "
 "gebruiker."
 
-#: signbank/dictionary/adminviews.py:4260
+#: signbank/dictionary/adminviews.py:4270
 msgid ""
 "User has view permission for this dataset as staff or superuser. This cannot "
 "be modified here."
@@ -838,24 +838,24 @@ msgstr ""
 "De gebruiker heeft kijkrechten voor deze dataset als personeel of "
 "supergebruiker. Dit kan hier niet worden gewijzigd."
 
-#: signbank/dictionary/adminviews.py:4268
+#: signbank/dictionary/adminviews.py:4278
 msgid "View (and change) permission for user successfully revoked."
 msgstr ""
 "Lees-toestemming (en wijzigingsrechten) voor de gebruiker succesvol "
 "ingetrokken."
 
-#: signbank/dictionary/adminviews.py:4271
+#: signbank/dictionary/adminviews.py:4281
 msgid "Error revoking view dataset permission for user."
 msgstr ""
 "Fout bij het intrekken van de permissies voor het bekijken van de dataset "
 "voor de gebruiker."
 
-#: signbank/dictionary/adminviews.py:4275
+#: signbank/dictionary/adminviews.py:4285
 msgid "User currently has no permission to view this dataset."
 msgstr ""
 "De gebruiker heeft momenteel geen toestemming om deze dataset te bekijken."
 
-#: signbank/dictionary/adminviews.py:4284
+#: signbank/dictionary/adminviews.py:4294
 msgid ""
 "User has change permission for this dataset as staff or superuser. This "
 "cannot be modified here."
@@ -863,153 +863,153 @@ msgstr ""
 "De gebruiker heeft wijzigingsrechten voor deze dataset als personeel of "
 "supergebruiker. Dit kan hier niet worden gewijzigd."
 
-#: signbank/dictionary/adminviews.py:4300
+#: signbank/dictionary/adminviews.py:4310
 msgid "Change permission for user successfully revoked."
 msgstr "Verander toestemming voor gebruiker succesvol ingetrokken."
 
-#: signbank/dictionary/adminviews.py:4303
+#: signbank/dictionary/adminviews.py:4313
 msgid "Error revoking change dataset permission for user."
 msgstr ""
 "Fout bij het intrekken van de permissies voor het wijzigingsdataset voor de "
 "gebruiker."
 
-#: signbank/dictionary/adminviews.py:4307
+#: signbank/dictionary/adminviews.py:4317
 msgid "User currently has no permission to change this dataset."
 msgstr "Gebruiker heeft geen rechten om de geselecteerde dataset te wijzigen."
 
-#: signbank/dictionary/adminviews.py:4312
+#: signbank/dictionary/adminviews.py:4322
 msgid "Unrecognised argument to dataset manager url."
 msgstr "Onherkenbaar argument voor de datasetbeheer URL."
 
-#: signbank/dictionary/adminviews.py:4414
-#: signbank/dictionary/adminviews.py:4740
+#: signbank/dictionary/adminviews.py:4424
+#: signbank/dictionary/adminviews.py:4750
 msgid ""
 "You must be in group Dataset_Manager to use the requested functionality."
 msgstr ""
 "Je moet in groep Dataset Manager zijn om deze functionaliteit te gebruiken."
 
-#: signbank/dictionary/adminviews.py:4453
-#: signbank/dictionary/adminviews.py:4578
-#: signbank/dictionary/adminviews.py:4851
+#: signbank/dictionary/adminviews.py:4463
+#: signbank/dictionary/adminviews.py:4588
+#: signbank/dictionary/adminviews.py:4861
 #: signbank/dictionary/dataset_views.py:43
 msgid "The requested dataset does not exist."
 msgstr "Aangevraagd dataset bestaat niet."
 
-#: signbank/dictionary/adminviews.py:4535
+#: signbank/dictionary/adminviews.py:4545
 msgid "Username must be non-empty."
 msgstr "Gebruikersnaam is leeg."
 
-#: signbank/dictionary/adminviews.py:4551
+#: signbank/dictionary/adminviews.py:4561
 msgid "User successfully made (co-)owner of this dataset."
 msgstr "De gebruiker is succesvol (mede)eigenaar geworden van deze dataset."
 
-#: signbank/dictionary/adminviews.py:4761
-#: signbank/dictionary/adminviews.py:4834
+#: signbank/dictionary/adminviews.py:4771
+#: signbank/dictionary/adminviews.py:4844
 msgid "Please login to use the requested functionality."
 msgstr "Log alstublieft in om de gevraagde functionaliteit te gebruiken."
 
-#: signbank/dictionary/adminviews.py:4862
+#: signbank/dictionary/adminviews.py:4872
 msgid "You do not have permission to view this corpus."
 msgstr "Je hebt geen toestemming om deze verzameling te bekijken."
 
-#: signbank/dictionary/adminviews.py:4929
+#: signbank/dictionary/adminviews.py:4939
 msgid "Modified"
 msgstr ""
 
-#: signbank/dictionary/adminviews.py:4950
+#: signbank/dictionary/adminviews.py:4960
 msgid "Male"
 msgstr ""
 
-#: signbank/dictionary/adminviews.py:4950
+#: signbank/dictionary/adminviews.py:4960
 msgid "Female"
 msgstr ""
 
-#: signbank/dictionary/adminviews.py:4950
+#: signbank/dictionary/adminviews.py:4960
 msgid "Other"
 msgstr ""
 
-#: signbank/dictionary/adminviews.py:4951
+#: signbank/dictionary/adminviews.py:4961
 msgid "Right"
 msgstr ""
 
-#: signbank/dictionary/adminviews.py:4951
+#: signbank/dictionary/adminviews.py:4961
 msgid "Left"
 msgstr ""
 
-#: signbank/dictionary/adminviews.py:4951
+#: signbank/dictionary/adminviews.py:4961
 msgid "Ambidextrous"
 msgstr ""
 
-#: signbank/dictionary/adminviews.py:4951
+#: signbank/dictionary/adminviews.py:4961
 msgid "Unknown"
 msgstr ""
 
-#: signbank/dictionary/adminviews.py:5001
-#: signbank/dictionary/adminviews.py:5039
-#: signbank/dictionary/adminviews.py:5078
+#: signbank/dictionary/adminviews.py:5011
+#: signbank/dictionary/adminviews.py:5049
+#: signbank/dictionary/adminviews.py:5088
 msgid "No dataset with that acronym found."
 msgstr "Geen dataset met dat acroniem gevonden."
 
-#: signbank/dictionary/adminviews.py:5008
+#: signbank/dictionary/adminviews.py:5018
 msgid "No permission to import speakers for this dataset."
 msgstr "Geen toestemming om gebaarders te importeren voor deze dataset."
 
-#: signbank/dictionary/adminviews.py:5015
-#: signbank/dictionary/adminviews.py:5053
-#: signbank/dictionary/adminviews.py:5096
+#: signbank/dictionary/adminviews.py:5025
+#: signbank/dictionary/adminviews.py:5063
+#: signbank/dictionary/adminviews.py:5106
 msgid "Error processing participants meta data for this dataset."
 msgstr "Er is iets misgelopen bij het verwerken van de metadata."
 
-#: signbank/dictionary/adminviews.py:5018
+#: signbank/dictionary/adminviews.py:5028
 msgid "Speakers successfully processed."
 msgstr "Gebaarders met succes bijgewerkt."
 
-#: signbank/dictionary/adminviews.py:5046
+#: signbank/dictionary/adminviews.py:5056
 msgid "No permission to create a corpus for this dataset."
 msgstr "Geen toestemming om een corpus te maken voor deze dataset."
 
-#: signbank/dictionary/adminviews.py:5057
+#: signbank/dictionary/adminviews.py:5067
 msgid "Corpus successfully created."
 msgstr "Corpus met succes gecreëerd."
 
-#: signbank/dictionary/adminviews.py:5085
+#: signbank/dictionary/adminviews.py:5095
 msgid "No permission to update the corpus for this dataset."
 msgstr "Geen toestemming om het corpus bij te werken."
 
-#: signbank/dictionary/adminviews.py:5102
+#: signbank/dictionary/adminviews.py:5112
 msgid "Corpus successfully updated."
 msgstr "Corpus met succes bijgewerkt."
 
-#: signbank/dictionary/adminviews.py:5182
+#: signbank/dictionary/adminviews.py:5192
 msgid "The requested morpheme does not exist."
 msgstr "Aangevraagd morfeem bestaat niet."
 
-#: signbank/dictionary/adminviews.py:5186
+#: signbank/dictionary/adminviews.py:5196
 msgid "Requested morpheme has no lemma or dataset."
 msgstr "Aangevraagd morfeem heeft geen lemma nog dataset."
 
-#: signbank/dictionary/adminviews.py:5200
+#: signbank/dictionary/adminviews.py:5210
 msgid "The morpheme you are trying to view is not in your selected datasets. "
 msgstr ""
 "De aangevraagde morfeem bevindt zich niet in de geselecteerde datasets. "
 
-#: signbank/dictionary/adminviews.py:5201
+#: signbank/dictionary/adminviews.py:5211
 #, python-brace-format
 msgid "It is in dataset {dataset}."
 msgstr "Hij behoort tot de dataset {dataset}."
 
-#: signbank/dictionary/adminviews.py:5205
+#: signbank/dictionary/adminviews.py:5215
 msgid "The morpheme you are trying to view is not in a dataset you can view."
 msgstr ""
 "De aangevraagde morfeem bevindt zich niet in een dataset die u kunt bekijken."
 
-#: signbank/dictionary/adminviews.py:5836
-#: signbank/dictionary/adminviews.py:5850
-#: signbank/dictionary/adminviews.py:6975 signbank/dictionary/forms.py:364
+#: signbank/dictionary/adminviews.py:5846
+#: signbank/dictionary/adminviews.py:5860
+#: signbank/dictionary/adminviews.py:6985 signbank/dictionary/forms.py:364
 #: signbank/dictionary/forms.py:541 signbank/dictionary/forms.py:821
-#: signbank/dictionary/forms.py:893 signbank/dictionary/forms.py:915
-#: signbank/dictionary/forms.py:1091 signbank/dictionary/forms.py:1523
-#: signbank/dictionary/forms.py:1625 signbank/dictionary/forms.py:1664
+#: signbank/dictionary/forms.py:904 signbank/dictionary/forms.py:927
+#: signbank/dictionary/forms.py:1103 signbank/dictionary/forms.py:1535
+#: signbank/dictionary/forms.py:1637 signbank/dictionary/forms.py:1676
 #: signbank/dictionary/gloss_revision.py:34
 #: signbank/dictionary/gloss_revision.py:216
 #: signbank/dictionary/gloss_revision.py:217 signbank/dictionary/models.py:1394
@@ -1043,20 +1043,20 @@ msgstr ""
 msgid "Yes"
 msgstr "Ja"
 
-#: signbank/dictionary/adminviews.py:5838
-#: signbank/dictionary/adminviews.py:5852 signbank/dictionary/forms.py:366
+#: signbank/dictionary/adminviews.py:5848
+#: signbank/dictionary/adminviews.py:5862 signbank/dictionary/forms.py:366
 #: signbank/dictionary/gloss_revision.py:45 signbank/dictionary/models.py:2659
 #: signbank/dictionary/models.py:3988 signbank/query_parameters.py:594
 msgid "Neutral"
 msgstr ""
 
-#: signbank/dictionary/adminviews.py:5840
-#: signbank/dictionary/adminviews.py:5854
-#: signbank/dictionary/adminviews.py:6976 signbank/dictionary/forms.py:364
+#: signbank/dictionary/adminviews.py:5850
+#: signbank/dictionary/adminviews.py:5864
+#: signbank/dictionary/adminviews.py:6986 signbank/dictionary/forms.py:364
 #: signbank/dictionary/forms.py:541 signbank/dictionary/forms.py:821
-#: signbank/dictionary/forms.py:893 signbank/dictionary/forms.py:915
-#: signbank/dictionary/forms.py:1091 signbank/dictionary/forms.py:1523
-#: signbank/dictionary/forms.py:1625 signbank/dictionary/forms.py:1664
+#: signbank/dictionary/forms.py:904 signbank/dictionary/forms.py:927
+#: signbank/dictionary/forms.py:1103 signbank/dictionary/forms.py:1535
+#: signbank/dictionary/forms.py:1637 signbank/dictionary/forms.py:1676
 #: signbank/dictionary/gloss_revision.py:31
 #: signbank/dictionary/gloss_revision.py:216
 #: signbank/dictionary/gloss_revision.py:217 signbank/dictionary/models.py:1394
@@ -1089,8 +1089,8 @@ msgstr ""
 msgid "No"
 msgstr "Nee"
 
-#: signbank/dictionary/adminviews.py:5966
-#: signbank/dictionary/adminviews.py:6056
+#: signbank/dictionary/adminviews.py:5976
+#: signbank/dictionary/adminviews.py:6066
 #: signbank/dictionary/templates/dictionary/gloss.html:374
 #: signbank/dictionary/templates/dictionary/gloss_detail.html:1357
 #: signbank/dictionary/templates/dictionary/morpheme_detail.html:485
@@ -1099,8 +1099,8 @@ msgstr "Nee"
 msgid "Dialect"
 msgstr "Dialect"
 
-#: signbank/dictionary/adminviews.py:5967
-#: signbank/dictionary/adminviews.py:6057
+#: signbank/dictionary/adminviews.py:5977
+#: signbank/dictionary/adminviews.py:6067
 #: signbank/dictionary/templates/dictionary/dataset_frequency.html:125
 #: signbank/dictionary/templates/dictionary/dataset_frequency.html:229
 #: signbank/dictionary/templates/dictionary/unassigned_glosses.html:20
@@ -1115,23 +1115,23 @@ msgstr "Dialect"
 msgid "Sign Language"
 msgstr "Gebarentaal"
 
-#: signbank/dictionary/adminviews.py:5968
-#: signbank/dictionary/adminviews.py:6058 signbank/dictionary/forms.py:302
+#: signbank/dictionary/adminviews.py:5978
+#: signbank/dictionary/adminviews.py:6068 signbank/dictionary/forms.py:302
 #: signbank/dictionary/forms.py:494 signbank/dictionary/gloss_revision.py:109
 #: signbank/dictionary/models.py:207 signbank/query_parameters.py:541
 msgid "Note Type"
 msgstr "Type aantekening"
 
-#: signbank/dictionary/adminviews.py:5969
-#: signbank/dictionary/adminviews.py:6059 signbank/dictionary/forms.py:239
+#: signbank/dictionary/adminviews.py:5979
+#: signbank/dictionary/adminviews.py:6069 signbank/dictionary/forms.py:239
 #: signbank/dictionary/templates/dictionary/gloss_detail.html:3169
 #: signbank/dictionary/templates/dictionary/gloss_videos.html:189
 #: signbank/dictionary/templates/dictionary/morpheme_detail.html:763
 msgid "Other Media"
 msgstr "Andere media"
 
-#: signbank/dictionary/adminviews.py:5970
-#: signbank/dictionary/adminviews.py:6060 signbank/dictionary/forms.py:268
+#: signbank/dictionary/adminviews.py:5980
+#: signbank/dictionary/adminviews.py:6070 signbank/dictionary/forms.py:268
 #: signbank/dictionary/gloss_revision.py:96 signbank/dictionary/models.py:1546
 #: signbank/dictionary/models.py:3837 signbank/dictionary/related_objects.py:96
 #: signbank/dictionary/templates/dictionary/gloss.html:459
@@ -1144,8 +1144,8 @@ msgstr "Andere media"
 msgid "Sequential Morphology"
 msgstr "Sequentiële morfologie"
 
-#: signbank/dictionary/adminviews.py:5971
-#: signbank/dictionary/adminviews.py:6061 signbank/dictionary/forms.py:251
+#: signbank/dictionary/adminviews.py:5981
+#: signbank/dictionary/adminviews.py:6071 signbank/dictionary/forms.py:251
 #: signbank/dictionary/gloss_revision.py:97 signbank/dictionary/models.py:1551
 #: signbank/dictionary/related_objects.py:38
 #: signbank/dictionary/related_objects.py:130
@@ -1158,71 +1158,71 @@ msgstr "Sequentiële morfologie"
 msgid "Simultaneous Morphology"
 msgstr "Simultane morfologie"
 
-#: signbank/dictionary/adminviews.py:5972 signbank/dictionary/forms.py:623
+#: signbank/dictionary/adminviews.py:5982 signbank/dictionary/forms.py:623
 #: signbank/dictionary/models.py:949
 #: signbank/dictionary/templates/dictionary/related_signs_detail_view.html:670
 msgid "Blend"
 msgstr "Blend"
 
-#: signbank/dictionary/adminviews.py:5973
+#: signbank/dictionary/adminviews.py:5983
 #: signbank/dictionary/related_objects.py:163
 #: signbank/dictionary/templates/dictionary/related_signs_detail_view.html:700
 msgid "Part of Blend"
 msgstr "Onderdeel blend"
 
-#: signbank/dictionary/adminviews.py:5974
-#: signbank/dictionary/adminviews.py:6064 signbank/dictionary/forms.py:308
-#: signbank/dictionary/templates/dictionary/admin_morpheme_list.html:606
+#: signbank/dictionary/adminviews.py:5984
+#: signbank/dictionary/adminviews.py:6074 signbank/dictionary/forms.py:308
+#: signbank/dictionary/templates/dictionary/admin_morpheme_list.html:638
 #: signbank/dictionary/templates/dictionary/morpheme_detail.html:479
 #: signbank/dictionary/templates/dictionary/related_signs_detail_view.html:733
 msgid "Morpheme Type"
 msgstr "Morfeem-type"
 
-#: signbank/dictionary/adminviews.py:5975
-#: signbank/dictionary/adminviews.py:6065 signbank/dictionary/forms.py:247
+#: signbank/dictionary/adminviews.py:5985
+#: signbank/dictionary/adminviews.py:6075 signbank/dictionary/forms.py:247
 msgid "Gloss of Related Sign"
 msgstr "Glos van een verwant gebaar"
 
-#: signbank/dictionary/adminviews.py:5976
-#: signbank/dictionary/adminviews.py:6066 signbank/dictionary/forms.py:261
+#: signbank/dictionary/adminviews.py:5986
+#: signbank/dictionary/adminviews.py:6076 signbank/dictionary/forms.py:261
 #: signbank/dictionary/models.py:3973
 msgid "Related to Foreign Sign"
 msgstr "Verwant gebaar uit andere gebarentaal"
 
-#: signbank/dictionary/adminviews.py:5977
-#: signbank/dictionary/adminviews.py:6067 signbank/dictionary/forms.py:249
+#: signbank/dictionary/adminviews.py:5987
+#: signbank/dictionary/adminviews.py:6077 signbank/dictionary/forms.py:249
 msgid "Gloss of Foreign Sign"
 msgstr "Glos in een andere gebarentaal"
 
-#: signbank/dictionary/adminviews.py:5990
+#: signbank/dictionary/adminviews.py:6000
 msgid "Relation: "
 msgstr "Relatie: "
 
-#: signbank/dictionary/adminviews.py:6062 signbank/dictionary/forms.py:253
+#: signbank/dictionary/adminviews.py:6072 signbank/dictionary/forms.py:253
 #: signbank/dictionary/models.py:3975
 msgid "Is a Blend"
 msgstr "Is een blend"
 
-#: signbank/dictionary/adminviews.py:6063 signbank/dictionary/forms.py:256
+#: signbank/dictionary/adminviews.py:6073 signbank/dictionary/forms.py:256
 #: signbank/dictionary/models.py:3977
 msgid "Is Part of a Blend"
 msgstr "Is onderdeel van een blend"
 
-#: signbank/dictionary/adminviews.py:6077
-#: signbank/dictionary/adminviews.py:6080 signbank/dictionary/forms.py:264
+#: signbank/dictionary/adminviews.py:6087
+#: signbank/dictionary/adminviews.py:6090 signbank/dictionary/forms.py:264
 msgid "Type of Relation"
 msgstr "Type relatie"
 
-#: signbank/dictionary/adminviews.py:6343
+#: signbank/dictionary/adminviews.py:6353
 msgid "You have no permission to delete lemmas."
 msgstr "Je hebt geen toestemming om lemma's te verwijderen."
 
-#: signbank/dictionary/adminviews.py:6348
+#: signbank/dictionary/adminviews.py:6358
 msgid "Incorrect deletion code."
 msgstr "Onjuiste verwijderingscode."
 
-#: signbank/dictionary/adminviews.py:6354
-#: signbank/dictionary/adminviews.py:6367
+#: signbank/dictionary/adminviews.py:6364
+#: signbank/dictionary/adminviews.py:6377
 msgid ""
 "You do not have change permission on the dataset of the lemma you are "
 "attempting to delete."
@@ -1230,53 +1230,53 @@ msgstr ""
 "Je hebt geen wijzigingsrecht op de dataset van de lemma die je probeert te "
 "verwijderen."
 
-#: signbank/dictionary/adminviews.py:6432
+#: signbank/dictionary/adminviews.py:6442
 msgid "Lemma ID Gloss is not unique for that language."
 msgstr "Lemma-ID-Glos is niet uniek voor die taal"
 
-#: signbank/dictionary/adminviews.py:6469
+#: signbank/dictionary/adminviews.py:6479
 msgid "The specified gloss does not exist."
 msgstr "De opgegeven glos bestaat niet."
 
-#: signbank/dictionary/adminviews.py:6488
+#: signbank/dictionary/adminviews.py:6498
 msgid "Lemma ID Gloss not unique for language."
 msgstr "Lemma-ID-Glos is niet uniek."
 
-#: signbank/dictionary/adminviews.py:6501
+#: signbank/dictionary/adminviews.py:6511
 msgid "The form contains errors."
 msgstr "De invoerformulier bevat fouten."
 
-#: signbank/dictionary/adminviews.py:6622 signbank/dictionary/update.py:1223
+#: signbank/dictionary/adminviews.py:6632 signbank/dictionary/update.py:1223
 msgid "The requested lemma does not exist."
 msgstr "Het gevraagde lemma bestaat niet"
 
-#: signbank/dictionary/adminviews.py:6630
+#: signbank/dictionary/adminviews.py:6640
 msgid "Requested lemma has no dataset."
 msgstr "Het gevraagde lemma heeft geen dataset."
 
-#: signbank/dictionary/adminviews.py:6641
+#: signbank/dictionary/adminviews.py:6651
 msgid "The lemma you are trying to view is not in your selected datasets. "
 msgstr ""
 "Het lemma dat u probeert te bekijken, bevindt zich niet in uw geselecteerde "
 "datasets. "
 
-#: signbank/dictionary/adminviews.py:6646
+#: signbank/dictionary/adminviews.py:6656
 msgid "The lemma you are trying to view is not in a dataset you can view. "
 msgstr ""
 "Het lemma dat u probeert te bekijken, bevindt zich niet in een dataset die u "
 "kunt bekijken. "
 
-#: signbank/dictionary/adminviews.py:6666
+#: signbank/dictionary/adminviews.py:6676
 msgid "There are glosses using this lemma."
 msgstr "Er zijn glossen die dit lemma gebruiken."
 
-#: signbank/dictionary/adminviews.py:6692
-#: signbank/dictionary/adminviews.py:6729
-#: signbank/dictionary/adminviews.py:7167
+#: signbank/dictionary/adminviews.py:6702
+#: signbank/dictionary/adminviews.py:6739
+#: signbank/dictionary/adminviews.py:7177
 msgid "Please select a single dataset to view keywords."
 msgstr "Kies alsjeblieft een enkel dataset om trefwoorden te bekijken."
 
-#: signbank/dictionary/adminviews.py:6698 signbank/dictionary/models.py:1532
+#: signbank/dictionary/adminviews.py:6708 signbank/dictionary/models.py:1532
 #: signbank/dictionary/templates/dictionary/admin_batch_edit_senses.html:459
 #: signbank/dictionary/templates/dictionary/admin_batch_edit_senses.html:504
 #: signbank/dictionary/templates/dictionary/admin_batch_edit_senses.html:604
@@ -1285,42 +1285,42 @@ msgstr "Kies alsjeblieft een enkel dataset om trefwoorden te bekijken."
 msgid "Text"
 msgstr "Tekst"
 
-#: signbank/dictionary/adminviews.py:6737
-#: signbank/dictionary/adminviews.py:7023
+#: signbank/dictionary/adminviews.py:6747
+#: signbank/dictionary/adminviews.py:7033
 msgid "Your query result is not glosses."
 msgstr "De resultaat van uw zoekopdracht bevat geen glossen"
 
-#: signbank/dictionary/adminviews.py:6761
+#: signbank/dictionary/adminviews.py:6771
 msgid "No glosses found."
 msgstr "Geen glossen gevonden."
 
-#: signbank/dictionary/adminviews.py:7017
+#: signbank/dictionary/adminviews.py:7027
 msgid "Please select a single dataset to use Batch Edit."
 msgstr "Selecteer een enkel dataset om Batchbewerking te gebruiken."
 
-#: signbank/dictionary/adminviews.py:7232
+#: signbank/dictionary/adminviews.py:7242
 msgid "Annotated Sentence not available."
 msgstr "Voorbeeldzin niet beschikbaar"
 
-#: signbank/dictionary/adminviews.py:7525
+#: signbank/dictionary/adminviews.py:7535
 msgid "Sentence ID"
 msgstr "Voorbeeldzin ID"
 
-#: signbank/dictionary/adminviews.py:7526
+#: signbank/dictionary/adminviews.py:7536
 #: signbank/dictionary/templates/dictionary/annotated_sentence_detail.html:67
 msgid "Annotated Sentence"
 msgstr "Voorbeeldzin"
 
-#: signbank/dictionary/adminviews.py:7527 signbank/dictionary/forms.py:1599
+#: signbank/dictionary/adminviews.py:7537 signbank/dictionary/forms.py:1611
 #: signbank/query_parameters.py:556 signbank/query_parameters.py:763
 msgid "Is Representative"
 msgstr "Is representatief"
 
-#: signbank/dictionary/adminviews.py:7528
+#: signbank/dictionary/adminviews.py:7538
 msgid "Annotated Video"
 msgstr "Geannoteerde video"
 
-#: signbank/dictionary/adminviews.py:7529
+#: signbank/dictionary/adminviews.py:7539
 msgid "EAF File"
 msgstr "EAF-bestand"
 
@@ -1388,7 +1388,7 @@ msgid "number"
 msgstr "nummer"
 
 #: signbank/dictionary/forms.py:83 signbank/dictionary/forms.py:388
-#: signbank/dictionary/forms.py:1551 signbank/dictionary/models.py:3446
+#: signbank/dictionary/forms.py:1563 signbank/dictionary/models.py:3446
 #: signbank/dictionary/templates/dictionary/admin_batch_edit_view.html:346
 #: signbank/dictionary/templates/dictionary/admin_toggle_view.html:252
 #: signbank/dictionary/templates/dictionary/gloss.html:478
@@ -1416,7 +1416,7 @@ msgstr "nummer"
 msgid "Gloss"
 msgstr "Glos"
 
-#: signbank/dictionary/forms.py:87 signbank/dictionary/forms.py:1583
+#: signbank/dictionary/forms.py:87 signbank/dictionary/forms.py:1595
 #: signbank/dictionary/gloss_revision.py:120
 #: signbank/dictionary/gloss_revision.py:122
 #: signbank/dictionary/templates/dictionary/senselist_headerrow.html:17
@@ -1426,8 +1426,8 @@ msgstr "Betekenis"
 #: signbank/dictionary/forms.py:91 signbank/dictionary/models.py:958
 #: signbank/dictionary/templates/dictionary/admin_batch_edit_view.html:503
 #: signbank/dictionary/templates/dictionary/admin_batch_edit_view.html:679
-#: signbank/dictionary/templates/dictionary/admin_handshape_list.html:526
-#: signbank/dictionary/templates/dictionary/admin_morpheme_list.html:614
+#: signbank/dictionary/templates/dictionary/admin_handshape_list.html:518
+#: signbank/dictionary/templates/dictionary/admin_morpheme_list.html:646
 #: signbank/dictionary/templates/dictionary/related_signs_detail_view.html:105
 #: signbank/dictionary/templates/dictionary/related_signs_detail_view.html:188
 #: signbank/dictionary/templates/dictionary/related_signs_detail_view.html:241
@@ -1444,7 +1444,7 @@ msgstr "Handigheid"
 #: signbank/dictionary/forms.py:99 signbank/dictionary/models.py:965
 #: signbank/dictionary/templates/dictionary/admin_batch_edit_view.html:512
 #: signbank/dictionary/templates/dictionary/admin_batch_edit_view.html:697
-#: signbank/dictionary/templates/dictionary/admin_handshape_list.html:527
+#: signbank/dictionary/templates/dictionary/admin_handshape_list.html:519
 #: signbank/dictionary/templates/dictionary/related_signs_detail_view.html:106
 #: signbank/dictionary/templates/dictionary/related_signs_detail_view.html:189
 #: signbank/dictionary/templates/dictionary/related_signs_detail_view.html:242
@@ -1461,7 +1461,7 @@ msgstr "Sterke hand"
 #: signbank/dictionary/forms.py:107 signbank/dictionary/models.py:969
 #: signbank/dictionary/templates/dictionary/admin_batch_edit_view.html:521
 #: signbank/dictionary/templates/dictionary/admin_batch_edit_view.html:716
-#: signbank/dictionary/templates/dictionary/admin_handshape_list.html:528
+#: signbank/dictionary/templates/dictionary/admin_handshape_list.html:520
 #: signbank/dictionary/templates/dictionary/related_signs_detail_view.html:107
 #: signbank/dictionary/templates/dictionary/related_signs_detail_view.html:190
 #: signbank/dictionary/templates/dictionary/related_signs_detail_view.html:243
@@ -1528,19 +1528,19 @@ msgid "Affiliation"
 msgstr "Affiliatie"
 
 #: signbank/dictionary/forms.py:232 signbank/dictionary/forms.py:470
-#: signbank/dictionary/forms.py:1061 signbank/dictionary/models.py:4044
+#: signbank/dictionary/forms.py:1073 signbank/dictionary/models.py:4044
 #: templates/ASL-templates/menu.html:46 templates/global-templates/menu.html:86
 msgid "Search Gloss"
 msgstr "Glos zoeken"
 
 #: signbank/dictionary/forms.py:233 signbank/dictionary/forms.py:471
-#: signbank/dictionary/forms.py:719 signbank/dictionary/forms.py:878
-#: signbank/dictionary/forms.py:899 signbank/dictionary/forms.py:1062
+#: signbank/dictionary/forms.py:719 signbank/dictionary/forms.py:889
+#: signbank/dictionary/forms.py:911 signbank/dictionary/forms.py:1074
 msgid "Sort Order"
 msgstr "Volgorde"
 
 #: signbank/dictionary/forms.py:234 signbank/dictionary/forms.py:475
-#: signbank/dictionary/forms.py:1063 signbank/query_parameters.py:580
+#: signbank/dictionary/forms.py:1075 signbank/query_parameters.py:580
 #: signbank/query_parameters.py:608
 msgid "Search Senses"
 msgstr "Zoek betekenissen"
@@ -1573,12 +1573,12 @@ msgid "Phonology Other"
 msgstr "Fonologie: overig"
 
 #: signbank/dictionary/forms.py:272 signbank/dictionary/forms.py:482
-#: signbank/dictionary/forms.py:1065
+#: signbank/dictionary/forms.py:1077
 msgid "Repeating Movement"
 msgstr "Herhaalde beweging"
 
 #: signbank/dictionary/forms.py:274 signbank/dictionary/forms.py:485
-#: signbank/dictionary/forms.py:1067 signbank/dictionary/models.py:1132
+#: signbank/dictionary/forms.py:1079 signbank/dictionary/models.py:1132
 #: signbank/dictionary/templates/dictionary/admin_batch_edit_view.html:585
 #: signbank/dictionary/templates/dictionary/admin_batch_edit_view.html:868
 msgid "Alternating Movement"
@@ -1610,7 +1610,7 @@ msgid "Note Contains"
 msgstr "Aantekening bevat"
 
 #: signbank/dictionary/forms.py:312 signbank/dictionary/forms.py:508
-#: signbank/dictionary/forms.py:1040 signbank/dictionary/models.py:4036
+#: signbank/dictionary/forms.py:1052 signbank/dictionary/models.py:4036
 #: signbank/dictionary/templates/dictionary/admin_batch_edit_view.html:317
 #: signbank/dictionary/templates/dictionary/admin_toggle_view.html:226
 msgid "Created By"
@@ -1626,9 +1626,9 @@ msgstr "Aangemaakt na"
 msgid "Created Before"
 msgstr "Toegevoegd vóór"
 
-#: signbank/dictionary/forms.py:402 signbank/dictionary/forms.py:898
-#: signbank/dictionary/forms.py:945 signbank/dictionary/forms.py:993
-#: signbank/dictionary/forms.py:1545
+#: signbank/dictionary/forms.py:402 signbank/dictionary/forms.py:910
+#: signbank/dictionary/forms.py:957 signbank/dictionary/forms.py:1005
+#: signbank/dictionary/forms.py:1557
 #: signbank/dictionary/templates/dictionary/add_morpheme.html:116
 #: signbank/dictionary/templates/dictionary/admin_batch_edit_view.html:431
 #: signbank/dictionary/templates/dictionary/admin_dataset_videos_list.html:304
@@ -1636,7 +1636,7 @@ msgstr "Toegevoegd vóór"
 #: signbank/dictionary/templates/dictionary/admin_dataset_videos_list.html:385
 #: signbank/dictionary/templates/dictionary/admin_dataset_videos_list.html:425
 #: signbank/dictionary/templates/dictionary/admin_dataset_videos_list.html:487
-#: signbank/dictionary/templates/dictionary/admin_morpheme_list.html:562
+#: signbank/dictionary/templates/dictionary/admin_morpheme_list.html:594
 #: signbank/dictionary/templates/dictionary/dataset_video_storage.html:134
 #: signbank/dictionary/templates/dictionary/dataset_video_storage.html:165
 #: signbank/dictionary/templates/dictionary/dataset_video_storage.html:195
@@ -1656,12 +1656,12 @@ msgstr ""
 msgid "Annotation instructions"
 msgstr "Annotatieinstructies"
 
-#: signbank/dictionary/forms.py:546 signbank/dictionary/forms.py:1669
+#: signbank/dictionary/forms.py:546 signbank/dictionary/forms.py:1681
 msgid "Enter New Note"
 msgstr "Vul nieuwe aantekening in"
 
 #: signbank/dictionary/forms.py:554 signbank/dictionary/forms.py:600
-#: signbank/dictionary/forms.py:643 signbank/dictionary/forms.py:1520
+#: signbank/dictionary/forms.py:643 signbank/dictionary/forms.py:1532
 #: signbank/dictionary/models.py:1531 signbank/dictionary/models.py:3138
 #: signbank/dictionary/templates/dictionary/gloss_detail.html:2865
 #: signbank/dictionary/templates/dictionary/gloss_detail.html:3184
@@ -1724,12 +1724,12 @@ msgid "Prominent Media Type"
 msgstr "Prominente mediatype"
 
 #: signbank/dictionary/forms.py:769
-#: signbank/dictionary/templates/dictionary/admin_handshape_list.html:363
+#: signbank/dictionary/templates/dictionary/admin_handshape_list.html:402
 msgid "Unselected Fingers Extended"
 msgstr "Gestrekte ongeselecteerde vingers"
 
 #: signbank/dictionary/forms.py:777 signbank/dictionary/models.py:315
-#: signbank/dictionary/templates/dictionary/admin_handshape_list.html:361
+#: signbank/dictionary/templates/dictionary/admin_handshape_list.html:400
 msgid "Quantity"
 msgstr "Aantal"
 
@@ -1742,100 +1742,100 @@ msgid "Finger configuration 2"
 msgstr "Vingerconfiguratie 2"
 
 #: signbank/dictionary/forms.py:801 signbank/dictionary/models.py:357
-#: signbank/dictionary/templates/dictionary/admin_handshape_list.html:364
+#: signbank/dictionary/templates/dictionary/admin_handshape_list.html:403
 msgid "Spreading"
 msgstr "Spreiding"
 
 #: signbank/dictionary/forms.py:809 signbank/dictionary/models.py:345
-#: signbank/dictionary/templates/dictionary/admin_handshape_list.html:365
+#: signbank/dictionary/templates/dictionary/admin_handshape_list.html:404
 msgid "Aperture"
 msgstr "Opening"
 
-#: signbank/dictionary/forms.py:877
+#: signbank/dictionary/forms.py:888
 #: signbank/dictionary/templates/dictionary/admin_batch_edit_senses.html:245
 #: signbank/dictionary/templates/dictionary/admin_batch_edit_view.html:340
 msgid "Search"
 msgstr "Zoeken"
 
-#: signbank/dictionary/forms.py:879 signbank/dictionary/forms.py:900
+#: signbank/dictionary/forms.py:890 signbank/dictionary/forms.py:912
 msgid "Only show results without glosses"
 msgstr "Alleen resultaten tonen zonder glossen"
 
-#: signbank/dictionary/forms.py:881 signbank/dictionary/forms.py:902
+#: signbank/dictionary/forms.py:892 signbank/dictionary/forms.py:914
 msgid "Only show results with glosses"
 msgstr "Alleen resultaten tonen met glossen"
 
-#: signbank/dictionary/forms.py:989
+#: signbank/dictionary/forms.py:1001
 #: signbank/dictionary/templates/dictionary/admin_lemma_list.html:236
 #: signbank/dictionary/templates/dictionary/import_csv_update_lemmas.html:144
 #: signbank/dictionary/templates/dictionary/update_lemma.html:208
 msgid "Lemma ID"
 msgstr "Lemma-ID"
 
-#: signbank/dictionary/forms.py:1113
+#: signbank/dictionary/forms.py:1125
 msgid "Days"
 msgstr "Dagen"
 
-#: signbank/dictionary/forms.py:1114
+#: signbank/dictionary/forms.py:1126
 msgid "90 days"
 msgstr "90 dagen"
 
-#: signbank/dictionary/forms.py:1115
+#: signbank/dictionary/forms.py:1127
 msgid "60 days"
 msgstr "60 dagen"
 
-#: signbank/dictionary/forms.py:1116
+#: signbank/dictionary/forms.py:1128
 msgid "30 days"
 msgstr "30 dagen"
 
-#: signbank/dictionary/forms.py:1117
+#: signbank/dictionary/forms.py:1129
 msgid "14 days"
 msgstr "14 dagen"
 
-#: signbank/dictionary/forms.py:1118
+#: signbank/dictionary/forms.py:1130
 msgid "7 days"
 msgstr "7 dagen"
 
-#: signbank/dictionary/forms.py:1121
+#: signbank/dictionary/forms.py:1133
 msgid "Chronological"
 msgstr "Chronologisch"
 
-#: signbank/dictionary/forms.py:1121
+#: signbank/dictionary/forms.py:1133
 msgid "Reverse chronological"
 msgstr "Omgekeerd chronologisch"
 
-#: signbank/dictionary/forms.py:1123
+#: signbank/dictionary/forms.py:1135
 msgid "Timeline"
 msgstr "Tijdlijn"
 
-#: signbank/dictionary/forms.py:1126
+#: signbank/dictionary/forms.py:1138
 msgid "Time Field"
 msgstr "Tijd veld"
 
-#: signbank/dictionary/forms.py:1127 signbank/dictionary/models.py:210
+#: signbank/dictionary/forms.py:1139 signbank/dictionary/models.py:210
 #: signbank/dictionary/models.py:1225 signbank/dictionary/models.py:4367
 msgid "Creation date"
 msgstr "Aanmaakdatum"
 
-#: signbank/dictionary/forms.py:1127 signbank/dictionary/models.py:211
+#: signbank/dictionary/forms.py:1139 signbank/dictionary/models.py:211
 #: signbank/dictionary/models.py:1226 signbank/dictionary/models.py:4368
 msgid "Last updated"
 msgstr "Laatste update"
 
-#: signbank/dictionary/forms.py:1219
+#: signbank/dictionary/forms.py:1231
 msgid "The Field Choice Category is required"
 msgstr "De categorie Veldkeuze is verplicht"
 
-#: signbank/dictionary/forms.py:1229
+#: signbank/dictionary/forms.py:1241
 msgid "The Name fields for all languages are required"
 msgstr "De velden Naam zijn voor alle talen verplicht"
 
-#: signbank/dictionary/forms.py:1236 signbank/dictionary/forms.py:1246
+#: signbank/dictionary/forms.py:1248 signbank/dictionary/forms.py:1258
 msgid "The combination "
 msgstr "De combinatie "
 
-#: signbank/dictionary/forms.py:1394 signbank/dictionary/forms.py:1414
-#: signbank/dictionary/forms.py:1435 signbank/dictionary/models.py:3826
+#: signbank/dictionary/forms.py:1406 signbank/dictionary/forms.py:1426
+#: signbank/dictionary/forms.py:1447 signbank/dictionary/models.py:3826
 #: signbank/dictionary/templates/dictionary/admin_frequency_list.html:248
 #: signbank/dictionary/templates/dictionary/admin_minimalpairs_list.html:401
 #: signbank/dictionary/templates/dictionary/gloss_detail.html:2576
@@ -1843,58 +1843,58 @@ msgstr "De combinatie "
 msgid "Field Name"
 msgstr "Veldnaam"
 
-#: signbank/dictionary/forms.py:1398 signbank/dictionary/forms.py:1418
+#: signbank/dictionary/forms.py:1410 signbank/dictionary/forms.py:1430
 #: signbank/dictionary/models.py:3827 signbank/dictionary/models.py:3963
 msgid "Field Value"
 msgstr "Veld waarde"
 
-#: signbank/dictionary/forms.py:1439
+#: signbank/dictionary/forms.py:1451
 msgid "Language"
 msgstr "Taal"
 
-#: signbank/dictionary/forms.py:1480 signbank/dictionary/forms.py:1485
+#: signbank/dictionary/forms.py:1492 signbank/dictionary/forms.py:1497
 #: signbank/dictionary/templates/dictionary/admin_search_history.html:128
 msgid "Parameters"
 msgstr "Parameters"
 
-#: signbank/dictionary/forms.py:1494
+#: signbank/dictionary/forms.py:1506
 #: signbank/dictionary/templates/dictionary/import_csv_create_sentences.html:143
 #: signbank/dictionary/templates/dictionary/senselist_headerrow.html:54
 #: signbank/query_parameters.py:554 signbank/query_parameters.py:761
 msgid "Negative"
 msgstr "Negatief"
 
-#: signbank/dictionary/forms.py:1496 signbank/query_parameters.py:558
+#: signbank/dictionary/forms.py:1508 signbank/query_parameters.py:558
 #: signbank/query_parameters.py:765
 msgid "Sentence Contains"
 msgstr "Betekenis bevat"
 
-#: signbank/dictionary/forms.py:1601 signbank/query_parameters.py:560
+#: signbank/dictionary/forms.py:1613 signbank/query_parameters.py:560
 #: signbank/query_parameters.py:767
 msgid "Annotated Sentence Contains"
 msgstr "Voorbeeldzin bevat"
 
-#: signbank/dictionary/forms.py:1630
+#: signbank/dictionary/forms.py:1642
 msgid "Is Primary Video"
 msgstr "Primaire video"
 
-#: signbank/dictionary/forms.py:1633
+#: signbank/dictionary/forms.py:1645
 msgid "Is Perspective Video"
 msgstr "Video met perspectief"
 
-#: signbank/dictionary/forms.py:1636
+#: signbank/dictionary/forms.py:1648
 msgid "Is NME or Perspective NME Video"
 msgstr "NME video of NME video met perspectief"
 
-#: signbank/dictionary/forms.py:1639
+#: signbank/dictionary/forms.py:1651
 msgid "Is Backup Video"
 msgstr "Back-upvideo"
 
-#: signbank/dictionary/forms.py:1642
+#: signbank/dictionary/forms.py:1654
 msgid "Wrong Filename"
 msgstr "Bestandsnaam heeft fouten"
 
-#: signbank/dictionary/forms.py:1670 signbank/dictionary/forms.py:1680
+#: signbank/dictionary/forms.py:1682 signbank/dictionary/forms.py:1692
 #: signbank/dictionary/models.py:4366
 #: signbank/dictionary/templates/dictionary/gloss_detail.html:2974
 msgid "Method"
@@ -1981,7 +1981,7 @@ msgstr "Voeg toe"
 
 #: signbank/dictionary/gloss_revision.py:132
 #: signbank/dictionary/gloss_revision.py:185
-#: signbank/dictionary/templates/dictionary/admin_annotatedsentence_list.html:216
+#: signbank/dictionary/templates/dictionary/admin_annotatedsentence_list.html:255
 #: signbank/dictionary/templates/dictionary/admin_lemma_list.html:295
 #: signbank/dictionary/templates/dictionary/admin_search_history.html:161
 #: signbank/feedback/templates/feedback/recent_feedback.html:87
@@ -1994,7 +1994,7 @@ msgstr "Verwijder"
 
 #: signbank/dictionary/gloss_revision.py:134
 #: signbank/dictionary/gloss_revision.py:193
-#: signbank/dictionary/templates/dictionary/admin_annotatedsentence_list.html:215
+#: signbank/dictionary/templates/dictionary/admin_annotatedsentence_list.html:254
 #: signbank/dictionary/templates/dictionary/admin_batch_edit_senses.html:487
 #: signbank/dictionary/templates/dictionary/admin_lemma_list.html:243
 #: signbank/dictionary/templates/dictionary/admin_lemma_list.html:281
@@ -2043,7 +2043,7 @@ msgid "Finger selection 2"
 msgstr "Vingerselectie 2"
 
 #: signbank/dictionary/models.py:351
-#: signbank/dictionary/templates/dictionary/admin_handshape_list.html:362
+#: signbank/dictionary/templates/dictionary/admin_handshape_list.html:401
 msgid "Thumb"
 msgstr "Duim"
 
@@ -2225,7 +2225,7 @@ msgstr ""
 #: signbank/dictionary/models.py:989
 #: signbank/dictionary/templates/dictionary/admin_batch_edit_view.html:545
 #: signbank/dictionary/templates/dictionary/admin_batch_edit_view.html:773
-#: signbank/dictionary/templates/dictionary/admin_morpheme_list.html:615
+#: signbank/dictionary/templates/dictionary/admin_morpheme_list.html:647
 #: signbank/dictionary/templates/dictionary/related_signs_detail_view.html:108
 #: signbank/dictionary/templates/dictionary/related_signs_detail_view.html:191
 #: signbank/dictionary/templates/dictionary/related_signs_detail_view.html:244
@@ -2648,7 +2648,7 @@ msgid "Is this a multiselect parameter?"
 msgstr "Is dit een multiselect-parameter?"
 
 #: signbank/dictionary/models.py:3868
-#: signbank/dictionary/templates/dictionary/admin_handshape_list.html:355
+#: signbank/dictionary/templates/dictionary/admin_handshape_list.html:394
 msgid "Handshape"
 msgstr "Handvorm"
 
@@ -2690,7 +2690,7 @@ msgstr "Afkorting voor de query"
 #: signbank/dictionary/templates/dictionary/admin_configure_derivationhistory.html:34
 #: signbank/dictionary/templates/dictionary/admin_configure_handshapes.html:35
 #: signbank/dictionary/templates/dictionary/admin_derivationhistory_list.html:22
-#: signbank/dictionary/templates/dictionary/admin_handshape_list.html:356
+#: signbank/dictionary/templates/dictionary/admin_handshape_list.html:395
 #: signbank/dictionary/templates/dictionary/admin_semanticfield_list.html:22
 msgid "Name"
 msgstr "Naam"
@@ -2705,7 +2705,7 @@ msgid "Url"
 msgstr ""
 
 #: signbank/dictionary/models.py:4353
-#: signbank/dictionary/templates/dictionary/admin_annotatedsentence_list.html:211
+#: signbank/dictionary/templates/dictionary/admin_annotatedsentence_list.html:250
 #: signbank/dictionary/templates/dictionary/annotated_sentence_detail.html:126
 #: signbank/dictionary/templates/dictionary/gloss.html:644
 #: signbank/dictionary/templates/dictionary/gloss_detail.html:3102
@@ -2827,13 +2827,13 @@ msgid "Create new"
 msgstr "Maak een nieuwe"
 
 #: signbank/dictionary/templates/dictionary/add_morpheme.html:130
-#: signbank/dictionary/templates/dictionary/admin_morpheme_list.html:576
+#: signbank/dictionary/templates/dictionary/admin_morpheme_list.html:608
 msgid "Select"
 msgstr "Selecteer"
 
 #: signbank/dictionary/templates/dictionary/add_morpheme.html:149
-#: signbank/dictionary/templates/dictionary/admin_morpheme_list.html:504
-#: signbank/dictionary/templates/dictionary/admin_morpheme_list.html:585
+#: signbank/dictionary/templates/dictionary/admin_morpheme_list.html:536
+#: signbank/dictionary/templates/dictionary/admin_morpheme_list.html:617
 msgid "Add New Morpheme"
 msgstr "Voeg nieuw morfeem toe"
 
@@ -2845,113 +2845,113 @@ msgstr "Nieuwe voorbeeldzin-video uploaden"
 msgid "Signbank: Search Annotated Glosses"
 msgstr "Signbank: Zoek glossen met voorbeeldzin"
 
-#: signbank/dictionary/templates/dictionary/admin_annotatedgloss_list.html:569
-#: signbank/dictionary/templates/dictionary/admin_annotatedsentence_list.html:110
-#: signbank/dictionary/templates/dictionary/admin_gloss_list.html:679
-#: signbank/dictionary/templates/dictionary/admin_handshape_list.html:133
+#: signbank/dictionary/templates/dictionary/admin_annotatedgloss_list.html:544
+#: signbank/dictionary/templates/dictionary/admin_annotatedsentence_list.html:149
+#: signbank/dictionary/templates/dictionary/admin_gloss_list.html:712
+#: signbank/dictionary/templates/dictionary/admin_handshape_list.html:171
 #: signbank/dictionary/templates/dictionary/admin_lemma_list.html:116
-#: signbank/dictionary/templates/dictionary/admin_morpheme_list.html:297
-#: signbank/dictionary/templates/dictionary/admin_senses_list.html:569
+#: signbank/dictionary/templates/dictionary/admin_morpheme_list.html:329
+#: signbank/dictionary/templates/dictionary/admin_senses_list.html:544
 msgid "Form Your Query"
 msgstr "Formuleer zoek-opdracht"
 
-#: signbank/dictionary/templates/dictionary/admin_annotatedgloss_list.html:637
-#: signbank/dictionary/templates/dictionary/admin_gloss_list.html:749
-#: signbank/dictionary/templates/dictionary/admin_senses_list.html:639
+#: signbank/dictionary/templates/dictionary/admin_annotatedgloss_list.html:612
+#: signbank/dictionary/templates/dictionary/admin_gloss_list.html:782
+#: signbank/dictionary/templates/dictionary/admin_senses_list.html:614
 msgid "Search by Language and Basic Properties"
 msgstr "Zoek op Taal en Basiseigenschappen"
 
-#: signbank/dictionary/templates/dictionary/admin_annotatedgloss_list.html:665
-#: signbank/dictionary/templates/dictionary/admin_gloss_list.html:811
-#: signbank/dictionary/templates/dictionary/admin_morpheme_list.html:392
-#: signbank/dictionary/templates/dictionary/admin_senses_list.html:667
+#: signbank/dictionary/templates/dictionary/admin_annotatedgloss_list.html:640
+#: signbank/dictionary/templates/dictionary/admin_gloss_list.html:844
+#: signbank/dictionary/templates/dictionary/admin_morpheme_list.html:424
+#: signbank/dictionary/templates/dictionary/admin_senses_list.html:642
 msgid "Search by Phonology"
 msgstr "Zoek op Fonologie"
 
-#: signbank/dictionary/templates/dictionary/admin_annotatedgloss_list.html:706
-#: signbank/dictionary/templates/dictionary/admin_gloss_list.html:852
-#: signbank/dictionary/templates/dictionary/admin_morpheme_list.html:420
-#: signbank/dictionary/templates/dictionary/admin_senses_list.html:708
+#: signbank/dictionary/templates/dictionary/admin_annotatedgloss_list.html:681
+#: signbank/dictionary/templates/dictionary/admin_gloss_list.html:885
+#: signbank/dictionary/templates/dictionary/admin_morpheme_list.html:452
+#: signbank/dictionary/templates/dictionary/admin_senses_list.html:683
 msgid "Search by Semantics"
 msgstr "Zoek op Semantiek"
 
-#: signbank/dictionary/templates/dictionary/admin_annotatedgloss_list.html:730
-#: signbank/dictionary/templates/dictionary/admin_annotatedgloss_list.html:782
+#: signbank/dictionary/templates/dictionary/admin_annotatedgloss_list.html:705
+#: signbank/dictionary/templates/dictionary/admin_annotatedgloss_list.html:757
 msgid "Search Annotated Gloss"
 msgstr "Zoek glos met voorbeeldzin"
 
-#: signbank/dictionary/templates/dictionary/admin_annotatedgloss_list.html:755
-#: signbank/dictionary/templates/dictionary/admin_gloss_list.html:892
-#: signbank/dictionary/templates/dictionary/admin_morpheme_list.html:448
-#: signbank/dictionary/templates/dictionary/admin_senses_list.html:760
+#: signbank/dictionary/templates/dictionary/admin_annotatedgloss_list.html:730
+#: signbank/dictionary/templates/dictionary/admin_gloss_list.html:925
+#: signbank/dictionary/templates/dictionary/admin_morpheme_list.html:480
+#: signbank/dictionary/templates/dictionary/admin_senses_list.html:735
 msgid "Search by Publication Status and Notes"
 msgstr "Zoek op Publicatiestatus en Aantekeningen"
 
-#: signbank/dictionary/templates/dictionary/admin_annotatedgloss_list.html:785
-#: signbank/dictionary/templates/dictionary/admin_annotatedsentence_list.html:183
+#: signbank/dictionary/templates/dictionary/admin_annotatedgloss_list.html:760
+#: signbank/dictionary/templates/dictionary/admin_annotatedsentence_list.html:222
 #: signbank/dictionary/templates/dictionary/admin_batch_edit_senses.html:282
 #: signbank/dictionary/templates/dictionary/admin_batch_edit_view.html:327
 #: signbank/dictionary/templates/dictionary/admin_dataset_videos_list.html:278
-#: signbank/dictionary/templates/dictionary/admin_gloss_list.html:960
-#: signbank/dictionary/templates/dictionary/admin_handshape_list.html:334
+#: signbank/dictionary/templates/dictionary/admin_gloss_list.html:993
+#: signbank/dictionary/templates/dictionary/admin_handshape_list.html:372
 #: signbank/dictionary/templates/dictionary/admin_lemma_list.html:196
 #: signbank/dictionary/templates/dictionary/admin_minimalpairs_list.html:373
-#: signbank/dictionary/templates/dictionary/admin_morpheme_list.html:480
-#: signbank/dictionary/templates/dictionary/admin_senses_list.html:790
+#: signbank/dictionary/templates/dictionary/admin_morpheme_list.html:512
+#: signbank/dictionary/templates/dictionary/admin_senses_list.html:765
 #: signbank/dictionary/templates/dictionary/admin_toggle_view.html:237
 #: signbank/dictionary/templates/dictionary/edit_annotated_sentence.html:50
 msgid "Reset"
 msgstr "Reset"
 
-#: signbank/dictionary/templates/dictionary/admin_annotatedgloss_list.html:791
+#: signbank/dictionary/templates/dictionary/admin_annotatedgloss_list.html:766
 #: signbank/dictionary/templates/dictionary/annotated_sentence_detail.html:70
 msgid "Annotated Glosses"
 msgstr "Glossen met voorbeeldzin"
 
-#: signbank/dictionary/templates/dictionary/admin_annotatedgloss_list.html:792
-#: signbank/dictionary/templates/dictionary/admin_annotatedsentence_list.html:188
-#: signbank/dictionary/templates/dictionary/admin_gloss_list.html:987
-#: signbank/dictionary/templates/dictionary/admin_handshape_list.html:345
-#: signbank/dictionary/templates/dictionary/admin_handshape_list.html:509
+#: signbank/dictionary/templates/dictionary/admin_annotatedgloss_list.html:767
+#: signbank/dictionary/templates/dictionary/admin_annotatedsentence_list.html:227
+#: signbank/dictionary/templates/dictionary/admin_gloss_list.html:1020
+#: signbank/dictionary/templates/dictionary/admin_handshape_list.html:384
+#: signbank/dictionary/templates/dictionary/admin_handshape_list.html:501
 #: signbank/dictionary/templates/dictionary/admin_lemma_list.html:203
-#: signbank/dictionary/templates/dictionary/admin_morpheme_list.html:596
-#: signbank/dictionary/templates/dictionary/admin_senses_list.html:797
+#: signbank/dictionary/templates/dictionary/admin_morpheme_list.html:628
+#: signbank/dictionary/templates/dictionary/admin_senses_list.html:772
 msgid "Number of Matches:"
 msgstr "Aantal hits:"
 
-#: signbank/dictionary/templates/dictionary/admin_annotatedgloss_list.html:792
-#: signbank/dictionary/templates/dictionary/admin_annotatedsentence_list.html:188
-#: signbank/dictionary/templates/dictionary/admin_gloss_list.html:989
-#: signbank/dictionary/templates/dictionary/admin_handshape_list.html:345
-#: signbank/dictionary/templates/dictionary/admin_handshape_list.html:509
+#: signbank/dictionary/templates/dictionary/admin_annotatedgloss_list.html:767
+#: signbank/dictionary/templates/dictionary/admin_annotatedsentence_list.html:227
+#: signbank/dictionary/templates/dictionary/admin_gloss_list.html:1022
+#: signbank/dictionary/templates/dictionary/admin_handshape_list.html:384
+#: signbank/dictionary/templates/dictionary/admin_handshape_list.html:501
 #: signbank/dictionary/templates/dictionary/admin_lemma_list.html:203
-#: signbank/dictionary/templates/dictionary/admin_morpheme_list.html:596
-#: signbank/dictionary/templates/dictionary/admin_senses_list.html:797
+#: signbank/dictionary/templates/dictionary/admin_morpheme_list.html:628
+#: signbank/dictionary/templates/dictionary/admin_senses_list.html:772
 msgid "out of"
 msgstr "van"
 
-#: signbank/dictionary/templates/dictionary/admin_annotatedgloss_list.html:795
-#: signbank/dictionary/templates/dictionary/admin_annotatedsentence_list.html:191
-#: signbank/dictionary/templates/dictionary/admin_gloss_list.html:992
-#: signbank/dictionary/templates/dictionary/admin_handshape_list.html:511
+#: signbank/dictionary/templates/dictionary/admin_annotatedgloss_list.html:770
+#: signbank/dictionary/templates/dictionary/admin_annotatedsentence_list.html:230
+#: signbank/dictionary/templates/dictionary/admin_gloss_list.html:1025
+#: signbank/dictionary/templates/dictionary/admin_handshape_list.html:503
 #: signbank/dictionary/templates/dictionary/admin_lemma_list.html:206
-#: signbank/dictionary/templates/dictionary/admin_senses_list.html:800
+#: signbank/dictionary/templates/dictionary/admin_senses_list.html:775
 msgid "Datasets:"
 msgstr "Datasets:"
 
-#: signbank/dictionary/templates/dictionary/admin_annotatedgloss_list.html:807
-#: signbank/dictionary/templates/dictionary/admin_gloss_list.html:1006
-#: signbank/dictionary/templates/dictionary/admin_morpheme_list.html:490
-#: signbank/dictionary/templates/dictionary/admin_senses_list.html:812
+#: signbank/dictionary/templates/dictionary/admin_annotatedgloss_list.html:782
+#: signbank/dictionary/templates/dictionary/admin_gloss_list.html:1039
+#: signbank/dictionary/templates/dictionary/admin_morpheme_list.html:522
+#: signbank/dictionary/templates/dictionary/admin_senses_list.html:787
 msgid "Results Per Page"
 msgstr "Hits per pagina"
 
-#: signbank/dictionary/templates/dictionary/admin_annotatedgloss_list.html:814
+#: signbank/dictionary/templates/dictionary/admin_annotatedgloss_list.html:789
 #: signbank/dictionary/templates/dictionary/admin_dataset_list.html:114
-#: signbank/dictionary/templates/dictionary/admin_gloss_list.html:1015
+#: signbank/dictionary/templates/dictionary/admin_gloss_list.html:1048
 #: signbank/dictionary/templates/dictionary/admin_minimalpairs_list.html:391
-#: signbank/dictionary/templates/dictionary/admin_morpheme_list.html:497
-#: signbank/dictionary/templates/dictionary/admin_senses_list.html:821
+#: signbank/dictionary/templates/dictionary/admin_morpheme_list.html:529
+#: signbank/dictionary/templates/dictionary/admin_senses_list.html:796
 msgid "Refresh"
 msgstr "Ververs"
 
@@ -2959,26 +2959,26 @@ msgstr "Ververs"
 msgid "Signbank: Annotated sentences"
 msgstr "Signbank: Voorbeeldzinnen"
 
-#: signbank/dictionary/templates/dictionary/admin_annotatedsentence_list.html:173
+#: signbank/dictionary/templates/dictionary/admin_annotatedsentence_list.html:212
 msgid "Search Annotated Sentence"
 msgstr "Zoek voorbeeldzin"
 
-#: signbank/dictionary/templates/dictionary/admin_annotatedsentence_list.html:179
+#: signbank/dictionary/templates/dictionary/admin_annotatedsentence_list.html:218
 #: signbank/dictionary/templates/dictionary/admin_lemma_list.html:186
 msgid "Show All"
 msgstr "Laat alles zien"
 
-#: signbank/dictionary/templates/dictionary/admin_annotatedsentence_list.html:213
+#: signbank/dictionary/templates/dictionary/admin_annotatedsentence_list.html:252
 #: signbank/dictionary/templates/dictionary/admin_lemma_list.html:240
 msgid "Number of Glosses"
 msgstr "Aantal gebaren"
 
-#: signbank/dictionary/templates/dictionary/admin_annotatedsentence_list.html:337
+#: signbank/dictionary/templates/dictionary/admin_annotatedsentence_list.html:348
 #: signbank/dictionary/templates/dictionary/gloss_detail.html:3077
 msgid "Delete this annotated sentence"
 msgstr "Verwijder dit voorbeeldzin"
 
-#: signbank/dictionary/templates/dictionary/admin_annotatedsentence_list.html:340
+#: signbank/dictionary/templates/dictionary/admin_annotatedsentence_list.html:351
 #: signbank/dictionary/templates/dictionary/gloss_detail.html:1497
 #: signbank/dictionary/templates/dictionary/gloss_detail.html:1676
 #: signbank/dictionary/templates/dictionary/gloss_detail.html:2151
@@ -2994,7 +2994,7 @@ msgstr ""
 "Weet je zeker dat je dit wilt verwijderen? Het kan niet ongedaan gemaakt "
 "worden."
 
-#: signbank/dictionary/templates/dictionary/admin_annotatedsentence_list.html:347
+#: signbank/dictionary/templates/dictionary/admin_annotatedsentence_list.html:358
 #: signbank/dictionary/templates/dictionary/admin_lemma_list.html:393
 #: signbank/dictionary/templates/dictionary/admin_search_history.html:188
 #: signbank/dictionary/templates/dictionary/dataset_frequency.html:451
@@ -3035,7 +3035,7 @@ msgstr ""
 msgid "Cancel"
 msgstr "Annuleer"
 
-#: signbank/dictionary/templates/dictionary/admin_annotatedsentence_list.html:348
+#: signbank/dictionary/templates/dictionary/admin_annotatedsentence_list.html:359
 #: signbank/dictionary/templates/dictionary/admin_lemma_list.html:395
 #: signbank/dictionary/templates/dictionary/admin_search_history.html:189
 #: signbank/dictionary/templates/dictionary/gloss_detail.html:985
@@ -3064,7 +3064,7 @@ msgstr "Annuleer"
 msgid "Confirm Delete"
 msgstr "Bevestig verwijderen"
 
-#: signbank/dictionary/templates/dictionary/admin_annotatedsentence_list.html:406
+#: signbank/dictionary/templates/dictionary/admin_annotatedsentence_list.html:417
 msgid "No sentences found. Please enter a query."
 msgstr "Geen voorbeeldzinnen gevonden. Voer een zoekopdracht in."
 
@@ -3356,7 +3356,7 @@ msgid "No datasets found."
 msgstr "Geen datasets gevonden."
 
 #: signbank/dictionary/templates/dictionary/admin_dataset_manager.html:29
-#: signbank/dictionary/templates/dictionary/admin_handshape_list.html:21
+#: signbank/dictionary/templates/dictionary/admin_handshape_list.html:18
 #: signbank/dictionary/templates/dictionary/dataset_detail.html:18
 #: signbank/dictionary/templates/dictionary/dataset_media_manager.html:20
 #: signbank/dictionary/templates/dictionary/gloss_detail.html:27
@@ -3750,12 +3750,12 @@ msgstr "Geen frequentie data beschikbaar"
 msgid "Signbank: Search Signs"
 msgstr "Signbank: Zoek gebaren"
 
-#: signbank/dictionary/templates/dictionary/admin_gloss_list.html:775
-#: signbank/dictionary/templates/dictionary/admin_morpheme_list.html:378
+#: signbank/dictionary/templates/dictionary/admin_gloss_list.html:808
+#: signbank/dictionary/templates/dictionary/admin_morpheme_list.html:410
 msgid "Search by Morphology"
 msgstr "Zoek op Morfologie"
 
-#: signbank/dictionary/templates/dictionary/admin_gloss_list.html:788
+#: signbank/dictionary/templates/dictionary/admin_gloss_list.html:821
 #: signbank/dictionary/templates/dictionary/gloss_detail.html:2215
 #: signbank/dictionary/templates/dictionary/gloss_detail.html:2222
 #: signbank/dictionary/templates/dictionary/gloss_detail.html:2282
@@ -3763,33 +3763,33 @@ msgstr "Zoek op Morfologie"
 msgid "Morpheme Gloss"
 msgstr "Morfeem-Glos"
 
-#: signbank/dictionary/templates/dictionary/admin_gloss_list.html:876
+#: signbank/dictionary/templates/dictionary/admin_gloss_list.html:909
 msgid "Search by Relation"
 msgstr "Zoek op Relaties"
 
-#: signbank/dictionary/templates/dictionary/admin_gloss_list.html:925
-#: signbank/dictionary/templates/dictionary/admin_gloss_list.html:932
-#: signbank/dictionary/templates/dictionary/admin_gloss_list.html:940
+#: signbank/dictionary/templates/dictionary/admin_gloss_list.html:958
+#: signbank/dictionary/templates/dictionary/admin_gloss_list.html:965
+#: signbank/dictionary/templates/dictionary/admin_gloss_list.html:973
 #: signbank/query_parameters.py:607
 msgid "Search Sign"
 msgstr "Zoek gebaar"
 
-#: signbank/dictionary/templates/dictionary/admin_gloss_list.html:927
+#: signbank/dictionary/templates/dictionary/admin_gloss_list.html:960
 #: signbank/query_parameters.py:609
 msgid "Search Sign or Morpheme"
 msgstr "Zoek gebaar of morfeem"
 
-#: signbank/dictionary/templates/dictionary/admin_gloss_list.html:934
+#: signbank/dictionary/templates/dictionary/admin_gloss_list.html:967
 msgid "Sign or Morpheme"
 msgstr "Gebaar of morfeem"
 
-#: signbank/dictionary/templates/dictionary/admin_gloss_list.html:970
-#: signbank/dictionary/templates/dictionary/admin_gloss_list.html:981
+#: signbank/dictionary/templates/dictionary/admin_gloss_list.html:1003
+#: signbank/dictionary/templates/dictionary/admin_gloss_list.html:1014
 msgid "Lemma View"
 msgstr "Lemmalijst"
 
-#: signbank/dictionary/templates/dictionary/admin_gloss_list.html:972
-#: signbank/dictionary/templates/dictionary/admin_gloss_list.html:983
+#: signbank/dictionary/templates/dictionary/admin_gloss_list.html:1005
+#: signbank/dictionary/templates/dictionary/admin_gloss_list.html:1016
 msgid "List View"
 msgstr "Lijst"
 
@@ -3797,66 +3797,40 @@ msgstr "Lijst"
 msgid "Signbank: Search Handshapes"
 msgstr "Signbank: Zoek handvormen"
 
-#: signbank/dictionary/templates/dictionary/admin_handshape_list.html:19
-#: signbank/dictionary/templates/dictionary/admin_search_history.html:142
-#: signbank/dictionary/templates/dictionary/annotated_sentence_detail.html:62
-#: signbank/dictionary/templates/dictionary/dataset_detail.html:16
-#: signbank/dictionary/templates/dictionary/dataset_detail.html:62
-#: signbank/dictionary/templates/dictionary/dataset_media_manager.html:18
-#: signbank/dictionary/templates/dictionary/gloss_detail.html:24
-#: signbank/dictionary/templates/dictionary/gloss_detail.html:806
-#: signbank/dictionary/templates/dictionary/gloss_videos.html:18
-#: signbank/dictionary/templates/dictionary/handshape_detail.html:19
-#: signbank/dictionary/templates/dictionary/handshape_detail.html:73
-#: signbank/dictionary/templates/dictionary/morpheme_detail.html:107
-#: signbank/dictionary/templates/dictionary/morpheme_detail.html:300
-#: signbank/dictionary/templates/dictionary/semanticfield_detail.html:22
-#: signbank/dictionary/templates/dictionary/semanticfield_detail.html:60
-msgid "Edit"
-msgstr "Bewerk"
-
-#: signbank/dictionary/templates/dictionary/admin_handshape_list.html:20
-#: signbank/dictionary/templates/dictionary/gloss_detail.html:25
-#: signbank/dictionary/templates/dictionary/gloss_videos.html:19
-#: signbank/dictionary/templates/dictionary/morpheme_detail.html:108
-#: signbank/dictionary/templates/dictionary/semanticfield_detail.html:23
-msgid "Turn Off Edit Mode"
-msgstr "Zet edit-stand uit"
-
-#: signbank/dictionary/templates/dictionary/admin_handshape_list.html:143
-#: signbank/dictionary/templates/dictionary/admin_handshape_list.html:146
+#: signbank/dictionary/templates/dictionary/admin_handshape_list.html:181
+#: signbank/dictionary/templates/dictionary/admin_handshape_list.html:184
 msgid "Handshape Name"
 msgstr "Handvorm-naam"
 
-#: signbank/dictionary/templates/dictionary/admin_handshape_list.html:157
+#: signbank/dictionary/templates/dictionary/admin_handshape_list.html:195
 msgid "FINGER SELECTION"
 msgstr "VINGERSELECTIE"
 
-#: signbank/dictionary/templates/dictionary/admin_handshape_list.html:310
-#: signbank/dictionary/templates/dictionary/admin_handshape_list.html:317
+#: signbank/dictionary/templates/dictionary/admin_handshape_list.html:348
+#: signbank/dictionary/templates/dictionary/admin_handshape_list.html:355
 #: signbank/query_parameters.py:612
 msgid "Search Handshape"
 msgstr "Zoek handvorm"
 
-#: signbank/dictionary/templates/dictionary/admin_handshape_list.html:312
-#: signbank/dictionary/templates/dictionary/admin_handshape_list.html:319
+#: signbank/dictionary/templates/dictionary/admin_handshape_list.html:350
+#: signbank/dictionary/templates/dictionary/admin_handshape_list.html:357
 #: signbank/query_parameters.py:611
 msgid "Search Sign by Handshape"
 msgstr "Zoek gebaar met handvorm"
 
-#: signbank/dictionary/templates/dictionary/admin_handshape_list.html:357
+#: signbank/dictionary/templates/dictionary/admin_handshape_list.html:396
 msgid "Finger Selection"
 msgstr "Vingerselectie"
 
-#: signbank/dictionary/templates/dictionary/admin_handshape_list.html:358
+#: signbank/dictionary/templates/dictionary/admin_handshape_list.html:397
 msgid "Finger Configuration"
 msgstr "Vingerconfiguratie"
 
-#: signbank/dictionary/templates/dictionary/admin_handshape_list.html:359
+#: signbank/dictionary/templates/dictionary/admin_handshape_list.html:398
 msgid "Finger Selection 2"
 msgstr "Vingerselectie 2"
 
-#: signbank/dictionary/templates/dictionary/admin_handshape_list.html:360
+#: signbank/dictionary/templates/dictionary/admin_handshape_list.html:399
 msgid "Finger Configuration 2"
 msgstr "Vingerconfiguratie 2"
 
@@ -3996,26 +3970,26 @@ msgstr ""
 msgid "Signbank: Search Morphemes"
 msgstr "Signbank: Zoek morfeem"
 
-#: signbank/dictionary/templates/dictionary/admin_morpheme_list.html:364
+#: signbank/dictionary/templates/dictionary/admin_morpheme_list.html:396
 msgid "Search by Basic Properties"
 msgstr "Zoek op basiseigenschappen"
 
-#: signbank/dictionary/templates/dictionary/admin_morpheme_list.html:468
+#: signbank/dictionary/templates/dictionary/admin_morpheme_list.html:500
 #: signbank/query_parameters.py:610
 msgid "Search Morpheme"
 msgstr "Zoek morfeem"
 
-#: signbank/dictionary/templates/dictionary/admin_morpheme_list.html:565
+#: signbank/dictionary/templates/dictionary/admin_morpheme_list.html:597
 #: signbank/dictionary/templates/dictionary/gloss_detail.html:1381
 #: signbank/dictionary/templates/dictionary/morpheme_detail.html:437
 msgid "Create New"
 msgstr "Maak nieuw"
 
-#: signbank/dictionary/templates/dictionary/admin_morpheme_list.html:593
+#: signbank/dictionary/templates/dictionary/admin_morpheme_list.html:625
 msgid "You are not authorized to add a morpheme"
 msgstr "Je hebt niet genoeg rechten om een morfeem toe te voegen"
 
-#: signbank/dictionary/templates/dictionary/admin_morpheme_list.html:608
+#: signbank/dictionary/templates/dictionary/admin_morpheme_list.html:640
 #: signbank/dictionary/templates/dictionary/morpheme_detail.html:469
 #: signbank/dictionary/templates/dictionary/word.html:158
 msgid "Abstract Meaning"
@@ -4187,6 +4161,23 @@ msgstr "Query beschrijving"
 msgid "Actions"
 msgstr "Acties"
 
+#: signbank/dictionary/templates/dictionary/admin_search_history.html:142
+#: signbank/dictionary/templates/dictionary/annotated_sentence_detail.html:62
+#: signbank/dictionary/templates/dictionary/dataset_detail.html:16
+#: signbank/dictionary/templates/dictionary/dataset_detail.html:62
+#: signbank/dictionary/templates/dictionary/dataset_media_manager.html:18
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:24
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:806
+#: signbank/dictionary/templates/dictionary/gloss_videos.html:18
+#: signbank/dictionary/templates/dictionary/handshape_detail.html:19
+#: signbank/dictionary/templates/dictionary/handshape_detail.html:73
+#: signbank/dictionary/templates/dictionary/morpheme_detail.html:107
+#: signbank/dictionary/templates/dictionary/morpheme_detail.html:300
+#: signbank/dictionary/templates/dictionary/semanticfield_detail.html:22
+#: signbank/dictionary/templates/dictionary/semanticfield_detail.html:60
+msgid "Edit"
+msgstr "Bewerk"
+
 #: signbank/dictionary/templates/dictionary/admin_search_history.html:150
 msgid "Run"
 msgstr "Voer uit"
@@ -4230,11 +4221,11 @@ msgstr "Geen semantische velden gevonden."
 msgid "Signbank: Search Senses"
 msgstr "Signbank: Zoek betekenissen"
 
-#: signbank/dictionary/templates/dictionary/admin_senses_list.html:732
+#: signbank/dictionary/templates/dictionary/admin_senses_list.html:707
 msgid "Search Sentences"
 msgstr "Zoek Voorbeeldzinnen"
 
-#: signbank/dictionary/templates/dictionary/admin_senses_list.html:787
+#: signbank/dictionary/templates/dictionary/admin_senses_list.html:762
 #: templates/ASL-templates/menu.html:48 templates/global-templates/menu.html:92
 msgid "Search Sense"
 msgstr "Zoek Betekenis"
@@ -4896,6 +4887,13 @@ msgstr "Vertaling voorbeeldzin"
 #: signbank/dictionary/templates/dictionary/gloss_detail.html:3153
 msgid "Original video"
 msgstr "Originele video"
+
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:25
+#: signbank/dictionary/templates/dictionary/gloss_videos.html:19
+#: signbank/dictionary/templates/dictionary/morpheme_detail.html:108
+#: signbank/dictionary/templates/dictionary/semanticfield_detail.html:23
+msgid "Turn Off Edit Mode"
+msgstr "Zet edit-stand uit"
 
 #: signbank/dictionary/templates/dictionary/gloss_detail.html:26
 msgid "Delete This Gloss"
