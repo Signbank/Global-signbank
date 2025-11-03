@@ -35,12 +35,10 @@
             
             
             <h3>{% trans "General Feedback" %}</h3>
-            
-            <p>{% blocktrans trimmed %}Want to tell us what you think of the {{language}} Signbank website or any
-                other signed language related issues? The <a href="{{PREFIX_URL}}/feedback/site">General Feedback</a>
-                 form is just the place to do it.
-            {% endblocktrans %}</p>
-                
+            <p>{% blocktrans trimmed %}Want to tell us what you think of the {{language}} Signbank website or any other sign language related issues? Respond here:{% endblocktrans %}
+                <a href='{{general_feedback_form}}'>{% trans "General Feedback" %}</a>
+            </p>
+
             <h3>{% trans "Report a Missing Sign" %}</h3>
             
             <p>{% blocktrans trimmed %}If you know of a sign that isn't in Signbank, you can use the

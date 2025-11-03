@@ -1350,7 +1350,7 @@ textarea:focus {
 
         <table class='table table-condensed table-condensed-light' style="width:100%;">
             <tr>
-                <th>Release information:</th>
+                <th>{% trans "Release information" %}:</th>
                 <td><div class="edit edit_area" id='{{ release_information.1 }}' value='{{ release_information.2 }}'>{% value release_information.0 %}</div></td>
             </tr>
             <tr {% if gloss_dialects|length == 0 %} class="empty_row" {% endif %}>
