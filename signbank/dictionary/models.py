@@ -1042,7 +1042,7 @@ class Gloss(MetaModelMixin, models.Model):
     inWeb = models.BooleanField(_("In the Web dictionary"), default=False)
     isNew = models.BooleanField(_("Is this a proposed new sign?"), null=True, default=False)
     excludeFromEcv = models.BooleanField(_("Exclude from ECV"), default=False)
-    release_information = models.CharField(max_length=128, blank=True, default='')
+    release_information = models.CharField(_("Release information"), max_length=128, blank=True, default='')
 
     inittext = models.CharField(max_length=50, blank=True)
 
