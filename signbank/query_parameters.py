@@ -1085,6 +1085,7 @@ def queryset_glosssense_from_get(model, formclass, searchform, GET, qs):
     """
     if not searchform:
         return qs
+    search_form_fields = list(searchform.fields.keys()) + ['signlanguage', 'dialect']
     gloss_prefix = 'gloss__' if model in [GlossSense, AnnotatedGloss] else ''
     text_filter = 'iregex' if USE_REGULAR_EXPRESSIONS else 'icontains'
     for get_key, get_value in GET.items():
@@ -1096,7 +1097,7 @@ def queryset_glosssense_from_get(model, formclass, searchform, GET, qs):
             # multiple select
             field = get_key[:-2]
             vals = GET.getlist(get_key)
-            if field not in searchform.fields.keys() or not vals:
+            if field not in search_form_fields or not vals:
                 continue
             values = convert_getlist_values_to_machine_values_list(model, searchform, field, vals)
             if field in ['sentenceType']:
@@ -1356,12 +1357,12 @@ def queryset_annotatedgloss_from_get(searchform, GET, qs):
     """
     if not searchform:
         return qs
+    search_form_fields = list(searchform.fields.keys()) + ['signlanguage', 'dialect']
     for get_key, get_value in GET.items():
         if get_key.endswith('[]'):
             # no multi-select search fields
             continue
-        elif get_key not in searchform.fields.keys() \
-                or get_value in ['', '0']:
+        elif get_key not in search_form_fields or get_value in ['', '0']:
             continue
         elif searchform.fields[get_key].widget.input_type in ['text']:
             if get_key in ['annotatedSentenceContains']:
@@ -1390,7 +1391,9 @@ def query_parameters_from_get(model, searchform, GET, query_parameters):
     """
     if not searchform:
         return query_parameters
-    search_form_fields = searchform.fields.keys()
+    search_form_fields = list(searchform.fields.keys())
+    if model in [Gloss, GlossSense, AnnotatedGloss]:
+        search_form_fields += ['signlanguage', 'dialect']
     for get_key, get_value in GET.items():
         if get_value in ['', '0']:
             continue

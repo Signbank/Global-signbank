@@ -2366,18 +2366,51 @@ def get_checksum_for_path(file_path):
 
 
 def get_multiselect_fieldnames():
-    fieldnames = FIELDS['main'] + FIELDS['phonology'] + FIELDS['semantics'] + ['inWeb', 'isNew']
-    fields_with_choices = fields_to_fieldcategory_dict()
+    fieldnames = FIELDS['main'] + FIELDS['phonology'] + FIELDS['semantics'] + ['inWeb', 'isNew'] + ['dialect', 'signlanguage']
+    fields_with_choices = fields_to_fieldcategory_dict(fieldnames)
     multiple_select_gloss_fields = [fieldname for fieldname in fieldnames if fieldname in fields_with_choices.keys()]
     return multiple_select_gloss_fields
 
 
+def check_get_parameters_are_available(search_form, request_get_parameters, query_parameters):
+    search_form_fields = list(search_form.fields.keys()) + ['signlanguage', 'dialect']
+    multiselect_fields = get_multiselect_fieldnames() + ['signlanguage', 'dialect']
+
+    multiselect_fields_of_form = [f'{field}[]' for field in multiselect_fields if field in search_form_fields]
+    multiselect_fields_missing_brackets = [field for field in multiselect_fields if field in search_form_fields]
+    okay_parameters = []
+    not_okay_parameters = []
+    workflow_parameters = []
+    for key, value in request_get_parameters.items():
+        if key == 'page' or key in query_parameters.keys():
+            okay_parameters.append(key)
+            continue
+        if key.endswith('[]') and key[:-2] not in multiselect_fields_missing_brackets:
+            # this is a non-existent multiple choice field in the url
+            not_okay_parameters.append(key)
+            continue
+        if key.endswith('[]') and key in multiselect_fields_of_form:
+            # this is a non-existent multiple choice field in the url
+            okay_parameters.append(key)
+            continue
+        if key in multiselect_fields_missing_brackets:
+            # url parameter is a multiselect but appears in the url without the brackets
+            not_okay_parameters.append(key)
+            continue
+        if key in ['csrfmiddlewaretoken', 'search_type', 'view_type', 'format', 'show_all', 'page']:
+            # key is not in  form and not an operational parameter
+            workflow_parameters.append(key)
+            continue
+        if key not in search_form_fields:
+            not_okay_parameters.append(key)
+            continue
+        okay_parameters.append(key)
+    return okay_parameters, not_okay_parameters, workflow_parameters
+
+
 def get_page_parameters_for_listview(search_form, request_get_parameters, query_parameters):
-    # fill page parameters
-    search_form_fields = search_form.fields.keys()
-    model = type(search_form.instance)
-    multiselect_fields_of_form = [field for field in get_multiselect_fieldnames() if field in search_form_fields]
     page_params_list = []
+    okay_parameters, not_okay_parameters, workflow_parameters = check_get_parameters_are_available(search_form, request_get_parameters, query_parameters)
     if 'query' not in request_get_parameters:
         for key, value in query_parameters.items():
             # process explicitly saved query parameters first
@@ -2391,14 +2424,7 @@ def get_page_parameters_for_listview(search_form, request_get_parameters, query_
         # add other url parameters and ignore if processed above, this allows processing of multi-select parameters
         if key == 'page' or key in query_parameters.keys():
             continue
-        if key.endswith('[]') and key[:-2] not in multiselect_fields_of_form:
-            # this is a non-existent multiple choice field in the url
-            continue
-        if key in multiselect_fields_of_form:
-            # url parameter is a multiselect but appears in the url without the brackets
-            continue
-        if key not in search_form_fields and key not in ['view_type', 'search_type', 'format', 'show_all', 'csrfmiddlewaretoken']:
-            # key is not in  form and not an operational parameter
+        if key in not_okay_parameters:
             continue
         if isinstance(value, list):
             page_params_list.extend((key, x) for x in value)
