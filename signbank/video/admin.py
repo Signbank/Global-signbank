@@ -233,6 +233,40 @@ class GlossVideoFileTypeFilter(admin.SimpleListFilter):
             return queryset.all()
 
 
+class GlossVideoWebmTypeFilter(admin.SimpleListFilter):
+    """
+    Filter the GlossVideo objects on whether the video is an MP4 video
+    The values of lookups show in the right-hand column of the admin under a heading "MP4 File"
+    Called from GlossVideoAdmin
+    :model: GlossVideoAdmin
+    """
+    title = _('Webm File')
+    parameter_name = 'webm_file_type'
+
+    def lookups(self, request, model_admin):
+        file_type = tuple((b, b) for b in ('True', 'False'))
+        return file_type
+
+    def queryset(self, request, queryset):
+
+        def matching_file_type(videofile, key):
+            if not key:
+                return False
+            video_file_full_path = Path(WRITABLE_FOLDER, videofile)
+            file_extension = video_file_type_extension(video_file_full_path)
+            has_webm_type = file_extension == '.webm'
+            return key == str(has_webm_type)
+
+        queryset_res = queryset.values('id', 'videofile')
+        results = [qv['id'] for qv in queryset_res
+                   if matching_file_type(qv['videofile'], self.value())]
+
+        if self.value():
+            return queryset.filter(id__in=results)
+        else:
+            return queryset.all()
+
+
 class GlossVideoBackupFilter(admin.SimpleListFilter):
     """
     Filter the GlossVideo objects on whether the video is a backup video
@@ -529,7 +563,7 @@ class GlossVideoAdmin(admin.ModelAdmin):
 
     list_display = ['id', 'gloss', 'video_file', 'perspective', 'NME', 'file_timestamp', 'file_group', 'permissions', 'file_size', 'video_type',  'version']
     list_filter = (GlossVideoDatasetFilter, GlossVideoFileSystemGroupFilter, GlossVideoExistenceFilter,
-                   GlossVideoFileTypeFilter, GlossVideoNMEFilter, GlossVideoPerspectiveFilter,
+                   GlossVideoFileTypeFilter, GlossVideoWebmTypeFilter, GlossVideoNMEFilter, GlossVideoPerspectiveFilter,
                    GlossVideoFilenameFilter, GlossVideoBackupFilter)
 
     search_fields = ['^gloss__annotationidglosstranslation__text', '^gloss__lemma__lemmaidglosstranslation__text']
