@@ -8,7 +8,7 @@ from signbank.settings.base import *
 from signbank.settings.server_specific import WRITABLE_FOLDER, FILESYSTEM_SIGNBANK_GROUPS, DEBUG_VIDEOS, DELETED_FILES_FOLDER
 from django.utils.translation import gettext_lazy as _
 from signbank.tools import get_two_letter_dir
-from signbank.video.convertvideo import video_file_type_extension
+from signbank.video.convertvideo import video_file_type_extension, convert_video
 from pathlib import Path
 import os
 import stat
@@ -429,6 +429,102 @@ def unlink_files(modeladmin, request, queryset):
         obj.save()
 
 
+@admin.action(description="Convert non-mp4 video files to mp4")
+def convert_non_mp4_videos(modeladmin, request, queryset):
+    """
+    Command for the GlossVideo objects selected in queryset
+    The command appears in the admin pull-down list of commands for the selected gloss videos
+    The command determines which glosses are selected, then retrieves the normal video objects for those glosses
+    This allows the user to merely select one of the objects and hereby change them all instead of numerous selections
+    For those gloss video objects, it converts the file if the format is not mp4.
+    Called from GlossVideoAdmin
+    :model: GlossVideoAdmin
+    """
+    # retrieve glosses of selected GlossVideo objects
+    distinct_glosses = Gloss.objects.filter(glossvideo__in=queryset).distinct()
+
+    for gloss in distinct_glosses:
+        for glossvideo in GlossVideo.objects.filter(gloss=gloss, glossvideonme=None, glossvideoperspective=None).order_by('version', 'id'):
+            current_relative_path = str(glossvideo.videofile)
+            if not current_relative_path:
+                # make sure the path is not empty
+                continue
+
+            video_file_full_path = os.path.join(WRITABLE_FOLDER, current_relative_path)
+
+            # use the file system command 'file' to determine the extension for the type of video file
+            desired_video_extension = video_file_type_extension(video_file_full_path)
+            if not desired_video_extension:
+                continue
+
+            # compare the stored filename to the name it should have
+            base_filename = os.path.basename(video_file_full_path)
+
+            idgloss = gloss.idgloss
+            two_letter_dir = get_two_letter_dir(idgloss)
+            dataset_dir = gloss.lemma.dataset.acronym
+            desired_filename_without_extension = f'{idgloss}-{gloss.id}'
+
+            if glossvideo.version > 0:
+                desired_extension = f'{desired_video_extension}.bak{glossvideo.id}'
+            else:
+                desired_extension = desired_video_extension
+
+            desired_filename = desired_filename_without_extension + desired_extension
+            if base_filename != desired_filename:
+                # the file has the wrong filename
+                source = os.path.join(WRITABLE_FOLDER, current_relative_path)
+                destination = os.path.join(WRITABLE_FOLDER, GLOSS_VIDEO_DIRECTORY,
+                                           dataset_dir, two_letter_dir, desired_filename)
+                desired_relative_path = os.path.join(GLOSS_VIDEO_DIRECTORY,
+                                                     dataset_dir, two_letter_dir, desired_filename)
+                if DEBUG_VIDEOS:
+                    print('video:admin:convert_non_mp4_videos:os.rename: ', source, destination)
+                if os.path.exists(video_file_full_path):
+                    os.rename(source, destination)
+                if DEBUG_VIDEOS:
+                    print('video:admin:convert_non_mp4_videos:videofile.name := ', desired_relative_path)
+                glossvideo.videofile.name = desired_relative_path
+                glossvideo.save()
+
+            if desired_video_extension == '.mp4':
+                return
+
+            current_relative_path = str(glossvideo.videofile)
+            if not current_relative_path:
+                # make sure the path is not empty
+                continue
+
+            # if we get to here, the file needs to be converted
+            idgloss = gloss.idgloss
+            two_letter_dir = get_two_letter_dir(idgloss)
+            dataset_dir = gloss.lemma.dataset.acronym
+            desired_filename_without_extension = f'{idgloss}-{gloss.id}'
+
+            if glossvideo.version > 0:
+                desired_extension = f'.mp4.bak{glossvideo.id}'
+            else:
+                desired_extension = '.mp4'
+
+            desired_filename = desired_filename_without_extension + desired_extension
+
+            source = os.path.join(WRITABLE_FOLDER, current_relative_path)
+            destination = os.path.join(WRITABLE_FOLDER, GLOSS_VIDEO_DIRECTORY,
+                                       dataset_dir, two_letter_dir, desired_filename)
+            desired_relative_path = os.path.join(GLOSS_VIDEO_DIRECTORY,
+                                                 dataset_dir, two_letter_dir, desired_filename)
+            if DEBUG_VIDEOS:
+                print('video:admin:convert_non_mp4_videos:convert_video: ', source, destination)
+            if not os.path.exists(video_file_full_path):
+                return
+            okay = convert_video(source, destination)
+            if DEBUG_VIDEOS:
+                print('video:admin:convert_non_mp4_videos:videofile.name := ', desired_relative_path)
+            if okay:
+                glossvideo.videofile.name = desired_relative_path
+                glossvideo.save()
+
+
 class GlossVideoAdmin(admin.ModelAdmin):
 
     list_display = ['id', 'gloss', 'video_file', 'perspective', 'NME', 'file_timestamp', 'file_group', 'permissions', 'file_size', 'video_type',  'version']
@@ -437,7 +533,7 @@ class GlossVideoAdmin(admin.ModelAdmin):
                    GlossVideoFilenameFilter, GlossVideoBackupFilter)
 
     search_fields = ['^gloss__annotationidglosstranslation__text', '^gloss__lemma__lemmaidglosstranslation__text']
-    actions = [rename_extension_videos, remove_backups, renumber_backups, unlink_files]
+    actions = [rename_extension_videos, remove_backups, renumber_backups, unlink_files, convert_non_mp4_videos]
 
     def video_file(self, obj=None):
         """
