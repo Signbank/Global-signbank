@@ -2372,59 +2372,37 @@ def get_multiselect_fieldnames():
     return multiple_select_gloss_fields
 
 
-def check_get_parameters_are_available(search_form, request_get_parameters, query_parameters):
+def filter_page_values(vals):
+    values = [v for v in vals if re.match(r"[1-9]\d*$", v)]
+    return values
+
+
+def get_available_url_parameters_for_template(search_form):
+    # workflow_parameters = ['csrfmiddlewaretoken', 'search_type', 'view_type', 'format', 'show_all', 'page', 'paginate_by']
+    # view_commands = ['export_ecv', 'reset']
     search_form_fields = list(search_form.fields.keys()) + ['signlanguage', 'dialect']
     multiselect_fields = get_multiselect_fieldnames() + ['signlanguage', 'dialect']
 
     multiselect_fields_of_form = [f'{field}[]' for field in multiselect_fields if field in search_form_fields]
     multiselect_fields_missing_brackets = [field for field in multiselect_fields if field in search_form_fields]
-    okay_parameters = []
-    not_okay_parameters = []
-    workflow_parameters = []
-    for key, value in request_get_parameters.items():
-        if key == 'page' or key in query_parameters.keys():
-            okay_parameters.append(key)
-            continue
-        if key.endswith('[]') and key[:-2] not in multiselect_fields_missing_brackets:
-            # this is a non-existent multiple choice field in the url
-            not_okay_parameters.append(key)
-            continue
-        if key.endswith('[]') and key in multiselect_fields_of_form:
-            # this is a non-existent multiple choice field in the url
-            okay_parameters.append(key)
-            continue
-        if key in multiselect_fields_missing_brackets:
-            # url parameter is a multiselect but appears in the url without the brackets
-            not_okay_parameters.append(key)
-            continue
-        if key in ['csrfmiddlewaretoken', 'search_type', 'view_type', 'format', 'show_all', 'page']:
-            # key is not in  form and not an operational parameter
-            workflow_parameters.append(key)
-            continue
-        if key not in search_form_fields:
-            not_okay_parameters.append(key)
-            continue
-        okay_parameters.append(key)
-    return okay_parameters, not_okay_parameters, workflow_parameters
+    non_multiselect_fields = [field for field in search_form_fields if field not in multiselect_fields_missing_brackets]
+
+    return multiselect_fields_of_form + non_multiselect_fields
 
 
 def get_page_parameters_for_listview(search_form, request_get_parameters, query_parameters):
     page_params_list = []
-    okay_parameters, not_okay_parameters, workflow_parameters = check_get_parameters_are_available(search_form, request_get_parameters, query_parameters)
+    okay_parameters = get_available_url_parameters_for_template(search_form)
     if 'query' not in request_get_parameters:
         for key, value in query_parameters.items():
             # process explicitly saved query parameters first
-            if key == 'page':
-                continue
             if isinstance(value, list):
                 page_params_list.extend((key, x) for x in value)
             else:
                 page_params_list.append((key, value))
     for key, value in request_get_parameters.items():
         # add other url parameters and ignore if processed above, this allows processing of multi-select parameters
-        if key == 'page' or key in query_parameters.keys():
-            continue
-        if key in not_okay_parameters:
+        if key in query_parameters.keys() or key not in okay_parameters:
             continue
         if isinstance(value, list):
             page_params_list.extend((key, x) for x in value)

@@ -17,7 +17,7 @@ from django.db.models.functions import Concat
 from django.db.models import Q, Count, CharField, Value as V, Prefetch
 from django.db.models.fields import BooleanField
 from django.http import (HttpResponse, HttpResponseRedirect, HttpResponseForbidden,
-                         QueryDict, JsonResponse, StreamingHttpResponse, Http404)
+                         QueryDict, JsonResponse, StreamingHttpResponse, Http404, HttpResponseBadRequest)
 from django.urls import reverse_lazy, reverse
 from django.core.exceptions import PermissionDenied, ObjectDoesNotExist, MultipleObjectsReturned, ValidationError
 from django.utils.translation import override, gettext, gettext_lazy as _, activate
@@ -85,7 +85,7 @@ from signbank.tools import (write_ecv_file_for_dataset, find_duplicate_lemmas,
                             construct_scrollbar, get_dataset_languages, get_datasets_with_public_glosses,
                             searchform_panels, map_search_results_to_gloss_list,
                             get_interface_language_and_default_language_codes, get_default_annotationidglosstranslation,
-                            get_page_parameters_for_listview)
+                            get_page_parameters_for_listview, filter_page_values)
 from signbank.csv_interface import (csv_gloss_to_row, csv_header_row_glosslist, csv_header_row_morphemelist,
                                     csv_morpheme_to_row, csv_header_row_handshapelist, csv_handshape_to_row,
                                     csv_header_row_lemmalist, csv_lemma_to_row,
@@ -560,6 +560,12 @@ class GlossListView(ListView):
 
     def get_context_data(self, **kwargs):
         # Call the base implementation first to get a context
+        if 'page' in self.request.GET:
+            tempdict = self.request.GET.copy()
+            self.request.GET._mutable = True
+            safe_pages = filter_page_values(self.request.GET.getlist('page', []))
+            tempdict['page'] = safe_pages[0] if safe_pages else ['1']
+            self.request.GET = tempdict
         context = super(GlossListView, self).get_context_data(**kwargs)
 
         context['public'] = self.public
