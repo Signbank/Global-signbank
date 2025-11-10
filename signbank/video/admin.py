@@ -235,8 +235,8 @@ class GlossVideoFileTypeFilter(admin.SimpleListFilter):
 
 class GlossVideoWebmTypeFilter(admin.SimpleListFilter):
     """
-    Filter the GlossVideo objects on whether the video is an MP4 video
-    The values of lookups show in the right-hand column of the admin under a heading "MP4 File"
+    Filter the GlossVideo objects on whether the video is a Webm video
+    The values of lookups show in the right-hand column of the admin under a heading "Webm File"
     Called from GlossVideoAdmin
     :model: GlossVideoAdmin
     """
@@ -463,6 +463,29 @@ def unlink_files(modeladmin, request, queryset):
         obj.save()
 
 
+def _get_desired_filename_components(gloss, glossvideo, extension):
+    idgloss = gloss.idgloss
+    two_letter_dir = get_two_letter_dir(idgloss)
+    dataset_dir = gloss.lemma.dataset.acronym
+    desired_filename_without_extension = f'{idgloss}-{gloss.pk}'
+    if glossvideo.version > 0:
+        desired_extension = f'{extension}.bak{glossvideo.pk}'
+    else:
+        desired_extension = extension
+    desired_filename = desired_filename_without_extension + desired_extension
+    return two_letter_dir, dataset_dir, desired_filename_without_extension, desired_extension, desired_filename
+
+
+def build_desired_filename(gloss, glossvideo, desired_video_extension):
+    idgloss = gloss.idgloss
+    desired_filename_without_extension = f'{idgloss}-{gloss.pk}'
+    if glossvideo.version > 0:
+        desired_extension = f'{desired_video_extension}.bak{glossvideo.pk}'
+    else:
+        desired_extension = desired_video_extension
+    return desired_filename_without_extension + desired_extension
+
+
 @admin.action(description="Convert non-mp4 video files to mp4")
 def convert_non_mp4_videos(modeladmin, request, queryset):
     """
@@ -494,19 +517,12 @@ def convert_non_mp4_videos(modeladmin, request, queryset):
             # compare the stored filename to the name it should have
             base_filename = os.path.basename(video_file_full_path)
 
-            idgloss = gloss.idgloss
-            two_letter_dir = get_two_letter_dir(idgloss)
-            dataset_dir = gloss.lemma.dataset.acronym
-            desired_filename_without_extension = f'{idgloss}-{gloss.id}'
+            (two_letter_dir, dataset_dir,
+             desired_filename_without_extension, desired_extension,
+             desired_filename) = _get_desired_filename_components(gloss, glossvideo, desired_video_extension)
 
-            if glossvideo.version > 0:
-                desired_extension = f'{desired_video_extension}.bak{glossvideo.id}'
-            else:
-                desired_extension = desired_video_extension
-
-            desired_filename = desired_filename_without_extension + desired_extension
             if base_filename != desired_filename:
-                # the file has the wrong filename
+                # the file has the wrong filename, it may be a backup file
                 source = os.path.join(WRITABLE_FOLDER, current_relative_path)
                 destination = os.path.join(WRITABLE_FOLDER, GLOSS_VIDEO_DIRECTORY,
                                            dataset_dir, two_letter_dir, desired_filename)
@@ -522,7 +538,8 @@ def convert_non_mp4_videos(modeladmin, request, queryset):
                 glossvideo.save()
 
             if desired_video_extension == '.mp4':
-                return
+                # this is tested after a possible renaming of the file in the above step
+                continue
 
             # refresh the video filename
             current_relative_path = str(glossvideo.videofile)
@@ -531,17 +548,7 @@ def convert_non_mp4_videos(modeladmin, request, queryset):
                 continue
 
             # if we get to here, the file needs to be converted
-            idgloss = gloss.idgloss
-            two_letter_dir = get_two_letter_dir(idgloss)
-            dataset_dir = gloss.lemma.dataset.acronym
-            desired_filename_without_extension = f'{idgloss}-{gloss.id}'
-
-            if glossvideo.version > 0:
-                desired_extension = f'.mp4.bak{glossvideo.id}'
-            else:
-                desired_extension = '.mp4'
-
-            desired_filename = desired_filename_without_extension + desired_extension
+            desired_filename = build_desired_filename(gloss, glossvideo, '.mp4')
 
             source = os.path.join(WRITABLE_FOLDER, current_relative_path)
             destination = os.path.join(WRITABLE_FOLDER, GLOSS_VIDEO_DIRECTORY,
@@ -551,27 +558,29 @@ def convert_non_mp4_videos(modeladmin, request, queryset):
             if DEBUG_VIDEOS:
                 print('video:admin:convert_non_mp4_videos:convert_video: ', source, destination)
             if not os.path.exists(video_file_full_path):
-                return
+                continue
             okay = convert_video(source, destination)
             if DEBUG_VIDEOS:
                 print('video:admin:convert_non_mp4_videos:videofile.name := ', desired_relative_path)
-            if okay:
-                glossvideo.videofile.name = desired_relative_path
-                glossvideo.save()
+            if not okay:
+                continue
 
-                # move the original video file to DELETED_FILES_FOLDER, it is not referenced anymore by the GlossVIdeo object
-                deleted_file_name = flattened_video_path(current_relative_path)
-                deleted_destination = os.path.join(WRITABLE_FOLDER, DELETED_FILES_FOLDER, deleted_file_name)
-                destination_dir = os.path.dirname(destination)
-                if not os.path.exists(destination_dir):
-                    os.makedirs(destination_dir)
-                if os.path.isdir(destination_dir):
-                    try:
-                        shutil.move(source, str(deleted_destination))
-                        if DEBUG_VIDEOS:
-                            print('video:admin:convert_non_mp4_videos:shutil.move: ', source, deleted_destination)
-                    except (OSError, PermissionError) as e:
-                        print(e)
+            glossvideo.videofile.name = desired_relative_path
+            glossvideo.save()
+
+            # move the original video file to DELETED_FILES_FOLDER, it is not referenced anymore by the GlossVideo object
+            deleted_file_name = flattened_video_path(current_relative_path)
+            deleted_destination = os.path.join(WRITABLE_FOLDER, DELETED_FILES_FOLDER, deleted_file_name)
+            destination_dir = os.path.dirname(destination)
+            if not os.path.exists(destination_dir):
+                os.makedirs(destination_dir)
+            if os.path.isdir(destination_dir):
+                try:
+                    shutil.move(source, str(deleted_destination))
+                    if DEBUG_VIDEOS:
+                        print('video:admin:convert_non_mp4_videos:shutil.move: ', source, deleted_destination)
+                except (OSError, PermissionError) as e:
+                    print(e)
 
 
 class GlossVideoAdmin(admin.ModelAdmin):
