@@ -473,7 +473,7 @@ def _get_desired_filename_components(gloss, glossvideo, extension):
     else:
         desired_extension = extension
     desired_filename = desired_filename_without_extension + desired_extension
-    return two_letter_dir, dataset_dir, desired_filename_without_extension, desired_extension, desired_filename
+    return two_letter_dir, dataset_dir, desired_filename
 
 
 def build_desired_filename(gloss, glossvideo, desired_video_extension):
@@ -518,11 +518,10 @@ def convert_non_mp4_videos(modeladmin, request, queryset):
             base_filename = os.path.basename(video_file_full_path)
 
             (two_letter_dir, dataset_dir,
-             desired_filename_without_extension, desired_extension,
              desired_filename) = _get_desired_filename_components(gloss, glossvideo, desired_video_extension)
 
             if base_filename != desired_filename:
-                # the file has the wrong filename, it may be a backup file
+                # the file has the wrong filename, the file may be a backup file that includes a video extension
                 source = os.path.join(WRITABLE_FOLDER, current_relative_path)
                 destination = os.path.join(WRITABLE_FOLDER, GLOSS_VIDEO_DIRECTORY,
                                            dataset_dir, two_letter_dir, desired_filename)
@@ -547,7 +546,7 @@ def convert_non_mp4_videos(modeladmin, request, queryset):
                 # make sure the path is not empty
                 continue
 
-            # if we get to here, the file needs to be converted
+            # if we get to here, the file needs to be converted to mp4 with an mp4 extension
             desired_filename = build_desired_filename(gloss, glossvideo, '.mp4')
 
             source = os.path.join(WRITABLE_FOLDER, current_relative_path)
