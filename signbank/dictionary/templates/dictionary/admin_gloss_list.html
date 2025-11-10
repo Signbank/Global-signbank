@@ -192,8 +192,8 @@ $(document).ready(function() {
      <!--Django was messing up the template generation otherwise (without the uppercase L)-->
      <!--The value field is signlanguage[] (lowercase l to match the model)-->
 
-     makeMultipleSelect('id_signLanguage', 'signlanguage[]');
-     $('#id_signLanguage').select2({
+     makeMultipleSelect('id_signlanguage', 'signlanguage[]');
+     $('#id_signlanguage').select2({
         allowClear: true,
         dropdownAutoWidth: true,
         width: 'resolve',
@@ -203,21 +203,21 @@ $(document).ready(function() {
 
      if (query_parameters_keys.includes('signlanguage[]')) {
          var query_initial = query_parameters_dict['signlanguage[]'];
-         $('#id_signLanguage').val(query_initial);
-         $('#id_signLanguage').trigger('change');
+         $('#id_signlanguage').val(query_initial);
+         $('#id_signlanguage').trigger('change');
      } else {
-         $('#id_signLanguage').val(null).trigger('change');
+         $('#id_signlanguage').val(null).trigger('change');
      };
 
-     $('#id_signLanguage').change(function() {
+     $('#id_signlanguage').change(function() {
         set_signlanguages_dialects();
      });
 
      <!--Alert: the id for the dialect field is dialects (plural), not the same as the model field!-->
      <!--Django was messing up the template generation otherwise (without the s at the end)-->
 
-     makeMultipleSelect('id_dialects', 'dialect[]');
-     $('#id_dialects').select2({
+     makeMultipleSelect('id_dialect', 'dialect[]');
+     $('#id_dialect').select2({
         allowClear: true,
         dropdownAutoWidth: true,
         width: 'resolve',
@@ -227,10 +227,10 @@ $(document).ready(function() {
 
      if (query_parameters_keys.includes('dialect[]')) {
          var query_initial = query_parameters_dict['dialect[]'];
-         $('#id_dialects').val(query_initial);
-         $('#id_dialects').trigger('change');
+         $('#id_dialect').val(query_initial);
+         $('#id_dialect').trigger('change');
     } else {
-         $('#id_dialects').val(null).trigger('change');
+         $('#id_dialect').val(null).trigger('change');
     };
 
      function identityOption(optionNode) {
@@ -784,12 +784,12 @@ function do_toggle_language(el) {
                         <div id='searchbasic' class='collapse-light collapse'>
                         <table class='table table-condensed table-condensed-light' style="width:65%;">
                             <tr id='signlanguage_selection'>
-                                <td class='td td-light' style="padding-left:30px;"><label>{{searchform.signLanguage.label}}</label></td>
-                                <td class='td td-light' style="width:600px;">{{ searchform.signLanguage }}</td>
+                                <td class='td td-light' style="padding-left:30px;"><label>{{searchform.signlanguage.label}}</label></td>
+                                <td class='td td-light' style="width:600px;">{{ searchform.signlanguage }}</td>
                             </tr>
                             <tr id='dialect_selection'>
-                                <td class='td td-light' style="padding-left:30px;"><label>{{searchform.dialects.label}}</label></td>
-                                <td class='td td-light' style="width:600px;">{{ searchform.dialects }}</td>
+                                <td class='td td-light' style="padding-left:30px;"><label>{{searchform.dialect.label}}</label></td>
+                                <td class='td td-light' style="width:600px;">{{ searchform.dialect }}</td>
                             </tr>
                             {% for fieldname,field,label in input_names_fields_and_labels.main %}
                                 {% if not public or fieldname in PUBLIC_MAIN_FIELDS %}
