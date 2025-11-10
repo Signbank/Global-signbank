@@ -1076,7 +1076,7 @@ def queryset_glosssense_from_get(model, formclass, searchform, GET, qs):
     """
     if not searchform:
         return qs
-    search_form_fields = list(searchform.fields.keys()) + ['signlanguage', 'dialect']
+    search_form_fields = list(searchform.fields.keys())
     gloss_prefix = 'gloss__' if model in [GlossSense, AnnotatedGloss] else ''
     text_filter = 'iregex' if USE_REGULAR_EXPRESSIONS else 'icontains'
     for get_key, get_value in GET.items():
@@ -1348,7 +1348,7 @@ def queryset_annotatedgloss_from_get(searchform, GET, qs):
     """
     if not searchform:
         return qs
-    search_form_fields = list(searchform.fields.keys()) + ['signlanguage', 'dialect']
+    search_form_fields = list(searchform.fields.keys())
     for get_key, get_value in GET.items():
         if get_key.endswith('[]'):
             # no multi-select search fields
@@ -1384,8 +1384,6 @@ def query_parameters_from_get(model, searchform, GET, query_parameters):
         return query_parameters
     search_form_fields = list(searchform.fields.keys())
     available = get_available_url_parameters_for_template(searchform)
-    if model in [Gloss, GlossSense, AnnotatedGloss]:
-        search_form_fields += ['signlanguage', 'dialect']
     for get_key, get_value in GET.items():
         if get_value in ['', '0']:
             continue
