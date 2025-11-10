@@ -752,13 +752,13 @@ def query_parameters_toggle_fields(query_parameters):
         if query_field == 'search_type':
             # don't show a button for this
             continue
-        if query_field in GlossSearchForm.get_field_names():
-            toggle_query_parameter = (query_field,
-                                      GlossSearchForm.get_field(query_field).label.encode('utf-8').decode())
-        elif query_field == 'dialect':
+        if query_field == 'dialect':
             toggle_query_parameter = (query_field, _("Dialect"))
         elif query_field == 'signlanguage':
             toggle_query_parameter = (query_field, _("Sign Language"))
+        elif query_field in GlossSearchForm.get_field_names():
+            toggle_query_parameter = (query_field,
+                                      GlossSearchForm.get_field(query_field).label.encode('utf-8').decode())
         elif query_field == 'sentenceType':
             toggle_query_parameter = (query_field, _("Sentence Type"))
         elif query_field == 'negative':
@@ -1043,15 +1043,15 @@ def set_up_signlanguage_dialects_fields(view, form):
     selected_datasets = get_selected_datasets(view.request)
     field_label_signlanguage = gettext("Sign Language")
     field_label_dialects = gettext("Dialect")
-    form.fields['signLanguage'] = forms.ModelMultipleChoiceField(label=field_label_signlanguage,
+    form.fields['signlanguage'] = forms.ModelMultipleChoiceField(label=field_label_signlanguage,
                                                                  widget=Select2,
                                                                  queryset=SignLanguage.objects.filter(
-                                                                     dataset__in=selected_datasets).distinct())
+                                                                 dataset__in=selected_datasets).distinct())
 
-    form.fields['dialects'] = forms.ModelMultipleChoiceField(label=field_label_dialects,
-                                                             widget=Select2,
-                                                             queryset=Dialect.objects.filter(
-                                                                 signlanguage__dataset__in=selected_datasets))
+    form.fields['dialect'] = forms.ModelMultipleChoiceField(label=field_label_dialects,
+                                                            widget=Select2,
+                                                            queryset=Dialect.objects.filter(
+                                                            signlanguage__dataset__in=selected_datasets))
 
 
 def legitimate_search_form_url_parameter(searchform, get_key):
