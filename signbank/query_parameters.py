@@ -825,16 +825,12 @@ def search_fields_from_get(searchform, GET):
         elif searchform.fields[get_key].widget.input_type == 'select':
             search_form_choices = list(dict(searchform.fields[get_key].widget.choices).keys())
             if get_key in HANDEDNESS_ARTICULATION_FIELDS + HANDSHAPE_ETYMOLOGY_FIELDS:
-                if not re.match(r"^[1-9]\d*$", get_value):
-                    continue
-                if int(get_value) not in search_form_choices:
+                if not re.match(r"^[1-9]\d*$", get_value) or int(get_value) not in search_form_choices:
                     continue
                 search_fields_to_populate[get_key] = get_value
-            elif get_value not in search_form_choices:
-                continue
-            else:
+            elif get_value in search_form_choices:
                 search_fields_to_populate[get_key] = get_value
-            search_keys.append(get_key)
+                search_keys.append(get_key)
         else:
             # includes sortOrder
             search_fields_to_populate[get_key] = get_value
@@ -1404,14 +1400,10 @@ def query_parameters_from_get(model, searchform, GET, query_parameters):
         elif searchform.fields[get_key].widget.input_type == 'select':
             search_form_choices = list(dict(searchform.fields[get_key].widget.choices).keys())
             if get_key in HANDEDNESS_ARTICULATION_FIELDS + HANDSHAPE_ETYMOLOGY_FIELDS:
-                if not re.match(r"^[1-9]\d*$", get_value):
-                    continue
-                if int(get_value) not in search_form_choices:
+                if not re.match(r"^[1-9]\d*$", get_value) or int(get_value) not in search_form_choices:
                     continue
                 query_parameters[get_key] = get_value
-            elif get_value not in search_form_choices:
-                continue
-            else:
+            elif get_value in search_form_choices:
                 query_parameters[get_key] = get_value
         else:
             query_parameters[get_key] = get_value

@@ -2378,10 +2378,8 @@ def filter_page_values(vals):
 
 
 def get_available_url_parameters_for_template(search_form):
-    # workflow_parameters = ['csrfmiddlewaretoken', 'search_type', 'view_type', 'format', 'show_all', 'page', 'paginate_by']
-    # view_commands = ['export_ecv', 'reset']
-    search_form_fields = list(search_form.fields.keys()) + ['signlanguage', 'dialect']
-    multiselect_fields = get_multiselect_fieldnames() + ['signlanguage', 'dialect']
+    search_form_fields = list(search_form.fields.keys())
+    multiselect_fields = get_multiselect_fieldnames()
 
     multiselect_fields_of_form = [f'{field}[]' for field in multiselect_fields if field in search_form_fields]
     multiselect_fields_missing_brackets = [field for field in multiselect_fields if field in search_form_fields]

@@ -559,13 +559,14 @@ class GlossListView(ListView):
         set_up_fieldchoice_translations(self.search_form, fields_with_choices)
 
     def get_context_data(self, **kwargs):
-        # Call the base implementation first to get a context
         if 'page' in self.request.GET:
-            tempdict = self.request.GET.copy()
-            self.request.GET._mutable = True
             safe_pages = filter_page_values(self.request.GET.getlist('page', []))
-            tempdict['page'] = safe_pages[0] if safe_pages else ['1']
-            self.request.GET = tempdict
+            self.request.GET._mutable = True
+            if safe_pages:
+                self.request.GET['page'] = safe_pages[0]
+            else:
+                del self.request.GET['page']
+            self.request.GET._mutable = False
         context = super(GlossListView, self).get_context_data(**kwargs)
 
         context['public'] = self.public
