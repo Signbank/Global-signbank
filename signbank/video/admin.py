@@ -464,6 +464,7 @@ def unlink_files(modeladmin, request, queryset):
 
 
 def _get_desired_filename_components(gloss, glossvideo, extension):
+    # if the file is a backup file, the video encoding extension appears before the "bakNNN" extension
     idgloss = gloss.idgloss
     two_letter_dir = get_two_letter_dir(idgloss)
     dataset_dir = gloss.lemma.dataset.acronym
@@ -514,19 +515,19 @@ def convert_non_mp4_videos(modeladmin, request, queryset):
             if not desired_video_extension:
                 continue
 
-            # compare the stored filename to the name it should have
-            base_filename = os.path.basename(video_file_full_path)
-
             (two_letter_dir, dataset_dir,
-             desired_filename) = _get_desired_filename_components(gloss, glossvideo, desired_video_extension)
+             desired_filename_including_extension) = _get_desired_filename_components(gloss, glossvideo, desired_video_extension)
 
-            if base_filename != desired_filename:
+            # compare the stored filename to the name it should have
+            base_filename_including_extension = os.path.basename(video_file_full_path)
+
+            if base_filename_including_extension != desired_filename_including_extension:
                 # the file has the wrong filename, the file may be a backup file that includes a video extension
                 source = os.path.join(WRITABLE_FOLDER, current_relative_path)
                 destination = os.path.join(WRITABLE_FOLDER, GLOSS_VIDEO_DIRECTORY,
-                                           dataset_dir, two_letter_dir, desired_filename)
+                                           dataset_dir, two_letter_dir, desired_filename_including_extension)
                 desired_relative_path = os.path.join(GLOSS_VIDEO_DIRECTORY,
-                                                     dataset_dir, two_letter_dir, desired_filename)
+                                                     dataset_dir, two_letter_dir, desired_filename_including_extension)
                 if DEBUG_VIDEOS:
                     print('video:admin:convert_non_mp4_videos:os.rename: ', source, destination)
                 if os.path.exists(video_file_full_path):
@@ -537,7 +538,7 @@ def convert_non_mp4_videos(modeladmin, request, queryset):
                 glossvideo.save()
 
             if desired_video_extension == '.mp4':
-                # this is tested after a possible renaming of the file in the above step
+                # this is tested after a possible renaming of a backup video file in the above step
                 continue
 
             # refresh the video filename
