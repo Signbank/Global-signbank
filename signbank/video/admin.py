@@ -1,7 +1,8 @@
 
 from django.contrib import admin
 from signbank.video.models import (GlossVideo, GlossVideoHistory, AnnotatedVideo, ExampleVideoHistory,
-                                   filename_matches_nme, filename_matches_perspective, filename_matches_video, filename_matches_backup_video, flattened_video_path)
+                                   filename_matches_nme, filename_matches_perspective, filename_matches_video,
+                                   filename_matches_backup_video, flattened_video_path, flipped_backup_filename)
 from signbank.dictionary.models import Dataset, AnnotatedGloss, Gloss
 from django.contrib.auth.models import User
 from signbank.settings.base import *
@@ -541,46 +542,55 @@ def convert_non_mp4_videos(modeladmin, request, queryset):
                 # this is tested after a possible renaming of a backup video file in the above step
                 continue
 
-            # refresh the video filename
-            current_relative_path = str(glossvideo.videofile)
-            if not current_relative_path:
-                # make sure the path is not empty
-                continue
-
-            # if we get to here, the file needs to be converted to mp4 with an mp4 extension
-            desired_filename = build_desired_filename(gloss, glossvideo, '.mp4')
-
-            source = os.path.join(WRITABLE_FOLDER, current_relative_path)
-            destination = os.path.join(WRITABLE_FOLDER, GLOSS_VIDEO_DIRECTORY,
-                                       dataset_dir, two_letter_dir, desired_filename)
-            desired_relative_path = os.path.join(GLOSS_VIDEO_DIRECTORY,
-                                                 dataset_dir, two_letter_dir, desired_filename)
-            if DEBUG_VIDEOS:
-                print('video:admin:convert_non_mp4_videos:convert_video: ', source, destination)
-            if not os.path.exists(video_file_full_path):
-                continue
-            okay = convert_video(source, destination)
-            if DEBUG_VIDEOS:
-                print('video:admin:convert_non_mp4_videos:videofile.name := ', desired_relative_path)
-            if not okay:
-                continue
-
-            glossvideo.videofile.name = desired_relative_path
-            glossvideo.save()
+            if glossvideo.version > 0:
+                # the video is not converted by ensure_mp4 if it is a backup, refetch the path after possible renaming
+                current_relative_path = str(glossvideo.videofile)
+                flipped_source_filename = flipped_backup_filename(gloss, glossvideo, desired_video_extension)
+                flipped_source = os.path.join(WRITABLE_FOLDER, GLOSS_VIDEO_DIRECTORY,
+                                              dataset_dir, two_letter_dir, flipped_source_filename)
+                source = os.path.join(WRITABLE_FOLDER, current_relative_path)
+                desired_filename = build_desired_filename(gloss, glossvideo, '.mp4')
+                flipped_destination_filename = flipped_backup_filename(gloss, glossvideo, '.mp4')
+                flipped_destination = os.path.join(WRITABLE_FOLDER, GLOSS_VIDEO_DIRECTORY,
+                                           dataset_dir, two_letter_dir, flipped_destination_filename)
+                destination = os.path.join(WRITABLE_FOLDER, GLOSS_VIDEO_DIRECTORY,
+                                           dataset_dir, two_letter_dir, desired_filename)
+                desired_relative_path = os.path.join(GLOSS_VIDEO_DIRECTORY,
+                                                     dataset_dir, two_letter_dir, desired_filename)
+                if not os.path.exists(source):
+                    continue
+                if DEBUG_VIDEOS:
+                    print('video:admin:convert_non_mp4_videos:os.rename: ', source, flipped_source)
+                os.rename(source, flipped_source)
+                okay = convert_video(flipped_source, flipped_destination)
+                if DEBUG_VIDEOS:
+                    print('video:admin:convert_non_mp4_videos:convert_video: ', flipped_source, flipped_destination)
+                if not okay or not os.path.exists(flipped_destination):
+                    continue
+                if DEBUG_VIDEOS:
+                    print('video:admin:convert_non_mp4_videos:os.rename: ', flipped_destination, desired_relative_path)
+                    print('video:admin:convert_non_mp4_videos:videofile.name := ', desired_relative_path)
+                os.rename(flipped_destination, destination)
+                glossvideo.videofile.name = desired_relative_path
+                glossvideo.save()
+                os.rename(flipped_source, source)
 
             # move the original video file to DELETED_FILES_FOLDER, it is not referenced anymore by the GlossVideo object
-            deleted_file_name = flattened_video_path(current_relative_path)
+            original_with_correct_extension = os.path.join(WRITABLE_FOLDER, GLOSS_VIDEO_DIRECTORY,
+                                       dataset_dir, two_letter_dir, desired_filename_including_extension)
+            original_relative_path = os.path.join(GLOSS_VIDEO_DIRECTORY,
+                                                 dataset_dir, two_letter_dir, desired_filename_including_extension)
+            deleted_file_name = flattened_video_path(original_relative_path)
             deleted_destination = os.path.join(WRITABLE_FOLDER, DELETED_FILES_FOLDER, deleted_file_name)
-            destination_dir = os.path.dirname(destination)
+            destination_dir = os.path.dirname(original_with_correct_extension)
             if not os.path.exists(destination_dir):
                 os.makedirs(destination_dir)
-            if os.path.isdir(destination_dir):
-                try:
-                    shutil.move(source, str(deleted_destination))
-                    if DEBUG_VIDEOS:
-                        print('video:admin:convert_non_mp4_videos:shutil.move: ', source, deleted_destination)
-                except (OSError, PermissionError) as e:
-                    print(e)
+            try:
+                shutil.move(str(original_with_correct_extension), str(deleted_destination))
+                if DEBUG_VIDEOS:
+                    print('video:admin:convert_non_mp4_videos:shutil.move: ', original_with_correct_extension, deleted_destination)
+            except (OSError, PermissionError) as e:
+                print(e)
 
 
 class GlossVideoAdmin(admin.ModelAdmin):

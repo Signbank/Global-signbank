@@ -72,6 +72,17 @@ def flattened_video_path(relative_path):
     return filename
 
 
+def flipped_backup_filename(gloss, glossvideo, extension):
+    idgloss = gloss.idgloss
+    desired_filename_without_extension = f'{idgloss}-{gloss.pk}'
+    if glossvideo.version > 0:
+        desired_extension = f'.bak{glossvideo.pk}{extension}'
+    else:
+        desired_extension = extension
+    desired_filename = desired_filename_without_extension + desired_extension
+    return desired_filename
+
+
 PERSPECTIVE_CHOICES = (('left', 'Left'),
                        ('right', 'Right')
                        )
