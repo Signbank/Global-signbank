@@ -3554,7 +3554,7 @@ class AnnotationIdglossTranslation(models.Model):
         super(AnnotationIdglossTranslation, self).save(*args, **kwargs)
 
 
-class LemmaIdgloss(models.Model):
+class LemmaIdgloss(MetaModelMixin, models.Model):
     dataset = models.ForeignKey("Dataset", verbose_name=_("Dataset"), on_delete=models.CASCADE,
                                 help_text=_("Dataset a lemma is part of"), null=True)
 
