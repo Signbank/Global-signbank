@@ -505,6 +505,14 @@ class AnnotatedSentenceListView(ListView):
         return qs
 
     def get_context_data(self, **kwargs):
+        if 'page' in self.request.GET:
+            safe_pages = filter_page_values(self.request.GET.getlist('page', []))
+            self.request.GET._mutable = True
+            if safe_pages:
+                self.request.GET['page'] = safe_pages[0]
+            else:
+                del self.request.GET['page']
+            self.request.GET._mutable = False
         context = super().get_context_data(**kwargs)
 
         selected_datasets = get_selected_datasets(self.request)
@@ -958,7 +966,14 @@ class SenseListView(ListView):
         set_up_fieldchoice_translations(self.sentence_search_form, sentence_fields_with_choices)
 
     def get_context_data(self, **kwargs):
-        # Call the base implementation first to get a context
+        if 'page' in self.request.GET:
+            safe_pages = filter_page_values(self.request.GET.getlist('page', []))
+            self.request.GET._mutable = True
+            if safe_pages:
+                self.request.GET['page'] = safe_pages[0]
+            else:
+                del self.request.GET['page']
+            self.request.GET._mutable = False
         context = super(SenseListView, self).get_context_data(**kwargs)
 
         context = get_context_data_for_list_view(self.request, self, self.kwargs, context)
@@ -2040,7 +2055,14 @@ class MorphemeListView(ListView):
         set_up_fieldchoice_translations(self.search_form, fields_with_choices)
 
     def get_context_data(self, **kwargs):
-        # Call the base implementation first to get a context
+        if 'page' in self.request.GET:
+            safe_pages = filter_page_values(self.request.GET.getlist('page', []))
+            self.request.GET._mutable = True
+            if safe_pages:
+                self.request.GET['page'] = safe_pages[0]
+            else:
+                del self.request.GET['page']
+            self.request.GET._mutable = False
         context = super(MorphemeListView, self).get_context_data(**kwargs)
 
         selected_datasets = get_selected_datasets(self.request)
@@ -2626,6 +2648,14 @@ class MinimalPairsListView(ListView):
         set_up_fieldchoice_translations(self.search_form, fields_with_choices)
 
     def get_context_data(self, **kwargs):
+        if 'page' in self.request.GET:
+            safe_pages = filter_page_values(self.request.GET.getlist('page', []))
+            self.request.GET._mutable = True
+            if safe_pages:
+                self.request.GET['page'] = safe_pages[0]
+            else:
+                del self.request.GET['page']
+            self.request.GET._mutable = False
         context = super(MinimalPairsListView, self).get_context_data(**kwargs)
 
         selected_datasets = get_selected_datasets(self.request)
@@ -6257,6 +6287,14 @@ class LemmaListView(ListView):
         return results
 
     def get_context_data(self, **kwargs):
+        if 'page' in self.request.GET:
+            safe_pages = filter_page_values(self.request.GET.getlist('page', []))
+            self.request.GET._mutable = True
+            if safe_pages:
+                self.request.GET['page'] = safe_pages[0]
+            else:
+                del self.request.GET['page']
+            self.request.GET._mutable = False
         context = super(LemmaListView, self).get_context_data(**kwargs)
 
         context['SHOW_DATASET_INTERFACE_OPTIONS'] = SHOW_DATASET_INTERFACE_OPTIONS
@@ -6700,6 +6738,14 @@ class KeywordListView(ListView):
         return super(KeywordListView, self).get(request, *args, **kwargs)
 
     def get_context_data(self, **kwargs):
+        if 'page' in self.request.GET:
+            safe_pages = filter_page_values(self.request.GET.getlist('page', []))
+            self.request.GET._mutable = True
+            if safe_pages:
+                self.request.GET['page'] = safe_pages[0]
+            else:
+                del self.request.GET['page']
+            self.request.GET._mutable = False
         context = super(KeywordListView, self).get_context_data(**kwargs)
 
         selected_datasets = get_selected_datasets(self.request)
@@ -6908,6 +6954,14 @@ class BatchEditView(ListView):
         return super(BatchEditView, self).get(request, *args, **kwargs)
 
     def get_context_data(self, **kwargs):
+        if 'page' in self.request.GET:
+            safe_pages = filter_page_values(self.request.GET.getlist('page', []))
+            self.request.GET._mutable = True
+            if safe_pages:
+                self.request.GET['page'] = safe_pages[0]
+            else:
+                del self.request.GET['page']
+            self.request.GET._mutable = False
         context = super(BatchEditView, self).get_context_data(**kwargs)
 
         selected_datasets = get_selected_datasets(self.request)
@@ -7117,6 +7171,14 @@ class ToggleListView(ListView):
         return super(ToggleListView, self).get(request, *args, **kwargs)
 
     def get_context_data(self, **kwargs):
+        if 'page' in self.request.GET:
+            safe_pages = filter_page_values(self.request.GET.getlist('page', []))
+            self.request.GET._mutable = True
+            if safe_pages:
+                self.request.GET['page'] = safe_pages[0]
+            else:
+                del self.request.GET['page']
+            self.request.GET._mutable = False
         context = super(ToggleListView, self).get_context_data(**kwargs)
 
         selected_datasets = get_selected_datasets(self.request)
@@ -7351,7 +7413,14 @@ class AnnotatedGlossListView(ListView):
         return self.request.GET.get('paginate_by', self.paginate_by)
 
     def get_context_data(self, **kwargs):
-        # Call the base implementation first to get a context
+        if 'page' in self.request.GET:
+            safe_pages = filter_page_values(self.request.GET.getlist('page', []))
+            self.request.GET._mutable = True
+            if safe_pages:
+                self.request.GET['page'] = safe_pages[0]
+            else:
+                del self.request.GET['page']
+            self.request.GET._mutable = False
         context = super(AnnotatedGlossListView, self).get_context_data(**kwargs)
 
         context = get_context_data_for_list_view(self.request, self, self.kwargs, context)
