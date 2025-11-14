@@ -227,14 +227,14 @@ def detect_video_file_extension(file_path):
     filename, extension = os.path.splitext(file_path)
     if not os.path.exists(file_path):
         return extension
-    filetype_output = subprocess.run(["file", file_path], stdout=subprocess.PIPE)
+    filetype_output = subprocess.run(["file", "-b", file_path], stdout=subprocess.PIPE)
     filetype = str(filetype_output.stdout)
-    if 'MOV' in filetype:
+    if 'MP4' in filetype:
+        video_extension = '.mp4'
+    elif 'MOV' in filetype:
         video_extension = '.mov'
     elif 'M4V' in filetype:
         video_extension = '.m4v'
-    elif 'MP4' in filetype:
-        video_extension = '.mp4'
     elif 'Matroska' in filetype:
         video_extension = '.webm'
     elif 'MKV' in filetype:
@@ -254,14 +254,14 @@ def video_file_type_extension(video_file_full_path):
     if not os.path.exists(video_file_full_path):
         return extension_on_filename(video_file_full_path)
 
-    filetype_output = subprocess.run(["file", video_file_full_path], stdout=subprocess.PIPE)
+    filetype_output = subprocess.run(["file", "-b", video_file_full_path], stdout=subprocess.PIPE)
     filetype = str(filetype_output.stdout)
-    if 'MOV' in filetype:
+    if 'MP4' in filetype:
+        desired_video_extension = '.mp4'
+    elif 'MOV' in filetype:
         desired_video_extension = '.mov'
     elif 'M4V' in filetype:
         desired_video_extension = '.m4v'
-    elif 'MP4' in filetype:
-        desired_video_extension = '.mp4'
     elif 'Matroska' in filetype:
         desired_video_extension = '.webm'
     elif 'MKV' in filetype:
