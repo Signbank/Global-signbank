@@ -2,7 +2,7 @@
 from django.contrib import admin
 from signbank.video.models import (GlossVideo, GlossVideoHistory, AnnotatedVideo, ExampleVideoHistory,
                                    filename_matches_nme, filename_matches_perspective, filename_matches_video,
-                                   filename_matches_backup_video, flattened_video_path, flipped_backup_filename)
+                                   filename_matches_backup_video, flattened_video_path, build_filename)
 from signbank.dictionary.models import Dataset, AnnotatedGloss, Gloss
 from django.contrib.auth.models import User
 from signbank.settings.base import *
@@ -464,30 +464,6 @@ def unlink_files(modeladmin, request, queryset):
         obj.save()
 
 
-def _get_desired_filename_components(gloss, glossvideo, extension):
-    # if the file is a backup file, the video encoding extension appears before the "bakNNN" extension
-    idgloss = gloss.idgloss
-    two_letter_dir = get_two_letter_dir(idgloss)
-    dataset_dir = gloss.lemma.dataset.acronym
-    desired_filename_without_extension = f'{idgloss}-{gloss.pk}'
-    if glossvideo.version > 0:
-        desired_extension = f'{extension}.bak{glossvideo.pk}'
-    else:
-        desired_extension = extension
-    desired_filename = desired_filename_without_extension + desired_extension
-    return two_letter_dir, dataset_dir, desired_filename
-
-
-def build_desired_filename(gloss, glossvideo, desired_video_extension):
-    idgloss = gloss.idgloss
-    desired_filename_without_extension = f'{idgloss}-{gloss.pk}'
-    if glossvideo.version > 0:
-        desired_extension = f'{desired_video_extension}.bak{glossvideo.pk}'
-    else:
-        desired_extension = desired_video_extension
-    return desired_filename_without_extension + desired_extension
-
-
 @admin.action(description="Convert non-mp4 video files to mp4")
 def convert_non_mp4_videos(modeladmin, request, queryset):
     """
@@ -517,7 +493,7 @@ def convert_non_mp4_videos(modeladmin, request, queryset):
                 continue
 
             (two_letter_dir, dataset_dir,
-             desired_filename_including_extension) = _get_desired_filename_components(gloss, glossvideo, desired_video_extension)
+             desired_filename_including_extension) = build_filename(gloss, glossvideo, desired_video_extension, include_dirs=True)
 
             # compare the stored filename to the name it should have
             base_filename_including_extension = os.path.basename(video_file_full_path)
@@ -545,12 +521,12 @@ def convert_non_mp4_videos(modeladmin, request, queryset):
             if glossvideo.version > 0:
                 # the video is not converted by ensure_mp4 if it is a backup, refetch the path after possible renaming
                 current_relative_path = str(glossvideo.videofile)
-                flipped_source_filename = flipped_backup_filename(gloss, glossvideo, desired_video_extension)
+                flipped_source_filename = build_filename(gloss, glossvideo, desired_video_extension, flipped=True)
                 flipped_source = os.path.join(WRITABLE_FOLDER, GLOSS_VIDEO_DIRECTORY,
                                               dataset_dir, two_letter_dir, flipped_source_filename)
                 source = os.path.join(WRITABLE_FOLDER, current_relative_path)
-                desired_filename = build_desired_filename(gloss, glossvideo, '.mp4')
-                flipped_destination_filename = flipped_backup_filename(gloss, glossvideo, '.mp4')
+                desired_filename = build_filename(gloss, glossvideo, '.mp4')
+                flipped_destination_filename = build_filename(gloss, glossvideo, '.mp4', flipped=True)
                 flipped_destination = os.path.join(WRITABLE_FOLDER, GLOSS_VIDEO_DIRECTORY,
                                            dataset_dir, two_letter_dir, flipped_destination_filename)
                 destination = os.path.join(WRITABLE_FOLDER, GLOSS_VIDEO_DIRECTORY,
