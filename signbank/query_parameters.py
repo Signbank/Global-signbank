@@ -1392,10 +1392,7 @@ def query_parameters_from_get(model, searchform, GET, query_parameters):
             if not values:
                 continue
             query_parameters[get_key] = values
-        elif get_key not in search_form_fields:
-            # skip csrf_token and page
-            continue
-        elif get_key not in model.get_field_names():
+        elif get_key not in available:
             continue
         elif searchform.fields[get_key].widget.input_type == 'select':
             search_form_choices = list(dict(searchform.fields[get_key].widget.choices).keys())

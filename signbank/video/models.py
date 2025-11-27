@@ -21,7 +21,7 @@ from django.utils.translation import gettext
 
 from signbank.settings.server_specific import (WRITABLE_FOLDER, DEBUG_VIDEOS, DELETE_FILES_ON_GLOSSVIDEO_DELETE,
                                                ESCAPE_UPLOADED_VIDEO_FILE_PATH, EXAMPLESENTENCE_VIDEO_DIRECTORY,
-                                               ANNOTATEDSENTENCE_VIDEO_DIRECTORY,
+                                               ANNOTATEDSENTENCE_VIDEO_DIRECTORY, DELETED_FILES_FOLDER,
                                                GLOSS_VIDEO_DIRECTORY, GLOSS_IMAGE_DIRECTORY, FFMPEG_PROGRAM)
 from signbank.settings.base import MEDIA_ROOT, MEDIA_URL
 from signbank.video.convertvideo import (extract_frame, convert_video, make_thumbnail_video, generate_image_sequence,
@@ -70,6 +70,37 @@ def flattened_video_path(relative_path):
         two_char_folder = m.group(2)
         return f"{dataset_folder}_{two_char_folder}_{filename}"
     return filename
+
+
+def move_file_to_prullenmand(filepath, relative_path):
+    deleted_file_name = flattened_video_path(relative_path)
+    deleted_destination = os.path.join(WRITABLE_FOLDER, DELETED_FILES_FOLDER, deleted_file_name)
+    destination_dir = os.path.dirname(filepath)
+    if not os.path.exists(destination_dir):
+        os.makedirs(destination_dir)
+    try:
+        shutil.move(str(filepath), str(deleted_destination))
+        if DEBUG_VIDEOS:
+            print('video:models:move_file_to_prullenmand:shutil.move: ', filepath,
+                  deleted_destination)
+    except (OSError, PermissionError) as e:
+        print(e)
+
+
+def find_dangling_video_files(gloss):
+    dataset_dir = gloss.lemma.dataset.acronym
+    two_letter_dir = get_two_letter_dir(gloss.idgloss)
+    filename_prefix = f'{gloss.idgloss}-{gloss.id}'
+    chosen_path = os.path.join(os.path.join(WRITABLE_FOLDER),GLOSS_VIDEO_DIRECTORY, dataset_dir, two_letter_dir)
+    file_names = []
+    for gloss_video in GlossVideo.objects.filter(gloss=gloss).iterator():
+        file_names.append(gloss_video.videofile.name.split("/")[-1])
+    non_existent_file_names = []
+    for subdir, dirs, files in os.walk(chosen_path):
+        for file in files:
+            if file.startswith(filename_prefix) and file not in file_names:
+                non_existent_file_names.append(file)
+    return non_existent_file_names
 
 
 PERSPECTIVE_CHOICES = (('left', 'Left'),
