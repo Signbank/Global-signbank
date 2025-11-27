@@ -87,6 +87,30 @@ def move_file_to_prullenmand(filepath, relative_path):
         print(e)
 
 
+def flipped_backup_filename(gloss, glossvideo, extension):
+    idgloss = gloss.idgloss
+    desired_filename_without_extension = f'{idgloss}-{gloss.pk}'
+    if glossvideo.version > 0:
+        desired_extension = f'.bak{glossvideo.pk}{extension}'
+    else:
+        desired_extension = extension
+    desired_filename = desired_filename_without_extension + desired_extension
+    return desired_filename
+
+
+def build_filename(gloss, glossvideo, extension, include_dirs=False, flipped=False):
+    if flipped:
+        name = f'{gloss.idgloss}-{gloss.pk}.bak{glossvideo.pk}{extension}'
+    elif glossvideo.version > 0:
+        name = f'{gloss.idgloss}-{gloss.pk}{extension}.bak{glossvideo.pk}'
+    else:
+        name = f'{gloss.idgloss}-{gloss.pk}{extension}'
+    if include_dirs:
+        return get_two_letter_dir(gloss.idgloss), gloss.lemma.dataset.acronym, name
+    else:
+        return name
+
+
 PERSPECTIVE_CHOICES = (('left', 'Left'),
                        ('right', 'Right')
                        )

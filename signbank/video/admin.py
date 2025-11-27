@@ -1,14 +1,15 @@
 
 from django.contrib import admin
 from signbank.video.models import (GlossVideo, GlossVideoHistory, AnnotatedVideo, ExampleVideoHistory,
-                                   filename_matches_nme, filename_matches_perspective, filename_matches_video, filename_matches_backup_video, flattened_video_path)
+                                   filename_matches_nme, filename_matches_perspective, filename_matches_video,
+                                   filename_matches_backup_video, flattened_video_path, build_filename)
 from signbank.dictionary.models import Dataset, AnnotatedGloss, Gloss
 from django.contrib.auth.models import User
 from signbank.settings.base import *
 from signbank.settings.server_specific import WRITABLE_FOLDER, FILESYSTEM_SIGNBANK_GROUPS, DEBUG_VIDEOS, DELETED_FILES_FOLDER
 from django.utils.translation import gettext_lazy as _
 from signbank.tools import get_two_letter_dir
-from signbank.video.convertvideo import video_file_type_extension
+from signbank.video.convertvideo import video_file_type_extension, convert_video
 from pathlib import Path
 import os
 import stat
@@ -233,6 +234,40 @@ class GlossVideoFileTypeFilter(admin.SimpleListFilter):
             return queryset.all()
 
 
+class GlossVideoWebmTypeFilter(admin.SimpleListFilter):
+    """
+    Filter the GlossVideo objects on whether the video is a Webm video
+    The values of lookups show in the right-hand column of the admin under a heading "Webm File"
+    Called from GlossVideoAdmin
+    :model: GlossVideoAdmin
+    """
+    title = _('Webm File')
+    parameter_name = 'webm_file_type'
+
+    def lookups(self, request, model_admin):
+        file_type = tuple((b, b) for b in ('True', 'False'))
+        return file_type
+
+    def queryset(self, request, queryset):
+
+        def matching_file_type(videofile, key):
+            if not key:
+                return False
+            video_file_full_path = Path(WRITABLE_FOLDER, videofile)
+            file_extension = video_file_type_extension(video_file_full_path)
+            has_webm_type = file_extension == '.webm'
+            return key == str(has_webm_type)
+
+        queryset_res = queryset.values('id', 'videofile')
+        results = [qv['id'] for qv in queryset_res
+                   if matching_file_type(qv['videofile'], self.value())]
+
+        if self.value():
+            return queryset.filter(id__in=results)
+        else:
+            return queryset.all()
+
+
 class GlossVideoBackupFilter(admin.SimpleListFilter):
     """
     Filter the GlossVideo objects on whether the video is a backup video
@@ -429,15 +464,120 @@ def unlink_files(modeladmin, request, queryset):
         obj.save()
 
 
+@admin.action(description="Convert non-mp4 video files to mp4")
+def convert_non_mp4_videos(modeladmin, request, queryset):
+    """
+    Command for the GlossVideo objects selected in queryset
+    The command appears in the admin pull-down list of commands for the selected gloss videos
+    The command determines which glosses are selected, then retrieves the normal video objects for those glosses
+    This allows the user to merely select one of the objects and hereby change them all instead of numerous selections
+    For those gloss video objects, it converts the file if the format is not mp4.
+    Called from GlossVideoAdmin
+    :model: GlossVideoAdmin
+    """
+    # retrieve glosses of selected GlossVideo objects
+    distinct_glosses = Gloss.objects.filter(glossvideo__in=queryset).distinct()
+
+    for gloss in distinct_glosses:
+        for glossvideo in GlossVideo.objects.filter(gloss=gloss, glossvideonme=None, glossvideoperspective=None).order_by('version', 'id'):
+            current_relative_path = str(glossvideo.videofile)
+            if not current_relative_path:
+                # make sure the path is not empty
+                continue
+
+            video_file_full_path = os.path.join(WRITABLE_FOLDER, current_relative_path)
+
+            # use the file system command 'file' to determine the extension for the type of video file
+            desired_video_extension = video_file_type_extension(video_file_full_path)
+            if not desired_video_extension:
+                continue
+
+            (two_letter_dir, dataset_dir,
+             desired_filename_including_extension) = build_filename(gloss, glossvideo, desired_video_extension, include_dirs=True)
+
+            # compare the stored filename to the name it should have
+            base_filename_including_extension = os.path.basename(video_file_full_path)
+
+            if base_filename_including_extension != desired_filename_including_extension:
+                # the file has the wrong filename, the file may be a backup file that includes a video extension
+                source = os.path.join(WRITABLE_FOLDER, current_relative_path)
+                destination = os.path.join(WRITABLE_FOLDER, GLOSS_VIDEO_DIRECTORY,
+                                           dataset_dir, two_letter_dir, desired_filename_including_extension)
+                desired_relative_path = os.path.join(GLOSS_VIDEO_DIRECTORY,
+                                                     dataset_dir, two_letter_dir, desired_filename_including_extension)
+                if DEBUG_VIDEOS:
+                    print('video:admin:convert_non_mp4_videos:os.rename: ', source, destination)
+                if os.path.exists(video_file_full_path):
+                    os.rename(source, destination)
+                if DEBUG_VIDEOS:
+                    print('video:admin:convert_non_mp4_videos:videofile.name := ', desired_relative_path)
+                glossvideo.videofile.name = desired_relative_path
+                glossvideo.save()
+
+            if desired_video_extension == '.mp4':
+                # this is tested after a possible renaming of a backup video file in the above step
+                continue
+
+            if glossvideo.version > 0:
+                # the video is not converted by ensure_mp4 if it is a backup, refetch the path after possible renaming
+                current_relative_path = str(glossvideo.videofile)
+                flipped_source_filename = build_filename(gloss, glossvideo, desired_video_extension, flipped=True)
+                flipped_source = os.path.join(WRITABLE_FOLDER, GLOSS_VIDEO_DIRECTORY,
+                                              dataset_dir, two_letter_dir, flipped_source_filename)
+                source = os.path.join(WRITABLE_FOLDER, current_relative_path)
+                desired_filename = build_filename(gloss, glossvideo, '.mp4')
+                flipped_destination_filename = build_filename(gloss, glossvideo, '.mp4', flipped=True)
+                flipped_destination = os.path.join(WRITABLE_FOLDER, GLOSS_VIDEO_DIRECTORY,
+                                           dataset_dir, two_letter_dir, flipped_destination_filename)
+                destination = os.path.join(WRITABLE_FOLDER, GLOSS_VIDEO_DIRECTORY,
+                                           dataset_dir, two_letter_dir, desired_filename)
+                desired_relative_path = os.path.join(GLOSS_VIDEO_DIRECTORY,
+                                                     dataset_dir, two_letter_dir, desired_filename)
+                if not os.path.exists(source):
+                    continue
+                if DEBUG_VIDEOS:
+                    print('video:admin:convert_non_mp4_videos:os.rename: ', source, flipped_source)
+                os.rename(source, flipped_source)
+                okay = convert_video(flipped_source, flipped_destination)
+                if DEBUG_VIDEOS:
+                    print('video:admin:convert_non_mp4_videos:convert_video: ', flipped_source, flipped_destination)
+                if not okay or not os.path.exists(flipped_destination):
+                    continue
+                if DEBUG_VIDEOS:
+                    print('video:admin:convert_non_mp4_videos:os.rename: ', flipped_destination, desired_relative_path)
+                    print('video:admin:convert_non_mp4_videos:videofile.name := ', desired_relative_path)
+                os.rename(flipped_destination, destination)
+                glossvideo.videofile.name = desired_relative_path
+                glossvideo.save()
+                os.rename(flipped_source, source)
+
+            # move the original video file to DELETED_FILES_FOLDER, it is not referenced anymore by the GlossVideo object
+            original_with_correct_extension = os.path.join(WRITABLE_FOLDER, GLOSS_VIDEO_DIRECTORY,
+                                       dataset_dir, two_letter_dir, desired_filename_including_extension)
+            original_relative_path = os.path.join(GLOSS_VIDEO_DIRECTORY,
+                                                 dataset_dir, two_letter_dir, desired_filename_including_extension)
+            deleted_file_name = flattened_video_path(original_relative_path)
+            deleted_destination = os.path.join(WRITABLE_FOLDER, DELETED_FILES_FOLDER, deleted_file_name)
+            destination_dir = os.path.dirname(original_with_correct_extension)
+            if not os.path.exists(destination_dir):
+                os.makedirs(destination_dir)
+            try:
+                shutil.move(str(original_with_correct_extension), str(deleted_destination))
+                if DEBUG_VIDEOS:
+                    print('video:admin:convert_non_mp4_videos:shutil.move: ', original_with_correct_extension, deleted_destination)
+            except (OSError, PermissionError) as e:
+                print(e)
+
+
 class GlossVideoAdmin(admin.ModelAdmin):
 
     list_display = ['id', 'gloss', 'video_file', 'perspective', 'NME', 'file_timestamp', 'file_group', 'permissions', 'file_size', 'video_type',  'version']
     list_filter = (GlossVideoDatasetFilter, GlossVideoFileSystemGroupFilter, GlossVideoExistenceFilter,
-                   GlossVideoFileTypeFilter, GlossVideoNMEFilter, GlossVideoPerspectiveFilter,
+                   GlossVideoFileTypeFilter, GlossVideoWebmTypeFilter, GlossVideoNMEFilter, GlossVideoPerspectiveFilter,
                    GlossVideoFilenameFilter, GlossVideoBackupFilter)
 
     search_fields = ['^gloss__annotationidglosstranslation__text', '^gloss__lemma__lemmaidglosstranslation__text']
-    actions = [rename_extension_videos, remove_backups, renumber_backups, unlink_files]
+    actions = [rename_extension_videos, remove_backups, renumber_backups, unlink_files, convert_non_mp4_videos]
 
     def video_file(self, obj=None):
         """
