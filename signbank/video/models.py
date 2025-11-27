@@ -75,7 +75,7 @@ def flattened_video_path(relative_path):
 def move_file_to_prullenmand(filepath, relative_path):
     deleted_file_name = flattened_video_path(relative_path)
     deleted_destination = os.path.join(WRITABLE_FOLDER, DELETED_FILES_FOLDER, deleted_file_name)
-    destination_dir = os.path.dirname(filepath)
+    destination_dir = os.path.join(WRITABLE_FOLDER, DELETED_FILES_FOLDER)
     if not os.path.exists(destination_dir):
         os.makedirs(destination_dir)
     try:
@@ -84,7 +84,12 @@ def move_file_to_prullenmand(filepath, relative_path):
             print('video:models:move_file_to_prullenmand:shutil.move: ', filepath,
                   deleted_destination)
     except (OSError, PermissionError) as e:
-        print(e)
+        if DEBUG_VIDEOS:
+            print('video:models:move_file_to_prullenmand:shutil.move: ', filepath,
+                  deleted_destination)
+            print('video:models:move_file_to_prullenmand:shutil.move: ', e)
+        # if the file cannot be moved, just delete it
+        os.remove(str(filepath))
 
 
 def flipped_backup_filename(gloss, glossvideo, extension):
