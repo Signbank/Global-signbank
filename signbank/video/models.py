@@ -21,7 +21,7 @@ from django.utils.translation import gettext
 
 from signbank.settings.server_specific import (WRITABLE_FOLDER, DEBUG_VIDEOS, DELETE_FILES_ON_GLOSSVIDEO_DELETE,
                                                ESCAPE_UPLOADED_VIDEO_FILE_PATH, EXAMPLESENTENCE_VIDEO_DIRECTORY,
-                                               ANNOTATEDSENTENCE_VIDEO_DIRECTORY,
+                                               ANNOTATEDSENTENCE_VIDEO_DIRECTORY, DELETED_FILES_FOLDER,
                                                GLOSS_VIDEO_DIRECTORY, GLOSS_IMAGE_DIRECTORY, FFMPEG_PROGRAM)
 from signbank.settings.base import MEDIA_ROOT, MEDIA_URL
 from signbank.video.convertvideo import (extract_frame, convert_video, make_thumbnail_video, generate_image_sequence,
@@ -70,6 +70,50 @@ def flattened_video_path(relative_path):
         two_char_folder = m.group(2)
         return f"{dataset_folder}_{two_char_folder}_{filename}"
     return filename
+
+
+def move_file_to_prullenmand(filepath, relative_path):
+    deleted_file_name = flattened_video_path(relative_path)
+    deleted_destination = os.path.join(WRITABLE_FOLDER, DELETED_FILES_FOLDER, deleted_file_name)
+    destination_dir = os.path.join(WRITABLE_FOLDER, DELETED_FILES_FOLDER)
+    if not os.path.exists(destination_dir):
+        os.makedirs(destination_dir)
+    try:
+        shutil.move(str(filepath), str(deleted_destination))
+        if DEBUG_VIDEOS:
+            print('video:models:move_file_to_prullenmand:shutil.move: ', filepath,
+                  deleted_destination)
+    except (OSError, PermissionError) as e:
+        if DEBUG_VIDEOS:
+            print('video:models:move_file_to_prullenmand:shutil.move: ', filepath,
+                  deleted_destination)
+            print('video:models:move_file_to_prullenmand:shutil.move: ', e)
+        # if the file cannot be moved, just delete it
+        os.remove(str(filepath))
+
+
+def flipped_backup_filename(gloss, glossvideo, extension):
+    idgloss = gloss.idgloss
+    desired_filename_without_extension = f'{idgloss}-{gloss.pk}'
+    if glossvideo.version > 0:
+        desired_extension = f'.bak{glossvideo.pk}{extension}'
+    else:
+        desired_extension = extension
+    desired_filename = desired_filename_without_extension + desired_extension
+    return desired_filename
+
+
+def build_filename(gloss, glossvideo, extension, include_dirs=False, flipped=False):
+    if flipped:
+        name = f'{gloss.idgloss}-{gloss.pk}.bak{glossvideo.pk}{extension}'
+    elif glossvideo.version > 0:
+        name = f'{gloss.idgloss}-{gloss.pk}{extension}.bak{glossvideo.pk}'
+    else:
+        name = f'{gloss.idgloss}-{gloss.pk}{extension}'
+    if include_dirs:
+        return get_two_letter_dir(gloss.idgloss), gloss.lemma.dataset.acronym, name
+    else:
+        return name
 
 
 PERSPECTIVE_CHOICES = (('left', 'Left'),
@@ -359,10 +403,14 @@ class ExampleVideo(models.Model):
         video_format_extension = detect_video_file_extension(self.videofile.path)
         (basename, ext) = os.path.splitext(self.videofile.path)
         if ext != '.mp4' or video_format_extension != '.mp4':
+            old_relative_path = str(self.videofile)
             oldloc = self.videofile.path
             newloc = basename + ".mp4"
             okay = convert_video(oldloc, newloc)
+            if not okay or not os.path.exists(newloc):
+                return
             self.videofile.name = get_sentence_video_file_path(self, os.path.basename(newloc))
+            move_file_to_prullenmand(oldloc, old_relative_path)
 
     def ch_own_mod_video(self):
         """Change owner and permissions"""
@@ -529,10 +577,14 @@ class AnnotatedVideo(models.Model):
         video_format_extension = detect_video_file_extension(self.videofile.path)
         (basename, ext) = os.path.splitext(self.videofile.path)
         if ext != '.mp4' or video_format_extension != '.mp4':
+            old_relative_path = str(self.videofile)
             oldloc = self.videofile.path
             newloc = basename + ".mp4"
             okay = convert_video(oldloc, newloc)
+            if not okay or not os.path.exists(newloc):
+                return
             self.videofile.name = get_annotated_video_file_path(self, os.path.basename(newloc))
+            move_file_to_prullenmand(oldloc, old_relative_path)
 
     def ch_own_mod_video(self):
         """Change owner and permissions"""
@@ -718,10 +770,14 @@ class GlossVideo(models.Model):
         video_format_extension = detect_video_file_extension(self.videofile.path)
         (basename, ext) = os.path.splitext(self.videofile.path)
         if ext != '.mp4' or video_format_extension != '.mp4':
+            old_relative_path = str(self.videofile)
             oldloc = self.videofile.path
             newloc = basename + ".mp4"
             okay = convert_video(oldloc, newloc)
+            if not okay or not os.path.exists(newloc):
+                return
             self.videofile.name = get_video_file_path(self, os.path.basename(newloc))
+            move_file_to_prullenmand(oldloc, old_relative_path)
 
     def ch_own_mod_video(self):
         """Change owner and permissions"""
@@ -988,11 +1044,15 @@ class GlossVideoNME(GlossVideo):
         video_format_extension = detect_video_file_extension(self.videofile.path)
         (basename, ext) = os.path.splitext(self.videofile.path)
         if ext != '.mp4' or video_format_extension != '.mp4':
+            old_relative_path = str(self.videofile)
             oldloc = self.videofile.path
             newloc = basename + ".mp4"
             okay = convert_video(oldloc, newloc)
+            if not okay or not os.path.exists(newloc):
+                return
             self.videofile.name = get_video_file_path(self, os.path.basename(newloc),
                                                       nmevideo=True, perspective='', offset=self.offset)
+            move_file_to_prullenmand(oldloc, old_relative_path)
 
     def save(self, *args, **kwargs):
         super(GlossVideoNME, self).save(*args, **kwargs)

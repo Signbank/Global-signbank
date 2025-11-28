@@ -43,6 +43,7 @@ from signbank.csv_interface import (sense_translations_for_language, update_sens
                                     parse_sentence_row, get_senses_to_sentences, csv_sentence_tuples_list_compare,
                                     required_csv_columns, trim_columns_in_row,
                                     normalize_field_choice)
+from signbank.dictionary.field_choices import fields_to_fieldcategory_dict
 
 from tagging.models import TaggedItem, Tag
 from CNGT_scripts.python.extractMiddleFrame import MiddleFrameExtracter
@@ -2364,21 +2365,42 @@ def get_checksum_for_path(file_path):
         return None
 
 
-def get_page_parameters_for_listview(request_get_parameters, query_parameters):
-    # fill page parameters
+def get_multiselect_fieldnames():
+    fieldnames = FIELDS['main'] + FIELDS['phonology'] + FIELDS['semantics'] + ['inWeb', 'isNew'] + ['dialect', 'signlanguage']
+    fields_with_choices = fields_to_fieldcategory_dict(fieldnames)
+    multiple_select_gloss_fields = [fieldname for fieldname in fieldnames if fieldname in fields_with_choices.keys()]
+    return multiple_select_gloss_fields
+
+
+def filter_page_values(vals):
+    values = [v for v in vals if re.match(r"[1-9]\d*$", v)]
+    return values
+
+
+def get_available_url_parameters_for_template(search_form):
+    search_form_fields = list(search_form.fields.keys())
+    multiselect_fields = get_multiselect_fieldnames()
+
+    multiselect_fields_of_form = [f'{field}[]' for field in multiselect_fields if field in search_form_fields]
+    multiselect_fields_missing_brackets = [field for field in multiselect_fields if field in search_form_fields]
+    non_multiselect_fields = [field for field in search_form_fields if field not in multiselect_fields_missing_brackets]
+
+    return multiselect_fields_of_form + non_multiselect_fields
+
+
+def get_page_parameters_for_listview(search_form, request_get_parameters, query_parameters):
     page_params_list = []
+    okay_parameters = get_available_url_parameters_for_template(search_form)
     if 'query' not in request_get_parameters:
         for key, value in query_parameters.items():
             # process explicitly saved query parameters first
-            if key == 'page':
-                continue
             if isinstance(value, list):
                 page_params_list.extend((key, x) for x in value)
             else:
                 page_params_list.append((key, value))
     for key, value in request_get_parameters.items():
         # add other url parameters and ignore if processed above, this allows processing of multi-select parameters
-        if key == 'page' or key in query_parameters.keys():
+        if key in query_parameters.keys() or key not in okay_parameters:
             continue
         if isinstance(value, list):
             page_params_list.extend((key, x) for x in value)

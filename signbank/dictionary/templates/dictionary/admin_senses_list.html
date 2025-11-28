@@ -160,13 +160,8 @@ $(document).ready(function() {
 
      $('.js-example-basic-multiple').val(null).trigger('change');
 
-
      <!--Alert: The sign language and dialect multiple select code differs from the other fields.-->
      <!--The code must appear after the class initialisation for for js-example-basic-multiple to avoid applying it to these fields prematurely-->
-
-     <!--Alert: the id for sign language is signLanguage (with an uppercase L), not the same as the model field!-->
-     <!--Django was messing up the template generation otherwise (without the uppercase L)-->
-     <!--The value field is signlanguage[] (lowercase l to match the model)-->
 
      makeMultipleSelect('id_signlanguage', 'signlanguage[]');
      $('#id_signlanguage').select2({
@@ -187,9 +182,6 @@ $(document).ready(function() {
      $('#id_signlanguage').change(function() {
         set_signlanguages_dialects();
      });
-
-     <!--Alert: the id for the dialect field is dialects (plural), not the same as the model field!-->
-     <!--Django was messing up the template generation otherwise (without the s at the end)-->
 
      makeMultipleSelect('id_dialect', 'dialect[]');
      $('#id_dialect').select2({

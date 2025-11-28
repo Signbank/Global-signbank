@@ -1674,6 +1674,7 @@ class GlossVideoSearchForm(forms.ModelForm):
 
         for boolean_field in ['isPrimaryVideo', 'isPerspectiveVideo', 'isNMEVideo', 'isBackup', 'wrongFilename']:
             self.fields[boolean_field].choices = [('0', '-'), ('2', _('Yes')), ('3', _('No'))]
+            self.fields[boolean_field].initial = '0'
 
 
 class GlossProvenanceForm(forms.ModelForm):
