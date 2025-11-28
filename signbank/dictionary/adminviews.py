@@ -55,6 +55,7 @@ from signbank.settings.server_specific import (URL, PREFIX_URL, LANGUAGE_CODE, L
                                                DEBUG_SENSES, DEBUG_EMAILS_ON, SEPARATE_ENGLISH_IDGLOSS_FIELD)
 from signbank.video.forms import VideoUploadForObjectForm
 from signbank.video.convertvideo import get_folder_name
+from signbank.video.models import GlossVideo, find_dangling_video_files
 from signbank.dictionary.models import (Dataset, UserProfile, AffiliatedUser, AffiliatedGloss,
                                         Language, Dialect, Gloss, Morpheme, GlossSense, Sense,
                                         Corpus, Speaker, Document, GlossFrequency,
@@ -131,6 +132,9 @@ from signbank.dictionary.related_objects import (morpheme_is_related_to, gloss_i
 from signbank.manage_videos import listing_uploaded_videos
 from signbank.zip_interface import uploaded_zip_archives
 from signbank.relation_tools import ensure_synonym_transitivity
+from signbank.dataset_operations import (get_primary_videos_for_gloss, get_perspective_videos_for_gloss,
+                                         get_nme_videos_for_gloss, get_wrong_videos_for_gloss,
+                                         get_backup_videos_for_gloss)
 
 
 def order_annotatedsentence_queryset_by_sort_order(get, qs, queryset_language_codes):
@@ -1806,6 +1810,21 @@ class GlossVideosView(DetailView):
                 'other-media-type_' + str(other_media.pk)] = choicelist_queryset_to_translated_dict(other_media_type_choice_list)
 
         context['senses'] = gl.senses.all().order_by('glosssense')
+
+        video_files = GlossVideo.objects.filter(gloss=gl)
+        print('video objects: ', video_files)
+        display_glossvideos = get_primary_videos_for_gloss(gl)
+        print('primary videos: ', display_glossvideos)
+        display_perspvideos = get_perspective_videos_for_gloss(gl)
+        print('perspective videos: ', display_perspvideos)
+        display_nmevideos = get_nme_videos_for_gloss(gl)
+        print('nme videos: ', display_nmevideos)
+        display_wrong_videos = get_wrong_videos_for_gloss(gl)
+        print('wrongly named videos: ', display_wrong_videos)
+        num_backup_videos, display_glossbackupvideos = get_backup_videos_for_gloss(gl)
+        print('backup files: ', display_glossbackupvideos)
+        dangling_video_files = find_dangling_video_files(gl)
+        print('dangling files without objects: ', dangling_video_files)
 
         # the lemma field is non-empty because it's caught in the get method
         dataset_of_requested_gloss = gl.lemma.dataset
