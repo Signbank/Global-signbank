@@ -84,6 +84,11 @@ def filter_values_on_domain(vals, domain):
     return values
 
 
+def parse_gloss_ids_from_value(value):
+    split_values = value.strip().split()
+    return coerce_values_to_numbers(split_values)
+
+
 def query_parameters_this_gloss(phonology_focus, phonology_matrix):
     # this is used to determine a default query for the case the user showed all glosses and there are no parameters
     # when the user is looking at a specific gloss and no query parameters are active, this determines what to show

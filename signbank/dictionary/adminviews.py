@@ -78,7 +78,7 @@ from signbank.dictionary.forms import (AnnotatedSentenceSearchForm, GlossSearchF
                                        ImageUploadForGlossForm, ImageUploadForHandshapeForm, EAFFilesForm,
                                        LemmaCreateForm, LemmaUpdateForm, set_up_lemma_language_fields, MorphemeCreateForm, OtherMediaForm, RelationForm,
                                        GlossMorphologyForm, GlossBlendForm, DefinitionForm, GlossMorphemeForm,
-                                       SemanticFieldTranslationForm, ZippedVideosForm,
+                                       SemanticFieldTranslationForm, ZippedVideosForm, SearchGlossIds,
                                        check_language_fields, check_multilingual_fields, SentenceForm,
                                        check_language_fields_annotatedsentence, GlossProvenanceForm, check_sortOrder_handshapes)
 from signbank.tools import (write_ecv_file_for_dataset, find_duplicate_lemmas,
@@ -102,7 +102,7 @@ from signbank.query_parameters import (convert_query_parameters_to_filter, prett
                                        queryset_glosssense_from_get, query_parameters_from_get,
                                        queryset_sentences_from_get, query_parameters_toggle_fields,
                                        queryset_annotatedgloss_from_get, convert_query_parameters_to_annotatedgloss_filter,
-                                       coerce_values_to_numbers, filter_values_on_domain)
+                                       coerce_values_to_numbers, filter_values_on_domain, parse_gloss_ids_from_value)
 from signbank.search_history import (available_query_parameters_in_search_history, languages_in_query, display_parameters,
     get_query_parameters, save_query_parameters, fieldnames_from_query_parameters)
 from signbank.frequency import (import_corpus_speakers, configure_corpus_documents_for_dataset, update_corpus_counts,
@@ -588,6 +588,8 @@ class GlossListView(ListView):
 
         context = get_context_data_for_gloss_search_form(self.request, self, self.search_form, self.kwargs, context)
 
+        context['search_form_gloss_ids'] = SearchGlossIds()
+
         # it is necessary to sort the object list by lemma_id in order for all glosses with the same lemma to be grouped
         # correctly in the template
         list_of_object_ids = [g.id for g in self.object_list]
@@ -840,6 +842,10 @@ class GlossListView(ListView):
                 else:
                     qs = Gloss.objects.all().filter(lemma__dataset__in=selected_datasets,
                                                     archived__exact=False)
+            if 'glossids' in self.request.GET and self.request.GET['glossids']:
+                glossids = parse_gloss_ids_from_value(self.request.GET['glossids'])
+                if glossids:
+                    qs = qs.filter(id__in=glossids)
         elif self.query_parameters and 'query' in self.request.GET:
             if self.search_type == 'sign_or_morpheme':
                 qs = Gloss.objects.all().prefetch_related('lemma').filter(lemma__dataset__in=selected_datasets,
