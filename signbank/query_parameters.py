@@ -89,6 +89,12 @@ def parse_gloss_ids_from_value(value):
     return coerce_values_to_numbers(split_values)
 
 
+def string_gloss_ids_from_value(value):
+    split_values = value.strip().split()
+    filtered_values = [v for v in split_values if re.match(r"[1-9]\d*$", v)]
+    return '\n'.join(filtered_values)
+
+
 def query_parameters_this_gloss(phonology_focus, phonology_matrix):
     # this is used to determine a default query for the case the user showed all glosses and there are no parameters
     # when the user is looking at a specific gloss and no query parameters are active, this determines what to show
@@ -819,8 +825,9 @@ def search_fields_from_get(searchform, GET):
                 continue
             search_fields_to_populate[get_key] = values
             search_keys.append(get_key)
-        elif get_key in ['translation', 'search']:
+        elif get_key in ['translation', 'search', 'glossids']:
             search_fields_to_populate[get_key] = get_value
+            # these fields are not stored in the search_keys list
         elif get_key not in search_form_fields:
             # skip csrf_token and page
             continue
@@ -1397,6 +1404,10 @@ def query_parameters_from_get(model, searchform, GET, query_parameters):
             if not values:
                 continue
             query_parameters[get_key] = values
+        elif get_key == 'glossids':
+            list_of_ids = string_gloss_ids_from_value(get_value)
+            if list_of_ids:
+                query_parameters[get_key] = list_of_ids
         elif get_key not in available:
             continue
         elif searchform.fields[get_key].widget.input_type == 'select':

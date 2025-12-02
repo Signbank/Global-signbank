@@ -318,6 +318,11 @@ $(document).ready(function() {
         $("#menu_bar_search_mirror").val(query_initial);
     };
 
+    if (query_parameters_keys.includes('glossids')) {
+        var query_initial = query_parameters_dict['glossids'];
+        $('#id_glossids').val(query_initial);
+    };
+
      // Empty menu_bar_search_mirror
      $("#adminsearch :input").change(function() {
         $("#menu_bar_search_mirror").val("");
