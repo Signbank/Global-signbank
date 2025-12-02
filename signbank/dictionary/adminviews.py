@@ -843,9 +843,9 @@ class GlossListView(ListView):
                     qs = Gloss.objects.all().filter(lemma__dataset__in=selected_datasets,
                                                     archived__exact=False)
             if 'glossids' in self.request.GET and self.request.GET['glossids']:
+                # an XSS attempt in the field results in an empty list and no results are shown
                 glossids = parse_gloss_ids_from_value(self.request.GET['glossids'])
-                if glossids:
-                    qs = qs.filter(id__in=glossids)
+                qs = qs.filter(id__in=glossids)
         elif self.query_parameters and 'query' in self.request.GET:
             if self.search_type == 'sign_or_morpheme':
                 qs = Gloss.objects.all().prefetch_related('lemma').filter(lemma__dataset__in=selected_datasets,

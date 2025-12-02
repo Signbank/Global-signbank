@@ -67,6 +67,7 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/js/select2.full.js"></script>
 {{ query_parameters|json_script:"query_parameters" }}
 {{ gloss_fields_to_populate|json_script:"gloss_fields_to_populate" }}
+{{ id_glossids|json_script:"id_glossids" }}
 <script type='text/javascript'>
 var show_dataset_interface_options = {{ SHOW_DATASET_INTERFACE_OPTIONS|yesno:"true,false" }};
 var multiple_select_fields = {{MULTIPLE_SELECT_GLOSS_FIELDS|safe}};
@@ -86,6 +87,7 @@ var language_query_keys = {{language_query_keys|safe}};
 var morpheme_idgloss = '{{morpheme_idgloss|safe}}';
 var gloss_fields_to_populate = JSON.parse(document.getElementById('gloss_fields_to_populate').textContent);
 var gloss_fields_to_populate_keys = {{gloss_fields_to_populate_keys|safe}};
+
 $(document).ready(function() {
 
     $('[data-toggle="tooltip"]').tooltip();
