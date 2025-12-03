@@ -2958,11 +2958,11 @@ class QueryListView(ListView):
 
         return object_list
 
-    def render_to_response(self, context):
+    def render_to_response(self, context, **response_kwargs):
         if self.request.GET.get('save_query') == 'Save':
             return self.render_to_save_query(context)
         else:
-            return super(QueryListView, self).render_to_response(context)
+            return super(QueryListView, self).render_to_response(context, **response_kwargs)
 
     def render_to_save_query(self, context):
         query_parameters = context['query_parameters']
@@ -3042,7 +3042,7 @@ class SearchHistoryView(ListView):
 
         return qs
 
-    def render_to_response(self, context):
+    def render_to_response(self, context, **response_kwargs):
         if self.request.GET.get('run_query') == 'Run':
             queryid = self.request.GET.get('queryid')
             languages = languages_in_query(queryid)
@@ -3058,7 +3058,7 @@ class SearchHistoryView(ListView):
 
             return self.render_to_run_query(context, queryid)
         else:
-            return super(SearchHistoryView, self).render_to_response(context)
+            return super(SearchHistoryView, self).render_to_response(context, **response_kwargs)
 
     def render_to_run_query(self, context, queryid):
         query = get_object_or_404(SearchHistory, id=queryid)
@@ -3834,13 +3834,13 @@ class DatasetListView(ListView):
             return ['dictionary/admin_dataset_select_list.html']
         return ['dictionary/admin_dataset_list.html']
 
-    def render_to_response(self, context):
+    def render_to_response(self, context, **response_kwargs):
         if self.request.GET.get('export_ecv') == 'ECV':
             return self.render_to_ecv_export_response(context)
         elif self.request.GET.get('request_view_access') == 'VIEW':
             return self.render_to_request_response(context)
         else:
-            return super(DatasetListView, self).render_to_response(context)
+            return super(DatasetListView, self).render_to_response(context, **response_kwargs)
 
     def render_to_request_response(self, context):
 
@@ -4080,7 +4080,7 @@ class DatasetManagerView(ListView):
 
         return context
 
-    def render_to_response(self, context):
+    def render_to_response(self, context, **response_kwargs):
         if 'add_view_perm' in self.request.GET or 'add_change_perm' in self.request.GET \
                     or 'delete_view_perm' in self.request.GET or 'delete_change_perm' in self.request.GET:
             return self.render_to_add_user_response(context)
@@ -4089,7 +4089,7 @@ class DatasetManagerView(ListView):
         elif 'format' in self.request.GET:
             return self.render_to_csv_response()
         else:
-            return super(DatasetManagerView, self).render_to_response(context)
+            return super(DatasetManagerView, self).render_to_response(context, **response_kwargs)
 
     def check_user_permissions_for_managing_dataset(self, dataset_object):
         """
@@ -4544,13 +4544,13 @@ class DatasetDetailView(DetailView):
 
         return context
 
-    def render_to_response(self, context):
+    def render_to_response(self, context, **response_kwargs):
         if 'add_owner' in self.request.GET:
             return self.render_to_add_owner_response(context)
         elif 'request_access' in self.request.GET:
             return self.render_to_request_access(context)
         else:
-            return super(DatasetDetailView, self).render_to_response(context)
+            return super(DatasetDetailView, self).render_to_response(context, **response_kwargs)
 
     def render_to_request_access(self, context):
         dataset = context['dataset']
@@ -5024,7 +5024,7 @@ class DatasetFrequencyView(DetailView):
 
         return context
 
-    def render_to_response(self, context):
+    def render_to_response(self, context, **response_kwargs):
         if self.request.GET.get('process_speakers') == self.object.acronym:
             return self.render_to_process_speakers_response(context)
         elif self.request.GET.get('create_corpus') == self.object.acronym:
@@ -5032,7 +5032,7 @@ class DatasetFrequencyView(DetailView):
         elif self.request.GET.get('update_corpus') == self.object.acronym:
             return self.render_to_update_corpus_response(context)
         else:
-            return super(DatasetFrequencyView, self).render_to_response(context)
+            return super(DatasetFrequencyView, self).render_to_response(context, **response_kwargs)
 
     def render_to_process_speakers_response(self, context):
         # check that the user is logged in
