@@ -7442,6 +7442,8 @@ class AnnotatedGlossListView(ListView):
 
         context['sentenceform'] = self.sentence_search_form
 
+        context['search_form_gloss_ids'] = SearchGlossIds()
+
         if not self.last_used_dataset:
             if 'last_used_dataset' in self.request.session.keys():
                 self.last_used_dataset = self.request.session['last_used_dataset']
@@ -7536,6 +7538,10 @@ class AnnotatedGlossListView(ListView):
         if len(get) > 0 and 'query' not in self.request.GET:
             qs = AnnotatedGloss.objects.all().prefetch_related('gloss').filter(
                 gloss__lemma__dataset__in=selected_datasets).order_by('gloss__id', 'annotatedsentence__id')
+            if 'glossids' in self.request.GET and self.request.GET['glossids']:
+                # an XSS attempt in the field results in an empty list and no results are shown
+                glossids = parse_gloss_ids_from_value(self.request.GET['glossids'])
+                qs = qs.filter(gloss__id__in=glossids)
         elif self.query_parameters and 'query' in self.request.GET:
             gloss_query = Gloss.objects.all().prefetch_related('lemma').filter(lemma__dataset__in=selected_datasets,
                                                                                archived__exact=False)
