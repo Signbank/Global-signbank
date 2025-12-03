@@ -252,6 +252,9 @@ def convert_query_parameters_to_filter(query_parameters):
     for get_key, get_value in query_parameters.items():
         if get_key in ['search_type', 'isRepresentative', 'annotatedSentenceContains']:
             continue
+        elif get_key == 'glossids':
+            glossids = parse_gloss_ids_from_value(get_value)
+            query_list.append(Q(id__in=glossids))
         elif get_key.startswith(glosssearch) or get_key.startswith(lemmasearch) \
                 or get_key.startswith(keywordsearch):
             # because of joining tables, these are done in a separate function
@@ -731,7 +734,7 @@ def query_parameters_toggle_fields(query_parameters):
     query_fields_focus = []
     query_fields_parameters = []
     for qp_key in query_parameters.keys():
-        if qp_key in ['search_type', 'isRepresentative', 'annotatedSentenceContains']:
+        if qp_key in ['search_type', 'isRepresentative', 'annotatedSentenceContains', 'glossids']:
             continue
         if qp_key.startswith(GlossSearchForm.gloss_search_field_prefix) or \
                 qp_key.startswith(GlossSearchForm.lemma_search_field_prefix) or \
