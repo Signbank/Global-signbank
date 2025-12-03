@@ -6,6 +6,7 @@ from django.contrib.auth import models as authmodels
 from django.conf import settings
 from django import forms
 from django.utils.translation import gettext_lazy as _
+from django.utils.encoding import escape_uri_path
 
 from signbank.dictionary.models import Gloss, Morpheme, SignLanguage
 
@@ -36,20 +37,15 @@ class GeneralFeedback(models.Model):
 
     def has_video(self):
         """Return the video object for this Feedback or None if no video available"""
-        if self.video:
-            filepath = os.path.join(settings.COMMENT_VIDEO_LOCATION, self.video.name)
-        else:
-            filepath = ''
+        filepath = os.path.join(settings.COMMENT_VIDEO_LOCATION, self.video.name) if self.video else ''
         if filepath and os.path.exists(filepath.encode('utf-8')):
             return self.video
-        else:
-            return ''
+        return ''
 
 
 class GeneralFeedbackForm(forms.Form):
     """Form for general feedback"""
-    comment = forms.CharField(widget=forms.Textarea(attrs={'rows': 4, 'cols': 80}),
-                              required=True)
+    comment = forms.CharField(widget=forms.Textarea(attrs={'rows': 4, 'cols': 80}), required=True)
     video = forms.FileField(required=False, widget=forms.FileInput(attrs={'size': '60'}))
 
 
@@ -89,16 +85,13 @@ class SignFeedbackForm(forms.Form):
                               widget=forms.Textarea(attrs={'rows': 4, 'cols': 80}))
 
     def __init__(self, *args, **kwargs):
-        super(SignFeedbackForm, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
 
 
 class MorphemeFeedbackForm(forms.Form):
     """Form for input of sign feedback"""
     comment = forms.CharField(label=_("Comment or new keywords"), required=True,
                               widget=forms.Textarea(attrs={'rows': 4, 'cols': 80}))
-
-    def __init__(self, *args, **kwargs):
-        super(MorphemeFeedbackForm, self).__init__(*args, **kwargs)
 
 
 class MissingSignFeedbackForm(forms.Form):
@@ -113,8 +106,7 @@ class MissingSignFeedbackForm(forms.Form):
 
     def __init__(self, *args, **kwargs):
         sign_languages = kwargs.pop('sign_languages')
-
-        super(MissingSignFeedbackForm, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
 
         self.fields['signlanguage'] = forms.ModelChoiceField(
             label=_("Sign Language"), required=True,
@@ -134,7 +126,6 @@ def get_video_file_path(instance, filename, signlanguage, comment_type):
         os.mkdir(signlanguage_directory)
 
     if hasattr(settings, 'ESCAPE_UPLOADED_VIDEO_FILE_PATH') and settings.ESCAPE_UPLOADED_VIDEO_FILE_PATH:
-        from django.utils.encoding import escape_uri_path
         path = escape_uri_path(path)
     return path
 
@@ -156,27 +147,19 @@ class MissingSignFeedback(models.Model):
 
     def has_video(self):
         """Return the video object for this Feedback or None if no video available"""
-        if self.video:
-            filepath = os.path.join(settings.WRITABLE_FOLDER, self.video.name)
-        else:
-            filepath = ''
+        filepath = os.path.join(settings.WRITABLE_FOLDER, self.video.name) if self.video else ''
         if filepath and os.path.exists(filepath.encode('utf-8')):
             return self.video
-        else:
-            return ''
+        return ''
 
     def has_sentence_video(self):
         """Return the sentence object for this Feedback or None if no sentence available"""
-        if self.sentence:
-            filepath = os.path.join(settings.WRITABLE_FOLDER, self.sentence.name)
-        else:
-            filepath = ''
+        filepath = os.path.join(settings.WRITABLE_FOLDER, self.sentence.name) if self.sentence else ''
         if filepath and os.path.exists(filepath.encode('utf-8')):
             return self.sentence
-        else:
-            return ''
+        return ''
 
-    def save_video(self, *args, **kwargs):
+    def save_video(self):
         if not self.video:
             return
         filename = self.video.name
@@ -188,7 +171,7 @@ class MissingSignFeedback(models.Model):
         self.video.name = newloc
         self.save()
 
-    def save_sentence_video(self, *args, **kwargs):
+    def save_sentence_video(self):
         if not self.sentence:
             return
         filename = self.sentence.name
