@@ -551,6 +551,8 @@ def pretty_print_query_fields(dataset_languages, query_parameters):
             continue
         elif key == 'search_type':
             query_dict[key] = gettext("Search Type")
+        elif key == 'glossids':
+            query_dict[key] = gettext("Gloss Ids")
         elif key == 'dialect[]':
             query_dict[key] = gettext("Dialect")
         elif key == 'signlanguage[]':
