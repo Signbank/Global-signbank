@@ -1,21 +1,19 @@
+import os
+import string
+
 from django.db import models
 from django.contrib.auth import models as authmodels
 from django.conf import settings
-import os
 from django import forms
-
 from django.utils.translation import gettext_lazy as _
 
 from signbank.dictionary.models import Gloss, Morpheme, SignLanguage
 
+
 # models to represent the feedback from users in the site
-
-import string
-
 
 def t(message):
     """Replace $country and $language in message with dat from settings"""
-    
     tpl = string.Template(message)
     return tpl.substitute(country=settings.COUNTRY_NAME, language=settings.LANGUAGE_NAME)
 
@@ -27,13 +25,12 @@ STATUS_CHOICES = (('unread', 'unread'),
 
 
 class GeneralFeedback(models.Model):
- 
     comment = models.TextField(blank=True)
-    video = models.FileField(upload_to=settings.COMMENT_VIDEO_LOCATION, blank=True) 
+    video = models.FileField(upload_to=settings.COMMENT_VIDEO_LOCATION, blank=True)
     user = models.ForeignKey(authmodels.User, on_delete=models.CASCADE)
     date = models.DateTimeField(auto_now_add=True)
     status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='unread')
-           
+
     class Meta:
         ordering = ['-date']
 
@@ -51,24 +48,19 @@ class GeneralFeedback(models.Model):
 
 class GeneralFeedbackForm(forms.Form):
     """Form for general feedback"""
-    
     comment = forms.CharField(widget=forms.Textarea(attrs={'rows': 4, 'cols': 80}),
                               required=True)
-    video = forms.FileField(required=False, widget=forms.FileInput(attrs={'size':'60'}))
+    video = forms.FileField(required=False, widget=forms.FileInput(attrs={'size': '60'}))
 
 
 class SignFeedback(models.Model):
     """Store feedback on a particular sign"""
-    
     user = models.ForeignKey(authmodels.User, editable=False, on_delete=models.CASCADE)
     date = models.DateTimeField(auto_now_add=True)
-    
     gloss = models.ForeignKey(Gloss, on_delete=models.SET_NULL, null=True, editable=False)
-    
     comment = models.TextField("Comment or new keywords.", blank=True)
-
     status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='unread')
-    
+
     def __str__(self):
         return str(self.gloss) + " by " + str(self.user) + " on " + str(self.date)
 
@@ -78,14 +70,10 @@ class SignFeedback(models.Model):
 
 class MorphemeFeedback(models.Model):
     """Store feedback on a particular sign"""
-
     user = models.ForeignKey(authmodels.User, editable=False, on_delete=models.CASCADE)
     date = models.DateTimeField(auto_now_add=True)
-
     morpheme = models.ForeignKey(Morpheme, on_delete=models.SET_NULL, null=True, editable=False)
-
     comment = models.TextField("Comment or new keywords.", blank=True)
-
     status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='unread')
 
     def __str__(self):
@@ -97,7 +85,6 @@ class MorphemeFeedback(models.Model):
 
 class SignFeedbackForm(forms.Form):
     """Form for input of sign feedback"""
-
     comment = forms.CharField(label="Comment or new keywords", required=True,
                               widget=forms.Textarea(attrs={'rows': 4, 'cols': 80}))
 
@@ -107,7 +94,6 @@ class SignFeedbackForm(forms.Form):
 
 class MorphemeFeedbackForm(forms.Form):
     """Form for input of sign feedback"""
-
     comment = forms.CharField(label=_("Comment or new keywords"), required=True,
                               widget=forms.Textarea(attrs={'rows': 4, 'cols': 80}))
 
@@ -116,7 +102,6 @@ class MorphemeFeedbackForm(forms.Form):
 
 
 class MissingSignFeedbackForm(forms.Form):
-
     meaning = forms.CharField(label=_('Sign Meaning'), widget=forms.Textarea(attrs={'rows': 4, 'cols': 80}),
                               required=True)
     video = forms.FileField(label=_('Video of the Sign'), required=True,
@@ -131,17 +116,17 @@ class MissingSignFeedbackForm(forms.Form):
 
         super(MissingSignFeedbackForm, self).__init__(*args, **kwargs)
 
-        self.fields['signlanguage'] = forms.ModelChoiceField(label=_("Sign Language"), required=True,
-                                                             queryset=SignLanguage.objects.filter(id__in=sign_languages),
-                                                             widget=forms.Select(attrs={'class': 'form-control'}))
+        self.fields['signlanguage'] = forms.ModelChoiceField(
+            label=_("Sign Language"), required=True,
+            queryset=SignLanguage.objects.filter(id__in=sign_languages),
+            widget=forms.Select(attrs={'class': 'form-control'})
+        )
         self.fields['signlanguage'].initial = sign_languages[0]
 
 
 def get_video_file_path(instance, filename, signlanguage, comment_type):
     (base, ext) = os.path.splitext(filename)
-
     filename = comment_type + '_' + signlanguage + '_' + str(instance.id) + ext
-
     signlanguage_directory = os.path.join(settings.WRITABLE_FOLDER, settings.COMMENT_VIDEO_LOCATION, signlanguage)
     path = os.path.join(settings.COMMENT_VIDEO_LOCATION, signlanguage, filename)
 
@@ -154,7 +139,7 @@ def get_video_file_path(instance, filename, signlanguage, comment_type):
     return path
 
 
-class MissingSignFeedback(models.Model):    
+class MissingSignFeedback(models.Model):
     user = models.ForeignKey(authmodels.User, on_delete=models.CASCADE)
     date = models.DateTimeField(auto_now_add=True)
     signlanguage = models.ForeignKey(SignLanguage, verbose_name=_("Sign Language"),
@@ -164,7 +149,6 @@ class MissingSignFeedback(models.Model):
     comments = models.TextField(blank=True)
     video = models.FileField(upload_to=settings.VIDEO_UPLOAD_LOCATION, blank=True)
     sentence = models.FileField(upload_to=settings.VIDEO_UPLOAD_LOCATION, blank=True)
-
     status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='unread')
 
     class Meta:

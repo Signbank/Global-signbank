@@ -1,11 +1,12 @@
-from django.conf.urls import *
-from django.urls import re_path, path, include
-from signbank.dictionary.models import *
-from django.contrib.auth.decorators import login_required, permission_required
+from django.urls import re_path
+from django.contrib.auth.decorators import login_required
 
 import signbank.feedback.views
 
+
 app_name = 'feedback'
+
+
 urlpatterns = [
     re_path(r'^$', signbank.feedback.views.index),
 
@@ -22,5 +23,3 @@ urlpatterns = [
 
     re_path(r'^(?P<kind>general|sign|morpheme|missingsign)/delete/(?P<id>\d+)$', signbank.feedback.views.delete),
 ]
-
-
