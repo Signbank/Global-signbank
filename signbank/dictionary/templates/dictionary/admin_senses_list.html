@@ -69,6 +69,7 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.5/js/select2.full.js"></script>
 {{ query_parameters|json_script:"query_parameters" }}
 {{ gloss_fields_to_populate|json_script:"gloss_fields_to_populate" }}
+{{ id_glossids|json_script:"id_glossids" }}
 <script type='text/javascript'>
 var show_dataset_interface_options = {{ SHOW_DATASET_INTERFACE_OPTIONS|yesno:"true,false" }};
 var multiple_select_fields = {{MULTIPLE_SELECT_GLOSS_FIELDS|safe}};
@@ -280,6 +281,11 @@ $(document).ready(function() {
         var query_initial = gloss_fields_to_populate['translation'];
         $translation.val(query_initial);
      };
+
+    if (query_parameters_keys.includes('glossids')) {
+        var query_initial = query_parameters_dict['glossids'];
+        $('#id_glossids').val(query_initial);
+    };
 
      // Empty menu_bar_search_mirror: if the user is still busy with the form and hits Reset, this clears it
      $("#adminsearch :input").change(function() {
@@ -628,7 +634,27 @@ function do_toggle_language(el) {
                         </table>
 
                         </div>
+                    </div>
+
+                    <div  class="panel panel-default panel-light">
+                      <div class="panel-heading panel-light" data-toggle="collapse" data-target="#gloss_ids_search">{% trans "Search by Gloss Ids" %}</div>
+
+                      <div id='gloss_ids_search' class='collapse-light collapse'>
+                      <table class='table table-condensed table-condensed-light'>
+                        <tr>
+
+                          <td class='td td-light'>
+                            <table class='table table-condensed table-condensed-light' style="width:65%;">
+                                <tr><td class='td td-light' style="padding-left:30px;"><label for='id_search_form_gloss_ids'>{{search_form_gloss_ids.glossids.label}}</label></td>
+                                    <td class='td td-light' style="width:600px;">{{search_form_gloss_ids.glossids}}</td>
+                                </tr>
+                            </table>
+
+                          </td>
+                        </tr>
+                      </table>
                       </div>
+                    </div>
 
                     <div  class="panel panel-default panel-light">
                       <div class="panel-heading panel-light" data-toggle="collapse" data-target="#phon_search">{% trans "Search by Phonology" %}</div>

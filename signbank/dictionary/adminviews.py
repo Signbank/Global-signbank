@@ -987,6 +987,8 @@ class SenseListView(ListView):
         context = get_context_data_for_gloss_search_form(self.request, self, self.search_form, self.kwargs,
                                                          context, self.sentence_search_form)
 
+        context['search_form_gloss_ids'] = SearchGlossIds()
+
         context['sensecount'] = Sense.objects.filter(glosssense__gloss__lemma__dataset__in=context['selected_datasets']).count()
 
         context['page_number'] = context['page_obj'].number
@@ -1087,6 +1089,10 @@ class SenseListView(ListView):
         if len(get) > 0 and 'query' not in self.request.GET:
             qs = GlossSense.objects.filter(gloss__lemma__dataset__in=selected_datasets,
                                            gloss__archived__exact=False)
+            if 'glossids' in self.request.GET and self.request.GET['glossids']:
+                # an XSS attempt in the field results in an empty list and no results are shown
+                glossids = parse_gloss_ids_from_value(self.request.GET['glossids'])
+                qs = qs.filter(gloss__id__in=glossids)
             qs = qs.order_by('gloss__id', 'order')
 
         elif self.query_parameters and 'query' in self.request.GET:
