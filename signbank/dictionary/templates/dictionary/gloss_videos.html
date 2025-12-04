@@ -114,7 +114,7 @@ var search_results_url = '{% url 'dictionary:ajax_search_results' %}';
             {% endif %}
         </div>
     </div>
-
+</div>
     <div class='panel panel-group panel-default panel-light' id="definition"
          style="width:auto; z-index: 0;opacity:.99; position: relative;background-color:inherit;">
 
@@ -181,13 +181,12 @@ var search_results_url = '{% url 'dictionary:ajax_search_results' %}';
                 {% endif %}
         </div>
         {% endif %}
-
         <!-- Other media -->
             {% if other_media %}
             <div class="panel panel-default panel-default-light">
 
-            <div class="panel-heading"><h3>{% trans "Other Media" %}</h3></div>
-            <div class="panel-body">
+            <div class="panel-heading" data-toggle="collapse" data-target="#other_media">{% trans "Other Media" %}</div>
+            <div class="panel-body collapse" id="other_media">
             <table class='table table-condensed table-condensed-light'>
                 {% for media_okay,pk,path,file_type,type,alternative_gloss,file_name in other_media %}
                     {% if media_okay and file_type == 'video/mp4' %}
@@ -230,10 +229,49 @@ var search_results_url = '{% url 'dictionary:ajax_search_results' %}';
             </div>
             {% endif %}
 
+    {% if dangling_video_files %}
+    <div class="panel panel-default panel-default-light">
+
+    <div class="panel-heading" data-toggle="collapse" data-target="#dangling_video_files">{% trans "Video Files Without Objects" %} ({{dangling_video_files|length}})</div>
+    <div class="panel-body collapse" id="dangling_video_files">
+    <table class='table table-condensed table-condensed-light' style="width:100%;">
+    <tr><td>{% translate "Object Id" %}</td><td>{% translate "Relative Path" %}</td></tr>
+    {% for relative_path in dangling_video_files %}
+    <tr><td>NONE</td><td>{{relative_path}}</td></tr>
+    {% endfor %}
+    </table>
     </div>
+    </div>
+    {% endif %}
+
+    {% if backup_videos %}
+    <div class="panel panel-default panel-default-light">
+
+    <div class="panel-heading" data-toggle="collapse" data-target="#backup_videos">{% trans "Backup Video Files" %} ({{backup_videos|length}})</div>
+    <div class="panel-body collapse" id="backup_videos">
+    <table class='table table-condensed table-condensed-light' style="width:100%;">
+    <tr><td>{% translate "Object Id" %}</td><td>{% translate "Relative Path" %}</td></tr>
+    {% for object_id, relative_path in backup_videos %}
+    <tr><td>{{object_id}}</td><td>{{relative_path}}</td></tr>
+    {% endfor %}
+    </table>
+    </div>
+    </div>
+    {% endif %}
+
+    {% if wrongly_named_videos %}
+    <div class="panel panel-default panel-default-light">
+
+    <div class="panel-heading" data-toggle="collapse" data-target="#wrongly_named">{% trans "Wrongly Named Video Files" %} ({{wrongly_named_videos|length}})</div>
+    <div class="panel-body collapse" id="wrongly_named">
+    <table class='table table-condensed table-condensed-light' style="width:100%;">
+    <tr><td>{% translate "Object Id" %}</td><td>{% translate "Relative Path" %}</td></tr>
+    {% for object_id, relative_path in wrongly_named_videos %}
+    <tr><td>{{object_id}}</td><td>{{relative_path}}</td></tr>
+    {% endfor %}
+    </table>
+    </div>
+    </div>
+    {% endif %}
 </div>
-
-</div>
-
-
 {% endblock %}
