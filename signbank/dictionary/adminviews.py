@@ -1815,10 +1815,10 @@ class GlossVideosView(DetailView):
         # print('video objects: ', video_files)
         display_glossvideos = get_primary_videos_for_gloss(gl)
         # print('primary videos: ', display_glossvideos)
-        display_perspvideos = get_perspective_videos_for_gloss(gl)
-        # print('perspective videos: ', display_perspvideos)
-        display_nmevideos = get_nme_videos_for_gloss(gl)
-        # print('nme videos: ', display_nmevideos)
+        perspective_videos = get_perspective_videos_for_gloss(gl, string_result=False)
+        context['perspective_videos'] = perspective_videos
+        nme_videos = get_nme_videos_for_gloss(gl, string_result=False)
+        context['nme_videos'] = nme_videos
         wrongly_named_videos = get_wrong_videos_for_gloss(gl, string_result=False)
         context['wrongly_named_videos'] = wrongly_named_videos
         backup_videos = get_backup_videos_for_gloss(gl, string_result=False)

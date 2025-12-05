@@ -405,14 +405,18 @@ def get_backup_videos_for_gloss(gloss, string_result=True):
     return num_backup_videos, display_glossbackupvideos
 
 
-def get_perspective_videos_for_gloss(gloss):
+def get_perspective_videos_for_gloss(gloss, string_result=True):
     glossperspvideos = GlossVideoPerspective.objects.filter(gloss=gloss).distinct()
+    if not string_result:
+        return [(gv.pk, gv.version, str(gv.videofile)) for gv in glossperspvideos]
     display_perspective_videos = ', '.join([str(gv.perspective) + ': ' + str(gv.videofile) for gv in glossperspvideos])
     return display_perspective_videos
 
 
-def get_nme_videos_for_gloss(gloss):
+def get_nme_videos_for_gloss(gloss, string_result=True):
     glossnmevideos = GlossVideoNME.objects.filter(gloss=gloss).distinct().order_by('offset')
+    if not string_result:
+        return [(gv.pk, gv.version, str(gv.videofile)) for gv in glossnmevideos]
     display_nme_videos = ', '.join([file_display_preface(gv) + ': ' + str(gv.videofile) for gv in glossnmevideos])
     return display_nme_videos
 
@@ -422,7 +426,7 @@ def get_wrong_videos_for_gloss(gloss, string_result=True):
     gloss_video_ids = wrong_filename_filter(all_gloss_video_objects)
     gloss_video_objects = GlossVideo.objects.filter(id__in=gloss_video_ids).order_by('pk')
     if not string_result:
-        return [(gv.pk, str(gv.videofile)) for gv in gloss_video_objects]
+        return [(gv.pk, gv.version, str(gv.videofile)) for gv in gloss_video_objects]
     display_wrong_videos = ', '.join([file_display_preface(gv) + ': ' + str(gv.videofile) for gv in gloss_video_objects])
     return display_wrong_videos
 
