@@ -41,6 +41,11 @@ var search_results_url = '{% url 'dictionary:ajax_search_results' %}';
 #panel-expand-collapse-btn-group.affix {
     position:fixed;
 }
+.copy-button {
+    font-size: 10px;
+    padding-left: 2px;
+    padding-right: 2px;
+}
 </style>
 {% endblock %}
 
@@ -249,10 +254,37 @@ var search_results_url = '{% url 'dictionary:ajax_search_results' %}';
 
     <div class="panel-heading" data-toggle="collapse" data-target="#backup_videos">{% trans "Backup Video Files" %} ({{backup_videos|length}})</div>
     <div class="panel-body collapse" id="backup_videos">
+         {% if perms.dictionary.add_gloss %}
+         <button id='renumber_btn' class='btn btn-primary copy-button' data-toggle='modal' data-target='#renumber_modal'>{% trans "Renumber Backups" %}</button>
+
+          <div class="modal fade" id="renumber_modal" role="dialog" aria-labelledby="#modalRenumber" aria-hidden="true">
+             <div class="modal-dialog modal-lg">
+                <div class="modal-content">
+                    <div class='modal-header'>
+                        <h2 id='modalRenumber'>{% trans "Renumber Backup Videos" %}</h2>
+                    </div>
+                    <div class='modal-body'>
+                        <p>{% trans "Renumber the version numbers of the backup videos." %}</p>
+                     </div>
+                  <form id="renumber" method='get'>
+                      {% csrf_token %}
+                      <input type='hidden' name='operation' value='Renumber'>
+                      <input type='hidden' name='value' value='confirmed'>
+                      <div class="modal-footer">
+                        <button type="button" class="btn btn-default btn-default-light" data-dismiss="modal">{% trans "Cancel" %}</button>
+                        <input type="submit" class="btn btn-primary" value='{% trans "Confirm Renumber" %}'>
+                      </div>
+                  </form>
+
+                </div>
+              </div>
+         </div>
+
+        {% endif %}
     <table class='table table-condensed table-condensed-light' style="width:100%;">
-    <tr><td>{% translate "Object Id" %}</td><td>{% translate "Relative Path" %}</td></tr>
-    {% for object_id, relative_path in backup_videos %}
-    <tr><td>{{object_id}}</td><td>{{relative_path}}</td></tr>
+    <tr><td>{% translate "Object Id" %}</td><td>{% translate "Version" %}</td><td>{% translate "Relative Path" %}</td></tr>
+    {% for object_id, version, relative_path in backup_videos %}
+    <tr><td>{{object_id}}</td><td>{{version}}</td><td>{{relative_path}}</td></tr>
     {% endfor %}
     </table>
     </div>
@@ -262,8 +294,36 @@ var search_results_url = '{% url 'dictionary:ajax_search_results' %}';
     {% if wrongly_named_videos %}
     <div class="panel panel-default panel-default-light">
 
-    <div class="panel-heading" data-toggle="collapse" data-target="#wrongly_named">{% trans "Wrongly Named Video Files" %} ({{wrongly_named_videos|length}})</div>
+    <div class="panel-heading" data-toggle="collapse" data-target="#wrongly_named">{% trans "Obsolete Video Files" %} ({{wrongly_named_videos|length}})</div>
     <div class="panel-body collapse" id="wrongly_named">
+         {% if perms.dictionary.add_gloss %}
+         <button id='remove_btn' class='btn btn-primary copy-button' data-toggle='modal' data-target='#remove_modal'>{% trans "Remove Obsolete Files" %}</button>
+
+          <div class="modal fade" id="remove_modal" role="dialog" aria-labelledby="#modalRenumber" aria-hidden="true">
+             <div class="modal-dialog modal-lg">
+                <div class="modal-content">
+                    <div class='modal-header'>
+                        <h2 id='modalRemove'>{% trans "Remove Obsolete Files" %}</h2>
+                    </div>
+                    <div class='modal-body'>
+                        <p>{% trans "Remove the archived objects with an obsolete filename." %}</p>
+                     </div>
+                  <form id="remove" method='get'>
+                      {% csrf_token %}
+                      <input type='hidden' name='operation' value='Remove'>
+                      <input type='hidden' name='value' value='confirmed'>
+                      <div class="modal-footer">
+                        <button type="button" class="btn btn-default btn-default-light" data-dismiss="modal">{% trans "Cancel" %}</button>
+                        <input type="submit" class="btn btn-primary" value='{% trans "Confirm Remove" %}'>
+                      </div>
+                  </form>
+
+                </div>
+              </div>
+         </div>
+
+        {% endif %}
+
     <table class='table table-condensed table-condensed-light' style="width:100%;">
     <tr><td>{% translate "Object Id" %}</td><td>{% translate "Relative Path" %}</td></tr>
     {% for object_id, relative_path in wrongly_named_videos %}

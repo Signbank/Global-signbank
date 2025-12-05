@@ -108,6 +108,63 @@ def find_dangling_video_files(gloss):
     return files_without_glossvideo_object
 
 
+def has_correct_filename(videofile, nmevideo, perspective, version):
+    if not videofile:
+        return False
+    video_file_full_path = Path(WRITABLE_FOLDER, videofile)
+    if nmevideo is not None:
+        filename_is_correct = filename_matches_nme(video_file_full_path) is not None
+        return filename_is_correct
+    elif perspective is not None:
+        filename_is_correct = filename_matches_perspective(video_file_full_path) is not None
+        return filename_is_correct
+    elif version > 0:
+        filename_is_correct = filename_matches_backup_video(video_file_full_path) is not None
+        return filename_is_correct
+    else:
+        filename_is_correct = filename_matches_video(video_file_full_path) is not None
+        return filename_is_correct
+
+
+def wrong_filename_filter(glossvideos):
+    filenames = []
+    queryset_tuples = glossvideos.values('id', 'videofile', 'glossvideonme', 'glossvideoperspective', 'version')
+    for qv in queryset_tuples:
+       if not has_correct_filename(qv['videofile'],
+                                   qv['glossvideonme'],
+                                   qv['glossvideoperspective'], qv['version']):
+           filenames.append(qv['id'])
+    return filenames
+
+
+def delete_glossvideo_object_and_file(gloss):
+    all_gloss_video_objects = GlossVideo.objects.filter(gloss=gloss).distinct()
+    gloss_video_ids = wrong_filename_filter(all_gloss_video_objects)
+    gloss_video_objects = GlossVideo.objects.filter(id__in=gloss_video_ids)
+    for glossvideo in gloss_video_objects:
+        relative_path = str(glossvideo.videofile)
+        if not relative_path:
+            glossvideo.delete()
+            continue
+        video_file_full_path = os.path.join(WRITABLE_FOLDER, relative_path)
+        if os.path.exists(video_file_full_path):
+            os.remove(video_file_full_path)
+        glossvideo.delete()
+
+
+def renumber_backup_videos(gloss):
+    lookup_backup_files = GlossVideo.objects.filter(gloss=gloss,
+                                                    glossvideonme=None,
+                                                    glossvideoperspective=None,
+                                                    version__gt=0).order_by('version', 'id')
+    # enumerate over the backup videos and give them new version numbers
+    for inx, video in enumerate(lookup_backup_files, 1):
+        if inx == video.version:
+            continue
+        video.version = inx
+        video.save()
+
+
 def flipped_backup_filename(gloss, glossvideo, extension):
     idgloss = gloss.idgloss
     desired_filename_without_extension = f'{idgloss}-{gloss.pk}'

@@ -55,7 +55,7 @@ from signbank.settings.server_specific import (URL, PREFIX_URL, LANGUAGE_CODE, L
                                                DEBUG_SENSES, DEBUG_EMAILS_ON, SEPARATE_ENGLISH_IDGLOSS_FIELD)
 from signbank.video.forms import VideoUploadForObjectForm
 from signbank.video.convertvideo import get_folder_name
-from signbank.video.models import GlossVideo, find_dangling_video_files
+from signbank.video.models import (GlossVideo, find_dangling_video_files, delete_glossvideo_object_and_file, renumber_backup_videos)
 from signbank.dictionary.models import (Dataset, UserProfile, AffiliatedUser, AffiliatedGloss,
                                         Language, Dialect, Gloss, Morpheme, GlossSense, Sense,
                                         Corpus, Speaker, Document, GlossFrequency,
@@ -1845,6 +1845,30 @@ class GlossVideosView(DetailView):
         context['USE_REGULAR_EXPRESSIONS'] = USE_REGULAR_EXPRESSIONS
 
         return context
+
+    def render_to_response(self, context, **response_kwargs):
+        if self.request.GET.get('operation') == 'Renumber':
+            return self.renumber_backups(context)
+        elif self.request.GET.get('operation') == 'Remove':
+            return self.remove_obsolete(context)
+        else:
+            return super(GlossVideosView, self).render_to_response(context, **response_kwargs)
+
+    def renumber_backups(self, context):
+        gloss = context['gloss']
+        if (self.request.user.has_perm('dictionary.change_gloss')
+                and gloss.lemma.dataset in get_objects_for_user(self.request.user, ['change_dataset'], Dataset,
+                                                                any_perm=True)):
+            renumber_backup_videos(gloss)
+        return HttpResponseRedirect(PREFIX_URL + '/dictionary/gloss/'+str(gloss.id)+'/glossvideos')
+
+    def remove_obsolete(self, context):
+        gloss = context['gloss']
+        if (self.request.user.has_perm('dictionary.change_gloss')
+                and gloss.lemma.dataset in get_objects_for_user(self.request.user, ['change_dataset'], Dataset,
+                                                                any_perm=True)):
+            delete_glossvideo_object_and_file(gloss)
+        return HttpResponseRedirect(PREFIX_URL + '/dictionary/gloss/'+str(gloss.id)+'/glossvideos')
 
 
 class GlossRelationsDetailView(DetailView):
@@ -7290,7 +7314,7 @@ class ToggleListView(ListView):
             possible_tags = [str(tag.id) for tag in Tag.objects.all()]
             vals = filter_values_on_domain(vals, possible_tags)
             if vals:
-                query_parameters['tags[]'] = vals
+                self.query_parameters['tags[]'] = vals
                 values = coerce_values_to_numbers(vals)
                 glosses_with_tag = list(
                     TaggedItem.objects.filter(tag__id__in=values).values_list('object_id', flat=True))
