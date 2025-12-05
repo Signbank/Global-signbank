@@ -4,7 +4,8 @@ import datetime as DT
 import re
 
 from django import forms
-from django.core.exceptions import ObjectDoesNotExist
+from django.core.exceptions import ObjectDoesNotExist, ValidationError
+from django.forms import Textarea
 from django.utils.translation import override, gettext_lazy as _, gettext
 from django.db.transaction import atomic
 from django.utils.timezone import get_current_timezone
@@ -1697,3 +1698,8 @@ class GlossProvenanceForm(forms.ModelForm):
                                                         ordered=False, id_prefix='', shortlist=False
                                                   ),
                                                   widget=forms.Select(attrs=ATTRS_FOR_FORMS))
+
+
+class SearchGlossIds(forms.Form):
+    glossids = forms.CharField(label=_("Gloss Ids"), required=False, initial='',
+                               widget=forms.Textarea(attrs={'cols': 60, 'rows': 5, 'placeholder': _('Enter Gloss Ids')}))
