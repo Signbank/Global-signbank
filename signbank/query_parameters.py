@@ -89,7 +89,13 @@ def parse_gloss_ids_from_value(value):
     return coerce_values_to_numbers(split_values)
 
 
-def string_gloss_ids_from_value(value):
+def filter_gloss_ids_of_textarea(value):
+    """
+    Used by form SearchGlossIds, Gloss Search by Gloss Ids
+    :view: GlossListView, AnnotatedGlossListView, SenseListView
+    :param value: string containing gloss ids separated by white space or commas
+    :return: string containing gloss ids separated by newline characters
+    """
     split_values = value.strip().split()
     filtered_values = [v for v in split_values if re.match(r"[1-9]\d*$", v)]
     return '\n'.join(filtered_values)
@@ -1410,7 +1416,7 @@ def query_parameters_from_get(model, searchform, GET, query_parameters):
                 continue
             query_parameters[get_key] = values
         elif get_key == 'glossids':
-            list_of_ids = string_gloss_ids_from_value(get_value)
+            list_of_ids = filter_gloss_ids_of_textarea(get_value)
             if list_of_ids:
                 query_parameters[get_key] = list_of_ids
         elif get_key not in available:
