@@ -84,6 +84,23 @@ def filter_values_on_domain(vals, domain):
     return values
 
 
+def parse_gloss_ids_from_value(value):
+    split_values = value.strip().split()
+    return coerce_values_to_numbers(split_values)
+
+
+def filter_gloss_ids_of_textarea(value):
+    """
+    Used by form SearchGlossIds, Gloss Search by Gloss Ids
+    :view: GlossListView, AnnotatedGlossListView, SenseListView
+    :param value: string containing gloss ids separated by white space or commas
+    :return: string containing gloss ids separated by newline characters
+    """
+    split_values = value.strip().split()
+    filtered_values = [v for v in split_values if re.match(r"[1-9]\d*$", v)]
+    return '\n'.join(filtered_values)
+
+
 def query_parameters_this_gloss(phonology_focus, phonology_matrix):
     # this is used to determine a default query for the case the user showed all glosses and there are no parameters
     # when the user is looking at a specific gloss and no query parameters are active, this determines what to show
@@ -241,6 +258,9 @@ def convert_query_parameters_to_filter(query_parameters):
     for get_key, get_value in query_parameters.items():
         if get_key in ['search_type', 'isRepresentative', 'annotatedSentenceContains']:
             continue
+        elif get_key == 'glossids':
+            glossids = parse_gloss_ids_from_value(get_value)
+            query_list.append(Q(id__in=glossids))
         elif get_key.startswith(glosssearch) or get_key.startswith(lemmasearch) \
                 or get_key.startswith(keywordsearch):
             # because of joining tables, these are done in a separate function
@@ -537,6 +557,8 @@ def pretty_print_query_fields(dataset_languages, query_parameters):
             continue
         elif key == 'search_type':
             query_dict[key] = gettext("Search Type")
+        elif key == 'glossids':
+            query_dict[key] = gettext("Gloss Ids")
         elif key == 'dialect[]':
             query_dict[key] = gettext("Dialect")
         elif key == 'signlanguage[]':
@@ -720,7 +742,7 @@ def query_parameters_toggle_fields(query_parameters):
     query_fields_focus = []
     query_fields_parameters = []
     for qp_key in query_parameters.keys():
-        if qp_key in ['search_type', 'isRepresentative', 'annotatedSentenceContains']:
+        if qp_key in ['search_type', 'isRepresentative', 'annotatedSentenceContains', 'glossids']:
             continue
         if qp_key.startswith(GlossSearchForm.gloss_search_field_prefix) or \
                 qp_key.startswith(GlossSearchForm.lemma_search_field_prefix) or \
@@ -814,8 +836,9 @@ def search_fields_from_get(searchform, GET):
                 continue
             search_fields_to_populate[get_key] = values
             search_keys.append(get_key)
-        elif get_key in ['translation', 'search']:
+        elif get_key in ['translation', 'search', 'glossids']:
             search_fields_to_populate[get_key] = get_value
+            # these fields are not stored in the search_keys list
         elif get_key not in search_form_fields:
             # skip csrf_token and page
             continue
@@ -1392,6 +1415,10 @@ def query_parameters_from_get(model, searchform, GET, query_parameters):
             if not values:
                 continue
             query_parameters[get_key] = values
+        elif get_key == 'glossids':
+            list_of_ids = filter_gloss_ids_of_textarea(get_value)
+            if list_of_ids:
+                query_parameters[get_key] = list_of_ids
         elif get_key not in available:
             continue
         elif searchform.fields[get_key].widget.input_type == 'select':
