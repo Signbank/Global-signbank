@@ -79,7 +79,7 @@ from signbank.dictionary.forms import (AnnotatedSentenceSearchForm, GlossSearchF
                                        ImageUploadForGlossForm, ImageUploadForHandshapeForm, EAFFilesForm,
                                        LemmaCreateForm, LemmaUpdateForm, set_up_lemma_language_fields, MorphemeCreateForm, OtherMediaForm, RelationForm,
                                        GlossMorphologyForm, GlossBlendForm, DefinitionForm, GlossMorphemeForm,
-                                       SemanticFieldTranslationForm, ZippedVideosForm,
+                                       SemanticFieldTranslationForm, ZippedVideosForm, SearchGlossIds,
                                        check_language_fields, check_multilingual_fields, SentenceForm,
                                        check_language_fields_annotatedsentence, GlossProvenanceForm, check_sortOrder_handshapes)
 from signbank.tools import (write_ecv_file_for_dataset, find_duplicate_lemmas,
@@ -103,7 +103,7 @@ from signbank.query_parameters import (convert_query_parameters_to_filter, prett
                                        queryset_glosssense_from_get, query_parameters_from_get,
                                        queryset_sentences_from_get, query_parameters_toggle_fields,
                                        queryset_annotatedgloss_from_get, convert_query_parameters_to_annotatedgloss_filter,
-                                       coerce_values_to_numbers, filter_values_on_domain)
+                                       coerce_values_to_numbers, filter_values_on_domain, parse_gloss_ids_from_value)
 from signbank.search_history import (available_query_parameters_in_search_history, languages_in_query, display_parameters,
     get_query_parameters, save_query_parameters, fieldnames_from_query_parameters)
 from signbank.frequency import (import_corpus_speakers, configure_corpus_documents_for_dataset, update_corpus_counts,
@@ -592,6 +592,8 @@ class GlossListView(ListView):
 
         context = get_context_data_for_gloss_search_form(self.request, self, self.search_form, self.kwargs, context)
 
+        context['search_form_gloss_ids'] = SearchGlossIds()
+
         # it is necessary to sort the object list by lemma_id in order for all glosses with the same lemma to be grouped
         # correctly in the template
         list_of_object_ids = [g.id for g in self.object_list]
@@ -844,6 +846,10 @@ class GlossListView(ListView):
                 else:
                     qs = Gloss.objects.all().filter(lemma__dataset__in=selected_datasets,
                                                     archived__exact=False)
+            if 'glossids' in self.request.GET and self.request.GET['glossids']:
+                # an XSS attempt in the field results in an empty list and no results are shown
+                glossids = parse_gloss_ids_from_value(self.request.GET['glossids'])
+                qs = qs.filter(id__in=glossids)
         elif self.query_parameters and 'query' in self.request.GET:
             if self.search_type == 'sign_or_morpheme':
                 qs = Gloss.objects.all().prefetch_related('lemma').filter(lemma__dataset__in=selected_datasets,
@@ -985,6 +991,8 @@ class SenseListView(ListView):
         context = get_context_data_for_gloss_search_form(self.request, self, self.search_form, self.kwargs,
                                                          context, self.sentence_search_form)
 
+        context['search_form_gloss_ids'] = SearchGlossIds()
+
         context['sensecount'] = Sense.objects.filter(glosssense__gloss__lemma__dataset__in=context['selected_datasets']).count()
 
         context['page_number'] = context['page_obj'].number
@@ -1085,6 +1093,10 @@ class SenseListView(ListView):
         if len(get) > 0 and 'query' not in self.request.GET:
             qs = GlossSense.objects.filter(gloss__lemma__dataset__in=selected_datasets,
                                            gloss__archived__exact=False)
+            if 'glossids' in self.request.GET and self.request.GET['glossids']:
+                # an XSS attempt in the field results in an empty list and no results are shown
+                glossids = parse_gloss_ids_from_value(self.request.GET['glossids'])
+                qs = qs.filter(gloss__id__in=glossids)
             qs = qs.order_by('gloss__id', 'order')
 
         elif self.query_parameters and 'query' in self.request.GET:
@@ -2995,11 +3007,11 @@ class QueryListView(ListView):
 
         return object_list
 
-    def render_to_response(self, context):
+    def render_to_response(self, context, **response_kwargs):
         if self.request.GET.get('save_query') == 'Save':
             return self.render_to_save_query(context)
         else:
-            return super(QueryListView, self).render_to_response(context)
+            return super(QueryListView, self).render_to_response(context, **response_kwargs)
 
     def render_to_save_query(self, context):
         query_parameters = context['query_parameters']
@@ -3079,7 +3091,7 @@ class SearchHistoryView(ListView):
 
         return qs
 
-    def render_to_response(self, context):
+    def render_to_response(self, context, **response_kwargs):
         if self.request.GET.get('run_query') == 'Run':
             queryid = self.request.GET.get('queryid')
             languages = languages_in_query(queryid)
@@ -3095,7 +3107,7 @@ class SearchHistoryView(ListView):
 
             return self.render_to_run_query(context, queryid)
         else:
-            return super(SearchHistoryView, self).render_to_response(context)
+            return super(SearchHistoryView, self).render_to_response(context, **response_kwargs)
 
     def render_to_run_query(self, context, queryid):
         query = get_object_or_404(SearchHistory, id=queryid)
@@ -3871,13 +3883,13 @@ class DatasetListView(ListView):
             return ['dictionary/admin_dataset_select_list.html']
         return ['dictionary/admin_dataset_list.html']
 
-    def render_to_response(self, context):
+    def render_to_response(self, context, **response_kwargs):
         if self.request.GET.get('export_ecv') == 'ECV':
             return self.render_to_ecv_export_response(context)
         elif self.request.GET.get('request_view_access') == 'VIEW':
             return self.render_to_request_response(context)
         else:
-            return super(DatasetListView, self).render_to_response(context)
+            return super(DatasetListView, self).render_to_response(context, **response_kwargs)
 
     def render_to_request_response(self, context):
 
@@ -4117,7 +4129,7 @@ class DatasetManagerView(ListView):
 
         return context
 
-    def render_to_response(self, context):
+    def render_to_response(self, context, **response_kwargs):
         if 'add_view_perm' in self.request.GET or 'add_change_perm' in self.request.GET \
                     or 'delete_view_perm' in self.request.GET or 'delete_change_perm' in self.request.GET:
             return self.render_to_add_user_response(context)
@@ -4126,7 +4138,7 @@ class DatasetManagerView(ListView):
         elif 'format' in self.request.GET:
             return self.render_to_csv_response()
         else:
-            return super(DatasetManagerView, self).render_to_response(context)
+            return super(DatasetManagerView, self).render_to_response(context, **response_kwargs)
 
     def check_user_permissions_for_managing_dataset(self, dataset_object):
         """
@@ -4581,13 +4593,13 @@ class DatasetDetailView(DetailView):
 
         return context
 
-    def render_to_response(self, context):
+    def render_to_response(self, context, **response_kwargs):
         if 'add_owner' in self.request.GET:
             return self.render_to_add_owner_response(context)
         elif 'request_access' in self.request.GET:
             return self.render_to_request_access(context)
         else:
-            return super(DatasetDetailView, self).render_to_response(context)
+            return super(DatasetDetailView, self).render_to_response(context, **response_kwargs)
 
     def render_to_request_access(self, context):
         dataset = context['dataset']
@@ -5061,7 +5073,7 @@ class DatasetFrequencyView(DetailView):
 
         return context
 
-    def render_to_response(self, context):
+    def render_to_response(self, context, **response_kwargs):
         if self.request.GET.get('process_speakers') == self.object.acronym:
             return self.render_to_process_speakers_response(context)
         elif self.request.GET.get('create_corpus') == self.object.acronym:
@@ -5069,7 +5081,7 @@ class DatasetFrequencyView(DetailView):
         elif self.request.GET.get('update_corpus') == self.object.acronym:
             return self.render_to_update_corpus_response(context)
         else:
-            return super(DatasetFrequencyView, self).render_to_response(context)
+            return super(DatasetFrequencyView, self).render_to_response(context, **response_kwargs)
 
     def render_to_process_speakers_response(self, context):
         # check that the user is logged in
@@ -7473,6 +7485,8 @@ class AnnotatedGlossListView(ListView):
 
         context['sentenceform'] = self.sentence_search_form
 
+        context['search_form_gloss_ids'] = SearchGlossIds()
+
         if not self.last_used_dataset:
             if 'last_used_dataset' in self.request.session.keys():
                 self.last_used_dataset = self.request.session['last_used_dataset']
@@ -7567,6 +7581,10 @@ class AnnotatedGlossListView(ListView):
         if len(get) > 0 and 'query' not in self.request.GET:
             qs = AnnotatedGloss.objects.all().prefetch_related('gloss').filter(
                 gloss__lemma__dataset__in=selected_datasets).order_by('gloss__id', 'annotatedsentence__id')
+            if 'glossids' in self.request.GET and self.request.GET['glossids']:
+                # an XSS attempt in the field results in an empty list and no results are shown
+                glossids = parse_gloss_ids_from_value(self.request.GET['glossids'])
+                qs = qs.filter(gloss__id__in=glossids)
         elif self.query_parameters and 'query' in self.request.GET:
             gloss_query = Gloss.objects.all().prefetch_related('lemma').filter(lemma__dataset__in=selected_datasets,
                                                                                archived__exact=False)
