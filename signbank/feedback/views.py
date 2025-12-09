@@ -31,47 +31,35 @@ def index(request):
 
 @login_required
 def generalfeedback(request):
-    feedback = GeneralFeedback()
-    valid = False
+    template_name = 'feedback/generalfeedback.html'
+    context = {
+        'language': settings.LANGUAGE_NAME,
+        'selected_datasets': get_selected_datasets(request),
+        'SHOW_DATASET_INTERFACE_OPTIONS': settings.SHOW_DATASET_INTERFACE_OPTIONS,
+        'title': gettext("General Feedback"),
+        'valid': False
+    }
 
-    if request.method == "POST":
-        form = GeneralFeedbackForm(request.POST, request.FILES)
-        if form.is_valid():
-            feedback = GeneralFeedback(user=request.user)
-            if 'comment' in form.cleaned_data:
-                feedback.comment = form.cleaned_data['comment']
+    if request.method != "POST":
+        context['form'] = GeneralFeedbackForm()
+        return render(request, template_name, context)
 
-            if 'video' in form.cleaned_data and form.cleaned_data['video'] is not None:
-                feedback.video = form.cleaned_data['video']
+    context['form'] = form = GeneralFeedbackForm(request.POST, request.FILES)
+    if not form.is_valid():
+        return render(request, template_name, context)
 
-            feedback.save()
-            valid = True
-            if 'return' in request.GET:
-                sourcepage = request.GET['return']
-            else:
-                sourcepage = ""
+    context['valid'] = True
+    feedback = GeneralFeedback(user=request.user)
+    if 'comment' in form.cleaned_data:
+        feedback.comment = form.cleaned_data['comment']
+    if 'video' in form.cleaned_data and form.cleaned_data['video'] is not None:
+        feedback.video = form.cleaned_data['video']
+    feedback.save()
 
-            messages.add_message(request, messages.INFO, mark_safe('Thank you. Your feedback has been saved. <a href="'
-                                                                   + sourcepage + '">Return to Previous Page</a>'))
-
-            # return HttpResponseRedirect("")
-            return render(request, 'feedback/generalfeedback.html',
-                          {'language': settings.LANGUAGE_NAME,
-                           'selected_datasets': get_selected_datasets(request),
-                           'SHOW_DATASET_INTERFACE_OPTIONS': settings.SHOW_DATASET_INTERFACE_OPTIONS,
-                           'title': gettext("General Feedback"),
-                           'form': form,
-                           'valid': valid})
-    else:
-        form = GeneralFeedbackForm()
-
-    return render(request, "feedback/generalfeedback.html",
-                  {'language': settings.LANGUAGE_NAME,
-                   'selected_datasets': get_selected_datasets(request),
-                   'SHOW_DATASET_INTERFACE_OPTIONS': settings.SHOW_DATASET_INTERFACE_OPTIONS,
-                   'title': gettext("General Feedback"),
-                   'form': form,
-                   'valid': valid})
+    sourcepage = request.GET.get('return', "")
+    messages.add_message(request, messages.INFO, mark_safe(f'Thank you. Your feedback has been saved. '
+                                                           f'<a href="{sourcepage}">Return to Previous Page</a>'))
+    return render(request, template_name, context)
 
 
 @login_required
