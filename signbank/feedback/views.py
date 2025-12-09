@@ -1,6 +1,5 @@
 import datetime as DT
 
-from django.apps import apps
 from django.utils.timezone import get_current_timezone
 from django.conf import settings
 from django.contrib.auth.decorators import login_required, permission_required
@@ -86,9 +85,9 @@ def missingsign(request):
     sign_languages = list(set(sign_languages))
 
     # this is used to show a table of sign languages paired with the datasets
-    signlanguage_to_dataset = dict()
+    signlanguage_to_dataset = {}
     for dataset in selected_datasets:
-        if dataset.signlanguage not in signlanguage_to_dataset.keys():
+        if dataset.signlanguage not in signlanguage_to_dataset:
             signlanguage_to_dataset[dataset.signlanguage] = [(dataset.name, dataset.acronym)]
         else:
             signlanguage_to_dataset[dataset.signlanguage].append((dataset.name, dataset.acronym))
@@ -239,36 +238,19 @@ def showfeedback_missing(request):
 @login_required
 def glossfeedback(request, glossid):
     # this function checks the existence of the gloss or morpheme in the url
-    request_path = request.path
-    if 'morpheme' in request_path:
-        morpheme = get_object_or_404(Morpheme, id=glossid)
-    else:
-        gloss = get_object_or_404(Gloss, id=glossid, archived=False)
-    return recordsignfeedback(request, glossid)
+    return recordsignfeedback(request, glossid, is_morpheme=False)
 
 
 @login_required
 def morphemefeedback(request, glossid):
     # this function checks the existence of the gloss or morpheme in the url
-    request_path = request.path
-    if 'morpheme' in request_path:
-        morpheme = get_object_or_404(Morpheme, id=glossid)
-    else:
-        gloss = get_object_or_404(Gloss, id=glossid, archived=False)
-    return recordsignfeedback(request, glossid)
+    return recordsignfeedback(request, glossid, is_morpheme=True)
 
 
 # @atomic  # This rolls back saving feedback on failure
-def recordsignfeedback(request, glossid):
+def recordsignfeedback(request, glossid, is_morpheme):
     """record feedback for a gloss or morpheme"""
-
-    # get the page to return to from the get request
-    if 'return' in request.GET:
-        sourcepage = request.GET['return']
-    else:
-        sourcepage = ""
-
-    is_morpheme = 'morpheme' in request.path
+    sourcepage = request.GET['return'] if 'return' in request.GET else ""
 
     if is_morpheme:
         sign_or_morpheme = get_object_or_404(Morpheme, id=glossid)
@@ -283,40 +265,16 @@ def recordsignfeedback(request, glossid):
 
     if feedback_form.is_valid():
         clean = feedback_form.cleaned_data
-        # create a SignFeedback object to store the result in the db
-
         try:
-            if is_morpheme:
-                sfb = MorphemeFeedback(
-                    comment=clean['comment'],
-                    user=request.user,
-                    morpheme=sign_or_morpheme
-                    )
-                sfb.save()
-            else:
-                sfb = SignFeedback(
-                    comment=clean['comment'],
-                    user=request.user,
-                    gloss=sign_or_morpheme
-                    )
-                sfb.save()
-            # return a message with a link to the original gloss or morpheme page
+            feedback_obj = MorphemeFeedback(comment=clean['comment'],user=request.user, morpheme=sign_or_morpheme) \
+                            if is_morpheme \
+                            else SignFeedback(comment=clean['comment'], user=request.user, gloss=sign_or_morpheme)
+            feedback_obj.save()
             messages.add_message(request, messages.INFO, mark_safe('Thank you. Your feedback has been saved. <a href="'
                                                                    + redirect_page + '">Return to Detail View</a>'))
-            return render(request, feedback_template, {
-                'feedback_form': feedback_form,
-                'sourcepage': sourcepage,
-                'selected_datasets': get_selected_datasets(request),
-                'SHOW_DATASET_INTERFACE_OPTIONS': settings.SHOW_DATASET_INTERFACE_OPTIONS
-            })
         except (KeyError, PermissionError):
             messages.add_message(request, messages.ERROR, 'There was an error processing your feedback data.')
-            return render(request, feedback_template, {
-                'feedback_form': feedback_form,
-                'sourcepage': sourcepage,
-                'selected_datasets': get_selected_datasets(request),
-                'SHOW_DATASET_INTERFACE_OPTIONS': settings.SHOW_DATASET_INTERFACE_OPTIONS
-            })
+
     return render(request, feedback_template,
                   {'feedback_form': feedback_form,
                    'sourcepage': sourcepage,
@@ -330,31 +288,25 @@ def recordsignfeedback(request, glossid):
 @permission_required('feedback.delete_generalfeedback')
 def delete(request, kind, id):
     """Mark a feedback item as deleted, kind 'signfeedback', 'generalfeedback' or 'missingsign'"""
+    url = request.META.get('HTTP_REFERER', '/')
 
-    # return to referer
-    if 'HTTP_REFERER' in request.META:
-        url = request.META['HTTP_REFERER']
-    else:
-        url = '/'
-
-    if kind == 'sign':
-        KindModel = apps.get_model('feedback', 'SignFeedback')
-    elif kind == 'morpheme':
-        KindModel = apps.get_model('feedback', 'MorphemeFeedback')
-    elif kind == 'general':
-        KindModel = apps.get_model('feedback', 'GeneralFeedback')
-    elif kind == 'missingsign':
-        KindModel = apps.get_model('feedback', 'MissingSignFeedback')
-    else:
+    kinds = {
+        'sign': SignFeedback,
+        'morpheme': MorphemeFeedback,
+        'general': GeneralFeedback,
+        'missingsign': MissingSignFeedback
+    }
+    if kind not in kinds:
         return redirect(url)
+    model = kinds[kind]
 
     field = request.POST.get('id', '')
     value = request.POST.get('value', '')
 
-    (what, fbid) = field.split('_')
+    _, id = field.split('_')
 
     if value == 'confirmed':
-        item = get_object_or_404(KindModel, pk=fbid)
+        item = get_object_or_404(model, pk=id)
         item.status = 'deleted'
         item.save()
 
@@ -364,29 +316,25 @@ def delete(request, kind, id):
 @permission_required('feedback.delete_signfeedback')
 def recent_feedback(request):
     """View to list the feedback that's been submitted on the site"""
-
-    if not request.user.is_authenticated:
-        messages.add_message(request, messages.ERROR, _('Please login to view feedback.'))
-        return HttpResponseRedirect(reverse('registration:auth_login'))
-
+    selected_datasets = get_selected_datasets(request)
     group_editor = Group.objects.get(name='Editor')
     groups_of_user = request.user.groups.all()
     if group_editor not in groups_of_user:
         messages.add_message(request, messages.ERROR, _('You must be in group Editor to view feedback.'))
         return render(request, 'feedback/index.html',
-                      {'selected_datasets': get_selected_datasets(request),
+                      {'selected_datasets': selected_datasets,
                        'SHOW_DATASET_INTERFACE_OPTIONS': settings.SHOW_DATASET_INTERFACE_OPTIONS,
                        'language': settings.LANGUAGE_NAME})
 
-    selected_datasets = get_selected_datasets(request)
-    signfb = SignFeedback.objects.filter(Q(**{'gloss__lemma__dataset__in': selected_datasets})).filter(
-        status__in=('unread', 'read'))
+    signfeedback_objs = (SignFeedback.objects.filter(Q(**{'gloss__lemma__dataset__in': selected_datasets}))
+                         .filter(status__in=('unread', 'read')))
     recently_added_feedback_since_date = DT.datetime.now(tz=get_current_timezone()) - RECENTLY_ADDED_SIGNS_PERIOD
-    signfb = signfb.filter(
-        date__range=[recently_added_feedback_since_date, DT.datetime.now(tz=get_current_timezone())]).order_by(
-        '-date')
+    signfeedback_objs = (signfeedback_objs
+                         .filter(date__range=[recently_added_feedback_since_date,
+                                              DT.datetime.now(tz=get_current_timezone())])
+                         .order_by('-date'))
 
     return render(request, "feedback/recent_feedback.html",
-                  {'signfb': signfb,
-                   'selected_datasets': get_selected_datasets(request),
+                  {'signfb': signfeedback_objs,
+                   'selected_datasets': selected_datasets,
                    'SHOW_DATASET_INTERFACE_OPTIONS': settings.SHOW_DATASET_INTERFACE_OPTIONS})
