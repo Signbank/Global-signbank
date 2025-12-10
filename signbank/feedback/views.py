@@ -126,28 +126,20 @@ def showfeedback(request):
 @permission_required('feedback.delete_signfeedback')
 def showfeedback_signs(request):
     """View to list the feedback that's been submitted on the site"""
-
-    if not request.user.is_authenticated:
-        messages.add_message(request, messages.ERROR, _('Please login to view feedback.'))
-        return HttpResponseRedirect(reverse('registration:auth_login'))
-
-    group_editor = Group.objects.get(name='Editor')
-    groups_of_user = request.user.groups.all()
-    if group_editor not in groups_of_user:
-        messages.add_message(request, messages.ERROR, _('You must be in group Editor to view feedback.'))
-        return render(request, 'feedback/index.html',
-                      {'selected_datasets': get_selected_datasets(request),
-                       'SHOW_DATASET_INTERFACE_OPTIONS': settings.SHOW_DATASET_INTERFACE_OPTIONS,
-                       'language': settings.LANGUAGE_NAME})
-
     selected_datasets = get_selected_datasets(request)
-    signfb = SignFeedback.objects.filter(Q(**{'gloss__lemma__dataset__in': selected_datasets})).filter(
-        status__in=('unread', 'read'))
+    context = {
+        "selected_datasets": selected_datasets,
+        "SHOW_DATASET_INTERFACE_OPTIONS": settings.SHOW_DATASET_INTERFACE_OPTIONS,
+    }
 
-    return render(request, "feedback/show_feedback_signs.html",
-                  {'signfb': signfb,
-                   'selected_datasets': get_selected_datasets(request),
-                   'SHOW_DATASET_INTERFACE_OPTIONS': settings.SHOW_DATASET_INTERFACE_OPTIONS})
+    if not request.user.groups.filter(name='Editor').exists():
+        messages.add_message(request, messages.ERROR, _('You must be in group Editor to view feedback.'))
+        context['language'] = settings.LANGUAGE_NAME
+        return render(request, 'feedback/index.html', context)
+
+    context['signfb'] = (SignFeedback.objects.filter(gloss__lemma__dataset__in=selected_datasets)
+                         .filter(status__in=('unread', 'read')))
+    return render(request, "feedback/show_feedback_signs.html", context)
 
 
 @permission_required('feedback.delete_morphemefeedback')
