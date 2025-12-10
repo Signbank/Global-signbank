@@ -1,4 +1,5 @@
 import datetime as DT
+from collections import defaultdict
 
 from django.utils.timezone import get_current_timezone
 from django.conf import settings
@@ -64,58 +65,45 @@ def generalfeedback(request):
 
 @login_required
 def missingsign(request):
+    template_name = 'feedback/missingsign.html'
+    context = {
+        "language": settings.LANGUAGE_NAME,
+        "SHOW_DATASET_INTERFACE_OPTIONS": settings.SHOW_DATASET_INTERFACE_OPTIONS,
+        "posted": False,
+    }
 
-    posted = False  # was the feedback posted?
+    context['selected_datasets'] = selected_datasets = get_selected_datasets(request)
+    sign_languages = list(set([dataset.signlanguage_id for dataset in selected_datasets]))
 
-    selected_datasets = get_selected_datasets(request)
-    sign_languages = [dataset.signlanguage.id for dataset in selected_datasets]
-    # get rid of duplicates
-    sign_languages = list(set(sign_languages))
-
-    # this is used to show a table of sign languages paired with the datasets
-    signlanguage_to_dataset = {}
+    signlanguage_to_dataset = defaultdict(list)
     for dataset in selected_datasets:
-        if dataset.signlanguage not in signlanguage_to_dataset:
-            signlanguage_to_dataset[dataset.signlanguage] = [(dataset.name, dataset.acronym)]
-        else:
-            signlanguage_to_dataset[dataset.signlanguage].append((dataset.name, dataset.acronym))
+        signlanguage_to_dataset[dataset.signlanguage].append((dataset.name, dataset.acronym))
+    context['signlanguage_to_dataset'] = dict(signlanguage_to_dataset)
 
-    if request.method == "POST":
-        fb = MissingSignFeedback()
-        fb.user = request.user
+    if request.method != "POST":
+        context['form'] = MissingSignFeedbackForm(sign_languages=sign_languages)
+        return render(request, template_name, context)
 
-        form = MissingSignFeedbackForm(request.POST, request.FILES, sign_languages=sign_languages)
+    context['posted'] = True
+    context['form'] = form = MissingSignFeedbackForm(request.POST, request.FILES, sign_languages=sign_languages)
+    if not form.is_valid():
+        return render(request, template_name, context)
 
-        if form.is_valid():
-            # either we get video of the new sign or we get the
-            # description via the form
-            if 'signlanguage' in form.cleaned_data:
-                # the form yields a sign language object
-                fb.signlanguage = form.cleaned_data['signlanguage']
-            if 'video' in form.cleaned_data and form.cleaned_data['video'] is not None:
-                fb.video = form.cleaned_data['video']
-            if 'sentence' in form.cleaned_data and form.cleaned_data['sentence'] is not None:
-                fb.sentence = form.cleaned_data['sentence']
+    missing_sign_feedback = MissingSignFeedback(user=request.user)
+    if 'signlanguage' in form.cleaned_data:
+        missing_sign_feedback.signlanguage = form.cleaned_data['signlanguage']
+    if 'video' in form.cleaned_data and form.cleaned_data['video'] is not None:
+        missing_sign_feedback.video = form.cleaned_data['video']
+    if 'sentence' in form.cleaned_data and form.cleaned_data['sentence'] is not None:
+        missing_sign_feedback.sentence = form.cleaned_data['sentence']
+    missing_sign_feedback.meaning = form.cleaned_data['meaning']
+    missing_sign_feedback.comments = form.cleaned_data['comments']
 
-            # these last two are required either way (video or not)
-            fb.meaning = form.cleaned_data['meaning']
-            fb.comments = form.cleaned_data['comments']
+    missing_sign_feedback.save()
+    missing_sign_feedback.save_video()
+    missing_sign_feedback.save_sentence_video()
 
-            fb.save()
-            fb.save_video()
-            fb.save_sentence_video()
-            posted = True
-
-    else:
-        form = MissingSignFeedbackForm(sign_languages=sign_languages)
-
-    return render(request, 'feedback/missingsign.html',
-                  {'language': settings.LANGUAGE_NAME,
-                   'selected_datasets': get_selected_datasets(request),
-                   'signlanguage_to_dataset': signlanguage_to_dataset,
-                   'SHOW_DATASET_INTERFACE_OPTIONS': settings.SHOW_DATASET_INTERFACE_OPTIONS,
-                   'posted': posted,
-                   'form': form})
+    return render(request, template_name, context)
 
 
 @permission_required('feedback.delete_generalfeedback')
