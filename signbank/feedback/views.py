@@ -4,8 +4,7 @@ from collections import defaultdict
 from django.utils.timezone import get_current_timezone
 from django.conf import settings
 from django.contrib.auth.decorators import login_required, permission_required
-from django.http import HttpResponseRedirect
-from django.urls import reverse
+from django.http import HttpResponse, QueryDict
 from django.contrib import messages
 from django.utils.safestring import mark_safe
 from django.utils.translation import gettext_lazy as _, gettext
@@ -106,9 +105,7 @@ def missingsign(request):
     return render(request, template_name, context)
 
 
-@permission_required('feedback.delete_generalfeedback')
-def showfeedback(request):
-    """View to list the feedback that's been submitted on the site"""
+def generic_showfeedback(request: QueryDict, extra_context: dict, template_name: str) -> HttpResponse:
     context = {
         "selected_datasets": get_selected_datasets(request),
         "SHOW_DATASET_INTERFACE_OPTIONS": settings.SHOW_DATASET_INTERFACE_OPTIONS,
@@ -119,63 +116,40 @@ def showfeedback(request):
         context['language'] = settings.LANGUAGE_NAME
         return render(request, 'feedback/index.html', context)
 
-    context['general'] = GeneralFeedback.objects.filter(status='unread')
-    return render(request, "feedback/show_general_feedback.html", context)
+    context.update(extra_context)
+    return render(request, template_name, context)
+
+
+@permission_required('feedback.delete_generalfeedback')
+def showfeedback(request):
+    """View to list the feedback that's been submitted on the site"""
+    extra_context = {'general': GeneralFeedback.objects.filter(status='unread')}
+    return generic_showfeedback(request, extra_context, "feedback/show_general_feedback.html")
 
 
 @permission_required('feedback.delete_signfeedback')
 def showfeedback_signs(request):
     """View to list the feedback that's been submitted on the site"""
-    selected_datasets = get_selected_datasets(request)
-    context = {
-        "selected_datasets": selected_datasets,
-        "SHOW_DATASET_INTERFACE_OPTIONS": settings.SHOW_DATASET_INTERFACE_OPTIONS,
-    }
-
-    if not request.user.groups.filter(name='Editor').exists():
-        messages.add_message(request, messages.ERROR, _('You must be in group Editor to view feedback.'))
-        context['language'] = settings.LANGUAGE_NAME
-        return render(request, 'feedback/index.html', context)
-
-    context['signfb'] = (SignFeedback.objects.filter(gloss__lemma__dataset__in=selected_datasets)
-                         .filter(status__in=('unread', 'read')))
-    return render(request, "feedback/show_feedback_signs.html", context)
+    extra_context = {'signfb': (SignFeedback.objects
+                                .filter(gloss__lemma__dataset__in=get_selected_datasets(request))
+                                .filter(status__in=('unread', 'read')))}
+    return generic_showfeedback(request, extra_context, "feedback/show_feedback_signs.html")
 
 
 @permission_required('feedback.delete_morphemefeedback')
 def showfeedback_morphemes(request):
     """View to list the feedback that's been submitted on the site"""
-    selected_datasets = get_selected_datasets(request)
-    context = {
-        "selected_datasets": selected_datasets,
-        "SHOW_DATASET_INTERFACE_OPTIONS": settings.SHOW_DATASET_INTERFACE_OPTIONS,
-    }
-    
-    if not request.user.groups.filter(name='Editor').exists():
-        messages.add_message(request, messages.ERROR, _('You must be in group Editor to view feedback.'))
-        context['language'] = settings.LANGUAGE_NAME
-        return render(request, 'feedback/index.html', context)
-
-    context['morphfb'] = (MorphemeFeedback.objects.filter(morpheme__lemma__dataset__in=selected_datasets)
-               .filter(status__in=('unread', 'read')))
-    return render(request, "feedback/show_feedback_morphemes.html", context)
+    extra_context = {'morphfb': (MorphemeFeedback.objects
+                                 .filter(morpheme__lemma__dataset__in=get_selected_datasets(request))
+                                 .filter(status__in=('unread', 'read')))}
+    return generic_showfeedback(request, extra_context,"feedback/show_feedback_morphemes.html")
 
 
 @permission_required('feedback.delete_missingsignfeedback')
 def showfeedback_missing(request):
     """View to list the feedback that's been submitted on the site"""
-    selected_datasets = get_selected_datasets(request)
-    context = {
-        "selected_datasets": selected_datasets,
-        "SHOW_DATASET_INTERFACE_OPTIONS": settings.SHOW_DATASET_INTERFACE_OPTIONS,
-    }
-    if not request.user.groups.filter(name='Editor').exists():
-        messages.add_message(request, messages.ERROR, _('You must be in group Editor to view feedback.'))
-        context['language'] = settings.LANGUAGE_NAME
-        return render(request, 'feedback/index.html', context)
-
-    context['missing'] = MissingSignFeedback.objects.filter(status='unread')
-    return render(request, "feedback/show_feedback_missing_signs.html", context)
+    extra_context = {'missing': MissingSignFeedback.objects.filter(status='unread')}
+    return generic_showfeedback(request, extra_context, "feedback/show_feedback_missing_signs.html")
 
 
 @login_required
