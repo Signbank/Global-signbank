@@ -12,7 +12,7 @@ from signbank.dictionary.models import (Gloss, AnnotationIdglossTranslation)
 from signbank.video.models import (GlossVideo, GlossVideoNME, GlossVideoPerspective, filename_matches_backup_video,
                                    flattened_video_path, wrong_filename_filter)
 from signbank.video.convertvideo import video_file_type_extension
-from signbank.tools import get_two_letter_dir
+from signbank.tools import get_two_letter_dir, get_checksum_for_path
 
 
 def video_type(glossvideo):
@@ -396,11 +396,20 @@ def get_primary_videos_for_gloss(gloss):
     return display_glossvideos
 
 
+def check_sum_relative_path(videofile):
+    if not videofile or not videofile.path:
+        return ""
+    fullpath = os.path.join(WRITABLE_FOLDER, videofile.path)
+    if not os.path.exists(fullpath):
+        return ""
+    return get_checksum_for_path(fullpath)
+
+
 def get_backup_videos_for_gloss(gloss, string_result=True):
     backupglossvideos = GlossVideo.objects.filter(gloss=gloss, version__gt=0).distinct().order_by('version', 'pk')
     num_backup_videos = backupglossvideos.count()
     if not string_result:
-        return [(gv.pk, gv.version, str(gv.videofile)) for gv in backupglossvideos]
+        return [(gv.pk, gv.version, str(gv.videofile), check_sum_relative_path(gv.videofile)) for gv in backupglossvideos]
     display_glossbackupvideos = ', '.join([str(gv.version) + ': ' + str(gv.videofile) for gv in backupglossvideos])
     return num_backup_videos, display_glossbackupvideos
 
@@ -424,9 +433,9 @@ def get_nme_videos_for_gloss(gloss, string_result=True):
 def get_wrong_videos_for_gloss(gloss, string_result=True):
     all_gloss_video_objects = GlossVideo.objects.filter(gloss=gloss).distinct()
     gloss_video_ids = wrong_filename_filter(all_gloss_video_objects)
-    gloss_video_objects = GlossVideo.objects.filter(id__in=gloss_video_ids).order_by('pk')
+    gloss_video_objects = GlossVideo.objects.filter(id__in=gloss_video_ids).order_by('version', 'pk')
     if not string_result:
-        return [(gv.pk, gv.version, str(gv.videofile)) for gv in gloss_video_objects]
+        return [(gv.pk, gv.version, str(gv.videofile), check_sum_relative_path(gv.videofile)) for gv in gloss_video_objects]
     display_wrong_videos = ', '.join([file_display_preface(gv) + ': ' + str(gv.videofile) for gv in gloss_video_objects])
     return display_wrong_videos
 

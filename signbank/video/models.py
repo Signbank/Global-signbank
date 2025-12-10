@@ -138,6 +138,11 @@ def wrong_filename_filter(glossvideos):
 
 
 def delete_glossvideo_object_and_file(gloss):
+    """
+    This method removes wrongly named video files that do not match the correct naming
+    If the file points to the primary video, its name is erased prior to deleting the object
+    This prevents deleting the primary video file that was wrongly linked to an object during the delete class method
+    """
     all_gloss_video_objects = GlossVideo.objects.filter(gloss=gloss).distinct()
     gloss_video_ids = wrong_filename_filter(all_gloss_video_objects)
     gloss_video_objects = GlossVideo.objects.filter(id__in=gloss_video_ids)
@@ -146,9 +151,19 @@ def delete_glossvideo_object_and_file(gloss):
         if not relative_path:
             glossvideo.delete()
             continue
+
         video_file_full_path = os.path.join(WRITABLE_FOLDER, relative_path)
         if os.path.exists(video_file_full_path):
-            os.remove(video_file_full_path)
+            # construct the primary video filename and make sure a file to delete does not point to it
+            _, extension = os.path.splitext(video_file_full_path)
+            basename = os.path.basename(video_file_full_path)
+            primary_video_filename = f'{gloss.idgloss}-{gloss.id}{extension}'
+            if basename == primary_video_filename:
+                # this gloss video object points to the primary video, just erase the link
+                glossvideo.videofile.name = ""
+                glossvideo.save()
+            else:
+                os.remove(video_file_full_path)
         glossvideo.delete()
 
 
@@ -468,7 +483,7 @@ class ExampleVideo(models.Model):
         """Ensure that the video file is an h264 format
         video, convert it if necessary"""
 
-        if not os.path.exists(self.videofile.path):
+        if not self.videofile or not  self.videofile.path or not os.path.exists(self.videofile.path):
             return
         if self.version > 0:
             return
@@ -642,7 +657,7 @@ class AnnotatedVideo(models.Model):
     def ensure_mp4(self):
         """Ensure that the video file is an h264 format
         video, convert it if necessary"""
-        if not os.path.exists(self.videofile.path):
+        if not self.videofile or not self.videofile.path or not os.path.exists(self.videofile.path):
             return
         if self.version > 0:
             return
@@ -835,7 +850,7 @@ class GlossVideo(models.Model):
         """Ensure that the video file is an h264 format
         video, convert it if necessary"""
 
-        if not os.path.exists(self.videofile.path):
+        if not self.videofile or not self.videofile.path or not os.path.exists(self.videofile.path):
             return
         if self.version > 0:
             return
@@ -1111,7 +1126,7 @@ class GlossVideoNME(GlossVideo):
         # create a temporary copy in the new format
         # then move it into place
 
-        if not os.path.exists(self.videofile.path):
+        if not self.videofile or not self.videofile.path or not os.path.exists(self.videofile.path):
             return
 
         video_format_extension = detect_video_file_extension(self.videofile.path)

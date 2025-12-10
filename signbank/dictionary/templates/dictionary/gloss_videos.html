@@ -128,8 +128,8 @@ var search_results_url = '{% url 'dictionary:ajax_search_results' %}';
         <div class="panel panel-default panel-default-light">
             <!-- Only show if any example sentence videos exist -->
                 {% if senses %}
-                <div class="panel-heading"><h3>{% trans "Example Sentences" %}</h3></div>
-                <div class="panel-body">
+                <div class="panel-heading" data-toggle="collapse" data-target="#sentences">{% trans "Example Sentences" %}</div>
+                <div class="panel-body collapse" id="sentences">
                 <table class='table table-condensed table-condensed-light'>
                     {% for sense in senses %}
                         <!-- Only show if the sense has any example sentences with videos -->
@@ -139,7 +139,7 @@ var search_results_url = '{% url 'dictionary:ajax_search_results' %}';
                                     {{ forloop.counter }}. <br>
                                 </th>
                                 <td style="width:20%">
-                                    {% if sense.get_sense_translations_dict_without%}
+                                    {% if sense.get_sense_translations_dict_without %}
                                         {% for key, value in sense.get_sense_translations_dict_without.items %}
                                             {{key}}: {{ value }}
                                             {% if not forloop.last %}<br>{% endif %}
@@ -213,6 +213,10 @@ var search_results_url = '{% url 'dictionary:ajax_search_results' %}';
                         </td>
                     {% endif %}
                     </tr>
+                    {% else %}
+                    <tr>
+                        <td>{{path}}</td><td>{% trans "NOT FOUND" %}</td>
+                    </tr>
                     {% endif %}
                 {% endfor %}
             </table>
@@ -220,7 +224,7 @@ var search_results_url = '{% url 'dictionary:ajax_search_results' %}';
             </div>
             {% endif %}
 
-    {% if perspective_videos %}
+    {% if perspective_videos and perms.dictionary.change_gloss %}
     <div class="panel panel-default panel-default-light">
 
     <div class="panel-heading" data-toggle="collapse" data-target="#perspective_videos">{% trans "Perspective Videos" %} ({{perspective_videos|length}})</div>
@@ -235,7 +239,7 @@ var search_results_url = '{% url 'dictionary:ajax_search_results' %}';
     </div>
     {% endif %}
 
-    {% if nme_videos %}
+    {% if nme_videos and perms.dictionary.change_gloss %}
     <div class="panel panel-default panel-default-light">
 
     <div class="panel-heading" data-toggle="collapse" data-target="#nme_videos">{% trans "Videos with Non-manual Elements" %} ({{nme_videos|length}})</div>
@@ -250,7 +254,7 @@ var search_results_url = '{% url 'dictionary:ajax_search_results' %}';
     </div>
     {% endif %}
 
-    {% if dangling_video_files %}
+    {% if dangling_video_files and perms.dictionary.change_gloss %}
     <div class="panel panel-default panel-default-light">
 
     <div class="panel-heading" data-toggle="collapse" data-target="#dangling_video_files">{% trans "Video Files Without Objects" %} ({{dangling_video_files|length}})</div>
@@ -265,12 +269,17 @@ var search_results_url = '{% url 'dictionary:ajax_search_results' %}';
     </div>
     {% endif %}
 
-    {% if backup_videos %}
+    {% if backup_videos and perms.dictionary.change_gloss %}
     <div class="panel panel-default panel-default-light">
 
     <div class="panel-heading" data-toggle="collapse" data-target="#backup_videos">{% trans "Backup Video Files" %} ({{backup_videos|length}})</div>
     <div class="panel-body collapse" id="backup_videos">
          {% if perms.dictionary.add_gloss %}
+         <p>{% blocktrans %}
+            Here you find backup video objects. It is possible that the version numbers are not sequential.
+            These can be renumbered.
+            {% endblocktrans %}
+         </p>
          <button id='renumber_btn' class='btn btn-primary copy-button' data-toggle='modal' data-target='#renumber_modal'>{% trans "Renumber Backups" %}</button>
 
           <div class="modal fade" id="renumber_modal" role="dialog" aria-labelledby="#modalRenumber" aria-hidden="true">
@@ -298,21 +307,26 @@ var search_results_url = '{% url 'dictionary:ajax_search_results' %}';
 
         {% endif %}
     <table class='table table-condensed table-condensed-light' style="width:100%;">
-    <tr><td>{% translate "Object Id" %}</td><td>{% translate "Version" %}</td><td>{% translate "Relative Path" %}</td></tr>
-    {% for object_id, version, relative_path in backup_videos %}
-    <tr><td>{{object_id}}</td><td>{{version}}</td><td>{{relative_path}}</td></tr>
+    <tr><td>{% translate "Object Id" %}</td><td>{% translate "Version" %}</td><td>{% translate "Relative Path" %}</td><td>{% trans "Checksum" %}</td></tr>
+    {% for object_id, version, relative_path, checksum in backup_videos %}
+    <tr><td>{{object_id}}</td><td>{{version}}</td><td>{{relative_path}}</td><td>{{checksum}}</td></tr>
     {% endfor %}
     </table>
     </div>
     </div>
     {% endif %}
 
-    {% if wrongly_named_videos %}
+    {% if wrongly_named_videos and perms.dictionary.change_gloss %}
     <div class="panel panel-default panel-default-light">
 
     <div class="panel-heading" data-toggle="collapse" data-target="#wrongly_named">{% trans "Obsolete Video Files" %} ({{wrongly_named_videos|length}})</div>
     <div class="panel-body collapse" id="wrongly_named">
          {% if perms.dictionary.add_gloss %}
+         <p>{% blocktrans %}
+            Here you find backup video objects that link to a file with an incorrect filename.
+            These can be deleted.
+            {% endblocktrans %}
+         </p>
          <button id='remove_btn' class='btn btn-primary copy-button' data-toggle='modal' data-target='#remove_modal'>{% trans "Remove Obsolete Files" %}</button>
 
           <div class="modal fade" id="remove_modal" role="dialog" aria-labelledby="#modalRenumber" aria-hidden="true">
@@ -337,13 +351,12 @@ var search_results_url = '{% url 'dictionary:ajax_search_results' %}';
                 </div>
               </div>
          </div>
-
         {% endif %}
 
     <table class='table table-condensed table-condensed-light' style="width:100%;">
-    <tr><td>{% translate "Object Id" %}</td><td>{% translate "Version" %}</td><td>{% translate "Relative Path" %}</td></tr>
-    {% for object_id, version, relative_path in wrongly_named_videos %}
-    <tr><td>{{object_id}}</td><td>{{version}}</td><td>{{relative_path}}</td></tr>
+    <tr><td>{% translate "Object Id" %}</td><td>{% translate "Version" %}</td><td>{% translate "Relative Path" %}</td><td>{% trans "Checksum" %}</td></tr>
+    {% for object_id, version, relative_path, checksum in wrongly_named_videos %}
+    <tr><td>{{object_id}}</td><td>{{version}}</td><td>{{relative_path}}</td><td>{{checksum}}</td></tr>
     {% endfor %}
     </table>
     </div>
