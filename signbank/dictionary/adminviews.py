@@ -1743,8 +1743,8 @@ class GlossVideosView(DetailView):
 
         try:
             self.object = super().get_object()
-            if self.object.archived:
-                raise ObjectDoesNotExist
+            # if self.object.archived:
+            #     raise ObjectDoesNotExist
         except (Http404, ObjectDoesNotExist):
             translated_message = _('The requested gloss does not exist.')
             return show_warning(request, translated_message, selected_datasets)
@@ -1823,10 +1823,8 @@ class GlossVideosView(DetailView):
 
         context['senses'] = gl.senses.all().order_by('glosssense')
 
-        video_files = GlossVideo.objects.filter(gloss=gl)
-        # print('video objects: ', video_files)
-        display_glossvideos = get_primary_videos_for_gloss(gl)
-        # print('primary videos: ', display_glossvideos)
+        primary_videos = get_primary_videos_for_gloss(gl, string_result=False, include_subclasses=False)
+        context['primary_videos'] = primary_videos
         perspective_videos = get_perspective_videos_for_gloss(gl, string_result=False)
         context['perspective_videos'] = perspective_videos
         nme_videos = get_nme_videos_for_gloss(gl, string_result=False)

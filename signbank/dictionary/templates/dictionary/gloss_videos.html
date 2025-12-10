@@ -224,15 +224,23 @@ var search_results_url = '{% url 'dictionary:ajax_search_results' %}';
             </div>
             {% endif %}
 
+    {% if perms.dictionary.change_gloss %}
+    <div id="video_storage" class='panel-group'>
+    <div class="panel panel-default panel-light panel-toggles">
+    <div class='panel-heading panel-light' data-toggle='collapse' data-parent="#video_storage"
+         data-target='#toggle_video_storage'>{% trans "VIDEO STORAGE" %}
+    </div>
+    <div id='toggle_video_storage' class="panel-collapse collapse" style="margin-top:10px;">
+
     {% if perspective_videos and perms.dictionary.change_gloss %}
     <div class="panel panel-default panel-default-light">
 
     <div class="panel-heading" data-toggle="collapse" data-target="#perspective_videos">{% trans "Perspective Videos" %} ({{perspective_videos|length}})</div>
     <div class="panel-body collapse" id="perspective_videos">
     <table class='table table-condensed table-condensed-light' style="width:100%;">
-    <tr><td>{% translate "Object Id" %}</td><td>{% translate "Version" %}</td><td>{% translate "Relative Path" %}</td></tr>
-    {% for object_id, version, relative_path in perspective_videos %}
-    <tr><td>{{object_id}}</td><td>{{version}}</td><td>{{relative_path}}</td></tr>
+    <tr><td>{% trans "Object Id" %}</td><td>{% trans "Version" %}</td><td>{% trans "Relative Path" %}</td><td>{% trans "Checksum" %}</td></tr>
+    {% for object_id, version, relative_path, checksum in perspective_videos %}
+    <tr><td>{{object_id}}</td><td>{{version}}</td><td>{{relative_path}}</td><td>{{checksum}}</td></tr>
     {% endfor %}
     </table>
     </div>
@@ -245,9 +253,9 @@ var search_results_url = '{% url 'dictionary:ajax_search_results' %}';
     <div class="panel-heading" data-toggle="collapse" data-target="#nme_videos">{% trans "Videos with Non-manual Elements" %} ({{nme_videos|length}})</div>
     <div class="panel-body collapse" id="nme_videos">
     <table class='table table-condensed table-condensed-light' style="width:100%;">
-    <tr><td>{% translate "Object Id" %}</td><td>{% translate "Version" %}</td><td>{% translate "Relative Path" %}</td></tr>
-    {% for object_id, version, relative_path in nme_videos %}
-    <tr><td>{{object_id}}</td><td>{{version}}</td><td>{{relative_path}}</td></tr>
+    <tr><td>{% translate "Object Id" %}</td><td>{% translate "Version" %}</td><td>{% translate "Relative Path" %}</td><td>{% trans "Checksum" %}</td></tr>
+    {% for object_id, version, relative_path, checksum in nme_videos %}
+    <tr><td>{{object_id}}</td><td>{{version}}</td><td>{{relative_path}}</td><td>{{checksum}}</td></tr>
     {% endfor %}
     </table>
     </div>
@@ -263,6 +271,21 @@ var search_results_url = '{% url 'dictionary:ajax_search_results' %}';
     <tr><td>{% translate "Object Id" %}</td><td>{% translate "Relative Path" %}</td></tr>
     {% for relative_path in dangling_video_files %}
     <tr><td>NONE</td><td>{{relative_path}}</td></tr>
+    {% endfor %}
+    </table>
+    </div>
+    </div>
+    {% endif %}
+
+    {% if primary_videos and perms.dictionary.change_gloss %}
+    <div class="panel panel-default panel-default-light">
+
+    <div class="panel-heading" data-toggle="collapse" data-target="#primary_videos">{% trans "Primary Video Files" %} ({{primary_videos|length}})</div>
+    <div class="panel-body collapse" id="primary_videos">
+    <table class='table table-condensed table-condensed-light' style="width:100%;">
+    <tr><td>{% trans "Object Id" %}</td><td>{% trans "Version" %}</td><td>{% trans "Relative Path" %}</td><td>{% trans "Checksum" %}</td></tr>
+    {% for object_id, version, relative_path, checksum in primary_videos %}
+    <tr><td>{{object_id}}</td><td>{{version}}</td><td>{{relative_path}}</td><td>{{checksum}}</td></tr>
     {% endfor %}
     </table>
     </div>
@@ -319,11 +342,11 @@ var search_results_url = '{% url 'dictionary:ajax_search_results' %}';
     {% if wrongly_named_videos and perms.dictionary.change_gloss %}
     <div class="panel panel-default panel-default-light">
 
-    <div class="panel-heading" data-toggle="collapse" data-target="#wrongly_named">{% trans "Obsolete Video Files" %} ({{wrongly_named_videos|length}})</div>
+    <div class="panel-heading" data-toggle="collapse" data-target="#wrongly_named">{% trans "Incorrect Filenames" %} ({{wrongly_named_videos|length}})</div>
     <div class="panel-body collapse" id="wrongly_named">
          {% if perms.dictionary.add_gloss %}
          <p>{% blocktrans %}
-            Here you find backup video objects that link to a file with an incorrect filename.
+            Here you find video objects that link to a file with an incorrect filename.
             These can be deleted.
             {% endblocktrans %}
          </p>
@@ -354,11 +377,15 @@ var search_results_url = '{% url 'dictionary:ajax_search_results' %}';
         {% endif %}
 
     <table class='table table-condensed table-condensed-light' style="width:100%;">
-    <tr><td>{% translate "Object Id" %}</td><td>{% translate "Version" %}</td><td>{% translate "Relative Path" %}</td><td>{% trans "Checksum" %}</td></tr>
-    {% for object_id, version, relative_path, checksum in wrongly_named_videos %}
-    <tr><td>{{object_id}}</td><td>{{version}}</td><td>{{relative_path}}</td><td>{{checksum}}</td></tr>
+    <tr><td>{% translate "Object Id" %}</td><td>{% translate "Version" %}</td><td>{% trans "Perspective" %}</td><td>{% trans "NME" %}</td><td>{% translate "Relative Path" %}</td><td>{% trans "Checksum" %}</td></tr>
+    {% for object_id, version, perspective, nme, relative_path, checksum in wrongly_named_videos %}
+    <tr><td>{{object_id}}</td><td>{{version}}</td><td>{{perspective}}</td><td>{{nme}}</td><td>{{relative_path}}</td><td>{{checksum}}</td></tr>
     {% endfor %}
     </table>
+    </div>
+    </div>
+    {% endif %}
+    </div>
     </div>
     </div>
     {% endif %}
