@@ -8,8 +8,6 @@ from django.http import HttpResponse, QueryDict
 from django.contrib import messages
 from django.utils.safestring import mark_safe
 from django.utils.translation import gettext_lazy as _, gettext
-from django.contrib.auth.models import Group
-from django.db.models import Q
 from django.shortcuts import render, get_object_or_404, redirect
 
 from signbank.settings.server_specific import RECENTLY_ADDED_SIGNS_PERIOD, PREFIX_URL
