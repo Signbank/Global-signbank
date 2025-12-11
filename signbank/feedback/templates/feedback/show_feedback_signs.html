@@ -127,7 +127,6 @@ $(window).ready(function(){
                      </div>
                   <form action="{{PREFIX_URL}}/feedback/sign/delete/{{fb.pk}}" method='post'>
                       {% csrf_token %}
-                      <input type='hidden' name='id' value='deletefeedbacksign_{{fb.pk}}'>
                       <input type='hidden' name='value' value='confirmed'>
                       <div class="modal-footer">
                         <button type="button" class="btn btn-primary" data-dismiss="modal">{% trans "Cancel" %}</button>

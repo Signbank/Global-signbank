@@ -4,7 +4,7 @@ from collections import defaultdict
 from django.utils.timezone import get_current_timezone
 from django.conf import settings
 from django.contrib.auth.decorators import login_required, permission_required
-from django.http import HttpResponse, QueryDict
+from django.http import HttpResponse, HttpRequest
 from django.contrib import messages
 from django.utils.safestring import mark_safe
 from django.utils.translation import gettext_lazy as _, gettext
@@ -103,7 +103,7 @@ def missingsign(request):
     return render(request, template_name, context)
 
 
-def generic_showfeedback(request: QueryDict, extra_context: dict, template_name: str) -> HttpResponse:
+def generic_showfeedback(request: HttpRequest, extra_context: dict, template_name: str) -> HttpResponse:
     context = {
         "selected_datasets": get_selected_datasets(request),
         "SHOW_DATASET_INTERFACE_OPTIONS": settings.SHOW_DATASET_INTERFACE_OPTIONS,
@@ -140,7 +140,7 @@ def showfeedback_morphemes(request):
     extra_context = {'morphfb': (MorphemeFeedback.objects
                                  .filter(morpheme__lemma__dataset__in=get_selected_datasets(request))
                                  .filter(status__in=('unread', 'read')))}
-    return generic_showfeedback(request, extra_context,"feedback/show_feedback_morphemes.html")
+    return generic_showfeedback(request, extra_context, "feedback/show_feedback_morphemes.html")
 
 
 @permission_required('feedback.delete_missingsignfeedback')
@@ -153,13 +153,13 @@ def showfeedback_missing(request):
 @login_required
 def glossfeedback(request, glossid):
     # this function checks the existence of the gloss or morpheme in the url
-    return recordsignfeedback(request, glossid, is_morpheme=False)
+    return recordsignfeedback(request, id=glossid, is_morpheme=False)
 
 
 @login_required
-def morphemefeedback(request, glossid):
+def morphemefeedback(request, morphemeid):
     # this function checks the existence of the gloss or morpheme in the url
-    return recordsignfeedback(request, glossid, is_morpheme=True)
+    return recordsignfeedback(request, id=morphemeid, is_morpheme=True)
 
 
 # @atomic  # This rolls back saving feedback on failure
@@ -218,12 +218,7 @@ def delete(request, kind, id):
         return redirect(url)
     model = kinds[kind]
 
-    field = request.POST.get('id', '')
-    value = request.POST.get('value', '')
-
-    _, id = field.split('_')
-
-    if value == 'confirmed':
+    if request.POST.get('value', '') == 'confirmed':
         item = get_object_or_404(model, pk=id)
         item.status = 'deleted'
         item.save()
