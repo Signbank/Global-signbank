@@ -137,7 +137,7 @@ def wrong_filename_filter(glossvideos):
     return filenames
 
 
-def delete_glossvideo_object_and_file(gloss):
+def delete_glossvideo_objects_and_files(gloss):
     """
     This method removes wrongly named video files that do not match the correct naming
     If the file points to the primary video, its name is erased prior to deleting the object
@@ -178,6 +178,32 @@ def renumber_backup_videos(gloss):
             continue
         video.version = inx
         video.save()
+
+
+def remove_backup_videos(gloss):
+    backup_files = GlossVideo.objects.filter(gloss=gloss,
+                                                    glossvideonme=None,
+                                                    glossvideoperspective=None,
+                                                    version__gt=0).order_by('version', 'id')
+    for glossvideo in backup_files:
+        relative_path = str(glossvideo.videofile)
+        if not relative_path:
+            glossvideo.delete()
+            continue
+
+        video_file_full_path = os.path.join(WRITABLE_FOLDER, relative_path)
+        if os.path.exists(video_file_full_path):
+            # construct the primary video filename and make sure the object does not point to it
+            _, extension = os.path.splitext(video_file_full_path)
+            basename = os.path.basename(video_file_full_path)
+            primary_video_filename = f'{gloss.idgloss}-{gloss.id}{extension}'
+            if basename == primary_video_filename:
+                # this gloss video object points to the primary video, just erase the link
+                glossvideo.videofile.name = ""
+                glossvideo.save()
+            else:
+                os.remove(video_file_full_path)
+        glossvideo.delete()
 
 
 def flipped_backup_filename(gloss, glossvideo, extension):

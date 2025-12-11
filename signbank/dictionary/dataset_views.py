@@ -120,10 +120,6 @@ class GlossVideoListView(ListView):
         nr_of_glosses = glosses.count()
         context['nr_of_glosses'] = nr_of_glosses
 
-        if not self.search_form.is_bound:
-            # if the search_form is not bound, then initialise the dynamic language fields for the dataset
-            set_up_language_fields(GlossVideo, self, self.search_form)
-
         context['searchform'] = self.search_form
 
         (gloss_videos, count_video_objects,

@@ -55,7 +55,8 @@ from signbank.settings.server_specific import (URL, PREFIX_URL, LANGUAGE_CODE, L
                                                DEBUG_SENSES, DEBUG_EMAILS_ON, SEPARATE_ENGLISH_IDGLOSS_FIELD)
 from signbank.video.forms import VideoUploadForObjectForm
 from signbank.video.convertvideo import get_folder_name
-from signbank.video.models import (GlossVideo, find_dangling_video_files, delete_glossvideo_object_and_file, renumber_backup_videos)
+from signbank.video.models import (GlossVideo, find_dangling_video_files, delete_glossvideo_objects_and_files,
+                                   renumber_backup_videos, remove_backup_videos)
 from signbank.dictionary.models import (Dataset, UserProfile, AffiliatedUser, AffiliatedGloss,
                                         Language, Dialect, Gloss, Morpheme, GlossSense, Sense,
                                         Corpus, Speaker, Document, GlossFrequency,
@@ -1743,8 +1744,8 @@ class GlossVideosView(DetailView):
 
         try:
             self.object = super().get_object()
-            # if self.object.archived:
-            #     raise ObjectDoesNotExist
+            if self.object.archived:
+                raise ObjectDoesNotExist
         except (Http404, ObjectDoesNotExist):
             translated_message = _('The requested gloss does not exist.')
             return show_warning(request, translated_message, selected_datasets)
@@ -1859,7 +1860,9 @@ class GlossVideosView(DetailView):
     def render_to_response(self, context, **response_kwargs):
         if self.request.GET.get('operation') == 'Renumber':
             return self.renumber_backups(context)
-        elif self.request.GET.get('operation') == 'Remove':
+        elif self.request.GET.get('operation') == 'Backups':
+            return self.remove_backups(context)
+        elif self.request.GET.get('operation') == 'Obsolete':
             return self.remove_obsolete(context)
         else:
             return super(GlossVideosView, self).render_to_response(context, **response_kwargs)
@@ -1872,12 +1875,20 @@ class GlossVideosView(DetailView):
             renumber_backup_videos(gloss)
         return HttpResponseRedirect(PREFIX_URL + '/dictionary/gloss/'+str(gloss.id)+'/glossvideos')
 
+    def remove_backups(self, context):
+        gloss = context['gloss']
+        if (self.request.user.has_perm('dictionary.change_gloss')
+                and gloss.lemma.dataset in get_objects_for_user(self.request.user, ['change_dataset'], Dataset,
+                                                                any_perm=True)):
+            remove_backup_videos(gloss)
+        return HttpResponseRedirect(PREFIX_URL + '/dictionary/gloss/'+str(gloss.id)+'/glossvideos')
+
     def remove_obsolete(self, context):
         gloss = context['gloss']
         if (self.request.user.has_perm('dictionary.change_gloss')
                 and gloss.lemma.dataset in get_objects_for_user(self.request.user, ['change_dataset'], Dataset,
                                                                 any_perm=True)):
-            delete_glossvideo_object_and_file(gloss)
+            delete_glossvideo_objects_and_files(gloss)
         return HttpResponseRedirect(PREFIX_URL + '/dictionary/gloss/'+str(gloss.id)+'/glossvideos')
 
 

@@ -299,8 +299,8 @@ var search_results_url = '{% url 'dictionary:ajax_search_results' %}';
     <div class="panel-body collapse" id="backup_videos">
          {% if perms.dictionary.add_gloss %}
          <p>{% blocktrans %}
-            Here you find backup video objects. It is possible that the version numbers are not sequential.
-            These can be renumbered.
+            Here you see the backup video objects. It is possible that the version numbers are not sequential.
+            These can be renumbered. The checksum is also shown to see whether a video is a duplicate of the primary video. You can remove these.
             {% endblocktrans %}
          </p>
          <button id='renumber_btn' class='btn btn-primary copy-button' data-toggle='modal' data-target='#renumber_modal'>{% trans "Renumber Backups" %}</button>
@@ -327,7 +327,31 @@ var search_results_url = '{% url 'dictionary:ajax_search_results' %}';
                 </div>
               </div>
          </div>
+         <button id='backups_btn' class='btn btn-primary copy-button' data-toggle='modal' data-target='#backups_modal'>{% trans "Remove Backups" %}</button>
 
+          <div class="modal fade" id="backups_modal" role="dialog" aria-labelledby="#modalBackups" aria-hidden="true">
+             <div class="modal-dialog modal-lg">
+                <div class="modal-content">
+                    <div class='modal-header'>
+                        <h2 id='modalBackups'>{% trans "Remove Backup Videos" %}</h2>
+                    </div>
+                    <div class='modal-body'>
+                        <p>{% trans "Remove the backup videos." %}</p>
+                        <p>{% trans "If you wish to keep specific files, you can do this in the Gloss Videos Admin." %}</p>
+                     </div>
+                  <form id="backups" method='get'>
+                      {% csrf_token %}
+                      <input type='hidden' name='operation' value='Backups'>
+                      <input type='hidden' name='value' value='confirmed'>
+                      <div class="modal-footer">
+                        <button type="button" class="btn btn-default btn-default-light" data-dismiss="modal">{% trans "Cancel" %}</button>
+                        <input type="submit" class="btn btn-primary" value='{% trans "Confirm Remove" %}'>
+                      </div>
+                  </form>
+
+                </div>
+              </div>
+         </div>
         {% endif %}
     <table class='table table-condensed table-condensed-light' style="width:100%;">
     <tr><td>{% translate "Object Id" %}</td><td>{% translate "Version" %}</td><td>{% translate "Relative Path" %}</td><td>{% trans "Checksum" %}</td></tr>
@@ -346,7 +370,7 @@ var search_results_url = '{% url 'dictionary:ajax_search_results' %}';
     <div class="panel-body collapse" id="wrongly_named">
          {% if perms.dictionary.add_gloss %}
          <p>{% blocktrans %}
-            Here you find video objects that link to a file with an incorrect filename.
+            Here you see the video objects that link to a file with an incorrect filename.
             These can be deleted.
             {% endblocktrans %}
          </p>
@@ -363,7 +387,7 @@ var search_results_url = '{% url 'dictionary:ajax_search_results' %}';
                      </div>
                   <form id="remove" method='get'>
                       {% csrf_token %}
-                      <input type='hidden' name='operation' value='Remove'>
+                      <input type='hidden' name='operation' value='Obsolete'>
                       <input type='hidden' name='value' value='confirmed'>
                       <div class="modal-footer">
                         <button type="button" class="btn btn-default btn-default-light" data-dismiss="modal">{% trans "Cancel" %}</button>

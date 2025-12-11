@@ -431,7 +431,9 @@ def get_perspective_videos_for_gloss(gloss, string_result=True):
 def get_nme_videos_for_gloss(gloss, string_result=True):
     glossnmevideos = GlossVideoNME.objects.filter(gloss=gloss).distinct().order_by('offset')
     if not string_result:
-        return [(gv.pk, gv.version, str(gv.videofile), check_sum_relative_path(gv.videofile)) for gv in glossnmevideos]
+        tuples_nmevideos = [(gv.pk, gv.version, str(gv.videofile), check_sum_relative_path(gv.videofile)) for gv in glossnmevideos]
+        sorted_by_checksum = sorted(tuples_nmevideos, key=lambda x:x[3])
+        return sorted_by_checksum
     display_nme_videos = ', '.join([file_display_preface(gv) + ': ' + str(gv.videofile) for gv in glossnmevideos])
     return display_nme_videos
 
