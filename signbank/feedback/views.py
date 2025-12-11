@@ -165,38 +165,41 @@ def morphemefeedback(request, glossid):
 
 
 # @atomic  # This rolls back saving feedback on failure
-def recordsignfeedback(request, glossid, is_morpheme):
+def recordsignfeedback(request, id, is_morpheme):
     """record feedback for a gloss or morpheme"""
-    sourcepage = request.GET['return'] if 'return' in request.GET else ""
+    sourcepage = request.GET.get('return', "")
+    form_class = MorphemeFeedbackForm if is_morpheme else SignFeedbackForm
+    form = form_class(request.POST) if request.method == "POST" else form_class()
+    template_name = "feedback/morphemefeedback.html" if is_morpheme else "feedback/signfeedback.html"
 
-    if is_morpheme:
-        sign_or_morpheme = get_object_or_404(Morpheme, id=glossid)
-        feedback_form = MorphemeFeedbackForm(request.POST) if request.method == 'POST' else MorphemeFeedbackForm()
-        feedback_template = "feedback/morphemefeedback.html"
-        redirect_page = settings.PREFIX_URL + '/dictionary/morpheme/' + str(glossid)
-    else:
-        sign_or_morpheme = get_object_or_404(Gloss, id=glossid, archived=False)
-        feedback_form = SignFeedbackForm(request.POST) if request.method == 'POST' else SignFeedbackForm()
-        feedback_template = "feedback/signfeedback.html"
-        redirect_page = settings.PREFIX_URL + '/dictionary/gloss/' + str(glossid)
+    context = {
+        "feedback_form": form,
+        "sourcepage": sourcepage,
+        "selected_datasets": get_selected_datasets(request),
+        "SHOW_DATASET_INTERFACE_OPTIONS": settings.SHOW_DATASET_INTERFACE_OPTIONS,
+    }
 
-    if feedback_form.is_valid():
-        clean = feedback_form.cleaned_data
-        try:
-            feedback_obj = MorphemeFeedback(comment=clean['comment'],user=request.user, morpheme=sign_or_morpheme) \
-                            if is_morpheme \
-                            else SignFeedback(comment=clean['comment'], user=request.user, gloss=sign_or_morpheme)
-            feedback_obj.save()
-            messages.add_message(request, messages.INFO, mark_safe('Thank you. Your feedback has been saved. <a href="'
-                                                                   + redirect_page + '">Return to Detail View</a>'))
-        except (KeyError, PermissionError):
-            messages.add_message(request, messages.ERROR, 'There was an error processing your feedback data.')
+    if not form.is_valid():
+        return render(request, template_name, context)
 
-    return render(request, feedback_template,
-                  {'feedback_form': feedback_form,
-                   'sourcepage': sourcepage,
-                   'selected_datasets': get_selected_datasets(request),
-                   'SHOW_DATASET_INTERFACE_OPTIONS': settings.SHOW_DATASET_INTERFACE_OPTIONS})
+    model = Morpheme if is_morpheme else Gloss
+    obj = get_object_or_404(model, id=id, archived=False)
+
+    comment = form.cleaned_data.get('comment')
+    if not comment:
+        messages.add_message(request, messages.ERROR, "There was an error processing your feedback data.")
+        return render(request, template_name, context)
+
+    feedback_obj = MorphemeFeedback(comment=comment, user=request.user, morpheme=obj) \
+                    if is_morpheme else SignFeedback(comment=comment, user=request.user, gloss=obj)
+    feedback_obj.save()
+
+    obj_type = 'morpheme' if is_morpheme else 'gloss'
+    message = (f'Thank you. Your feedback has been saved. '
+               f'<a href="{settings.PREFIX_URL}/dictionary/{obj_type}/{str(id)}">Return to Detail View</a>')
+    messages.add_message(request, messages.INFO, mark_safe(message))
+
+    return render(request, template_name, context)
 
 
 #
