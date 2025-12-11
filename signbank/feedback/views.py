@@ -237,24 +237,20 @@ def delete(request, kind, id):
 def recent_feedback(request):
     """View to list the feedback that's been submitted on the site"""
     selected_datasets = get_selected_datasets(request)
-    group_editor = Group.objects.get(name='Editor')
-    groups_of_user = request.user.groups.all()
-    if group_editor not in groups_of_user:
+    context = {
+        "selected_datasets": selected_datasets,
+        "SHOW_DATASET_INTERFACE_OPTIONS": settings.SHOW_DATASET_INTERFACE_OPTIONS,
+    }
+
+    if not request.user.groups.filter(name='Editor').exists():
         messages.add_message(request, messages.ERROR, _('You must be in group Editor to view feedback.'))
-        return render(request, 'feedback/index.html',
-                      {'selected_datasets': selected_datasets,
-                       'SHOW_DATASET_INTERFACE_OPTIONS': settings.SHOW_DATASET_INTERFACE_OPTIONS,
-                       'language': settings.LANGUAGE_NAME})
+        context['language'] = settings.LANGUAGE_NAME
+        return render(request, 'feedback/index.html', context)
 
-    signfeedback_objs = (SignFeedback.objects.filter(Q(**{'gloss__lemma__dataset__in': selected_datasets}))
-                         .filter(status__in=('unread', 'read')))
-    recently_added_feedback_since_date = DT.datetime.now(tz=get_current_timezone()) - RECENTLY_ADDED_SIGNS_PERIOD
-    signfeedback_objs = (signfeedback_objs
-                         .filter(date__range=[recently_added_feedback_since_date,
-                                              DT.datetime.now(tz=get_current_timezone())])
+    now = DT.datetime.now(tz=get_current_timezone())
+    context['signfb'] = (SignFeedback.objects
+                         .filter(gloss__lemma__dataset__in=selected_datasets)
+                         .filter(status__in=('unread', 'read'))
+                         .filter(date__range=[now - RECENTLY_ADDED_SIGNS_PERIOD, now])
                          .order_by('-date'))
-
-    return render(request, "feedback/recent_feedback.html",
-                  {'signfb': signfeedback_objs,
-                   'selected_datasets': selected_datasets,
-                   'SHOW_DATASET_INTERFACE_OPTIONS': settings.SHOW_DATASET_INTERFACE_OPTIONS})
+    return render(request, "feedback/recent_feedback.html", context)
