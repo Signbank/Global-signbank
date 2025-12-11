@@ -22,6 +22,7 @@ from guardian.shortcuts import assign_perm, get_user_perms
 
 from signbank.registration.models import RegistrationProfile
 from signbank.registration.forms import RegistrationForm, EmailAuthenticationForm
+from signbank.attachments.models import Communication
 from signbank.dictionary.models import Dataset, UserProfile, SearchHistory, Affiliation, AffiliatedUser, SignbankAPIToken
 from signbank.dictionary.context_data import get_selected_datasets
 from signbank.tools import get_users_without_dataset
@@ -147,13 +148,15 @@ def register(request, success_url=settings.PREFIX_URL + '/accounts/register/comp
                                 # this owner can't manage users
                                 continue
 
-                            subject = render_to_string('registration/dataset_to_owner_new_user_given_access_subject.txt',
+                            access_email = Communication.objects.filter(label='dataset_to_owner_new_user_given_access').first()
+
+                            subject = render_to_string(access_email.subject if access_email else 'registration/dataset_to_owner_new_user_given_access_subject.txt',
                                                     context={'dataset': dataset_name,
                                                                 'site': current_site})
                             # Email subject *must not* contain newlines
                             subject = ''.join(subject.splitlines())
 
-                            message = render_to_string('registration/dataset_to_owner_new_user_given_access.txt',
+                            message = render_to_string(access_email.text if access_email else 'registration/dataset_to_owner_new_user_given_access.txt',
                                                     context={'dataset': dataset_name,
                                                                 'new_user_username': new_user.username,
                                                                 'new_user_firstname': new_user.first_name,
@@ -181,13 +184,15 @@ def register(request, success_url=settings.PREFIX_URL + '/accounts/register/comp
 
                             current_site = Site.objects.get_current()
 
-                            subject = render_to_string('registration/dataset_to_owner_user_requested_access_subject.txt',
+                            request_email = Communication.objects.filter(label='dataset_to_owner_user_requested_access').first()
+
+                            subject = render_to_string(request_email.subject if request_email else 'registration/dataset_to_owner_user_requested_access_subject.txt',
                                                     context={'dataset': dataset_name,
                                                                 'site': current_site})
                             # Email subject *must not* contain newlines
                             subject = ''.join(subject.splitlines())
 
-                            message = render_to_string('registration/dataset_to_owner_user_requested_access.txt',
+                            message = render_to_string(request_email.text if request_email else 'registration/dataset_to_owner_user_requested_access.txt',
                                                     context={'dataset': dataset_name,
                                                                 'new_user_username': new_user.username,
                                                                 'new_user_firstname': new_user.first_name,

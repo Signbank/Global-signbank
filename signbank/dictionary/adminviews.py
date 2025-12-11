@@ -55,6 +55,7 @@ from signbank.settings.server_specific import (URL, PREFIX_URL, LANGUAGE_CODE, L
                                                DEBUG_SENSES, DEBUG_EMAILS_ON, SEPARATE_ENGLISH_IDGLOSS_FIELD)
 from signbank.video.forms import VideoUploadForObjectForm
 from signbank.video.convertvideo import get_folder_name
+from signbank.attachments.models import Communication
 from signbank.dictionary.models import (Dataset, UserProfile, AffiliatedUser, AffiliatedGloss,
                                         Language, Dialect, Gloss, Morpheme, GlossSense, Sense,
                                         Corpus, Speaker, Document, GlossFrequency,
@@ -3916,13 +3917,15 @@ class DatasetListView(ListView):
             
             # send email to notify dataset managers that user was GIVEN access
             if may_request_dataset:
-                subject = render_to_string('registration/dataset_to_owner_existing_user_given_access_subject.txt',
+                access_email = Communication.objects.filter(label='dataset_to_owner_existing_user_given_access').first()
+
+                subject = render_to_string(access_email.subject if access_email else 'registration/dataset_to_owner_existing_user_given_access_subject.txt',
                                            context={'dataset': dataset_object.name,
                                                     'site': current_site})
                 # Email subject *must not* contain newlines
                 subject = ''.join(subject.splitlines())
 
-                message = render_to_string('registration/dataset_to_owner_existing_user_given_access.txt',
+                message = render_to_string(access_email.text if access_email else 'registration/dataset_to_owner_existing_user_given_access.txt',
                                            context={'user': self.request.user,
                                                     'dataset': dataset_object.name,
                                                     'motivation': motivation,
@@ -3940,13 +3943,15 @@ class DatasetListView(ListView):
             
             # send email to notify dataset managers that user REQUESTS access
             elif not may_request_dataset:
-                subject = render_to_string('registration/dataset_to_owner_user_requested_access_subject.txt',
+                access_email = Communication.objects.filter(label='dataset_to_owner_user_requested_access').first()
+
+                subject = render_to_string(access_email.subject if access_email else 'registration/dataset_to_owner_user_requested_access_subject.txt',
                                         context={'dataset': dataset_object.name,
                                                     'site': current_site})
                 # Email subject *must not* contain newlines
                 subject = ''.join(subject.splitlines())
 
-                message = render_to_string('registration/dataset_to_owner_user_requested_access.txt',
+                message = render_to_string(access_email.text if access_email else 'registration/dataset_to_owner_user_requested_access.txt',
                                         context={'user': self.request.user,
                                                     'dataset': dataset_object.name,
                                                     'motivation': motivation,
@@ -4248,13 +4253,15 @@ class DatasetManagerView(ListView):
                 # send email to user
                 current_site = Site.objects.get_current()
 
-                subject = render_to_string('registration/dataset_to_user_existing_user_given_access_subject.txt',
+                access_email = Communication.objects.filter(label='dataset_to_user_existing_user_given_access').first()
+
+                subject = render_to_string(access_email.subject if access_email else 'registration/dataset_to_user_existing_user_given_access_subject.txt',
                                            context={'dataset': dataset_object.name,
                                                     'site': current_site})
                 # Email subject *must not* contain newlines
                 subject = ''.join(subject.splitlines())
 
-                message = render_to_string('registration/dataset_to_user_existing_user_given_access.txt',
+                message = render_to_string(access_email.text if access_email else 'registration/dataset_to_user_existing_user_given_access.txt',
                                            context={'dataset': dataset_object.name,
                                                     'site': current_site})
 

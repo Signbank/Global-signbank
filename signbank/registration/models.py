@@ -15,6 +15,9 @@ from django.contrib.auth.models import User, Group
 from django.contrib.sites.models import Site
 from django.utils import timezone
 
+from signbank.attachments.models import Communication
+
+
 SHA1_RE = re.compile('^[a-f0-9]{40}$')
 
 
@@ -101,12 +104,13 @@ class RegistrationManager(models.Manager):
             from django.core.mail import send_mail
             signbank_name = settings.LANGUAGE_NAME + ' Signbank'
 
-            subject = render_to_string('registration/activation_email_subject.txt',
+            activation_email = Communication.objects.filter(label='activation_email').first()
+            subject = render_to_string(activation_email.subject if activation_email else 'registration/activation_email_subject.txt',
                                        context={ 'signbank_name': signbank_name})
             # Email subject *must not* contain newlines
             subject = ''.join(subject.splitlines())
             
-            message = render_to_string('registration/activation_email.txt',
+            message = render_to_string(activation_email.text if activation_email else 'registration/activation_email.txt',
                                        context={ 'activation_key': registration_profile.activation_key,
                                          'expiration_days': settings.ACCOUNT_ACTIVATION_DAYS,
                                          'signbank_name': signbank_name,
