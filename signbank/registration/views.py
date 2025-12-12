@@ -12,6 +12,8 @@ from django.middleware.csrf import get_token
 from django.contrib.auth.models import Group, User
 from django.contrib import messages
 from django.template.loader import render_to_string
+from django import template
+from django.template import Context
 from django.core.mail import send_mail
 from django.contrib.auth import REDIRECT_FIELD_NAME, login
 from django.views.decorators.cache import never_cache
@@ -148,22 +150,39 @@ def register(request, success_url=settings.PREFIX_URL + '/accounts/register/comp
                                 # this owner can't manage users
                                 continue
 
+                            mail_template_context = Context({'dataset': dataset_name,
+                                                             'new_user_username': new_user.username,
+                                                             'new_user_firstname': new_user.first_name,
+                                                             'new_user_lastname': new_user.last_name,
+                                                             'new_user_email': new_user.email,
+                                                             'motivation': motivation,
+                                                             'site': current_site})
+
                             access_email = Communication.objects.filter(label='dataset_to_owner_new_user_given_access').first()
 
-                            subject = render_to_string(access_email.subject if access_email else 'registration/dataset_to_owner_new_user_given_access_subject.txt',
-                                                    context={'dataset': dataset_name,
-                                                                'site': current_site})
+                            if access_email:
+                                subject_template = template.Template(access_email.subject)
+                                subject = subject_template.render(mail_template_context)
+                            else:
+                                subject = render_to_string('registration/dataset_to_owner_new_user_given_access_subject.txt',
+                                                           context={'dataset': dataset_name,
+                                                                    'site': current_site})
+
                             # Email subject *must not* contain newlines
                             subject = ''.join(subject.splitlines())
 
-                            message = render_to_string(access_email.text if access_email else 'registration/dataset_to_owner_new_user_given_access.txt',
-                                                    context={'dataset': dataset_name,
-                                                                'new_user_username': new_user.username,
-                                                                'new_user_firstname': new_user.first_name,
-                                                                'new_user_lastname': new_user.last_name,
-                                                                'new_user_email': new_user.email,
-                                                                'motivation': motivation,
-                                                                'site': current_site})
+                            if access_email:
+                                message_template = template.Template(access_email.text)
+                                message = message_template.render(mail_template_context)
+                            else:
+                                message = render_to_string('registration/dataset_to_owner_new_user_given_access.txt',
+                                                           context={'dataset': dataset_name,
+                                                                    'new_user_username': new_user.username,
+                                                                    'new_user_firstname': new_user.first_name,
+                                                                    'new_user_lastname': new_user.last_name,
+                                                                    'new_user_email': new_user.email,
+                                                                    'motivation': motivation,
+                                                                    'site': current_site})
 
                             # for debug purposes on local machine
                             if settings.DEBUG_EMAILS_ON:
@@ -184,22 +203,39 @@ def register(request, success_url=settings.PREFIX_URL + '/accounts/register/comp
 
                             current_site = Site.objects.get_current()
 
+                            mail_template_context = Context({'dataset': dataset_name,
+                                                             'new_user_username': new_user.username,
+                                                             'new_user_firstname': new_user.first_name,
+                                                             'new_user_lastname': new_user.last_name,
+                                                             'new_user_email': new_user.email,
+                                                             'motivation': motivation,
+                                                             'site': current_site})
+
                             request_email = Communication.objects.filter(label='dataset_to_owner_user_requested_access').first()
 
-                            subject = render_to_string(request_email.subject if request_email else 'registration/dataset_to_owner_user_requested_access_subject.txt',
-                                                    context={'dataset': dataset_name,
-                                                                'site': current_site})
+                            if request_email:
+                                subject_template = template.Template(request_email.subject)
+                                subject = subject_template.render(mail_template_context)
+                            else:
+                                subject = render_to_string('registration/dataset_to_owner_user_requested_access_subject.txt',
+                                                           context={'dataset': dataset_name,
+                                                                    'site': current_site})
+
                             # Email subject *must not* contain newlines
                             subject = ''.join(subject.splitlines())
 
-                            message = render_to_string(request_email.text if request_email else 'registration/dataset_to_owner_user_requested_access.txt',
-                                                    context={'dataset': dataset_name,
-                                                                'new_user_username': new_user.username,
-                                                                'new_user_firstname': new_user.first_name,
-                                                                'new_user_lastname': new_user.last_name,
-                                                                'new_user_email': new_user.email,
-                                                                'motivation': motivation,
-                                                                'site': current_site})
+                            if request_email:
+                                message_template = template.Template(request_email.text)
+                                message = message_template.render(mail_template_context)
+                            else:
+                                message = render_to_string('registration/dataset_to_owner_user_requested_access.txt',
+                                                           context={'dataset': dataset_name,
+                                                                    'new_user_username': new_user.username,
+                                                                    'new_user_firstname': new_user.first_name,
+                                                                    'new_user_lastname': new_user.last_name,
+                                                                    'new_user_email': new_user.email,
+                                                                    'motivation': motivation,
+                                                                    'site': current_site})
 
                             # for debug purposes on local machine
                             if settings.DEBUG_EMAILS_ON:

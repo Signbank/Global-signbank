@@ -28,6 +28,8 @@ from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib import messages
 from django.contrib.sites.models import Site
 from django.template.loader import render_to_string
+from django import template
+from django.template import Context
 from django.contrib.auth.models import User, Group
 from django.utils.safestring import mark_safe
 from django.utils.timezone import get_current_timezone
@@ -3914,22 +3916,35 @@ class DatasetListView(ListView):
 
             # send email to the dataset manager
             current_site = Site.objects.get_current()
-            
+
+            mail_template_context = Context({'user': self.request.user,
+                                             'dataset': dataset_object.name,
+                                             'motivation': motivation,
+                                             'site': current_site})
+
             # send email to notify dataset managers that user was GIVEN access
             if may_request_dataset:
                 access_email = Communication.objects.filter(label='dataset_to_owner_existing_user_given_access').first()
 
-                subject = render_to_string(access_email.subject if access_email else 'registration/dataset_to_owner_existing_user_given_access_subject.txt',
-                                           context={'dataset': dataset_object.name,
-                                                    'site': current_site})
+                if access_email:
+                    subject_template = template.Template(access_email.subject)
+                    subject = subject_template.render(mail_template_context)
+                else:
+                    subject = render_to_string('registration/dataset_to_owner_existing_user_given_access_subject.txt',
+                                               context={'dataset': dataset_object.name,
+                                                        'site': current_site})
                 # Email subject *must not* contain newlines
                 subject = ''.join(subject.splitlines())
 
-                message = render_to_string(access_email.text if access_email else 'registration/dataset_to_owner_existing_user_given_access.txt',
-                                           context={'user': self.request.user,
-                                                    'dataset': dataset_object.name,
-                                                    'motivation': motivation,
-                                                    'site': current_site})
+                if access_email:
+                    message_template = template.Template(access_email.text)
+                    message = message_template.render(mail_template_context)
+                else:
+                    message = render_to_string('registration/dataset_to_owner_existing_user_given_access.txt',
+                                               context={'user': self.request.user,
+                                                        'dataset': dataset_object.name,
+                                                        'motivation': motivation,
+                                                        'site': current_site})
 
                 # for debug purposes on local machine
                 if DEBUG_EMAILS_ON:
@@ -3945,17 +3960,26 @@ class DatasetListView(ListView):
             elif not may_request_dataset:
                 access_email = Communication.objects.filter(label='dataset_to_owner_user_requested_access').first()
 
-                subject = render_to_string(access_email.subject if access_email else 'registration/dataset_to_owner_user_requested_access_subject.txt',
-                                        context={'dataset': dataset_object.name,
-                                                    'site': current_site})
+                if access_email:
+                    subject_template = template.Template(access_email.subject)
+                    subject = subject_template.render(mail_template_context)
+                else:
+                    subject = render_to_string('registration/dataset_to_owner_user_requested_access_subject.txt',
+                                               context={'dataset': dataset_object.name,
+                                                        'site': current_site})
+
                 # Email subject *must not* contain newlines
                 subject = ''.join(subject.splitlines())
 
-                message = render_to_string(access_email.text if access_email else 'registration/dataset_to_owner_user_requested_access.txt',
-                                        context={'user': self.request.user,
-                                                    'dataset': dataset_object.name,
-                                                    'motivation': motivation,
-                                                    'site': current_site})
+                if access_email:
+                    message_template = template.Template(access_email.text)
+                    message = message_template.render(mail_template_context)
+                else:
+                    message = render_to_string('registration/dataset_to_owner_user_requested_access.txt',
+                                               context={'user': self.request.user,
+                                                        'dataset': dataset_object.name,
+                                                        'motivation': motivation,
+                                                        'site': current_site})
 
                 # for debug purposes on local machine
                 if DEBUG_EMAILS_ON:
@@ -4253,17 +4277,28 @@ class DatasetManagerView(ListView):
                 # send email to user
                 current_site = Site.objects.get_current()
 
+                mail_template_context = Context({'dataset': dataset_object.name,
+                                                 'site': current_site})
+
                 access_email = Communication.objects.filter(label='dataset_to_user_existing_user_given_access').first()
 
-                subject = render_to_string(access_email.subject if access_email else 'registration/dataset_to_user_existing_user_given_access_subject.txt',
-                                           context={'dataset': dataset_object.name,
-                                                    'site': current_site})
+                if access_email:
+                    subject_template = template.Template(access_email.subject)
+                    subject = subject_template.render(mail_template_context)
+                else:
+                    subject = render_to_string('registration/dataset_to_user_existing_user_given_access_subject.txt',
+                                               context={'dataset': dataset_object.name,
+                                                        'site': current_site})
                 # Email subject *must not* contain newlines
                 subject = ''.join(subject.splitlines())
 
-                message = render_to_string(access_email.text if access_email else 'registration/dataset_to_user_existing_user_given_access.txt',
-                                           context={'dataset': dataset_object.name,
-                                                    'site': current_site})
+                if access_email:
+                    message_template = template.Template(access_email.text)
+                    message = message_template.render(mail_template_context)
+                else:
+                    message = render_to_string('registration/dataset_to_user_existing_user_given_access.txt',
+                                               context={'dataset': dataset_object.name,
+                                                        'site': current_site})
 
                 # for debug purposes on local machine
                 if DEBUG_EMAILS_ON:
