@@ -21,7 +21,7 @@ from django.contrib.sites.requests import RequestSite
 from guardian.shortcuts import assign_perm, get_user_perms
 
 from signbank.registration.models import RegistrationProfile
-from signbank.registration.forms import RegistrationForm, EmailAuthenticationForm
+from signbank.registration.forms import RegistrationForm, SignbankAuthenticationForm
 from signbank.dictionary.models import Dataset, UserProfile, SearchHistory, Affiliation, AffiliatedUser, SignbankAPIToken
 from signbank.dictionary.context_data import get_selected_datasets
 from signbank.tools import get_users_without_dataset
@@ -219,7 +219,7 @@ def register(request, success_url=settings.PREFIX_URL + '/accounts/register/comp
             # form = form_class()
     else:
         # this insures that a preselected dataset is available if we got here from Dataset Details
-        form = form_class(request=request)
+        form = form_class()
     return render(request,template_name, {'form': form,
                                           'SHOW_DATASET_INTERFACE_OPTIONS': show_dataset_interface})
 
@@ -236,7 +236,7 @@ def mylogin(request, template_name='registration/login.html', redirect_field_nam
         if REDIRECT_FIELD_NAME in request.POST:
             redirect_to = request.POST[REDIRECT_FIELD_NAME]
 
-        form = EmailAuthenticationForm(data=request.POST)
+        form = SignbankAuthenticationForm(data=request.POST)
         if form.is_valid():
 
             # Count the number of logins
@@ -246,7 +246,7 @@ def mylogin(request, template_name='registration/login.html', redirect_field_nam
 
             # Expiry date cannot be in the past
             if profile.expiry_date is not None and date.today() > profile.expiry_date:
-                form = EmailAuthenticationForm(request)
+                form = SignbankAuthenticationForm(request)
                 error_message = _('This account has expired. Please contact w.stoop@let.ru.nl.')
 
             else:
@@ -268,7 +268,7 @@ def mylogin(request, template_name='registration/login.html', redirect_field_nam
             error_message = _('The username or password is incorrect.')
 
     else:
-        form = EmailAuthenticationForm(request)
+        form = SignbankAuthenticationForm(request)
 
     request.session.set_test_cookie()
     try:
