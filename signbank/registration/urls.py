@@ -23,14 +23,14 @@ urlpatterns = [
     # [a-fA-F0-9]+ because a bad activation key should still get to the view;
     # that way it can return a sensible "invalid key" message instead of a confusing 404.
     re_path(r'^activate/(?P<activation_key>\w+)/$', activate, name='registration_activate'),
-    re_path(r'^login/$', mylogin, {'template_name': 'registration/login.html'}, name='login'),
+    re_path(r'^login/$', mylogin, name='login'),
 
     re_path(r'^password/change/$', auth_views.PasswordChangeView.as_view(), name='auth_password_change'),
     re_path(r'^password/change/done/$', auth_views.PasswordChangeDoneView.as_view(),
             name='auth_password_change_done'),
     re_path(r'^password/reset/$', SignbankPasswordResetView.as_view(), name='auth_password_reset'),
-    re_path(r'^password/reset/(?P<uidb64>[0-9A-Za-z]+)-(?P<token>.+)/$', SignbankPasswordResetConfirmView.as_view(),
-            name='password_reset_confirm'),
+    re_path(r'^password/reset/(?P<uidb64>[0-9A-Za-z]+)-(?P<token>.+)/$',
+            SignbankPasswordResetConfirmView.as_view(), name='password_reset_confirm'),
     re_path(r'^password/reset/complete/$', auth_views.PasswordResetCompleteView.as_view(),
             name='password_reset_complete'),
     re_path(r'^password/reset/done/$', auth_views.PasswordResetDoneView.as_view(), name='password_reset_done'),
