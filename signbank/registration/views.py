@@ -7,13 +7,14 @@ from datetime import date
 from django.conf import settings
 from django.http import HttpResponseRedirect, HttpResponse, JsonResponse
 from django.shortcuts import render
+from django.urls import reverse_lazy
 from django.utils.translation import gettext_lazy as _
 from django.middleware.csrf import get_token
 from django.contrib.auth.models import Group, User
 from django.contrib import messages
 from django.template.loader import render_to_string
 from django.core.mail import send_mail
-from django.contrib.auth import REDIRECT_FIELD_NAME, login
+from django.contrib.auth import REDIRECT_FIELD_NAME, login, views as auth_views
 from django.views.decorators.cache import never_cache
 from django.contrib.sites.models import Site
 from django.contrib.sites.requests import RequestSite
@@ -370,3 +371,11 @@ def auth_token(request):
                                                      api_token=hashed_token)
     signbank_Token.save()
     return JsonResponse({'new_token': new_token})
+
+
+class SignbankPasswordResetView(auth_views.PasswordResetView):
+    success_url = reverse_lazy('registration:password_reset_done')
+
+
+class SignbankPasswordResetConfirmView(auth_views.PasswordResetConfirmView):
+    success_url = reverse_lazy('registration:password_reset_complete')
