@@ -23,13 +23,6 @@ class RegistrationForm(forms.Form):
 
     Validates that the request username is not already in use, and
     requires the password to be entered twice to catch typos.
-
-    Subclasses should feel free to add any additional validation they
-    need, but should either preserve the base ``save()`` or implement
-    a ``save()`` which accepts the ``profile_callback`` keyword
-    argument and passes it through to
-    ``RegistrationProfile.objects.create_inactive_user()``.
-
     """
     username = forms.CharField(max_length=30, required=True, widget=forms.TextInput(), label=_('Username'))
     first_name = forms.CharField(max_length=30, required=True, widget=forms.TextInput(), label=_('First Name'))
@@ -80,7 +73,6 @@ class RegistrationForm(forms.Form):
             raise forms.ValidationError(_("This username is already taken. Please choose another."))
         return username
 
-
     def clean_password2(self):
         """Validates that the two password inputs match."""
         password1 = self.cleaned_data.get('password1')
@@ -105,23 +97,12 @@ class RegistrationForm(forms.Form):
         return self.cleaned_data['terms_of_service']
 
     def save(self):
-        """
-        Creates the new ``User`` and ``RegistrationProfile``, and
-        returns the ``User``.
-
-        This is essentially a light wrapper around
-        ``RegistrationProfile.objects.create_inactive_user()``,
-        feeding it the form data and a profile callback (see the
-        documentation on ``create_inactive_user()`` for details) if
-        supplied.
-
-        """
-        new_user = RegistrationProfile.objects.create_inactive_user(username=self.cleaned_data['username'],
-                                                                    password=self.cleaned_data['password1'],
-                                                                    email=self.cleaned_data['email'],
-                                                                    firstname=self.cleaned_data['first_name'],
-                                                                    lastname=self.cleaned_data['last_name'],
-                                                                    agree=self.cleaned_data['terms_of_service'])
+        """Creates the new ``User`` and ``RegistrationProfile``, and returns the ``User``."""
+        new_user = RegistrationProfile.objects.create_user(username=self.cleaned_data['username'],
+                                                           password=self.cleaned_data['password1'],
+                                                           email=self.cleaned_data['email'],
+                                                           firstname=self.cleaned_data['first_name'],
+                                                           lastname=self.cleaned_data['last_name'],)
         return new_user
 
 
