@@ -387,7 +387,7 @@ def file_display_preface(glossvideo):
     return str(glossvideo.version)
 
 
-def check_sum_relative_path(videofile):
+def get_check_sum_relative_path(videofile):
     if not videofile or not videofile.path:
         return ""
     fullpath = os.path.join(WRITABLE_FOLDER, videofile.path)
@@ -406,7 +406,7 @@ def get_primary_videos_for_gloss(gloss, string_result=True, include_subclasses=F
                                                 glossvideonme=None,
                                                 glossvideoperspective=None).distinct().order_by('version')
     if not string_result:
-        return [(gv.pk, gv.version, str(gv.videofile), check_sum_relative_path(gv.videofile)) for gv in glossvideos]
+        return [(gv.pk, gv.version, str(gv.videofile), get_check_sum_relative_path(gv.videofile)) for gv in glossvideos]
     display_glossvideos = ', '.join([str(gv.version) + ': ' + str(gv.videofile) for gv in glossvideos])
     return display_glossvideos
 
@@ -415,7 +415,7 @@ def get_backup_videos_for_gloss(gloss, string_result=True):
     backupglossvideos = GlossVideo.objects.filter(gloss=gloss, version__gt=0).distinct().order_by('version', 'pk')
     num_backup_videos = backupglossvideos.count()
     if not string_result:
-        return [(gv.pk, gv.version, str(gv.videofile), check_sum_relative_path(gv.videofile)) for gv in backupglossvideos]
+        return [(gv.pk, gv.version, str(gv.videofile), get_check_sum_relative_path(gv.videofile)) for gv in backupglossvideos]
     display_glossbackupvideos = ', '.join([str(gv.version) + ': ' + str(gv.videofile) for gv in backupglossvideos])
     return num_backup_videos, display_glossbackupvideos
 
@@ -423,7 +423,7 @@ def get_backup_videos_for_gloss(gloss, string_result=True):
 def get_perspective_videos_for_gloss(gloss, string_result=True):
     glossperspvideos = GlossVideoPerspective.objects.filter(gloss=gloss).distinct()
     if not string_result:
-        return [(gv.pk, gv.version, str(gv.videofile), check_sum_relative_path(gv.videofile)) for gv in glossperspvideos]
+        return [(gv.pk, gv.version, str(gv.videofile), get_check_sum_relative_path(gv.videofile)) for gv in glossperspvideos]
     display_perspective_videos = ', '.join([str(gv.perspective) + ': ' + str(gv.videofile) for gv in glossperspvideos])
     return display_perspective_videos
 
@@ -431,7 +431,7 @@ def get_perspective_videos_for_gloss(gloss, string_result=True):
 def get_nme_videos_for_gloss(gloss, string_result=True):
     glossnmevideos = GlossVideoNME.objects.filter(gloss=gloss).distinct().order_by('offset')
     if not string_result:
-        tuples_nmevideos = [(gv.pk, gv.version, str(gv.videofile), check_sum_relative_path(gv.videofile)) for gv in glossnmevideos]
+        tuples_nmevideos = [(gv.pk, gv.version, str(gv.videofile), get_check_sum_relative_path(gv.videofile)) for gv in glossnmevideos]
         sorted_by_checksum = sorted(tuples_nmevideos, key=lambda x:x[3])
         return sorted_by_checksum
     display_nme_videos = ', '.join([file_display_preface(gv) + ': ' + str(gv.videofile) for gv in glossnmevideos])
@@ -443,7 +443,7 @@ def get_wrong_videos_for_gloss(gloss, string_result=True):
     gloss_video_ids = wrong_filename_filter(all_gloss_video_objects)
     gloss_video_objects = GlossVideo.objects.filter(id__in=gloss_video_ids).order_by('version', 'pk')
     if not string_result:
-        return [(gv.pk, gv.version, gv.is_glossvideoperspective(), gv.is_glossvideonme, str(gv.videofile), check_sum_relative_path(gv.videofile)) for gv in gloss_video_objects]
+        return [(gv.pk, gv.version, gv.is_glossvideoperspective(), gv.is_glossvideonme(), str(gv.videofile), get_check_sum_relative_path(gv.videofile)) for gv in gloss_video_objects]
     display_wrong_videos = ', '.join([file_display_preface(gv) + ': ' + str(gv.videofile) for gv in gloss_video_objects])
     return display_wrong_videos
 

@@ -1824,18 +1824,12 @@ class GlossVideosView(DetailView):
 
         context['senses'] = gl.senses.all().order_by('glosssense')
 
-        primary_videos = get_primary_videos_for_gloss(gl, string_result=False, include_subclasses=False)
-        context['primary_videos'] = primary_videos
-        perspective_videos = get_perspective_videos_for_gloss(gl, string_result=False)
-        context['perspective_videos'] = perspective_videos
-        nme_videos = get_nme_videos_for_gloss(gl, string_result=False)
-        context['nme_videos'] = nme_videos
-        wrongly_named_videos = get_wrong_videos_for_gloss(gl, string_result=False)
-        context['wrongly_named_videos'] = wrongly_named_videos
-        backup_videos = get_backup_videos_for_gloss(gl, string_result=False)
-        context['backup_videos'] = backup_videos
-        dangling_video_files = find_dangling_video_files(gl)
-        context['dangling_video_files'] = dangling_video_files
+        context['primary_videos'] = get_primary_videos_for_gloss(gl, string_result=False, include_subclasses=False)
+        context['perspective_videos'] = get_perspective_videos_for_gloss(gl, string_result=False)
+        context['nme_videos'] = get_nme_videos_for_gloss(gl, string_result=False)
+        context['wrongly_named_videos'] = get_wrong_videos_for_gloss(gl, string_result=False)
+        context['backup_videos'] = get_backup_videos_for_gloss(gl, string_result=False)
+        context['dangling_video_files'] = find_dangling_video_files(gl)
 
         # the lemma field is non-empty because it's caught in the get method
         dataset_of_requested_gloss = gl.lemma.dataset

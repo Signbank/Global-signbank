@@ -509,7 +509,7 @@ class ExampleVideo(models.Model):
         """Ensure that the video file is an h264 format
         video, convert it if necessary"""
 
-        if not self.videofile or not  self.videofile.path or not os.path.exists(self.videofile.path):
+        if not self.videofile or not self.videofile.path or not os.path.exists(self.videofile.path):
             return
         if self.version > 0:
             return
