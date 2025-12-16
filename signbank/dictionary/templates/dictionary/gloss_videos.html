@@ -41,6 +41,11 @@ var search_results_url = '{% url 'dictionary:ajax_search_results' %}';
 #panel-expand-collapse-btn-group.affix {
     position:fixed;
 }
+.copy-button {
+    font-size: 10px;
+    padding-left: 2px;
+    padding-right: 2px;
+}
 </style>
 {% endblock %}
 
@@ -114,7 +119,7 @@ var search_results_url = '{% url 'dictionary:ajax_search_results' %}';
             {% endif %}
         </div>
     </div>
-
+</div>
     <div class='panel panel-group panel-default panel-light' id="definition"
          style="width:auto; z-index: 0;opacity:.99; position: relative;background-color:inherit;">
 
@@ -123,8 +128,8 @@ var search_results_url = '{% url 'dictionary:ajax_search_results' %}';
         <div class="panel panel-default panel-default-light">
             <!-- Only show if any example sentence videos exist -->
                 {% if senses %}
-                <div class="panel-heading"><h3>{% trans "Example Sentences" %}</h3></div>
-                <div class="panel-body">
+                <div class="panel-heading" data-toggle="collapse" data-target="#sentences">{% trans "Example Sentences" %}</div>
+                <div class="panel-body collapse" id="sentences">
                 <table class='table table-condensed table-condensed-light'>
                     {% for sense in senses %}
                         <!-- Only show if the sense has any example sentences with videos -->
@@ -134,7 +139,7 @@ var search_results_url = '{% url 'dictionary:ajax_search_results' %}';
                                     {{ forloop.counter }}. <br>
                                 </th>
                                 <td style="width:20%">
-                                    {% if sense.get_sense_translations_dict_without%}
+                                    {% if sense.get_sense_translations_dict_without %}
                                         {% for key, value in sense.get_sense_translations_dict_without.items %}
                                             {{key}}: {{ value }}
                                             {% if not forloop.last %}<br>{% endif %}
@@ -181,59 +186,232 @@ var search_results_url = '{% url 'dictionary:ajax_search_results' %}';
                 {% endif %}
         </div>
         {% endif %}
-
         <!-- Other media -->
             {% if other_media %}
             <div class="panel panel-default panel-default-light">
 
-            <div class="panel-heading"><h3>{% trans "Other Media" %}</h3></div>
-            <div class="panel-body">
+            <div class="panel-heading" data-toggle="collapse" data-target="#other_media">{% trans "Other Media" %}</div>
+            <div class="panel-body collapse" id="other_media">
             <table class='table table-condensed table-condensed-light'>
                 {% for media_okay,pk,path,file_type,type,alternative_gloss,file_name in other_media %}
-                    {% if media_okay and file_type == 'video/mp4' %}
-                    <tr >
+                    {% if media_okay %}
+                    <tr>
+                    <td><a download="{{ file_name }}"
+                           href="{{ PREFIX_URL }}{{protected_media_url}}{{ path }}">{{path}}</a>
+                    </td>
+                    {% if file_type == 'video/mp4' %}
+                    <td style="width:auto;" colspan="2">
+                        <div id="player_{{pk}}" style="width:auto;">
+                            <video id='videoplayer_{{pk}}' width="450" controls autoplay muted>
+                                <source src="{{ PREFIX_URL }}{{protected_media_url}}{{ path }}" type="video/mp4">
+                            </video>
+                        </div>
+                    </td>
+                    {% elif file_type == 'image/png' or file_type == 'image/jpeg' %}
                         <td style="width:auto;" colspan="2">
-                            <div id="player_{{pk}}" style="width:auto;">
-                                <video id='videoplayer_{{pk}}' width="450" controls autoplay muted>
-                                    <source src="{{ PREFIX_URL }}{{ path }}" type="video/mp4">
-                                    <source src="{{ PREFIX_URL }}{{ path }}" type="video/quicktime"
-                                    codecs="avc1.42E01E mp4a.40.2">
-                                    {% trans "Your browser does not support this format." %}
-                                </video>
-                            </div>
+                            <img src="{{ PREFIX_URL }}{{protected_media_url}}{{ path }}" style="height:259px;width:auto;">
                         </td>
+                    {% endif %}
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td>{{path}}</td><td>{% trans "NOT FOUND" %}</td>
                     </tr>
                     {% endif %}
-                    <!-- ADD TO SHOW IMAGES -->
-                    <!-- {% if file_type == 'image/png' %}
-                    <tr >
-                        <td style="width:auto;" colspan="2">
-                            <img src="{{ PREFIX_URL }}{{ path }}" style="height:259px;width:auto;">
-                        </td>
-                    </tr>
-                    {% endif %} -->
-                    <tr>
-                        <th style='width:6em'>{% trans "Download" %}</th>
-                    </tr>
-                    <tr>
-                        <td>{% if not media_okay %}
-                                <a disabled style="color:rgb(150,150,150);" onclick="return false;" style="color:rgb(150,150,150);"
-                                        download="{{ file_name }}" href="{{ PREFIX_URL }}{{ path }}">{{file_name}}</a>
-                            {% else %}
-                            <a download="{{ file_name }}" href="{{ PREFIX_URL }}{{ path }}">{{file_name}}</a>
-                            {% endif %}
-                        </td>
-                    </tr>
                 {% endfor %}
             </table>
             </div>
             </div>
             {% endif %}
 
+    {% if perms.dictionary.change_gloss %}
+    <div id="video_storage" class='panel-group'>
+    <div class="panel panel-default panel-light panel-toggles">
+    <div class='panel-heading panel-light' data-toggle='collapse' data-parent="#video_storage"
+         data-target='#toggle_video_storage'>{% trans "VIDEO STORAGE" %}
     </div>
+    <div id='toggle_video_storage' class="panel-collapse collapse" style="margin-top:10px;">
+
+    {% if perspective_videos and perms.dictionary.change_gloss %}
+    <div class="panel panel-default panel-default-light">
+
+    <div class="panel-heading" data-toggle="collapse" data-target="#perspective_videos">{% trans "Perspective Videos" %} ({{perspective_videos|length}})</div>
+    <div class="panel-body collapse" id="perspective_videos">
+    <table class='table table-condensed table-condensed-light' style="width:100%;">
+    <tr><td>{% trans "Object Id" %}</td><td>{% trans "Version" %}</td><td>{% trans "Relative Path" %}</td><td>{% trans "Checksum" %}</td></tr>
+    {% for object_id, version, relative_path, checksum in perspective_videos %}
+    <tr><td>{{object_id}}</td><td>{{version}}</td><td>{{relative_path}}</td><td>{{checksum}}</td></tr>
+    {% endfor %}
+    </table>
+    </div>
+    </div>
+    {% endif %}
+
+    {% if nme_videos and perms.dictionary.change_gloss %}
+    <div class="panel panel-default panel-default-light">
+
+    <div class="panel-heading" data-toggle="collapse" data-target="#nme_videos">{% trans "Videos with Non-manual Elements" %} ({{nme_videos|length}})</div>
+    <div class="panel-body collapse" id="nme_videos">
+    <table class='table table-condensed table-condensed-light' style="width:100%;">
+    <tr><td>{% translate "Object Id" %}</td><td>{% translate "Version" %}</td><td>{% translate "Relative Path" %}</td><td>{% trans "Checksum" %}</td></tr>
+    {% for object_id, version, relative_path, checksum in nme_videos %}
+    <tr><td>{{object_id}}</td><td>{{version}}</td><td>{{relative_path}}</td><td>{{checksum}}</td></tr>
+    {% endfor %}
+    </table>
+    </div>
+    </div>
+    {% endif %}
+
+    {% if dangling_video_files and perms.dictionary.change_gloss %}
+    <div class="panel panel-default panel-default-light">
+
+    <div class="panel-heading" data-toggle="collapse" data-target="#dangling_video_files">{% trans "Video Files Without Objects" %} ({{dangling_video_files|length}})</div>
+    <div class="panel-body collapse" id="dangling_video_files">
+    <table class='table table-condensed table-condensed-light' style="width:100%;">
+    <tr><td>{% translate "Object Id" %}</td><td>{% translate "Relative Path" %}</td></tr>
+    {% for relative_path in dangling_video_files %}
+    <tr><td>NONE</td><td>{{relative_path}}</td></tr>
+    {% endfor %}
+    </table>
+    </div>
+    </div>
+    {% endif %}
+
+    {% if primary_videos and perms.dictionary.change_gloss %}
+    <div class="panel panel-default panel-default-light">
+
+    <div class="panel-heading" data-toggle="collapse" data-target="#primary_videos">{% trans "Primary Video Files" %} ({{primary_videos|length}})</div>
+    <div class="panel-body collapse" id="primary_videos">
+    <table class='table table-condensed table-condensed-light' style="width:100%;">
+    <tr><td>{% trans "Object Id" %}</td><td>{% trans "Version" %}</td><td>{% trans "Relative Path" %}</td><td>{% trans "Checksum" %}</td></tr>
+    {% for object_id, version, relative_path, checksum in primary_videos %}
+    <tr><td>{{object_id}}</td><td>{{version}}</td><td>{{relative_path}}</td><td>{{checksum}}</td></tr>
+    {% endfor %}
+    </table>
+    </div>
+    </div>
+    {% endif %}
+
+    {% if backup_videos and perms.dictionary.change_gloss %}
+    <div class="panel panel-default panel-default-light">
+
+    <div class="panel-heading" data-toggle="collapse" data-target="#backup_videos">{% trans "Backup Video Files" %} ({{backup_videos|length}})</div>
+    <div class="panel-body collapse" id="backup_videos">
+         {% if perms.dictionary.add_gloss %}
+         <p>{% blocktrans %}
+            Here you see the backup video objects. It is possible that the version numbers are not sequential.
+            These can be renumbered. The checksum is also shown to see whether a video is a duplicate of the primary video. You can remove these.
+            {% endblocktrans %}
+         </p>
+         <button id='renumber_btn' class='btn btn-primary copy-button' data-toggle='modal' data-target='#renumber_modal'>{% trans "Renumber Backups" %}</button>
+
+          <div class="modal fade" id="renumber_modal" role="dialog" aria-labelledby="#modalRenumber" aria-hidden="true">
+             <div class="modal-dialog modal-lg">
+                <div class="modal-content">
+                    <div class='modal-header'>
+                        <h2 id='modalRenumber'>{% trans "Renumber Backup Videos" %}</h2>
+                    </div>
+                    <div class='modal-body'>
+                        <p>{% trans "Renumber the version numbers of the backup videos." %}</p>
+                     </div>
+                  <form id="renumber" method='get'>
+                      {% csrf_token %}
+                      <input type='hidden' name='operation' value='Renumber'>
+                      <input type='hidden' name='value' value='confirmed'>
+                      <div class="modal-footer">
+                        <button type="button" class="btn btn-default btn-default-light" data-dismiss="modal">{% trans "Cancel" %}</button>
+                        <input type="submit" class="btn btn-primary" value='{% trans "Confirm Renumber" %}'>
+                      </div>
+                  </form>
+
+                </div>
+              </div>
+         </div>
+         <button id='backups_btn' class='btn btn-primary copy-button' data-toggle='modal' data-target='#backups_modal'>{% trans "Remove Backups" %}</button>
+
+          <div class="modal fade" id="backups_modal" role="dialog" aria-labelledby="#modalBackups" aria-hidden="true">
+             <div class="modal-dialog modal-lg">
+                <div class="modal-content">
+                    <div class='modal-header'>
+                        <h2 id='modalBackups'>{% trans "Remove Backup Videos" %}</h2>
+                    </div>
+                    <div class='modal-body'>
+                        <p>{% trans "Remove the backup videos." %}</p>
+                        <p>{% trans "If you wish to keep specific files, you can do this in the Gloss Videos Admin." %}</p>
+                     </div>
+                  <form id="backups" method='get'>
+                      {% csrf_token %}
+                      <input type='hidden' name='operation' value='Backups'>
+                      <input type='hidden' name='value' value='confirmed'>
+                      <div class="modal-footer">
+                        <button type="button" class="btn btn-default btn-default-light" data-dismiss="modal">{% trans "Cancel" %}</button>
+                        <input type="submit" class="btn btn-primary" value='{% trans "Confirm Remove" %}'>
+                      </div>
+                  </form>
+
+                </div>
+              </div>
+         </div>
+        {% endif %}
+    <table class='table table-condensed table-condensed-light' style="width:100%;">
+    <tr><td>{% translate "Object Id" %}</td><td>{% translate "Version" %}</td><td>{% translate "Relative Path" %}</td><td>{% trans "Checksum" %}</td></tr>
+    {% for object_id, version, relative_path, checksum in backup_videos %}
+    <tr><td>{{object_id}}</td><td>{{version}}</td><td>{{relative_path}}</td><td>{{checksum}}</td></tr>
+    {% endfor %}
+    </table>
+    </div>
+    </div>
+    {% endif %}
+
+    {% if wrongly_named_videos and perms.dictionary.change_gloss %}
+    <div class="panel panel-default panel-default-light">
+
+    <div class="panel-heading" data-toggle="collapse" data-target="#wrongly_named">{% trans "Incorrect Filenames" %} ({{wrongly_named_videos|length}})</div>
+    <div class="panel-body collapse" id="wrongly_named">
+         {% if perms.dictionary.add_gloss %}
+         <p>{% blocktrans %}
+            Here you see the video objects that link to a file with an incorrect filename.
+            These can be deleted.
+            {% endblocktrans %}
+         </p>
+         <button id='remove_btn' class='btn btn-primary copy-button' data-toggle='modal' data-target='#remove_modal'>{% trans "Remove Obsolete Files" %}</button>
+
+          <div class="modal fade" id="remove_modal" role="dialog" aria-labelledby="#modalRenumber" aria-hidden="true">
+             <div class="modal-dialog modal-lg">
+                <div class="modal-content">
+                    <div class='modal-header'>
+                        <h2 id='modalRemove'>{% trans "Remove Obsolete Files" %}</h2>
+                    </div>
+                    <div class='modal-body'>
+                        <p>{% trans "Remove the archived objects with an obsolete filename." %}</p>
+                     </div>
+                  <form id="remove" method='get'>
+                      {% csrf_token %}
+                      <input type='hidden' name='operation' value='Obsolete'>
+                      <input type='hidden' name='value' value='confirmed'>
+                      <div class="modal-footer">
+                        <button type="button" class="btn btn-default btn-default-light" data-dismiss="modal">{% trans "Cancel" %}</button>
+                        <input type="submit" class="btn btn-primary" value='{% trans "Confirm Remove" %}'>
+                      </div>
+                  </form>
+
+                </div>
+              </div>
+         </div>
+        {% endif %}
+
+    <table class='table table-condensed table-condensed-light' style="width:100%;">
+    <tr><td>{% translate "Object Id" %}</td><td>{% translate "Version" %}</td><td>{% trans "Perspective" %}</td><td>{% trans "NME" %}</td><td>{% translate "Relative Path" %}</td><td>{% trans "Checksum" %}</td></tr>
+    {% for object_id, version, perspective, nme, relative_path, checksum in wrongly_named_videos %}
+    <tr><td>{{object_id}}</td><td>{{version}}</td><td>{{perspective}}</td><td>{{nme}}</td><td>{{relative_path}}</td><td>{{checksum}}</td></tr>
+    {% endfor %}
+    </table>
+    </div>
+    </div>
+    {% endif %}
+    </div>
+    </div>
+    </div>
+    {% endif %}
 </div>
-
-</div>
-
-
 {% endblock %}
