@@ -11,9 +11,9 @@ your crontab::
 
 See the method ``delete_expired_users`` of the ``RegistrationManager``
 class in ``registration/models.py`` for further documentation.
-
 """
+from signbank.registration.models import RegistrationProfile
+
 
 if __name__ == '__main__':
-    from registration.models import RegistrationProfile
     RegistrationProfile.objects.delete_expired_users()
