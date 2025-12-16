@@ -92,6 +92,120 @@ def move_file_to_prullenmand(filepath, relative_path):
         os.remove(str(filepath))
 
 
+def find_dangling_video_files(gloss):
+    dataset_dir = gloss.lemma.dataset.acronym
+    two_letter_dir = get_two_letter_dir(gloss.idgloss)
+    filename_prefix = f'{gloss.idgloss}-{gloss.id}'
+    chosen_path = str(os.path.join(WRITABLE_FOLDER, GLOSS_VIDEO_DIRECTORY, dataset_dir, two_letter_dir))
+    file_names = []
+    for gloss_video in GlossVideo.objects.filter(gloss=gloss).iterator():
+        file_names.append(gloss_video.videofile.name.split("/")[-1])
+    files_without_glossvideo_object = []
+    for subdir, dirs, files in os.walk(chosen_path):
+        for file in files:
+            if file.startswith(filename_prefix) and file not in file_names:
+                files_without_glossvideo_object.append(f'{GLOSS_VIDEO_DIRECTORY}/{dataset_dir}/{two_letter_dir}/{file}')
+    return files_without_glossvideo_object
+
+
+def has_correct_filename(videofile, nmevideo, perspective, version):
+    if not videofile:
+        return False
+    video_file_full_path = Path(WRITABLE_FOLDER, videofile)
+    if nmevideo is not None:
+        filename_is_correct = filename_matches_nme(video_file_full_path) is not None
+        return filename_is_correct
+    elif perspective is not None:
+        filename_is_correct = filename_matches_perspective(video_file_full_path) is not None
+        return filename_is_correct
+    elif version > 0:
+        filename_is_correct = filename_matches_backup_video(video_file_full_path) is not None
+        return filename_is_correct
+    else:
+        filename_is_correct = filename_matches_video(video_file_full_path) is not None
+        return filename_is_correct
+
+
+def wrong_filename_filter(glossvideos):
+    filenames = []
+    queryset_tuples = glossvideos.values('id', 'videofile', 'glossvideonme', 'glossvideoperspective', 'version')
+    for qv in queryset_tuples:
+       if not has_correct_filename(qv['videofile'],
+                                   qv['glossvideonme'],
+                                   qv['glossvideoperspective'], qv['version']):
+           filenames.append(qv['id'])
+    return filenames
+
+
+def delete_glossvideo_objects_and_files(gloss):
+    """
+    This method removes wrongly named video files that do not match the correct naming
+    If the file points to the primary video, its name is erased prior to deleting the object
+    This prevents deleting the primary video file that was wrongly linked to an object during the delete class method
+    """
+    all_gloss_video_objects = GlossVideo.objects.filter(gloss=gloss).distinct()
+    gloss_video_ids = wrong_filename_filter(all_gloss_video_objects)
+    gloss_video_objects = GlossVideo.objects.filter(id__in=gloss_video_ids)
+    for glossvideo in gloss_video_objects:
+        relative_path = str(glossvideo.videofile)
+        if not relative_path:
+            glossvideo.delete()
+            continue
+
+        video_file_full_path = os.path.join(WRITABLE_FOLDER, relative_path)
+        if os.path.exists(video_file_full_path):
+            # construct the primary video filename and make sure a file to delete does not point to it
+            _, extension = os.path.splitext(video_file_full_path)
+            basename = os.path.basename(video_file_full_path)
+            primary_video_filename = f'{gloss.idgloss}-{gloss.id}{extension}'
+            if basename == primary_video_filename:
+                # this gloss video object points to the primary video, just erase the link
+                glossvideo.videofile.name = ""
+                glossvideo.save()
+            else:
+                os.remove(video_file_full_path)
+        glossvideo.delete()
+
+
+def renumber_backup_videos(gloss):
+    lookup_backup_files = GlossVideo.objects.filter(gloss=gloss,
+                                                    glossvideonme=None,
+                                                    glossvideoperspective=None,
+                                                    version__gt=0).order_by('version', 'id')
+    # enumerate over the backup videos and give them new version numbers
+    for inx, video in enumerate(lookup_backup_files, 1):
+        if inx == video.version:
+            continue
+        video.version = inx
+        video.save()
+
+
+def remove_backup_videos(gloss):
+    backup_files = GlossVideo.objects.filter(gloss=gloss,
+                                                    glossvideonme=None,
+                                                    glossvideoperspective=None,
+                                                    version__gt=0).order_by('version', 'id')
+    for glossvideo in backup_files:
+        relative_path = str(glossvideo.videofile)
+        if not relative_path:
+            glossvideo.delete()
+            continue
+
+        video_file_full_path = os.path.join(WRITABLE_FOLDER, relative_path)
+        if os.path.exists(video_file_full_path):
+            # construct the primary video filename and make sure the object does not point to it
+            _, extension = os.path.splitext(video_file_full_path)
+            basename = os.path.basename(video_file_full_path)
+            primary_video_filename = f'{gloss.idgloss}-{gloss.id}{extension}'
+            if basename == primary_video_filename:
+                # this gloss video object points to the primary video, just erase the link
+                glossvideo.videofile.name = ""
+                glossvideo.save()
+            else:
+                os.remove(video_file_full_path)
+        glossvideo.delete()
+
+
 def flipped_backup_filename(gloss, glossvideo, extension):
     idgloss = gloss.idgloss
     desired_filename_without_extension = f'{idgloss}-{gloss.pk}'
@@ -395,7 +509,7 @@ class ExampleVideo(models.Model):
         """Ensure that the video file is an h264 format
         video, convert it if necessary"""
 
-        if not os.path.exists(self.videofile.path):
+        if not self.videofile or not self.videofile.path or not os.path.exists(self.videofile.path):
             return
         if self.version > 0:
             return
@@ -569,7 +683,7 @@ class AnnotatedVideo(models.Model):
     def ensure_mp4(self):
         """Ensure that the video file is an h264 format
         video, convert it if necessary"""
-        if not os.path.exists(self.videofile.path):
+        if not self.videofile or not self.videofile.path or not os.path.exists(self.videofile.path):
             return
         if self.version > 0:
             return
@@ -762,7 +876,7 @@ class GlossVideo(models.Model):
         """Ensure that the video file is an h264 format
         video, convert it if necessary"""
 
-        if not os.path.exists(self.videofile.path):
+        if not self.videofile or not self.videofile.path or not os.path.exists(self.videofile.path):
             return
         if self.version > 0:
             return
@@ -1038,7 +1152,7 @@ class GlossVideoNME(GlossVideo):
         # create a temporary copy in the new format
         # then move it into place
 
-        if not os.path.exists(self.videofile.path):
+        if not self.videofile or not self.videofile.path or not os.path.exists(self.videofile.path):
             return
 
         video_format_extension = detect_video_file_extension(self.videofile.path)
