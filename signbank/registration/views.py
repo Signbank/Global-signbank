@@ -1,7 +1,6 @@
 """
 Views which allow users to create and activate accounts.
 """
-import json
 from datetime import date
 
 from django.conf import settings
@@ -23,353 +22,242 @@ from guardian.shortcuts import assign_perm, get_user_perms
 
 from signbank.registration.models import RegistrationProfile
 from signbank.registration.forms import RegistrationForm, SignbankAuthenticationForm
-from signbank.dictionary.models import Dataset, UserProfile, SearchHistory, Affiliation, AffiliatedUser, SignbankAPIToken
+from signbank.dictionary.models import Dataset, UserProfile, SearchHistory, AffiliatedUser, SignbankAPIToken
 from signbank.dictionary.context_data import get_selected_datasets
 from signbank.tools import get_users_without_dataset
 from signbank.api_token import generate_auth_token, hash_token
 
 
 def activate(request, activation_key, template_name='registration/activate.html'):
-    """
-    Activates a ``User``'s account, if their key is valid and hasn't
-    expired.
-    
-    By default, uses the template ``registration/activate.html``; to
-    change this, pass the name of a template as the keyword argument
-    ``template_name``.
-    
-    Context:
-    
-        account
-            The ``User`` object corresponding to the account, if the
-            activation was successful. ``False`` if the activation was
-            not successful.
-    
-        expiration_days
-            The number of days for which activation keys stay valid
-            after registration.
-    
-    Template:
-    
-        registration/activate.html or ``template_name`` keyword
-        argument.
-    
-    """
-    activation_key = activation_key.lower() # Normalize before trying anything with it.
+    """Activates a ``User``'s account, if their key is valid and hasn't expired."""
+    activation_key = activation_key.lower()
     account = RegistrationProfile.objects.activate_user(activation_key)
     account.is_active = True
     account.save()
-    return render(request, template_name,
-                              { 'account': account,
-                                'expiration_days': settings.ACCOUNT_ACTIVATION_DAYS })
+    return render(request, template_name, {'account': account, 'expiration_days': settings.ACCOUNT_ACTIVATION_DAYS})
+
 
 def register(request, success_url=settings.PREFIX_URL + '/accounts/register/complete/',
              form_class=RegistrationForm,
              template_name='registration/registration_form.html'):
-    """
-    Allows a new user to register an account.
-    
-    Following successful registration, redirects to either
-    ``/accounts/register/complete/`` or, if supplied, the URL
-    specified in the keyword argument ``success_url``.
-    
-    By default, ``registration.forms.RegistrationForm`` will be used
-    as the registration form; to change this, pass a different form
-    class as the ``form_class`` keyword argument. The form class you
-    specify must have a method ``save`` which will create and return
-    the new ``User``, and that method must accept the keyword argument
-    ``profile_callback`` (see below).
-    
-    To enable creation of a site-specific user profile object for the
-    new user, pass a function which will create the profile object as
-    the keyword argument ``profile_callback``. See
-    ``RegistrationManager.create_inactive_user`` in the file
-    ``models.py`` for details on how to write this function.
-    
-    By default, uses the template
-    ``registration/registration_form.html``; to change this, pass the
-    name of a template as the keyword argument ``template_name``.
-    
-    Context:
-    
-        form
-            The registration form.
-    
-    Template:
-    
-        registration/registration_form.html or ``template_name``
-        keyword argument.
-    
-    """
-    if hasattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS') and settings.SHOW_DATASET_INTERFACE_OPTIONS:
-        show_dataset_interface = settings.SHOW_DATASET_INTERFACE_OPTIONS
-    else:
-        show_dataset_interface = False
+    """Allows a new user to register an account."""
+    show_dataset_interface = getattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS', False)
 
-    if request.method == 'POST':
-        form = form_class(data=request.POST)
-        if form.is_valid():
-            new_user = form.save()
-            request.session['username'] = new_user.username
-            request.session['first_name'] = new_user.first_name
-            request.session['last_name'] = new_user.last_name
-            request.session['email'] = new_user.email
-            groups_of_user = [ g.name.replace('_',' ') for g in new_user.groups.all() ]
-            request.session['groups'] = groups_of_user
+    if request.method != 'POST':
+        context = {'form': form_class(), 'SHOW_DATASET_INTERFACE_OPTIONS': show_dataset_interface}
+        return render(request, template_name, context)
 
-            if hasattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS') and settings.SHOW_DATASET_INTERFACE_OPTIONS:
-                list_of_datasets = request.POST.getlist('dataset[]')
-                if '' in list_of_datasets:
-                    list_of_datasets.remove('')
+    form = form_class(data=request.POST)
+    if not form.is_valid():
+        messages.add_message(request, messages.ERROR, _("Error processing your request."))
+        context = {"form": form, "SHOW_DATASET_INTERFACE_OPTIONS": show_dataset_interface}
+        return render(request, template_name, context)
 
-                group_manager = Group.objects.get(name='Dataset_Manager')
+    new_user = form.save()
+    add_user_data_to_session(new_user, request)
 
-                motivation = request.POST.get('motivation_for_use', '')  # motivation is a required field in the form
+    if not show_dataset_interface:
+        return HttpResponseRedirect(success_url)
 
-                # send email to each of the dataset owners
-                current_site = Site.objects.get_current()
+    send_mail_to_dataset_owners(new_user, request)
 
-                for dataset_name in list_of_datasets:
-                    # the datasets are selected via a pulldown list, they should exist
-                    dataset_obj = Dataset.objects.get(name=dataset_name)
-
-                    # Notify the dataset owners about (accepted) request for access
-                    owners_of_dataset = dataset_obj.owners.all()
-
-                    if dataset_obj.is_public:
-
-                        # Give user access to view the database
-                        assign_perm('view_dataset', new_user, dataset_obj)
-
-                        for owner in owners_of_dataset:
-
-                            groups_of_user = owner.groups.all()
-                            if not group_manager in groups_of_user:
-                                # this owner can't manage users
-                                continue
-
-                            subject = render_to_string('registration/dataset_to_owner_new_user_given_access_subject.txt',
-                                                    context={'dataset': dataset_name,
-                                                                'site': current_site})
-                            # Email subject *must not* contain newlines
-                            subject = ''.join(subject.splitlines())
-
-                            message = render_to_string('registration/dataset_to_owner_new_user_given_access.txt',
-                                                    context={'dataset': dataset_name,
-                                                                'new_user_username': new_user.username,
-                                                                'new_user_firstname': new_user.first_name,
-                                                                'new_user_lastname': new_user.last_name,
-                                                                'new_user_email': new_user.email,
-                                                                'motivation': motivation,
-                                                                'site': current_site})
-
-                            # for debug purposes on local machine
-                            if settings.DEBUG_EMAILS_ON:
-                                print('owner of dataset: ', owner.username, ' with email: ', owner.email)
-                                print('message: ', message)
-                                print('setting: ', settings.DEFAULT_FROM_EMAIL)
-
-                            send_mail(subject, message, settings.DEFAULT_FROM_EMAIL, [owner.email])
-
-                    else:
-
-                        for owner in owners_of_dataset:
-
-                            groups_of_user = owner.groups.all()
-                            if not group_manager in groups_of_user:
-                                # this owner can't manage users
-                                continue
-
-                            current_site = Site.objects.get_current()
-
-                            subject = render_to_string('registration/dataset_to_owner_user_requested_access_subject.txt',
-                                                    context={'dataset': dataset_name,
-                                                                'site': current_site})
-                            # Email subject *must not* contain newlines
-                            subject = ''.join(subject.splitlines())
-
-                            message = render_to_string('registration/dataset_to_owner_user_requested_access.txt',
-                                                    context={'dataset': dataset_name,
-                                                                'new_user_username': new_user.username,
-                                                                'new_user_firstname': new_user.first_name,
-                                                                'new_user_lastname': new_user.last_name,
-                                                                'new_user_email': new_user.email,
-                                                                'motivation': motivation,
-                                                                'site': current_site})
-
-                            # for debug purposes on local machine
-                            if settings.DEBUG_EMAILS_ON:
-                                print('owner of dataset: ', owner.username, ' with email: ', owner.email)
-                                print('message: ', message)
-                                print('setting: ', settings.DEFAULT_FROM_EMAIL)
-
-                            send_mail(subject, message, settings.DEFAULT_FROM_EMAIL, [owner.email])
+    return HttpResponseRedirect(success_url)
 
 
-                request.session['requested_datasets'] = list_of_datasets
-            return HttpResponseRedirect(success_url)
+def send_mail_to_dataset_owners(new_user: User, request):
+    """Sends emails to dataset owners [helper for 'register' view]"""
+    group_manager = Group.objects.get(name='Dataset_Manager')
+    motivation = request.POST.get('motivation_for_use', '')
+    current_site = Site.objects.get_current()
+
+    list_of_datasets = [dataset for dataset in request.POST.getlist("dataset[]") if dataset != ""]
+    request.session["requested_datasets"] = list_of_datasets
+    for dataset_name in list_of_datasets:
+        dataset_obj = Dataset.objects.get(name=dataset_name)
+        if dataset_obj.is_public:
+            assign_perm("view_dataset", new_user, dataset_obj)
+            template_name_subject = 'registration/dataset_to_owner_new_user_given_access_subject.txt'
+            template_name_message = 'registration/dataset_to_owner_new_user_given_access.txt'
         else:
-            # error messages
-            messages.add_message(request, messages.ERROR, _('Error processing your request.'))
-            # for ff in form.visible_fields():
-            #     if ff.errors:
-            #         print('form error in field ', ff.name, ': ', ff.errors)
-            #         messages.add_message(request, messages.ERROR, ff.errors)
+            template_name_subject = 'registration/dataset_to_owner_user_requested_access_subject.txt'
+            template_name_message = 'registration/dataset_to_owner_user_requested_access.txt'
 
-            # create a new empty form, this deletes the erroneous fields
-            # form = form_class()
+        for owner in dataset_obj.owners.all():
+            if group_manager not in owner.groups.all():
+                continue
+
+            subject = render_to_string(template_name_subject, context={'dataset': dataset_name, 'site': current_site})
+            subject = ''.join(subject.splitlines())
+            message_context = {
+                'dataset': dataset_name,
+                'new_user_username': new_user.username,
+                'new_user_firstname': new_user.first_name,
+                'new_user_lastname': new_user.last_name,
+                'new_user_email': new_user.email,
+                'motivation': motivation,
+                'site': current_site
+            }
+            message = render_to_string(template_name_message, context=message_context)
+            send_mail_with_debug(message, owner, subject)
+
+
+def send_mail_with_debug(message, owner, subject):
+    """Send an email or, if DEBUG_EMAILS_ON, print info"""
+    if not settings.DEBUG_EMAILS_ON:
+        send_mail(subject, message, settings.DEFAULT_FROM_EMAIL, [owner.email])
     else:
-        # this insures that a preselected dataset is available if we got here from Dataset Details
-        form = form_class()
-    return render(request,template_name, {'form': form,
-                                          'SHOW_DATASET_INTERFACE_OPTIONS': show_dataset_interface})
+        print('owner of dataset: ', owner.username, ' with email: ', owner.email)
+        print('message: ', message)
+        print('setting: ', settings.DEFAULT_FROM_EMAIL)
 
-# a copy of the login view since we need to change the form to allow longer
-# userids (> 30 chars) since we're using email addresses
 
-def mylogin(request, template_name='registration/login.html', redirect_field_name='/signs/recently_added/'):
+def add_user_data_to_session(new_user: User, request):
+    """Populates the request.session with data from new_user [helper for 'register' view]"""
+    request.session['username'] = new_user.username
+    request.session['first_name'] = new_user.first_name
+    request.session['last_name'] = new_user.last_name
+    request.session['email'] = new_user.email
+    groups_of_user = [g.name.replace('_', ' ') for g in new_user.groups.all()]
+    request.session['groups'] = groups_of_user
+
+
+def signbank_login(request, template_name='registration/login.html'):
     """Displays the login form and handles the login action."""
 
-    redirect_to = request.GET[REDIRECT_FIELD_NAME] if REDIRECT_FIELD_NAME in request.GET else ''
-    error_message = ''
-
-    if request.method == "POST":
-        if REDIRECT_FIELD_NAME in request.POST:
-            redirect_to = request.POST[REDIRECT_FIELD_NAME]
-
-        form = SignbankAuthenticationForm(data=request.POST)
-        if form.is_valid():
-
-            # Count the number of logins
-            profile = form.get_user().user_profile_user
-            profile.number_of_logins += 1
-            profile.save()
-
-            # Expiry date cannot be in the past
-            if profile.expiry_date is not None and date.today() > profile.expiry_date:
-                form = SignbankAuthenticationForm(request)
-                error_message = _('This account has expired. Please contact w.stoop@let.ru.nl.')
-
-            else:
-                # Light security check -- make sure redirect_to isn't garbage.
-                if not redirect_to or '//' in redirect_to or ' ' in redirect_to:
-                    redirect_to = settings.LOGIN_REDIRECT_URL
-                login(request, form.get_user())
-                if request.session.test_cookie_worked():
-                    request.session.delete_test_cookie()
-
-                # For logging in API clients
-                if "api" in request.GET and request.GET['api'] == 'yes':
-                    return HttpResponse(json.dumps({'success': 'true'}), content_type='application/json')
-
-                return HttpResponseRedirect(redirect_to)
-        else:
-            if "api" in request.GET and request.GET['api'] == 'yes':
-                    return HttpResponse(json.dumps({'success': 'false'}), content_type='application/json')
-            error_message = _('The username or password is incorrect.')
-
-    else:
-        form = SignbankAuthenticationForm(request)
-
-    request.session.set_test_cookie()
-    try:
-        if Site._meta.installed:
-            current_site = Site.objects.get_current()
-    except AttributeError:
-        current_site = RequestSite(request)
-
     # For logging in API clients
-    if request.method == "GET" and "api" in request.GET and request.GET['api'] == 'yes':
+    if request.method == "GET" and request.GET.get('api') == 'yes':
         token = get_token(request)
-        return HttpResponse(json.dumps({'csrfmiddlewaretoken': token}), content_type='application/json')
+        request.session.set_test_cookie()
+        return JsonResponse({'csrfmiddlewaretoken': token})
 
-    return render(request,template_name, {
-        'form': form,
+    redirect_to = request.GET.get(REDIRECT_FIELD_NAME, '')
+    current_site = get_current_site(request)
+
+    context = {
         REDIRECT_FIELD_NAME: settings.URL+redirect_to,
         'site': current_site,
         'site_name': current_site.name,
         'allow_registration': settings.ALLOW_REGISTRATION,
-        'error_message': error_message})
-mylogin = never_cache(mylogin)
+        'error_message': ''
+    }
+
+    if request.method != 'POST':
+        context['form'] = SignbankAuthenticationForm(request)
+        return render(request, template_name, context)
+
+    if REDIRECT_FIELD_NAME in request.POST:
+        context[REDIRECT_FIELD_NAME] = redirect_to = settings.URL+request.POST[REDIRECT_FIELD_NAME]
+
+    form = SignbankAuthenticationForm(data=request.POST)
+    if not form.is_valid():
+        if request.GET.get('api') == 'yes':
+            return JsonResponse({'success': 'false'})
+        context['error_message'] = _('The username or password is incorrect.')
+        request.session.set_test_cookie()
+        return render(request, template_name, context)
+
+    profile = form.get_user().user_profile_user
+    profile.number_of_logins += 1
+    profile.save()
+
+    if profile.expiry_date is not None and date.today() > profile.expiry_date:
+        context['form'] = SignbankAuthenticationForm(request)
+        context['error_message'] = _('This account has expired. Please contact w.stoop@let.ru.nl.')
+        request.session.set_test_cookie()
+        return render(request, template_name, context)
+
+    login(request, form.get_user())
+
+    if request.session.test_cookie_worked():
+        request.session.delete_test_cookie()
+
+    if request.GET.get('api') == 'yes':
+        return JsonResponse({'success': 'true'})
+
+    if not redirect_to or '//' in redirect_to or ' ' in redirect_to:
+        redirect_to = settings.LOGIN_REDIRECT_URL
+    return HttpResponseRedirect(redirect_to)
+
+
+signbank_login = never_cache(signbank_login)
+
+
+def get_current_site(request) -> Site:
+    try:
+        if Site._meta.installed:
+            return Site.objects.get_current()
+    except AttributeError:
+        return RequestSite(request)
+    return None
 
 
 def users_without_dataset(request):
+    """Show users that are not linked to any dataset"""
     if not request.user.is_superuser:
         return HttpResponse('Unauthorized', status=401)
 
     main_dataset = Dataset.objects.get(pk=settings.DEFAULT_DATASET_PK)
 
-    if len(request.POST) > 0:
-        users_with_access = []
-        for user in request.POST.keys():
+    context = {
+        'users_without_dataset': get_users_without_dataset(),
+        'main_dataset_name': main_dataset.name,
+        'alert_success': None
+    }
 
-            if not 'user' in user:
-                continue
+    if not request.POST:
+        return render(request, "users_without_dataset.html", context)
 
-            user = User.objects.get(pk=int(user.split('_')[-1]))
-            assign_perm('view_dataset', user, main_dataset)
+    users_with_access = []
+    user_keys = (user for user in request.POST.keys() if 'user' in user)
+    for user in user_keys:
+        user = User.objects.get(pk=int(user.split('_')[-1]))
+        assign_perm('view_dataset', user, main_dataset)
+        users_with_access.append(user.first_name + ' ' + user.last_name)
 
-            users_with_access.append(user.first_name + ' ' + user.last_name)
-
-        alert_success = ', '.join(users_with_access)
-    else:
-        alert_success = None
-
-    return render(request, 'users_without_dataset.html', {'users_without_dataset': get_users_without_dataset(),
-                                                          'main_dataset_name': main_dataset.name,
-                                                          'alert_success': alert_success})
+    context['alert_success'] = ', '.join(users_with_access)
+    return render(request, 'users_without_dataset.html', context)
 
 
 def user_profile(request):
+    """Show profile info to user"""
+    user = request.user
+    profile = UserProfile.objects.get(user=user)
+    expiry = profile.expiry_date
+    delta = expiry - date.today() if expiry else None
 
-    user_object = User.objects.get(username=request.user)
-    user_profile = UserProfile.objects.get(user=user_object)
-    expiry = getattr(user_profile, 'expiry_date')
-    today = date.today()
-    if expiry:
-        delta = expiry - today
-    else:
-        delta = None
     selected_datasets = get_selected_datasets(request)
-    view_permit_datasets = []
-    for dataset in Dataset.objects.all():
-        permissions_for_dataset = get_user_perms(request.user, dataset)
-        if 'view_dataset' in permissions_for_dataset:
-            view_permit_datasets.append(dataset)
-    change_permit_datasets = []
-    for dataset_user_can_view in view_permit_datasets:
-        if 'change_dataset' in get_user_perms(request.user, dataset_user_can_view):
-            change_permit_datasets.append(dataset_user_can_view)
-    user_has_queries = SearchHistory.objects.filter(user=request.user).count()
-    user_can_change_glosses = len(change_permit_datasets) > 0
-    possible_affiliations = [aff for aff in Affiliation.objects.all()]
-    user_affiliation = [au for au in AffiliatedUser.objects.filter(user=request.user)]
-    user_has_api_tokens = user_object.tokens.all().count()
-    user_api_tokens = [str(token) for token in user_object.tokens.all()]
-    return render(request, 'user_profile.html', {'selected_datasets': selected_datasets,
-                                                 'view_permit_datasets': view_permit_datasets,
-                                                 'change_permit_datasets': change_permit_datasets,
-                                                 'user_can_change_glosses': user_can_change_glosses,
-                                                 'user_has_queries': user_has_queries,
-                                                 'possible_affiliations': possible_affiliations,
-                                                 'user_affiliation': user_affiliation,
-                                                 'user_has_api_tokens': user_has_api_tokens,
-                                                 'user_api_tokens': user_api_tokens,
-                                                 'SHOW_DATASET_INTERFACE_OPTIONS': settings.SHOW_DATASET_INTERFACE_OPTIONS,
-                                                 'expiry': expiry,
-                                                 'delta': delta})
+    view_permit_datasets = [
+        dataset for dataset in Dataset.objects.all()
+        if 'view_dataset' in get_user_perms(user, dataset)
+    ]
+    change_permit_datasets = [
+        dataset for dataset in view_permit_datasets
+        if 'change_dataset' in get_user_perms(user, dataset)
+    ]
+
+    user_has_queries = SearchHistory.objects.filter(user=user).exists()
+    user_affiliation = AffiliatedUser.objects.filter(user=user)
+    user_api_tokens = user.tokens.all()
+    context = {
+        'selected_datasets': selected_datasets,
+        'view_permit_datasets': view_permit_datasets,
+        'change_permit_datasets': change_permit_datasets,
+        'user_has_queries': user_has_queries,
+        'user_affiliation': user_affiliation,
+        'user_api_tokens': user_api_tokens,
+        'SHOW_DATASET_INTERFACE_OPTIONS': settings.SHOW_DATASET_INTERFACE_OPTIONS,
+        'expiry': expiry,
+        'delta': delta
+    }
+    return render(request, 'user_profile.html', context)
 
 
 def auth_token(request):
-
-    user_object = User.objects.get(username=request.user)
-
-    # generate a token and create a SignbankAPIToken for it
+    """Returns new authentication token"""
+    user = request.user
     new_token = generate_auth_token()
     hashed_token = hash_token(new_token)
-    signbank_Token = SignbankAPIToken.objects.create(signbank_user=user_object,
-                                                     api_token=hashed_token)
-    signbank_Token.save()
+    SignbankAPIToken.objects.create(signbank_user=user, api_token=hashed_token)
     return JsonResponse({'new_token': new_token})
 
 

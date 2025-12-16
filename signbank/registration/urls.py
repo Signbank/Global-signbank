@@ -9,8 +9,11 @@ from django.views.generic import TemplateView
 from django.contrib.auth import views as auth_views
 from django.urls import re_path
 
-from signbank.registration.views import activate, register, mylogin, users_without_dataset, user_profile, auth_token, \
+from signbank.registration.views import activate, register, signbank_login, users_without_dataset, user_profile, auth_token, \
     SignbankPasswordResetView, SignbankPasswordResetConfirmView
+
+
+app_name = 'registration'
 
 
 urlpatterns = [
@@ -23,7 +26,7 @@ urlpatterns = [
     # [a-fA-F0-9]+ because a bad activation key should still get to the view;
     # that way it can return a sensible "invalid key" message instead of a confusing 404.
     re_path(r'^activate/(?P<activation_key>\w+)/$', activate, name='registration_activate'),
-    re_path(r'^login/$', mylogin, name='login'),
+    re_path(r'^login/$', signbank_login, name='login'),
 
     re_path(r'^password/change/$', auth_views.PasswordChangeView.as_view(), name='auth_password_change'),
     re_path(r'^password/change/done/$', auth_views.PasswordChangeDoneView.as_view(),
