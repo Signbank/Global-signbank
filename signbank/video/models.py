@@ -217,17 +217,17 @@ def flipped_backup_filename(gloss, glossvideo, extension):
     return desired_filename
 
 
-def build_filename(gloss, glossvideo, extension, include_dirs=False, flipped=False):
+def build_glossvideo_filename(glossvideo, extension, flipped=False):
+    """Builds file name for a GlossVideo video file"""
+    idgloss = glossvideo.gloss.idgloss
+    gloss_pk = glossvideo.gloss_id
+    glossvideo_pk = glossvideo.pk
+
     if flipped:
-        name = f'{gloss.idgloss}-{gloss.pk}.bak{glossvideo.pk}{extension}'
-    elif glossvideo.version > 0:
-        name = f'{gloss.idgloss}-{gloss.pk}{extension}.bak{glossvideo.pk}'
-    else:
-        name = f'{gloss.idgloss}-{gloss.pk}{extension}'
-    if include_dirs:
-        return get_two_letter_dir(gloss.idgloss), gloss.lemma.dataset.acronym, name
-    else:
-        return name
+        return f'{idgloss}-{gloss_pk}.bak{glossvideo_pk}{extension}'
+    if glossvideo.version > 0:
+        return f'{idgloss}-{gloss_pk}{extension}.bak{glossvideo_pk}'
+    return f'{idgloss}-{gloss_pk}{extension}'
 
 
 PERSPECTIVE_CHOICES = (('left', 'Left'),
