@@ -32,7 +32,7 @@ class CommunicationAdminForm(forms.ModelForm):
 
     class Meta:
         model = Communication
-        fields = ['label', 'template_subject']
+        fields = ['label', 'subject', 'template_subject', 'text', 'template_text']
 
     def template_context(self):
         # template context with strings
@@ -102,13 +102,14 @@ class CommunicationAdmin(admin.ModelAdmin):
         template = Template(obj.subject)
         highlight = template.render(self.template_context())
         return highlight
+    subject_help.short_description = "Subject (rendered)"
 
     admin.display(empty_value="EMPTY")
     def text_help(self, obj):
         template = Template(obj.text)
         highlight = template.render(self.template_context())
         return highlight
-
+    text_help.short_description = "Text (rendered)"
 
 admin.site.register(Attachment, AttachmentAdmin)
 admin.site.register(Communication, CommunicationAdmin)
