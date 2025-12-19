@@ -1,0 +1,47 @@
+[
+  {
+    "model": "attachments.communication",
+    "pk": 0,
+    "fields": {
+      "label": "activation_email",
+      "subject": "Request for account at {{ signbank_name }}",
+      "text": "Someone, hopefully you, requested a new account at {{ signbank_name }}\nusing this email address. If it was you, welcome to {{ signbank_name }}.\nClick the link below or copy and paste it into your web browser's address bar:\n \n{{url}}\n\nIf you didn't request this, you don't need to do anything; you won't \nreceive any more email from us, and the request will expire automatically.\n\nThe {{signbank_name}} team"
+    }
+  },
+  {
+    "model": "attachments.communication",
+    "pk": 1,
+    "fields": {
+      "label": "dataset_to_owner_existing_user_given_access",
+      "subject": "A user has been given access to dataset {{dataset}} for {{site.name}}",
+      "text": "{{user.firstname}} {{user.lastname}} (user {{user.username}}, email address {{user.email}})\nhas been given access to dataset {{dataset}}.\n\n{% if motivation %}\nMotivation: {{motivation}}\n\n{% endif %}\nYou are the dataset manager for {{dataset}}. Please go to the following page to change access for the user:\n\nhttps://{{site}}/datasets/manager/\n\n{{site.name}} Webmaster"
+    }
+  },
+  {
+    "model": "attachments.communication",
+    "pk": 2,
+    "fields": {
+      "label": "dataset_to_owner_new_user_given_access",
+      "subject": "A new user has been given access to dataset {{dataset}} for {{site.name}}",
+      "text": "A new user has signed up at {{site.name}}.\n\n{{new_user_firstname}} {{new_user_lastname}} (user {{new_user_username}}, email address {{new_user_email}})\nhas been given access to dataset {{dataset}}.\n\n{% if motivation %}\nMotivation: {{motivation}}\n\n{% endif %}\nYou are the dataset manager for {{dataset}}. If needed, please go to the following page to change access for the user:\n\nhttps://{{site}}/datasets/manager/\n\n{{site.name}} Webmaster"
+    }
+  },
+  {
+    "model": "attachments.communication",
+    "pk": 3,
+    "fields": {
+      "label": "dataset_to_owner_user_requested_access",
+      "subject": "Request for access to private dataset {{dataset}} for {{site.name}}",
+      "text": "{{user.firstname}} {{user.lastname}} (user {{user.username}}, email address {{user.email}})\nwould like to gain access to private dataset {{dataset}}.\n\n{% if motivation %}\nMotivation: {{motivation}}\n\n{% endif %}\nYou are the dataset manager for {{dataset}}. Please go to the following page to allow access for the dataset\n\nhttps://{{site}}/datasets/manager/\n\n{{site.name}} Webmaster"
+    }
+  },
+  {
+    "model": "attachments.communication",
+    "pk": 4,
+    "fields": {
+      "label": "dataset_to_user_existing_user_given_access",
+      "subject": "Access granted to dataset {{dataset}} at {{site.name}}",
+      "text": "You have been granted access to dataset {{dataset}} at {{site.name}}.\n\nFor more information on the type of information Global Signbank stores about signs, see the manual on this page: https://signbank.cls.ru.nl/about/manual/\nNote that handshapes are described in terms of phonological features separately from signs; see this page: https://signbank.cls.ru.nl/signs/search_handshape/\n\nThe Release Notes page describes the latest changes and additions to the functionalities of the website: https://signbank.cls.ru.nl/about/release/\n\n{{site.name}} Webmaster"
+    }
+  }
+]
