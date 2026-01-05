@@ -86,21 +86,23 @@ def missingsign(request):
     if not form.is_valid():
         return render(request, template_name, context)
 
-    missing_sign_feedback = MissingSignFeedback(user=request.user)
-    if 'signlanguage' in form.cleaned_data:
-        missing_sign_feedback.signlanguage = form.cleaned_data['signlanguage']
-    if 'video' in form.cleaned_data and form.cleaned_data['video'] is not None:
-        missing_sign_feedback.video = form.cleaned_data['video']
-    if 'sentence' in form.cleaned_data and form.cleaned_data['sentence'] is not None:
-        missing_sign_feedback.sentence = form.cleaned_data['sentence']
-    missing_sign_feedback.meaning = form.cleaned_data['meaning']
-    missing_sign_feedback.comments = form.cleaned_data['comments']
+    create_missing_sign_feedback(request.user, form.cleaned_data)
 
+    return render(request, template_name, context)
+
+
+def create_missing_sign_feedback(user, data):
+    missing_sign_feedback = MissingSignFeedback(
+        user=user,
+        meaning=data["meaning"],
+        comments=data["comments"],
+        signlanguage=data.get("signlanguage"),
+        video=data.get("video"),
+        sentence=data.get("sentence"),
+    )
     missing_sign_feedback.save()
     missing_sign_feedback.save_video()
     missing_sign_feedback.save_sentence_video()
-
-    return render(request, template_name, context)
 
 
 def generic_showfeedback(request: HttpRequest, extra_context: dict, template_name: str) -> HttpResponse:
