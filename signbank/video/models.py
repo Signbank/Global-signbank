@@ -24,7 +24,7 @@ from signbank.settings.server_specific import (WRITABLE_FOLDER, DEBUG_VIDEOS, DE
                                                ANNOTATEDSENTENCE_VIDEO_DIRECTORY, DELETED_FILES_FOLDER,
                                                GLOSS_VIDEO_DIRECTORY, GLOSS_IMAGE_DIRECTORY, FFMPEG_PROGRAM)
 from signbank.settings.base import MEDIA_ROOT, MEDIA_URL
-from signbank.video.convertvideo import (extract_frame, convert_video, make_thumbnail_video, generate_image_sequence,
+from signbank.video.convertvideo import (extract_frame, convert_video, generate_image_sequence,
                                          remove_stills, detect_video_file_extension)
 from signbank.dictionary.models import (Gloss, Morpheme, Dataset, Language, LemmaIdgloss, LemmaIdglossTranslation,
                                         ExampleSentence, AnnotatedSentence, AnnotatedSentenceSource)
@@ -927,16 +927,10 @@ class GlossVideo(models.Model):
         # this method is not called (bugs)
         name, _ = os.path.splitext(self.videofile.path)
         small_name = name + "_small.mp4"
-        make_thumbnail_video(self.videofile, small_name)
-
-        # ffmpeg_small = FFMPEG_OPTIONS + ["-vf", "scale=180:-2"]
-        # video_file_full_path = os.path.join(WRITABLE_FOLDER, str(self.videofile))
-        # try:
-        #     resizer = VideoResizer([video_file_full_path], FFMPEG_PROGRAM, 180, 0, 0)
-        #     resizer.run()
-        # except Exception as e:
-        #     print("Error resizing video: ", video_file_full_path)
-        #     print(e)
+        (ffmpeg.input(self.videofile.path)
+               .filter("scale", -2, 180)
+               .output(small_name)
+               .run(quiet=True))
 
     def make_poster_image(self):
         try:

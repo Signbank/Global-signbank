@@ -54,7 +54,7 @@ from signbank.settings.server_specific import (URL, PREFIX_URL, LANGUAGE_CODE, L
                                                PUBLIC_PHONOLOGY_FIELDS, PUBLIC_SEMANTICS_FIELDS, PUBLIC_MAIN_FIELDS,
                                                DEBUG_SENSES, DEBUG_EMAILS_ON, SEPARATE_ENGLISH_IDGLOSS_FIELD)
 from signbank.video.forms import VideoUploadForObjectForm
-from signbank.video.convertvideo import get_folder_name
+from signbank.video.convertvideo import get_folder_name, thumbnail_frames_dir
 from signbank.video.models import (GlossVideo, find_dangling_video_files, delete_glossvideo_objects_and_files,
                                    renumber_backup_videos, remove_backup_videos)
 from signbank.dictionary.models import (Dataset, UserProfile, AffiliatedUser, AffiliatedGloss,
@@ -7760,9 +7760,8 @@ def fetch_video_stills_for_gloss(request, gloss_id):
     gloss = Gloss.objects.get(id=gloss_id, archived=False)
 
     folder = get_folder_name(gloss)
-    temp_location_frames = os.path.join(GLOSS_IMAGE_DIRECTORY, "signbank-thumbnail-frames", folder)
-    temp_video_frames_folder = os.path.join(WRITABLE_FOLDER,
-                                            GLOSS_IMAGE_DIRECTORY, "signbank-thumbnail-frames", folder)
+    temp_location_frames = os.path.join(GLOSS_IMAGE_DIRECTORY, thumbnail_frames_dir, folder)
+    temp_video_frames_folder = os.path.join(WRITABLE_FOLDER, GLOSS_IMAGE_DIRECTORY, thumbnail_frames_dir, folder)
     stills = []
     if os.path.exists(temp_video_frames_folder):
         for filename in os.listdir(temp_video_frames_folder):
