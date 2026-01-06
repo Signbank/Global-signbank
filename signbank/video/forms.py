@@ -1,28 +1,18 @@
 from django import forms
-from signbank.video.models import GlossVideo, Gloss, NME_PERSPECTIVE_CHOICES
-from signbank.dictionary.models import AnnotatedSentenceSource
-import json
 from django.utils.translation import gettext_lazy as _
 
-
-class VideoUploadForm(forms.ModelForm):
-    """Form for video upload"""
-    
-    class Meta:
-        model = GlossVideo
-        fields = '__all__'
+from signbank.video.models import NME_PERSPECTIVE_CHOICES
+from signbank.dictionary.models import AnnotatedSentenceSource
 
 
 ATTRS_FOR_FORMS = {'class': 'form-control'}
+PERSPECTIVE_CHOICES = (('left', 'Left'), ('right', 'Right'))
 
-PERSPECTIVE_CHOICES = (('left', 'Left'),
-                       ('right', 'Right')
-                       ) 
 
 class VideoUploadForObjectForm(forms.Form):
     """Form for video upload for all video types"""
-    
-    videofile = forms.FileField(label="Upload Video", widget=forms.FileInput(attrs={'accept':'video/mp4, video/quicktime'}))
+    videofile = forms.FileField(label="Upload Video",
+                                widget=forms.FileInput(attrs={'accept': 'video/mp4, video/quicktime'}))
     object_id = forms.CharField(widget=forms.HiddenInput)
     object_type = forms.CharField(widget=forms.HiddenInput)
     redirect = forms.CharField(widget=forms.HiddenInput, required=False)
@@ -33,9 +23,8 @@ class VideoUploadForObjectForm(forms.Form):
                                     widget=forms.Select(attrs=ATTRS_FOR_FORMS))
     nme_perspective = forms.ChoiceField(label=_('NME video perspective'),
                                         choices=NME_PERSPECTIVE_CHOICES, required=False,
-                                        widget=forms.Select(attrs=ATTRS_FOR_FORMS)) 
-
-    eaffile = forms.FileField(label="Upload EAF", widget=forms.FileInput(attrs={'accept':'text/xml'}), required=False)
+                                        widget=forms.Select(attrs=ATTRS_FOR_FORMS))
+    eaffile = forms.FileField(label="Upload EAF", widget=forms.FileInput(attrs={'accept': 'text/xml'}), required=False)
     feedbackdata = forms.CharField(widget=forms.HiddenInput, required=False)
     translations = forms.CharField(widget=forms.HiddenInput, required=False)
     contexts = forms.CharField(widget=forms.HiddenInput, required=False)
@@ -45,7 +34,7 @@ class VideoUploadForObjectForm(forms.Form):
     def __init__(self, *args, **kwargs):
         languages = kwargs.pop('languages', [])
         dataset = kwargs.pop('dataset', None)
-        super(VideoUploadForObjectForm, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
 
         self.fields['offset'].initial = 0
         for language in languages:
@@ -55,23 +44,21 @@ class VideoUploadForObjectForm(forms.Form):
                 widget=forms.Textarea(attrs={'cols': 200, 'rows': 2, 'placeholder': _('Description')}),
                 required=False
             )
-        
+
         if dataset:
             self.fields['source_id'].queryset = AnnotatedSentenceSource.objects.filter(dataset=dataset)
 
 
 class VideoUploadForGlossCreateForm(forms.Form):
     """Form for video upload for all video types"""
-
     videofile = forms.FileField(label="Upload Video",
                                 widget=forms.FileInput(attrs={'accept': 'video/mp4, video/quicktime'}))
 
     def __init__(self, *args, **kwargs):
-        super(VideoUploadForGlossCreateForm, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
 
     def clean_file(self):
         data = self.cleaned_data['videofile']
         if not data:
             raise forms.ValidationError(_("Please choose a video file to upload."))
-        else:
-            return data
+        return data
