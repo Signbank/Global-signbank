@@ -59,7 +59,7 @@ from signbank.video.forms import VideoUploadForObjectForm
 from signbank.video.convertvideo import get_folder_name
 from signbank.video.models import (GlossVideo, find_dangling_video_files, delete_glossvideo_objects_and_files,
                                    renumber_backup_videos, remove_backup_videos)
-from signbank.attachments.models import Communication
+from signbank.communication.models import Communication
 from signbank.dictionary.models import (Dataset, UserProfile, AffiliatedUser, AffiliatedGloss,
                                         Language, Dialect, Gloss, Morpheme, GlossSense, Sense,
                                         Corpus, Speaker, Document, GlossFrequency,

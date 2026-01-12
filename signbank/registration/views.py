@@ -24,7 +24,7 @@ from guardian.shortcuts import assign_perm, get_user_perms
 
 from signbank.registration.models import RegistrationProfile
 from signbank.registration.forms import RegistrationForm, EmailAuthenticationForm
-from signbank.attachments.models import Communication
+from signbank.communication.models import Communication
 from signbank.dictionary.models import Dataset, UserProfile, SearchHistory, Affiliation, AffiliatedUser, SignbankAPIToken
 from signbank.dictionary.context_data import get_selected_datasets
 from signbank.tools import get_users_without_dataset

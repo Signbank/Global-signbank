@@ -15,7 +15,7 @@ from django.contrib.auth.models import User, Group
 from django.contrib.sites.models import Site
 from django.utils import timezone
 
-from signbank.attachments.models import Communication
+from signbank.communication.models import Communication
 
 
 SHA1_RE = re.compile('^[a-f0-9]{40}$')
