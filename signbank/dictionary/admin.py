@@ -1458,8 +1458,6 @@ class AffiliatedUserAdmin(admin.ModelAdmin):
     list_display = ("affiliation", "user", )
 
 
-
-
 admin.site.register(Dialect, DialectAdmin)
 admin.site.register(SignLanguage, SignLanguageAdmin)
 admin.site.register(Gloss, GlossAdmin)
