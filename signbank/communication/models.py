@@ -1,5 +1,8 @@
 from django.db import models
 from django.utils.translation import gettext_lazy as _
+from django.template.loader import render_to_string
+from django import template
+from django.template import Context
 
 
 COMMUNICATION_TYPES = [('-', 'Type of Communication'),
@@ -21,3 +24,24 @@ class Communication(models.Model):
     class Meta:
         app_label = 'communication'
 
+
+def generate_communication(label, context):
+    access_email = Communication.objects.filter(label=label).first()
+
+    if access_email:
+        subject_template = template.Template(access_email.subject)
+        subject = subject_template.render(Context(context))
+    else:
+        subject = render_to_string(f'registration/{label}_subject.txt',
+                                   context=context)
+
+    # Email subject *must not* contain newlines
+    subject = ''.join(subject.splitlines())
+
+    if access_email:
+        message_template = template.Template(access_email.text)
+        message = message_template.render(Context(context))
+    else:
+        message = render_to_string(f'registration/{label}.txt',
+                                   context=context)
+    return subject, message

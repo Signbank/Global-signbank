@@ -27,9 +27,6 @@ from django.db.transaction import atomic
 from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib import messages
 from django.contrib.sites.models import Site
-from django.template.loader import render_to_string
-from django import template
-from django.template import Context
 from django.contrib.auth.models import User, Group
 from django.utils.safestring import mark_safe
 from django.utils.timezone import get_current_timezone
@@ -59,7 +56,7 @@ from signbank.video.forms import VideoUploadForObjectForm
 from signbank.video.convertvideo import get_folder_name
 from signbank.video.models import (GlossVideo, find_dangling_video_files, delete_glossvideo_objects_and_files,
                                    renumber_backup_videos, remove_backup_videos)
-from signbank.communication.models import Communication
+from signbank.communication.models import generate_communication
 from signbank.dictionary.models import (Dataset, UserProfile, AffiliatedUser, AffiliatedGloss,
                                         Language, Dialect, Gloss, Morpheme, GlossSense, Sense,
                                         Corpus, Speaker, Document, GlossFrequency,
@@ -3963,34 +3960,14 @@ class DatasetListView(ListView):
             # send email to the dataset manager
             current_site = Site.objects.get_current()
 
-            mail_template_context = Context({'user': self.request.user,
-                                             'dataset': dataset_object.name,
-                                             'motivation': motivation,
-                                             'site': current_site})
+            mail_template_context = {'user': self.request.user,
+                                     'dataset': dataset_object.name,
+                                     'motivation': motivation,
+                                     'site': current_site}
 
             # send email to notify dataset managers that user was GIVEN access
             if may_request_dataset:
-                access_email = Communication.objects.filter(label='dataset_to_owner_existing_user_given_access').first()
-
-                if access_email:
-                    subject_template = template.Template(access_email.subject)
-                    subject = subject_template.render(mail_template_context)
-                else:
-                    subject = render_to_string('registration/dataset_to_owner_existing_user_given_access_subject.txt',
-                                               context={'dataset': dataset_object.name,
-                                                        'site': current_site})
-                # Email subject *must not* contain newlines
-                subject = ''.join(subject.splitlines())
-
-                if access_email:
-                    message_template = template.Template(access_email.text)
-                    message = message_template.render(mail_template_context)
-                else:
-                    message = render_to_string('registration/dataset_to_owner_existing_user_given_access.txt',
-                                               context={'user': self.request.user,
-                                                        'dataset': dataset_object.name,
-                                                        'motivation': motivation,
-                                                        'site': current_site})
+                subject, message = generate_communication('dataset_to_owner_existing_user_given_access', mail_template_context)
 
                 # for debug purposes on local machine
                 if DEBUG_EMAILS_ON:
@@ -4001,31 +3978,10 @@ class DatasetListView(ListView):
                     print('Settings: ', DEFAULT_FROM_EMAIL)
 
                 send_mail(subject, message, DEFAULT_FROM_EMAIL, [owner.email])
-            
+
             # send email to notify dataset managers that user REQUESTS access
             elif not may_request_dataset:
-                access_email = Communication.objects.filter(label='dataset_to_owner_user_requested_access').first()
-
-                if access_email:
-                    subject_template = template.Template(access_email.subject)
-                    subject = subject_template.render(mail_template_context)
-                else:
-                    subject = render_to_string('registration/dataset_to_owner_user_requested_access_subject.txt',
-                                               context={'dataset': dataset_object.name,
-                                                        'site': current_site})
-
-                # Email subject *must not* contain newlines
-                subject = ''.join(subject.splitlines())
-
-                if access_email:
-                    message_template = template.Template(access_email.text)
-                    message = message_template.render(mail_template_context)
-                else:
-                    message = render_to_string('registration/dataset_to_owner_user_requested_access.txt',
-                                               context={'user': self.request.user,
-                                                        'dataset': dataset_object.name,
-                                                        'motivation': motivation,
-                                                        'site': current_site})
+                subject, message = generate_communication('dataset_to_owner_user_requested_access', mail_template_context)
 
                 # for debug purposes on local machine
                 if DEBUG_EMAILS_ON:
@@ -4323,28 +4279,10 @@ class DatasetManagerView(ListView):
                 # send email to user
                 current_site = Site.objects.get_current()
 
-                mail_template_context = Context({'dataset': dataset_object.name,
-                                                 'site': current_site})
+                mail_template_context = {'dataset': dataset_object.name,
+                                         'site': current_site}
 
-                access_email = Communication.objects.filter(label='dataset_to_user_existing_user_given_access').first()
-
-                if access_email:
-                    subject_template = template.Template(access_email.subject)
-                    subject = subject_template.render(mail_template_context)
-                else:
-                    subject = render_to_string('registration/dataset_to_user_existing_user_given_access_subject.txt',
-                                               context={'dataset': dataset_object.name,
-                                                        'site': current_site})
-                # Email subject *must not* contain newlines
-                subject = ''.join(subject.splitlines())
-
-                if access_email:
-                    message_template = template.Template(access_email.text)
-                    message = message_template.render(mail_template_context)
-                else:
-                    message = render_to_string('registration/dataset_to_user_existing_user_given_access.txt',
-                                               context={'dataset': dataset_object.name,
-                                                        'site': current_site})
+                subject, message = generate_communication('dataset_to_user_existing_user_given_access', mail_template_context)
 
                 # for debug purposes on local machine
                 if DEBUG_EMAILS_ON:

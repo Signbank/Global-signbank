@@ -30,6 +30,8 @@ MEDIA_MOBILE_URL = MEDIA_URL
 # Example: "/home/media/media.lawrence.com/static/"
 STATIC_ROOT = PREFIX_URL
 
+DEBUG = True
+
 # URL prefix for static files.
 # Example: "http://media.lawrence.com/static/"
 STATIC_URL = PREFIX_URL+'/static/'

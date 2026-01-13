@@ -15,11 +15,11 @@ class CommunicationAdminForm(forms.ModelForm):
                                                 choices=COMMUNICATION_TYPES),
                             help_text="""Label without spaces""")
 
-    template_subject = forms.CharField(label=_("Subject (rendered)"),
+    template_subject = forms.CharField(label=_("Subject (rendered)"), required=False,
                                        widget=forms.Textarea(attrs={'cols': 60, 'rows': 1}))
     subject = forms.CharField(label=_("Subject (template)"),
                               widget=forms.Textarea(attrs={'cols': 60, 'rows': 1}))
-    template_text = forms.CharField(label=_("Text (rendered)"),
+    template_text = forms.CharField(label=_("Text (rendered)"), required=False,
                                     widget=forms.Textarea(attrs={'cols': 80, 'rows': 18}))
     text = forms.CharField(label=_("Text (template"),
                            widget=forms.Textarea(attrs={'cols': 80, 'rows': 18}))
