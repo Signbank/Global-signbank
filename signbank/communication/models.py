@@ -26,7 +26,8 @@ class Communication(models.Model):
 
 
 def generate_communication(label, context):
-    access_email = Communication.objects.filter(label=label).first()
+    # grabs the newest matching object with the label
+    access_email = Communication.objects.filter(label=label).last()
 
     if access_email:
         subject_template = template.Template(access_email.subject)

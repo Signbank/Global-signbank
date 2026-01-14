@@ -3976,8 +3976,8 @@ class DatasetListView(ListView):
                     print('owner of dataset: ', owner.username, ' with email: ', owner.email)
                     print('user email: ', self.request.user.email)
                     print('Settings: ', DEFAULT_FROM_EMAIL)
-
-                send_mail(subject, message, DEFAULT_FROM_EMAIL, [owner.email])
+                else:
+                    send_mail(subject, message, DEFAULT_FROM_EMAIL, [owner.email])
 
             # send email to notify dataset managers that user REQUESTS access
             elif not may_request_dataset:
@@ -3990,8 +3990,8 @@ class DatasetListView(ListView):
                     print('owner of dataset: ', owner.username, ' with email: ', owner.email)
                     print('user email: ', self.request.user.email)
                     print('Settings: ', DEFAULT_FROM_EMAIL)
-
-                send_mail(subject, message, DEFAULT_FROM_EMAIL, [owner.email])
+                else:
+                    send_mail(subject, message, DEFAULT_FROM_EMAIL, [owner.email])
 
         return HttpResponseRedirect(PREFIX_URL + '/datasets/available')
 
@@ -4290,8 +4290,8 @@ class DatasetManagerView(ListView):
                     print('message: ', message)
                     print('user email: ', user_object.email)
                     print('Settings: ', DEFAULT_FROM_EMAIL)
-
-                send_mail(subject, message, DEFAULT_FROM_EMAIL, [user_object.email])
+                else:
+                    send_mail(subject, message, DEFAULT_FROM_EMAIL, [user_object.email])
 
             except (PermissionError, SystemError, OSError):
                 messages.add_message(self.request, messages.ERROR, _('Error assigning view dataset permission to user.'))
