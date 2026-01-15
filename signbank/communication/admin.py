@@ -14,6 +14,36 @@ from django.utils.html import format_html, format_html_join
 from signbank.communication.models import Communication, COMMUNICATION_TYPES
 
 
+def typed_context():
+    # template context with strings per email type
+    placeholders = {'activation_email': {'signbank_name': 'SIGNBANK',
+                                         'activation_key': 'ACTIVATION KEY',
+                                         'expiration_days': 'EXPIRATION DAYS',
+                                         'url': 'url'},
+                    'dataset_to_owner_existing_user_given_access': {'user': 'USER',
+                                                                    'dataset': 'DATASET',
+                                                                    'motivation': 'MOTIVATION',
+                                                                    'site': 'SITE'},
+                    'dataset_to_owner_new_user_given_access': {'dataset': 'DATASET',
+                                                               'new_user_username': 'NEW USER USERNAME',
+                                                               'new_user_firstname': 'NEW USER FIRST NAME',
+                                                               'new_user_lastname': 'NEW USER LAST NAME',
+                                                               'new_user_email': 'NEW USER EMAIL',
+                                                               'motivation':'MOTIVATION',
+                                                               'site': 'SITE'},
+                    'dataset_to_owner_user_requested_access': {'dataset': 'DATASET',
+                                                               'new_user_username': 'NEW USER USERNAME',
+                                                               'new_user_firstname': 'NEW USER FIRST NAME',
+                                                               'new_user_lastname': 'NEW USER LAST NAME',
+                                                               'new_user_email': 'NEW USER EMAIL',
+                                                               'motivation':'MOTIVATION',
+                                                               'site': 'SITE'},
+                    'dataset_to_user_existing_user_given_access': {'dataset': 'DATASET',
+                                                                   'site': 'SITE'}
+                    }
+    return placeholders
+
+
 def template_context():
     # template context with strings
     placeholders = {'site_name': 'SITE NAME',
@@ -79,6 +109,11 @@ class CommunicationAdmin(admin.ModelAdmin):
 
     list_display = ['label', 'subject_rendered', 'text_rendered']
 
+    fieldsets = (('INSTRUCTIONS FOR CONTEXT VARIABLES', {'fields': ['instructions']}, ),
+                 ('EDIT COMMUNICATION', {'fields': ('label', 'subject', 'rendered_subject', 'text', 'rendered_text'), }),
+
+    )
+
     admin.display(empty_value="EMPTY")
     def subject_rendered(self, obj):
         template = Template(obj.subject)
@@ -91,8 +126,7 @@ class CommunicationAdmin(admin.ModelAdmin):
         template = Template(obj.text)
         highlight = template.render(Context(template_context()))
         highlight_lines = highlight.splitlines()
-        format_lines = [format_html("{}", row) if row else "" for row in highlight_lines]
-        html_output = format_html_join(mark_safe("<br>"),"{}", ((row, row) for row in format_lines))
+        html_output = format_html_join(mark_safe("<br><br>"),"{}", ((row, row) for row in highlight_lines if row != ""))
         return html_output
     text_rendered.short_description = "Text (rendered)"
 
