@@ -632,7 +632,7 @@ class ExampleSentence(MetaModelMixin, models.Model):
         else:
             return ExampleVideo(examplesentence=self)
         video.save()
-        video.ch_own_mod_video()
+        video.change_file_permissions()
         # video.make_small_video()
 
         return video

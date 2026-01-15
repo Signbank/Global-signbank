@@ -38,7 +38,7 @@ from signbank.settings.server_specific import (PREFIX_URL, WRITABLE_FOLDER, GLOS
                                                DEFAULT_LANGUAGE_HEADER_COLUMN, DEFAULT_DATASET_ACRONYM, OBLIGATORY_FIELDS)
 from signbank.settings.base import (MAXIMUM_UPLOAD_SIZE, SUPPORTED_CITATION_IMAGE_EXTENSIONS, USE_X_SENDFILE,
                                     ALWAYS_REQUIRE_LOGIN, MEDIA_ROOT, ESCAPE_UPLOADED_VIDEO_FILE_PATH)
-from signbank.video.models import (GlossVideo, small_appendix, add_small_appendix)
+from signbank.video.models import (GlossVideo, SMALL_APPENDIX, add_small_appendix)
 from signbank.video.forms import VideoUploadForGlossCreateForm
 from signbank.dictionary.models import (Dataset, Language, Gloss, Morpheme, LemmaIdgloss, LemmaIdglossTranslation,
                                         Handshape, SignLanguage, AnnotatedSentence,
@@ -2079,7 +2079,7 @@ def get_unused_videos(request):
             for folder in os.listdir(os.path.join(gloss_video_dir, acronym)):
                 if os.path.isdir(os.path.join(gloss_video_dir, acronym, folder)):
                     for filename in os.listdir(os.path.join(gloss_video_dir, acronym, folder)):
-                        if small_appendix in filename:
+                        if SMALL_APPENDIX in filename:
                             filename = add_small_appendix(filename, reverse=True)
                         gloss_video_path = os.path.join(GLOSS_VIDEO_DIRECTORY, acronym, folder, filename)
                         gloss_videos = GlossVideo.objects.filter(videofile=gloss_video_path, version=0)

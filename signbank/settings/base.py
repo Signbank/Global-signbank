@@ -185,7 +185,7 @@ LOGGING = {
 
 
 # turn on lots of logging or not
-DO_LOGGING = False
+DO_LOGGING = True
 LOG_FILENAME = "debug.log"
 
 
