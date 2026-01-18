@@ -10,72 +10,94 @@ from django.template import Context, Template
 from django.utils.safestring import mark_safe
 from django.utils.translation import  gettext_lazy as _, gettext
 from django.utils.html import format_html, format_html_join
+from joblib.externals.cloudpickle import instance
+from django.contrib.sites.models import Site
+from numpy.ma.core import not_equal
 
-from signbank.communication.models import Communication, COMMUNICATION_TYPES
+from signbank.communication.models import Communication, COMMUNICATION_TYPES, typed_context
 
 
-def typed_context():
-    # template context with strings per email type
-    placeholders = {'activation_email': {'signbank_name': 'SIGNBANK',
-                                         'activation_key': 'ACTIVATION KEY',
-                                         'expiration_days': 'EXPIRATION DAYS',
-                                         'url': 'url'},
-                    'dataset_to_owner_existing_user_given_access': {'user': 'USER',
-                                                                    'dataset': 'DATASET',
-                                                                    'motivation': 'MOTIVATION',
-                                                                    'site': 'SITE'},
-                    'dataset_to_owner_new_user_given_access': {'dataset': 'DATASET',
-                                                               'new_user_username': 'NEW USER USERNAME',
-                                                               'new_user_firstname': 'NEW USER FIRST NAME',
-                                                               'new_user_lastname': 'NEW USER LAST NAME',
-                                                               'new_user_email': 'NEW USER EMAIL',
-                                                               'motivation':'MOTIVATION',
-                                                               'site': 'SITE'},
-                    'dataset_to_owner_user_requested_access': {'dataset': 'DATASET',
-                                                               'new_user_username': 'NEW USER USERNAME',
-                                                               'new_user_firstname': 'NEW USER FIRST NAME',
-                                                               'new_user_lastname': 'NEW USER LAST NAME',
-                                                               'new_user_email': 'NEW USER EMAIL',
-                                                               'motivation':'MOTIVATION',
-                                                               'site': 'SITE'},
-                    'dataset_to_user_existing_user_given_access': {'dataset': 'DATASET',
-                                                                   'site': 'SITE'}
-                    }
-    return placeholders
+CONTEXT_COMMUNICATION_TYPES = [
+    ('', 'CONTEXT VARIABLES PER COMMUNICATION TYPE'),
+    ('Mail to New User: Welcome to Signbank', [('1', 'Mail to New User: Welcome to Signbank'),
+                          ('2', '{{site.name}}'),
+                          ('3', '{{site.domain}}'),
+                          ('4', '{{activation_key}}'),
+                          ('5', '{{expiration_days}}'),
+                          ('6', '{{url}}')]),
+    ('Mail to Dataset Owner: Existing User Given Access',
+                         [('1', 'Mail to Dataset Owner: Existing User Given Access'),
+                          ('2', '{{dataset}}'),
+                          ('3', '{{user.username}}'),
+                          ('4', '{{user.firstname}}'),
+                          ('5', '{{user.lastname}}'),
+                          ('6', '{{user.email}}'),
+                          ('7', '{{motivation}}'),
+                          ('8', '{{site.name}}'),
+                          ('9', '{{site.domain}}')]),
+    ('Mail to Dataset Owner: New User Given Access',
+                         [('1', 'Mail to Dataset Owner: New User Given Access'),
+                          ('2', '{{dataset}}'),
+                          ('3', '{{user.username}}'),
+                          ('4', '{{user.firstname}}'),
+                          ('5', '{{user.lastname}}'),
+                          ('6', '{{user.email}}'),
+                          ('7', '{{motivation}}'),
+                          ('8', '{{site.name}}'),
+                          ('9', '{{site.domain}}')
+                          ]),
+    ('Mail to Dataset Owner: User Requested Access',
+                         [('1', 'Mail to Dataset Owner: User Requested Access'),
+                          ('2', '{{dataset}}'),
+                          ('3', '{{user.username}}'),
+                          ('4', '{{user.firstname}}'),
+                          ('5', '{{user.lastname}}'),
+                          ('6', '{{user.email}}'),
+                          ('7', '{{motivation}}'),
+                          ('8', '{{site.name}}'),
+                          ('9', '{{site.domain}}')
+                          ]),
+    ('Mail to Existing User: Access Granted',
+                         [('1', 'Mail to Existing User: Access Granted'),
+                          ('2', '{{dataset}}'),
+                          ('3', '{{site.name}}'),
+                          ('4', '{{site.domain}}')
+                          ])
+]
 
 
 def template_context():
-    # template context with strings
-    placeholders = {'site_name': 'SITE NAME',
-                    'signbank_name': 'SIGNBANK',
-                    'url': 'URL',
+    # this contains all of the possible context variables
+    placeholders = {'url': 'URL',
+                    'activation_key': 'ACTIVATION KEY',
+                    'expiration_days': 'EXPIRATION DAYS',
                     'user': {'firstname': 'FIRST NAME',
                              'lastname': 'LAST NAME',
                              'email': 'EMAIL',
                              'username': 'USERNAME'},
-                    'new_user_firstname': 'NEW USER FIRST NAME',
-                    'new_user_lastname': 'NEW USER LAST NAME',
-                    'new_user_email': 'NEW USER EMAIL',
                     'dataset': 'DATASET',
                     'motivation': 'MOTIVATION',
-                    'site': {'name': 'SITE NAME'}}
+                    'site': {'name': 'SITE NAME',
+                             'domain': 'SITE DOMAIN'}
+                    }
     return placeholders
 
 
 class CommunicationAdminForm(forms.ModelForm):
-    label = forms.CharField(label=_("Description of type of communication"),
+    label = forms.CharField(label=_("Description of type of communication"), required=True, initial="-",
                             widget=forms.Select(attrs={'class': 'form-control'},
                                                 choices=COMMUNICATION_TYPES),
                             help_text="""Choose a type of communication""")
     instructions = forms.CharField(label=_("Instructions"), required=False,
-                                   widget=Textarea(attrs={'cols': 80, 'rows': 18}))
-    subject = forms.CharField(label=_("Subject (edit)"),
+                                   widget=forms.Select(attrs={'class': 'form-control'},
+                                                       choices=CONTEXT_COMMUNICATION_TYPES))
+    subject = forms.CharField(label=_("Subject (edit)"), required=True, initial="",
                               widget=forms.Textarea(attrs={'cols': 60, 'rows': 1}))
-    rendered_subject = forms.CharField(label=_("Subject (rendered)"), required=False,
+    rendered_subject = forms.CharField(label=_("Subject (rendered)"), required=False, initial="",
                                        widget=forms.Textarea(attrs={'cols': 60, 'rows': 1}))
-    text = forms.CharField(label=_("Text (edit)"),
+    text = forms.CharField(label=_("Text (edit)"), required=True, initial="",
                            widget=forms.Textarea(attrs={'cols': 80, 'rows': 18}))
-    rendered_text = forms.CharField(label=_("Text (rendered)"), required=False,
+    rendered_text = forms.CharField(label=_("Text (rendered)"), required=False, initial="",
                                     widget=forms.Textarea(attrs={'cols': 80, 'rows': 18}))
 
     class Meta:
@@ -84,17 +106,8 @@ class CommunicationAdminForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super(CommunicationAdminForm, self).__init__(*args, **kwargs)
-        self.fields['instructions'].disabled = True
-        context_string = '\n'.join(json.dumps(template_context(), indent=4).split(','))
-        self.fields['instructions'].initial = format_html("{}\n\n{}\n\n{}\n\n{}",
-                                                          "The available context variables are shown below in JSON with mockup values.",
-                                                          "Add curly brackets to use them in your text: {{user.username}}",
-                                                          "You can preview your text using the button 'Save and continue editing' below",
-                                                          context_string)
         if not self.instance:
-            self.fields['label'].initial = '-'
-            self.fields['rendered_subject'].initial = "Email Subject"
-            self.fields['rendered_text'].initial = "Email Text"
+            self.fields['label'] = '-'
         else:
             subject_template = Template(self.instance.subject)
             self.fields['rendered_subject'].initial = subject_template.render(Context(template_context()))
@@ -117,14 +130,14 @@ class CommunicationAdmin(admin.ModelAdmin):
     admin.display(empty_value="EMPTY")
     def subject_rendered(self, obj):
         template = Template(obj.subject)
-        highlight = template.render(Context(template_context()))
+        highlight = template.render(Context(typed_context()[obj.label]))
         return highlight
     subject_rendered.short_description = "Subject (rendered)"
 
     admin.display(empty_value="EMPTY")
     def text_rendered(self, obj):
         template = Template(obj.text)
-        highlight = template.render(Context(template_context()))
+        highlight = template.render(Context(typed_context()[obj.label]))
         highlight_lines = highlight.splitlines()
         html_output = format_html_join(mark_safe("<br><br>"),"{}", ((row, row) for row in highlight_lines if row != ""))
         return html_output

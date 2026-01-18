@@ -101,9 +101,9 @@ class RegistrationManager(models.Manager):
 
         if send_email:
             from django.core.mail import send_mail
-            signbank_name = settings.LANGUAGE_NAME + ' Signbank'
+            current_site = Site.objects.get_current()
 
-            mail_template_context = {'signbank_name': signbank_name,
+            mail_template_context = {'site': current_site,
                                      'activation_key': registration_profile.activation_key,
                                      'expiration_days': settings.ACCOUNT_ACTIVATION_DAYS,
                                      'url': settings.URL}

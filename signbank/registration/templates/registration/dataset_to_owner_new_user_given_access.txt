@@ -1,6 +1,6 @@
 A new user has signed up at {{site.name}}.
 
-{{new_user_firstname}} {{new_user_lastname}} (user {{new_user_username}}, email address {{new_user_email}})
+{{user.firstname}} {{user.lastname}} (user {{user.username}}, email address {{user.email}})
 has been given access to dataset {{dataset}}.
 
 {% if motivation %}
@@ -9,6 +9,6 @@ Motivation: {{motivation}}
 {% endif %}
 You are the dataset manager for {{dataset}}. If needed, please go to the following page to change access for the user:
 
-https://{{site}}/datasets/manager/
+https://{{site.domain}}/datasets/manager/
 
 {{site.name}} Webmaster

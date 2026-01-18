@@ -148,10 +148,7 @@ def register(request, success_url=settings.PREFIX_URL + '/accounts/register/comp
                                 continue
 
                             mail_template_context = {'dataset': dataset_name,
-                                                     'new_user_username': new_user.username,
-                                                     'new_user_firstname': new_user.first_name,
-                                                     'new_user_lastname': new_user.last_name,
-                                                     'new_user_email': new_user.email,
+                                                     'user': new_user,
                                                      'motivation': motivation,
                                                      'site': current_site}
 
@@ -178,10 +175,7 @@ def register(request, success_url=settings.PREFIX_URL + '/accounts/register/comp
                             current_site = Site.objects.get_current()
 
                             mail_template_context = {'dataset': dataset_name,
-                                                     'new_user_username': new_user.username,
-                                                     'new_user_firstname': new_user.first_name,
-                                                     'new_user_lastname': new_user.last_name,
-                                                     'new_user_email': new_user.email,
+                                                     'user': new_user,
                                                      'motivation': motivation,
                                                      'site': current_site}
 

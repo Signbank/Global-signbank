@@ -7,6 +7,6 @@ Motivation: {{motivation}}
 {% endif %}
 You are the dataset manager for {{dataset}}. Please go to the following page to change access for the user:
 
-https://{{site}}/datasets/manager/
+https://{{site.domain}}/datasets/manager/
 
 {{site.name}} Webmaster
