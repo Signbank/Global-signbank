@@ -14,7 +14,7 @@
     "fields": {
       "label": "dataset_to_owner_existing_user_given_access",
       "subject": "A user has been given access to dataset {{dataset}} for {{site.name}}",
-      "text": "{{user.firstname}} {{user.lastname}} (user {{user.username}}, email address {{user.email}})\nhas been given access to dataset {{dataset}}.\n\n{% if motivation %}\nMotivation: {{motivation}}\n\n{% endif %}\nYou are the dataset manager for {{dataset}}. Please go to the following page to change access for the user:\n\nhttps://{{site}}/datasets/manager/\n\n{{site.name}} Webmaster"
+      "text": "{{user.firstname}} {{user.lastname}} (user {{user.username}}, email address {{user.email}})\nhas been given access to dataset {{dataset}}.\n\n{% if motivation %}\nMotivation: {{motivation}}\n\n{% endif %}\nYou are the dataset manager for {{dataset}}. Please go to the following page to change access for the user:\n\nhttps://{{site.domain}}/datasets/manager/\n\n{{site.name}} Webmaster"
     }
   },
   {
@@ -23,7 +23,7 @@
     "fields": {
       "label": "dataset_to_owner_new_user_given_access",
       "subject": "A new user has been given access to dataset {{dataset}} for {{site.name}}",
-      "text": "A new user has signed up at {{site.name}}.\n\n{{user.firstname}} {{user.lastname}} (user {{user.username}}, email address {{user.email}})\nhas been given access to dataset {{dataset}}.\n\n{% if motivation %}\nMotivation: {{motivation}}\n\n{% endif %}\nYou are the dataset manager for {{dataset}}. If needed, please go to the following page to change access for the user:\n\nhttps://{{site}}/datasets/manager/\n\n{{site.name}} Webmaster"
+      "text": "A new user has signed up at {{site.name}}.\n\n{{user.firstname}} {{user.lastname}} (user {{user.username}}, email address {{user.email}})\nhas been given access to dataset {{dataset}}.\n\n{% if motivation %}\nMotivation: {{motivation}}\n\n{% endif %}\nYou are the dataset manager for {{dataset}}. If needed, please go to the following page to change access for the user:\n\nhttps://{{site.domain}}/datasets/manager/\n\n{{site.name}} Webmaster"
     }
   },
   {
@@ -32,7 +32,7 @@
     "fields": {
       "label": "dataset_to_owner_user_requested_access",
       "subject": "Request for access to private dataset {{dataset}} for {{site.name}}",
-      "text": "{{user.firstname}} {{user.lastname}} (user {{user.username}}, email address {{user.email}})\nwould like to gain access to private dataset {{dataset}}.\n\n{% if motivation %}\nMotivation: {{motivation}}\n\n{% endif %}\nYou are the dataset manager for {{dataset}}. Please go to the following page to allow access for the dataset\n\nhttps://{{site}}/datasets/manager/\n\n{{site.name}} Webmaster"
+      "text": "{{user.firstname}} {{user.lastname}} (user {{user.username}}, email address {{user.email}})\nwould like to gain access to private dataset {{dataset}}.\n\n{% if motivation %}\nMotivation: {{motivation}}\n\n{% endif %}\nYou are the dataset manager for {{dataset}}. Please go to the following page to allow access for the dataset\n\nhttps://{{site.domain}}/datasets/manager/\n\n{{site.name}} Webmaster"
     }
   },
   {
