@@ -240,7 +240,7 @@ var search_results_url = '{% url 'dictionary:ajax_search_results' %}';
     <table class='table table-condensed table-condensed-light' style="width:100%;">
     <tr><td>{% trans "Object Id" %}</td><td>{% trans "Version" %}</td><td>{% trans "Relative Path" %}</td><td>{% trans "Checksum" %}</td></tr>
     {% for object_id, version, relative_path, checksum in perspective_videos %}
-    <tr><td>{{object_id}}</td><td>{{version}}</td><td>{{relative_path}}</td><td>{{checksum}}</td></tr>
+    <tr><td>{{object_id}}</td><td>{{version}}</td><td>{{relative_path}}</td><td>{{checksum|default:"NOT FOUND"}}</td></tr>
     {% endfor %}
     </table>
     </div>
@@ -255,7 +255,7 @@ var search_results_url = '{% url 'dictionary:ajax_search_results' %}';
     <table class='table table-condensed table-condensed-light' style="width:100%;">
     <tr><td>{% translate "Object Id" %}</td><td>{% translate "Version" %}</td><td>{% translate "Relative Path" %}</td><td>{% trans "Checksum" %}</td></tr>
     {% for object_id, version, relative_path, checksum in nme_videos %}
-    <tr><td>{{object_id}}</td><td>{{version}}</td><td>{{relative_path}}</td><td>{{checksum}}</td></tr>
+    <tr><td>{{object_id}}</td><td>{{version}}</td><td>{{relative_path}}</td><td>{{checksum|default:"NOT FOUND"}}</td></tr>
     {% endfor %}
     </table>
     </div>
@@ -285,7 +285,7 @@ var search_results_url = '{% url 'dictionary:ajax_search_results' %}';
     <table class='table table-condensed table-condensed-light' style="width:100%;">
     <tr><td>{% trans "Object Id" %}</td><td>{% trans "Version" %}</td><td>{% trans "Relative Path" %}</td><td>{% trans "Checksum" %}</td></tr>
     {% for object_id, version, relative_path, checksum in primary_videos %}
-    <tr><td>{{object_id}}</td><td>{{version}}</td><td>{{relative_path}}</td><td>{{checksum}}</td></tr>
+    <tr><td>{{object_id}}</td><td>{{version}}</td><td>{{relative_path}}</td><td>{{checksum|default:"NOT FOUND"}}</td></tr>
     {% endfor %}
     </table>
     </div>
@@ -356,7 +356,7 @@ var search_results_url = '{% url 'dictionary:ajax_search_results' %}';
     <table class='table table-condensed table-condensed-light' style="width:100%;">
     <tr><td>{% translate "Object Id" %}</td><td>{% translate "Version" %}</td><td>{% translate "Relative Path" %}</td><td>{% trans "Checksum" %}</td></tr>
     {% for object_id, version, relative_path, checksum in backup_videos %}
-    <tr><td>{{object_id}}</td><td>{{version}}</td><td>{{relative_path}}</td><td>{{checksum}}</td></tr>
+    <tr><td>{{object_id}}</td><td>{{version}}</td><td>{{relative_path}}</td><td>{{checksum|default:"NOT FOUND"}}</td></tr>
     {% endfor %}
     </table>
     </div>
@@ -403,7 +403,7 @@ var search_results_url = '{% url 'dictionary:ajax_search_results' %}';
     <table class='table table-condensed table-condensed-light' style="width:100%;">
     <tr><td>{% translate "Object Id" %}</td><td>{% translate "Version" %}</td><td>{% trans "Perspective" %}</td><td>{% trans "NME" %}</td><td>{% translate "Relative Path" %}</td><td>{% trans "Checksum" %}</td></tr>
     {% for object_id, version, perspective, nme, relative_path, checksum in wrongly_named_videos %}
-    <tr><td>{{object_id}}</td><td>{{version}}</td><td>{{perspective}}</td><td>{{nme}}</td><td>{{relative_path}}</td><td>{{checksum}}</td></tr>
+    <tr><td>{{object_id}}</td><td>{{version}}</td><td>{{perspective}}</td><td>{{nme}}</td><td>{{relative_path}}</td><td>{{checksum|default:"NOT FOUND"}}</td></tr>
     {% endfor %}
     </table>
     </div>
