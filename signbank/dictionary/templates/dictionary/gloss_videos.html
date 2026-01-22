@@ -269,8 +269,11 @@ var search_results_url = '{% url 'dictionary:ajax_search_results' %}';
     <div class="panel-body collapse" id="dangling_video_files">
     <table class='table table-condensed table-condensed-light' style="width:100%;">
     <tr><td>{% translate "Object Id" %}</td><td>{% translate "Relative Path" %}</td></tr>
-    {% for relative_path in dangling_video_files %}
-    <tr><td>NONE</td><td>{{relative_path}}</td></tr>
+    {% for relative_path, file_name in dangling_video_files %}
+    <tr><td>NONE</td><td>{{relative_path}}</td>
+        <td><a download="{{file_name}}"
+               href="{{PREFIX_URL}}{{protected_media_url}}{{relative_path}}">{{file_name}}</a>
+        </td></tr>
     {% endfor %}
     </table>
     </div>
