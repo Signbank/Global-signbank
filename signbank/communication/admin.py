@@ -1,18 +1,10 @@
-import json
 
 from django.contrib import admin
-from django.db import models
 from django import forms
-from django.forms import Textarea
-from django.template.loader import render_to_string
-from django import template
 from django.template import Context, Template
 from django.utils.safestring import mark_safe
 from django.utils.translation import  gettext_lazy as _, gettext
 from django.utils.html import format_html, format_html_join
-from joblib.externals.cloudpickle import instance
-from django.contrib.sites.models import Site
-from numpy.ma.core import not_equal
 
 from signbank.communication.models import Communication, COMMUNICATION_TYPES, typed_context
 
@@ -29,8 +21,8 @@ CONTEXT_COMMUNICATION_TYPES = [
                          [('1', 'Mail to Dataset Owner: Existing User Given Access'),
                           ('2', '{{dataset}}'),
                           ('3', '{{user.username}}'),
-                          ('4', '{{user.firstname}}'),
-                          ('5', '{{user.lastname}}'),
+                          ('4', '{{user.first_name}}'),
+                          ('5', '{{user.last_name}}'),
                           ('6', '{{user.email}}'),
                           ('7', '{{motivation}}'),
                           ('8', '{{site.name}}'),
@@ -39,8 +31,8 @@ CONTEXT_COMMUNICATION_TYPES = [
                          [('1', 'Mail to Dataset Owner: New User Given Access'),
                           ('2', '{{dataset}}'),
                           ('3', '{{user.username}}'),
-                          ('4', '{{user.firstname}}'),
-                          ('5', '{{user.lastname}}'),
+                          ('4', '{{user.first_name}}'),
+                          ('5', '{{user.last_name}}'),
                           ('6', '{{user.email}}'),
                           ('7', '{{motivation}}'),
                           ('8', '{{site.name}}'),
@@ -50,8 +42,8 @@ CONTEXT_COMMUNICATION_TYPES = [
                          [('1', 'Mail to Dataset Owner: User Requested Access'),
                           ('2', '{{dataset}}'),
                           ('3', '{{user.username}}'),
-                          ('4', '{{user.firstname}}'),
-                          ('5', '{{user.lastname}}'),
+                          ('4', '{{user.first_name}}'),
+                          ('5', '{{user.last_name}}'),
                           ('6', '{{user.email}}'),
                           ('7', '{{motivation}}'),
                           ('8', '{{site.name}}'),
@@ -71,8 +63,8 @@ def template_context():
     placeholders = {'url': 'URL',
                     'activation_key': 'ACTIVATION KEY',
                     'expiration_days': 'EXPIRATION DAYS',
-                    'user': {'firstname': 'FIRST NAME',
-                             'lastname': 'LAST NAME',
+                    'user': {'first_name': 'FIRST NAME',
+                             'last_name': 'LAST NAME',
                              'email': 'EMAIL',
                              'username': 'USERNAME'},
                     'dataset': 'DATASET',
@@ -107,7 +99,7 @@ class CommunicationAdminForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         super(CommunicationAdminForm, self).__init__(*args, **kwargs)
         if not self.instance:
-            self.fields['label'] = '-'
+            self.fields['label'].initial = '-'
         else:
             subject_template = Template(self.instance.subject)
             self.fields['rendered_subject'].initial = subject_template.render(Context(template_context()))
