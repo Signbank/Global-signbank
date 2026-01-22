@@ -1,6 +1,6 @@
 A new user has signed up at {{site.name}}.
 
-{{user.firstname}} {{user.lastname}} (user {{user.username}}, email address {{user.email}})
+{{user.first_name}} {{user.last_name}} (user {{user.username}}, email address {{user.email}})
 has been given access to dataset {{dataset}}.
 
 {% if motivation %}
