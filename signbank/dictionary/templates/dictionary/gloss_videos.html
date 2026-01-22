@@ -355,6 +355,31 @@ var search_results_url = '{% url 'dictionary:ajax_search_results' %}';
                 </div>
               </div>
          </div>
+         <button id='duplicates_btn' class='btn btn-primary copy-button' data-toggle='modal' data-target='#duplicates_modal'>{% trans "Remove Duplicates" %}</button>
+
+          <div class="modal fade" id="duplicates_modal" role="dialog" aria-labelledby="#modalDuplicates" aria-hidden="true">
+             <div class="modal-dialog modal-lg">
+                <div class="modal-content">
+                    <div class='modal-header'>
+                        <h2 id='modalDuplicates'>{% trans "Remove Duplicate Videos" %}</h2>
+                    </div>
+                    <div class='modal-body'>
+                        <p>{% trans "Remove the backup videos that are duplicates of the primary video." %}</p>
+                        <p>{% trans "If you wish to keep specific files, you can do this in the Gloss Videos Admin." %}</p>
+                     </div>
+                  <form id="duplicates" method='get'>
+                      {% csrf_token %}
+                      <input type='hidden' name='operation' value='Duplicates'>
+                      <input type='hidden' name='value' value='confirmed'>
+                      <div class="modal-footer">
+                        <button type="button" class="btn btn-default btn-default-light" data-dismiss="modal">{% trans "Cancel" %}</button>
+                        <input type="submit" class="btn btn-primary" value='{% trans "Confirm Remove" %}'>
+                      </div>
+                  </form>
+
+                </div>
+              </div>
+         </div>
         {% endif %}
     <table class='table table-condensed table-condensed-light' style="width:100%;">
     <tr><td>{% translate "Object Id" %}</td><td>{% translate "Version" %}</td><td>{% translate "Relative Path" %}</td><td>{% trans "Checksum" %}</td></tr>
