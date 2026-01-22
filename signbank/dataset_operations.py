@@ -415,7 +415,7 @@ def get_backup_videos_for_gloss(gloss, string_result=True):
     backupglossvideos = GlossVideo.objects.filter(gloss=gloss, version__gt=0).distinct().order_by('version', 'pk')
     num_backup_videos = backupglossvideos.count()
     if not string_result:
-        results = [(gv.pk, gv.version, str(gv.videofile), get_check_sum_relative_path(gv.videofile)) for gv in backupglossvideos]
+        results = [(gv.pk, gv.version, str(gv.videofile), get_check_sum_relative_path(gv.videofile), os.path.basename(gv.videofile.name)) for gv in backupglossvideos]
         sorted_by_checksum = sorted(results, key=lambda x: (x[3], x[1]))
         return sorted_by_checksum
     display_glossbackupvideos = ', '.join([str(gv.version) + ': ' + str(gv.videofile) for gv in backupglossvideos])
