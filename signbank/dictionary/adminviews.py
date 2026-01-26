@@ -27,7 +27,6 @@ from django.db.transaction import atomic
 from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib import messages
 from django.contrib.sites.models import Site
-from django.template.loader import render_to_string
 from django.contrib.auth.models import User, Group
 from django.utils.safestring import mark_safe
 from django.utils.timezone import get_current_timezone
@@ -57,6 +56,7 @@ from signbank.video.forms import VideoUploadForObjectForm
 from signbank.video.convertvideo import get_folder_name
 from signbank.video.models import (GlossVideo, find_dangling_video_files, delete_glossvideo_objects_and_files,
                                    renumber_backup_videos, remove_backup_videos, remove_duplicate_videos)
+from signbank.communication.models import generate_communication
 from signbank.dictionary.models import (Dataset, UserProfile, AffiliatedUser, AffiliatedGloss,
                                         Language, Dialect, Gloss, Morpheme, GlossSense, Sense,
                                         Corpus, Speaker, Document, GlossFrequency,
@@ -3969,20 +3969,15 @@ class DatasetListView(ListView):
 
             # send email to the dataset manager
             current_site = Site.objects.get_current()
-            
+
+            mail_template_context = {'user': self.request.user,
+                                     'dataset': dataset_object.name,
+                                     'motivation': motivation,
+                                     'site': current_site}
+
             # send email to notify dataset managers that user was GIVEN access
             if may_request_dataset:
-                subject = render_to_string('registration/dataset_to_owner_existing_user_given_access_subject.txt',
-                                           context={'dataset': dataset_object.name,
-                                                    'site': current_site})
-                # Email subject *must not* contain newlines
-                subject = ''.join(subject.splitlines())
-
-                message = render_to_string('registration/dataset_to_owner_existing_user_given_access.txt',
-                                           context={'user': self.request.user,
-                                                    'dataset': dataset_object.name,
-                                                    'motivation': motivation,
-                                                    'site': current_site})
+                subject, message = generate_communication('dataset_to_owner_existing_user_given_access', mail_template_context)
 
                 # for debug purposes on local machine
                 if DEBUG_EMAILS_ON:
@@ -3991,22 +3986,12 @@ class DatasetListView(ListView):
                     print('owner of dataset: ', owner.username, ' with email: ', owner.email)
                     print('user email: ', self.request.user.email)
                     print('Settings: ', DEFAULT_FROM_EMAIL)
+                else:
+                    send_mail(subject, message, DEFAULT_FROM_EMAIL, [owner.email])
 
-                send_mail(subject, message, DEFAULT_FROM_EMAIL, [owner.email])
-            
             # send email to notify dataset managers that user REQUESTS access
             elif not may_request_dataset:
-                subject = render_to_string('registration/dataset_to_owner_user_requested_access_subject.txt',
-                                        context={'dataset': dataset_object.name,
-                                                    'site': current_site})
-                # Email subject *must not* contain newlines
-                subject = ''.join(subject.splitlines())
-
-                message = render_to_string('registration/dataset_to_owner_user_requested_access.txt',
-                                        context={'user': self.request.user,
-                                                    'dataset': dataset_object.name,
-                                                    'motivation': motivation,
-                                                    'site': current_site})
+                subject, message = generate_communication('dataset_to_owner_user_requested_access', mail_template_context)
 
                 # for debug purposes on local machine
                 if DEBUG_EMAILS_ON:
@@ -4015,8 +4000,8 @@ class DatasetListView(ListView):
                     print('owner of dataset: ', owner.username, ' with email: ', owner.email)
                     print('user email: ', self.request.user.email)
                     print('Settings: ', DEFAULT_FROM_EMAIL)
-
-                send_mail(subject, message, DEFAULT_FROM_EMAIL, [owner.email])
+                else:
+                    send_mail(subject, message, DEFAULT_FROM_EMAIL, [owner.email])
 
         return HttpResponseRedirect(PREFIX_URL + '/datasets/available')
 
@@ -4304,15 +4289,10 @@ class DatasetManagerView(ListView):
                 # send email to user
                 current_site = Site.objects.get_current()
 
-                subject = render_to_string('registration/dataset_to_user_existing_user_given_access_subject.txt',
-                                           context={'dataset': dataset_object.name,
-                                                    'site': current_site})
-                # Email subject *must not* contain newlines
-                subject = ''.join(subject.splitlines())
+                mail_template_context = {'dataset': dataset_object.name,
+                                         'site': current_site}
 
-                message = render_to_string('registration/dataset_to_user_existing_user_given_access.txt',
-                                           context={'dataset': dataset_object.name,
-                                                    'site': current_site})
+                subject, message = generate_communication('dataset_to_user_existing_user_given_access', mail_template_context)
 
                 # for debug purposes on local machine
                 if DEBUG_EMAILS_ON:
@@ -4320,8 +4300,8 @@ class DatasetManagerView(ListView):
                     print('message: ', message)
                     print('user email: ', user_object.email)
                     print('Settings: ', DEFAULT_FROM_EMAIL)
-
-                send_mail(subject, message, DEFAULT_FROM_EMAIL, [user_object.email])
+                else:
+                    send_mail(subject, message, DEFAULT_FROM_EMAIL, [user_object.email])
 
             except (PermissionError, SystemError, OSError):
                 messages.add_message(self.request, messages.ERROR, _('Error assigning view dataset permission to user.'))

@@ -2811,6 +2811,7 @@ textarea:focus {
         <div id="pubStatus" class="collapse">
             <table class='table table-condensed'>
                 <tr><th>{% trans "Creation Date" %}</th><td>{{gloss.creationDate}}</td></tr>
+                <tr><th>{% trans "Publication Date" %}</th><td>{{gloss.publicationDate|default_if_none:''}}</td></tr>
                 <tr><th>{% trans "Creator" %}</th>
                     <td>{% for creator in gloss.creator.all %}
                             {% if forloop.last %}

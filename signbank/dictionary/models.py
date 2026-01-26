@@ -1253,6 +1253,15 @@ class Gloss(MetaModelMixin, models.Model):
         except:
             return str(self.id)
 
+    @property
+    def publicationDate(self):
+        if not self.inWeb:
+            return None
+        glossrevision = GlossRevision.objects.filter(gloss__pk=self.pk, field_name='inWeb').order_by('time').last()
+        if not glossrevision or glossrevision.new_value not in ['Yes', 'yes', 'ja', 'Ja', '是', 'true', 'True', True, 1]:
+            return None
+        return glossrevision.time.date()
+
     def num_senses(self):
         senses_for_this_gloss = GlossSense.objects.filter(gloss_pk=self.pk).count()
         return senses_for_this_gloss
