@@ -10,7 +10,6 @@ import signbank.pages.views
 import signbank.dictionary.urls
 import signbank.feedback.urls
 import signbank.feedback.views
-import signbank.attachments.urls
 import signbank.video.urls
 import signbank.registration.urls
 import django.contrib.admindocs.urls
@@ -45,7 +44,6 @@ urlpatterns = [
 
     re_path(r'^dictionary/', include(signbank.dictionary.urls)),
     re_path(r'^feedback/', include(signbank.feedback.urls)),
-    re_path(r'^attachments/', include(signbank.attachments.urls)),
     re_path(r'^video/', include(signbank.video.urls)),
 
     re_path(r'^image/upload/', add_image),

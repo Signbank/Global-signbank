@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-10-23 12:57+0200\n"
+"POT-Creation-Date: 2026-01-21 11:18+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -109,19 +109,19 @@ msgid ""
 "required for logging in."
 msgstr ""
 
-#: signbank/registration/models.py:206
+#: signbank/registration/models.py:204
 msgid "user"
 msgstr ""
 
-#: signbank/registration/models.py:207
+#: signbank/registration/models.py:205
 msgid "activation key"
 msgstr ""
 
-#: signbank/registration/models.py:212
+#: signbank/registration/models.py:210
 msgid "registration profile"
 msgstr ""
 
-#: signbank/registration/models.py:213
+#: signbank/registration/models.py:211
 msgid "registration profiles"
 msgstr ""
 
@@ -219,14 +219,14 @@ msgstr "Bewaarde zoekopdrachten"
 msgid "Search History"
 msgstr "Zoek-geschiedenis"
 
-#: signbank/registration/views.py:212
+#: signbank/registration/views.py:198
 msgid "Error processing your request."
 msgstr ""
 
-#: signbank/registration/views.py:250
+#: signbank/registration/views.py:236
 msgid "This account has expired. Please contact w.stoop@let.ru.nl."
 msgstr ""
 
-#: signbank/registration/views.py:268
+#: signbank/registration/views.py:254
 msgid "The username or password is incorrect."
 msgstr ""
