@@ -11,7 +11,6 @@ from django.utils.translation import gettext_lazy as _
 from django.middleware.csrf import get_token
 from django.contrib.auth.models import Group, User
 from django.contrib import messages
-from django.template.loader import render_to_string
 from django.core.mail import send_mail
 from django.contrib.auth import REDIRECT_FIELD_NAME, login
 from django.views.decorators.cache import never_cache
@@ -22,6 +21,7 @@ from guardian.shortcuts import assign_perm, get_user_perms
 
 from signbank.registration.models import RegistrationProfile
 from signbank.registration.forms import RegistrationForm, EmailAuthenticationForm
+from signbank.communication.models import generate_communication
 from signbank.dictionary.models import Dataset, UserProfile, SearchHistory, Affiliation, AffiliatedUser, SignbankAPIToken
 from signbank.dictionary.context_data import get_selected_datasets
 from signbank.tools import get_users_without_dataset
@@ -147,20 +147,13 @@ def register(request, success_url=settings.PREFIX_URL + '/accounts/register/comp
                                 # this owner can't manage users
                                 continue
 
-                            subject = render_to_string('registration/dataset_to_owner_new_user_given_access_subject.txt',
-                                                    context={'dataset': dataset_name,
-                                                                'site': current_site})
-                            # Email subject *must not* contain newlines
-                            subject = ''.join(subject.splitlines())
+                            mail_template_context = {'dataset': dataset_name,
+                                                     'user': new_user,
+                                                     'motivation': motivation,
+                                                     'site': current_site}
 
-                            message = render_to_string('registration/dataset_to_owner_new_user_given_access.txt',
-                                                    context={'dataset': dataset_name,
-                                                                'new_user_username': new_user.username,
-                                                                'new_user_firstname': new_user.first_name,
-                                                                'new_user_lastname': new_user.last_name,
-                                                                'new_user_email': new_user.email,
-                                                                'motivation': motivation,
-                                                                'site': current_site})
+                            subject, message = generate_communication('dataset_to_owner_new_user_given_access',
+                                                                      mail_template_context)
 
                             # for debug purposes on local machine
                             if settings.DEBUG_EMAILS_ON:
@@ -181,20 +174,13 @@ def register(request, success_url=settings.PREFIX_URL + '/accounts/register/comp
 
                             current_site = Site.objects.get_current()
 
-                            subject = render_to_string('registration/dataset_to_owner_user_requested_access_subject.txt',
-                                                    context={'dataset': dataset_name,
-                                                                'site': current_site})
-                            # Email subject *must not* contain newlines
-                            subject = ''.join(subject.splitlines())
+                            mail_template_context = {'dataset': dataset_name,
+                                                     'user': new_user,
+                                                     'motivation': motivation,
+                                                     'site': current_site}
 
-                            message = render_to_string('registration/dataset_to_owner_user_requested_access.txt',
-                                                    context={'dataset': dataset_name,
-                                                                'new_user_username': new_user.username,
-                                                                'new_user_firstname': new_user.first_name,
-                                                                'new_user_lastname': new_user.last_name,
-                                                                'new_user_email': new_user.email,
-                                                                'motivation': motivation,
-                                                                'site': current_site})
+                            subject, message = generate_communication('dataset_to_owner_user_requested_access',
+                                                                      mail_template_context)
 
                             # for debug purposes on local machine
                             if settings.DEBUG_EMAILS_ON:

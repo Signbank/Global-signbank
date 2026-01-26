@@ -133,6 +133,7 @@ INSTALLED_APPS = (
     #'signbank.registration',
     'signbank.pages',
     'signbank.attachments',
+    'signbank.communication',
     'signbank.video'
     # 'debug_toolbar',
     # 'video_encoding'
@@ -201,9 +202,6 @@ PAGES_VIDEO_LOCATION = 'pages'
 # videos are stored here prior to copying over to the main
 # storage location
 VIDEO_UPLOAD_LOCATION = "upload"
-
-# path to store uploaded attachments relative to MEDIA_ROOT
-ATTACHMENT_LOCATION = 'attachments'
 
 # which fields from the Gloss model should be included in the quick update form on the sign view
 QUICK_UPDATE_GLOSS_FIELDS = ['signlanguage', 'dialect']
