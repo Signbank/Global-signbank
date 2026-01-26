@@ -245,6 +245,45 @@ def remove_duplicate_videos(gloss):
         glossvideo.delete()
 
 
+def weedout_duplicate_backup_videos(gloss):
+    backup_files = GlossVideo.objects.filter(gloss=gloss,
+                                             glossvideonme=None,
+                                             glossvideoperspective=None,
+                                             version__gt=0).distinct()
+    checksum_X_glossvideo = []
+    for glossvideo in backup_files:
+        if not glossvideo.videofile:
+            glossvideo.delete()
+            continue
+        video_file_full_path = os.path.join(WRITABLE_FOLDER, glossvideo.videofile.path)
+        if not os.path.exists(video_file_full_path):
+            glossvideo.delete()
+            continue
+        checksum_this_backup_video = get_checksum_for_path(video_file_full_path)
+        checksum_X_glossvideo.append((checksum_this_backup_video, glossvideo))
+    sorted_by_checksum = sorted(checksum_X_glossvideo, key=lambda x: x[0])
+    visited = set()
+    duplicates = []
+    for (checksum, glossvideo) in sorted_by_checksum:
+        if checksum not in visited:
+            visited.add(checksum)
+        else:
+            duplicates.append(glossvideo)
+    for glossvideo in duplicates:
+        video_file_full_path = os.path.join(WRITABLE_FOLDER, glossvideo.videofile.path)
+        # construct the primary video filename and make sure the object does not point to it
+        _, extension = os.path.splitext(video_file_full_path)
+        basename = os.path.basename(video_file_full_path)
+        primary_video_filename = f'{gloss.idgloss}-{gloss.id}{extension}'
+        if basename == primary_video_filename:
+            # this gloss video object points to the primary video, just erase the link
+            glossvideo.videofile.name = ""
+            glossvideo.save()
+        else:
+            os.remove(video_file_full_path)
+        glossvideo.delete()
+
+
 def flipped_backup_filename(gloss, glossvideo, extension):
     idgloss = gloss.idgloss
     desired_filename_without_extension = f'{idgloss}-{gloss.pk}'

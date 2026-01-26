@@ -355,13 +355,13 @@ var search_results_url = '{% url 'dictionary:ajax_search_results' %}';
                 </div>
               </div>
          </div>
-         <button id='duplicates_btn' class='btn btn-primary copy-button' data-toggle='modal' data-target='#duplicates_modal'>{% trans "Remove Duplicates" %}</button>
+         <button id='duplicates_btn' class='btn btn-primary copy-button' data-toggle='modal' data-target='#duplicates_modal'>{% trans "Remove Duplicates of Primary Video" %}</button>
 
           <div class="modal fade" id="duplicates_modal" role="dialog" aria-labelledby="#modalDuplicates" aria-hidden="true">
              <div class="modal-dialog modal-lg">
                 <div class="modal-content">
                     <div class='modal-header'>
-                        <h2 id='modalDuplicates'>{% trans "Remove Duplicate Videos" %}</h2>
+                        <h2 id='modalDuplicates'>{% trans "Remove Duplicates of Primary Video" %}</h2>
                     </div>
                     <div class='modal-body'>
                         <p>{% trans "Remove the backup videos that are duplicates of the primary video." %}</p>
@@ -370,6 +370,31 @@ var search_results_url = '{% url 'dictionary:ajax_search_results' %}';
                   <form id="duplicates" method='get'>
                       {% csrf_token %}
                       <input type='hidden' name='operation' value='Duplicates'>
+                      <input type='hidden' name='value' value='confirmed'>
+                      <div class="modal-footer">
+                        <button type="button" class="btn btn-default btn-default-light" data-dismiss="modal">{% trans "Cancel" %}</button>
+                        <input type="submit" class="btn btn-primary" value='{% trans "Confirm Remove" %}'>
+                      </div>
+                  </form>
+
+                </div>
+              </div>
+         </div>
+         <button id='weedout_btn' class='btn btn-primary copy-button' data-toggle='modal' data-target='#weedout_modal'>{% trans "Weed Out Duplicates" %}</button>
+
+          <div class="modal fade" id="weedout_modal" role="dialog" aria-labelledby="#modalWeedout" aria-hidden="true">
+             <div class="modal-dialog modal-lg">
+                <div class="modal-content">
+                    <div class='modal-header'>
+                        <h2 id='modalWeedout'>{% trans "Weed Out Duplicate Backup Videos" %}</h2>
+                    </div>
+                    <div class='modal-body'>
+                        <p>{% trans "Weed out duplicate backup videos based on the checksum." %}</p>
+                        <p>{% trans "If you wish to keep specific files, you can do this in the Gloss Videos Admin." %}</p>
+                     </div>
+                  <form id="weedout_form" method='get'>
+                      {% csrf_token %}
+                      <input type='hidden' name='operation' value='Weedout'>
                       <input type='hidden' name='value' value='confirmed'>
                       <div class="modal-footer">
                         <button type="button" class="btn btn-default btn-default-light" data-dismiss="modal">{% trans "Cancel" %}</button>

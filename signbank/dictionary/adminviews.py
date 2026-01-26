@@ -55,7 +55,8 @@ from signbank.settings.server_specific import (URL, PREFIX_URL, LANGUAGE_CODE, L
 from signbank.video.forms import VideoUploadForObjectForm
 from signbank.video.convertvideo import get_folder_name
 from signbank.video.models import (GlossVideo, find_dangling_video_files, delete_glossvideo_objects_and_files,
-                                   renumber_backup_videos, remove_backup_videos, remove_duplicate_videos)
+                                   renumber_backup_videos, remove_backup_videos, remove_duplicate_videos,
+                                   weedout_duplicate_backup_videos)
 from signbank.communication.models import generate_communication
 from signbank.dictionary.models import (Dataset, UserProfile, AffiliatedUser, AffiliatedGloss,
                                         Language, Dialect, Gloss, Morpheme, GlossSense, Sense,
@@ -1860,6 +1861,8 @@ class GlossVideosView(DetailView):
             return self.remove_obsolete(context)
         elif self.request.GET.get('operation') == 'Duplicates':
             return self.remove_duplicates(context)
+        elif self.request.GET.get('operation') == 'Weedout':
+            return self.weedout_duplicates(context)
         else:
             return super(GlossVideosView, self).render_to_response(context, **response_kwargs)
 
@@ -1893,6 +1896,14 @@ class GlossVideosView(DetailView):
                 and gloss.lemma.dataset in get_objects_for_user(self.request.user, ['change_dataset'], Dataset,
                                                                 any_perm=True)):
             remove_duplicate_videos(gloss)
+        return HttpResponseRedirect(PREFIX_URL + '/dictionary/gloss/'+str(gloss.id)+'/glossvideos')
+
+    def weedout_duplicates(self, context):
+        gloss = context['gloss']
+        if (self.request.user.has_perm('dictionary.change_gloss')
+                and gloss.lemma.dataset in get_objects_for_user(self.request.user, ['change_dataset'], Dataset,
+                                                                any_perm=True)):
+            weedout_duplicate_backup_videos(gloss)
         return HttpResponseRedirect(PREFIX_URL + '/dictionary/gloss/'+str(gloss.id)+'/glossvideos')
 
 
