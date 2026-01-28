@@ -621,7 +621,7 @@ class ExampleSentence(MetaModelMixin, models.Model):
             # Backup the existing video objects stored in the database
             existing_videos = ExampleVideo.objects.filter(examplesentence=self)
             for video_object in existing_videos:
-                video_object.reversion(revert=False)
+                video_object.reversion()
 
             # Create a ExampleVideoHistory object
             video_file_full_path = os.path.join(WRITABLE_FOLDER, get_sentence_video_file_path(video, str(videofile)))
@@ -2444,7 +2444,7 @@ class Gloss(MetaModelMixin, models.Model):
             existing_videos_all = existing_videos.order_by('version')
             # revert all the old video objects
             for video_object in existing_videos_all:
-                video_object.reversion(revert=False)
+                video_object.reversion()
 
             # see if there is a file with the correct path that is not referred to by an object
             already_existing_relative_target_path = get_gloss_path_to_video_file_on_disk(self)
@@ -2564,9 +2564,9 @@ class Gloss(MetaModelMixin, models.Model):
         from signbank.video.models import GlossVideoPerspective, GlossVideoHistory, get_video_file_path
 
         existing_perspectivevideos = GlossVideoPerspective.objects.filter(gloss=self, perspective=new_perspective)
-        if existing_perspectivevideos.count() > 0:
-            for existing_video in existing_perspectivevideos:
-                existing_video.delete()
+        # if existing_perspectivevideos.count() > 0:
+        #     for existing_video in existing_perspectivevideos:
+        #         existing_video.delete()
         perspective = str(new_perspective)
         if isinstance(videofile, File):
             video = GlossVideoPerspective(gloss=self, perspective=perspective, upload_to=get_video_file_path)

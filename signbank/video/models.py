@@ -582,42 +582,15 @@ class ExampleVideo(models.Model):
         except (OSError, PermissionError):
             pass
 
-    def reversion(self, revert=False):
-        """We have a new version of this video so increase
-        the version count here and rename the video
-        to video.mp4.bak.V where V is the version number
-
-        unless revert=True, in which case we go the other
-        way and decrease the version number, if version=0
-        we delete ourselves"""
-        if revert:
-            print("REVERT VIDEO", self.videofile.name, self.version)
-            if self.version == 0:
-                print("DELETE VIDEO VIA REVERSION", self.videofile.name)
-                self.delete_files()
-                self.delete()
-                return
-            if self.version == 1:
-                # remove .bak from filename and decrement the version
-                (newname, bak) = os.path.splitext(self.videofile.name)
-                expected_extension = '.bak' + str(self.id)
-                if bak != expected_extension:
-                    raise Exception(f'Unknown suffix on stored video file. Expected {expected_extension}')
-                if os.path.isfile(os.path.join(storage.location, self.videofile.name)):
-                    os.rename(os.path.join(storage.location, self.videofile.name),
-                            os.path.join(storage.location, newname))
-                self.videofile.name = newname
-            self.version -= 1
-            self.save()
-        else:
-            if self.version == 0:
-                # find a name for the backup, a filename that isn't used already
-                newname = self.videofile.name + ".bak" + str(self.id)
-                if os.path.isfile(os.path.join(storage.location, self.videofile.name)):
-                    os.rename(os.path.join(storage.location, self.videofile.name), os.path.join(storage.location, newname))
-                self.videofile.name = newname
-            self.version += 1
-            self.save()
+    def reversion(self):
+        if self.version == 0:
+            # find a name for the backup, a filename that isn't used already
+            newname = self.videofile.name + ".bak" + str(self.pk)
+            if os.path.isfile(os.path.join(storage.location, self.videofile.name)):
+                os.rename(os.path.join(storage.location, self.videofile.name), os.path.join(storage.location, newname))
+            self.videofile.name = newname
+        self.version += 1
+        self.save()
 
     def __str__(self):
         # this coercion to a string type sometimes causes special characters in the filename to be a problem
@@ -977,49 +950,23 @@ class GlossVideo(models.Model):
                 print('delete_files exception GlossVideo OSError, PermissionError: ', str(self.videofile))
             pass
 
-    def reversion(self, revert=False):
+    def reversion(self):
         """We have a new version of this video so increase
         the version count here and rename the video
-        to video.mp4.bak.V where V is the version number
-
-        unless revert=True, in which case we go the other
-        way and decrease the version number, if version=0
-        we delete ourselves"""
+        to video.mp4.bakNNN where NNN is the object ID"""
 
         if hasattr(self, 'glossvideonme') or hasattr(self, 'glossvideoperspective'):
             # make sure this is not applied to subclass objects
             return
-        if revert:
-            print("REVERT VIDEO", self.videofile.name, self.version)
-            if self.version == 0:
-                print("DELETE VIDEO VIA REVERSION", self.videofile.name)
-                self.delete_files()
-                self.delete()
-                return
-            else:
-                if self.version == 1:
-                    # remove .bak from filename and decrement the version
-                    (newname, bak) = os.path.splitext(self.videofile.name)
-                    expected_extension = '.bak' + str(self.id)
-                    if bak != expected_extension:
-                        # hmm, something bad happened
-                        raise Exception(f'Unknown suffix on stored video file. Expected {expected_extension}')
-                    if os.path.isfile(os.path.join(storage.location, self.videofile.name)):
-                        os.rename(os.path.join(storage.location, self.videofile.name),
-                                  os.path.join(storage.location, newname))
-                    self.videofile.name = newname
-                self.version -= 1
-                self.save()
-        else:
-            if self.version == 0:
-                # find a name for the backup, a filename that isn't used already
-                newname = self.videofile.name + ".bak" + str(self.id)
-                if os.path.isfile(os.path.join(storage.location, self.videofile.name)):
-                    os.rename(os.path.join(storage.location, self.videofile.name),
-                              os.path.join(storage.location, newname))
-                self.videofile.name = newname
-            self.version += 1
-            self.save()
+        if self.version == 0:
+            # find a name for the backup, a filename that isn't used already
+            newname = self.videofile.name + ".bak" + str(self.pk)
+            if os.path.isfile(os.path.join(storage.location, self.videofile.name)):
+                os.rename(os.path.join(storage.location, self.videofile.name),
+                          os.path.join(storage.location, newname))
+            self.videofile.name = newname
+        self.version += 1
+        self.save()
 
         # also remove the post image if present, it will be regenerated
         poster = self.poster_path(create=False)
@@ -1215,13 +1162,17 @@ class GlossVideoNME(GlossVideo):
             print(e)
             return False
 
-    def reversion(self, revert=False):
-        """Delete the video file of this object"""
-        status = self.delete_files()
-        if not status:
-            print("DELETE NME VIDEO FAILED: ", self.videofile.name)
-        else:
-            self.delete()
+    def reversion(self):
+        if self.version == 0:
+            # find a name for the backup, a filename that isn't used already
+            newname = self.videofile.name + ".bak" + str(self.pk)
+            if os.path.isfile(os.path.join(storage.location, self.videofile.name)):
+                os.rename(os.path.join(storage.location, self.videofile.name),
+                          os.path.join(storage.location, newname))
+            self.videofile.name = newname
+        self.version += 1
+        self.save()
+
 
 class GlossVideoPerspective(GlossVideo):
     perspective = models.CharField(max_length=20, choices=PERSPECTIVE_CHOICES)
@@ -1283,13 +1234,16 @@ class GlossVideoPerspective(GlossVideo):
             print(e)
             return False
 
-    def reversion(self, revert=False):
-        """Delete the video file of this object"""
-        status = self.delete_files()
-        if not status:
-            print("DELETE Perspective VIDEO FAILED: ", self.videofile.name)
-        else:
-            self.delete()
+    def reversion(self):
+        if self.version == 0:
+            # find a name for the backup, a filename that isn't used already
+            newname = self.videofile.name + ".bak" + str(self.pk)
+            if os.path.isfile(os.path.join(storage.location, self.videofile.name)):
+                os.rename(os.path.join(storage.location, self.videofile.name),
+                          os.path.join(storage.location, newname))
+            self.videofile.name = newname
+        self.version += 1
+        self.save()
 
 
 def move_videos_for_filter(filter, move_files_on_disk: bool=False) -> None:

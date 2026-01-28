@@ -246,7 +246,7 @@ def deletesentencevideo(request, videoid):
         for v in vids:
             # this will remove the most recent video, ie it's equivalent
             # to delete if version=0
-            v.reversion(revert=True)
+            v.reversion()
 
             # Issue #162: log the deletion history
             log_entry = ExampleVideoHistory(action="delete", examplesentence=examplesentence,
@@ -301,7 +301,7 @@ def deletevideo(request, glossid):
         uploadfile = os.path.basename(v.videofile.name)
         goal_location = v.videofile.path
         reversion_log.append((v.version, uploadfile, goal_location))
-        v.reversion(revert=True)
+        v.reversion()
     for (version, uploadfile, goal_location) in reversion_log:
         # Issue #162: log the deletion history
         if version > 0:

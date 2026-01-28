@@ -1342,7 +1342,7 @@ def update_nmevideo(user, gloss, field, value):
         for nmev in nme_objects_with_same_offset:
             filename = os.path.basename(nmev.videofile.name)
             filepath = nmev.videofile.path
-            nmev.reversion(revert=False)
+            nmev.reversion()
             log_entry = GlossVideoHistory(action="delete", gloss=gloss,
                                           actor=user,
                                           uploadfile=filename,
@@ -1362,7 +1362,7 @@ def update_perspectivevideo(user, gloss, field, value):
         perspvideo = GlossVideoPerspective.objects.get(id=int(perspvideoid))
         filename = os.path.basename(perspvideo.videofile.name)
         filepath = perspvideo.videofile.path
-        perspvideo.reversion(revert=False)
+        perspvideo.reversion()
         log_entry = GlossVideoHistory(action="delete", gloss=gloss,
                                       actor=user,
                                       uploadfile=filename,
