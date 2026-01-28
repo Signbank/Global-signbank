@@ -305,7 +305,7 @@ def add_gloss(request):
         return show_warning(request, feedback_message, selected_datasets)
 
     # new gloss created successfully, go to GlossDetailView
-    return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': gloss.id}) + '?edit')
+    return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': gloss.pk}) + '?edit')
 
 
 @require_http_methods(["POST"])
@@ -2231,7 +2231,7 @@ def add_othermedia(request):
 
     othermedia_exists = os.path.exists(OTHER_MEDIA_DIRECTORY)
     if not othermedia_exists:
-        messages.add_message(request, messages.ERROR, _("Upload other media failed: The othermedia folder is missing."))
+        messages.add_message(request, messages.ERROR, gettext("Upload other media failed: The othermedia folder is missing."))
         return HttpResponseRedirect(reverse(reverse_url, kwargs={'pk': gloss_or_morpheme.pk}))
 
     # Create the folder if needed
@@ -2251,7 +2251,7 @@ def add_othermedia(request):
 
     if not filetype:
         # unrecognised file type has been uploaded
-        messages.add_message(request, messages.ERROR, _("Upload other media failed: The file has an unknown type."))
+        messages.add_message(request, messages.ERROR, gettext("Upload other media failed: The file has an unknown type."))
         return HttpResponseRedirect(reverse(reverse_url, kwargs={'pk': gloss_or_morpheme.pk}))
 
     norm_filename = os.path.normpath(filename)
@@ -2259,7 +2259,7 @@ def add_othermedia(request):
 
     if len(split_norm_filename) == 1:
         # file has no extension
-        messages.add_message(request, messages.ERROR, _("Upload other media failed: The file has no extension."))
+        messages.add_message(request, messages.ERROR, gettext("Upload other media failed: The file has no extension."))
         return HttpResponseRedirect(reverse(reverse_url, kwargs={'pk': gloss_or_morpheme.pk}))
 
     extension = split_norm_filename[-1]
@@ -2277,7 +2277,7 @@ def add_othermedia(request):
 
     if os.path.exists(goal_path):
         messages.add_message(request, messages.ERROR,
-                             _("The other media filename is already in use. Please use a different filename."))
+                             gettext("The other media filename is already in use. Please use a different filename."))
         return HttpResponseRedirect(reverse(reverse_url, kwargs={'pk': request.POST['gloss']}))
 
     othermedia_decription = request.POST['description']
@@ -2306,7 +2306,7 @@ def add_othermedia(request):
         goal_location_str = os.path.join(goal_directory, filename_plus_extension)
         if os.path.exists(goal_location_str):
             messages.add_message(request, messages.ERROR,
-                                 _("The other media filename {filename} is already in use. Please use a different filename.").format(filename=filename_plus_extension))
+                                 gettext("The other media filename {filename} is already in use. Please use a different filename.").format(filename=filename_plus_extension))
             return HttpResponseRedirect(reverse(reverse_url, kwargs={'pk': request.POST['gloss']}))
         # we need to use a quoted filename instead, update the other media object
         other_media_path = request.POST['gloss'] + '/' + filename_plus_extension
@@ -2318,7 +2318,7 @@ def add_othermedia(request):
             # something went wrong with uploading, delete the object
             newothermedia.delete()
             messages.add_message(request, messages.ERROR,
-                        _("The other media filename could not be created: {filename}").format(filename=filename_plus_extension))
+                        gettext("The other media filename could not be created: {filename}").format(filename=filename_plus_extension))
             return HttpResponseRedirect(reverse(reverse_url, kwargs={'pk': request.POST['gloss']}))
 
     destination = File(f)
