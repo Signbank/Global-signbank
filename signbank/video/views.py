@@ -10,7 +10,6 @@ from django.views.decorators.http import require_http_methods
 from django.contrib import messages
 from django.http import HttpResponse, JsonResponse
 from django.conf import settings
-from django.core.exceptions import ObjectDoesNotExist
 from django.utils.translation import gettext_lazy as _
 
 from guardian.shortcuts import get_user_perms
@@ -215,22 +214,24 @@ def get_glosses_from_eaf(eaf, dataset_acronym):
 
 def process_eaffile(request):
 
-    if request.method == 'POST':
-        check_gloss_label = request.POST.get('check_gloss_label', '')
-        dataset_acronym = request.POST.get('dataset', '')
-        uploaded_file = request.FILES['eaffile']
-        file_type = magic.from_buffer(open(uploaded_file.temporary_file_path(), "rb").read(2040), mime=True)
-        if not (uploaded_file.name.endswith('.eaf') and file_type == 'text/xml'):
-            return JsonResponse({'error': _('Invalid file. Please try again.')})
+    if request.method != 'POST':
+        return JsonResponse({'error': _('Not allowed.')})
 
-        eaf = Eaf(uploaded_file.temporary_file_path())
-        glosses, labels_not_found, sentence_dict = get_glosses_from_eaf(eaf, dataset_acronym)
+    check_gloss_label = request.POST.get('check_gloss_label', '')
+    dataset_acronym = request.POST.get('dataset', '')
+    uploaded_file = request.FILES['eaffile']
+    file_type = magic.from_buffer(open(uploaded_file.temporary_file_path(), "rb").read(2040), mime=True)
+    if not (uploaded_file.name.endswith('.eaf') and file_type == 'text/xml'):
+        return JsonResponse({'error': _('Invalid file. Please try again.')})
+
+    eaf = Eaf(uploaded_file.temporary_file_path())
+    glosses, labels_not_found, sentence_dict = get_glosses_from_eaf(eaf, dataset_acronym)
 
     # Create the annotations table
     annotations_table_html = render(request, 'annotations_table.html', {'glosses_list': glosses, 'check_gloss_label': [check_gloss_label], 'labels_not_found': labels_not_found}).content.decode('utf-8')
     sentences_json = json.dumps(sentence_dict)
 
-    if glosses == []:
+    if not glosses:
         return JsonResponse({'error': annotations_table_html})
     
     return JsonResponse({'annotations_table_html': annotations_table_html, 'sentences': sentences_json})
@@ -238,36 +239,26 @@ def process_eaffile(request):
 
 @login_required
 def deletesentencevideo(request, videoid):
-    """Remove the video for this gloss, if there is an older version
-    then reinstate that as the current video (act like undo)"""
-
-    if request.method == "POST":
-        # deal with any existing video for this sign
-        examplesentence = get_object_or_404(ExampleSentence, id=videoid)
-        vids = ExampleVideo.objects.filter(examplesentence=examplesentence).order_by('version')
-        for v in vids:
-            # this will remove the most recent video, ie it's equivalent
-            # to delete if version=0
-            v.reversion()
-
-            # Issue #162: log the deletion history
-            log_entry = ExampleVideoHistory(action="delete", examplesentence=examplesentence,
-                                          actor=request.user,
-                                          uploadfile=os.path.basename(v.videofile.name),
-                                          goal_location=v.videofile.path)
-            log_entry.save()
-
-    try:
-        video = examplesentence.examplevideo_set.get(version=0)
-        video.make_small_video()
-    except ObjectDoesNotExist:
-        pass
-
-    # return to referer
     if 'HTTP_REFERER' in request.META:
         url = request.META['HTTP_REFERER']
     else:
         url = '/'
+
+    if request.method != "POST":
+        return redirect(url)
+
+    # deal with any existing video for this sign
+    examplesentence = get_object_or_404(ExampleSentence, id=videoid)
+    vids = ExampleVideo.objects.filter(examplesentence=examplesentence, version=0)
+    for v in vids:
+        v.reversion()
+
+        log_entry = ExampleVideoHistory(action="delete", examplesentence=examplesentence,
+                                      actor=request.user,
+                                      uploadfile=os.path.basename(v.videofile.name),
+                                      goal_location=v.videofile.path)
+        log_entry.save()
+
     return redirect(url)
 
 
