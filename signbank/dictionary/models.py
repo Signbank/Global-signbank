@@ -2379,11 +2379,9 @@ class Gloss(MetaModelMixin, models.Model):
 
     def get_video_path(self, check_file_on_disk=True):
         from signbank.video.models import GlossVideo, get_gloss_path_to_video_file_on_disk, GlossVideoNME, GlossVideoPerspective
-        glossvideos_nme = [gv.id for gv in GlossVideoNME.objects.filter(gloss=self)]
-        glossvideos_persp = [gv.id for gv in GlossVideoPerspective.objects.filter(gloss=self)]
-        glossvideos = GlossVideo.objects.filter(gloss=self,
+        glossvideos = GlossVideo.objects.filter(gloss=self, archived=False,
                                                 glossvideonme=None,
-                                                glossvideoperspective=None, version=0).exclude(id__in=glossvideos_nme).exclude(id__in=glossvideos_persp)
+                                                glossvideoperspective=None, version=0)
         if glossvideos.count() > 0:
             # in the case of multiple version 0 objects the first is returned
             return str(glossvideos.first().videofile)
@@ -2434,16 +2432,10 @@ class Gloss(MetaModelMixin, models.Model):
         # Create a new GlossVideo object
         if isinstance(videofile, File) or videofile.content_type == 'django.core.files.uploadedfile.InMemoryUploadedFile':
             video = GlossVideo(gloss=self, upload_to=get_video_file_path, glossvideonme=None, glossvideoperspective=None)
-            # Backup the existing video objects stored in the database
-            glossvideos_nme = [gv.id for gv in GlossVideoNME.objects.filter(gloss=self)]
-            glossvideos_persp = [gv.id for gv in GlossVideoPerspective.objects.filter(gloss=self)]
             # get existing gloss video objects but exclude NME and perspective videos
-            existing_videos = GlossVideo.objects.filter(gloss=self).exclude(
-                id__in=glossvideos_nme).exclude(id__in=glossvideos_persp)
-            # order them by version number
-            existing_videos_all = existing_videos.order_by('version')
-            # revert all the old video objects
-            for video_object in existing_videos_all:
+            existing_videos = GlossVideo.objects.filter(gloss=self, glossvideonme=None, glossvideoperspective=None).order_by('version')
+            # Update the backup video objects stored in the database
+            for video_object in existing_videos:
                 video_object.reversion()
 
             # see if there is a file with the correct path that is not referred to by an object
@@ -2485,19 +2477,19 @@ class Gloss(MetaModelMixin, models.Model):
 
     def has_nme_videos(self):
         from signbank.video.models import GlossVideoNME
-        nmevideos = GlossVideoNME.objects.filter(gloss=self)
+        nmevideos = GlossVideoNME.objects.filter(gloss=self, version=0)
         return nmevideos.count()
 
     def get_nme_videos(self):
         # Only retrieve the primary NME video
         from signbank.video.models import GlossVideoNME
-        nmevideos = GlossVideoNME.objects.filter(gloss=self, perspective__in=['', 'center'])
+        nmevideos = GlossVideoNME.objects.filter(gloss=self, perspective__in=['', 'center'], version=0)
         return nmevideos
 
     def get_nme_videos_lookup(self):
         # Group the NME video objects together by their offset; this is used for retrieval in the template
         from signbank.video.models import GlossVideoNME
-        nmevideos = GlossVideoNME.objects.filter(gloss=self)
+        nmevideos = GlossVideoNME.objects.filter(gloss=self, version=0)
         nme_videos_dict = dict()
         for nmevideo in nmevideos:
             if nmevideo.offset not in nme_videos_dict.keys():
@@ -2509,20 +2501,24 @@ class Gloss(MetaModelMixin, models.Model):
     def nme_video_has_left_perspective(self, offset):
         # this is used in the template to conditionally generate code
         from signbank.video.models import GlossVideoNME
-        primary_nmevideo = GlossVideoNME.objects.filter(gloss=self, offset=offset, perspective__in=['', 'center']).first()
+        primary_nmevideo = GlossVideoNME.objects.filter(gloss=self, offset=offset, perspective__in=['', 'center'], version=0).first()
         return primary_nmevideo.has_left_perspective if primary_nmevideo else False
 
     def nme_video_has_right_perspective(self, offset):
         # this is used in the template to conditionally generate code
         from signbank.video.models import GlossVideoNME
-        primary_nmevideo = GlossVideoNME.objects.filter(gloss=self, offset=offset, perspective__in=['', 'center']).first()
+        primary_nmevideo = GlossVideoNME.objects.filter(gloss=self, offset=offset, perspective__in=['', 'center'], version=0).first()
         return primary_nmevideo.has_right_perspective if primary_nmevideo else False
 
     def add_nme_video(self, user, videofile, new_offset, recorded, perspective='center'):
         # Preventing circular import
         from signbank.video.models import GlossVideoNME, GlossVideoHistory, get_video_file_path
 
-        existing_offsets_for_this_perspective = [nmev.offset for nmev in GlossVideoNME.objects.filter(gloss=self, perspective=perspective)]
+        existing_nme_videos = GlossVideoNME.objects.filter(gloss=self, perspective=perspective, offset=new_offset, version=0)
+        for existing_nme_vid in existing_nme_videos:
+            # convert an existing version 0 video for this offset to a backup file
+            existing_nme_vid.reversion()
+        existing_offsets_for_this_perspective = [nmev.offset for nmev in GlossVideoNME.objects.filter(gloss=self, perspective=perspective, version=0)]
         if new_offset in existing_offsets_for_this_perspective:
             # override given offset to avoid duplicate usage
             offset = max(existing_offsets_for_this_perspective)+1
@@ -2551,22 +2547,21 @@ class Gloss(MetaModelMixin, models.Model):
 
     def has_perspective_videos(self):
         from signbank.video.models import GlossVideoPerspective
-        perspectivevideos = GlossVideoPerspective.objects.filter(gloss=self)
+        perspectivevideos = GlossVideoPerspective.objects.filter(gloss=self, version=0)
         return perspectivevideos.count()
 
     def get_perspective_videos(self):
         from signbank.video.models import GlossVideoPerspective
-        perspectivevideos = GlossVideoPerspective.objects.filter(gloss=self)
+        perspectivevideos = GlossVideoPerspective.objects.filter(gloss=self, version=0)
         return perspectivevideos
 
     def add_perspective_video(self, user, videofile, new_perspective, recorded):
         # Preventing circular import
         from signbank.video.models import GlossVideoPerspective, GlossVideoHistory, get_video_file_path
 
-        existing_perspectivevideos = GlossVideoPerspective.objects.filter(gloss=self, perspective=new_perspective)
-        # if existing_perspectivevideos.count() > 0:
-        #     for existing_video in existing_perspectivevideos:
-        #         existing_video.delete()
+        existing_perspectivevideos = GlossVideoPerspective.objects.filter(gloss=self, perspective=new_perspective, version=0)
+        for existing_video in existing_perspectivevideos:
+            existing_video.reversion()
         perspective = str(new_perspective)
         if isinstance(videofile, File):
             video = GlossVideoPerspective(gloss=self, perspective=perspective, upload_to=get_video_file_path)
