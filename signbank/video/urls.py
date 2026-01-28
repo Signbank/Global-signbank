@@ -5,7 +5,6 @@ from django.urls import re_path, path, include
 import signbank.video.views
 
 urlpatterns = [
-    re_path(r'^video/(?P<videoid>\d+)$', signbank.video.views.video),
     re_path(r'^upload/', signbank.video.views.addvideo),
     re_path(r'^delete/(?P<glossid>\d+)$', signbank.video.views.deletevideo),
     re_path(r'^deletesentencevideo/(?P<videoid>\d+)$', signbank.video.views.deletesentencevideo),

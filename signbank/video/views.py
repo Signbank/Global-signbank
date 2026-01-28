@@ -254,9 +254,9 @@ def deletesentencevideo(request, videoid):
         v.reversion()
 
         log_entry = ExampleVideoHistory(action="delete", examplesentence=examplesentence,
-                                      actor=request.user,
-                                      uploadfile=os.path.basename(v.videofile.name),
-                                      goal_location=v.videofile.path)
+                                        actor=request.user,
+                                        uploadfile=os.path.basename(v.videofile.name),
+                                        goal_location=v.videofile.path)
         log_entry.save()
 
     return redirect(url)
@@ -304,17 +304,6 @@ def deletevideo(request, glossid):
     deleted_video.save()
 
     return redirect(url)
-
-
-# CHECK FUNCTIONALITY
-# WHY IS VIDEOID USED AS GLOSSID?
-# IS THIS METHOD USED?
-def video(request, videoid):
-    """Redirect to the video url for this videoid"""
-
-    video = get_object_or_404(GlossVideo, gloss_id=videoid, gloss__archived=False)
-
-    return redirect(video)
 
 
 def create_still_images(request):
