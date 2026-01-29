@@ -341,7 +341,7 @@ function do_adminsearch(el) {
 <div class='btn-group'>
     <!-- Make sure no button has the *name* 'submit', otherwise submit() cannot be used -->
     <div class="btn-group">
-        <a class='btn btn-primary dropdown-toggle' data-toggle="dropdown" type='submit' name='submit_button'>
+        <a class='btn btn-primary dropdown-toggle' data-toggle="dropdown" type='submit' id='submit_button'>
             <span data-bind="label" onclick="do_adminsearch(this);" data-value="{{search_type}}">
                 {% if search_type == 'handshape' %}
                 {% trans "Search Handshape" %}
