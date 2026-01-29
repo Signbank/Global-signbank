@@ -421,7 +421,7 @@ def get_backup_videos_for_gloss(gloss, string_result=True):
 
 
 def get_perspective_videos_for_gloss(gloss, string_result=True):
-    glossperspvideos = GlossVideoPerspective.objects.filter(gloss=gloss).distinct()
+    glossperspvideos = GlossVideoPerspective.objects.filter(gloss=gloss, version=0).distinct()
     if not string_result:
         return [(gv.pk, gv.version, str(gv.videofile), get_check_sum_relative_path(gv.videofile)) for gv in glossperspvideos]
     display_perspective_videos = ', '.join([str(gv.perspective) + ': ' + str(gv.videofile) for gv in glossperspvideos])
@@ -429,7 +429,7 @@ def get_perspective_videos_for_gloss(gloss, string_result=True):
 
 
 def get_nme_videos_for_gloss(gloss, string_result=True):
-    glossnmevideos = GlossVideoNME.objects.filter(gloss=gloss).distinct().order_by('offset')
+    glossnmevideos = GlossVideoNME.objects.filter(gloss=gloss, version=0).distinct().order_by('offset')
     if not string_result:
         tuples_nmevideos = [(gv.pk, gv.version, str(gv.videofile), get_check_sum_relative_path(gv.videofile)) for gv in glossnmevideos]
         sorted_by_checksum = sorted(tuples_nmevideos, key=lambda x:x[3])

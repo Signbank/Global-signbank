@@ -42,9 +42,19 @@ def filename_matches_nme(filename):
     return re.search(r".+-(\d+)_(nme_\d+|nme_\d+_left|nme_\d+_right|nme_\d+_center)$", filename_without_extension)
 
 
+def filename_matches_nme_backup(filename):
+    filename_with_extension = os.path.basename(filename)
+    return re.search(r".+-(\d+)_(nme_\d+|nme_\d+_left|nme_\d+_right|nme_\d+_center)\.(mp4|m4v|mov|webm|mkv|m2v)\.(bak\d+)$", filename_with_extension)
+
+
 def filename_matches_perspective(filename):
     filename_without_extension, ext = os.path.splitext(os.path.basename(filename))
     return re.search(r".+-(\d+)_(left|right|nme_\d+_left|nme_\d+_right)$", filename_without_extension)
+
+
+def filename_matches_perspective_backup(filename):
+    filename_with_extension = os.path.basename(filename)
+    return re.search(r".+-(\d+)_(left|right|nme_\d+_left|nme_\d+_right)\.(mp4|m4v|mov|webm|mkv|m2v)\.(bak\d+)$", filename_with_extension)
 
 
 def filename_matches_video(filename):
@@ -114,10 +124,16 @@ def has_correct_filename(videofile, nmevideo, perspective, version):
         return False
     video_file_full_path = Path(WRITABLE_FOLDER, videofile)
     if nmevideo is not None:
-        filename_is_correct = filename_matches_nme(video_file_full_path) is not None
+        if version > 0:
+            filename_is_correct = filename_matches_nme_backup(video_file_full_path) is not None
+        else:
+            filename_is_correct = filename_matches_nme(video_file_full_path) is not None
         return filename_is_correct
     elif perspective is not None:
-        filename_is_correct = filename_matches_perspective(video_file_full_path) is not None
+        if version > 0:
+            filename_is_correct = filename_matches_perspective_backup(video_file_full_path) is not None
+        else:
+            filename_is_correct = filename_matches_perspective(video_file_full_path) is not None
         return filename_is_correct
     elif version > 0:
         filename_is_correct = filename_matches_backup_video(video_file_full_path) is not None
@@ -183,9 +199,7 @@ def renumber_backup_videos(gloss):
 
 def remove_backup_videos(gloss):
     backup_files = GlossVideo.objects.filter(gloss=gloss,
-                                                    glossvideonme=None,
-                                                    glossvideoperspective=None,
-                                                    version__gt=0).order_by('version', 'id')
+                                             version__gt=0).order_by('version', 'id')
     for glossvideo in backup_files:
         relative_path = str(glossvideo.videofile)
         if not relative_path:
@@ -194,16 +208,29 @@ def remove_backup_videos(gloss):
 
         video_file_full_path = os.path.join(WRITABLE_FOLDER, relative_path)
         if os.path.exists(video_file_full_path):
-            # construct the primary video filename and make sure the object does not point to it
-            _, extension = os.path.splitext(video_file_full_path)
-            basename = os.path.basename(video_file_full_path)
-            primary_video_filename = f'{gloss.idgloss}-{gloss.id}{extension}'
-            if basename == primary_video_filename:
-                # this gloss video object points to the primary video, just erase the link
-                glossvideo.videofile.name = ""
-                glossvideo.save()
+            if glossvideo.is_glossvideonme():
+                if filename_matches_nme(video_file_full_path):
+                    glossvideo.videofile.name = ""
+                    glossvideo.save()
+                else:
+                    os.remove(video_file_full_path)
+            elif glossvideo.is_glossvideoperspective():
+                if filename_matches_perspective(video_file_full_path):
+                    glossvideo.videofile.name = ""
+                    glossvideo.save()
+                else:
+                    os.remove(video_file_full_path)
             else:
-                os.remove(video_file_full_path)
+                # construct the primary video filename and make sure the object does not point to it
+                _, extension = os.path.splitext(video_file_full_path)
+                basename = os.path.basename(video_file_full_path)
+                primary_video_filename = f'{gloss.idgloss}-{gloss.id}{extension}'
+                if basename == primary_video_filename:
+                    # this gloss video object points to the primary video, just erase the link
+                    glossvideo.videofile.name = ""
+                    glossvideo.save()
+                else:
+                    os.remove(video_file_full_path)
         glossvideo.delete()
 
 
@@ -1117,6 +1144,8 @@ class GlossVideoNME(GlossVideo):
         self.videofile: FieldFile
         if not self.videofile or not self.videofile.path or not os.path.exists(self.videofile.path):
             return
+        if int(self.version or 0) > 0:
+            return
 
         video_format_extension = detect_video_file_extension(self.videofile.path)
         (basename, ext) = os.path.splitext(self.videofile.path)
@@ -1202,6 +1231,32 @@ class GlossVideoPerspective(GlossVideo):
 
     def save(self, *args, **kwargs):
         super(GlossVideoPerspective, self).save(*args, **kwargs)
+
+    def ensure_mp4(self):
+        """Ensure that the video file is a h264 format
+        video, convert it if necessary"""
+
+        # convert video to use the right size and iphone/net friendly bitrate
+        # create a temporary copy in the new format
+        # then move it into place
+        self.videofile: FieldFile
+        if not self.videofile or not self.videofile.path or not os.path.exists(self.videofile.path):
+            return
+        if int(self.version or 0) > 0:
+            return
+
+        video_format_extension = detect_video_file_extension(self.videofile.path)
+        (basename, ext) = os.path.splitext(self.videofile.path)
+        if ext != '.mp4' or video_format_extension != '.mp4':
+            old_relative_path = str(self.videofile)
+            oldloc = self.videofile.path
+            newloc = basename + ".mp4"
+            okay = convert_video(oldloc, newloc)
+            if not okay or not os.path.exists(newloc):
+                return
+            self.videofile.name = get_video_file_path(self, os.path.basename(newloc),
+                                                      nmevideo=False, perspective=self.perspective, offset=0)
+            move_file_to_prullenmand(oldloc, old_relative_path)
 
     def move_video(self, move_files_on_disk=True):
         """
