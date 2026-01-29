@@ -2379,7 +2379,7 @@ class Gloss(MetaModelMixin, models.Model):
 
     def get_video_path(self, check_file_on_disk=True):
         from signbank.video.models import GlossVideo, get_gloss_path_to_video_file_on_disk, GlossVideoNME, GlossVideoPerspective
-        glossvideos = GlossVideo.objects.filter(gloss=self, archived=False,
+        glossvideos = GlossVideo.objects.filter(gloss=self, gloss__archived=False,
                                                 glossvideonme=None,
                                                 glossvideoperspective=None, version=0)
         if glossvideos.count() > 0:
