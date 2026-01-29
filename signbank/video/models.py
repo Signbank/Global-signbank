@@ -395,8 +395,10 @@ def get_video_file_path(instance, filename, nmevideo=False, perspective='', offs
         dataset_dir = ""
         if DEBUG_VIDEOS:
             print('get_video_file_path: dataset_dir is empty for gloss ', str(instance.gloss.pk))
-    if nmevideo:
+    if nmevideo and perspective:
         filename = f'{idgloss}-{instance.gloss.id}_nme_{offset}_{perspective}{ext}'
+    elif nmevideo:
+        filename = f'{idgloss}-{instance.gloss.id}_nme_{offset}{ext}'
     elif perspective:
         filename = f'{idgloss}-{instance.gloss.id}_{perspective}{ext}'
     elif version > 0:
@@ -1105,8 +1107,6 @@ class GlossVideoNME(GlossVideo):
         return display_preface + ": " + ", ".join(translations)
 
     def has_perspective_videos(self):
-        if self.perspective not in ['', 'center']:
-            return False
         perspectivevideos = GlossVideoNME.objects.filter(gloss=self.gloss, offset=self.offset, perspective__in=['left', 'right'])
         return perspectivevideos.count() > 0
 
@@ -1171,7 +1171,7 @@ class GlossVideoNME(GlossVideo):
         old_path = str(self.videofile)
         if not move_files_on_disk or not old_path:
             return
-        new_path = str(get_video_file_path(self, old_path, nmevideo=True, perspective='', offset=int(self.offset or 0), version=0))
+        new_path = str(get_video_file_path(self, old_path, nmevideo=True, perspective=self.perspective, offset=int(self.offset or 0), version=self.version))
         if old_path == new_path:
             return
         source = os.path.join(WRITABLE_FOLDER, old_path)
@@ -1255,7 +1255,7 @@ class GlossVideoPerspective(GlossVideo):
             if not okay or not os.path.exists(newloc):
                 return
             self.videofile.name = get_video_file_path(self, os.path.basename(newloc),
-                                                      nmevideo=False, perspective=self.perspective, offset=0)
+                                                      nmevideo=False, perspective=self.perspective, offset=0, version=self.version)
             move_file_to_prullenmand(oldloc, old_relative_path)
 
     def move_video(self, move_files_on_disk=True):
@@ -1269,7 +1269,7 @@ class GlossVideoPerspective(GlossVideo):
         old_path = str(self.videofile)
         if not old_path:
             return
-        new_path = str(get_video_file_path(self, old_path, nmevideo=False, perspective=str(self.perspective)))
+        new_path = str(get_video_file_path(self, old_path, nmevideo=False, perspective=str(self.perspective), version=self.version))
         if old_path == new_path:
             return
 
