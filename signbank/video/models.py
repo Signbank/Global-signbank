@@ -62,6 +62,16 @@ def filename_matches_video(filename):
     return re.search(r".+-(\d+)$", filename_without_extension)
 
 
+def filename_matches_non_backup(gloss, filename):
+    # used to make sure a backup video object does not point to a non-backup file
+    primary_video_filename = f'{gloss.idgloss}-{gloss.id}'
+    filename_with_extension = os.path.basename(filename)
+    filename_matches_primary = re.search(rf"^{primary_video_filename}\.(mp4|m4v|mov|webm|mkv|m2v)$", filename_with_extension)
+    filename_matches_perspective_video = re.search(rf"^{primary_video_filename}_(left|right|nme_\d+_left|nme_\d+_right)\.(mp4|m4v|mov|webm|mkv|m2v)$", filename_with_extension)
+    filename_matches_nme_video = re.search(rf"^{primary_video_filename}_(nme_\d+|nme_\d+_left|nme_\d+_right|nme_\d+_center)\.(mp4|m4v|mov|webm|mkv|m2v)$", filename_with_extension)
+    return filename_matches_primary or filename_matches_perspective_video or filename_matches_nme_video
+
+
 def filename_matches_backup_video(filename):
     filename_with_extension = os.path.basename(filename)
     return re.search(r".+-(\d+)\.(mp4|m4v|mov|webm|mkv|m2v)\.(bak\d+)$", filename_with_extension)
@@ -157,8 +167,8 @@ def wrong_filename_filter(glossvideos):
 def delete_glossvideo_objects_and_files(gloss):
     """
     This method removes wrongly named video files that do not match the correct naming
-    If the file points to the primary video, its name is erased prior to deleting the object
-    This prevents deleting the primary video file that was wrongly linked to an object during the delete class method
+    If the file points to a primary video, its name is erased prior to deleting the object
+    This prevents deleting a primary video file that was wrongly linked to a backup video object
     """
     all_gloss_video_objects = GlossVideo.objects.filter(gloss=gloss).distinct()
     gloss_video_ids = wrong_filename_filter(all_gloss_video_objects)
@@ -171,12 +181,8 @@ def delete_glossvideo_objects_and_files(gloss):
 
         video_file_full_path = os.path.join(WRITABLE_FOLDER, relative_path)
         if os.path.exists(video_file_full_path):
-            # construct the primary video filename and make sure a file to delete does not point to it
-            _, extension = os.path.splitext(video_file_full_path)
-            basename = os.path.basename(video_file_full_path)
-            primary_video_filename = f'{gloss.idgloss}-{gloss.id}{extension}'
-            if basename == primary_video_filename:
-                # this gloss video object points to the primary video, just erase the link
+            if filename_matches_non_backup(gloss, video_file_full_path):
+                # this gloss video object points to a non-backup video file, just erase the link
                 glossvideo.videofile.name = ""
                 glossvideo.save()
             else:
@@ -208,29 +214,12 @@ def remove_backup_videos(gloss):
 
         video_file_full_path = os.path.join(WRITABLE_FOLDER, relative_path)
         if os.path.exists(video_file_full_path):
-            if glossvideo.is_glossvideonme():
-                if filename_matches_nme(video_file_full_path):
-                    glossvideo.videofile.name = ""
-                    glossvideo.save()
-                else:
-                    os.remove(video_file_full_path)
-            elif glossvideo.is_glossvideoperspective():
-                if filename_matches_perspective(video_file_full_path):
-                    glossvideo.videofile.name = ""
-                    glossvideo.save()
-                else:
-                    os.remove(video_file_full_path)
+            if filename_matches_non_backup(gloss, video_file_full_path):
+                # this gloss video object points to a non-backup video file, just erase the link
+                glossvideo.videofile.name = ""
+                glossvideo.save()
             else:
-                # construct the primary video filename and make sure the object does not point to it
-                _, extension = os.path.splitext(video_file_full_path)
-                basename = os.path.basename(video_file_full_path)
-                primary_video_filename = f'{gloss.idgloss}-{gloss.id}{extension}'
-                if basename == primary_video_filename:
-                    # this gloss video object points to the primary video, just erase the link
-                    glossvideo.videofile.name = ""
-                    glossvideo.save()
-                else:
-                    os.remove(video_file_full_path)
+                os.remove(video_file_full_path)
         glossvideo.delete()
 
 
