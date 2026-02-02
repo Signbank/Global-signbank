@@ -1,344 +1,241 @@
-import datetime as DT
 import os
 import json
+import datetime as DT
+
 import magic
+from pympi.Elan import Eaf
 
 from django.utils.timezone import get_current_timezone
 from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth.decorators import login_required
 from django.views.decorators.http import require_http_methods
 from django.contrib import messages
-from django.http import HttpResponse, JsonResponse
-from django.conf import settings
-from django.core.exceptions import ObjectDoesNotExist
+from django.http import JsonResponse
 from django.utils.translation import gettext as _
 
-from signbank.video.models import GlossVideo, ExampleVideo, GlossVideoHistory, ExampleVideoHistory, GlossVideoNME, GlossVideoPerspective
+from signbank.video.models import (GlossVideo, GlossVideoHistory, ExampleVideoHistory, GlossVideoNME,
+                                   GlossVideoPerspective)
 from signbank.video.forms import VideoUploadForObjectForm
 from signbank.dictionary.models import (Gloss, DeletedGlossOrMedia, ExampleSentence, Morpheme, AnnotatedSentence,
                                         Dataset, GlossRevision, AnnotationIdglossTranslation)
-from signbank.tools import generate_still_image, get_default_annotationidglosstranslation
-
-from pympi.Elan import Eaf
+from signbank.tools import get_default_annotationidglosstranslation
 
 
 @require_http_methods(["POST"])
 def addvideo(request):
     """View to present a video upload form and process the upload"""
-
-    last_used_dataset = request.session['last_used_dataset']
+    last_used_dataset = request.session.get('last_used_dataset')
     dataset = Dataset.objects.filter(acronym=last_used_dataset).first()
     dataset_languages = dataset.translation_languages.all()
     form = VideoUploadForObjectForm(request.POST, request.FILES, languages=dataset_languages, dataset=dataset)
     if not form.is_valid():
-        # redirect back to the referring page or root
-        if 'HTTP_REFERER' in request.META:
-            url = request.META['HTTP_REFERER']
-        else:
-            url = '/'
-        return redirect(url)
-
-    # control below may or may not set these variables
-    gloss = None
-    uploaded_video = ""
+        return redirect(request.META.get('HTTP_REFERER', '/'))
 
     object_id = form.cleaned_data['object_id']
     object_type = form.cleaned_data['object_type']
-    fieldname = object_type
-    vfile = form.cleaned_data['videofile']
+    video_file = form.cleaned_data['videofile']
     redirect_url = form.cleaned_data['redirect']
     recorded = form.cleaned_data['recorded']
-    # add the video, depending on which type of object it is added to
-    if object_type == 'examplesentence_video':
-        sentence = ExampleSentence.objects.filter(id=object_id).first()
-        if not sentence:
-            return redirect(redirect_url)
-        sentence.add_video(request.user, vfile, recorded)
-        # return here, since example sentences do not have a revision history and do not point to a single gloss
+
+    object_type_model_mapping = {
+        'examplesentence_video': ExampleSentence,
+        'morpheme_video': Morpheme,
+        'gloss_video': Gloss,
+        'gloss_perspectivevideo': Gloss,
+        'gloss_nmevideo': Gloss,
+        'annotated_video': Gloss
+    }
+
+    model = object_type_model_mapping.get(object_type)
+    if not model:
         return redirect(redirect_url)
-    elif object_type == 'gloss_video':
-        gloss = Gloss.objects.filter(id=object_id).first()
-        if not gloss:
-            return redirect(redirect_url)
-        gloss_video = gloss.add_video(request.user, vfile, recorded)
-        uploaded_video = str(gloss_video)
+    first_obj = model.objects.filters(id=object_id).first()
+    if not first_obj and object_type != 'annotated_video':
+        return redirect(redirect_url)
+
+    if model in [ExampleSentence, Morpheme]:
+        first_obj.add_video(request.user, video_file, recorded)
+        return redirect(redirect_url)
+
+    gloss = first_obj
+    uploaded_video = None
+    fieldname = object_type
+
+    if object_type == "gloss_video":
+        gloss_video = gloss.add_video(request.user, video_file, recorded)
+        uploaded_video = gloss_video.videofile.name
     elif object_type == 'gloss_perspectivevideo':
-        gloss = Gloss.objects.filter(id=object_id).first()
-        if not gloss:
-            return redirect(redirect_url)
-        perspective = form.cleaned_data['perspective']
-        stringpersp = str(perspective)
-        if stringpersp:
-            fieldname += '_' + stringpersp
-        perspective_video = gloss.add_perspective_video(request.user, vfile, stringpersp, recorded)
-        if settings.DEBUG_VIDEOS:
-            print('Perspective video created: ', str(perspective_video))
-        uploaded_video = str(perspective_video)
+        perspective = str(form.cleaned_data['perspective'])
+        if perspective:
+            fieldname = f'{fieldname}_{perspective}'
+        perspective_video = gloss.add_perspective_video(request.user, video_file, perspective, recorded)
+        uploaded_video = perspective_video.videofile.name
     elif object_type == 'gloss_nmevideo':
-        gloss = Gloss.objects.filter(id=object_id).first()
-        if not gloss:
-            return redirect(redirect_url)
         offset = form.cleaned_data['offset']
         perspective = form.cleaned_data['nme_perspective']
-        fieldname += '_' + str(offset) + '_' + str(perspective)
-        nmevideo = gloss.add_nme_video(request.user, vfile, offset, recorded, perspective)
+        fieldname += f'_{offset}_{perspective}'
+        nmevideo = gloss.add_nme_video(request.user, video_file, offset, recorded, perspective)
         translation_languages = gloss.lemma.dataset.translation_languages.all()
-        descriptions = dict()
-        for language in translation_languages:
-            form_field = 'description_' + language.language_code_2char
-            form_value = form.cleaned_data[form_field]
-            descriptions[language.language_code_2char] = form_value.strip()
+        descriptions = {
+            language.language_code_2char: form.cleaned_data["description_" + language.language_code_2char].strip()
+            for language in translation_languages
+        }
         nmevideo.add_descriptions(descriptions)
         nmevideo.perspective = perspective
         nmevideo.save()
-        uploaded_video = str(nmevideo.videofile)
-    elif object_type == 'morpheme_video':
-        morpheme = Morpheme.objects.filter(id=object_id).first()
-        if not morpheme:
-            return redirect(redirect_url)
-        morpheme.add_video(request.user, vfile, recorded)
-        # return here, since morphemes do not have a revision history
-        return redirect(redirect_url)
+        uploaded_video = nmevideo.videofile.name
     elif object_type == 'annotated_video':
-        eaf_file = form.cleaned_data['eaffile']
         annotated_sentence = AnnotatedSentence.objects.create()
-
-        gloss = Gloss.objects.filter(id=object_id).first()
-        annotations = form.cleaned_data['feedbackdata']
-        annotations = json.loads(annotations)
+        annotations = json.loads(form.cleaned_data['feedbackdata'])
         annotated_sentence.add_annotations(annotations, gloss)
 
-        translations = form.cleaned_data['translations']
-        if translations:
+        if translations := form.cleaned_data['translations']:
             annotated_sentence.add_translations(json.loads(translations))
-
-        contexts = form.cleaned_data['contexts']
-        if contexts:
+        if contexts := form.cleaned_data['contexts']:
             annotated_sentence.add_contexts(json.loads(contexts))
 
+        eaf_file = form.cleaned_data['eaffile']
         source = form.cleaned_data['source_id']
         url = form.cleaned_data['url']
-        annotated_video = annotated_sentence.add_video(request.user, vfile, eaf_file, source, url)
+        annotated_video = annotated_sentence.add_video(request.user, video_file, eaf_file, source, url)
 
         if annotated_video is None:
             messages.add_message(request, messages.ERROR, _('Annotated sentence upload went wrong. Please try again.'))
             annotated_sentence.delete()
             return redirect(redirect_url)
 
-        uploaded_video = str(annotated_video)
-
+        uploaded_video = annotated_video.videofile.name
         annotated_sentence.save()
 
     if gloss and uploaded_video:
-        revision = GlossRevision(old_value='', new_value=uploaded_video,
-                                 field_name=fieldname,
-                                 gloss=gloss, user=request.user, time=DT.datetime.now(tz=get_current_timezone()))
-        revision.save()
+        GlossRevision.objects.create(old_value='', new_value=uploaded_video, field_name=fieldname, gloss=gloss,
+                                     ser=request.user, time=DT.datetime.now(tz=get_current_timezone()))
 
     return redirect(redirect_url)
 
 
 def find_non_overlapping_annotated_glosses(timeslots, annotations_tier_1, annotations_tier_2):
-    non_overlapping_glosses = []
+    """Find annotations in second tier that do not overlap with any annotation is the first tier."""
+    return [
+        annotation for annotation in annotations_tier_2
+        if not has_overlapping_annotations(annotation, annotations_tier_1, timeslots)
+    ]
 
-    for annotation_2 in annotations_tier_2:
-        is_overlapping = False
-        for annotation_1 in annotations_tier_1:
-            # timecode to time in ms
-            start_1 = int(timeslots[annotation_1[0]])
-            end_1 = int(timeslots[annotation_1[1]])
-            start_2 = int(timeslots[annotation_2[0]])
-            end_2 = int(timeslots[annotation_2[1]])
-            if (start_2 >= start_1 and start_2 <= end_1) or (end_2 >= start_1 and end_2 <= end_1):
-                is_overlapping = True
-                break
-        if not is_overlapping:
-            non_overlapping_glosses.append(annotation_2)
 
-    return non_overlapping_glosses
+def has_overlapping_annotations(annotation, tier, timeslots) -> bool:
+    """True if the annotation overlaps with any annotation from the tier."""
+    start_2 = int(timeslots[annotation[0]])
+    end_2 = int(timeslots[annotation[1]])
+    for annotation_from_tier in tier:
+        start_1 = int(timeslots[annotation_from_tier[0]])
+        end_1 = int(timeslots[annotation_from_tier[1]])
+        if start_1 <= start_2 <= end_1 or start_1 <= end_2 <= end_1:
+            return True
+    return False
+
+
+def add_glosses_from_annotations(annotations, dataset_acronym, eaf, glosses, labels_not_found):
+    for annotation in annotations:
+        gloss_label = annotation[2]
+        if AnnotationIdglossTranslation.objects.filter(gloss__lemma__dataset__acronym=dataset_acronym,
+                                                       text__exact=gloss_label).exists():
+            start = int(eaf.timeslots[annotation[0]])
+            end = int(eaf.timeslots[annotation[1]])
+            glosses.append([gloss_label, start, end])
+        else:
+            labels_not_found.append(gloss_label)
 
 
 def get_glosses_from_eaf(eaf, dataset_acronym):
-    glosses, labels_not_found, sentences = [], [], []
-    sentence_dict = {}
+    glosses = []
+    labels_not_found = []
 
     # check whether to use 'Signbank ID glossen' or 'Glosses R' and 'Glosses L' tiers
     if 'Signbank ID glossen' in eaf.tiers:
         # Add glosses from this one tier
-        for annotation in eaf.tiers['Signbank ID glossen'][0].values():
-            gloss_label = annotation[2]
-            if AnnotationIdglossTranslation.objects.filter(gloss__lemma__dataset__acronym=dataset_acronym, text__exact=gloss_label).exists():
-                start = int(eaf.timeslots[annotation[0]])
-                end = int(eaf.timeslots[annotation[1]])
-                glosses.append([gloss_label, start, end])
-            else:
-                labels_not_found.append(gloss_label)
+        annotations = eaf.tiers['Signbank ID glossen'][0].values()
+        add_glosses_from_annotations(annotations, dataset_acronym, eaf, glosses, labels_not_found)
     else:
         # Add glosses from the right hand
-        for annotation in eaf.tiers['Glosses R'][0].values():
-            gloss_label = annotation[2]
-            if AnnotationIdglossTranslation.objects.filter(gloss__lemma__dataset__acronym=dataset_acronym, text__exact=gloss_label).exists():
-                start = int(eaf.timeslots[annotation[0]])
-                end = int(eaf.timeslots[annotation[1]])
-                glosses.append([gloss_label, start, end])
-            else:
-                labels_not_found.append(gloss_label)
+        annotations = eaf.tiers['Glosses R'][0].values()
+        add_glosses_from_annotations(annotations, dataset_acronym, eaf, glosses, labels_not_found)
 
         # Add glosses from the left hand, if they don't overlap with the right hand
-        for annotation in find_non_overlapping_annotated_glosses(eaf.timeslots, eaf.tiers['Glosses R'][0].values(), eaf.tiers['Glosses L'][0].values()):
-            gloss_label = annotation[2]
-            if AnnotationIdglossTranslation.objects.filter(gloss__lemma__dataset__acronym=dataset_acronym, text__exact=gloss_label).exists():
-                start = int(eaf.timeslots[annotation[0]])
-                end = int(eaf.timeslots[annotation[1]])
-                glosses.append([gloss_label, start, end])
-            else:
-                labels_not_found.append(gloss_label)
+        annotations = find_non_overlapping_annotated_glosses(eaf.timeslots, eaf.tiers['Glosses R'][0].values(),
+                                                             eaf.tiers['Glosses L'][0].values())
+        add_glosses_from_annotations(annotations, dataset_acronym, eaf, glosses, labels_not_found)
 
     # Sort the list of glosses by the "start" value
     glosses = sorted(glosses, key=lambda x: x[1])
 
-    if 'Sentences' in eaf.tiers:
-        for annotation in eaf.tiers['Sentences'][0].values():
-            sentences.append(annotation[2])
-    elif 'Nederlands' in eaf.tiers:
-        for annotation in eaf.tiers['Nederlands'][0].values():
-            sentences.append(annotation[2])
-    
+    sentences = []
+    for tier_name in ['Sentences', 'Nederlands']:
+        if tier_name in eaf.tiers:
+            for annotation in eaf.tiers['Sentences'][0].values():
+                sentences.append(annotation[2])
+
     dataset_language = Dataset.objects.get(acronym=dataset_acronym).default_language.language_code_3char
-    for sentence in sentences:
-        sentence_dict[dataset_language] = sentence
+    sentence_dict = {dataset_language: sentence for sentence in sentences}
 
     return glosses, labels_not_found, sentence_dict
 
 
+@require_http_methods(["POST"])
 def process_eaffile(request):
-
-    if request.method == 'POST':
-        check_gloss_label = request.POST.get('check_gloss_label', '')
-        dataset_acronym = request.POST.get('dataset', '')
-        uploaded_file = request.FILES['eaffile']
-        file_type = magic.from_buffer(open(uploaded_file.temporary_file_path(), "rb").read(2040), mime=True)
-        if not (uploaded_file.name.endswith('.eaf') and file_type == 'text/xml'):
+    uploaded_file = request.FILES['eaffile']
+    with open(uploaded_file.temporary_file_path(), "rb") as eaf_file:
+        if not uploaded_file.name.endswith('.eaf') or magic.from_buffer(eaf_file.read(2040), mime=True) != 'text/xml':
             return JsonResponse({'error': _('Invalid file. Please try again.')})
 
-        eaf = Eaf(uploaded_file.temporary_file_path())
-        glosses, labels_not_found, sentence_dict = get_glosses_from_eaf(eaf, dataset_acronym)
+    glosses, labels_not_found, sentence_dict = get_glosses_from_eaf(eaf=Eaf(uploaded_file.temporary_file_path()),
+                                                                    dataset_acronym=request.POST.get('dataset', ''))
 
     # Create the annotations table
-    annotations_table_html = render(request, 'annotations_table.html', {'glosses_list': glosses, 'check_gloss_label': [check_gloss_label], 'labels_not_found': labels_not_found}).content.decode('utf-8')
-    sentences_json = json.dumps(sentence_dict)
-
+    check_gloss_label = request.POST.get('check_gloss_label', '')
+    annotations_table_html = render(request, 'annotations_table.html',
+                                    {'glosses_list': glosses, 'check_gloss_label': [check_gloss_label],
+                                     'labels_not_found': labels_not_found}).content.decode('utf-8')
     if glosses == []:
         return JsonResponse({'error': annotations_table_html})
-    
-    return JsonResponse({'annotations_table_html': annotations_table_html, 'sentences': sentences_json})
+
+    return JsonResponse({'annotations_table_html': annotations_table_html, 'sentences': json.dumps(sentence_dict)})
 
 
 @login_required
+@require_http_methods(["POST"])
 def deletesentencevideo(request, videoid):
     """Remove the video for this gloss, if there is an older version
     then reinstate that as the current video (act like undo)"""
+    examplesentence = get_object_or_404(ExampleSentence, id=videoid)
+    for video in examplesentence.examplevideo_set.order_by('version'):
+        video.reversion(revert=True)
+        if video.version == 0:
+            video.make_small_video()
+        log_entry = ExampleVideoHistory(action="delete", examplesentence=examplesentence, actor=request.user,
+                                        uploadfile=os.path.basename(video.videofile.name),
+                                        goal_location=video.videofile.path)
+        log_entry.save()
 
-    if request.method == "POST":
-        # deal with any existing video for this sign
-        examplesentence = get_object_or_404(ExampleSentence, id=videoid)
-        vids = ExampleVideo.objects.filter(examplesentence=examplesentence).order_by('version')
-        for v in vids:
-            # this will remove the most recent video, ie it's equivalent
-            # to delete if version=0
-            v.reversion(revert=True)
-
-            # Issue #162: log the deletion history
-            log_entry = ExampleVideoHistory(action="delete", examplesentence=examplesentence,
-                                          actor=request.user,
-                                          uploadfile=os.path.basename(v.videofile.name),
-                                          goal_location=v.videofile.path)
-            log_entry.save()
-
-    try:
-        video = examplesentence.examplevideo_set.get(version=0)
-        video.make_small_video()
-    except ObjectDoesNotExist:
-        pass
-
-    # return to referer
-    if 'HTTP_REFERER' in request.META:
-        url = request.META['HTTP_REFERER']
-    else:
-        url = '/'
-    return redirect(url)
+    return redirect(request.META.get('HTTP_REFERER', '/'))
 
 
 @login_required
+@require_http_methods(["POST"])
 def deletevideo(request, glossid):
     """Remove the video for this gloss, if there is an older version
     then reinstate that as the current video (act like undo)"""
-
-    # return to referer
-    if 'HTTP_REFERER' in request.META:
-        url = request.META['HTTP_REFERER']
-    else:
-        url = '/'
-
-    if not request.method == "POST":
-        return redirect(url)
-
-    # deal with any existing video for this sign
     gloss = get_object_or_404(Gloss, pk=glossid, archived=False)
-    # save the video path of the version 0 video before it gets deleted by the reversion method in the loop
-    deleted_video_filename = gloss.get_video_path()
-    glossvideos_nme = [gv.id for gv in GlossVideoNME.objects.filter(gloss=gloss)]
-    glossvideos_persp = [gv.id for gv in GlossVideoPerspective.objects.filter(gloss=gloss)]
-    # get existing gloss video objects but exclude NME and perspective videos
-    existing_videos = GlossVideo.objects.filter(gloss=gloss).exclude(
-        id__in=glossvideos_nme).exclude(id__in=glossvideos_persp)
-    vids = existing_videos.order_by('version')
-    reversion_log = []
-    for v in vids:
-        # this will remove the most recent video, ie it's equivalent
-        # to delete if version=0
-        # save the to be deleted data in a list of tuples
-        uploadfile = os.path.basename(v.videofile.name)
-        goal_location = v.videofile.path
-        reversion_log.append((v.version, uploadfile, goal_location))
-        v.reversion(revert=True)
-    for (version, uploadfile, goal_location) in reversion_log:
-        # Issue #162: log the deletion history
-        if version > 0:
-            continue
-        log_entry = GlossVideoHistory(action="delete", gloss=gloss,
-                                      actor=request.user,
-                                      uploadfile=uploadfile,
-                                      goal_location=goal_location)
-        log_entry.save()
+    excluded_glossvideo_ids = [*GlossVideoNME.objects.filter(gloss=gloss).values_list('id', flat=True),
+                               *GlossVideoPerspective.objects.filter(gloss=gloss).values_list('id', flat=True)]
+    for video in GlossVideo.objects.filter(gloss=gloss).exclude(id__in=excluded_glossvideo_ids).order_by('version'):
+        if video.version == 0:
+            GlossVideoHistory.objects.create(action="delete", gloss=gloss, actor=request.user,
+                                             uploadfile=os.path.basename(video.videofile.name),
+                                             goal_location=video.videofile.path,)
+        video.reversion(revert=True)
 
-    default_annotationidglosstranslation = get_default_annotationidglosstranslation(gloss)
+    DeletedGlossOrMedia.objects.create(item_type='video', idgloss=gloss.idgloss,
+                                       annotation_idgloss=get_default_annotationidglosstranslation(gloss),
+                                       old_pk=gloss.pk, filename=gloss.get_video_path())
 
-    deleted_video = DeletedGlossOrMedia()
-    deleted_video.item_type = 'video'
-    deleted_video.idgloss = gloss.idgloss
-    deleted_video.annotation_idgloss = default_annotationidglosstranslation
-    deleted_video.old_pk = gloss.pk
-    deleted_video.filename = deleted_video_filename
-    deleted_video.save()
-
-    return redirect(url)
-
-
-# CHECK FUNCTIONALITY
-# WHY IS VIDEOID USED AS GLOSSID?
-# IS THIS METHOD USED?
-def video(request, videoid):
-    """Redirect to the video url for this videoid"""
-
-    video = get_object_or_404(GlossVideo, gloss_id=videoid, gloss__archived=False)
-
-    return redirect(video)
-
-
-def create_still_images(request):
-    processed_videos = []
-    for video in GlossVideo.objects.filter(glossvideonme=None, glossvideoperspective=None, version=0):
-        generate_still_image(video)
-        processed_videos.append(str(video))
-    return HttpResponse('Processed videos: <br/>' + "<br/>".join(processed_videos))
+    return redirect(request.META.get('HTTP_REFERER', '/'))

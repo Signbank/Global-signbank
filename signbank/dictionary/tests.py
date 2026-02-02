@@ -936,14 +936,15 @@ class VideoTests(TestCase):
         response = client.post('/video/delete/'+str(new_gloss.pk))
         delete_response = response.status_code
         print('Status after deleting: ', delete_response)
-        if delete_response != '200':
+        if delete_response != 302:
             print("Error deleting the video! Check System folder permissions!")
         else:
             # We expect no video anymore
             print('Attempt to see video. It is not found.')
             response = client.get(video_url)
             print('status code: ', response.status_code)
-            self.assertEqual(response.status_code, '302')
+            self.assertEqual(response.status_code, 200)
+            self.assertEqual(response.content,b'')
 
     def test_create_and_delete_utf8_video(self):
 
@@ -1041,14 +1042,15 @@ class VideoTests(TestCase):
         response = client.post('/video/delete/'+str(new_gloss.pk))
         delete_response = response.status_code
         print('Status after deleting: ', delete_response)
-        if delete_response != '200':
+        if delete_response != 302:
             print("Error deleting the video! Check System folder permissions!")
         else:
             # We expect no video anymore
             print('Attempt to see video. It is not found.')
             response = client.get(video_url)
             print('status code: ', response.status_code)
-            self.assertEqual(response.status_code, '302')
+            self.assertEqual(response.status_code, 200)
+            self.assertEqual(response.content,b'')
 
 
 class AjaxTests(TestCase):
