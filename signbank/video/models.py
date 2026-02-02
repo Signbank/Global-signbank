@@ -104,6 +104,7 @@ def find_dangling_video_files(gloss):
     for subdir, dirs, files in os.walk(chosen_path):
         for file in files:
             if file.startswith(filename_prefix) and file not in file_names:
+                # Each entry is a (relative_path, filename) tuple for use in templates and views.
                 files_without_glossvideo_object.append((f'{GLOSS_VIDEO_DIRECTORY}/{dataset_dir}/{two_letter_dir}/{file}', file))
     return files_without_glossvideo_object
 
