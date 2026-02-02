@@ -28,7 +28,7 @@ from signbank.video.convertvideo import (extract_frame, convert_video, make_thum
                                          remove_stills, detect_video_file_extension)
 from signbank.dictionary.models import (Gloss, Morpheme, Dataset, Language, LemmaIdgloss, LemmaIdglossTranslation,
                                         ExampleSentence, AnnotatedSentence, AnnotatedSentenceSource)
-from signbank.tools import get_two_letter_dir, generate_still_image
+from signbank.tools import get_two_letter_dir, generate_still_image, get_checksum_for_path
 
 from CNGT_scripts.python.resizeVideos import VideoResizer
 from urllib.parse import urlparse
@@ -104,7 +104,8 @@ def find_dangling_video_files(gloss):
     for subdir, dirs, files in os.walk(chosen_path):
         for file in files:
             if file.startswith(filename_prefix) and file not in file_names:
-                files_without_glossvideo_object.append(f'{GLOSS_VIDEO_DIRECTORY}/{dataset_dir}/{two_letter_dir}/{file}')
+                # Each entry is a (relative_path, filename) tuple for use in templates and views.
+                files_without_glossvideo_object.append((f'{GLOSS_VIDEO_DIRECTORY}/{dataset_dir}/{two_letter_dir}/{file}', file))
     return files_without_glossvideo_object
 
 
@@ -203,6 +204,84 @@ def remove_backup_videos(gloss):
                 glossvideo.save()
             else:
                 os.remove(video_file_full_path)
+        glossvideo.delete()
+
+
+def remove_duplicate_videos(gloss):
+    primary_video = GlossVideo.objects.filter(gloss=gloss,
+                                              version=0,
+                                              glossvideonme=None,
+                                              glossvideoperspective=None).first()
+    if not primary_video or not primary_video.videofile:
+        return
+    fullpath = os.path.join(WRITABLE_FOLDER, primary_video.videofile.path)
+    if not os.path.exists(fullpath):
+        return
+    checksum_primary_video = get_checksum_for_path(fullpath)
+    backup_files = GlossVideo.objects.filter(gloss=gloss,
+                                             glossvideonme=None,
+                                             glossvideoperspective=None,
+                                             version__gt=0)
+    for glossvideo in backup_files:
+        if not glossvideo.videofile:
+            glossvideo.delete()
+            continue
+        video_file_full_path = os.path.join(WRITABLE_FOLDER, glossvideo.videofile.path)
+        if not os.path.exists(video_file_full_path):
+            glossvideo.delete()
+            continue
+        checksum_this_backup_video = get_checksum_for_path(video_file_full_path)
+        if checksum_primary_video != checksum_this_backup_video:
+            continue
+        # construct the primary video filename and make sure the object does not point to it
+        _, extension = os.path.splitext(video_file_full_path)
+        basename = os.path.basename(video_file_full_path)
+        primary_video_filename = f'{gloss.idgloss}-{gloss.id}{extension}'
+        if basename == primary_video_filename:
+            # this gloss video object points to the primary video, just erase the link
+            glossvideo.videofile.name = ""
+            glossvideo.save()
+        else:
+            os.remove(video_file_full_path)
+        glossvideo.delete()
+
+
+def weedout_duplicate_backup_videos(gloss):
+    backup_files = GlossVideo.objects.filter(gloss=gloss,
+                                             glossvideonme=None,
+                                             glossvideoperspective=None,
+                                             version__gt=0).distinct()
+    checksum_X_glossvideo = []
+    for glossvideo in backup_files:
+        if not glossvideo.videofile:
+            glossvideo.delete()
+            continue
+        video_file_full_path = os.path.join(WRITABLE_FOLDER, glossvideo.videofile.path)
+        if not os.path.exists(video_file_full_path):
+            glossvideo.delete()
+            continue
+        checksum_this_backup_video = get_checksum_for_path(video_file_full_path)
+        checksum_X_glossvideo.append((checksum_this_backup_video, glossvideo))
+    sorted_by_checksum = sorted(checksum_X_glossvideo, key=lambda x: x[0])
+    visited = set()
+    duplicates = []
+    for (checksum, glossvideo) in sorted_by_checksum:
+        if checksum not in visited:
+            visited.add(checksum)
+        else:
+            duplicates.append(glossvideo)
+    for glossvideo in duplicates:
+        video_file_full_path = os.path.join(WRITABLE_FOLDER, glossvideo.videofile.path)
+        # construct the primary video filename and make sure the object does not point to it
+        _, extension = os.path.splitext(video_file_full_path)
+        basename = os.path.basename(video_file_full_path)
+        primary_video_filename = f'{gloss.idgloss}-{gloss.id}{extension}'
+        if basename == primary_video_filename:
+            # this gloss video object points to the primary video, just erase the link
+            glossvideo.videofile.name = ""
+            glossvideo.save()
+        else:
+            os.remove(video_file_full_path)
         glossvideo.delete()
 
 
