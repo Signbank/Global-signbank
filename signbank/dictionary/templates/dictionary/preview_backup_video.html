@@ -1,0 +1,27 @@
+{% load i18n %}
+{% load stylesheet %}
+{% load annotation_idgloss_translation %}
+
+{% load bootstrap3 %}
+{% load tagging_tags %}
+
+{% block extrajs %}
+<script type='text/javascript'>
+    var url = '{{PREFIX_URL}}';
+
+</script>
+{% endblock %}
+
+{% if error %}
+<p>{{error}}</p>
+{% else %}
+<div id="preview_backup_{{focus_gloss.id}}_{{glossvideo.id}}">
+{% url 'dictionary:protected_media' '' as protected_media_url %}
+{% csrf_token %}
+    <label class="still_label" for="backup_{{glossvideo.id}}">
+    <video id='videoplayer' style="height:200px;width:auto;"
+           src="{{protected_media_url}}{{filename}}" controls autoplay muted></video>
+    </label>
+    <input type="radio" name="filename" value="{{filename}}" id="backup_{{glossvideo.id}}">
+</div>
+{% endif %}
