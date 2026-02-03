@@ -1,7 +1,5 @@
 import sys
 import os
-import time
-import signal
 import glob
 import ffmpeg
 import re
@@ -9,13 +7,8 @@ import logging
 
 import magic
 
+from django.conf import settings
 from signbank.settings.server_specific import DEBUG_VIDEOS
-
-try:
-    from django.conf import settings
-    FFMPEG_PROGRAM = settings.FFMPEG_PROGRAM
-except KeyError:
-    FFMPEG_PROGRAM = "/usr/bin/ffmpeg"
 
 
 logger = logging.getLogger(__name__)
