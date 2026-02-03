@@ -183,9 +183,10 @@ def get_glosses_from_eaf(eaf, dataset_acronym):
 @require_http_methods(["POST"])
 def process_eaffile(request):
     uploaded_file = request.FILES['eaffile']
-    with open(uploaded_file.temporary_file_path(), "rb") as eaf_file:
-        if not uploaded_file.name.endswith('.eaf') or magic.from_buffer(eaf_file.read(2040), mime=True) != 'text/xml':
-            return JsonResponse({'error': _('Invalid file. Please try again.')})
+    if not uploaded_file.name.endswith('.eaf'):
+        return JsonResponse({'error': _('Invalid file. Please try again.')})
+    if magic.from_file(uploaded_file.temporary_file_path(), mime=True) != 'text/xml':
+        return JsonResponse({'error': _('Invalid file. Please try again.')})
 
     glosses, labels_not_found, sentence_dict = get_glosses_from_eaf(eaf=Eaf(uploaded_file.temporary_file_path()),
                                                                     dataset_acronym=request.POST.get('dataset', ''))
