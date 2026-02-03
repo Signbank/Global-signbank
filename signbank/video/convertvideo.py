@@ -4,10 +4,11 @@ import time
 import signal
 import glob
 import ffmpeg
-from subprocess import Popen, PIPE
 import re
-import subprocess
 import logging
+
+import magic
+
 from signbank.settings.server_specific import DEBUG_VIDEOS
 
 try:
@@ -42,26 +43,9 @@ def get_middle_timecode(videofile):
     return ss
 
 
-def run_ffmpeg(sourcefile, targetfile, timeout=60, options=[]):
-    """Run FFMPEG with some command options, returning the output"""
-    ffmpeg = [FFMPEG_PROGRAM, "-y", "-i", sourcefile, *options, targetfile]
-    process = Popen(ffmpeg, stdout=PIPE, stderr=PIPE)
-    start = time.time()
-    while process.poll() is None:
-        if time.time()-start > timeout:
-            os.kill(process.pid, signal.SIGKILL)
-            logger.info(f"Killing ffmpeg process for {sourcefile}")
-            errormsg = "Conversion of video took too long.  This site is only able to host relatively short videos."
-            return errormsg
-
-    out, err = process.communicate()
-    return err
-
-
 def extract_frame(sourcefile, targetfile):
     """Extract a single frame from the source video and write it to the target file"""
-    options = ["-r", "1", "-f", "mjpeg"]
-    run_ffmpeg(sourcefile, targetfile, options=options)
+    ffmpeg.input(sourcefile).output(targetfile, r=1, f="mjpeg").run(overwrite_output=True, quiet=True)
 
 
 def get_folder_name(gloss):
@@ -127,8 +111,7 @@ def extension_on_filename(filename):
 
 
 def get_extension_from_type(file_path):
-    filetype_output = subprocess.run(["file", "-b", file_path], stdout=subprocess.PIPE)
-    filetype = str(filetype_output.stdout)
+    filetype = magic.from_file(file_path)
     for type in FILETYPE_EXTENSION_MAPPING:
         if type in filetype:
             return FILETYPE_EXTENSION_MAPPING[type]
@@ -177,8 +160,12 @@ def convert_video(sourcefile, targetfile):
     if input_file != sourcefile:
         os.rename(sourcefile, input_file)
 
-    result = subprocess.run(["ffmpeg", "-i", input_file, targetfile])
-    return result.returncode == 0
+    try:
+        ffmpeg.input(input_file).output(targetfile).run(quiet=True)
+        return True
+    except ffmpeg.Error as e:
+        logger.error(e)
+        return False
 
 
 if __name__ == '__main__':

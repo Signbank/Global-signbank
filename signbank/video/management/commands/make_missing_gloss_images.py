@@ -1,9 +1,11 @@
 """Make missing (thumbnail) images for existing videos"""
 
+import ffmpeg
+
 from django.core.management.base import BaseCommand  
 from django.conf import settings
 from signbank.video.models import GlossVideo
-from signbank.video.convertvideo import extract_frame, run_ffmpeg, get_middle_timecode
+from signbank.video.convertvideo import get_middle_timecode
 import os
 
 class Command(BaseCommand):
@@ -43,8 +45,10 @@ class Command(BaseCommand):
 
                 try:
                     # make the missing image from the middle frame of the video
-                    ss = get_middle_timecode(video_path)
-                    run_ffmpeg(video_path, image_path, options=["-r", "1", "-f", "mjpeg", "-ss", ss])
+                    (ffmpeg
+                     .input(video_path)
+                     .output(image_path, r=1, f="mjpeg", ss=get_middle_timecode(video_path))
+                     .run(overwrite_output=True, quiet=True))
                     images_created.append(os.path.basename(image_path))
                 except:
                     print("Error in creating an image for the following video: ", os.path.basename(video_path))
