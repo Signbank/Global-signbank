@@ -1,4 +1,5 @@
 import os.path
+import shutil
 import csv
 import json
 import re
@@ -51,12 +52,12 @@ from signbank.settings.server_specific import (URL, PREFIX_URL, LANGUAGE_CODE, L
                                                MORPHEME_CHOICE_FIELDS, MORPHEME_DISPLAY_FIELDS, SEARCH_BY,
                                                MINIMAL_PAIRS_SEARCH_FIELDS,
                                                PUBLIC_PHONOLOGY_FIELDS, PUBLIC_SEMANTICS_FIELDS, PUBLIC_MAIN_FIELDS,
-                                               DEBUG_SENSES, DEBUG_EMAILS_ON, SEPARATE_ENGLISH_IDGLOSS_FIELD)
+                                               DEBUG_SENSES, DEBUG_EMAILS_ON, SEPARATE_ENGLISH_IDGLOSS_FIELD, TMP_DIR)
 from signbank.video.forms import VideoUploadForObjectForm
-from signbank.video.convertvideo import get_folder_name
+from signbank.video.convertvideo import get_folder_name, extension_on_filename
 from signbank.video.models import (GlossVideo, find_dangling_video_files, delete_glossvideo_objects_and_files,
                                    renumber_backup_videos, remove_backup_videos, remove_duplicate_videos,
-                                   weedout_duplicate_backup_videos)
+                                   weedout_duplicate_backup_videos, flipped_backup_filename)
 from signbank.communication.models import generate_communication
 from signbank.dictionary.models import (Dataset, UserProfile, AffiliatedUser, AffiliatedGloss,
                                         Language, Dialect, Gloss, Morpheme, GlossSense, Sense,
@@ -7795,3 +7796,46 @@ def fetch_video_stills_for_gloss(request, gloss_id):
                    'PREFIX_URL': PREFIX_URL,
                    'USE_REGULAR_EXPRESSIONS': USE_REGULAR_EXPRESSIONS,
                    'SHOW_DATASET_INTERFACE_OPTIONS': SHOW_DATASET_INTERFACE_OPTIONS})
+
+
+def preview_backup_video_for_gloss(request, gloss_id, glossvideo_id):
+
+    gloss = Gloss.objects.get(id=gloss_id, archived=False)
+    glossvideo = GlossVideo.objects.get(id=glossvideo_id, gloss=gloss)
+
+    # introduce a mutable context variable
+    context = {'focus_gloss': gloss,
+               'glossvideo': glossvideo,
+               'filename': '',
+               'error': '',
+               'PREFIX_URL': PREFIX_URL}
+
+    user_change_datasets = get_objects_for_user(request.user, 'change_dataset', Dataset, accept_global_perms=False)
+    if not user_change_datasets or gloss.lemma.dataset not in user_change_datasets:
+        context['error'] = _('No permission to view backup videos.')
+        return render(request, 'dictionary/preview_backup_video.html', context)
+
+    backup_file = os.path.join(WRITABLE_FOLDER, str(glossvideo.videofile.path))
+    if not os.path.exists(backup_file):
+        context['error'] = _('File not found.')
+        return render(request, 'dictionary/preview_backup_video.html', context)
+
+    extension = extension_on_filename(glossvideo.videofile.path)
+    folder = get_folder_name(gloss)
+    backup_previews_folder = os.path.join(TMP_DIR, "preview-backups")
+    if not os.path.exists(backup_previews_folder):
+        os.mkdir(backup_previews_folder)
+    temp_location_video = str(os.path.join(TMP_DIR, "preview-backups", folder))
+    if not os.path.exists(temp_location_video):
+        os.mkdir(temp_location_video)
+    flipped_video_filename = str(flipped_backup_filename(gloss, glossvideo, extension))
+    temp_video_path = os.path.join(temp_location_video, flipped_video_filename)
+    try:
+        shutil.copy(backup_file, temp_video_path)
+    except (PermissionError, OSError):
+        context['error'] = _('Error generating preview file.')
+        return render(request, 'dictionary/preview_backup_video.html', context)
+
+    temp_relative_path = os.path.join('tmp', "preview-backups", folder, flipped_video_filename)
+    context['filename'] = temp_relative_path
+    return render(request, 'dictionary/preview_backup_video.html', context)
