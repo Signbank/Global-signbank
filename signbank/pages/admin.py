@@ -1,7 +1,6 @@
 from django import forms
 from django.contrib import admin
-from signbank.pages.models import Page, PageVideo
-from signbank.video.fields import VideoUploadToFLVField
+from signbank.pages.models import Page
 from django.utils.translation import gettext_lazy as _
 
 from django_summernote.admin import SummernoteModelAdmin
@@ -19,31 +18,6 @@ class PageForm(forms.ModelForm):
     class Meta:
         model = Page
         fields = '__all__'
-
-
-class PageVideoForm(forms.ModelForm):
-    video = VideoUploadToFLVField(label='Video',
-                            required=True,
-                            prefix='pages',
-                            help_text = _("Uploaded video will be converted to Flash"),
-                            widget = admin.widgets.AdminFileWidget)
-
-    class Meta:
-        model = PageVideo
-        fields = '__all__'
-
-    def save(self, commit=True):
-        debug("Saving a video form")
-        debug("VideoName: %s" % (self.cleaned_data['video'],))
-        debug("Cleaned data: %s" % (self.cleaned_data,))
-        instance = super(PageVideoForm, self).save(commit=commit)
-        debug("Instance video: %s" % instance.video)
-        return instance
-
-class PageVideoInline(admin.TabularInline):
-    form = PageVideoForm
-    model = PageVideo  
-    extra = 1
 
 class PageAdmin(TranslationAdmin, SummernoteModelAdmin):
     form = PageForm
@@ -63,7 +37,6 @@ class PageAdmin(TranslationAdmin, SummernoteModelAdmin):
     list_display = ('url', 'title', 'parent', 'index')
     list_filter = ('publish', 'group_required')
     search_fields = ('url', 'title')
-    inlines = [PageVideoInline]
 
 admin.site.register(Page, PageAdmin)
 

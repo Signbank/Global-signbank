@@ -31,15 +31,6 @@ class Page(models.Model):
     def get_absolute_url(self):
         return self.url
 
-class PageVideo(models.Model):
-    page = models.ForeignKey('Page', on_delete=models.CASCADE)
-    title = models.CharField(_('title'), max_length=200)
-    number = models.PositiveIntegerField(_('number'))
-    video = models.FileField(upload_to=settings.PAGES_VIDEO_LOCATION, blank=True)
-
-    def __str__(self):
-        return "Page Video: %s" % (self.title,)
-
 
 def copy_flatpages():
     """Copy existing flatpages into Pages"""
