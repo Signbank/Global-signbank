@@ -3,7 +3,7 @@
 import os
 import ffmpeg
 
-from django.core.management.base import BaseCommand  
+from django.core.management.base import BaseCommand
 from django.conf import settings
 
 from signbank.video.models import GlossVideo
@@ -23,8 +23,7 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         images_created = [
             created_image for gloss_video in GlossVideo.objects.all()
-            if os.path.exists(gloss_video.videofile.path)
-               and (created_image := self.create_image(gloss_video))
+            if os.path.exists(gloss_video.videofile.path) and (created_image := self.create_image(gloss_video))
         ]
 
         if len(images_created) == 0:
@@ -51,4 +50,3 @@ class Command(BaseCommand):
         except ffmpeg.Error:
             print("Error in creating an image for the following video: ", os.path.basename(video_path))
             return None
-    
