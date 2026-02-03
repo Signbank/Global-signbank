@@ -8,7 +8,6 @@ import glob
 import re
 import stat
 import shutil
-import subprocess
 import logging
 from urllib.parse import urlparse
 from pathlib import Path
@@ -554,10 +553,11 @@ class AnnotatedVideo(EnsureMp4Mixin, models.Model):
 
     def get_end_ms(self):
         """Get the duration of a video in ms using ffprobe."""
-        result = subprocess.run(['ffprobe', '-v', 'error', '-show_entries', 'format=duration', '-of',
-                                 'default=noprint_wrappers=1:nokey=1', self.videofile.path], stdout=subprocess.PIPE,
-                                stderr=subprocess.STDOUT)
-        return int(float(result.stdout)*1000)
+        ffprobe = ffmpeg.probe(self.videofile.path)
+        stream = next((stream for stream in ffprobe['streams'] if stream['codec_type'] == 'video'), None)
+        if not stream:
+            return -1
+        return float(stream['duration']) * 1000
 
     def __str__(self):
         return self.videofile.name
@@ -607,21 +607,19 @@ class AnnotatedVideo(EnsureMp4Mixin, models.Model):
         # Cut the video
         input_file = Path(self.videofile.path)
         temp_output_file = Path(os.path.join(os.path.split(input_file)[0], 'temp.mp4'))
-        command = ['ffmpeg', '-i', input_file, '-ss', start_time, '-to', end_time, '-c:v', 'libx264', '-c:a', 'aac',
-                   '-y', temp_output_file]
-        process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        _, stderr = process.communicate()
-        stderr_str = stderr.decode('utf-8')
-        if process.returncode != 0:
-            raise RuntimeError(f"ffmpeg error: {stderr_str}")
+        try:
+            (ffmpeg
+             .input(input_file)
+             .output(temp_output_file, ss=start_time, to=end_time)
+             .run(overwrite_output=True, quiet=True))
+        except ffmpeg.Error as e:
+            raise RuntimeError(f"ffmpeg error: {e}")
 
         # Overwrite the original file with the cut video
-        overwrite_command = ['mv', temp_output_file, input_file]
-        process = subprocess.Popen(overwrite_command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        _, stderr = process.communicate()
-        stderr_str = stderr.decode('utf-8')
-        if process.returncode != 0:
-            raise RuntimeError(f"File overwrite error: {stderr_str}")
+        try:
+            shutil.move(temp_output_file, input_file)
+        except (OSError, PermissionError) as e:
+            raise RuntimeError(f"File overwrite error: {e}")
 
         # Cut the eaf
         eaf = Eaf(self.eaffile.path)
