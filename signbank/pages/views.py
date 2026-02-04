@@ -1,15 +1,17 @@
-from signbank.pages.models import *
-from signbank.tools import get_dataset_languages
+from django.core.exceptions import ObjectDoesNotExist
 from django.template import loader
 from django.http import HttpResponse, HttpResponseRedirect, HttpResponseNotFound
 from django.conf import settings
 from django.utils.safestring import mark_safe
 from django.views.decorators.csrf import csrf_protect
 
+from signbank.pages.models import Page
+from signbank.tools import get_dataset_languages
 from signbank.dictionary.context_data import get_selected_datasets
 from signbank.settings.server_specific import USE_REGULAR_EXPRESSIONS
 
 DEFAULT_TEMPLATE = 'pages/default.html'
+
 
 @csrf_protect
 def page(request, url='/'):
@@ -24,53 +26,33 @@ def page(request, url='/'):
             `pages.page` object
     """
     if not url.endswith('/') and settings.APPEND_SLASH:
-        return HttpResponseRedirect("%s/" % request.path)
+        return HttpResponseRedirect(f'{request.path}/')
     if not url.startswith('/'):
         url = "/" + url
-    # here I've removed the requirement that the page be for this site
-    # - this won't work if we ever have more than one site here
-    # which isn't planned
-    # deal with the lack of a root page
+
     try:
-        f = Page.objects.get(url__exact=url)
-    except:
-        # no page, if we're after the root page then serve a default page
+        page = Page.objects.get(url__exact=url)
+    except ObjectDoesNotExist:
         if url == '/':
-
-            f = Page(title='No Pages', 
-                     content='<p>No pages defined. Login to <a href="/admin"> to create some.</p>')  
+            page = Page(title='No Pages', content='<p>No pages defined. Login to <a href="/admin"> to create some.</p>')
         else:
-            t = loader.get_template("404.html")
-            return HttpResponseNotFound(t.render(request=request))
+            template = loader.get_template("404.html")
+            return HttpResponseNotFound(template.render(request=request))
 
-    
-    # If registration is required for accessing this page, and the user isn't
-    # logged in, redirect to the login page.
+    template = loader.select_template((page.template_name, DEFAULT_TEMPLATE)) \
+                if page.template_name else loader.get_template(DEFAULT_TEMPLATE)
 
-    # if len(f.group_required.all()) > 0:
-    #
-    #      if not request.user.is_authenticated :
-    #          from django.contrib.auth.views import redirect_to_login
-    #          return redirect_to_login(request.path)
-
-    if f.template_name:
-        t = loader.select_template((f.template_name, DEFAULT_TEMPLATE))
-    else:
-        t = loader.get_template(DEFAULT_TEMPLATE)
-
-    # To avoid having to always use the "|safe" filter in flatpage templates,
-    # mark the title and content as already safe (since they are raw HTML
-    # content in the first place).
-    f.title = mark_safe(f.title)
-    f.content = mark_safe(f.content)
+    page.title = mark_safe(page.title)
+    page.content = mark_safe(page.content)
 
     selected_datasets = get_selected_datasets(request)
     dataset_languages = get_dataset_languages(selected_datasets)
 
-    response = HttpResponse(t.render({'page': f,
-                                      'dataset_languages': dataset_languages,
-                                      'selected_datasets': selected_datasets,
-                                      'SHOW_DATASET_INTERFACE_OPTIONS': settings.SHOW_DATASET_INTERFACE_OPTIONS,
-                                      'USE_REGULAR_EXPRESSIONS': USE_REGULAR_EXPRESSIONS,
-                                      },request))
-    return response
+    context = {
+        'page': page,
+        'dataset_languages': dataset_languages,
+        'selected_datasets': selected_datasets,
+        'SHOW_DATASET_INTERFACE_OPTIONS': settings.SHOW_DATASET_INTERFACE_OPTIONS,
+        'USE_REGULAR_EXPRESSIONS': USE_REGULAR_EXPRESSIONS,
+    }
+    return HttpResponse(template.render(context, request))
