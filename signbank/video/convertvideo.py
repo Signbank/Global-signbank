@@ -242,7 +242,7 @@ def detect_video_file_extension(file_path):
     elif 'MPEG-2' in filetype:
         video_extension = '.m2v'
     else:
-        video_extension = extension
+        video_extension = ''
     return video_extension
 
 
@@ -287,6 +287,8 @@ def convert_video(sourcefile, targetfile):
     basename, source_file_extension = os.path.splitext(sourcefile)
 
     video_format_extension = detect_video_file_extension(sourcefile)
+    if not video_format_extension:
+        return False
     file_with_extension_matching_video_type = f'{basename}{video_format_extension}'
 
     if source_file_extension == '.mp4' and video_format_extension == ".mp4":

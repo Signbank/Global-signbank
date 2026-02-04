@@ -2332,7 +2332,7 @@ def add_othermedia(request):
 
     is_video = filetype.startswith('video')
 
-    if not is_video:
+    if not is_video or not video_format_extension:
         return HttpResponseRedirect(reverse(reverse_url, kwargs={'pk': request.POST['gloss']}) + '?editothermedia')
 
     is_not_mp4_type = filetype != 'video/mp4'

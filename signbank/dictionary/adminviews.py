@@ -54,7 +54,7 @@ from signbank.settings.server_specific import (URL, PREFIX_URL, LANGUAGE_CODE, L
                                                PUBLIC_PHONOLOGY_FIELDS, PUBLIC_SEMANTICS_FIELDS, PUBLIC_MAIN_FIELDS,
                                                DEBUG_SENSES, DEBUG_EMAILS_ON, SEPARATE_ENGLISH_IDGLOSS_FIELD, TMP_DIR)
 from signbank.video.forms import VideoUploadForObjectForm
-from signbank.video.convertvideo import get_folder_name, extension_on_filename
+from signbank.video.convertvideo import get_folder_name, extension_on_filename, detect_video_file_extension
 from signbank.video.models import (GlossVideo, find_dangling_video_files, delete_glossvideo_objects_and_files,
                                    renumber_backup_videos, remove_backup_videos, remove_duplicate_videos,
                                    weedout_duplicate_backup_videos, flipped_backup_filename)
@@ -7828,10 +7828,22 @@ def preview_backup_video_for_gloss(request, gloss_id, glossvideo_id):
     temp_location_video = str(os.path.join(TMP_DIR, "preview-backups", folder))
     if not os.path.exists(temp_location_video):
         os.mkdir(temp_location_video)
+    else:
+        # remove any previously generated temporary backup videos for this gloss
+        for tempfile in os.listdir(temp_location_video):
+            temp_file_path = os.path.join(temp_location_video, tempfile)
+            os.remove(temp_file_path)
     flipped_video_filename = str(flipped_backup_filename(gloss, glossvideo, extension))
     temp_video_path = os.path.join(temp_location_video, flipped_video_filename)
     try:
         shutil.copy(backup_file, temp_video_path)
+        video_type_extension = detect_video_file_extension(temp_video_path)
+        if not video_type_extension:
+            os.remove(temp_video_path)
+            raise TypeError
+    except TypeError:
+        context['error'] = _('This is not a video file.')
+        return render(request, 'dictionary/preview_backup_video.html', context)
     except (PermissionError, OSError):
         context['error'] = _('Error generating preview file.')
         return render(request, 'dictionary/preview_backup_video.html', context)

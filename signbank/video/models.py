@@ -551,6 +551,11 @@ class ExampleVideo(models.Model):
             return
 
         video_format_extension = detect_video_file_extension(self.videofile.path)
+        if not video_format_extension:
+            # this is not a video file
+            os.remove(self.videofile.path)
+            self.videofile.name = ''
+            return
         (basename, ext) = os.path.splitext(self.videofile.path)
         if ext != '.mp4' or video_format_extension != '.mp4':
             old_relative_path = str(self.videofile)
@@ -702,6 +707,11 @@ class AnnotatedVideo(models.Model):
             return
 
         video_format_extension = detect_video_file_extension(self.videofile.path)
+        if not video_format_extension:
+            # this is not a video file
+            os.remove(self.videofile.path)
+            self.videofile.name = ''
+            return
         (basename, ext) = os.path.splitext(self.videofile.path)
         if ext != '.mp4' or video_format_extension != '.mp4':
             old_relative_path = str(self.videofile)
@@ -900,6 +910,11 @@ class GlossVideo(models.Model):
             return
 
         video_format_extension = detect_video_file_extension(self.videofile.path)
+        if not video_format_extension:
+            # this is not a video file
+            os.remove(self.videofile.path)
+            self.videofile.name = ''
+            return
         (basename, ext) = os.path.splitext(self.videofile.path)
         if ext != '.mp4' or video_format_extension != '.mp4':
             old_relative_path = str(self.videofile)
@@ -1153,6 +1168,11 @@ class GlossVideoNME(GlossVideo):
             return
 
         video_format_extension = detect_video_file_extension(self.videofile.path)
+        if not video_format_extension:
+            # this is not a video file
+            os.remove(self.videofile.path)
+            self.videofile.name = ''
+            return
         (basename, ext) = os.path.splitext(self.videofile.path)
         if ext != '.mp4' or video_format_extension != '.mp4':
             old_relative_path = str(self.videofile)
@@ -1251,6 +1271,11 @@ class GlossVideoPerspective(GlossVideo):
             return
 
         video_format_extension = detect_video_file_extension(self.videofile.path)
+        if not video_format_extension:
+            # this is not a video file
+            os.remove(self.videofile.path)
+            self.videofile.name = ''
+            return
         (basename, ext) = os.path.splitext(self.videofile.path)
         if ext != '.mp4' or video_format_extension != '.mp4':
             old_relative_path = str(self.videofile)
