@@ -2475,6 +2475,55 @@ class Gloss(MetaModelMixin, models.Model):
             msg = gettext("A GlossVideo object could not be created for gloss {glossid}.").format(glossid=self.pk)
             raise ValidationError(msg)
 
+    def restore_backup_video(self, user, videofile, glossvideo):
+        # Preventing circular import
+        from signbank.video.models import (GlossVideo, GlossVideoHistory, get_video_file_path, filename_matches_non_backup)
+
+        if not glossvideo or not videofile or not isinstance(videofile, File):
+            msg = gettext("File not found.")
+            raise ValidationError(msg)
+        if glossvideo.is_glossvideonme() or glossvideo.is_glossvideoperspective() or glossvideo.version == 0:
+            msg = gettext("The backup video object has the wrong type.")
+            raise ValidationError(msg)
+
+        # Create a new GlossVideo object
+        video = GlossVideo(gloss=self, upload_to=get_video_file_path, glossvideonme=None, glossvideoperspective=None)
+        # get existing gloss video objects but exclude NME and perspective videos
+        existing_videos = GlossVideo.objects.filter(gloss=self, glossvideonme=None, glossvideoperspective=None).exclude(pk=glossvideo.pk).order_by('version')
+        # Update the backup video objects stored in the database
+        for video_object in existing_videos:
+            video_object.reversion()
+
+        # Create a GlossVideoHistory object
+        relative_path = get_video_file_path(video, str(videofile), nmevideo=False, perspective='', version=0)
+        if settings.DEBUG_VIDEOS:
+            print('add_video relative_path: ', relative_path)
+        # Save the new videofile in the video object
+        try:
+            video.videofile.save(relative_path, videofile)
+        except OSError:
+            msg = gettext("The video could not be saved in the GlossVideo object for gloss {glossid}.").format(glossid=self.pk)
+            raise ValidationError(msg)
+
+        self.lastUpdated = DT.datetime.now(tz=get_current_timezone())
+        self.save()
+        video.make_poster_image()
+
+        video_file_full_path = os.path.join(WRITABLE_FOLDER, str(glossvideo.videofile))
+        if os.path.exists(video_file_full_path):
+            if filename_matches_non_backup(self, video_file_full_path):
+                # this gloss video object points to a non-backup video file, just erase the link
+                glossvideo.videofile.name = ""
+                glossvideo.save()
+            else:
+                os.remove(video_file_full_path)
+        glossvideo.delete()
+
+        video_file_full_path = os.path.join(WRITABLE_FOLDER, relative_path)
+        glossvideohistory = GlossVideoHistory(action="restore", gloss=self, actor=user,
+                                              uploadfile=videofile, goal_location=video_file_full_path)
+        glossvideohistory.save()
+
     def has_nme_videos(self):
         from signbank.video.models import GlossVideoNME
         nmevideos = GlossVideoNME.objects.filter(gloss=self, version=0)

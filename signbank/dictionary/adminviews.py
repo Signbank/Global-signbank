@@ -7886,7 +7886,10 @@ def save_backup_video_as_gloss_video(request, gloss_id, glossvideo_id):
     try:
         with open(temp_video_path, 'rb') as f:
             vfile = File(f)
-            gloss.add_video(request.user, vfile, recorded=False)
+            gloss.restore_backup_video(request.user, vfile, glossvideo)
+    except ValidationError as e:
+        result['feedback'] = e
+        return JsonResponse(result, safe=True)
     except (OSError, PermissionError, IOError):
         result['feedback'] = _('Unable to restore backup file as primary video.')
         return JsonResponse(result, safe=True)
