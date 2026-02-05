@@ -2519,11 +2519,6 @@ class Gloss(MetaModelMixin, models.Model):
                 os.remove(video_file_full_path)
         glossvideo.delete()
 
-        video_file_full_path = os.path.join(WRITABLE_FOLDER, relative_path)
-        glossvideohistory = GlossVideoHistory(action="restore", gloss=self, actor=user,
-                                              uploadfile=videofile, goal_location=video_file_full_path)
-        glossvideohistory.save()
-
     def has_nme_videos(self):
         from signbank.video.models import GlossVideoNME
         nmevideos = GlossVideoNME.objects.filter(gloss=self, version=0)

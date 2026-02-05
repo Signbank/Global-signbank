@@ -90,7 +90,7 @@ from signbank.tools import (write_ecv_file_for_dataset, find_duplicate_lemmas,
                             construct_scrollbar, get_dataset_languages, get_datasets_with_public_glosses,
                             searchform_panels, map_search_results_to_gloss_list,
                             get_interface_language_and_default_language_codes, get_default_annotationidglosstranslation,
-                            get_page_parameters_for_listview, filter_page_values)
+                            get_page_parameters_for_listview, filter_page_values, add_gloss_update_to_revision_history)
 from signbank.csv_interface import (csv_gloss_to_row, csv_header_row_glosslist, csv_header_row_morphemelist,
                                     csv_morpheme_to_row, csv_header_row_handshapelist, csv_handshape_to_row,
                                     csv_header_row_lemmalist, csv_lemma_to_row,
@@ -7883,6 +7883,8 @@ def save_backup_video_as_gloss_video(request, gloss_id, glossvideo_id):
         result['feedback'] = _('Temporary backup file not found.')
         return JsonResponse(result, safe=True)
 
+    backup_video = str(glossvideo)
+
     try:
         with open(temp_video_path, 'rb') as f:
             vfile = File(f)
@@ -7893,6 +7895,8 @@ def save_backup_video_as_gloss_video(request, gloss_id, glossvideo_id):
     except (OSError, PermissionError, IOError):
         result['feedback'] = _('Unable to restore backup file as primary video.')
         return JsonResponse(result, safe=True)
+
+    add_gloss_update_to_revision_history(request.user, gloss, 'gloss_video_restore', backup_video, gloss.get_video())
 
     result['feedback'] = _('Video successfully saved as primary video.')
     return JsonResponse(result, safe=True)

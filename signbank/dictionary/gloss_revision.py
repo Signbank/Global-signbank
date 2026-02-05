@@ -96,6 +96,7 @@ def pretty_print_revisions(gloss):
         'sequential_morphology': gettext("Sequential Morphology"),
         'simultaneous_morphology': gettext("Simultaneous Morphology"),
         'gloss_video': gettext("Upload Primary Video"),
+        'gloss_video_restore': gettext("Restore Backup Video"),
         'gloss_perspectivevideo_left': gettext("Upload Perspective Video (left)"),
         'gloss_perspectivevideo_right': gettext("Upload Perspective Video (right)"),
         'blend_morphology': gettext("Blend Morphology"),
