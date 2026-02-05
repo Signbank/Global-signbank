@@ -7,6 +7,7 @@ import mimetypes
 import datetime as DT
 from datetime import timedelta
 
+from django.core.files.base import File
 from django.views.generic.list import ListView
 from django.views.generic.detail import DetailView
 from django.core.paginator import Paginator
@@ -7800,8 +7801,8 @@ def fetch_video_stills_for_gloss(request, gloss_id):
 
 def preview_backup_video_for_gloss(request, gloss_id, glossvideo_id):
 
-    gloss = Gloss.objects.get(id=gloss_id, archived=False)
-    glossvideo = GlossVideo.objects.get(id=glossvideo_id, gloss=gloss)
+    gloss = get_object_or_404(Gloss, id=gloss_id, archived=False)
+    glossvideo = get_object_or_404(GlossVideo, id=glossvideo_id, gloss=gloss)
 
     # introduce a mutable context variable
     context = {'focus_gloss': gloss,
@@ -7812,7 +7813,7 @@ def preview_backup_video_for_gloss(request, gloss_id, glossvideo_id):
 
     user_change_datasets = get_objects_for_user(request.user, 'change_dataset', Dataset, accept_global_perms=False)
     if not user_change_datasets or gloss.lemma.dataset not in user_change_datasets:
-        context['error'] = _('No permission to view backup videos.')
+        context['error'] = _('No permission to access backup videos.')
         return render(request, 'dictionary/preview_backup_video.html', context)
 
     backup_file = os.path.join(WRITABLE_FOLDER, str(glossvideo.videofile.path))
@@ -7851,3 +7852,44 @@ def preview_backup_video_for_gloss(request, gloss_id, glossvideo_id):
     temp_relative_path = os.path.join('tmp', "preview-backups", folder, flipped_video_filename)
     context['filename'] = temp_relative_path
     return render(request, 'dictionary/preview_backup_video.html', context)
+
+
+def save_backup_video_as_gloss_video(request, gloss_id, glossvideo_id):
+
+    gloss = get_object_or_404(Gloss, id=gloss_id, archived=False)
+    glossvideo = get_object_or_404(GlossVideo, id=glossvideo_id, gloss=gloss)
+
+    # introduce a mutable context variable
+    result = {'glossid': gloss_id,
+              'glossvideoid': glossvideo_id,
+              'feedback': ''}
+
+    user_change_datasets = get_objects_for_user(request.user, 'change_dataset', Dataset, accept_global_perms=False)
+    if not user_change_datasets or gloss.lemma.dataset not in user_change_datasets:
+        result['feedback'] = _('No permission to modify backup videos.')
+        return JsonResponse(result, safe=True)
+
+    backup_file = os.path.join(WRITABLE_FOLDER, str(glossvideo.videofile.path))
+    if not os.path.exists(backup_file):
+        result['feedback'] = _('Unable to restore backup file as primary video. File not found.')
+        return JsonResponse(result, safe=True)
+
+    extension = extension_on_filename(glossvideo.videofile.path)
+    folder = get_folder_name(gloss)
+    temp_location_video = str(os.path.join(TMP_DIR, "preview-backups", folder))
+    flipped_video_filename = str(flipped_backup_filename(gloss, glossvideo, extension))
+    temp_video_path = os.path.join(temp_location_video, flipped_video_filename)
+    if not os.path.exists(temp_video_path):
+        result['feedback'] = _('Temporary backup file not found.')
+        return JsonResponse(result, safe=True)
+
+    try:
+        with open(temp_video_path, 'rb') as f:
+            vfile = File(f)
+            gloss.add_video(request.user, vfile, recorded=False)
+    except (OSError, PermissionError, IOError):
+        result['feedback'] = _('Unable to restore backup file as primary video.')
+        return JsonResponse(result, safe=True)
+
+    result['feedback'] = _('Video successfully saved as primary video.')
+    return JsonResponse(result, safe=True)

@@ -602,7 +602,7 @@ class ExampleVideo(models.Model):
     def make_poster_image(self):
         try:
             generate_still_image(self)
-        except (OSError, PermissionError):
+        except (OSError, PermissionError, IOError):
             print('Error generating still image', sys.exc_info())
 
     def convert_to_mp4(self):
@@ -977,7 +977,7 @@ class GlossVideo(models.Model):
     def make_poster_image(self):
         try:
             generate_still_image(self)
-        except (OSError, PermissionError):
+        except (OSError, PermissionError, IOError):
             print('Error generating still image', sys.exc_info())
 
     def convert_to_mp4(self):
