@@ -254,7 +254,7 @@ $('.quick_preview').click(function(e)
     <div class="panel-heading" data-toggle="collapse" data-target="#perspective_videos">{% trans "Perspective Videos" %} ({{perspective_videos|length}})</div>
     <div class="panel-body collapse" id="perspective_videos">
     <table class='table table-condensed table-condensed-light' style="width:100%;">
-    <tr><td>{% trans "Object Id" %}</td><td>{% trans "Version" %}</td><td>{% trans "Relative Path" %}</td><td>{% trans "Checksum" %}</td></tr>
+    <tr><th>{% trans "Object Id" %}</th><th>{% trans "Version" %}</th><th>{% trans "Relative Path" %}</th><th>{% trans "Checksum" %}</th></tr>
     {% for object_id, version, relative_path, checksum in perspective_videos %}
     <tr><td>{{object_id}}</td><td>{{version}}</td><td>{{relative_path}}</td><td>{{checksum|default:"NOT FOUND"}}</td></tr>
     {% endfor %}
@@ -269,7 +269,7 @@ $('.quick_preview').click(function(e)
     <div class="panel-heading" data-toggle="collapse" data-target="#nme_videos">{% trans "Videos with Non-manual Elements" %} ({{nme_videos|length}})</div>
     <div class="panel-body collapse" id="nme_videos">
     <table class='table table-condensed table-condensed-light' style="width:100%;">
-    <tr><td>{% translate "Object Id" %}</td><td>{% translate "Version" %}</td><td>{% translate "Relative Path" %}</td><td>{% trans "Checksum" %}</td></tr>
+    <tr><th>{% translate "Object Id" %}</th><th>{% translate "Version" %}</th><th>{% translate "Relative Path" %}</th><th>{% trans "Checksum" %}</th></tr>
     {% for object_id, version, relative_path, checksum in nme_videos %}
     <tr><td>{{object_id}}</td><td>{{version}}</td><td>{{relative_path}}</td><td>{{checksum|default:"NOT FOUND"}}</td></tr>
     {% endfor %}
@@ -284,7 +284,7 @@ $('.quick_preview').click(function(e)
     <div class="panel-heading" data-toggle="collapse" data-target="#dangling_video_files">{% trans "Video Files Without Objects" %} ({{dangling_video_files|length}})</div>
     <div class="panel-body collapse" id="dangling_video_files">
     <table class='table table-condensed table-condensed-light' style="width:100%;">
-    <tr><td>{% translate "Object Id" %}</td><td>{% translate "Relative Path" %}</td></tr>
+    <tr><th>{% translate "Object Id" %}</th><th>{% translate "Relative Path" %}</th></tr>
     {% for relative_path, file_name in dangling_video_files %}
     <tr><td>NONE</td><td>{{relative_path}}</td>
         <td><a download="{{file_name}}"
@@ -302,7 +302,7 @@ $('.quick_preview').click(function(e)
     <div class="panel-heading" data-toggle="collapse" data-target="#primary_videos">{% trans "Primary Video Files" %} ({{primary_videos|length}})</div>
     <div class="panel-body collapse" id="primary_videos">
     <table class='table table-condensed table-condensed-light' style="width:100%;">
-    <tr><td>{% trans "Object Id" %}</td><td>{% trans "Version" %}</td><td>{% trans "Relative Path" %}</td><td>{% trans "Checksum" %}</td></tr>
+    <tr><th>{% trans "Object Id" %}</th><th>{% trans "Version" %}</th><th>{% trans "Relative Path" %}</th><th>{% trans "Checksum" %}</th></tr>
     {% for object_id, version, relative_path, checksum in primary_videos %}
     <tr><td>{{object_id}}</td><td>{{version}}</td><td>{{relative_path}}</td><td>{{checksum|default:"NOT FOUND"}}</td></tr>
     {% endfor %}
@@ -423,7 +423,7 @@ $('.quick_preview').click(function(e)
          </div>
         {% endif %}
     <table class='table table-condensed table-condensed-light' style="width:100%;">
-    <tr><td>{% translate "Object Id" %}</td><td>{% translate "Version" %}</td><td>{% translate "Relative Path" %}</td><td>{% trans "Checksum" %}</td><td>{% trans "Preview" %}</td></tr>
+    <tr><th>{% translate "Object Id" %}</th><th>{% translate "Version" %}</th><th>{% translate "Relative Path" %}</th><th>{% trans "Checksum" %}</th><th>{% trans "Download" %}</th><th>{% trans "Preview" %}</th></tr>
     {% for object_id, version, relative_path, checksum, file_name in backup_videos %}
     <tr><td>{{object_id}}</td><td>{{version}}</td><td>{{relative_path}}</td><td>{{checksum|default:"NOT FOUND"}}</td>
         <td>{% if checksum %}
@@ -512,7 +512,7 @@ $('.quick_preview').click(function(e)
         {% endif %}
 
     <table class='table table-condensed table-condensed-light' style="width:100%;">
-    <tr><td>{% translate "Object Id" %}</td><td>{% translate "Version" %}</td><td>{% trans "Perspective" %}</td><td>{% trans "NME" %}</td><td>{% translate "Relative Path" %}</td><td>{% trans "Checksum" %}</td></tr>
+    <tr><th>{% translate "Object Id" %}</th><th>{% translate "Version" %}</th><th>{% trans "Perspective" %}</th><th>{% trans "NME" %}</th><th>{% translate "Relative Path" %}</th><th>{% trans "Checksum" %}</th></tr>
     {% for object_id, version, perspective, nme, relative_path, checksum in wrongly_named_videos %}
     <tr><td>{{object_id}}</td><td>{{version}}</td><td>{{perspective}}</td><td>{{nme}}</td><td>{{relative_path}}</td><td>{{checksum|default:"NOT FOUND"}}</td></tr>
     {% endfor %}
