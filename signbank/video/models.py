@@ -393,7 +393,6 @@ def get_video_file_path(instance, filename, nmevideo=False, perspective='', offs
     idgloss = instance.gloss.idgloss
     two_letter_dir = get_two_letter_dir(idgloss)
 
-    video_dir = GLOSS_VIDEO_DIRECTORY
     try:
         dataset_dir = instance.gloss.lemma.dataset.acronym
     except KeyError:
@@ -411,7 +410,7 @@ def get_video_file_path(instance, filename, nmevideo=False, perspective='', offs
     else:
         filename = f'{idgloss}-{instance.gloss.id}{ext}' 
 
-    path = os.path.join(video_dir, dataset_dir, two_letter_dir, filename)
+    path = os.path.join(GLOSS_VIDEO_DIRECTORY, dataset_dir, two_letter_dir, filename)
     if ESCAPE_UPLOADED_VIDEO_FILE_PATH:
         path = escape_uri_path(path)
     if DEBUG_VIDEOS:
@@ -1462,11 +1461,10 @@ def process_nmevideo_changes(sender, instance, update_fields=[], **kwargs):
     :param kwargs:
     :return:
     """
-    if DEBUG_VIDEOS:
-        move_videos = not update_fields or 'offset' not in update_fields
-        print('process_nmevideo_changes move videos: ', str(instance), move_videos)
     if not update_fields or 'offset' not in update_fields:
         return
+    if DEBUG_VIDEOS:
+        print('process_nmevideo_changes move videos: ', str(instance))
     glossvideo = instance
     glossvideo.move_video(move_files_on_disk=True)
 
@@ -1481,11 +1479,10 @@ def process_perspectivevideo_changes(sender, instance, update_fields=[], **kwarg
     :param kwargs:
     :return:
     """
-    if DEBUG_VIDEOS:
-        move_videos = not update_fields
-        print('process_perspectivevideo_changes move videos: ', str(instance), move_videos)
     if not update_fields:
         return
+    if DEBUG_VIDEOS:
+        print('process_perspectivevideo_changes move videos: ', str(instance))
     glossvideo = instance
     glossvideo.move_video(move_files_on_disk=True)
 

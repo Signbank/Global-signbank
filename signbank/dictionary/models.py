@@ -2537,7 +2537,8 @@ class Gloss(MetaModelMixin, models.Model):
             # Save the new videofile in the video object
             video.videofile.save(relative_path, videofile)
         else:
-            return GlossVideoNME(gloss=self, offset=offset, perspective=perspective)
+            msg = gettext("No video file supplied for NME video upload of gloss {glossid}.").format(glossid=self.pk)
+            raise ValidationError(msg)
 
         self.lastUpdated = DT.datetime.now(tz=get_current_timezone())
         self.save()
