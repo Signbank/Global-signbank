@@ -7,6 +7,7 @@ import os
 import re
 import stat
 import shutil
+
 import ffmpeg
 import subprocess
 
@@ -20,13 +21,13 @@ from django.contrib.auth.models import User
 from django.utils.encoding import escape_uri_path
 from django.utils.translation import gettext
 
-from signbank.settings.server_specific import (WRITABLE_FOLDER, DEBUG_VIDEOS, DELETE_FILES_ON_GLOSSVIDEO_DELETE,
+from signbank.settings.server_specific import (WRITABLE_FOLDER, DEBUG_VIDEOS,
                                                ESCAPE_UPLOADED_VIDEO_FILE_PATH, EXAMPLESENTENCE_VIDEO_DIRECTORY,
                                                ANNOTATEDSENTENCE_VIDEO_DIRECTORY,
                                                GLOSS_VIDEO_DIRECTORY, GLOSS_IMAGE_DIRECTORY, FFMPEG_PROGRAM)
 from signbank.settings.base import MEDIA_ROOT, MEDIA_URL
 from signbank.video.convertvideo import (extract_frame, convert_video, make_thumbnail_video, generate_image_sequence,
-                                         remove_stills, detect_video_file_extension)
+                                         remove_stills, detect_video_file_extension, extension_on_filename)
 from signbank.video.operations import (filename_matches_nme, filename_matches_nme_backup, filename_matches_perspective,
                                        filename_matches_perspective_backup, filename_matches_video,
                                        filename_matches_backup_video, move_file_to_prullenmand)
@@ -388,7 +389,13 @@ def get_video_file_path(instance, filename, nmevideo=False, perspective='', offs
     :param version: the version to determine the number of .bak extensions
     :return: 
     """
-    (base, ext) = os.path.splitext(filename)
+    (_, ext) = os.path.splitext(filename)
+
+    # confirm extension is okay
+    if not has_correct_filename(filename, nmevideo, perspective, version):
+        ext = detect_video_file_extension(filename)
+        if not ext:
+            ext = extension_on_filename(filename)
 
     idgloss = instance.gloss.idgloss
     two_letter_dir = get_two_letter_dir(idgloss)
@@ -862,7 +869,11 @@ class GlossVideo(models.Model):
         super().__init__(*args, **kwargs)
 
     def save(self, *args, **kwargs):
-        self.ensure_mp4()
+        try:
+            self.ensure_mp4()
+        except ValueError:
+            print('excepted ensure mp4')
+            raise ValueError(gettext("problem"))
         super(GlossVideo, self).save(*args, **kwargs)
 
     def process(self):
@@ -907,13 +918,10 @@ class GlossVideo(models.Model):
             return
         if int(self.version or 0) > 0:
             return
-
         video_format_extension = detect_video_file_extension(self.videofile.path)
         if not video_format_extension:
             # this is not a video file
-            os.remove(self.videofile.path)
-            self.videofile.name = ''
-            return
+            raise ValueError(gettext('The file is not a video file.'))
         (basename, ext) = os.path.splitext(self.videofile.path)
         if ext != '.mp4' or video_format_extension != '.mp4':
             old_relative_path = str(self.videofile)
@@ -1022,8 +1030,15 @@ class GlossVideo(models.Model):
             # make sure this is not applied to subclass objects
             return
         if self.version == 0:
-            # find a name for the backup, a filename that isn't used already
-            newname = self.videofile.name + ".bak" + str(self.pk)
+            # construct the file name for the primary video backup
+            filepath = os.path.join(WRITABLE_FOLDER, self.videofile.name)
+            if not has_correct_filename(filepath, False, '', 0):
+                extension = detect_video_file_extension(filepath)
+                if not extension:
+                    extension = extension_on_filename(filepath)
+                newname = f'{self.gloss.idgloss}-{self.gloss.pk}{extension}.bak{self.pk}'
+            else:
+                newname = f'{self.videofile.name}.bak{self.pk}'
             if os.path.isfile(os.path.join(storage.location, self.videofile.name)):
                 os.rename(os.path.join(storage.location, self.videofile.name),
                           os.path.join(storage.location, newname))
@@ -1373,7 +1388,7 @@ def process_dataset_changes(sender, instance, **kwargs):
     # and rename directories.
     dataset = instance
     if dataset._initial['acronym'] and dataset.acronym != dataset._initial['acronym']:
-        move_videos_for_filter({'gloss__lemma_dataset': dataset}, move_files_on_disk=False)
+        move_videos_for_filter({'gloss__lemma__dataset': dataset}, move_files_on_disk=False)
 
         # Rename dirs
         glossvideo_path_original = os.path.join(WRITABLE_FOLDER, GLOSS_VIDEO_DIRECTORY, dataset._initial['acronym'])
@@ -1392,7 +1407,7 @@ def process_dataset_changes(sender, instance, **kwargs):
     # If the default language has been changed, change all GlossVideos
     # and move all video/poster files accordingly.
     if dataset._initial['default_language'] and dataset.default_language_id != dataset._initial['default_language']:
-        move_videos_for_filter({'gloss__lemma_dataset': dataset}, move_files_on_disk=True)
+        move_videos_for_filter({'gloss__lemma__dataset': dataset}, move_files_on_disk=True)
 
         # Make sure that _initial reflect the database for the dataset object
         dataset._initial['default_language'] = dataset.default_language_id
@@ -1499,11 +1514,9 @@ def delete_files(sender, instance, **kwargs):
     :return: 
     """
     if DEBUG_VIDEOS:
-        print('delete_files pre_delete: ', str(instance))
-        print('delete_files settings.DELETE_FILES_ON_GLOSSVIDEO_DELETE: ', DELETE_FILES_ON_GLOSSVIDEO_DELETE)
+        print('delete_files pre_delete: ', sender, str(instance))
     if hasattr(instance, 'glossvideonme'):
         status = instance.delete_files()
     elif hasattr(instance, 'glossvideoperspective'):
         status = instance.delete_files()
-    elif DELETE_FILES_ON_GLOSSVIDEO_DELETE:
-        instance.delete_files()
+    instance.delete_files()

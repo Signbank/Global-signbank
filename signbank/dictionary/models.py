@@ -2388,31 +2388,20 @@ class Gloss(MetaModelMixin, models.Model):
         if not check_file_on_disk:
             return ""
         relative_path = get_gloss_path_to_video_file_on_disk(self)
-        if not relative_path:
-            # there is no video file and no GlossVideo object with version 0 for this gloss
-            return ''
-        # a video with the correct name was found
-        if settings.DEBUG_VIDEOS:
-            print('get_video_path: already existing file without GlossVideo object found: ', relative_path)
-        # there is a video file but no GlossVideo object
-        video = GlossVideo(gloss=self, glossvideonme=None, glossvideoperspective=None, version=0)
-        video.videofile.name = relative_path
-        video.save()
-        video.make_poster_image()
-        if settings.DEBUG_VIDEOS:
-            print('get_video_path: GlossVideo object created for already existing file: ', relative_path)
         return relative_path
-
 
     def get_video(self):
         """Return the video object for this gloss or None if no video available"""
+        from signbank.video.models import detect_video_file_extension
         video_path = self.get_video_path()
         if not video_path:
             return ''
         filepath = os.path.join(settings.WRITABLE_FOLDER, video_path)
-        if os.path.exists(filepath.encode('utf-8')):
-            return video_path
-        return ''
+        if not os.path.exists(filepath):
+            return ''
+        # confirm this is a video file
+        ext = detect_video_file_extension(filepath)
+        return video_path if ext else ''
 
     def get_video_url(self):
         """return  the url of the video for this gloss which may be that of a homophone"""
@@ -2431,6 +2420,7 @@ class Gloss(MetaModelMixin, models.Model):
 
         # Create a new GlossVideo object
         if isinstance(videofile, File) or videofile.content_type == 'django.core.files.uploadedfile.InMemoryUploadedFile':
+
             video = GlossVideo(gloss=self, upload_to=get_video_file_path, glossvideonme=None, glossvideoperspective=None)
             # get existing gloss video objects but exclude NME and perspective videos
             existing_videos = GlossVideo.objects.filter(gloss=self, glossvideonme=None, glossvideoperspective=None).order_by('version')
@@ -2442,23 +2432,18 @@ class Gloss(MetaModelMixin, models.Model):
             already_existing_relative_target_path = get_gloss_path_to_video_file_on_disk(self)
             if already_existing_relative_target_path:
                 # a video file without a GlossVideo object already exists, remove the file
-                try:
-                    file_system_path = os.path.join(WRITABLE_FOLDER, already_existing_relative_target_path)
+                file_system_path = os.path.join(WRITABLE_FOLDER, already_existing_relative_target_path)
+                if os.path.exists(file_system_path):
                     os.remove(file_system_path)
-                    if settings.DEBUG_VIDEOS:
-                        print('add_video: already existing file without GlossVideo object deleted: ', file_system_path)
-                except (OSError, PermissionError):
-                    if settings.DEBUG_VIDEOS:
-                        print('add_video: already existing file without GlossVideo object not deleted: ', already_existing_relative_target_path)
-                    pass
-            # Create a GlossVideoHistory object
+
             relative_path = get_video_file_path(video, str(videofile), nmevideo=False, perspective='', version=0)
-            if settings.DEBUG_VIDEOS:
-                print('add_video relative_path: ', relative_path)
-            # Save the new videofile in the video object
+            # Save the new video file in the video object
             try:
                 video.videofile.save(relative_path, videofile)
-            except OSError:
+            except (OSError, ValueError):
+                video_file_full_path = os.path.join(WRITABLE_FOLDER, relative_path)
+                if os.path.exists(video_file_full_path):
+                    os.remove(video_file_full_path)
                 msg = gettext("The video could not be saved in the GlossVideo object for gloss {glossid}.").format(glossid=self.pk)
                 raise ValidationError(msg)
 
@@ -2497,11 +2482,11 @@ class Gloss(MetaModelMixin, models.Model):
         # Create a GlossVideoHistory object
         relative_path = get_video_file_path(video, str(videofile), nmevideo=False, perspective='', version=0)
         if settings.DEBUG_VIDEOS:
-            print('add_video relative_path: ', relative_path)
+            print('restore_backup_video relative_path: ', relative_path)
         # Save the new videofile in the video object
         try:
             video.videofile.save(relative_path, videofile)
-        except OSError:
+        except (OSError, ValueError):
             msg = gettext("The video could not be saved in the GlossVideo object for gloss {glossid}.").format(glossid=self.pk)
             raise ValidationError(msg)
 

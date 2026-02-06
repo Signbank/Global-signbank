@@ -4,6 +4,7 @@ import json
 import magic
 
 from django.utils.timezone import get_current_timezone
+from django.forms.utils import ValidationError
 from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth.decorators import login_required
 from django.views.decorators.http import require_http_methods
@@ -61,8 +62,13 @@ def addvideo(request):
         gloss = Gloss.objects.filter(id=object_id).first()
         if not gloss:
             return redirect(redirect_url)
-        gloss_video = gloss.add_video(request.user, vfile, recorded)
-        uploaded_video = str(gloss_video)
+        try:
+            gloss_video = gloss.add_video(request.user, vfile, recorded)
+            uploaded_video = str(gloss_video)
+        except ValidationError as e:
+            feedback_message = getattr(e, 'message', repr(e))
+            messages.add_message(request, messages.ERROR, feedback_message)
+            return redirect(redirect_url)
     elif object_type == 'gloss_perspectivevideo':
         gloss = Gloss.objects.filter(id=object_id).first()
         if not gloss:
