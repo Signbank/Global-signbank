@@ -139,7 +139,7 @@ def renumber_backup_videos(gloss):
         if inx == video.version:
             continue
         video.version = inx
-        video.save()
+        video.save(update_fields=['version'])
 
 
 def remove_backup_videos(gloss):
@@ -311,7 +311,6 @@ class ExampleVideoHistory(models.Model):
     examplesentence = models.ForeignKey(ExampleSentence, on_delete=models.CASCADE)
 
     def __str__(self):
-        self.examplesentence: ExampleSentence
         # Basic feedback from one History item: gloss-action-date
         name = f"{self.examplesentence.pk}: {self.action}, ({self.datestamp})"
         return name
@@ -340,7 +339,6 @@ class GlossVideoHistory(models.Model):
     gloss = models.ForeignKey(Gloss, on_delete=models.CASCADE)
 
     def __str__(self):
-        self.gloss: Gloss
         # Basic feedback from one History item: gloss-action-date
         name = f"{self.gloss.idgloss}: {self.action}, ({self.datestamp})"
         return name
@@ -378,7 +376,7 @@ def get_gloss_path_to_video_file_on_disk(gloss):
         return ""
 
 
-def get_video_file_path(instance, filename, nmevideo=False, perspective='', offset=1, version=0):
+def get_video_file_path(instance, original_filename, nmevideo=False, perspective='', offset=0, version=0):
     """
     Return the full path for storing an uploaded video
     :param instance: A GlossVideo instance
@@ -389,35 +387,40 @@ def get_video_file_path(instance, filename, nmevideo=False, perspective='', offs
     :param version: the version to determine the number of .bak extensions
     :return: 
     """
-    (_, ext) = os.path.splitext(filename)
+    # override the optional parameters when this is not a creation
+    if instance and instance.is_glossvideonme():
+        nmevideo = True
+        offset = instance.offset
+        perspective = instance.perspective
+    elif instance and instance.is_glossvideoperspective():
+        nmevideo = False
+        perspective = instance.perspective
 
+    ext = extension_on_filename(original_filename)
     # confirm extension is okay
-    if not has_correct_filename(filename, nmevideo, perspective, version):
-        ext = detect_video_file_extension(filename)
-        if not ext:
-            ext = extension_on_filename(filename)
+    if not has_correct_filename(original_filename, nmevideo, perspective, version):
+        detected_extension = detect_video_file_extension(original_filename)
+        if detected_extension:
+            ext = detected_extension
 
     idgloss = instance.gloss.idgloss
-    two_letter_dir = get_two_letter_dir(idgloss)
-
-    try:
-        dataset_dir = instance.gloss.lemma.dataset.acronym
-    except KeyError:
-        dataset_dir = ""
-        if DEBUG_VIDEOS:
-            print('get_video_file_path: dataset_dir is empty for gloss ', str(instance.gloss.pk))
-    if nmevideo and perspective:
-        filename = f'{idgloss}-{instance.gloss.id}_nme_{offset}_{perspective}{ext}'
-    elif nmevideo:
-        filename = f'{idgloss}-{instance.gloss.id}_nme_{offset}{ext}'
-    elif perspective:
-        filename = f'{idgloss}-{instance.gloss.id}_{perspective}{ext}'
-    elif version > 0:
-        filename = f'{idgloss}-{instance.gloss.id}{ext}.bak{instance.id}'
+    video_folder = os.path.join(GLOSS_VIDEO_DIRECTORY,
+                                instance.gloss.lemma.dataset.acronym,
+                                get_two_letter_dir(idgloss))
+    if version > 0:
+        extension = f'{ext}.bak{instance.id}'
     else:
-        filename = f'{idgloss}-{instance.gloss.id}{ext}' 
+        extension = f'{ext}'
+    if nmevideo and perspective:
+        filename = f'{idgloss}-{instance.gloss.id}_nme_{offset}_{perspective}{extension}'
+    elif nmevideo:
+        filename = f'{idgloss}-{instance.gloss.id}_nme_{offset}{extension}'
+    elif perspective:
+        filename = f'{idgloss}-{instance.gloss.id}_{perspective}{extension}'
+    else:
+        filename = f'{idgloss}-{instance.gloss.id}{extension}'
 
-    path = os.path.join(GLOSS_VIDEO_DIRECTORY, dataset_dir, two_letter_dir, filename)
+    path = os.path.join(str(video_folder), filename)
     if ESCAPE_UPLOADED_VIDEO_FILE_PATH:
         path = escape_uri_path(path)
     if DEBUG_VIDEOS:
@@ -640,7 +643,7 @@ class ExampleVideo(models.Model):
                 os.rename(os.path.join(storage.location, self.videofile.name), os.path.join(storage.location, newname))
             self.videofile.name = newname
         self.version += 1
-        self.save()
+        self.save(update_fields=['version'])
 
     def __str__(self):
         # this coercion to a string type sometimes causes special characters in the filename to be a problem
@@ -871,9 +874,9 @@ class GlossVideo(models.Model):
     def save(self, *args, **kwargs):
         try:
             self.ensure_mp4()
-        except ValueError:
-            print('excepted ensure mp4')
-            raise ValueError(gettext("problem"))
+        except ValueError as e:
+            msg = getattr(e, 'message', repr(e))
+            raise ValueError(msg)
         super(GlossVideo, self).save(*args, **kwargs)
 
     def process(self):
@@ -1001,25 +1004,21 @@ class GlossVideo(models.Model):
 
     def delete_files(self):
         """Delete the files associated with this object"""
-        self.videofile: FieldFile
-        if DEBUG_VIDEOS:
-            print('delete_files GlossVideo: ', str(self.videofile))
-
         if not self.videofile or not self.videofile.name:
             return
 
-        small_video_path = self.small_video()
-        try:
-            os.unlink(self.videofile.path)
-            poster_path = self.poster_path(create=False)
-            if small_video_path:
-                os.unlink(small_video_path)
-            if poster_path:
-                os.unlink(poster_path)
-        except (OSError, PermissionError):
-            if DEBUG_VIDEOS:
-                print('delete_files exception GlossVideo OSError, PermissionError: ', str(self.videofile))
-            pass
+        if os.path.exists(self.videofile.path):
+            try:
+                os.unlink(self.videofile.path)
+                os.remove(self.videofile.path)
+            except (OSError, PermissionError) as e:
+                if DEBUG_VIDEOS:
+                    print(e)
+                    print('delete_files exception GlossVideo OSError, PermissionError: unlink', str(self.videofile))
+                pass
+        else:
+            print('file does not exist set to empty: ', self.videofile.path)
+            self.videofile.name = ''
 
     def reversion(self):
         """We have a new version of this video so increase
@@ -1044,7 +1043,7 @@ class GlossVideo(models.Model):
                           os.path.join(storage.location, newname))
             self.videofile.name = newname
         self.version += 1
-        self.save()
+        self.save(update_fields=['version'])
 
         # also remove the post image if present, it will be regenerated
         poster = self.poster_path(create=False)
@@ -1054,8 +1053,7 @@ class GlossVideo(models.Model):
     def __str__(self):
         # this coercion to a string type sometimes causes special characters in the filename to be a problem
         # code has been introduced elsewhere to make sure paths are the correct encoding
-        glossvideoname = self.videofile.name
-        return glossvideoname
+        return self.videofile.name
 
     def is_glossvideonme(self):
         """Test if this instance is a NME Gloss Video"""
@@ -1071,7 +1069,7 @@ class GlossVideo(models.Model):
         :return: 
         """
         old_path = str(self.videofile)
-        new_path = str(get_video_file_path(self, old_path, version=int(self.version or 0)))
+        new_path = str(get_video_file_path(self, old_path, version=self.version))
         if old_path != new_path:
             if move_files_on_disk:
                 source = os.path.join(WRITABLE_FOLDER, old_path)
@@ -1127,30 +1125,26 @@ class GlossVideoNME(GlossVideo):
         ordering = ['offset', ]
 
     def __str__(self):
-        self.gloss: Gloss
-        translations = []
-        lemma = self.gloss.lemma
-        count_dataset_languages = lemma.dataset.translation_languages.all().count() if lemma else 0
-        glossvideodescriptions = GlossVideoDescription.objects.filter(nmevideo=self)
-        display_preface = str(self.offset) + "_" + str(self.perspective) if self.perspective else str(self.offset)
-        for description in glossvideodescriptions:
-            if count_dataset_languages > 1:
-                translations.append("{}: {}".format(description.language, description.text))
-            else:
-                translations.append("{}".format(description.text))
-        return display_preface + ": " + ", ".join(translations)
+        return self.videofile.name
+
+    def __init__(self, *args, **kwargs):
+        if 'upload_to' in kwargs:
+            self.upload_to = kwargs.pop('upload_to')
+        else:
+            self.upload_to = get_video_file_path
+        super().__init__(*args, **kwargs)
 
     def has_perspective_videos(self):
-        perspectivevideos = GlossVideoNME.objects.filter(gloss=self.gloss, offset=self.offset, perspective__in=['left', 'right'])
+        perspectivevideos = GlossVideoNME.objects.filter(gloss=self.gloss, offset=self.offset, perspective__in=['left', 'right'], version=0)
         return perspectivevideos.count() > 0
 
     def has_left_perspective(self):
-        nmevideos = GlossVideoNME.objects.filter(gloss=self.gloss, offset=self.offset, perspective='left')
-        return nmevideos.count() > 0
+        nmevideo = GlossVideoNME.objects.filter(gloss=self.gloss, offset=self.offset, perspective='left', version=0).first()
+        return nmevideo is not None
 
     def has_right_perspective(self):
-        nmevideos = GlossVideoNME.objects.filter(gloss=self.gloss, offset=self.offset, perspective='right')
-        return nmevideos.count() > 0
+        nmevideo = GlossVideoNME.objects.filter(gloss=self.gloss, offset=self.offset, perspective='right', version=0).first()
+        return nmevideo is not None
 
     def add_descriptions(self, descriptions):
         """Add descriptions to the nme video"""
@@ -1248,14 +1242,17 @@ class GlossVideoNME(GlossVideo):
 
     def reversion(self):
         if self.version == 0:
-            # find a name for the backup, a filename that isn't used already
-            newname = self.videofile.name + ".bak" + str(self.pk)
+            self.version += 1
+            newname = get_video_file_path(self, str(self.videofile), nmevideo=True,
+                                          perspective=self.perspective, offset=self.offset, version=self.version)
             if os.path.isfile(os.path.join(storage.location, self.videofile.name)):
                 os.rename(os.path.join(storage.location, self.videofile.name),
                           os.path.join(storage.location, newname))
             self.videofile.name = newname
-        self.version += 1
-        self.save()
+            self.save()
+        else:
+            self.version += 1
+            self.save(update_fields=['version'])
 
 
 class GlossVideoPerspective(GlossVideo):
@@ -1264,6 +1261,18 @@ class GlossVideoPerspective(GlossVideo):
     class Meta:
         verbose_name = gettext("Gloss Video Perspective")
         ordering = ['perspective', ]
+
+    def __str__(self):
+        # this coercion to a string type sometimes causes special characters in the filename to be a problem
+        # code has been introduced elsewhere to make sure paths are the correct encoding
+        return self.videofile.name
+
+    def __init__(self, *args, **kwargs):
+        if 'upload_to' in kwargs:
+            self.upload_to = kwargs.pop('upload_to')
+        else:
+            self.upload_to = get_video_file_path
+        super().__init__(*args, **kwargs)
 
     def get_video_path(self):
         return escape_uri_path(self.videofile.name) if self.videofile else ''
@@ -1358,7 +1367,7 @@ class GlossVideoPerspective(GlossVideo):
                           os.path.join(storage.location, newname))
             self.videofile.name = newname
         self.version += 1
-        self.save()
+        self.save(update_fields=['version'])
 
 
 def move_videos_for_filter(filter, move_files_on_disk: bool=False) -> None:

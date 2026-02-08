@@ -7871,7 +7871,7 @@ def save_backup_video_as_gloss_video(request, gloss_id, glossvideo_id):
 
     backup_file = os.path.join(WRITABLE_FOLDER, str(glossvideo.videofile.path))
     if not os.path.exists(backup_file):
-        result['feedback'] = _('Unable to restore backup file as primary video. File not found.')
+        result['feedback'] = _('Unable to restore backup video. File not found.')
         return JsonResponse(result, safe=True)
 
     extension = extension_on_filename(glossvideo.videofile.path)
@@ -7888,15 +7888,17 @@ def save_backup_video_as_gloss_video(request, gloss_id, glossvideo_id):
     try:
         with open(temp_video_path, 'rb') as f:
             vfile = File(f)
-            gloss.restore_backup_video(request.user, vfile, glossvideo)
+            new_glossvideo = gloss.restore_backup_video(vfile, glossvideo)
     except ValidationError as e:
-        result['feedback'] = e
+        feedback_message = getattr(e, 'message', repr(e))
+        result['feedback'] = feedback_message
         return JsonResponse(result, safe=True)
     except (OSError, PermissionError, IOError):
-        result['feedback'] = _('Unable to restore backup file as primary video.')
+        result['feedback'] = _('Unable to restore backup video file.')
         return JsonResponse(result, safe=True)
 
-    add_gloss_update_to_revision_history(request.user, gloss, 'gloss_video_restore', backup_video, gloss.get_video())
+    new_video = str(new_glossvideo)
+    add_gloss_update_to_revision_history(request.user, gloss, 'gloss_video_restore', backup_video, new_video)
 
-    result['feedback'] = _('Video successfully saved as primary video.')
+    result['feedback'] = _('Backup video successfully restored.')
     return JsonResponse(result, safe=True)

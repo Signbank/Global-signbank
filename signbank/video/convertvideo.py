@@ -224,9 +224,8 @@ def extension_on_filename(filename):
 
 
 def detect_video_file_extension(file_path):
-    filename, extension = os.path.splitext(file_path)
     if not os.path.exists(file_path):
-        return extension
+        return extension_on_filename(file_path)
     filetype_output = subprocess.run(["file", "-b", file_path], stdout=subprocess.PIPE)
     filetype = str(filetype_output.stdout)
     if 'MP4' in filetype:
