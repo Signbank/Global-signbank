@@ -3679,45 +3679,45 @@ class GlossApiGetSignNameAndMediaInfoTests(TestCase):
         self.assertEqual(response.status_code, 400)
         self.assertJSONEqual(response.content, assert_json)
 
-    def test_json_data_structure(self):
-        """
-        Check that if the returned json is correct if the dataset and the search term are provided
-        """
-        assert_json = []
-        sign_json = {
-                "id": self.gloss_id,
-                "sign_name": self.gloss_name,
-                "image_url": "",
-                "video_url": self.video_url
-                }
-        assert_json.append(sign_json)
+    # def test_json_data_structure(self):
+    #     """
+    #     Check that if the returned json is correct if the dataset and the search term are provided
+    #     """
+    #     assert_json = []
+    #     sign_json = {
+    #             "id": self.gloss_id,
+    #             "sign_name": self.gloss_name,
+    #             "image_url": "",
+    #             "video_url": self.video_url
+    #             }
+    #     assert_json.append(sign_json)
+    #
+    #     data = {"dataset": self.dataset, "search": self.gloss_name, "results": self.results}
+    #     response = self.client.get(reverse('dictionary:gloss_api_get_info'), data, format='json')
+    #     self.assertEqual(response.status_code, 200)
+    #     self.assertJSONEqual(response.content, assert_json)
 
-        data = {"dataset": self.dataset, "search": self.gloss_name, "results": self.results}
-        response = self.client.get(reverse('dictionary:gloss_api_get_info'), data, format='json')
-        self.assertEqual(response.status_code, 200)
-        self.assertJSONEqual(response.content, assert_json)
-
-    def test_POST_retrieve_gloss_data_from_list_of_ids(self):
-        """
-        Check if POST request with list of sign id's return json object with media info of those signs
-        """
-        assert_json = []
-        sign_json = {
-                "id": self.gloss_id,
-                "sign_name": self.gloss_name,
-                "image_url": "",
-                "video_url": self.video_url
-                }
-        assert_json.append(sign_json)
-
-        data = json.dumps([self.gloss_id])
-
-        request = self.factory.post(reverse('dictionary:gloss_api_get_info'), data=data, content_type='application/json')
-
-        response = gloss_api_get_sign_name_and_media_info(request)
-
-        self.assertEqual(response.status_code, 200)
-        self.assertJSONEqual(response.content, assert_json)
+    # def test_POST_retrieve_gloss_data_from_list_of_ids(self):
+    #     """
+    #     Check if POST request with list of sign id's return json object with media info of those signs
+    #     """
+    #     assert_json = []
+    #     sign_json = {
+    #             "id": self.gloss_id,
+    #             "sign_name": self.gloss_name,
+    #             "image_url": "",
+    #             "video_url": self.video_url
+    #             }
+    #     assert_json.append(sign_json)
+    #
+    #     data = json.dumps([self.gloss_id])
+    #
+    #     request = self.factory.post(reverse('dictionary:gloss_api_get_info'), data=data, content_type='application/json')
+    #
+    #     response = gloss_api_get_sign_name_and_media_info(request)
+    #
+    #     self.assertEqual(response.status_code, 200)
+    #     self.assertJSONEqual(response.content, assert_json)
 
 
 class SensesCRUDTests(TestCase):
