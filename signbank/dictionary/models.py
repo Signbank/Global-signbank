@@ -80,16 +80,17 @@ class FieldChoice(models.Model):
     ORICHANGE = 'OriChange'
     OTHERMEDIATYPE = 'OtherMediaType'
     PATHONPATH = 'PathOnPath'
+    PROVENANCE = 'Provenance'
     QUANTITY = 'Quantity'
+    RELATARTIC = 'RelatArtic'
+    RELATIONROLE = 'RelationRole'
     RELORILOC = 'RelOriLoc'
     RELORIMOV = 'RelOriMov'
-    RELATARTIC = 'RelatArtic'
+    SENTENCETYPE = 'SentenceType'
     SPREADING = 'Spreading'
     THUMB = 'Thumb'
     VALENCE = 'Valence'
     WORDCLASS = 'WordClass'
-    SENTENCETYPE = 'SentenceType'
-    PROVENANCE = 'Provenance'
 
     FIELDCHOICE_FIELDS = [
         (ABSORIFING, 'AbsOriFing'),
@@ -100,8 +101,8 @@ class FieldChoice(models.Model):
         (DOMINANTHANDSELECTEDFINGERS, 'DominantHandSelectedFingers'),
         (FINGERSELECTION, 'FingerSelection'),
         (HANDEDNESS, 'Handedness'),
-        (ICONICITY, 'iconicity'),
         (HANDSHAPECHANGE, 'HandshapeChange'),
+        (ICONICITY, 'iconicity'),
         (JOINTCONFIGURATION, 'JointConfiguration'),
         (LOCATION, 'Location'),
         (MINORLOCATION, 'MinorLocation'),
@@ -115,16 +116,17 @@ class FieldChoice(models.Model):
         (ORICHANGE, 'OriChange'),
         (OTHERMEDIATYPE, 'OtherMediaType'),
         (PATHONPATH, 'PathOnPath'),
+        (PROVENANCE, 'Provenance'),
         (QUANTITY, 'Quantity'),
+        (RELATARTIC, 'RelatArtic'),
+        (RELATIONROLE, 'RelationRole'),
         (RELORILOC, 'RelOriLoc'),
         (RELORIMOV, 'RelOriMov'),
-        (RELATARTIC, 'RelatArtic'),
+        (SENTENCETYPE, 'SentenceType'),
         (SPREADING, 'Spreading'),
         (THUMB, 'Thumb'),
         (VALENCE, 'Valence'),
-        (WORDCLASS, 'WordClass'),
-        (SENTENCETYPE, 'SentenceType'),
-        (PROVENANCE, 'Provenance')
+        (WORDCLASS, 'WordClass')
     ]
 
     field = models.CharField(max_length=50, choices=FIELDCHOICE_FIELDS)
@@ -2660,7 +2662,12 @@ class Gloss(MetaModelMixin, models.Model):
     def relation_role_choices_json(self):
         """Return JSON for the relation role choice list"""
 
-        return self.options_to_json(RELATION_ROLE_CHOICES)
+        # return self.options_to_json(RELATION_ROLE_CHOICES)
+
+        d = dict()
+        for rrf in FieldChoice.objects.filter(field='RelationRole', machine_value__gt=1).order_by('name'):
+            d[rrf.name] = rrf.name
+        return json.dumps(d)
 
     def handedness_weak_choices(self):
         """Return JSON for the etymology choice list"""
@@ -2901,7 +2908,10 @@ class Relation(models.Model):
 
     source = models.ForeignKey(Gloss, related_name="relation_sources", on_delete=models.CASCADE)
     target = models.ForeignKey(Gloss, related_name="relation_targets", on_delete=models.CASCADE)
-    role = models.CharField(max_length=20, choices=RELATION_ROLE_CHOICES)
+    role = FieldChoiceForeignKey(FieldChoice, on_delete=models.SET_NULL, null=True,
+                                    limit_choices_to={'field': FieldChoice.RELATIONROLE},
+                                    field_choice_category=FieldChoice.RELATIONROLE,
+                                    verbose_name=_("Relation Role"), related_name="relation_role")
 
     class Admin:
         list_display = ['source', 'role', 'target']

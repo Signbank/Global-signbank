@@ -1502,14 +1502,18 @@ def check_existence_blend_morphology(gloss, values):
     return checked, errors
 
 
-RELATION_ROLES = ['homonym', 'Homonym', 'synonym', 'Synonym', 'variant', 'Variant', 'paradigm', 'Handshape Paradigm',
-                         'antonym', 'Antonym', 'hyponym', 'Hyponym', 'hypernym', 'Hypernym', 'seealso', 'See Also']
+# RELATION_ROLES = ['homonym', 'Homonym', 'synonym', 'Synonym', 'variant', 'Variant', 'paradigm', 'Handshape Paradigm',
+#                          'antonym', 'Antonym', 'hyponym', 'Hyponym', 'hypernym', 'Hypernym', 'seealso', 'See Also']
 
-RELATION_ROLES_DISPLAY = 'homonym, synonym, variant, paradigm, antonym, hyponym, hypernym, seealso'
+# RELATION_ROLES_DISPLAY = 'homonym, synonym, variant, paradigm, antonym, hyponym, hypernym, seealso'
 
 
 def check_existence_relations(gloss, relations, values):
     default_annotationidglosstranslation = get_default_annotationidglosstranslation(gloss)
+
+    RELATION_ROLES = [fc.name for fc in FieldChoice.objects.filter(field__iexact='RelationRole',
+                                                                   machine_value__gt=1).order_by('name')]
+    RELATION_ROLES_DISPLAY = ', '.join(RELATION_ROLES)
 
     errors = []
     checked = ''
