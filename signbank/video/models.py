@@ -1360,14 +1360,17 @@ class GlossVideoPerspective(GlossVideo):
 
     def reversion(self):
         if self.version == 0:
-            # find a name for the backup, a filename that isn't used already
-            newname = self.videofile.name + ".bak" + str(self.pk)
+            self.version += 1
+            newname = get_video_file_path(self, str(self.videofile), nmevideo=False,
+                                          perspective=self.perspective, version=self.version)
             if os.path.isfile(os.path.join(storage.location, self.videofile.name)):
                 os.rename(os.path.join(storage.location, self.videofile.name),
                           os.path.join(storage.location, newname))
             self.videofile.name = newname
-        self.version += 1
-        self.save(update_fields=['version'])
+            self.save()
+        else:
+            self.version += 1
+            self.save(update_fields=['version'])
 
 
 def move_videos_for_filter(filter, move_files_on_disk: bool=False) -> None:
