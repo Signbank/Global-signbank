@@ -2231,7 +2231,7 @@ def add_othermedia(request):
 
     othermedia_exists = os.path.exists(OTHER_MEDIA_DIRECTORY)
     if not othermedia_exists:
-        messages.add_message(request, messages.ERROR, gettext("Upload other media failed: The othermedia folder is missing."))
+        messages.add_message(request, messages.ERROR, _("Upload other media failed: The othermedia folder is missing."))
         return HttpResponseRedirect(reverse(reverse_url, kwargs={'pk': gloss_or_morpheme.pk}))
 
     # Create the folder if needed

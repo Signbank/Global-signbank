@@ -7869,7 +7869,7 @@ def save_backup_video_as_gloss_video(request, gloss_id, glossvideo_id):
         result['feedback'] = _('No permission to modify backup videos.')
         return JsonResponse(result, safe=True)
 
-    backup_file = os.path.join(WRITABLE_FOLDER, str(glossvideo.videofile.path))
+    backup_file = os.path.join(WRITABLE_FOLDER, str(glossvideo.videofile))
     if not os.path.exists(backup_file):
         result['feedback'] = _('Unable to restore backup video. File not found.')
         return JsonResponse(result, safe=True)

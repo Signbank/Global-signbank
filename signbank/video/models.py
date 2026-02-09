@@ -532,7 +532,7 @@ class ExampleVideo(models.Model):
     # video version, version = 0 is always the one that will be displayed
     # we will increment the version (via reversion) if a new video is added
     # for this gloss
-    version = models.IntegerField("Version", default=0)
+    version = models.IntegerField("Version", default=0, null=False)
 
     def save(self, *args, **kwargs):
         self.ensure_mp4()
@@ -547,16 +547,14 @@ class ExampleVideo(models.Model):
         self.ensure_mp4()
 
     def get_absolute_url(self):
-        self.videofile: FieldFile
         return self.videofile.url
 
     def ensure_mp4(self):
         """Ensure that the video file is a h264 format
         video, convert it if necessary"""
-        self.videofile: FieldFile
         if not self.videofile or not self.videofile.path or not os.path.exists(self.videofile.path):
             return
-        if int(self.version or 0) > 0:
+        if self.version > 0:
             return
 
         video_format_extension = detect_video_file_extension(self.videofile.path)
@@ -578,7 +576,6 @@ class ExampleVideo(models.Model):
 
     def ch_own_mod_video(self):
         """Change owner and permissions"""
-        self.videofile: FieldFile
         location = self.videofile.path
         # make sure they're readable by everyone
         # os.chown(location, 1000, 1002)
@@ -588,7 +585,6 @@ class ExampleVideo(models.Model):
         """Return the URL of the small version for this video
         :param use_name: whether videofile.name should be used instead of videofile.path
         """
-        self.videofile: FieldFile
         small_video_path = add_small_appendix(self.videofile.path)
         if os.path.exists(small_video_path):
             if use_name:
@@ -616,7 +612,6 @@ class ExampleVideo(models.Model):
 
     def convert_to_mp4(self):
         # this method is not called (bugs)
-        self.videofile: FieldFile
         print('Convert to mp4: ', self.videofile.path)
         name, _ = os.path.splitext(self.videofile.path)
         out_name = name + "_copy.mp4"
@@ -628,8 +623,6 @@ class ExampleVideo(models.Model):
 
     def delete_files(self):
         """Delete the files associated with this object"""
-        self.videofile: FieldFile
-        small_video_path = self.small_video()
         try:
             os.unlink(self.videofile.path)
         except (OSError, PermissionError):
@@ -655,8 +648,8 @@ class ExampleVideo(models.Model):
         Calculates the new path, moves the video file to the new path and updates the videofile field
         :return: 
         """
-        old_path = str(str(self.videofile))
-        new_path = str(get_sentence_video_file_path(self, old_path, int(self.version or 0)))
+        old_path = str(self.videofile)
+        new_path = str(get_sentence_video_file_path(self, old_path, self.version))
         if old_path != new_path:
             if move_files_on_disk:
                 source = os.path.join(WRITABLE_FOLDER, old_path)
@@ -694,7 +687,7 @@ class AnnotatedVideo(models.Model):
     # we will increment the version (via reversion) if a new video is added
     # for this gloss 
     # THIS IS NOT IMPLEMENTED YET
-    version = models.IntegerField("Version", default=0)
+    version = models.IntegerField("Version", default=0, null=False)
 
     def save(self, *args, **kwargs):
         self.ensure_mp4()
@@ -709,10 +702,9 @@ class AnnotatedVideo(models.Model):
     def ensure_mp4(self):
         """Ensure that the video file is a h264 format
         video, convert it if necessary"""
-        self.videofile: FieldFile
         if not self.videofile or not self.videofile.path or not os.path.exists(self.videofile.path):
             return
-        if int(self.version or 0) > 0:
+        if self.version > 0:
             return
 
         video_format_extension = detect_video_file_extension(self.videofile.path)
@@ -734,7 +726,6 @@ class AnnotatedVideo(models.Model):
 
     def ch_own_mod_video(self):
         """Change owner and permissions"""
-        self.videofile: FieldFile
         location = self.videofile.path
         # make sure they're readable by everyone
         # os.chown(location, 1000, 1002)
@@ -742,8 +733,6 @@ class AnnotatedVideo(models.Model):
 
     def delete_files(self, only_eaf=False):
         """Delete the files associated with this object"""
-        self.eaffile: FieldFile
-        self.annotatedsentence: AnnotatedSentence
         try:
             os.remove(self.eaffile.path)
             if not only_eaf:
@@ -757,7 +746,6 @@ class AnnotatedVideo(models.Model):
 
     def get_end_ms(self):
         """Get the duration of a video in ms using ffprobe."""
-        self.videofile: FieldFile
         result = subprocess.run(['ffprobe', '-v', 'error', '-show_entries', 'format=duration', '-of', 'default=noprint_wrappers=1:nokey=1', self.videofile.path], stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
         return int(float(result.stdout)*1000)
 
@@ -806,8 +794,6 @@ class AnnotatedVideo(models.Model):
 
     def cut_video_and_eaf(self, start_ms, end_ms):
         """cut both the video and the annotation file (eaf) to the selected range"""
-        self.videofile: FieldFile
-        self.eaffile: FieldFile
         start_ms, end_ms = int(start_ms), int(end_ms)
         start_time = self.convert_milliseconds_to_time_format(start_ms)
         end_time = self.convert_milliseconds_to_time_format(end_ms)
@@ -862,7 +848,7 @@ class GlossVideo(models.Model):
     # video version, version = 0 is always the one that will be displayed
     # we will increment the version (via reversion) if a new video is added
     # for this gloss
-    version = models.IntegerField("Version", default=0)
+    version = models.IntegerField("Version", default=0, null=False)
 
     def __init__(self, *args, **kwargs):
         if 'upload_to' in kwargs:
@@ -891,7 +877,6 @@ class GlossVideo(models.Model):
         """Return the path of the poster image for this
         video, if create=True, create the image if needed
         Return None if create=False and the file doesn't exist"""
-        self.videofile: FieldFile
         vidpath, _ = os.path.splitext(self.videofile.path)
         poster_path = vidpath + ".png"
         # replace vidpath with imagepath!
@@ -916,10 +901,9 @@ class GlossVideo(models.Model):
     def ensure_mp4(self):
         """Ensure that the video file is a h264 format
         video, convert it if necessary"""
-        self.videofile: FieldFile
         if not self.videofile or not self.videofile.path or not os.path.exists(self.videofile.path):
             return
-        if int(self.version or 0) > 0:
+        if self.version > 0:
             return
         video_format_extension = detect_video_file_extension(self.videofile.path)
         if not video_format_extension:
@@ -938,7 +922,6 @@ class GlossVideo(models.Model):
 
     def ch_own_mod_video(self):
         """Change owner and permissions"""
-        self.videofile: FieldFile
         location = self.videofile.path
 
         # make sure they're readable by everyone
@@ -949,7 +932,6 @@ class GlossVideo(models.Model):
         """Return the URL of the small version for this video
         :param use_name: whether videofile.name should be used instead of videofile.path
         """
-        self.videofile: FieldFile
         if not self.videofile:
             return None
         small_video_path = add_small_appendix(self.videofile.path)
@@ -970,7 +952,6 @@ class GlossVideo(models.Model):
 
     def make_small_video(self):
         # this method is not called (bugs)
-        self.videofile: FieldFile
         name, _ = os.path.splitext(self.videofile.path)
         small_name = name + "_small.mp4"
         make_thumbnail_video(self.videofile, small_name)
@@ -992,7 +973,6 @@ class GlossVideo(models.Model):
 
     def convert_to_mp4(self):
         # this method is not called (bugs)
-        self.videofile: FieldFile
         print('Convert to mp4: ', self.videofile.path)
         name, _ = os.path.splitext(self.videofile.path)
         out_name = name + "_copy.mp4"
@@ -1148,7 +1128,6 @@ class GlossVideoNME(GlossVideo):
 
     def add_descriptions(self, descriptions):
         """Add descriptions to the nme video"""
-        self.gloss: Gloss
         if self.perspective not in ['', 'center']:
             return
         for language in self.gloss.lemma.dataset.translation_languages.all():
@@ -1169,10 +1148,9 @@ class GlossVideoNME(GlossVideo):
         # convert video to use the right size and iphone/net friendly bitrate
         # create a temporary copy in the new format
         # then move it into place
-        self.videofile: FieldFile
         if not self.videofile or not self.videofile.path or not os.path.exists(self.videofile.path):
             return
-        if int(self.version or 0) > 0:
+        if self.version > 0:
             return
 
         video_format_extension = detect_video_file_extension(self.videofile.path)
@@ -1190,7 +1168,7 @@ class GlossVideoNME(GlossVideo):
             if not okay or not os.path.exists(newloc):
                 return
             self.videofile.name = get_video_file_path(self, os.path.basename(newloc),
-                                                      nmevideo=True, perspective='', offset=int(self.offset or 0))
+                                                      nmevideo=True, perspective='', offset=self.offset)
             move_file_to_prullenmand(oldloc, old_relative_path)
 
     def save(self, *args, **kwargs):
@@ -1204,7 +1182,7 @@ class GlossVideoNME(GlossVideo):
         old_path = str(self.videofile)
         if not move_files_on_disk or not old_path:
             return
-        new_path = str(get_video_file_path(self, old_path, nmevideo=True, perspective=self.perspective, offset=int(self.offset or 0), version=self.version))
+        new_path = str(get_video_file_path(self, old_path, nmevideo=True, perspective=self.perspective, offset=self.offset, version=self.version))
         if old_path == new_path:
             return
         source = os.path.join(WRITABLE_FOLDER, old_path)
@@ -1287,10 +1265,9 @@ class GlossVideoPerspective(GlossVideo):
         # convert video to use the right size and iphone/net friendly bitrate
         # create a temporary copy in the new format
         # then move it into place
-        self.videofile: FieldFile
         if not self.videofile or not self.videofile.path or not os.path.exists(self.videofile.path):
             return
-        if int(self.version or 0) > 0:
+        if self.version > 0:
             return
 
         video_format_extension = detect_video_file_extension(self.videofile.path)
