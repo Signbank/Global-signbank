@@ -69,7 +69,6 @@ def renumber_backup_videos(gloss):
 
 
 def rename_backup_videos(gloss):
-    gloss: Gloss
     glossvideos = gloss_backup_videos(gloss)
     idgloss = gloss.idgloss
     glossid = str(gloss.pk)
@@ -101,7 +100,6 @@ def rename_backup_videos(gloss):
 
 
 def gloss_has_videos_with_extra_chars_in_filename(gloss):
-    gloss: Gloss
     glossvideos = GlossVideo.objects.filter(gloss=gloss,
                                             glossvideonme=None,
                                             glossvideoperspective=None).order_by('version')
@@ -165,7 +163,6 @@ def weed_out_duplicate_version_0_videos(gloss):
 
 def rename_gloss_video(gloss):
 
-    gloss: Gloss
     weed_out_duplicate_version_0_videos(gloss)
 
     glossvideos = GlossVideo.objects.filter(gloss=gloss,

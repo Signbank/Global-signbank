@@ -560,9 +560,10 @@ class ExampleVideo(models.Model):
         video_format_extension = detect_video_file_extension(self.videofile.path)
         if not video_format_extension:
             # this is not a video file
-            os.remove(self.videofile.path)
+            if os.path.exists(self.videofile.path):
+                os.remove(self.videofile.path)
             self.videofile.name = ''
-            return
+            raise ValueError(gettext('The file is not a video file.'))
         (basename, ext) = os.path.splitext(self.videofile.path)
         if ext != '.mp4' or video_format_extension != '.mp4':
             old_relative_path = str(self.videofile)
@@ -710,9 +711,10 @@ class AnnotatedVideo(models.Model):
         video_format_extension = detect_video_file_extension(self.videofile.path)
         if not video_format_extension:
             # this is not a video file
-            os.remove(self.videofile.path)
+            if os.path.exists(self.videofile.path):
+                os.remove(self.videofile.path)
             self.videofile.name = ''
-            return
+            raise ValueError(gettext('The file is not a video file.'))
         (basename, ext) = os.path.splitext(self.videofile.path)
         if ext != '.mp4' or video_format_extension != '.mp4':
             old_relative_path = str(self.videofile)
@@ -908,17 +910,18 @@ class GlossVideo(models.Model):
         video_format_extension = detect_video_file_extension(self.videofile.path)
         if not video_format_extension:
             # this is not a video file
+            if os.path.exists(self.videofile.path):
+                os.remove(self.videofile.path)
+            self.videofile.name = ''
             raise ValueError(gettext('The file is not a video file.'))
         (basename, ext) = os.path.splitext(self.videofile.path)
-        if ext != '.mp4' or video_format_extension != '.mp4':
-            old_relative_path = str(self.videofile)
+        if video_format_extension != '.mp4':
             oldloc = self.videofile.path
             newloc = basename + ".mp4"
             okay = convert_video(oldloc, newloc)
             if not okay or not os.path.exists(newloc):
                 return
             self.videofile.name = get_video_file_path(self, os.path.basename(newloc))
-            move_file_to_prullenmand(oldloc, old_relative_path)
 
     def ch_own_mod_video(self):
         """Change owner and permissions"""
@@ -1009,21 +1012,17 @@ class GlossVideo(models.Model):
             # make sure this is not applied to subclass objects
             return
         if self.version == 0:
-            # construct the file name for the primary video backup
-            filepath = os.path.join(WRITABLE_FOLDER, self.videofile.name)
-            if not has_correct_filename(filepath, False, '', 0):
-                extension = detect_video_file_extension(filepath)
-                if not extension:
-                    extension = extension_on_filename(filepath)
-                newname = f'{self.gloss.idgloss}-{self.gloss.pk}{extension}.bak{self.pk}'
-            else:
-                newname = f'{self.videofile.name}.bak{self.pk}'
+            self.version += 1
+            newname = get_video_file_path(self, str(self.videofile), nmevideo=False,
+                                          version=self.version)
             if os.path.isfile(os.path.join(storage.location, self.videofile.name)):
                 os.rename(os.path.join(storage.location, self.videofile.name),
                           os.path.join(storage.location, newname))
             self.videofile.name = newname
-        self.version += 1
-        self.save(update_fields=['version'])
+            self.save()
+        else:
+            self.version += 1
+            self.save(update_fields=['version'])
 
         # also remove the post image if present, it will be regenerated
         poster = self.poster_path(create=False)
@@ -1156,9 +1155,10 @@ class GlossVideoNME(GlossVideo):
         video_format_extension = detect_video_file_extension(self.videofile.path)
         if not video_format_extension:
             # this is not a video file
-            os.remove(self.videofile.path)
+            if os.path.exists(self.videofile.path):
+                os.remove(self.videofile.path)
             self.videofile.name = ''
-            return
+            raise ValueError(gettext('The file is not a video file.'))
         (basename, ext) = os.path.splitext(self.videofile.path)
         if ext != '.mp4' or video_format_extension != '.mp4':
             old_relative_path = str(self.videofile)
@@ -1169,7 +1169,6 @@ class GlossVideoNME(GlossVideo):
                 return
             self.videofile.name = get_video_file_path(self, os.path.basename(newloc),
                                                       nmevideo=True, perspective='', offset=self.offset)
-            move_file_to_prullenmand(oldloc, old_relative_path)
 
     def save(self, *args, **kwargs):
         super(GlossVideoNME, self).save(*args, **kwargs)
@@ -1273,9 +1272,10 @@ class GlossVideoPerspective(GlossVideo):
         video_format_extension = detect_video_file_extension(self.videofile.path)
         if not video_format_extension:
             # this is not a video file
-            os.remove(self.videofile.path)
+            if os.path.exists(self.videofile.path):
+                os.remove(self.videofile.path)
             self.videofile.name = ''
-            return
+            raise ValueError(gettext('The file is not a video file.'))
         (basename, ext) = os.path.splitext(self.videofile.path)
         if ext != '.mp4' or video_format_extension != '.mp4':
             old_relative_path = str(self.videofile)
@@ -1286,7 +1286,6 @@ class GlossVideoPerspective(GlossVideo):
                 return
             self.videofile.name = get_video_file_path(self, os.path.basename(newloc),
                                                       nmevideo=False, perspective=self.perspective, offset=0, version=self.version)
-            move_file_to_prullenmand(oldloc, old_relative_path)
 
     def move_video(self, move_files_on_disk=True):
         """

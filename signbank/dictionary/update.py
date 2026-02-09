@@ -297,7 +297,7 @@ def add_gloss(request):
                                                                                  gloss=gloss)
         if 'videofile' in OBLIGATORY_FIELDS:
             gloss.add_video(request.user, obligatory_fields_dict['videofile'], False)
-    except (ValidationError, TypeError, Keyword) as e:
+    except (ValueError, ValidationError, TypeError, Keyword) as e:
         feedback_message = getattr(e, 'message', repr(e))
         if new_lemma:
             lemmaidgloss.delete()
