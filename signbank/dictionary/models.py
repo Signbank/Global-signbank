@@ -2908,8 +2908,8 @@ class Relation(models.Model):
 
     source = models.ForeignKey(Gloss, related_name="relation_sources", on_delete=models.CASCADE)
     target = models.ForeignKey(Gloss, related_name="relation_targets", on_delete=models.CASCADE)
-    role_cf = models.CharField(max_length=20, choices=RELATION_ROLE_CHOICES)
-    role = FieldChoiceForeignKey(FieldChoice, on_delete=models.SET_NULL, null=True,
+    role = models.CharField(max_length=20, choices=RELATION_ROLE_CHOICES)
+    role_fk = FieldChoiceForeignKey(FieldChoice, on_delete=models.SET_NULL, null=True,
                                     limit_choices_to={'field': FieldChoice.RELATIONROLE},
                                     field_choice_category=FieldChoice.RELATIONROLE,
                                     verbose_name=_("Relation Role"), related_name="relation_role")
@@ -2921,13 +2921,17 @@ class Relation(models.Model):
     class Meta:
         ordering = ['source']
 
+    def get_role_display(self):
+        return self.role_fk.name if self.role_fk else '-'
+
     def get_reverse_role(role):
+
         if role == 'hyponym':
-            return 'hypernym'
+            return FieldChoice.objects.filter(field='RelationRole', name__iexact='hypernym').first()
         elif role == 'hypernym':
-            return 'hyponym'
+            return FieldChoice.objects.filter(field='RelationRole', name__iexact='hyponym').first()
         else:
-            return role
+            return FieldChoice.objects.filter(field='RelationRole', name__iexact=role).first()
 
     def get_target_display(self):
         default_language = self.target.lemma.dataset.default_language.language_code_2char

@@ -568,9 +568,9 @@ class RelationForm(forms.ModelForm):
 
     class Meta:
         model = Relation
-        fields = ['role']
+        fields = ['role_fk']
         widgets = {
-                   'role': forms.Select(attrs={'class': 'form-control'}),
+                   'role_fk': forms.Select(attrs={'class': 'form-control'}),
                    }
 
 

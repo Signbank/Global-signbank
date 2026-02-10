@@ -1513,19 +1513,19 @@ def update_relation(gloss, field, value):
     elif what == 'relationdelete':
         rel_source = rel.source
         rel_target = rel.target
-        rel_role = Relation.get_reverse_role(rel.role)
+        rel_role = Relation.get_reverse_role(rel.role_fk.name)
         rel.delete()
 
         # Also delete the reverse relation
         reverse_relations = Relation.objects.filter(source=rel_target, target=rel_source,
-                                                    role=rel_role)
+                                                    role_fk__name__iexact=rel_role)
         if reverse_relations.count() > 0:
             for revrel in reverse_relations:
                 revrel.delete()
 
         return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': gloss.id}) + '?editrel')
     elif what == 'relationrole':
-        rel.role = value
+        rel.role_fk = value
         rel.save()
         newvalue = rel.get_role_display()
     elif what == 'relationtarget':
@@ -1723,9 +1723,14 @@ def add_relation(request):
         # fallback to the requesting page
         return HttpResponseRedirect('/')
 
-    role = form.cleaned_data['role']
+    roleid = form.cleaned_data['role_fk']
     sourceid = form.cleaned_data['sourceid']
     targetid = form.cleaned_data['targetid']
+
+    try:
+        role = FieldChoice.objects.get(field='RelationRole', pk=int(roleid))
+    except ObjectDoesNotExist:
+        return HttpResponseBadRequest("Relation role not found.", {'content-type': 'text/plain'})
 
     try:
         source = Gloss.objects.get(pk=int(sourceid), archived=False)
@@ -1737,11 +1742,11 @@ def add_relation(request):
     except ObjectDoesNotExist:
         return HttpResponseBadRequest("Target gloss not found.", {'content-type': 'text/plain'})
 
-    rel, created = Relation.objects.get_or_create(source=source, target=target, role=role)
+    rel, created = Relation.objects.get_or_create(source=source, target=target, role_fk=role)
     rel.save()
 
     # Also add the reverse relation
-    reverse_relation, created = Relation.objects.get_or_create(source=target, target=source, role=Relation.get_reverse_role(role))
+    reverse_relation, created = Relation.objects.get_or_create(source=target, target=source, role_fk=Relation.get_reverse_role(role.name))
     reverse_relation.save()
 
     ensure_synonym_transitivity(source)
@@ -1759,7 +1764,7 @@ def variants_of_gloss(request):
     if not form.is_valid():
         return HttpResponseRedirect('/')
 
-    role = 'variant'
+    role = get_object_or_404(FieldChoice, field='RelationRole', name__iexact='variant')
     sourceid = form.cleaned_data['sourceid']
     targetid = form.cleaned_data['targetid']
 
@@ -1773,7 +1778,7 @@ def variants_of_gloss(request):
     except ObjectDoesNotExist:
         return HttpResponseBadRequest("Target gloss not found.", {'content-type': 'text/plain'})
 
-    rel = Relation(source=source, target=target, role=role)
+    rel = Relation(source=source, target=target, role_fk=role)
     rel.save()
 
     return HttpResponse(json.dumps(rel), content_type="application/json")

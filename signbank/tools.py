@@ -571,7 +571,7 @@ def compare_valuedict_to_gloss(valuedict, gloss_id, my_datasets, nl,
                 if new_human_value in ['None', '']:
                     continue
 
-                relations = [(relation.role, get_default_annotationidglosstranslation(relation.target))
+                relations = [(relation.role_fk.name, get_default_annotationidglosstranslation(relation.target))
                              for relation in gloss.relation_sources.filter(target__archived__exact=False,
                                                                            source__archived__exact=False)]
 

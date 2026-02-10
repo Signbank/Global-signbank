@@ -131,14 +131,14 @@ def subst_relations(gloss, values):
     # values is a list of values, where each value is a tuple of the form 'Role:String'
     # The format of argument values has been checked before calling this function
 
-    existing_relations = [(relation.id, relation.role, relation.target.id)
+    existing_relations = [(relation.id, relation.role_fk.name, relation.target.id)
                           for relation in Relation.objects.filter(source=gloss)]
     existing_relation_ids = [r[0] for r in existing_relations]
     existing_relations_by_role = dict()
 
     for (rel_id, rel_role, rel_other_gloss) in existing_relations:
 
-        if rel_role in existing_relations_by_role:
+        if rel_role in existing_relations_by_role.keys():
             existing_relations_by_role[rel_role].append(rel_other_gloss)
         else:
             existing_relations_by_role[rel_role] = [rel_other_gloss]
@@ -150,7 +150,7 @@ def subst_relations(gloss, values):
         (role, target) = value.split(':')
         role = role.strip()
         target = target.strip()
-        if role in existing_relations_by_role and target in existing_relations_by_role[role]:
+        if role in existing_relations_by_role.keys() and target in existing_relations_by_role[role]:
             already_existing_to_keep.append((role, target))
         else:
             new_tuples_to_add.append((role, target))
@@ -159,12 +159,12 @@ def subst_relations(gloss, values):
     for rel_id in existing_relation_ids:
         rel = Relation.objects.get(id=rel_id)
 
-        if (rel.role, rel.target.id) in already_existing_to_keep:
+        if (rel.role_fk.name, rel.target.id) in already_existing_to_keep:
             continue
 
         # Also delete the reverse relation
         reverse_relations = Relation.objects.filter(source=rel.target, target=rel.source,
-                                                    role=Relation.get_reverse_role(rel.role))
+                                                    role_fk=Relation.get_reverse_role(rel.role_fk.name))
         if reverse_relations.count() > 0:
             print("DELETE reverse relation: target: ", rel.target, ", relation: ", reverse_relations[0])
             reverse_relations[0].delete()
@@ -180,10 +180,10 @@ def subst_relations(gloss, values):
         if not target_gloss:
             print("target gloss not found")
             continue
-        rel = Relation(source=gloss, role=role, target=target_gloss)
+        rel = Relation(source=gloss, role_fk__name=role, target=target_gloss)
         rel.save()
         # Also add the reverse relation
-        reverse_relation = Relation(source=target_gloss, target=gloss, role=Relation.get_reverse_role(role))
+        reverse_relation = Relation(source=target_gloss, target=gloss, role_fk=Relation.get_reverse_role(role))
         reverse_relation.save()
 
     gloss.lastUpdated = DT.datetime.now(tz=get_current_timezone())

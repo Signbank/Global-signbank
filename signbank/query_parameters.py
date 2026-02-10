@@ -429,7 +429,7 @@ def convert_query_parameters_to_filter(query_parameters):
             q_filter = mapped_key + '__machine_value__in'
             query_list.append(Q(** {q_filter: get_value}))
         elif get_key in ['hasRelation[]']:
-            relations_with_this_role = Relation.objects.filter(role__in=get_value)
+            relations_with_this_role = Relation.objects.filter(role_fk__in=get_value)
             pks_for_glosses_with_correct_relation = [relation.source.pk for relation in relations_with_this_role]
             query_list.append(Q(pk__in=pks_for_glosses_with_correct_relation))
         elif get_key in ['relation']:
@@ -1136,7 +1136,7 @@ def queryset_glosssense_from_get(model, formclass, searchform, GET, qs):
                 qs = qs.filter(**{query_filter: target_morphemes})
             elif field in ['hasRelation']:
                 values = coerce_values_to_numbers(vals)
-                relations_with_this_role = Relation.objects.filter(role__machine_value__in=values)
+                relations_with_this_role = Relation.objects.filter(role_fk__machine_value__in=values)
                 pks_for_glosses_with_correct_relation = [relation.source.pk for relation in relations_with_this_role]
                 query_filter = gloss_prefix + 'pk__in'
                 qs = qs.filter(**{query_filter: pks_for_glosses_with_correct_relation})
