@@ -2908,7 +2908,8 @@ class Relation(models.Model):
 
     source = models.ForeignKey(Gloss, related_name="relation_sources", on_delete=models.CASCADE)
     target = models.ForeignKey(Gloss, related_name="relation_targets", on_delete=models.CASCADE)
-    role = FieldChoiceForeignKey(FieldChoice, on_delete=models.SET_NULL, null=True,
+    role = models.CharField(max_length=20, choices=RELATION_ROLE_CHOICES)
+    role_fk = FieldChoiceForeignKey(FieldChoice, on_delete=models.SET_NULL, null=True,
                                     limit_choices_to={'field': FieldChoice.RELATIONROLE},
                                     field_choice_category=FieldChoice.RELATIONROLE,
                                     verbose_name=_("Relation Role"), related_name="relation_role")
