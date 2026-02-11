@@ -6021,11 +6021,12 @@ def glosslist_ajax_complete(request, gloss_id):
         elif fieldname == 'hasRelation':
             # this field has a list of roles as a parameter
             if query_fields_parameters:
+                fields_parameters = [FieldChoice.objects.get(field='RelationRole', machine_value=int(roleid)) for roleid
+                                     in query_fields_parameters[0]]
                 # query_fields_parameters ends up being a list of list for this field
-                field_paramters = query_fields_parameters
                 relations_of_type = [r for r in this_gloss.relation_sources.filter(target__archived__exact=False,
                                                                                    source__archived__exact=False)
-                                     if r.role in field_paramters]
+                                     if r.role_fk in fields_parameters]
                 relations = ", ".join([r.target.annotation_idgloss(default_language) for r in relations_of_type])
                 column_values.append((fieldname, relations))
         elif fieldname not in Gloss.get_field_names():
@@ -6088,12 +6089,15 @@ def glosslistheader_ajax(request):
         if fieldname in fieldname_to_column_header.keys():
             column_headers.append((fieldname, fieldname_to_column_header[fieldname]))
         elif fieldname == 'hasRelation':
-            fields_parameters = query_fields_parameters[0]
-            field_parameters = ', '.join([field_param.capitalize() for field_param in fields_parameters])
-            if len(fields_parameters) == 1:
-                column_headers.append((fieldname, field_parameters))
+            if query_fields_parameters:
+                fields_parameters = [FieldChoice.objects.get(field='RelationRole', machine_value=int(roleid)) for roleid in query_fields_parameters[0]]
+                field_parameters = ', '.join([field_param.name for field_param in fields_parameters])
+                if len(fields_parameters) == 1:
+                    column_headers.append((fieldname, field_parameters))
+                else:
+                    column_headers.append((fieldname, _("Relation: ") + field_parameters))
             else:
-                column_headers.append((fieldname, _("Relation: ") + field_parameters))
+                column_headers.append((fieldname, _("Type of Relation")))
         elif fieldname not in Gloss.get_field_names():
             continue
         else:
@@ -6179,8 +6183,9 @@ def senselistheader_ajax(request):
             column_headers.append((fieldname, fieldname_to_column_header[fieldname]))
         elif fieldname == 'hasRelation':
             if query_fields_parameters:
-                # this is a singleton type of relation
-                relation_type = _("Type of Relation") + ':' + query_fields_parameters[0].capitalize()
+                fields_parameters = [FieldChoice.objects.get(field='RelationRole', machine_value=int(roleid)) for roleid in query_fields_parameters[0]]
+                field_parameters = ', '.join([field_param.name for field_param in fields_parameters])
+                relation_type = _("Type of Relation") + ':' + field_parameters
                 column_headers.append((fieldname, relation_type))
             else:
                 column_headers.append((fieldname, _("Type of Relation")))

@@ -1357,7 +1357,7 @@ class Gloss(MetaModelMixin, models.Model):
     def get_relation_display(self):
         default_language = self.lemma.dataset.default_language.language_code_2char
         relations_to_signs = Relation.objects.filter(source=self)
-        return ", ".join([x.role + ':' + x.target.annotation_idgloss(default_language)
+        return ", ".join([x.role_fk.name + ':' + x.target.annotation_idgloss(default_language)
                                    for x in relations_to_signs])
 
     def get_hasComponentOfType_display(self):
