@@ -7816,7 +7816,7 @@ def preview_backup_video_for_gloss(request, gloss_id, glossvideo_id):
         context['error'] = _('No permission to access backup videos.')
         return render(request, 'dictionary/preview_backup_video.html', context)
 
-    backup_file = os.path.join(WRITABLE_FOLDER, str(glossvideo.videofile.path))
+    backup_file = os.path.join(WRITABLE_FOLDER, str(glossvideo.videofile))
     if not os.path.exists(backup_file):
         context['error'] = _('File not found.')
         return render(request, 'dictionary/preview_backup_video.html', context)

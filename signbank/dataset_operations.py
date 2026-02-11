@@ -78,10 +78,8 @@ def rename_backup_videos(gloss):
         video_file_full_path = os.path.join(WRITABLE_FOLDER, str(glossvideo.videofile))
         video_extension = video_file_type_extension(video_file_full_path)
         # keep this a normal string concatenation, not an f-string
-        desired_filename_without_extension = idgloss + '-' + glossid + video_extension
         _, bak = os.path.splitext(glossvideo.videofile.name)
-        desired_extension = '.bak' + str(glossvideo.pk)
-        desired_filename = desired_filename_without_extension + desired_extension
+        desired_filename = f'{idgloss}-{glossid}{video_extension}.bak{glossvideo.pk}'
         desired_relative_path = os.path.join(GLOSS_VIDEO_DIRECTORY,
                                              dataset_dir, two_letter_dir, desired_filename)
         current_relative_path = str(glossvideo.videofile)
@@ -275,8 +273,7 @@ def gloss_video_filename_check(dataset):
         glossvideos = GlossVideo.objects.filter(gloss=gloss,
                                                 glossvideonme=None,
                                                 glossvideoperspective=None).order_by('version')
-        weird_pattern = '-' + str(gloss.pk) + '_'
-        pattern_in_filename = [gv for gv in glossvideos if weird_pattern in str(gv.videofile)]
+        pattern_in_filename = [gv for gv in glossvideos if f'-{gloss.pk}_' in str(gv.videofile)]
         if pattern_in_filename:
             list_videos = ', '.join([str(gv.version)+': '+str(gv.videofile) for gv in pattern_in_filename])
             glosses_with_weird_filenames.append((gloss, list_videos))

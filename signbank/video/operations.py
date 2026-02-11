@@ -42,8 +42,8 @@ def flattened_video_path(relative_path):
     If this succeeds, prefix the filename with the dataset-specific components
     Otherwise just return the filename
     """
-    relative_path_folders, filename = os.path.split(relative_path)
-    m = re.search(r"^glossvideo/(.+)/(..)$", relative_path_folders)
+    folders_of_relative_path, filename = os.path.split(relative_path)
+    m = re.search(r"^glossvideo/(.+)/(..)$", folders_of_relative_path)
     if m:
         dataset_folder = m.group(1)
         two_char_folder = m.group(2)
