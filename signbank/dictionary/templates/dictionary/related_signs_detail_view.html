@@ -195,7 +195,7 @@
 		   </thead>
 		<tbody>
 		 {% for rel, sensetranslations_per_language, target_display in otherrelations %}
-		 {% if rel.role == "homonym" %}
+		 {% if rel.role_fk.name == "Homonym" %}
 		  <tr>
 				<td>{%if rel.target.get_image_path %}
 				  <div class="thumbnail_container">
@@ -248,7 +248,7 @@
 		 </thead>
 		<tbody>
 		 {% for rel, sensetranslations_per_language, target_display in otherrelations %}
-		  {% if rel.role == "synonym" %}
+		  {% if rel.role_fk.name == "Synonym" %}
 		  <tr>
 				 <td>{%if rel.target.get_image_path %}
 				  <div class="thumbnail_container">
@@ -300,7 +300,7 @@
 		</thead>
 		<tbody>
 		 {% for rel, sensetranslations_per_language, target_display in otherrelations %}
-		  {% if rel.role == "antonym" %}
+		  {% if rel.role_fk.name == "Antonym" %}
 		  <tr>
 			  <td>{%if rel.target.get_image_path %}
 				  <div class="thumbnail_container">
@@ -352,7 +352,7 @@
 		</thead>
 		<tbody>
 		 {% for rel, sensetranslations_per_language, target_display in otherrelations %}
-		  {% if rel.role == "hyponym" %}
+		  {% if rel.role_fk.name == "Hyponym" %}
 		  <tr>
 			  <td>{%if rel.target.get_image_path %}
 				  <div class="thumbnail_container">
@@ -404,7 +404,7 @@
 		</thead>
 		<tbody>
 		 {% for rel, sensetranslations_per_language, target_display in otherrelations %}
-		  {% if rel.role == "hypernym" %}
+		  {% if rel.role_fk.name == "Hypernym" %}
 		  <tr>
 			  <td>{%if rel.target.get_image_path %}
 				  <div class="thumbnail_container">
@@ -457,7 +457,7 @@
 		</thead>
 		<tbody>
 		 {% for rel, sensetranslations_per_language, target_display in otherrelations %}
-		  {% if rel.role == "paradigm" %}
+		  {% if rel.role_fk.name == "Handshape Paradigm" %}
 		  <tr>
 			  <td>{%if rel.target.get_image_path %}
 				  <div class="thumbnail_container">
@@ -510,7 +510,7 @@
 		</thead>
 		<tbody>
 		 {% for rel, sensetranslations_per_language, target_display in otherrelations %}
-		  {% if rel.role == "seealso" %}
+		  {% if rel.role_fk.name == "See Also" %}
 		  <tr>
 			  <td>{%if rel.target.get_image_path %}
 				  <div class="thumbnail_container">

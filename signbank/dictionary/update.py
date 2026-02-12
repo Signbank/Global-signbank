@@ -1723,14 +1723,9 @@ def add_relation(request):
         # fallback to the requesting page
         return HttpResponseRedirect('/')
 
-    roleid = form.cleaned_data['role_fk']
+    role = form.cleaned_data['role_fk']
     sourceid = form.cleaned_data['sourceid']
     targetid = form.cleaned_data['targetid']
-
-    try:
-        role = FieldChoice.objects.get(field='RelationRole', pk=int(roleid))
-    except ObjectDoesNotExist:
-        return HttpResponseBadRequest("Relation role not found.", {'content-type': 'text/plain'})
 
     try:
         source = Gloss.objects.get(pk=int(sourceid), archived=False)

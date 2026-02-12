@@ -2006,7 +2006,7 @@ class GlossRelationsDetailView(DetailView):
             for oth_rel in gl.relation_sources.all().filter(target__archived__exact=False,
                                                             source__archived__exact=False):
                 if oth_rel.source.id == oth_rel.target.id:
-                    print('circular relation found: ', gl, ' (', str(gl.id), ') ', oth_rel, oth_rel.role)
+                    print('circular relation found: ', gl, ' (', str(gl.id), ') ', oth_rel, oth_rel.role_fk.name)
                     continue
                 # This display is set to the default language for the dataset of this gloss
                 target_display = oth_rel.target.annotation_idgloss(oth_rel.target.lemma.dataset.default_language.language_code_2char)

@@ -1785,97 +1785,70 @@ class Gloss(MetaModelMixin, models.Model):
     def homophones(self):
         """Return the set of homophones for this gloss ordered by sense number"""
 
+        homophone = FieldChoice.objects.filter(name__iexact="Homophone")
         if self.sense == 1:
-            relations = Relation.objects.filter(role="homophone", target__exact=self).order_by('source__sense')
+            relations = Relation.objects.filter(role_fk__in=homophone, target__exact=self).order_by('source__sense')
             homophones = [rel.source for rel in relations]
             homophones.insert(0, self)
             return homophones
         elif self.sense > 1:
             # need to find the root and see how many senses it has
-            homophones = self.relation_sources.filter(target__archived__exact=False,
-                                                      source__archived__exact=False,
-                                                      role='homophone', target__sense__exact=1)
+            homophones = self.relation_sources.filter(role_fk__in=homophone, target__sense__exact=1)
             if len(homophones) > 0:
                 root = homophones[0].target
                 return root.homophones()
         return []
 
     def homonyms_count(self):
-
-        homonyms_count = self.relation_sources.filter(target__archived__exact=False,
-                                                      source__archived__exact=False,
-                                                      role='homonym').exclude(target=self).count()
-
-        return homonyms_count
+        homonym = FieldChoice.objects.filter(name__iexact="Homonym")
+        homonym_relations = self.relation_targets.all().filter(role_fk__in=homonym)
+        return homonym_relations.count()
 
     def synonyms_count(self):
-
-        synonyms_count = self.relation_sources.filter(target__archived__exact=False,
-                                                      source__archived__exact=False,
-                                                      role='synonym').exclude(target=self).count()
-        return synonyms_count
+        synonym = FieldChoice.objects.filter(name__iexact="Synonym")
+        synonym_relations = self.relation_targets.all().filter(role_fk__in=synonym)
+        return synonym_relations.count()
 
     def get_synonyms(self):
-        filters = dict(target__archived=False, source__archived=False, role='synonym')
-        synonyms = (rel.target for rel in self.relation_sources.all().filter(**filters).exclude(target=self))
+        synonym = FieldChoice.objects.filter(name__iexact="Synonym")
+        synonym_relations = self.relation_targets.all().filter(role_fk__in=synonym)
+        synonyms = [rel.target for rel in synonym_relations]
         return set(synonyms)
 
     def antonyms_count(self):
-
-        antonyms_count = self.relation_sources.filter(target__archived__exact=False,
-                                                      source__archived__exact=False,
-                                                      role='antonym').exclude(target=self).count()
-
-        return antonyms_count
+        antonym = FieldChoice.objects.filter(name__iexact="Antonym")
+        antonym_relations = self.relation_targets.all().filter(role_fk__in=antonym)
+        return antonym_relations.count()
 
     def hyponyms_count(self):
-
-        hyponyms_count = self.relation_sources.filter(target__archived__exact=False,
-                                                      source__archived__exact=False,
-                                                      role='hyponym').exclude(target=self).count()
-
-        return hyponyms_count
+        hyponym = FieldChoice.objects.filter(name__iexact="Hyponym")
+        hyponym_relations = self.relation_targets.all().filter(role_fk__in=hyponym)
+        return hyponym_relations.count()
 
     def hypernyms_count(self):
-
-        hypernyms_count = self.relation_sources.filter(target__archived__exact=False,
-                                                       source__archived__exact=False,
-                                                       role='hypernym').exclude(target=self).count()
-
-        return hypernyms_count
+        hypernym = FieldChoice.objects.filter(name__iexact="Hypernym")
+        hypernym_relations = self.relation_targets.all().filter(role_fk__in=hypernym)
+        return hypernym_relations.count()
 
     def seealso_count(self):
-
-        seealso_count = self.relation_sources.filter(target__archived__exact=False,
-                                                     source__archived__exact=False,
-                                                     role='seealso').exclude(target=self).count()
-
-        return seealso_count
+        seealso = FieldChoice.objects.filter(name__iexact="See Also")
+        seealso_relations = self.relation_targets.all().filter(role_fk__in=seealso)
+        return seealso_relations.count()
 
     def paradigm_count(self):
-
-        paradigm_count = self.relation_sources.filter(target__archived__exact=False,
-                                                      source__archived__exact=False,
-                                                      role='paradigm').exclude(target=self).count()
-
-        return paradigm_count
+        handshape_paradigm = FieldChoice.objects.filter(name__iexact="Handshape Paradigm")
+        handshape_relations = self.relation_targets.all().filter(role_fk__in=handshape_paradigm)
+        return handshape_relations.count()
 
     def variant_count(self):
-
-        variant_count = self.relation_sources.filter(target__archived__exact=False,
-                                                     source__archived__exact=False,
-                                                     role='variant').exclude(target=self).count()
-
-        return variant_count
+        variant = FieldChoice.objects.filter(name__iexact="Variant")
+        variant_relations = self.relation_targets.all().filter(role_fk__in=variant)
+        return variant_relations.count()
 
     def relations_count(self):
-
-        relations_count = self.relation_sources.filter(
-            target__archived__exact=False,
-            source__archived__exact=False,
-            role__in=['homonym', 'synonyn', 'antonym', 'hyponym', 'hypernym', 'seealso', 'variant']).exclude(target=self).count()
-
-        return relations_count
+        seealso = FieldChoice.objects.filter(name__iexact="See Also")
+        relations = self.relation_targets.all().exclude(role_fk__in=seealso)
+        return relations.count()
 
     def has_variants(self):
 
@@ -1927,30 +1900,22 @@ class Gloss(MetaModelMixin, models.Model):
         return pattern_variants
 
     def other_relations(self):
-
-        other_relations = self.relation_sources.filter(
-            target__archived__exact=False,
-            source__archived__exact=False,
-            role__in=['homonym', 'synonyn', 'antonym', 'hyponym', 'hypernym', 'seealso']).exclude(target=self)
-
+        # ['Homonym', 'Synonyn', 'Antonym', 'Hyponym', 'Hypernym', 'See Also']
+        variant_or_paradigm = Q(**{'name__iexact': "Variant"}) | Q(**{'name__iexact': "Handshape Paradigm"})
+        variant_or_paradigm_roles = FieldChoice.objects.filter(variant_or_paradigm)
+        other_relations = self.relation_targets.all().exclude(role_fk__in=variant_or_paradigm_roles)
         return other_relations
 
     def variant_relations(self):
-
-        variant_relations = self.relation_sources.filter(target__archived__exact=False,
-                                                         source__archived__exact=False,
-                                                         role__in=['variant']).exclude(target=self)
-
+        variant = FieldChoice.objects.filter(name__iexact="Variant")
+        variant_relations = self.relation_targets.all().filter(role_fk__in=variant)
         return variant_relations
 
     # this function is used by Homonyms List view
     # a boolean is paired with saved homonym relation targets to tag duplicates
     def homonym_relations(self):
-
-        homonym_relations = self.relation_sources.filter(target__archived__exact=False,
-                                                         source__archived__exact=False,
-                                                         role__in=['homonym'])
-
+        homonym = FieldChoice.objects.filter(name__iexact="Homonym")
+        homonym_relations = self.relation_targets.all().filter(role_fk__in=homonym)
         homonyms = [x.target for x in homonym_relations]
 
         tagged_homonym_objects = []
@@ -1988,16 +1953,9 @@ class Gloss(MetaModelMixin, models.Model):
         return stems
 
     def gloss_relations(self):
-
-        variant_relations = self.relation_sources.filter(target__archived__exact=False,
-                                                         source__archived__exact=False,
-                                                         role__in=['variant'])
-
-        other_relations = self.relation_sources.filter(
-            target__archived__exact=False,
-            source__archived__exact=False,
-            role__in=['homonym', 'synonyn', 'antonym', 'hyponym', 'hypernym', 'seealso', 'paradigm'])
-
+        variant = FieldChoice.objects.filter(name__iexact="Variant")
+        variant_relations = self.relation_targets.all().filter(role_fk__in=variant)
+        other_relations = self.relation_targets.all().exclude(role_fk__in=variant)
         return other_relations, variant_relations
 
     def phonology_matrix_homonymns(self, use_machine_value=False):
@@ -2309,7 +2267,7 @@ class Gloss(MetaModelMixin, models.Model):
 
         gloss_homonym_relations = self.relation_sources.filter(target__archived__exact=False,
                                                                source__archived__exact=False,
-                                                               role='homonym')
+                                                               role_fk__name__iexact='homonym')
 
         list_of_homonym_relations = [r for r in gloss_homonym_relations]
 
@@ -2915,7 +2873,7 @@ class Relation(models.Model):
                                     verbose_name=_("Relation Role"), related_name="relation_role")
 
     class Admin:
-        list_display = ['source', 'role', 'target']
+        list_display = ['source', 'role_pk__name', 'target']
         search_fields = ['source__idgloss', 'target__idgloss']
 
     class Meta:
