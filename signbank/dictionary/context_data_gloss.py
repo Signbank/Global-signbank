@@ -3,7 +3,7 @@ from django.db.models import IntegerField, Value as V
 
 from signbank.settings.server_specific import FIELDS, HANDSHAPE_ETYMOLOGY_FIELDS, HANDEDNESS_ARTICULATION_FIELDS
 from signbank.video.models import GlossVideoDescription, GlossVideoNME
-from signbank.dictionary.models import AnnotatedSentence, fieldname_to_kind
+from signbank.dictionary.models import AnnotatedSentence, fieldname_to_kind, Relation
 
 
 def get_annotation_idgloss_per_language_dict(gloss):
@@ -152,3 +152,12 @@ def get_provenance_groupedby_method(gloss):
             provenance_groupedby_method[method_id] = []
         provenance_groupedby_method[method_id].append(prov)
     return provenance_groupedby_method
+
+def get_relations_groupedby_role(gloss):
+    relations_source = Relation.objects.filter(source=gloss)
+    relations_dict = dict()
+    for rel in relations_source:
+        if rel.role_fk not in relations_dict.keys():
+            relations_dict[rel.role_fk] = []
+        relations_dict[rel.role_fk].append(rel.target)
+    return relations_dict
