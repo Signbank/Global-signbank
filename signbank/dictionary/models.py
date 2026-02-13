@@ -1800,17 +1800,13 @@ class Gloss(MetaModelMixin, models.Model):
                 return root.homophones()
         return []
 
-    def homonyms_count(self):
+    def get_relations_of_type(self, role):
+        assert isinstance(role, FieldChoice), "Not a FieldChoice object"
+        if not role.field == 'RelationRole':
+            raise ValueError("Not a RelationRole FieldChoice object")
         relations_source = Relation.objects.filter(source=self)
-        homonym = FieldChoice.objects.filter(field='RelationRole', name__iexact="Homonym")
-        homonym_relations = relations_source.filter(role_fk__in=homonym)
-        return homonym_relations.count()
-
-    def synonyms_count(self):
-        relations_source = Relation.objects.filter(source=self)
-        synonym = FieldChoice.objects.filter(field='RelationRole', name__iexact="Synonym")
-        synonym_relations = relations_source.filter(role_fk__in=synonym)
-        return synonym_relations.count()
+        relations_with_type_role = relations_source.filter(role_fk=role)
+        return relations_with_type_role
 
     def get_synonyms(self):
         relations_source = Relation.objects.filter(source=self)
@@ -1818,42 +1814,6 @@ class Gloss(MetaModelMixin, models.Model):
         synonym_relations = relations_source.filter(role_fk__in=synonym)
         synonyms = [rel.target for rel in synonym_relations]
         return set(synonyms)
-
-    def antonyms_count(self):
-        relations_source = Relation.objects.filter(source=self)
-        antonym = FieldChoice.objects.filter(field='RelationRole', name__iexact="Antonym")
-        antonym_relations = relations_source.filter(role_fk__in=antonym)
-        return antonym_relations.count()
-
-    def hyponyms_count(self):
-        relations_source = Relation.objects.filter(source=self)
-        hyponym = FieldChoice.objects.filter(field='RelationRole', name__iexact="Hyponym")
-        hyponym_relations = relations_source.filter(role_fk__in=hyponym)
-        return hyponym_relations.count()
-
-    def hypernyms_count(self):
-        relations_source = Relation.objects.filter(source=self)
-        hypernym = FieldChoice.objects.filter(field='RelationRole', name__iexact="Hypernym")
-        hypernym_relations = relations_source.filter(role_fk__in=hypernym)
-        return hypernym_relations.count()
-
-    def seealso_count(self):
-        relations_source = Relation.objects.filter(source=self)
-        seealso = FieldChoice.objects.filter(field='RelationRole', name__iexact="See Also")
-        seealso_relations = relations_source.filter(role_fk__in=seealso)
-        return seealso_relations.count()
-
-    def paradigm_count(self):
-        relations_source = Relation.objects.filter(source=self)
-        handshape_paradigm = FieldChoice.objects.filter(field='RelationRole', name__iexact="Handshape Paradigm")
-        handshape_relations = relations_source.filter(role_fk__in=handshape_paradigm)
-        return handshape_relations.count()
-
-    def variant_count(self):
-        relations_source = Relation.objects.filter(source=self)
-        variant = FieldChoice.objects.filter(field='RelationRole', name__iexact="Variant")
-        variant_relations = relations_source.filter(role_fk__in=variant)
-        return variant_relations.count()
 
     def relations_count(self):
         relations_source = Relation.objects.filter(source=self)
@@ -1915,7 +1875,6 @@ class Gloss(MetaModelMixin, models.Model):
         relations_source = Relation.objects.filter(source=self)
         variant = FieldChoice.objects.filter(field='RelationRole', name__iexact="Variant")
         relations = relations_source.exclude(role_fk__in=variant)
-        print('other relations: ', relations)
         return relations
 
     def variant_relations(self):

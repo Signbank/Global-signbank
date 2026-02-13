@@ -127,7 +127,8 @@ from signbank.dictionary.context_data_gloss import (get_other_relations, get_ann
                                                     get_sequential_morphology,
                                                     get_annotation_idgloss_per_language_dict, get_notes_groupedby_role,
                                                     get_provenance_groupedby_method,
-                                                    get_phonology_list_kinds, get_human_value_for_field_value, get_relations_groupedby_role)
+                                                    get_phonology_list_kinds, get_human_value_for_field_value,
+                                                    get_relations_groupedby_role, get_relations_dict, relations_target_gloss_lookup)
 from signbank.dictionary.related_objects import (morpheme_is_related_to, gloss_is_related_to,
                                                  okay_to_move_gloss, same_translation_languages, okay_to_move_glosses,
                                                  transitive_related_objects)
@@ -2000,21 +2001,27 @@ class GlossRelationsDetailView(DetailView):
 
         context['glosses_in_lemma_group'] = glosses_in_lemma_group
 
-        otherrelations = []
+        # otherrelations = []
+        #
+        # relations_grouped = get_relations_groupedby_role(gl)
+        # print('relations_grouped: ')
+        # for r in relations_grouped.keys():
+        #     print(r.name)
+        #     print(relations_grouped[r])
 
-        relations_grouped = get_relations_groupedby_role(gl)
-        print('relations_grouped: ')
-        for r in relations_grouped.keys():
-            print(r.name)
-            print(relations_grouped[r])
-        gloss_other_relations = gl.other_relations()
-        print('gloss other relations: ', gloss_other_relations)
-        for oth_rel in gloss_other_relations:
-            # This display is set to the default language for the dataset of this gloss
-            target_display = oth_rel.target.annotation_idgloss(oth_rel.target.lemma.dataset.default_language.language_code_2char)
-            otherrelations.append((oth_rel, senses_per_language(oth_rel.target), target_display))
+        # gloss_other_relations = gl.other_relations()
+        # print('gloss other relations: ', gloss_other_relations)
+        # for oth_rel in gloss_other_relations:
+        #     # This display is set to the default language for the dataset of this gloss
+        #     target_display = oth_rel.target.annotation_idgloss(oth_rel.target.lemma.dataset.default_language.language_code_2char)
+        #     otherrelations.append((oth_rel, senses_per_language(oth_rel.target), target_display))
 
-        context['otherrelations'] = otherrelations
+        relations_dict = get_relations_dict(gl)
+        context['relations_dict'] = relations_dict
+        target_lookup = relations_target_gloss_lookup(gl)
+        context['target_lookup_dict'] = target_lookup
+
+        # context['otherrelations'] = otherrelations
 
         pattern_variant_glosses = gl.pattern_variants()
         # the pattern_variants method result includes the gloss itself

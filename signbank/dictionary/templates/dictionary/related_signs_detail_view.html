@@ -176,222 +176,15 @@
 			{% endif %}
 
 			<tbody></tbody>
-		   <thead>
-		   {% if gloss.homonyms_count %}
-		   <tr>
-			   <th style="width:auto; color:darkred">{% trans "Homonyms" %}</th>
 
-			   <th style='width:12em'>{% trans "Annotation ID Gloss" %}</th>
-			   <th style='width:12em'>{% trans "Dataset" %}</th>
 
-			   <th style='width:12em'>{% trans "Senses" %} ({{gloss.lemma.dataset.default_language.name}})</th>
-			   <th style="width:8em">{% trans "Handedness" %}</th>
-			   <th style="width:8em">{% trans "Strong Hand" %}</th>
-			   <th style="width:8em">{% trans "Weak Hand" %}</th>
-			   <th style="width:8em">{% trans "Location" %}</th>
-			   <th style='width:12em'>{% trans "Tags" %}</th>
-		  </tr>
-		 {% endif %}
-		   </thead>
-		<tbody>
-		 {% for rel, sensetranslations_per_language, target_display in otherrelations %}
-		 {% if rel.role_fk.name == "Homonym" %}
-		  <tr>
-				<td>{%if rel.target.get_image_path %}
-				  <div class="thumbnail_container">
-				  <a href="{{PREFIX_URL}}/dictionary/gloss/{{rel.target.pk}}/">
-					  <img class="thumbnail" src="{{protected_media_url}}{{rel.target.get_image_url}}">
-				  </a>
-				  </div>
-				  {% endif %}
-				</td>
-			  <td id='homo_idgloss'><a
-                       href='{% url "dictionary:admin_gloss_view" pk=rel.target.pk %}'>{{target_display}}</a></td>
-			  <td id='homo_dataset'>{{rel.target.dataset}}</td>
-			  {% with rel.target.dataset.default_language as target_default_language %}
-			  {% with sensetranslations_per_language|get_senses_for_language:target_default_language as sensetranslations %}
-			  <td id='homo_keywords'>
-				  {% for sense in sensetranslations %}
-				  {{ sense|safe }}
-				  {% if not forloop.last %}<br>{% endif %}
-				  {% endfor %}
-			  </td>
-			  {% endwith %}
-			  {% endwith %}
-					<td id='homo_handedness'>{{ rel.target.display_handedness }}</td>
-					<td id='homo_domhndsh'>{{ rel.target.display_domhndsh }}</td>
-					<td id='homo_subhndsh'>{{ rel.target.display_subhndsh }}</td>
-					<td id='homo_locprim'>{{ rel.target.display_locprim }}</td>
-			  {% load underscore_to_space %}
-			  <td>{% for tag in rel.target.tags %}<span class='tag'>{{tag.name|underscore_to_space}}</span> {% endfor %}</td>
-		  </tr>
-		 {% endif %}
-		 {% endfor %}
-		</tbody>
-
-		   <thead>
-		   {% if gloss.synonyms_count %}
-		   <tr>
-			   <th style="width:auto; color:darkred">{% trans "Synonyms" %}</th>
-
-			   <th style='width:12em'>{% trans "Annotation ID Gloss" %}</th>
-			   <th style='width:12em'>{% trans "Dataset" %}</th>
-
-			   <th style='width:12em'>{% trans "Senses" %} ({{gloss.lemma.dataset.default_language.name}})</th>
-			   <th>{% trans "Handedness" %}</th>
-			   <th>{% trans "Strong Hand" %}</th>
-			   <th>{% trans "Weak Hand" %}</th>
-			   <th>{% trans "Location" %}</th>
-			   <th style='width:12em'>{% trans "Tags" %}</th>
-		  </tr>
-		 {% endif %}
-		 </thead>
-		<tbody>
-		 {% for rel, sensetranslations_per_language, target_display in otherrelations %}
-		  {% if rel.role_fk.name == "Synonym" %}
-		  <tr>
-				 <td>{%if rel.target.get_image_path %}
-				  <div class="thumbnail_container">
-				  <a href="{{PREFIX_URL}}/dictionary/gloss/{{rel.target.pk}}/">
-					  <img class="thumbnail" src="{{protected_media_url}}{{rel.target.get_image_url}}">
-				  </a>
-				  </div>
-				  {% endif %}
-				</td>
-			  <td id='syno_idgloss'><a href='{% url "dictionary:admin_gloss_view" pk=rel.target.pk %}'>{{target_display}}</a></td>
-			  <td id='syno_dataset'>{{rel.target.dataset}}</td>
-			  {% with rel.target.dataset.default_language as target_default_language %}
-			  {% with sensetranslations_per_language|get_senses_for_language:target_default_language as sensetranslations %}
-			  <td id='syno_keywords'>
-				  {% for sense in sensetranslations %}
-				  {{ sense|safe }}
-				  {% if not forloop.last %}<br>{% endif %}
-				  {% endfor %}
-			  </td>
-			  {% endwith %}
-			  {% endwith %}
-					<td id='syno_handedness'>{{ rel.target.display_handedness }}</td>
-					<td id='syno_domhndsh'>{{ rel.target.display_domhndsh }}</td>
-					<td id='syno_subhndsh'>{{ rel.target.display_subhndsh }}</td>
-					<td id='syno_locprim'>{{ rel.target.display_locprim }}</td>
-			  {% load underscore_to_space %}
-			  <td>{% for tag in rel.target.tags %}<span class='tag'>{{tag.name|underscore_to_space}}</span> {% endfor %}</td>
-		  </tr>
-		  {% endif %}
-		  {% endfor %}
-		</tbody>
-
-		<thead>
-		   {% if gloss.antonyms_count %}
-		   <tr>
-			   <th style="width:auto; color:darkred">{% trans "Antonyms" %}</th>
-
-			   <th style='width:12em'>{% trans "Annotation ID Gloss" %}</th>
-			   <th style='width:12em'>{% trans "Dataset" %}</th>
-
-			   <th style='width:12em'>{% trans "Senses" %}  ({{gloss.lemma.dataset.default_language.name}})</th>
-			   <th>{% trans "Handedness" %}</th>
-			   <th>{% trans "Strong Hand" %}</th>
-			   <th>{% trans "Weak Hand" %}</th>
-			   <th>{% trans "Location" %}</th>
-			   <th style='width:12em'>{% trans "Tags" %}</th>
-		  </tr>
-		 {% endif %}
-		</thead>
-		<tbody>
-		 {% for rel, sensetranslations_per_language, target_display in otherrelations %}
-		  {% if rel.role_fk.name == "Antonym" %}
-		  <tr>
-			  <td>{%if rel.target.get_image_path %}
-				  <div class="thumbnail_container">
-				  <a href="{{PREFIX_URL}}/dictionary/gloss/{{rel.target.pk}}/">
-					  <img class="thumbnail" src="{{protected_media_url}}{{rel.target.get_image_url}}">
-				  </a>
-				  </div>
-				  {% endif %}
-			  </td>
-			  <td id='anto_idgloss'><a href='{% url "dictionary:admin_gloss_view" pk=rel.target.pk %}'>{{target_display}}</a></td>
-			  <td id='anto_dataset'>{{rel.target.dataset}}</td>
-			  {% with rel.target.dataset.default_language as target_default_language %}
-			  {% with sensetranslations_per_language|get_senses_for_language:target_default_language as sensetranslations %}
-			  <td id='anto_keywords'>
-				  {% for sense in sensetranslations %}
-				  {{ sense|safe }}
-				  {% if not forloop.last %}<br>{% endif %}
-				  {% endfor %}
-			  </td>
-			  {% endwith %}
-			  {% endwith %}
-					<td id='anto_handedness'>{{ rel.target.display_handedness }}</td>
-					<td id='anto_domhndsh'>{{ rel.target.display_domhndsh }}</td>
-					<td id='anto_subhndsh'>{{ rel.target.display_subhndsh }}</td>
-					<td id='anto_locprim'>{{ rel.target.display_locprim }}</td>
-			  {% load underscore_to_space %}
-			  <td>{% for tag in rel.target.tags %}<span class='tag'>{{tag.name|underscore_to_space}}</span> {% endfor %}</td>
-		  </tr>
-		  {% endif %}
-		  {% endfor %}
-		</tbody>
-
-		<thead>
-		   {% if gloss.hyponyms_count %}
+		{% for role, relations in relations_dict.items %}
+		{% if relations %}
+			<thead>
 			<tr>
-				<th style="width:auto; color:darkred">{% trans "Hyponyms" %}</th>
+			   <th style="width:auto; color:darkred">{{role.name}}</th>
 
 			   <th style='width:12em'>{% trans "Annotation ID Gloss" %}</th>
-			   <th style='width:12em'>{% trans "Dataset" %}</th>
-
-			   <th style='width:12em'>{% trans "Senses" %}  ({{gloss.lemma.dataset.default_language.name}})</th>
-			   <th>{% trans "Handedness" %}</th>
-			   <th>{% trans "Strong Hand" %}</th>
-			   <th>{% trans "Weak Hand" %}</th>
-			   <th>{% trans "Location" %}</th>
-			   <th style='width:12em'>{% trans "Tags" %}</th>
-		  </tr>
-		 {% endif %}
-		</thead>
-		<tbody>
-		 {% for rel, sensetranslations_per_language, target_display in otherrelations %}
-		  {% if rel.role_fk.name == "Hyponym" %}
-		  <tr>
-			  <td>{%if rel.target.get_image_path %}
-				  <div class="thumbnail_container">
-				  <a href="{{PREFIX_URL}}/dictionary/gloss/{{rel.target.pk}}/">
-					  <img class="thumbnail" src="{{protected_media_url}}{{rel.target.get_image_url}}">
-				  </a>
-				  </div>
-				  {% endif %}
-			  </td>
-			  <td id='hypo_idgloss'><a href='{% url "dictionary:admin_gloss_view" pk=rel.target.pk %}'>{{target_display}}</a></td>
-			  <td id='hypo_dataset'>{{rel.target.dataset}}</td>
-			  {% with rel.target.dataset.default_language as target_default_language %}
-			  {% with sensetranslations_per_language|get_senses_for_language:target_default_language as sensetranslations %}
-			  <td id='hypo_keywords'>
-				  {% for sense in sensetranslations %}
-				  {{ sense|safe }}
-				  {% if not forloop.last %}<br>{% endif %}
-				  {% endfor %}
-			  </td>
-			  {% endwith %}
-			  {% endwith %}
-					<td id='hypo_handedness'>{{ rel.target.display_handedness }}</td>
-					<td id='hypo_domhndsh'>{{ rel.target.display_domhndsh }}</td>
-					<td id='hypo_subhndsh'>{{ rel.target.display_subhndsh }}</td>
-					<td id='hypo_locprim'>{{ rel.target.display_locprim }}</td>
-			  {% load underscore_to_space %}
-			  <td>{% for tag in rel.target.tags %}<span class='tag'>{{tag.name|underscore_to_space}}</span> {% endfor %}</td>
-		  </tr>
-		  {% endif %}
-		  {% endfor %}
-		</tbody>
-
-		<thead>
-		   {% if gloss.hypernyms_count %}
-			<tr>
-			   <th style="width:auto; color:darkred">{% trans "Hypernyms" %}</th>
-
-			   <th style='width:12em'>{% trans "Annotation ID Gloss" %}</th>
-			   <th style='width:12em'>{% trans "Dataset" %}</th>
 
 			   <th style='width:12em'>{% trans "Senses" %} ({{gloss.lemma.dataset.default_language.name}})</th>
 			   <th>{% trans "Handedness" %}</th>
@@ -400,25 +193,25 @@
 			   <th>{% trans "Location" %}</th>
 			   <th style='width:12em'>{% trans "Tags" %}</th>
 		  </tr>
-		 {% endif %}
 		</thead>
 		<tbody>
-		 {% for rel, sensetranslations_per_language, target_display in otherrelations %}
-		  {% if rel.role_fk.name == "Hypernym" %}
+		{% for relation in relations %}
+		{% with target_lookup_dict|get_item:relation.target as target_lookup %}
+		{% with target_lookup.senses as sensetranslations_per_language %}
+		{% with target_lookup.display as target_display %}
 		  <tr>
-			  <td>{%if rel.target.get_image_path %}
+			  <td>{% if relation.target.get_image_path %}
 				  <div class="thumbnail_container">
-				  <a href="{{PREFIX_URL}}/dictionary/gloss/{{rel.target.pk}}/">
-					  <img class="thumbnail" src="{{protected_media_url}}{{rel.target.get_image_url}}">
+				  <a href="{{PREFIX_URL}}/dictionary/gloss/{{relation.target.pk}}/">
+					  <img class="thumbnail" src="{{protected_media_url}}{{relation.target.get_image_url}}">
 				  </a>
 				  </div>
 				  {% endif %}
 			  </td>
-			  <td id='hyper_idgloss'><a href='{% url "dictionary:admin_gloss_view" pk=rel.target.pk %}'>{{target_display}}</a></td>
-			  <td id='hyper_dataset'>{{rel.target.dataset}}</td>
-			  {% with rel.target.dataset.default_language as target_default_language %}
-			  {% with sensetranslations_per_language|get_senses_for_language:target_default_language as sensetranslations %}
-			  <td id='hyper_keywords'>
+			  <td id='rel_{{role.machine_value}}_idgloss'><a href='{% url "dictionary:admin_gloss_view" pk=relation.target.pk %}'>{{target_display}}</a></td>
+			  {% with relation.target.dataset.default_language as target_default_language %}
+			  {% with sensetranslations_per_language|get_item:target_default_language as sensetranslations %}
+			  <td id='rel_{{role.machine_value}}_keywords'>
 				  {% for sense in sensetranslations %}
 				  {{ sense|safe }}
 				  {% if not forloop.last %}<br>{% endif %}
@@ -426,122 +219,21 @@
 			  </td>
 			  {% endwith %}
 			  {% endwith %}
-					<td id='hyper_handedness'>{{ rel.target.display_handedness }}</td>
-					<td id='hyper_domhndsh'>{{ rel.target.display_domhndsh }}</td>
-					<td id='hyper_subhndsh'>{{ rel.target.display_subhndsh }}</td>
-					<td id='hyper_locprim'>{{ rel.target.display_locprim }}</td>
+					<td id='rel_{{role.machine_value}}_handedness'>{{ relation.target.display_handedness }}</td>
+					<td id='rel_{{role.machine_value}}_domhndsh'>{{ relation.target.display_domhndsh }}</td>
+					<td id='rel_{{role.machine_value}}_subhndsh'>{{ relation.target.display_subhndsh }}</td>
+					<td id='rel_{{role.machine_value}}_locprim'>{{ relation.target.display_locprim }}</td>
 			  {% load underscore_to_space %}
-			  <td>{% for tag in rel.target.tags %}<span class='tag'>{{tag.name|underscore_to_space}}</span> {% endfor %}</td>
+			  <td>{% for tag in relation.target.tags %}<span class='tag'>{{tag.name|underscore_to_space}}</span> {% endfor %}</td>
 		  </tr>
-		  {% endif %}
-		  {% endfor %}
+		{% endwith %}
+		{% endwith %}
+		{% endwith %}
+		{% endfor %}
 		</tbody>
+		{% endif %}
+		{% endfor %}
 
-
-		<thead>
-		   {% if gloss.paradigm_count %}
-			<tr>
-			   <th style="width:auto; color:darkred">{% trans "Handshape Paradigm" %}</th>
-
-			   <th style='width:12em'>{% trans "Annotation ID Gloss" %}</th>
-			   <th style='width:12em'>{% trans "Dataset" %}</th>
-
-			   <th style='width:12em'>{% trans "Senses" %} ({{gloss.lemma.dataset.default_language.name}})</th>
-			   <th>{% trans "Handedness" %}</th>
-			   <th>{% trans "Strong Hand" %}</th>
-			   <th>{% trans "Weak Hand" %}</th>
-			   <th>{% trans "Location" %}</th>
-			   <th style='width:12em'>{% trans "Tags" %}</th>
-		  </tr>
-		 {% endif %}
-		</thead>
-		<tbody>
-		 {% for rel, sensetranslations_per_language, target_display in otherrelations %}
-		  {% if rel.role_fk.name == "Handshape Paradigm" %}
-		  <tr>
-			  <td>{%if rel.target.get_image_path %}
-				  <div class="thumbnail_container">
-				  <a href="{{PREFIX_URL}}/dictionary/gloss/{{rel.target.pk}}/">
-					  <img class="thumbnail" src="{{protected_media_url}}{{rel.target.get_image_url}}">
-				  </a>
-				  </div>
-				  {% endif %}
-			  </td>
-			  <td id='paradigm_idgloss'><a href='{% url "dictionary:admin_gloss_view" pk=rel.target.pk %}'>{{target_display}}</a></td>
-			  <td id='paradigm_dataset'>{{rel.target.dataset}}</td>
-			  {% with rel.target.dataset.default_language as target_default_language %}
-			  {% with sensetranslations_per_language|get_senses_for_language:target_default_language as sensetranslations %}
-			  <td id='paradigm_keywords'>
-				  {% for sense in sensetranslations %}
-				  {{ sense|safe }}
-				  {% if not forloop.last %}<br>{% endif %}
-				  {% endfor %}
-			  </td>
-			  {% endwith %}
-			  {% endwith %}
-					<td id='paradigm_handedness'>{{ rel.target.display_handedness }}</td>
-					<td id='paradigm_domhndsh'>{{ rel.target.display_domhndsh }}</td>
-					<td id='paradigm_subhndsh'>{{ rel.target.display_subhndsh }}</td>
-					<td id='paradigm_locprim'>{{ rel.target.display_locprim }}</td>
-			  {% load underscore_to_space %}
-			  <td>{% for tag in rel.target.tags %}<span class='tag'>{{tag.name|underscore_to_space}}</span> {% endfor %}</td>
-		  </tr>
-		  {% endif %}
-		  {% endfor %}
-		</tbody>
-
-
-		<thead>
-		   {% if gloss.seealso_count %}
-			<tr>
-			   <th style="width:auto; color:darkred">{% trans "See Also" %}</th>
-
-			   <th style='width:12em'>{% trans "Annotation ID Gloss" %}</th>
-			   <th style='width:12em'>{% trans "Dataset" %}</th>
-
-			   <th style='width:12em'>{% trans "Senses" %} ({{gloss.lemma.dataset.default_language.name}})</th>
-			   <th>{% trans "Handedness" %}</th>
-			   <th>{% trans "Strong Hand" %}</th>
-			   <th>{% trans "Weak Hand" %}</th>
-			   <th>{% trans "Location" %}</th>
-			   <th style='width:12em'>{% trans "Tags" %}</th>
-		  </tr>
-		 {% endif %}
-		</thead>
-		<tbody>
-		 {% for rel, sensetranslations_per_language, target_display in otherrelations %}
-		  {% if rel.role_fk.name == "See Also" %}
-		  <tr>
-			  <td>{%if rel.target.get_image_path %}
-				  <div class="thumbnail_container">
-				  <a href="{{PREFIX_URL}}/dictionary/gloss/{{rel.target.pk}}/">
-					  <img class="thumbnail" src="{{protected_media_url}}{{rel.target.get_image_url}}">
-				  </a>
-				  </div>
-				  {% endif %}
-			  </td>
-			  <td id='seealso_idgloss'><a href='{% url "dictionary:admin_gloss_view" pk=rel.target.pk %}'>{{target_display}}</a></td>
-			  <td id='seealso_dataset'>{{rel.target.dataset}}</td>
-			  {% with rel.target.dataset.default_language as target_default_language %}
-			  {% with sensetranslations_per_language|get_senses_for_language:target_default_language as sensetranslations %}
-			  <td id='seealso_keywords'>
-				  {% for sense in sensetranslations %}
-				  {{ sense|safe }}
-				  {% if not forloop.last %}<br>{% endif %}
-				  {% endfor %}
-			  </td>
-			  {% endwith %}
-			  {% endwith %}
-					<td id='seealso_handedness'>{{ rel.target.display_handedness }}</td>
-					<td id='seealso_domhndsh'>{{ rel.target.display_domhndsh }}</td>
-					<td id='seealso_subhndsh'>{{ rel.target.display_subhndsh }}</td>
-					<td id='seealso_locprim'>{{ rel.target.display_locprim }}</td>
-			  {% load underscore_to_space %}
-			  <td>{% for tag in rel.target.tags %}<span class='tag'>{{tag.name|underscore_to_space}}</span> {% endfor %}</td>
-		  </tr>
-		  {% endif %}
-		  {% endfor %}
-		</tbody>
 
 		<thead>
 		   {% if variants %}
