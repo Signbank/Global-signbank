@@ -21,7 +21,7 @@ from django.db import DatabaseError, IntegrityError
 from django.utils.timezone import get_current_timezone
 from django.contrib import messages
 from django.contrib.auth.models import Group
-from django.utils.translation import gettext_lazy as _, activate, override, gettext
+from django.utils.translation import gettext, gettext_lazy
 from django.db.transaction import atomic, TransactionManagementError
 from django.contrib.auth.models import User
 
@@ -351,7 +351,7 @@ def update_examplesentence(request, examplesentenceid):
 
         # Check if input was not empty and if both sentences already existed together
         if len(vals) == 0 or vals == examplesentence.get_examplestc_translations_dict_without():
-            messages.add_message(request, messages.INFO, _('This example sentence was not changed.'))
+            messages.add_message(request, messages.INFO, gettext_lazy('This example sentence was not changed.'))
             return HttpResponseRedirect(
                 reverse('dictionary:admin_gloss_view', kwargs={'pk': request.POST['glossid']}) + '?edit')
 
@@ -414,7 +414,7 @@ def create_examplesentence(request, senseid):
 
     # Check if input was not empty and if both sentences already existed together
     if len(vals) == 0:
-        messages.add_message(request, messages.ERROR, _('No input sentence given.'))
+        messages.add_message(request, messages.ERROR, gettext_lazy('No input sentence given.'))
         return HttpResponseRedirect(
             reverse('dictionary:admin_gloss_view', kwargs={'pk': request.POST['glossid']}) + '?edit')
 
@@ -480,7 +480,7 @@ def sort_sense(request, glossid, order, direction):
     gloss_senses_matching_order = GlossSense.objects.filter(gloss=gloss, order=order).count()
     if gloss_senses_matching_order != 1:
         print('sort_sense: multiple or no match for order: ', glossid, str(order))
-        messages.add_message(request, messages.ERROR, _('Could not sort this sense.'))
+        messages.add_message(request, messages.ERROR, gettext_lazy('Could not sort this sense.'))
         return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': gloss.id}) + '?edit')
 
     glosssense = GlossSense.objects.get(gloss=gloss, order=order)
@@ -502,7 +502,7 @@ def sort_sense(request, glossid, order, direction):
         reorder_translations(glosssense, swaporder)
     except (ObjectDoesNotExist, MultipleObjectsReturned, DatabaseError, TransactionManagementError):
         print('sort_sense ', direction.upper(), ': multiple or no match for order: ', glossid, str(swaporder))
-        messages.add_message(request, messages.ERROR, _('Could not sort this sense.'))
+        messages.add_message(request, messages.ERROR, gettext_lazy('Could not sort this sense.'))
 
     return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': gloss.id}) + '?edit')
 
@@ -532,7 +532,7 @@ def sort_examplesentence(request, senseid, glossid, order, direction):
         senseexamplesentencetoswap.save()
     except (ObjectDoesNotExist, MultipleObjectsReturned, DatabaseError, TransactionManagementError):
         print('sort_examplesentence ', direction.upper(), ': multiple or no match for order: ', senseid, str(swaporder))
-        messages.add_message(request, messages.ERROR, _('Could not sort this examplesentence.'))
+        messages.add_message(request, messages.ERROR, gettext_lazy('Could not sort this examplesentence.'))
 
     return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': gloss.id}) + '?edit')
 
@@ -564,7 +564,7 @@ def update_sense(request, senseid):
     glossid = request.POST['glossid']
 
     if not request.user.has_perm('dictionary.change_sense'):
-        messages.add_message(request, messages.ERROR, _('Sense Update Not Allowed'))
+        messages.add_message(request, messages.ERROR, gettext_lazy('Sense Update Not Allowed'))
         return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': glossid}) + '?edit')
 
     # Make a dict of new values
@@ -581,7 +581,7 @@ def update_sense(request, senseid):
 
     # Check if input given is empty
     if vals == {}:
-        messages.add_message(request, messages.ERROR, _('No keywords given for edited sense.'))
+        messages.add_message(request, messages.ERROR, gettext_lazy('No keywords given for edited sense.'))
         return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': gloss.id}) + '?edit')
 
     # Check if this sense changed at all
@@ -593,16 +593,16 @@ def update_sense(request, senseid):
     sensetranslation_dict = sense.get_sense_translations_dict_without_list()
 
     if sensetranslation_dict == vals:
-        messages.add_message(request, messages.ERROR, _('Sense did not change.'))
+        messages.add_message(request, messages.ERROR, gettext_lazy('Sense did not change.'))
         return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': gloss.id}) + '?edit')
 
     gloss_senses = GlossSense.objects.filter(gloss_id=gloss.id, sense=sense)
 
     if not gloss_senses.count():
-        messages.add_message(request, messages.ERROR, _('GlossSense not found for gloss.'))
+        messages.add_message(request, messages.ERROR, gettext_lazy('GlossSense not found for gloss.'))
         return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': gloss.id}) + '?edit')
     if gloss_senses.count() > 1:
-        messages.add_message(request, messages.ERROR, _('GlossSense duplicate found for gloss.'))
+        messages.add_message(request, messages.ERROR, gettext_lazy('GlossSense duplicate found for gloss.'))
         return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': gloss.id}) + '?edit')
 
     # Check if sense already exists in this gloss
@@ -610,7 +610,7 @@ def update_sense(request, senseid):
         if existing_sense == sense:
             continue
         if vals == existing_sense.get_sense_translations_dict_without_list():
-            messages.add_message(request, messages.ERROR, _('This sense was already in this gloss.'))
+            messages.add_message(request, messages.ERROR, gettext_lazy('This sense was already in this gloss.'))
             return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': gloss.id}) + '?edit')
 
     # Update sensetranslations
@@ -709,7 +709,7 @@ def update_sense(request, senseid):
                              time=DT.datetime.now(tz=get_current_timezone()))
     revision.save()
 
-    messages.add_message(request, messages.INFO, _('Given sense was updated.'))
+    messages.add_message(request, messages.INFO, gettext_lazy('Given sense was updated.'))
     return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': gloss.id}) + '?edit')
 
 
@@ -718,7 +718,7 @@ def create_sense(request, glossid):
     """View to create a sense model from the editable modal"""
 
     if not request.user.has_perm('dictionary.add_sense'):
-        messages.add_message(request, messages.ERROR, _('Sense Creation Not Allowed'))
+        messages.add_message(request, messages.ERROR, gettext_lazy('Sense Creation Not Allowed'))
         return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': glossid}) + '?edit')
 
     # Make a dict of new values
@@ -738,13 +738,13 @@ def create_sense(request, glossid):
 
     # Check if input given is empty
     if vals == {}:
-        messages.add_message(request, messages.ERROR, _('No keywords given for new sense.'))
+        messages.add_message(request, messages.ERROR, gettext_lazy('No keywords given for new sense.'))
         return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': glossid}) + '?edit')
 
     # Check if sense already exists in this gloss
     for existing_sense in gloss.senses.all():
         if vals == existing_sense.get_sense_translations_dict_without_list():
-            messages.add_message(request, messages.ERROR, _('This sense was already in this gloss.'))
+            messages.add_message(request, messages.ERROR, gettext_lazy('This sense was already in this gloss.'))
             return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': glossid}) + '?edit')
 
     # Make a new sense object
@@ -796,7 +796,7 @@ def delete_sense(request, glossid):
     """View to delete a sense model from the editable modal"""
 
     if not request.user.has_perm('dictionary.delete_sense'):
-        messages.add_message(request, messages.ERROR, _('Sense Deletion Not Allowed'))
+        messages.add_message(request, messages.ERROR, gettext_lazy('Sense Deletion Not Allowed'))
         return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': glossid}) + '?edit')
 
     sense = Sense.objects.get(id=request.POST['senseid'])
@@ -893,7 +893,7 @@ def update_gloss(request, glossid):
         if value != 'confirmed':
             # the confirmed value is a hidden field in the form in the template
             selected_datasets = get_selected_datasets(request)
-            feedback_message = _('Gloss deletion was not confirmed.')
+            feedback_message = gettext_lazy('Gloss deletion was not confirmed.')
             return show_warning(request, feedback_message, selected_datasets)
 
         # archive the gloss and redirect back to gloss list
@@ -902,7 +902,7 @@ def update_gloss(request, glossid):
         if GUARDED_GLOSS_DELETE and related_objects:
             reverse_url = 'dictionary:admin_gloss_view'
             messages.add_message(request, messages.INFO,
-                                 _("GUARDED_GLOSS_DELETE is set to True. The gloss has relations to other glosses and was not deleted."))
+                                 gettext_lazy("GUARDED_GLOSS_DELETE is set to True. The gloss has relations to other glosses and was not deleted."))
             return HttpResponseRedirect(reverse(reverse_url, kwargs={'pk': gloss.id}))
 
         gloss.archived = True
@@ -927,7 +927,7 @@ def update_gloss(request, glossid):
         return update_relationtoforeignsign(gloss, field, value)
 
     elif field.startswith('relation'):
-
+        print('update relation')
         return update_relation(gloss, field, value)
 
     elif field.startswith('morphology-definition'):
@@ -966,7 +966,7 @@ def update_gloss(request, glossid):
     elif field in ['excludeFromEcv', 'isNew', 'inWeb']:
 
         if field == 'inWeb' and not request.user.has_perm('dictionary.can_publish'):
-            return HttpResponseBadRequest(_("You do not have permission to publish glosses."), {'content-type': 'text/plain'})
+            return HttpResponseBadRequest(gettext_lazy("You do not have permission to publish glosses."), {'content-type': 'text/plain'})
 
         return update_boolean_checkbox(request.user, gloss, field, value)
 
@@ -987,11 +987,11 @@ def update_gloss(request, glossid):
         try:
             lemma = LemmaIdgloss.objects.get(pk=value)
         except ObjectDoesNotExist:
-            messages.add_message(request, messages.ERROR, _("The specified lemma does not exist."))
+            messages.add_message(request, messages.ERROR, gettext_lazy("The specified lemma does not exist."))
             return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
         if gloss.lemma.dataset != lemma.dataset:
             messages.add_message(request, messages.ERROR,
-                                 _("The dataset of the gloss is not the same as that of the lemma."))
+                                 gettext_lazy("The dataset of the gloss is not the same as that of the lemma."))
             return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
 
         gloss.lemma = lemma
@@ -1220,11 +1220,11 @@ def update_lemma_idgloss(request, lemmaid):
     selected_datasets = get_selected_datasets(request)
     lemma = LemmaIdgloss.objects.filter(pk=int(lemmaid)).first()
     if not lemma:
-        feedback_message = _('The requested lemma does not exist.')
+        feedback_message = gettext_lazy('The requested lemma does not exist.')
         return show_warning(request, feedback_message, selected_datasets)
 
     if not lemma.dataset:
-        feedback_message = _('The requested lemma has no dataset.')
+        feedback_message = gettext_lazy('The requested lemma has no dataset.')
         return show_warning(request, feedback_message, selected_datasets)
 
     translation_languages = lemma.dataset.translation_languages.all()
@@ -1270,7 +1270,7 @@ def update_lemma_idgloss(request, lemmaid):
 
     try:
         form.save()
-        messages.add_message(request, messages.INFO, _("The changes to the lemma have been saved."))
+        messages.add_message(request, messages.INFO, gettext_lazy("The changes to the lemma have been saved."))
         if 'gloss' not in request_path or 'update' in request_path:
             # if the page that happened before this update was not Gloss Detail but was an "update" use "this_page"
             # rather than the request path, to make sure the lemma id was not navigated away by e.g., the scroll bar to a different lemma
@@ -1494,31 +1494,33 @@ def update_derivationhistory(request, gloss, field, values):
 # This function is called from the Gloss Details template when updating Relations to Other Signs
 def update_relation(gloss, field, value):
     """Update one of the relations for this gloss"""
-    (what, relid) = field.split('_')
-    what = what.replace('-', '_')
 
     try:
-        rel = Relation.objects.get(id=relid)
+        synonym = FieldChoice.objects.get(field='RelationRole', name__iexact="Synonym")
+    except (ObjectDoesNotExist, MultipleObjectsReturned):
+        raise ValueError(gettext_lazy("FieldChoice for Synonym is not defined."))
+
+    (what, relid) = field.split('_')
+    what = what.replace('-', '_')
+    try:
+        rel = Relation.objects.get(id=int(relid))
     except ObjectDoesNotExist:
         return HttpResponseBadRequest("Bad Relation ID '%s'" % relid, {'content-type': 'text/plain'})
 
-    if not rel.source == gloss:
-        return HttpResponseBadRequest("Relation doesn't match gloss", {'content-type': 'text/plain'})
-
-    if what == 'relationdelete' and rel.role == 'synonym':
+    if what == 'relationdelete' and rel.role_fk == synonym:
         # special case for symmetric transitive relation
         remove_transitive_synonym(rel)
         return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': gloss.id}) + '?editrel')
 
-    elif what == 'relationdelete':
+    if what == 'relationdelete':
         rel_source = rel.source
         rel_target = rel.target
-        rel_role = Relation.get_reverse_role(rel.role_fk.name)
+        rel_role = rel.get_reverse_role()
         rel.delete()
 
         # Also delete the reverse relation
         reverse_relations = Relation.objects.filter(source=rel_target, target=rel_source,
-                                                    role_fk__name__iexact=rel_role)
+                                                    role_fk=rel_role)
         if reverse_relations.count() > 0:
             for revrel in reverse_relations:
                 revrel.delete()
@@ -1529,7 +1531,6 @@ def update_relation(gloss, field, value):
         rel.save()
         newvalue = rel.get_role_display()
     elif what == 'relationtarget':
-
         target = gloss_from_identifier(value)
         if target:
             rel.target = target
@@ -1655,9 +1656,9 @@ def update_definition(request, gloss, field, value):
 
         new_history_value = str(defn.published)
         if defn.published:
-            newvalue = _("Yes")
+            newvalue = gettext_lazy("Yes")
         else:
-            newvalue = _("No")
+            newvalue = gettext_lazy("No")
     elif what == 'definitionrole':
         defn.role = FieldChoice.objects.get(field='NoteType', machine_value=int(value))
         defn.save()
@@ -1723,25 +1724,34 @@ def add_relation(request):
         # fallback to the requesting page
         return HttpResponseRedirect('/')
 
-    role = form.cleaned_data['role_fk']
+    role_input = form.cleaned_data['role_fk']
     sourceid = form.cleaned_data['sourceid']
     targetid = form.cleaned_data['targetid']
+    print('add relation role: ', role_input, type(role_input))
+    print('add relation source: ', sourceid)
+
+    try:
+        role = FieldChoice.objects.get(field='RelationRole', machine_value=role_input.machine_value)
+    except (ObjectDoesNotExist, MultipleObjectsReturned):
+        raise ValueError(gettext_lazy("FieldChoice is not defined."))
 
     try:
         source = Gloss.objects.get(pk=int(sourceid), archived=False)
     except ObjectDoesNotExist:
         return HttpResponseBadRequest("Source gloss not found.", {'content-type': 'text/plain'})
-
+    print('source: ', source, type(source))
     try:
         target = Gloss.objects.get(id=int(targetid), archived=False)
     except ObjectDoesNotExist:
         return HttpResponseBadRequest("Target gloss not found.", {'content-type': 'text/plain'})
-
-    rel, created = Relation.objects.get_or_create(source=source, target=target, role_fk=role)
-    rel.save()
-
+    print('target: ', target)
+    new_relation = Relation(source=source, target=target, role_fk=role)
+    new_relation.save()
+    print('new relation created')
+    reverse_role = new_relation.get_reverse_role()
     # Also add the reverse relation
-    reverse_relation, created = Relation.objects.get_or_create(source=target, target=source, role_fk=Relation.get_reverse_role(role.name))
+    print('reverse relation: ', reverse_role)
+    reverse_relation, created = Relation.objects.get_or_create(source=target, target=source, role_fk=new_relation.get_reverse_role())
     reverse_relation.save()
 
     ensure_synonym_transitivity(source)
@@ -1759,7 +1769,11 @@ def variants_of_gloss(request):
     if not form.is_valid():
         return HttpResponseRedirect('/')
 
-    role = get_object_or_404(FieldChoice, field='RelationRole', name__iexact='variant')
+    try:
+        variant = FieldChoice.objects.get(field='RelationRole', name__iexact="Variant")
+    except (ObjectDoesNotExist, MultipleObjectsReturned):
+        raise ValueError(gettext_lazy("FieldChoice for Variant is not defined."))
+
     sourceid = form.cleaned_data['sourceid']
     targetid = form.cleaned_data['targetid']
 
@@ -1773,7 +1787,7 @@ def variants_of_gloss(request):
     except ObjectDoesNotExist:
         return HttpResponseBadRequest("Target gloss not found.", {'content-type': 'text/plain'})
 
-    rel = Relation(source=source, target=target, role_fk=role)
+    rel = Relation(source=source, target=target, role_fk=variant)
     rel.save()
 
     return HttpResponse(json.dumps(rel), content_type="application/json")
@@ -1893,11 +1907,11 @@ def add_morpheme_definition(request, glossid):
             count_morphemes_in_dataset = Morpheme.objects.filter(lemma__dataset=dataset_id).count()
             if count_morphemes_in_dataset < 1:
                 messages.add_message(request, messages.INFO,
-                                     _('Edit Simultaneuous Morphology: The dataset of this gloss has no morphemes.'))
+                                     gettext_lazy('Edit Simultaneuous Morphology: The dataset of this gloss has no morphemes.'))
                 return HttpResponseRedirect(
                     reverse('dictionary:admin_gloss_view', kwargs={'pk': thisgloss.id}) + '?editmorphdef')
 
-        messages.add_message(request, messages.INFO, _('Edit Simultaneuous Morphology: No morpheme selected.'))
+        messages.add_message(request, messages.INFO, gettext_lazy('Edit Simultaneuous Morphology: No morpheme selected.'))
         return HttpResponseRedirect(
             reverse('dictionary:admin_gloss_view', kwargs={'pk': thisgloss.id}) + '?editmorphdef')
 
@@ -2204,7 +2218,7 @@ def delete_annotated_sentence(request, glossid):
     """View to delete an annotated sentence model from the editable modal"""
 
     if not request.user.has_perm('dictionary.delete_annotatedsentence'):
-        messages.add_message(request, messages.ERROR, _('Annotated Sentence Deletion Not Allowed'))
+        messages.add_message(request, messages.ERROR, gettext_lazy('Annotated Sentence Deletion Not Allowed'))
         return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': glossid}))
 
     annotated_sentence = AnnotatedSentence.objects.get(id=request.POST['annotatedsentenceid'])
@@ -2231,7 +2245,7 @@ def add_othermedia(request):
 
     othermedia_exists = os.path.exists(OTHER_MEDIA_DIRECTORY)
     if not othermedia_exists:
-        messages.add_message(request, messages.ERROR, _("Upload other media failed: The othermedia folder is missing."))
+        messages.add_message(request, messages.ERROR, gettext_lazy("Upload other media failed: The othermedia folder is missing."))
         return HttpResponseRedirect(reverse(reverse_url, kwargs={'pk': gloss_or_morpheme.pk}))
 
     # Create the folder if needed
@@ -2251,7 +2265,7 @@ def add_othermedia(request):
 
     if not filetype:
         # unrecognised file type has been uploaded
-        messages.add_message(request, messages.ERROR, _("Upload other media failed: The file has an unknown type."))
+        messages.add_message(request, messages.ERROR, gettext_lazy("Upload other media failed: The file has an unknown type."))
         return HttpResponseRedirect(reverse(reverse_url, kwargs={'pk': gloss_or_morpheme.pk}))
 
     norm_filename = os.path.normpath(filename)
@@ -2259,7 +2273,7 @@ def add_othermedia(request):
 
     if len(split_norm_filename) == 1:
         # file has no extension
-        messages.add_message(request, messages.ERROR, _("Upload other media failed: The file has no extension."))
+        messages.add_message(request, messages.ERROR, gettext_lazy("Upload other media failed: The file has no extension."))
         return HttpResponseRedirect(reverse(reverse_url, kwargs={'pk': gloss_or_morpheme.pk}))
 
     extension = split_norm_filename[-1]
@@ -2277,7 +2291,7 @@ def add_othermedia(request):
 
     if os.path.exists(goal_path):
         messages.add_message(request, messages.ERROR,
-                             _("The other media filename is already in use. Please use a different filename."))
+                             gettext_lazy("The other media filename is already in use. Please use a different filename."))
         return HttpResponseRedirect(reverse(reverse_url, kwargs={'pk': request.POST['gloss']}))
 
     othermedia_decription = request.POST['description']
@@ -2306,7 +2320,7 @@ def add_othermedia(request):
         goal_location_str = os.path.join(goal_directory, filename_plus_extension)
         if os.path.exists(goal_location_str):
             messages.add_message(request, messages.ERROR,
-                                 _("The other media filename {filename} is already in use. Please use a different filename.").format(filename=filename_plus_extension))
+                                 gettext_lazy("The other media filename {filename} is already in use. Please use a different filename.").format(filename=filename_plus_extension))
             return HttpResponseRedirect(reverse(reverse_url, kwargs={'pk': request.POST['gloss']}))
         # we need to use a quoted filename instead, update the other media object
         other_media_path = request.POST['gloss'] + '/' + filename_plus_extension
@@ -2318,7 +2332,7 @@ def add_othermedia(request):
             # something went wrong with uploading, delete the object
             newothermedia.delete()
             messages.add_message(request, messages.ERROR,
-                        _("The other media filename could not be created: {filename}").format(filename=filename_plus_extension))
+                        gettext_lazy("The other media filename could not be created: {filename}").format(filename=filename_plus_extension))
             return HttpResponseRedirect(reverse(reverse_url, kwargs={'pk': request.POST['gloss']}))
 
     destination = File(f)
@@ -2433,18 +2447,18 @@ def add_morpheme(request):
             lemmaidgloss = LemmaIdgloss.objects.get(id=lemmaidgloss_id)
         except ObjectDoesNotExist:
             messages.add_message(request, messages.ERROR,
-                                 _("The given Lemma Idgloss ID is unknown."))
+                                 gettext_lazy("The given Lemma Idgloss ID is unknown."))
             return render(request, 'dictionary/add_morpheme.html', {'add_morpheme_form': form})
 
     # Check for 'change_dataset' permission
     if dataset and ('change_dataset' not in get_user_perms(request.user, dataset)) \
             and ('change_dataset' not in get_group_perms(request.user, dataset)) \
             and not request.user.is_staff:
-        messages.add_message(request, messages.ERROR, _("You are not authorized to change the selected dataset."))
+        messages.add_message(request, messages.ERROR, gettext_lazy("You are not authorized to change the selected dataset."))
         return render(request, 'dictionary/add_morpheme.html', {'add_morpheme_form': form})
     elif not dataset:
         # Dataset is empty, this is an error
-        messages.add_message(request, messages.ERROR, _("Please provide a dataset."))
+        messages.add_message(request, messages.ERROR, gettext_lazy("Please provide a dataset."))
         return render(request, 'dictionary/add_morpheme.html', {'add_morpheme_form': form})
 
     # if we get to here a dataset has been chosen for the new gloss
@@ -2458,7 +2472,7 @@ def add_morpheme(request):
                 annotationidglosstranslation__language=language,
                 annotationidglosstranslation__text__exact=value)
             if morphemes_for_this_language_and_annotation_idgloss.count() > 0:
-                translated_message = _('Annotation ID Gloss not unique.')
+                translated_message = gettext_lazy('Annotation ID Gloss not unique.')
                 return render(request, 'dictionary/warning.html',
                               {'warning': translated_message,
                                'dataset_languages': dataset_languages,
@@ -2532,7 +2546,7 @@ def update_morpheme(request, morphemeid):
         if value != 'confirmed':
             # the confirmed value is a hidden field in the form in the template
             selected_datasets = get_selected_datasets(request)
-            feedback_message = _('Morpheme deletion was not confirmed.')
+            feedback_message = gettext_lazy('Morpheme deletion was not confirmed.')
             return show_warning(request, feedback_message, selected_datasets)
 
         # delete the morpheme and redirect back to morpheme list
@@ -2541,7 +2555,7 @@ def update_morpheme(request, morphemeid):
         if GUARDED_MORPHEME_DELETE or related_objects:
             reverse_url = 'dictionary:admin_morpheme_view'
             messages.add_message(request, messages.INFO,
-                                 _("GUARDED_MORPHEME_DELETE is set to True or the morpheme has relations to other glosses and was not deleted."))
+                                 gettext_lazy("GUARDED_MORPHEME_DELETE is set to True or the morpheme has relations to other glosses and was not deleted."))
             return HttpResponseRedirect(reverse(reverse_url, kwargs={'pk': morpheme.id}))
         morpheme.delete()
         return HttpResponseRedirect(reverse('dictionary:admin_morpheme_list'))
@@ -2616,9 +2630,9 @@ def update_morpheme(request, morphemeid):
                 morpheme.save()
             else:
                 messages.add_message(request, messages.ERROR,
-                                     _("The dataset of the morpheme is not the same as that of the lemma."))
+                                     gettext_lazy("The dataset of the morpheme is not the same as that of the lemma."))
         except ObjectDoesNotExist:
-            messages.add_message(request, messages.ERROR, _("The specified lemma does not exist."))
+            messages.add_message(request, messages.ERROR, gettext_lazy("The specified lemma does not exist."))
         return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
 
     else:
@@ -2640,11 +2654,11 @@ def update_morpheme(request, morphemeid):
 
         # Translate the value if a boolean
         if isinstance(Morpheme.get_field(field), BooleanField):
-            value = (value.lower() in [_('Yes').lower(), 'true', True, 1])
+            value = (value.lower() in [gettext_lazy('Yes').lower(), 'true', True, 1])
             if value:
-                newvalue = _('Yes')
+                newvalue = gettext_lazy('Yes')
             else:
-                newvalue = _('No')
+                newvalue = gettext_lazy('No')
 
         # special value of 'notset' or -1 means remove the value
         fieldnames = FIELDS['main'] + MORPHEME_DISPLAY_FIELDS + FIELDS['semantics'] + ['inWeb', 'isNew', 'mrpType']
@@ -2965,24 +2979,24 @@ def change_dataset_selection(request):
 def check_permissions_dataset_update(request, dataset):
 
     if not request.user.is_authenticated:
-        messages.add_message(request, messages.ERROR, _('Please login to use this functionality.'))
-        return HttpResponseForbidden(_("Dataset Update Not Allowed"))
+        messages.add_message(request, messages.ERROR, gettext_lazy('Please login to use this functionality.'))
+        return HttpResponseForbidden(gettext_lazy("Dataset Update Not Allowed"))
 
     try:
         group_manager = Group.objects.get(name='Dataset_Manager')
     except ObjectDoesNotExist:
-        messages.add_message(request, messages.ERROR, _('No group Dataset_Manager found.'))
-        return HttpResponseForbidden(_("Dataset Update Not Allowed"))
+        messages.add_message(request, messages.ERROR, gettext_lazy('No group Dataset_Manager found.'))
+        return HttpResponseForbidden(gettext_lazy("Dataset Update Not Allowed"))
 
     groups_of_user = request.user.groups.all()
     if not group_manager in groups_of_user:
         messages.add_message(request, messages.ERROR,
-                             _('You must be in group Dataset Manager to modify dataset details.'))
-        return HttpResponseForbidden(_("Dataset Update Not Allowed"))
+                             gettext_lazy('You must be in group Dataset Manager to modify dataset details.'))
+        return HttpResponseForbidden(gettext_lazy("Dataset Update Not Allowed"))
 
     user_change_datasets = get_objects_for_user(request.user, 'change_dataset', Dataset, accept_global_perms=False)
     if dataset not in user_change_datasets:
-        return HttpResponseForbidden(_("Dataset Update Not Allowed"))
+        return HttpResponseForbidden(gettext_lazy("Dataset Update Not Allowed"))
 
 
 @require_http_methods(["POST"])
@@ -3148,7 +3162,7 @@ def update_field_choice_color(request, category, fieldchoiceid):
         thisfieldchoice = get_object_or_404(FieldChoice, pk=fieldchoiceid)
 
     if not form.is_valid():
-        messages.add_message(request, messages.ERROR, _("The form is not valid."))
+        messages.add_message(request, messages.ERROR, gettext_lazy("The form is not valid."))
         return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
 
     new_color = form.cleaned_data['field_color']
@@ -3171,7 +3185,7 @@ def upload_metadata(request):
     form = CSVMetadataForm(request.POST,request.FILES)
 
     if not form.is_valid():
-        messages.add_message(request, messages.ERROR, _("The form is not valid."))
+        messages.add_message(request, messages.ERROR, gettext_lazy("The form is not valid."))
         return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
 
     new_metadata = request.FILES['file']
@@ -3213,7 +3227,7 @@ def remove_eaf_files(request):
             selected_paths.append(value)
 
     if dataset_acronym == '':
-        messages.add_message(request, messages.ERROR, _('No acronym for dataset.'))
+        messages.add_message(request, messages.ERROR, gettext_lazy('No acronym for dataset.'))
         return HttpResponseRedirect(reverse('admin_dataset_view'))
 
     # Get the dataset
@@ -3221,13 +3235,13 @@ def remove_eaf_files(request):
         dataset = Dataset.objects.get(acronym=dataset_acronym)
 
     except ObjectDoesNotExist:
-        messages.add_message(request, messages.ERROR, _('Dataset does not exist.'))
+        messages.add_message(request, messages.ERROR, gettext_lazy('Dataset does not exist.'))
         return HttpResponseRedirect(reverse('admin_dataset_view'))
 
     # Check for 'change_dataset' permission
     user_change_datasets = get_objects_for_user(request.user, 'change_dataset', Dataset, accept_global_perms=False)
     if not user_change_datasets.exists() or dataset not in user_change_datasets:
-        messages.add_message(request, messages.ERROR, _("You are not authorized to remove eaf files."))
+        messages.add_message(request, messages.ERROR, gettext_lazy("You are not authorized to remove eaf files."))
         return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
 
     # The actual removal
@@ -3243,12 +3257,12 @@ def upload_eaf_files(request):
 
     form = EAFFilesForm(request.POST,request.FILES)
     if not form.is_valid():
-        messages.add_message(request, messages.ERROR, _("The form is not valid."))
+        messages.add_message(request, messages.ERROR, gettext_lazy("The form is not valid."))
         return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
 
     # Process the request data
     if not request.FILES:
-        messages.add_message(request, messages.ERROR, _('No eaf files found.'))
+        messages.add_message(request, messages.ERROR, gettext_lazy('No eaf files found.'))
         return HttpResponseRedirect(reverse('admin_dataset_manager'))
 
     folder = ''
@@ -3265,7 +3279,7 @@ def upload_eaf_files(request):
             folder = request.POST.get('dir_name', '')
 
     if dataset_acronym == '':
-        messages.add_message(request, messages.ERROR, _('No acronym for dataset.'))
+        messages.add_message(request, messages.ERROR, gettext_lazy('No acronym for dataset.'))
         return HttpResponseRedirect(reverse('admin_dataset_manager'))
 
     # Get the dataset
@@ -3273,13 +3287,13 @@ def upload_eaf_files(request):
         dataset = Dataset.objects.get(acronym=dataset_acronym)
 
     except ObjectDoesNotExist:
-        messages.add_message(request, messages.ERROR, _('Dataset does not exist.'))
+        messages.add_message(request, messages.ERROR, gettext_lazy('Dataset does not exist.'))
         return HttpResponseRedirect(reverse('admin_dataset_manager'))
 
     # Check for 'change_dataset' permission
     user_change_datasets = get_objects_for_user(request.user, 'change_dataset', Dataset, accept_global_perms=False)
     if not user_change_datasets.exists() or dataset not in user_change_datasets:
-        messages.add_message(request, messages.ERROR, _("You are not authorized to upload eaf files."))
+        messages.add_message(request, messages.ERROR, gettext_lazy("You are not authorized to upload eaf files."))
         return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
 
     # For the following, we want to keep track of which files are already uploaded
@@ -3366,15 +3380,15 @@ def upload_eaf_files(request):
     # Any problems encountered? Add error messages
     if ignored_files:
         ignored = ", ".join(ignored_files)
-        messages.add_message(request, messages.ERROR, _('Non-EAF file(s) ignored: {files}').format(files=ignored))
+        messages.add_message(request, messages.ERROR, gettext_lazy('Non-EAF file(s) ignored: {files}').format(files=ignored))
 
     if import_twice:
         twice = ", ".join(import_twice)
-        messages.add_message(request, messages.WARNING, _('File(s) encountered twice: {files}').format(files=twice))
+        messages.add_message(request, messages.WARNING, gettext_lazy('File(s) encountered twice: {files}').format(files=twice))
 
     if duplicate_files:
         duplicates = ", ".join(duplicate_files)
-        messages.add_message(request, messages.INFO, _('Already imported to a different folder: {files}').format(files=duplicates))
+        messages.add_message(request, messages.INFO, gettext_lazy('Already imported to a different folder: {files}').format(files=duplicates))
 
     return HttpResponseRedirect(reverse('admin_dataset_manager'))
 
@@ -3492,11 +3506,11 @@ def assign_lemma_dataset_to_gloss(request, glossid):
     # if anything fails nothing is done, but messages are output
 
     if not request.user.is_authenticated:
-        messages.add_message(request, messages.ERROR, _('Please login to use this functionality.'))
+        messages.add_message(request, messages.ERROR, gettext_lazy('Please login to use this functionality.'))
         return HttpResponse(json.dumps({}), {'content-type': 'application/json'})
 
     if not request.user.has_perm('dictionary.change_gloss'):
-        messages.add_message(request, messages.ERROR, _('You do not have permission to change glosses.'))
+        messages.add_message(request, messages.ERROR, gettext_lazy('You do not have permission to change glosses.'))
         return HttpResponse(json.dumps({}), {'content-type': 'application/json'})
 
     gloss = get_object_or_404(Gloss, id=glossid, archived=False)
@@ -3522,7 +3536,7 @@ def assign_lemma_dataset_to_gloss(request, glossid):
         # check that user can write to the dataset
         datasets_user_can_change = get_objects_for_user(request.user, 'change_dataset', Dataset)
         if dataset_of_dummy not in datasets_user_can_change:
-            failure_message = _('You do not have change permission for dataset {dataset}').format(dataset=dummy_lemma.dataset.name)
+            failure_message = gettext_lazy('You do not have change permission for dataset {dataset}').format(dataset=dummy_lemma.dataset.name)
             return HttpResponse(json.dumps({'glossid': str(glossid),
                                             'datasetname': str(failure_message)}), {'content-type': 'application/json'})
 
@@ -3530,11 +3544,11 @@ def assign_lemma_dataset_to_gloss(request, glossid):
         gloss.lemma = dummy_lemma
         gloss.save()
     except (DatabaseError, IntegrityError):
-        failure_message = _('Error assigning lemma to gloss.')
+        failure_message = gettext_lazy('Error assigning lemma to gloss.')
         return HttpResponse(json.dumps({'glossid': str(glossid),
                                         'datasetname': str(failure_message)}), {'content-type': 'application/json'})
 
-    success_message = _('Gloss saved to dataset {dataset}').format(dataset=dummy_lemma.dataset.name)
+    success_message = gettext_lazy('Gloss saved to dataset {dataset}').format(dataset=dummy_lemma.dataset.name)
 
     return HttpResponse(json.dumps({'glossid': str(gloss.id),
                                     'datasetname': str(success_message)}), {'content-type': 'application/json'})

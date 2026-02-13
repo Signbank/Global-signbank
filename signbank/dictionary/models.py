@@ -1785,7 +1785,7 @@ class Gloss(MetaModelMixin, models.Model):
     def homophones(self):
         """Return the set of homophones for this gloss ordered by sense number"""
 
-        homophone = FieldChoice.objects.filter(name__iexact="Homophone")
+        homophone = FieldChoice.objects.filter(field='RelationRole', name__iexact="Homophone")
         if self.sense == 1:
             relations = Relation.objects.filter(role_fk__in=homophone, target__exact=self).order_by('source__sense')
             homophones = [rel.source for rel in relations]
@@ -1793,61 +1793,72 @@ class Gloss(MetaModelMixin, models.Model):
             return homophones
         elif self.sense > 1:
             # need to find the root and see how many senses it has
-            homophones = self.relation_sources.filter(role_fk__in=homophone, target__sense__exact=1)
+            relations_source = Relation.objects.filter(source=self)
+            homophones = relations_source.filter(role_fk__in=homophone, target__sense__exact=1)
             if len(homophones) > 0:
                 root = homophones[0].target
                 return root.homophones()
         return []
 
     def homonyms_count(self):
-        homonym = FieldChoice.objects.filter(name__iexact="Homonym")
-        homonym_relations = self.relation_targets.all().filter(role_fk__in=homonym)
+        relations_source = Relation.objects.filter(source=self)
+        homonym = FieldChoice.objects.filter(field='RelationRole', name__iexact="Homonym")
+        homonym_relations = relations_source.filter(role_fk__in=homonym)
         return homonym_relations.count()
 
     def synonyms_count(self):
-        synonym = FieldChoice.objects.filter(name__iexact="Synonym")
-        synonym_relations = self.relation_targets.all().filter(role_fk__in=synonym)
+        relations_source = Relation.objects.filter(source=self)
+        synonym = FieldChoice.objects.filter(field='RelationRole', name__iexact="Synonym")
+        synonym_relations = relations_source.filter(role_fk__in=synonym)
         return synonym_relations.count()
 
     def get_synonyms(self):
-        synonym = FieldChoice.objects.filter(name__iexact="Synonym")
-        synonym_relations = self.relation_targets.all().filter(role_fk__in=synonym)
+        relations_source = Relation.objects.filter(source=self)
+        synonym = FieldChoice.objects.filter(field='RelationRole', name__iexact="Synonym")
+        synonym_relations = relations_source.filter(role_fk__in=synonym)
         synonyms = [rel.target for rel in synonym_relations]
         return set(synonyms)
 
     def antonyms_count(self):
-        antonym = FieldChoice.objects.filter(name__iexact="Antonym")
-        antonym_relations = self.relation_targets.all().filter(role_fk__in=antonym)
+        relations_source = Relation.objects.filter(source=self)
+        antonym = FieldChoice.objects.filter(field='RelationRole', name__iexact="Antonym")
+        antonym_relations = relations_source.filter(role_fk__in=antonym)
         return antonym_relations.count()
 
     def hyponyms_count(self):
-        hyponym = FieldChoice.objects.filter(name__iexact="Hyponym")
-        hyponym_relations = self.relation_targets.all().filter(role_fk__in=hyponym)
+        relations_source = Relation.objects.filter(source=self)
+        hyponym = FieldChoice.objects.filter(field='RelationRole', name__iexact="Hyponym")
+        hyponym_relations = relations_source.filter(role_fk__in=hyponym)
         return hyponym_relations.count()
 
     def hypernyms_count(self):
-        hypernym = FieldChoice.objects.filter(name__iexact="Hypernym")
-        hypernym_relations = self.relation_targets.all().filter(role_fk__in=hypernym)
+        relations_source = Relation.objects.filter(source=self)
+        hypernym = FieldChoice.objects.filter(field='RelationRole', name__iexact="Hypernym")
+        hypernym_relations = relations_source.filter(role_fk__in=hypernym)
         return hypernym_relations.count()
 
     def seealso_count(self):
-        seealso = FieldChoice.objects.filter(name__iexact="See Also")
-        seealso_relations = self.relation_targets.all().filter(role_fk__in=seealso)
+        relations_source = Relation.objects.filter(source=self)
+        seealso = FieldChoice.objects.filter(field='RelationRole', name__iexact="See Also")
+        seealso_relations = relations_source.filter(role_fk__in=seealso)
         return seealso_relations.count()
 
     def paradigm_count(self):
-        handshape_paradigm = FieldChoice.objects.filter(name__iexact="Handshape Paradigm")
-        handshape_relations = self.relation_targets.all().filter(role_fk__in=handshape_paradigm)
+        relations_source = Relation.objects.filter(source=self)
+        handshape_paradigm = FieldChoice.objects.filter(field='RelationRole', name__iexact="Handshape Paradigm")
+        handshape_relations = relations_source.filter(role_fk__in=handshape_paradigm)
         return handshape_relations.count()
 
     def variant_count(self):
-        variant = FieldChoice.objects.filter(name__iexact="Variant")
-        variant_relations = self.relation_targets.all().filter(role_fk__in=variant)
+        relations_source = Relation.objects.filter(source=self)
+        variant = FieldChoice.objects.filter(field='RelationRole', name__iexact="Variant")
+        variant_relations = relations_source.filter(role_fk__in=variant)
         return variant_relations.count()
 
     def relations_count(self):
-        seealso = FieldChoice.objects.filter(name__iexact="See Also")
-        relations = self.relation_targets.all().exclude(role_fk__in=seealso)
+        relations_source = Relation.objects.filter(source=self)
+        seealso = FieldChoice.objects.filter(field='RelationRole', name__iexact="See Also")
+        relations = relations_source.exclude(role_fk__in=seealso)
         return relations.count()
 
     def has_variants(self):
@@ -1901,21 +1912,24 @@ class Gloss(MetaModelMixin, models.Model):
 
     def other_relations(self):
         # ['Homonym', 'Synonyn', 'Antonym', 'Hyponym', 'Hypernym', 'See Also']
-        variant_or_paradigm = Q(**{'name__iexact': "Variant"}) | Q(**{'name__iexact': "Handshape Paradigm"})
-        variant_or_paradigm_roles = FieldChoice.objects.filter(variant_or_paradigm)
-        other_relations = self.relation_targets.all().exclude(role_fk__in=variant_or_paradigm_roles)
-        return other_relations
+        relations_source = Relation.objects.filter(source=self)
+        variant = FieldChoice.objects.filter(field='RelationRole', name__iexact="Variant")
+        relations = relations_source.exclude(role_fk__in=variant)
+        print('other relations: ', relations)
+        return relations
 
     def variant_relations(self):
-        variant = FieldChoice.objects.filter(name__iexact="Variant")
-        variant_relations = self.relation_targets.all().filter(role_fk__in=variant)
+        relations_source = Relation.objects.filter(source=self)
+        variant = FieldChoice.objects.filter(field='RelationRole', name__iexact="Variant")
+        variant_relations = relations_source.filter(role_fk__in=variant)
         return variant_relations
 
     # this function is used by Homonyms List view
     # a boolean is paired with saved homonym relation targets to tag duplicates
     def homonym_relations(self):
-        homonym = FieldChoice.objects.filter(name__iexact="Homonym")
-        homonym_relations = self.relation_targets.all().filter(role_fk__in=homonym)
+        relations_source = Relation.objects.filter(source=self)
+        homonym = FieldChoice.objects.filter(field='RelationRole', name__iexact="Homonym")
+        homonym_relations = relations_source.filter(role_fk__in=homonym)
         homonyms = [x.target for x in homonym_relations]
 
         tagged_homonym_objects = []
@@ -1953,9 +1967,11 @@ class Gloss(MetaModelMixin, models.Model):
         return stems
 
     def gloss_relations(self):
-        variant = FieldChoice.objects.filter(name__iexact="Variant")
-        variant_relations = self.relation_targets.all().filter(role_fk__in=variant)
-        other_relations = self.relation_targets.all().exclude(role_fk__in=variant)
+        # variant = FieldChoice.objects.filter(name__iexact="Variant")
+        # variant_relations = self.relation_targets.all().filter(role_fk__in=variant)
+        variant_relations = self.variant_relations()
+        # other_relations = self.relation_targets.all().exclude(role_fk__in=variant)
+        other_relations = self.other_relations()
         return other_relations, variant_relations
 
     def phonology_matrix_homonymns(self, use_machine_value=False):
@@ -2265,9 +2281,12 @@ class Gloss(MetaModelMixin, models.Model):
             # take care of glosses without a dataset
             return [], [], []
 
-        gloss_homonym_relations = self.relation_sources.filter(target__archived__exact=False,
-                                                               source__archived__exact=False,
-                                                               role_fk__name__iexact='homonym')
+        relations_source = Relation.objects.filter(source=self)
+        homonym = FieldChoice.objects.filter(field='RelationRole', name__iexact="Homonym")
+
+        gloss_homonym_relations = relations_source.filter(target__archived__exact=False,
+                                                          source__archived__exact=False,
+                                                          role_fk__in=homonym)
 
         list_of_homonym_relations = [r for r in gloss_homonym_relations]
 
@@ -2882,14 +2901,21 @@ class Relation(models.Model):
     def get_role_display(self):
         return self.role_fk.name if self.role_fk else '-'
 
-    def get_reverse_role(role):
+    def get_reverse_role(self):
 
-        if role == 'hyponym':
-            return FieldChoice.objects.filter(field='RelationRole', name__iexact='hypernym').first()
-        elif role == 'hypernym':
-            return FieldChoice.objects.filter(field='RelationRole', name__iexact='hyponym').first()
-        else:
-            return FieldChoice.objects.filter(field='RelationRole', name__iexact=role).first()
+        if self.role_fk.name.lower() == 'hyponym':
+            try:
+                hypernym = FieldChoice.objects.get(field='RelationRole', name__iexact="Hypernym")
+            except (ObjectDoesNotExist, MultipleObjectsReturned):
+                raise ValueError(_("FieldChoice for Hypernym is not defined."))
+            return hypernym
+        if self.role_fk.name.lower() == 'hypernym':
+            try:
+                hyponym = FieldChoice.objects.get(field='RelationRole', name__iexact="Hyponym")
+            except (ObjectDoesNotExist, MultipleObjectsReturned):
+                raise ValueError(_("FieldChoice for Hyponym is not defined."))
+            return hyponym
+        return self.role_fk
 
     def get_target_display(self):
         default_language = self.target.lemma.dataset.default_language.language_code_2char

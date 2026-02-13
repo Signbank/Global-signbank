@@ -70,8 +70,7 @@ def get_sequential_morphology(gloss, interface_language):
 
 def get_other_relations(gloss):
     otherrelations = []
-    for oth_rel in gloss.relation_sources.filter(target__archived__exact=False,
-                                                 source__archived__exact=False):
+    for oth_rel in gloss.other_relations():
         otherrelations.append((oth_rel, oth_rel.get_target_display()))
     return otherrelations
 
@@ -159,5 +158,6 @@ def get_relations_groupedby_role(gloss):
     for rel in relations_source:
         if rel.role_fk not in relations_dict.keys():
             relations_dict[rel.role_fk] = []
-        relations_dict[rel.role_fk].append(rel.target)
+        if rel.target not in relations_dict[rel.role_fk]:
+            relations_dict[rel.role_fk].append(rel.target)
     return relations_dict

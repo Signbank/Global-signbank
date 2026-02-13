@@ -61,7 +61,7 @@ def gloss_is_related_to(gloss, interface_language_code, default_language_code):
     """
     assert isinstance(gloss, Gloss), "Not a Gloss object"
     related_objects = dict()
-    related_glosses = [(relation.role, relation.target)
+    related_glosses = [(relation.role_fk, relation.target)
                        for relation in Relation.objects.filter(source=gloss).exclude(target=gloss)]
     relglosses = []
     for relrole, relgloss in related_glosses:
@@ -72,7 +72,7 @@ def gloss_is_related_to(gloss, interface_language_code, default_language_code):
                 sign_display = morph_texts[interface_language_code]
             else:
                 sign_display = morph_texts[default_language_code]
-        relglosses.append(relrole.upper() + ': ' + sign_display)
+        relglosses.append(relrole.name + ': ' + sign_display)
     related_glosses = ', '.join(relglosses)
     if related_glosses:
         related_objects[_('Relations')] = related_glosses

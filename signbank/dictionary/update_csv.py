@@ -2,6 +2,8 @@ import re
 import datetime as DT
 
 from django.utils.timezone import get_current_timezone
+from django.core.exceptions import ObjectDoesNotExist, MultipleObjectsReturned
+from django.utils.translation import gettext, gettext_lazy as _
 
 from tagging.models import TaggedItem, Tag
 
@@ -164,7 +166,7 @@ def subst_relations(gloss, values):
 
         # Also delete the reverse relation
         reverse_relations = Relation.objects.filter(source=rel.target, target=rel.source,
-                                                    role_fk=Relation.get_reverse_role(rel.role_fk.name))
+                                                    role_fk=rel.get_reverse_role())
         if reverse_relations.count() > 0:
             print("DELETE reverse relation: target: ", rel.target, ", relation: ", reverse_relations[0])
             reverse_relations[0].delete()
@@ -174,16 +176,21 @@ def subst_relations(gloss, values):
 
     # all remaining existing relations are to be updated
     for (role, target) in new_tuples_to_add:
+        try:
+            role_fieldchoice = FieldChoice.objects.get(field='RelationRole', name__iexact=role)
+        except (ObjectDoesNotExist, MultipleObjectsReturned):
+            raise ValueError(_("FieldChoice for Synonym is not defined."))
+
         filter_glosses = Gloss.objects.filter(lemma__dataset=gloss.lemma.dataset, archived=False,
                                               annotationidglosstranslation__text__exact=target).distinct()
         target_gloss = filter_glosses.first()
         if not target_gloss:
             print("target gloss not found")
             continue
-        rel = Relation(source=gloss, role_fk__name=role, target=target_gloss)
+        rel = Relation(source=gloss, role_fk=role_fieldchoice, target=target_gloss)
         rel.save()
         # Also add the reverse relation
-        reverse_relation = Relation(source=target_gloss, target=gloss, role_fk=Relation.get_reverse_role(role))
+        reverse_relation = Relation(source=target_gloss, target=gloss, role_fk=rel.get_reverse_role())
         reverse_relation.save()
 
     gloss.lastUpdated = DT.datetime.now(tz=get_current_timezone())
@@ -345,5 +352,5 @@ def subst_semanticfield(gloss, values):
 
     gloss.lastUpdated = DT.datetime.now(tz=get_current_timezone())
     gloss.save()
-    
+
     return

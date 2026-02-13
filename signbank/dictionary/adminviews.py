@@ -127,7 +127,7 @@ from signbank.dictionary.context_data_gloss import (get_other_relations, get_ann
                                                     get_sequential_morphology,
                                                     get_annotation_idgloss_per_language_dict, get_notes_groupedby_role,
                                                     get_provenance_groupedby_method,
-                                                    get_phonology_list_kinds, get_human_value_for_field_value)
+                                                    get_phonology_list_kinds, get_human_value_for_field_value, get_relations_groupedby_role)
 from signbank.dictionary.related_objects import (morpheme_is_related_to, gloss_is_related_to,
                                                  okay_to_move_gloss, same_translation_languages, okay_to_move_glosses,
                                                  transitive_related_objects)
@@ -2002,15 +2002,17 @@ class GlossRelationsDetailView(DetailView):
 
         otherrelations = []
 
-        if gl.relation_sources:
-            for oth_rel in gl.relation_sources.all().filter(target__archived__exact=False,
-                                                            source__archived__exact=False):
-                if oth_rel.source.id == oth_rel.target.id:
-                    print('circular relation found: ', gl, ' (', str(gl.id), ') ', oth_rel, oth_rel.role_fk.name)
-                    continue
-                # This display is set to the default language for the dataset of this gloss
-                target_display = oth_rel.target.annotation_idgloss(oth_rel.target.lemma.dataset.default_language.language_code_2char)
-                otherrelations.append((oth_rel, senses_per_language(oth_rel.target), target_display))
+        relations_grouped = get_relations_groupedby_role(gl)
+        print('relations_grouped: ')
+        for r in relations_grouped.keys():
+            print(r.name)
+            print(relations_grouped[r])
+        gloss_other_relations = gl.other_relations()
+        print('gloss other relations: ', gloss_other_relations)
+        for oth_rel in gloss_other_relations:
+            # This display is set to the default language for the dataset of this gloss
+            target_display = oth_rel.target.annotation_idgloss(oth_rel.target.lemma.dataset.default_language.language_code_2char)
+            otherrelations.append((oth_rel, senses_per_language(oth_rel.target), target_display))
 
         context['otherrelations'] = otherrelations
 

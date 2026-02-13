@@ -2670,12 +2670,11 @@ textarea:focus {
                                       {% csrf_token %}
                                       <input type='hidden' name='id' value='relationdelete_{{rel.id}}'>
                                       <input type='hidden' name='value' value='confirmed'>
-                                      <div class="modal-footer">
-                                        <button type="button" class="btn btn-default btn-default-light" data-dismiss="modal">{% trans "Cancel" %}</button>
-                                        <input type="submit" class="btn btn-primary" value='{% trans "Confirm Delete" %}'>
-                                      </div>
+                                      <input type="submit" class="btn btn-primary" value='{% trans "Confirm Delete" %}'>
                                   </form>
-
+                                  <div class="modal-footer">
+                                    <button type="button" class="btn btn-default btn-default-light" data-dismiss="modal">{% trans "Cancel" %}</button>
+                                  </div>
                                 </div>
                               </div>
                          </div>
@@ -2705,7 +2704,8 @@ textarea:focus {
                    <tr>
                        <td class="td td-light">{{relationform.role_fk}}</td>
                        <td class="td td-light">
-                           <input class='form-control form-control-light glosstypeahead glosstypeahead-light' placeholder='{% trans "Annotation ID Gloss" %}'/>
+                           <input class='form-control form-control-light glosstypeahead glosstypeahead-light'
+                                  placeholder='{% trans "Annotation ID Gloss" %}'/>
                            <input type="hidden" name="targetid" value=""/>
                        </td>
                        <td><input class='btn btn-primary' value='Add Relation' type='submit'></td>
