@@ -32,6 +32,9 @@ from urllib.parse import urlparse, unquote
 from signbank.settings.base import FIELDS, DEFAULT_KEYWORDS_LANGUAGE, \
     WRITABLE_FOLDER, DATASET_METADATA_DIRECTORY, ECV_FOLDER
 from signbank.dictionary.translate_choice_list import choicelist_queryset_to_translated_dict
+from signbank.settings.server_specific import HANDSHAPE_ETYMOLOGY_FIELDS
+from signbank.settings.server_specific.asl_yale import HANDEDNESS_ARTICULATION_FIELDS
+
 
 # -*- coding: utf-8 -*-
 
@@ -1883,14 +1886,18 @@ class Gloss(MetaModelMixin, models.Model):
         variant_relations = relations_source.filter(role_fk__in=variant)
         return variant_relations
 
+    def has_homonyms(self):
+        homonym = FieldChoice.objects.filter(field='RelationRole', name__iexact="Homonym")
+        homonym_relations = Relation.objects.filter(source=self, role_fk__in=homonym)
+        return homonym_relations.count()
+
     # this function is used by Homonyms List view
-    # a boolean is paired with saved homonym relation targets to tag duplicates
+    # a Boolean is paired with saved homonym relation targets to tag duplicates
     def homonym_relations(self):
         relations_source = Relation.objects.filter(source=self)
         homonym = FieldChoice.objects.filter(field='RelationRole', name__iexact="Homonym")
         homonym_relations = relations_source.filter(role_fk__in=homonym)
         homonyms = [x.target for x in homonym_relations]
-
         tagged_homonym_objects = []
         seen = []
         for o in homonyms:
@@ -1900,7 +1907,6 @@ class Gloss(MetaModelMixin, models.Model):
             else:
                 tagged_homonym_objects.append((o, False))
                 seen.append(o.id)
-
         return tagged_homonym_objects
 
     def get_stems(self):
@@ -2012,18 +2018,8 @@ class Gloss(MetaModelMixin, models.Model):
         focus_gloss_values_tuple = self.minimal_pairs_tuple()
         index_of_handedness = settings.MINIMAL_PAIRS_FIELDS.index('handedness')
         handedness_of_this_gloss = focus_gloss_values_tuple[index_of_handedness]
-
-        # Ignore minimal pairs when the Handedness of this gloss is X, if it's a possible field choice
-        try:
-            handedness_X = str(FieldChoice.objects.get(field='Handedness', name__exact='X').id)
-
-        except ObjectDoesNotExist:
-            # print('minimalpairs_objects: Handedness X is not defined')
-            handedness_X = ''
-
-        empty_handedness = [ str(fc.id) for fc in FieldChoice.objects.filter(field='Handedness', name__in=['-','N/A']) ]
-
-        if handedness_of_this_gloss in empty_handedness or handedness_of_this_gloss == handedness_X:
+        empty_or_X_handedness = [str(fc.id) for fc in FieldChoice.objects.filter(field='Handedness', name__in=['-','N/A', 'X'])]
+        if handedness_of_this_gloss in empty_or_X_handedness:
             # ignore gloss with empty or X handedness
             return minimalpairs_objects_list
 
@@ -2108,11 +2104,9 @@ class Gloss(MetaModelMixin, models.Model):
 
         minimal_pairs_fields = dict()
 
-        empty_handedness = [str(fc.id) for fc in
-                            FieldChoice.objects.filter(field='Handedness', name__in=['-', 'N/A'])]
-
+        empty_or_X_handedness = [str(fc.id) for fc in FieldChoice.objects.filter(field='Handedness', name__in=['-', 'N/A', 'X'])]
         # If handedness is not defined for this gloss, don't bother to look up minimal pairs
-        if handedness_of_this_gloss in empty_handedness:
+        if handedness_of_this_gloss in empty_or_X_handedness:
             return minimal_pairs_fields
 
         # Restrict minimal pairs search if gloss has empty phonology field for Strong Hand
@@ -2150,15 +2144,12 @@ class Gloss(MetaModelMixin, models.Model):
 
         return minimal_pairs_fields
 
-    # Homonyms
-    # these are now defined in settings
-
+    # Homonyms dynamically retrieved as glosses with the same phonology
     def homonym_objects(self):
 
         homonym_objects_list = []
 
         if not self.lemma or not self.lemma.dataset:
-            # take care of glosses without a dataset
             return homonym_objects_list
 
         phonology_for_gloss = self.phonology_matrix_homonymns()
@@ -2166,17 +2157,8 @@ class Gloss(MetaModelMixin, models.Model):
 
         homonym_objects_list = []
 
-        # Ignore homonyms when the Handedness of this gloss is X, if it's a possible field choice
-        try:
-            handedness_X = str(FieldChoice.objects.get(field='Handedness', name__exact='X').id)
-
-        except ObjectDoesNotExist:
-            # print('homonym_objects: Handedness X is not defined')
-            handedness_X = ''
-
-        empty_handedness = [ str(fc.id) for fc in FieldChoice.objects.filter(field='Handedness', name__in=['-','N/A']) ]
-
-        if handedness_of_this_gloss in empty_handedness or handedness_of_this_gloss == handedness_X:
+        empty_or_X_handedness = [str(fc.id) for fc in FieldChoice.objects.filter(field='Handedness', name__in=['-','N/A', 'X'])]
+        if handedness_of_this_gloss in empty_or_X_handedness:
             # ignore gloss with empty or X handedness
             return homonym_objects_list
 
@@ -2189,7 +2171,6 @@ class Gloss(MetaModelMixin, models.Model):
 
         for field in minimal_pair_fields + settings.HANDSHAPE_ETYMOLOGY_FIELDS + settings.HANDEDNESS_ARTICULATION_FIELDS:
             value_of_this_field = phonology_for_gloss.get(field)
-
             if value_of_this_field is None and field in foreign_key_fields:
                 # catch not set FK fields
                 comparison = field + '__isnull'
@@ -2224,25 +2205,17 @@ class Gloss(MetaModelMixin, models.Model):
                 q.add(Q(**{comparison: value_of_this_field}), q.AND)
 
         qs = Gloss.objects.select_related('lemma').exclude(id=self.id).filter(q)
-
         for o in qs:
             homonym_objects_list.append(o)
-        #
         return homonym_objects_list
-        # return qs
 
     def homonyms(self):
         #  this function returns a 3-tuple of information about homonymns for this gloss
-
-        homonyms_of_this_gloss = []
-
         if not self.lemma or not self.lemma.dataset:
-            # take care of glosses without a dataset
             return [], [], []
 
         relations_source = Relation.objects.filter(source=self)
         homonym = FieldChoice.objects.filter(field='RelationRole', name__iexact="Homonym")
-
         gloss_homonym_relations = relations_source.filter(target__archived__exact=False,
                                                           source__archived__exact=False,
                                                           role_fk__in=homonym)
@@ -2251,31 +2224,16 @@ class Gloss(MetaModelMixin, models.Model):
 
         targets_of_homonyms_of_this_gloss = [r.target for r in gloss_homonym_relations]
 
-        paren = ')'
-
         phonology_for_gloss = self.phonology_matrix_homonymns()
-
         handedness_of_this_gloss = phonology_for_gloss['handedness']
-
-        # Ignore homonyms when the Handedness of this gloss is X, if it's a possible field choice
-        try:
-            handedness_X = str(FieldChoice.objects.get(field='Handedness', name__exact='X').id)
-
-        except ObjectDoesNotExist:
-            print('homonyms: Handedness X is not defined')
-            return [], [], []
-
-        empty_handedness = [ str(fc.id) for fc in FieldChoice.objects.filter(field='Handedness', name__in=['-','N/A']) ]
-
-        if handedness_of_this_gloss in empty_handedness or handedness_of_this_gloss == handedness_X:
+        empty_or_X_handedness = [str(fc.id) for fc in FieldChoice.objects.filter(field='Handedness', name__in=['-','N/A', 'X'])]
+        if handedness_of_this_gloss in empty_or_X_handedness:
             # ignore gloss with empty or X handedness
             return [], [], []
 
         handshape_of_this_gloss = phonology_for_gloss['domhndsh']
-
         empty_handshape = [str(fc.machine_value) for fc in
-                            Handshape.objects.filter(name__in=['-', 'N/A'])]
-
+                           Handshape.objects.filter(name__in=['-', 'N/A'])]
         if handshape_of_this_gloss in empty_handshape:
             return [], [], []
 
@@ -2285,11 +2243,11 @@ class Gloss(MetaModelMixin, models.Model):
         saved_but_not_homonyms = []
 
         for r in list_of_homonym_relations:
-            if not r.target in homonyms_of_this_gloss:
-                saved_but_not_homonyms += [r.target]
+            if r.target not in homonyms_of_this_gloss:
+                saved_but_not_homonyms.append(r.target)
         for h in homonyms_of_this_gloss:
-            if not h in targets_of_homonyms_of_this_gloss:
-                homonyms_not_saved += [h]
+            if h not in targets_of_homonyms_of_this_gloss:
+                homonyms_not_saved.append(h)
 
         return homonyms_of_this_gloss, homonyms_not_saved, saved_but_not_homonyms
 
@@ -2597,9 +2555,6 @@ class Gloss(MetaModelMixin, models.Model):
 
     def relation_role_choices_json(self):
         """Return JSON for the relation role choice list"""
-
-        # return self.options_to_json(RELATION_ROLE_CHOICES)
-
         d = dict()
         for rrf in FieldChoice.objects.filter(field='RelationRole', machine_value__gt=1).order_by('name'):
             d[rrf.name] = rrf.name

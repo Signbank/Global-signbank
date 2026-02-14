@@ -1506,8 +1506,8 @@ class GlossDetailView(DetailView):
         context['homonyms_different_phonology'] = homonyms_different_phonology
 
         homonyms_but_not_saved = []
-        if homonyms_but_not_saved:
-            for homonym in homonyms_not_saved:
+        if homonyms_of_this_gloss:
+            for homonym in homonyms_of_this_gloss:
                 homo_trans = {}
                 if homonym.dataset:
                     for language in homonym.dataset.translation_languages.all():
@@ -2001,27 +2001,10 @@ class GlossRelationsDetailView(DetailView):
 
         context['glosses_in_lemma_group'] = glosses_in_lemma_group
 
-        # otherrelations = []
-        #
-        # relations_grouped = get_relations_groupedby_role(gl)
-        # print('relations_grouped: ')
-        # for r in relations_grouped.keys():
-        #     print(r.name)
-        #     print(relations_grouped[r])
-
-        # gloss_other_relations = gl.other_relations()
-        # print('gloss other relations: ', gloss_other_relations)
-        # for oth_rel in gloss_other_relations:
-        #     # This display is set to the default language for the dataset of this gloss
-        #     target_display = oth_rel.target.annotation_idgloss(oth_rel.target.lemma.dataset.default_language.language_code_2char)
-        #     otherrelations.append((oth_rel, senses_per_language(oth_rel.target), target_display))
-
         relations_dict = get_relations_dict(gl)
         context['relations_dict'] = relations_dict
         target_lookup = relations_target_gloss_lookup(gl)
         context['target_lookup_dict'] = target_lookup
-
-        # context['otherrelations'] = otherrelations
 
         pattern_variant_glosses = gl.pattern_variants()
         # the pattern_variants method result includes the gloss itself
@@ -5862,29 +5845,25 @@ def sensetranslation_ajax_complete(request, dataset_id, language_code, q):
     sorted_sensetranslations_dict = sorted(sensetranslations_dict_list, key=lambda x : len(x['sensetranslation']))
     return JsonResponse(sorted_sensetranslations_dict, safe=False)
 
-def homonyms_ajax_complete(request, gloss_id):
 
-    try:
-        this_gloss = Gloss.objects.get(id=gloss_id, archived=False)
-        homonym_objects = this_gloss.homonym_objects()
-    except ObjectDoesNotExist:
-        homonym_objects = []
+def homonyms_ajax_complete(request, gloss_id):
+    this_gloss = get_object_or_404(Gloss, id=gloss_id, archived=False)
+    homonym_objects = this_gloss.homonym_objects()
 
     (interface_language, interface_language_code,
      default_language, default_language_code) = get_interface_language_and_default_language_codes(request)
 
-    result = []
+    same_phonology = []
     for homonym in homonym_objects:
         translations = homonym.get_annotationidglosstranslation_texts()
-
         if interface_language_code in translations.keys():
             translation = translations[interface_language_code]
         else:
             translation = translations[default_language_code]
-        result.append({ 'id': str(homonym.id), 'gloss': translation })
-
-    homonyms_dict = { str(gloss_id) : result }
-
+        same_phonology.append({ 'id': str(homonym.id), 'gloss': translation })
+    homonyms_dict = { 'glossid': str(gloss_id),
+                      'same_phonology': same_phonology,
+                      'saved_relations': this_gloss.has_homonyms() }
     return JsonResponse(homonyms_dict, safe=False)
 
 

@@ -2528,11 +2528,10 @@ textarea:focus {
         </div>
     </div>
 
-    <!-- Minimal Pairs -->
- {% if homonyms_but_not_saved %}
+ {% if homonyms_but_not_saved and perms.dictionary.change_gloss %}
   <div class="panel panel-default panel-light">
         <div class='panel-heading panel-light' data-toggle='collapse'
-             style="color:red" data-target='#identicalphonology'>{% trans "Identical phonology but not marked as homonym" %}
+             data-target='#identicalphonology'>{% trans "Identical Phonology" %}
         </div>
         <div id='identicalphonology' class='collapse'>
             <table class='table table-condensed' style="padding-left: 20px;">
@@ -2540,29 +2539,12 @@ textarea:focus {
                    <th style="width:auto; padding-left: 25px;">{% trans "Annotation ID Gloss" %}</th>
                </tr>
                 {% for gl, homo_display in homonyms_but_not_saved %}
-                <tr><td style="color:red;"><a style="color:red; padding-left: 20px;" href='{% url "dictionary:admin_gloss_view" pk=gl.id %}'>{{homo_display}}</a></td></tr>
+                <tr><td><a style="padding-left: 20px;" href='{% url "dictionary:admin_gloss_view" pk=gl.id %}'>{{homo_display}}</a></td></tr>
                 {% endfor %}
             </table>
         </div>
   </div>
  {% endif %}
- {% if homonyms_different_phonology %}
- <div class="panel panel-default panel-light">
-        <div class='panel-heading panel-light' data-toggle='collapse'
-             style="color:red" data-target='#differentphonology'>{% trans "Marked as homonym but different phonology" %}
-        </div>
-        <div id='differentphonology' class='collapse'>
-            <table class='table table-condensed' style="padding-left: 20px;">
-               <tr>
-                   <th style="width:auto; padding-left: 25px;">{% trans "Annotation ID Gloss" %}</th>
-               </tr>
-                {% for gl, homo_display in homonyms_different_phonology %}
-                <tr><td><a href='{% url "dictionary:admin_gloss_view" pk=gl.id %}'>{{homo_display}}</a></td></tr>
-                {% endfor %}
-            </table>
-        </div>
-  </div>
-{% endif %}
 <div class="panel panel-default panel-light">
         <div class='panel-heading panel-light' data-toggle='collapse'
              data-target='#minimalpairs'>{% trans "Minimal Pairs" %}
