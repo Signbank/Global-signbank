@@ -2621,7 +2621,7 @@ textarea:focus {
     <div class="panel panel-default panel-light">
         <div class='panel-heading panel-light' data-toggle='collapse'
              data-target='#relations'>{% trans "Relations to Other Signs" %}
-                    {% if gloss.relations_count %}
+                    {% if gloss.get_relations_count > 0 %}
                     <div class="pull-right">
                     <span id="relations-icon"><img id='relations-arrows' src='{{STATIC_URL}}images/leftwards_arrow_over_rightwards_arrow.png'
                                                    style="width:15px; height:15px; margin: 0px;"></span>
@@ -2631,7 +2631,7 @@ textarea:focus {
         <div id='relations' class='collapse'>
 
            <table class='table table-condensed' style="z-index:1000;">
-               {% for rel, target_display in otherrelations %}
+               {% for seen, rel, target_display in otherrelations %}
                <tr id='row_{{rel.id}}'>
                {% if "change_dataset" in dataset_perms %}
 
@@ -2668,6 +2668,7 @@ textarea:focus {
                     <td class="td td-light" id='relationrole_{{rel.id}}'>{{rel.get_role_display}}</td>
                     <td class="td td-light" id='relationtarget_{{rel.id}}'>
                         <a id='relation_target_hyperlink_{{rel.id}}'
+                           style="padding-left: 5px;{% if seen %}color:red;{% endif %}"
                            href='{% url "dictionary:admin_gloss_view" pk=rel.target.pk %}'>{{target_display}}</a>
                     </td>
                 </tr>

@@ -1818,10 +1818,12 @@ class Gloss(MetaModelMixin, models.Model):
         synonyms = [rel.target for rel in synonym_relations]
         return set(synonyms)
 
-    def relations_count(self):
-        relations_source = Relation.objects.filter(source=self)
-        seealso = FieldChoice.objects.filter(field='RelationRole', name__iexact="See Also")
-        relations = relations_source.exclude(role_fk__in=seealso)
+    def get_relations(self):
+        relations = Relation.objects.filter(source=self)
+        return relations
+
+    def get_relations_count(self):
+        relations = Relation.objects.filter(source=self)
         return relations.count()
 
     def has_variants(self):

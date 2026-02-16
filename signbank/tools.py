@@ -571,9 +571,8 @@ def compare_valuedict_to_gloss(valuedict, gloss_id, my_datasets, nl,
                 if new_human_value in ['None', '']:
                     continue
 
-                relations = [(relation.role_fk.name, get_default_annotationidglosstranslation(relation.target))
-                             for relation in gloss.relation_sources.filter(target__archived__exact=False,
-                                                                           source__archived__exact=False)]
+                relations = [(relation.role_fk.name.lower(), get_default_annotationidglosstranslation(relation.target))
+                             for relation in gloss.get_relations()]
 
                 # sort tuples on other gloss to allow comparison with imported values
 
@@ -1511,7 +1510,7 @@ def check_existence_blend_morphology(gloss, values):
 def check_existence_relations(gloss, relations, values):
     default_annotationidglosstranslation = get_default_annotationidglosstranslation(gloss)
 
-    RELATION_ROLES = [fc.name for fc in FieldChoice.objects.filter(field__iexact='RelationRole',
+    RELATION_ROLES = [fc.name.lower() for fc in FieldChoice.objects.filter(field__iexact='RelationRole',
                                                                    machine_value__gt=1).order_by('name')]
     RELATION_ROLES_DISPLAY = ', '.join(RELATION_ROLES)
 
@@ -1523,10 +1522,7 @@ def check_existence_relations(gloss, relations, values):
     for new_value_tuple in values:
         try:
             (role, other_gloss) = new_value_tuple.split(':', 1)
-            role = role.strip()
-
-            role = role.replace(' ', '')
-            role = role.lower()
+            role = role.strip().lower()
             other_gloss = other_gloss.strip()
             sorted_values.append((role, other_gloss))
         except ValueError:
@@ -1534,9 +1530,6 @@ def check_existence_relations(gloss, relations, values):
                 "For gloss '{annotation}' ({glossid}), formatting error in Relations to other signs: '{input}'. Tuple role:gloss expected.").format(
                 annotation=default_annotationidglosstranslation, glossid=str(gloss.pk), input=str(new_value_tuple))
             errors.append(error_string)
-
-    # remove duplicates
-    sorted_values = list(set(sorted_values))
 
     sorted_values = sorted(sorted_values, key=lambda tup: tup[1])
 

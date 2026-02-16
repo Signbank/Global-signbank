@@ -72,9 +72,15 @@ def get_sequential_morphology(gloss, interface_language):
 
 
 def get_other_relations(gloss):
+    # Show whether a relation is a duplicate in Gloss Detail View
     otherrelations = []
-    for oth_rel in gloss.other_relations():
-        otherrelations.append((oth_rel, oth_rel.get_target_display()))
+    seen = []
+    for oth_rel in gloss.get_relations():
+        if (oth_rel.role_fk, oth_rel.target) in seen:
+            otherrelations.append((True, oth_rel, oth_rel.get_target_display()))
+        else:
+            otherrelations.append((False, oth_rel, oth_rel.get_target_display()))
+        seen.append((oth_rel.role_fk, oth_rel.target))
     return otherrelations
 
 

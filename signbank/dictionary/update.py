@@ -1727,32 +1727,38 @@ def add_relation(request):
     role_input = form.cleaned_data['role_fk']
     sourceid = form.cleaned_data['sourceid']
     targetid = form.cleaned_data['targetid']
-    print('add relation role: ', role_input, type(role_input))
-    print('add relation source: ', sourceid)
 
     try:
         role = FieldChoice.objects.get(field='RelationRole', machine_value=role_input.machine_value)
     except (ObjectDoesNotExist, MultipleObjectsReturned):
-        raise ValueError(gettext_lazy("FieldChoice is not defined."))
+        return HttpResponseBadRequest("ADD RELATION: FieldChoice is not defined.", {'content-type': 'text/plain'})
 
     try:
         source = Gloss.objects.get(pk=int(sourceid), archived=False)
     except ObjectDoesNotExist:
-        return HttpResponseBadRequest("Source gloss not found.", {'content-type': 'text/plain'})
-    print('source: ', source, type(source))
+        return HttpResponseBadRequest("ADD RELATION: Source gloss not found.", {'content-type': 'text/plain'})
     try:
         target = Gloss.objects.get(id=int(targetid), archived=False)
     except ObjectDoesNotExist:
-        return HttpResponseBadRequest("Target gloss not found.", {'content-type': 'text/plain'})
-    print('target: ', target)
-    new_relation = Relation(source=source, target=target, role_fk=role)
-    new_relation.save()
-    print('new relation created')
+        return HttpResponseBadRequest("ADD RELATION: Target gloss not found.", {'content-type': 'text/plain'})
+
+    try:
+        new_relation, created = Relation.objects.get_or_create(source=source, target=target, role_fk=role)
+    except MultipleObjectsReturned:
+        messages.add_message(request, messages.INFO,
+                             gettext_lazy("This relation already exists."))
+        return HttpResponseRedirect(
+            reverse('dictionary:admin_gloss_view', kwargs={'pk': source.id}) + '?editrel')
+
     reverse_role = new_relation.get_reverse_role()
     # Also add the reverse relation
-    print('reverse relation: ', reverse_role)
-    reverse_relation, created = Relation.objects.get_or_create(source=target, target=source, role_fk=new_relation.get_reverse_role())
-    reverse_relation.save()
+    try:
+        reverse_relation, created = Relation.objects.get_or_create(source=target, target=source, role_fk=reverse_role)
+    except MultipleObjectsReturned:
+        messages.add_message(request, messages.INFO,
+                             gettext_lazy("This relation already exists."))
+        return HttpResponseRedirect(
+            reverse('dictionary:admin_gloss_view', kwargs={'pk': source.id}) + '?editrel')
 
     ensure_synonym_transitivity(source)
 

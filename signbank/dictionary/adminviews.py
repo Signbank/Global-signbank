@@ -2009,12 +2009,9 @@ class GlossRelationsDetailView(DetailView):
         pattern_variant_glosses = gl.pattern_variants()
         # the pattern_variants method result includes the gloss itself
         pattern_variants = [v for v in pattern_variant_glosses if not v.id == gl.id]
-        other_variants = gl.has_variants()
 
-        all_variants = pattern_variants + [ov for ov in other_variants if ov not in pattern_variants]
-        has_variants = all_variants
         variants = []
-        for gl_var in has_variants:
+        for gl_var in pattern_variants:
             # This display is set to the default language for the dataset of the variant
             gl_var_display = gl_var.annotation_idgloss(gl_var.lemma.dataset.default_language.language_code_2char)
             variants.append((gl_var, senses_per_language(gl_var), gl_var_display))
