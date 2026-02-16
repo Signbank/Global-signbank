@@ -1,0 +1,19 @@
+{# Parameters #}
+{# title (string #}
+{#   The title of the page, appears in horizontal span above content. #}
+
+{% extends "baselayout.html" %}
+
+{% block content %}
+
+{% if form.has_errors %}
+  <p>Your username and password didn't match. Please try again.</p>
+{% endif %}
+
+    <p>{{ message }}</p>
+    
+{% include "loginform.html" %}
+ 
+{% endblock %}							
+
+

@@ -1,0 +1,137 @@
+{% load i18n %}
+
+<script type="text/javascript" src="{{ STATIC_URL }}js/dark-mode-toggles.js"></script>
+
+<style>
+#affix-bar.affix {
+    position:fixed;
+    top: 0;
+    z-index: 10 !important;
+    background: inherit;
+}
+</style>
+
+<nav id="signbank-bar" class="navbar navbar-light navbar-fixed-top" style="box-sizing:content-box;;height:200px;">
+
+<nav id='header' class="navbar navbar-fixed-top navbar-header" style="box-sizing:content-box;">
+    <div class="nav navbar-left">
+    <a href="{{PREFIX_URL}}/" height="80" width="80" style="box-sizing:content-box;">
+    <h1>Signbank <br/><span id="second-title-part">VGT</span></h1></a>
+
+    {% if SHOW_DATASET_INTERFACE_OPTIONS and viewable_datasets %}
+        <div class='navbar-text' style="left-margin: 15px;width:auto">
+            <div class='taglist ribbon_list'>
+                {% load underscore_to_space %}
+                {% for ds,selected in viewable_datasets %}
+                <a href="{{PREFIX_URL}}/datasets/{{ds.acronym}}">
+                    <div class="ribbon {% if selected %}selected{% endif %}">
+                        {{ds.generate_short_name|underscore_to_space}}
+                    </div>
+                </a>
+                {% endfor %}
+            </div>
+        </div>
+     {% endif %}
+    </div>
+    <div class="nav navbar-right">
+    <a href="https://www.vgtc.be" id='logoholder'
+       class='visible-lg visible-md visible-sm'>
+        <img src="{{STATIC_URL}}/images/VGT/vgtc.png"></a>
+    </div>
+</nav>
+{% get_current_language as WEBSITE_LANGUAGE %}
+<nav id='navbar-menus' class="collapse navbar-collapse navbar-upper navbar-default" role="navigation" style="display:inline;box-sizing:content-box;padding:0;">
+
+  <!-- Collect the nav links, forms, and other content for toggling -->
+  <nav class="nav navbar-upper" id="menu-pull-downs" style="display:inline;padding-left:0px;box-sizing:content-box;">
+
+    <nav class="nav navbar-upper">
+    <div class="container-fluid">
+        <div class="navbar-header">
+            <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#signbank-menus">
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+            </button>
+        </div>
+    <div class="collapse navbar-collapse" id="signbank-menus">
+    <ul class="nav navbar-left navbar-nav navbar-nav-light" style="margin-left:15px;box-sizing:content-box;">
+    {# add in the top level menu items from pages #}
+    {% for item in menu %}
+
+        {% if item.children %}
+        <li class='dropdown dropdown-light'>
+             <a href="{{PREFIX_URL}}{{item.url}}"  class="dropdown-toggle" data-toggle="dropdown">
+                 {{item.title}}
+                 <b class="caret"></b></a>
+             <ul class="dropdown-menu dropdown-menu-light">
+             {% for subitem in item.children %}
+                <li {% if subitem.current %}class='active'{% endif %}><a href="{{PREFIX_URL}}{{subitem.url}}">
+                 {{subitem.title}}
+                </a></li>
+             {% endfor %}
+             </ul>
+        </li>
+      {% else %}
+        <li><a style="padding-left: 0px;" href="{{PREFIX_URL}}{{item.url}}">
+                 {{item.title}}
+        </a></li>
+      {% endif %}
+    {% endfor %}
+
+    </ul>
+    <form class="navbar-form navbar-form-light navbar-left" role="search" id="frmSearch" name="frmSearch" method="get" action="{{PREFIX_URL}}/signs/search/">
+        {% csrf_token %}
+            <div class="text-container text-container-light {% if USE_REGULAR_EXPRESSIONS %}hasTooltip{% endif %}">
+                <input class='form-control' placeholder='{% trans "Search Gloss" %}' type="text" name="search" id="menubar-search"
+                                               onfocus="focusFunction()" onblur="blurFunction()" onclick="clickFunction()"
+                                               value="" maxlength="60" size="36" />
+				{% if USE_REGULAR_EXPRESSIONS %}{% include "tooltip.html" with include_tags=True %}{% endif %}
+            </div>
+            <div class="text-container text-container-light {% if USE_REGULAR_EXPRESSIONS %}hasTooltip{% endif %}">
+                <input class='form-control' placeholder='{% trans "Search Sense" %}' type="text" name="translation" id="menubar-translation"
+                                               onfocus="focusFunction2()" onblur="blurFunction2()" onclick="clickFunction2()"
+                                               value="" maxlength="60" size="36" />
+				{% if USE_REGULAR_EXPRESSIONS %}{% include "tooltip.html" with include_tags=True %}{% endif %}
+            </div>
+          <button class='invisible_button' type='submit'><img id='mag-glass' src='{{ STATIC_URL }}images/VGT/search_icon.svg'></button>
+    </form>
+    <div class="nav navbar-left navbar-nav" id="interface-language"
+         style="height: 20px;box-sizing:content-box;">
+    <div class='navbar-text navbar-text-light' id="minimalistic_language_picker">
+    <form id="change_language_form" method="post" action="{{PREFIX_URL}}/i18n/setlang/">
+        {% csrf_token %}
+        <input id="change_language_input_field" type="hidden" name="language" value="{{ user.user_profile_user.last_used_language }}">
+
+    </form>
+    </div>
+    </div>
+    <div class="nav navbar-left navbar-nav navbar-nav-light" id="user-menu" style="height: 20px;box-sizing:content-box;">
+        {% if user.is_authenticated %}
+        <div class='navbar-text navbar-text-light'>
+            <a href="{% url 'registration:user_profile' %}">{% trans "Profile" %}</a>
+        </div>
+        {% endif %}
+    </div>
+    <div class="nav navbar-left" style="height: 20px;box-sizing:content-box;">
+        {% if user.is_authenticated %}
+            <div class='navbar-text navbar-text-light'>
+                <a id="username_link" href="{% url 'logout' %}">{% trans "Logout" %} ({{ user.first_name }} {{ user.last_name }})</a></div>
+        {% else %}
+            <div class='navbar-text navbar-text-light'><a href="{{PREFIX_URL}}/accounts/login/">{% trans "Login" %}</a></div>
+        {% endif %}
+          <div id="toggle_dark_mode" class="navbar-text">
+              <button class='invisible_button' onclick="set_dark_mode()" style="width:10px;">
+                  <span class="glyphicon glyphicon-adjust" style="font-size:16px;color:DodgerBlue;"></span>
+              </button>
+          </div>
+	</div>
+
+    </div>
+    </div>
+  </nav>
+
+</nav>
+
+</nav>
+</nav>

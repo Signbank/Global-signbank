@@ -1,0 +1,31 @@
+{% load i18n %}
+
+{% if include_tags %}
+<span class="isTooltip">
+{% endif %}
+
+{% trans "In many text fields, you can use patterns as follows:" %}
+  <table>
+	<tr>
+		<td align='right'>A</td><td>&nbsp;&nbsp;</td><td align='left'>{% trans "contains A" %}</td>
+	</tr>
+	<tr>
+		<td align='right'>^A</td><td>&nbsp;&nbsp;</td><td align='left'>{% trans "starts with A" %}</td>
+	</tr>
+	<tr>
+		<td align='right'>A$</td><td>&nbsp;&nbsp;</td><td align='left'>{% trans "ends with A" %}</td>
+	</tr>
+	<tr>
+		<td align='right'>A|B</td><td>&nbsp;&nbsp;</td><td align='left'>{% trans "A or B" %}</td>
+	</tr>
+	<tr>
+		<td align='right'>.*</td><td>&nbsp;&nbsp;</td><td align='left'>{% trans "find all strings in this field" %}</td>
+	</tr>
+	<tr>
+		<td align='right'>(</td><td>&nbsp;&nbsp;</td><td align='left'>{% trans "use backslash to find <br/>special characters in field" %}</td>
+	</tr>
+  </table>
+
+{% if include_tags %}
+  </span>
+{% endif %}
