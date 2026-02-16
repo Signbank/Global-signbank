@@ -794,6 +794,12 @@ class GlossListView(ListView):
 
         self.public = not self.request.user.is_authenticated
 
+        # erase the variables used to pass RelationRole query parameters to the ajax row generation routines
+        if 'query_fields_parameters' in self.request.session.keys():
+            self.request.session['query_fields_parameters'] = []
+        if 'query_fields_parameters' in self.request.GET.keys():
+            self.request.GET['query_fields_parameters'] = []
+
         if self.show_all:
             self.query_parameters = dict()
             # erase the previous query
@@ -6009,8 +6015,7 @@ def glosslist_ajax_complete(request, gloss_id):
                 fields_parameters = [FieldChoice.objects.get(field='RelationRole', machine_value=int(roleid)) for roleid
                                      in query_fields_parameters[0]]
                 # query_fields_parameters ends up being a list of list for this field
-                relations_of_type = [r for r in this_gloss.relation_sources.filter(target__archived__exact=False,
-                                                                                   source__archived__exact=False)
+                relations_of_type = [r for r in this_gloss.get_relations()
                                      if r.role_fk in fields_parameters]
                 relations = ", ".join([r.target.annotation_idgloss(default_language) for r in relations_of_type])
                 column_values.append((fieldname, relations))
@@ -6051,7 +6056,6 @@ def glosslistheader_ajax(request):
         if 'query' in request.GET and 'display_fields' in request.GET and 'query_fields_parameters' in request.GET:
             display_fields = json.loads(request.GET['display_fields'])
             query_fields_parameters = json.loads(request.GET['query_fields_parameters'])
-
     selected_datasets = get_selected_datasets(request)
     dataset_languages = get_dataset_languages(selected_datasets)
 
@@ -6081,8 +6085,6 @@ def glosslistheader_ajax(request):
                     column_headers.append((fieldname, field_parameters))
                 else:
                     column_headers.append((fieldname, _("Relation: ") + field_parameters))
-            else:
-                column_headers.append((fieldname, _("Type of Relation")))
         elif fieldname not in Gloss.get_field_names():
             continue
         else:
