@@ -1,8 +1,7 @@
 
 from django.contrib import admin
 from signbank.video.models import (GlossVideo, GlossVideoHistory, AnnotatedVideo, ExampleVideoHistory,
-                                   filename_matches_nme, filename_matches_perspective, filename_matches_video,
-                                   filename_matches_backup_video, flattened_video_path, build_filename)
+                                   build_filename)
 from signbank.dictionary.models import Dataset, AnnotatedGloss, Gloss
 from django.contrib.auth.models import User
 from signbank.settings.base import *
@@ -10,6 +9,8 @@ from signbank.settings.server_specific import WRITABLE_FOLDER, FILESYSTEM_SIGNBA
 from django.utils.translation import gettext_lazy as _
 from signbank.tools import get_two_letter_dir
 from signbank.video.convertvideo import video_file_type_extension, convert_video
+from signbank.video.operations import (filename_matches_nme, filename_matches_perspective,
+                                       filename_matches_video, filename_matches_backup_video, flattened_video_path)
 from pathlib import Path
 import os
 import stat
@@ -30,7 +31,7 @@ class GlossVideoDatasetFilter(admin.SimpleListFilter):
     def lookups(self, request, model_admin):
         datasets = Dataset.objects.all()
         return (tuple(
-            (dataset.id, dataset.acronym) for dataset in datasets
+            (dataset.pk, dataset.acronym) for dataset in datasets
         ))
 
     def queryset(self, request, queryset):
@@ -75,7 +76,7 @@ class GlossVideoFileSystemGroupFilter(admin.SimpleListFilter):
 
 class GlossVideoExistenceFilter(admin.SimpleListFilter):
     """
-    Filter the GlossVideo objects on whether the the video file exists
+    Filter the GlossVideo objects on whether the video file exists
     The values of lookups show in the right-hand column of the admin under a heading "File Exists"
     Called from GlossVideoAdmin
     :model: GlossVideoAdmin
@@ -300,7 +301,7 @@ def rename_extension_videos(modeladmin, request, queryset):
     This allows the user to merely select one of the objects and hereby change them all instead of numerous selections
     For those gloss video objects, it renames the file if the filename is not correct
     This also applies to wrong video types in filenames, e.g., a webm video that has mp4 in its filename
-    This applies to backup videos as well as normal videos
+    This applies to back-up videos as well as normal videos
     Called from GlossVideoAdmin
     :model: GlossVideoAdmin
     """

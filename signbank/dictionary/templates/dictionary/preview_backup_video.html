@@ -1,0 +1,79 @@
+{% load i18n %}
+{% load stylesheet %}
+{% load annotation_idgloss_translation %}
+
+{% load bootstrap3 %}
+{% load tagging_tags %}
+
+{% block extrajs %}
+<script type='text/javascript'>
+var url = '{{PREFIX_URL}}';
+
+function show_feedback(data) {
+    if ($.isEmptyObject(data)) {
+        return;
+    };
+    var glossid = data.glossid;
+    var glossvideoid = data.glossvideoid;
+    var feedback = data.feedback;
+    if ($.isEmptyObject(feedback)) {
+        return;
+    };
+    var feedback_display = "#feedback_save_backup_video_" + glossvideoid;
+    $(feedback_display).empty();
+    $(feedback_display).html(feedback);
+};
+
+$('.quick_save').click(function(e)
+{
+    var glossid = $(this).attr('data-glossid');
+    var glossvideoid = $(this).attr('data-glossvideoid');
+    var lookup = "#feedback_save_backup_video_" + glossvideoid;
+    var video_display = "#backup_video_player_" + glossvideoid;
+    $(lookup).empty();
+    $.ajax({
+        url : url + "/dictionary/ajax/save_backup_video_as_gloss_video/" + glossid + "/" + glossvideoid + "/",
+        datatype: "json",
+        async: true,
+        data: { 'csrfmiddlewaretoken': csrf_token },
+        success: show_feedback
+    });
+});
+</script>
+{% endblock %}
+
+{% if error %}
+<p>{{error}}</p>
+{% else %}
+<div id="preview_backup_{{focus_gloss.id}}_{{glossvideo.id}}">
+{% url 'dictionary:protected_media' '' as protected_media_url %}
+{% csrf_token %}
+    <div id="backup_video_player_{{glossvideo.id}}">
+    <video id='videoplayer' style="height:200px;width:auto;"
+           src="{{protected_media_url}}{{filename}}" controls autoplay muted></video>
+    <button id='restore_backup_btn_{{focus_gloss.id}}'
+            class="quick_save btn btn-primary" style="width:auto;"
+            data-glossid='{{focus_gloss.id}}'
+            data-glossvideoid='{{glossvideo.id}}'>
+        {% if glossvideo.is_glossvideonme %}
+        {% trans "Restore as NME Video" %}
+        {% elif glossvideo.is_glossvideoperspective %}
+        {% trans "Restore as Perspective Video" %}
+        {% else %}
+        {% trans "Restore as Primary Video" %}
+        {% endif %}
+    </button>
+    </div>
+    <div style="width:800px;">
+        <table class='table table-condensed'>
+            <tbody class="tbody tbody-light">
+                <tr>
+                    <td id="feedback_save_backup_video_{{glossvideo.id}}">
+
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endif %}

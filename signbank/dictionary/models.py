@@ -621,7 +621,7 @@ class ExampleSentence(MetaModelMixin, models.Model):
             # Backup the existing video objects stored in the database
             existing_videos = ExampleVideo.objects.filter(examplesentence=self)
             for video_object in existing_videos:
-                video_object.reversion(revert=False)
+                video_object.reversion()
 
             # Create a ExampleVideoHistory object
             video_file_full_path = os.path.join(WRITABLE_FOLDER, get_sentence_video_file_path(video, str(videofile)))
@@ -2379,42 +2379,29 @@ class Gloss(MetaModelMixin, models.Model):
 
     def get_video_path(self, check_file_on_disk=True):
         from signbank.video.models import GlossVideo, get_gloss_path_to_video_file_on_disk, GlossVideoNME, GlossVideoPerspective
-        glossvideos_nme = [gv.id for gv in GlossVideoNME.objects.filter(gloss=self)]
-        glossvideos_persp = [gv.id for gv in GlossVideoPerspective.objects.filter(gloss=self)]
-        glossvideos = GlossVideo.objects.filter(gloss=self,
+        glossvideos = GlossVideo.objects.filter(gloss=self, gloss__archived=False,
                                                 glossvideonme=None,
-                                                glossvideoperspective=None, version=0).exclude(id__in=glossvideos_nme).exclude(id__in=glossvideos_persp)
+                                                glossvideoperspective=None, version=0)
         if glossvideos.count() > 0:
             # in the case of multiple version 0 objects the first is returned
             return str(glossvideos.first().videofile)
         if not check_file_on_disk:
             return ""
         relative_path = get_gloss_path_to_video_file_on_disk(self)
-        if not relative_path:
-            # there is no video file and no GlossVideo object with version 0 for this gloss
-            return ''
-        # a video with the correct name was found
-        if settings.DEBUG_VIDEOS:
-            print('get_video_path: already existing file without GlossVideo object found: ', relative_path)
-        # there is a video file but no GlossVideo object
-        video = GlossVideo(gloss=self, glossvideonme=None, glossvideoperspective=None, version=0)
-        video.videofile.name = relative_path
-        video.save()
-        video.make_poster_image()
-        if settings.DEBUG_VIDEOS:
-            print('get_video_path: GlossVideo object created for already existing file: ', relative_path)
         return relative_path
-
 
     def get_video(self):
         """Return the video object for this gloss or None if no video available"""
+        from signbank.video.models import detect_video_file_extension
         video_path = self.get_video_path()
         if not video_path:
             return ''
         filepath = os.path.join(settings.WRITABLE_FOLDER, video_path)
-        if os.path.exists(filepath.encode('utf-8')):
-            return video_path
-        return ''
+        if not os.path.exists(filepath):
+            return ''
+        # confirm this is a video file
+        ext = detect_video_file_extension(filepath)
+        return video_path if ext else ''
 
     def get_video_url(self):
         """return  the url of the video for this gloss which may be that of a homophone"""
@@ -2433,40 +2420,30 @@ class Gloss(MetaModelMixin, models.Model):
 
         # Create a new GlossVideo object
         if isinstance(videofile, File) or videofile.content_type == 'django.core.files.uploadedfile.InMemoryUploadedFile':
+
             video = GlossVideo(gloss=self, upload_to=get_video_file_path, glossvideonme=None, glossvideoperspective=None)
-            # Backup the existing video objects stored in the database
-            glossvideos_nme = [gv.id for gv in GlossVideoNME.objects.filter(gloss=self)]
-            glossvideos_persp = [gv.id for gv in GlossVideoPerspective.objects.filter(gloss=self)]
             # get existing gloss video objects but exclude NME and perspective videos
-            existing_videos = GlossVideo.objects.filter(gloss=self).exclude(
-                id__in=glossvideos_nme).exclude(id__in=glossvideos_persp)
-            # order them by version number
-            existing_videos_all = existing_videos.order_by('version')
-            # revert all the old video objects
-            for video_object in existing_videos_all:
-                video_object.reversion(revert=False)
+            existing_videos = GlossVideo.objects.filter(gloss=self, glossvideonme=None, glossvideoperspective=None).order_by('version')
+            # Update the backup video objects stored in the database
+            for video_object in existing_videos:
+                video_object.reversion()
 
             # see if there is a file with the correct path that is not referred to by an object
             already_existing_relative_target_path = get_gloss_path_to_video_file_on_disk(self)
             if already_existing_relative_target_path:
                 # a video file without a GlossVideo object already exists, remove the file
-                try:
-                    file_system_path = os.path.join(WRITABLE_FOLDER, already_existing_relative_target_path)
+                file_system_path = os.path.join(WRITABLE_FOLDER, already_existing_relative_target_path)
+                if os.path.exists(file_system_path):
                     os.remove(file_system_path)
-                    if settings.DEBUG_VIDEOS:
-                        print('add_video: already existing file without GlossVideo object deleted: ', file_system_path)
-                except (OSError, PermissionError):
-                    if settings.DEBUG_VIDEOS:
-                        print('add_video: already existing file without GlossVideo object not deleted: ', already_existing_relative_target_path)
-                    pass
-            # Create a GlossVideoHistory object
+
             relative_path = get_video_file_path(video, str(videofile), nmevideo=False, perspective='', version=0)
-            if settings.DEBUG_VIDEOS:
-                print('add_video relative_path: ', relative_path)
-            # Save the new videofile in the video object
+            # Save the new video file in the video object
             try:
                 video.videofile.save(relative_path, videofile)
-            except OSError:
+            except (OSError, ValueError):
+                video_file_full_path = os.path.join(WRITABLE_FOLDER, relative_path)
+                if os.path.exists(video_file_full_path):
+                    os.remove(video_file_full_path)
                 msg = gettext("The video could not be saved in the GlossVideo object for gloss {glossid}.").format(glossid=self.pk)
                 raise ValidationError(msg)
 
@@ -2483,15 +2460,93 @@ class Gloss(MetaModelMixin, models.Model):
             msg = gettext("A GlossVideo object could not be created for gloss {glossid}.").format(glossid=self.pk)
             raise ValidationError(msg)
 
+    def restore_backup_video(self, videofile, glossvideo):
+        # Preventing circular import
+        from signbank.video.models import (GlossVideo, GlossVideoPerspective, GlossVideoNME, get_video_file_path, filename_matches_non_backup)
+
+        if not glossvideo or not videofile or not isinstance(videofile, File):
+            msg = gettext("File not found.")
+            raise ValidationError(msg)
+        if glossvideo.version == 0:
+            msg = gettext("The video object is not a backup file.")
+            raise ValidationError(msg)
+
+        # Create a new GlossVideo object
+        if glossvideo.is_glossvideoperspective():
+            glossvideo = glossvideo.glossvideoperspective
+            video = GlossVideoPerspective(gloss=self, perspective=glossvideo.perspective,
+                                          upload_to=get_video_file_path, version=0)
+
+            # get existing gloss perspective video objects
+            existing_videos = GlossVideoPerspective.objects.filter(gloss=self,
+                                                                   perspective=glossvideo.perspective).exclude(pk=glossvideo.pk)
+            # Update the backup video objects stored in the database
+            for video_object in existing_videos:
+                video_object.reversion()
+            relative_path = get_video_file_path(video, str(videofile), nmevideo=False,
+                                                perspective=glossvideo.perspective,
+                                                version=0)
+        elif glossvideo.is_glossvideonme():
+            glossvideo = glossvideo.glossvideonme
+            video = GlossVideoNME(gloss=self, offset=glossvideo.offset, perspective=glossvideo.perspective,
+                                  upload_to=get_video_file_path, version=0)
+
+            # get existing gloss NME video objects
+            existing_videos = GlossVideoNME.objects.filter(gloss=self, offset=glossvideo.offset,
+                                                           perspective=glossvideo.perspective).exclude(pk=glossvideo.pk)
+            # Update the backup video objects stored in the database
+            for video_object in existing_videos:
+                video_object.reversion()
+            relative_path = get_video_file_path(video, str(videofile), nmevideo=True,
+                                                perspective=glossvideo.perspective,
+                                                offset=glossvideo.offset, version=0)
+        else:
+            video = GlossVideo(gloss=self,
+                               upload_to=get_video_file_path, glossvideonme=None, glossvideoperspective=None)
+
+            # get existing gloss video objects but exclude NME and perspective videos
+            existing_videos = GlossVideo.objects.filter(gloss=self, glossvideonme=None, glossvideoperspective=None).exclude(pk=glossvideo.pk).order_by('version')
+            # Update the backup video objects stored in the database
+            for video_object in existing_videos:
+                video_object.reversion()
+            relative_path = get_video_file_path(video, str(videofile), nmevideo=False, perspective='', version=0)
+
+        if settings.DEBUG_VIDEOS:
+            print('restore_backup_video relative_path: ', relative_path)
+
+        # Save the new videofile in the video object
+        try:
+            video.videofile.save(relative_path, videofile)
+        except (OSError, ValueError):
+            msg = gettext("The video could not be saved in the GlossVideo object for gloss {glossid}.").format(glossid=self.pk)
+            raise ValidationError(msg)
+
+        self.lastUpdated = DT.datetime.now(tz=get_current_timezone())
+        self.save()
+
+        if not video.is_glossvideonme() and not glossvideo.is_glossvideoperspective():
+            video.make_poster_image()
+
+        video_file_full_path = os.path.join(WRITABLE_FOLDER, str(glossvideo.videofile))
+        if os.path.exists(video_file_full_path):
+            if filename_matches_non_backup(self, video_file_full_path):
+                # this gloss video object points to a non-backup video file, just erase the link
+                glossvideo.videofile.name = ""
+                glossvideo.save()
+            else:
+                os.remove(video_file_full_path)
+        glossvideo.delete()
+        return video
+
     def has_nme_videos(self):
         from signbank.video.models import GlossVideoNME
-        nmevideos = GlossVideoNME.objects.filter(gloss=self)
+        nmevideos = GlossVideoNME.objects.filter(gloss=self, version=0)
         return nmevideos.count()
 
     def get_nme_videos(self):
         # Only retrieve the primary NME video
         from signbank.video.models import GlossVideoNME
-        nmevideos = GlossVideoNME.objects.filter(gloss=self, perspective__in=['', 'center'])
+        nmevideos = GlossVideoNME.objects.filter(gloss=self, perspective__in=['', 'center'], version=0)
         return nmevideos
 
     def get_nme_videos_lookup(self):
@@ -2509,20 +2564,24 @@ class Gloss(MetaModelMixin, models.Model):
     def nme_video_has_left_perspective(self, offset):
         # this is used in the template to conditionally generate code
         from signbank.video.models import GlossVideoNME
-        primary_nmevideo = GlossVideoNME.objects.filter(gloss=self, offset=offset, perspective__in=['', 'center']).first()
+        primary_nmevideo = GlossVideoNME.objects.filter(gloss=self, offset=offset, perspective__in=['', 'center'], version=0).first()
         return primary_nmevideo.has_left_perspective if primary_nmevideo else False
 
     def nme_video_has_right_perspective(self, offset):
         # this is used in the template to conditionally generate code
         from signbank.video.models import GlossVideoNME
-        primary_nmevideo = GlossVideoNME.objects.filter(gloss=self, offset=offset, perspective__in=['', 'center']).first()
+        primary_nmevideo = GlossVideoNME.objects.filter(gloss=self, offset=offset, perspective__in=['', 'center'], version=0).first()
         return primary_nmevideo.has_right_perspective if primary_nmevideo else False
 
     def add_nme_video(self, user, videofile, new_offset, recorded, perspective='center'):
         # Preventing circular import
         from signbank.video.models import GlossVideoNME, GlossVideoHistory, get_video_file_path
 
-        existing_offsets_for_this_perspective = [nmev.offset for nmev in GlossVideoNME.objects.filter(gloss=self, perspective=perspective)]
+        existing_nme_videos = GlossVideoNME.objects.filter(gloss=self, perspective=perspective, offset=new_offset, version=0)
+        for existing_nme_vid in existing_nme_videos:
+            # convert an existing version 0 video for this offset to a backup file
+            existing_nme_vid.reversion()
+        existing_offsets_for_this_perspective = [nmev.offset for nmev in GlossVideoNME.objects.filter(gloss=self, perspective=perspective, version=0)]
         if new_offset in existing_offsets_for_this_perspective:
             # override given offset to avoid duplicate usage
             offset = max(existing_offsets_for_this_perspective)+1
@@ -2541,7 +2600,8 @@ class Gloss(MetaModelMixin, models.Model):
             # Save the new videofile in the video object
             video.videofile.save(relative_path, videofile)
         else:
-            return GlossVideoNME(gloss=self, offset=offset, perspective=perspective)
+            msg = gettext("No video file supplied for NME video upload of gloss {glossid}.").format(glossid=self.pk)
+            raise ValidationError(msg)
 
         self.lastUpdated = DT.datetime.now(tz=get_current_timezone())
         self.save()
@@ -2551,22 +2611,21 @@ class Gloss(MetaModelMixin, models.Model):
 
     def has_perspective_videos(self):
         from signbank.video.models import GlossVideoPerspective
-        perspectivevideos = GlossVideoPerspective.objects.filter(gloss=self)
+        perspectivevideos = GlossVideoPerspective.objects.filter(gloss=self, version=0)
         return perspectivevideos.count()
 
     def get_perspective_videos(self):
         from signbank.video.models import GlossVideoPerspective
-        perspectivevideos = GlossVideoPerspective.objects.filter(gloss=self)
+        perspectivevideos = GlossVideoPerspective.objects.filter(gloss=self, version=0)
         return perspectivevideos
 
     def add_perspective_video(self, user, videofile, new_perspective, recorded):
         # Preventing circular import
         from signbank.video.models import GlossVideoPerspective, GlossVideoHistory, get_video_file_path
 
-        existing_perspectivevideos = GlossVideoPerspective.objects.filter(gloss=self, perspective=new_perspective)
-        if existing_perspectivevideos.count() > 0:
-            for existing_video in existing_perspectivevideos:
-                existing_video.delete()
+        existing_perspectivevideos = GlossVideoPerspective.objects.filter(gloss=self, perspective=new_perspective, version=0)
+        for existing_video in existing_perspectivevideos:
+            existing_video.reversion()
         perspective = str(new_perspective)
         if isinstance(videofile, File):
             video = GlossVideoPerspective(gloss=self, perspective=perspective, upload_to=get_video_file_path)
