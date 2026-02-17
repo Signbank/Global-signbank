@@ -81,7 +81,7 @@ from signbank.dictionary.update_glosses import (mapping_toggle_relOriLoc, mappin
                                                 batch_edit_create_sense)
 from signbank.dictionary.batch_edit import batch_edit_update_gloss, create_empty_sense
 from signbank.dictionary.adminviews import show_warning
-from signbank.relation_tools import ensure_synonym_transitivity, remove_transitive_synonym
+from signbank.relation_tools import ensure_synonym_transitivity
 
 
 # this method is called as dictionary:add_gloss from the template for /signs/add/
@@ -927,8 +927,8 @@ def update_gloss(request, glossid):
         return update_relationtoforeignsign(gloss, field, value)
 
     elif field.startswith('relation'):
-        print('update relation')
-        return update_relation(gloss, field, value)
+
+        return update_relation(request.user, gloss, field, value)
 
     elif field.startswith('morphology-definition'):
 
@@ -1491,8 +1491,52 @@ def update_derivationhistory(request, gloss, field, values):
     return HttpResponse(str(new_derivationhistory_value), {'content-type': 'text/plain'})
 
 
+def add_new_relations_to_revision_history(user, rels):
+    for rel in rels:
+        relation_display = f'{rel.role_fk.name}:{get_default_annotationidglosstranslation(rel.target)}'
+        add_gloss_update_to_revision_history(user, rel.source, 'relation', '',
+                                             relation_display)
+
+
+def remove_transitive_synonym(user, rel):
+    assert isinstance(rel, Relation), "Not a Relation object."
+
+    try:
+        synonym = FieldChoice.objects.get(field='RelationRole', name__iexact="Synonym")
+    except (ObjectDoesNotExist, MultipleObjectsReturned):
+        raise ValueError(gettext_lazy("FieldChoice for Synonym is not defined."))
+
+    transitive_synonyms = rel.target.get_synonyms()
+    trans_relations = []
+    for trans_gloss in transitive_synonyms:
+        relations_source = Relation.objects.filter(source=trans_gloss)
+        relations_target = Relation.objects.filter(target=trans_gloss)
+        trans_gloss_target_synonym = relations_source.filter(role_fk=synonym)
+        trans_gloss_source_synonym = relations_target.filter(role_fk=synonym)
+        for trans_rel in trans_gloss_target_synonym:
+            if trans_rel.target in trans_relations:
+                continue
+            if trans_rel.target != rel.target:
+                continue
+            trans_relations.append(trans_rel)
+        for trans_rel in trans_gloss_source_synonym:
+            if trans_rel.source in trans_relations:
+                continue
+            if trans_rel.source != rel.target:
+                continue
+            trans_relations.append(trans_rel)
+
+    for trans_rel in trans_relations:
+        relation_display = f'{trans_rel.role_fk.name}:{get_default_annotationidglosstranslation(trans_rel.target)}'
+        add_gloss_update_to_revision_history(user, trans_rel.source, 'relation', relation_display,
+                                             '')
+        trans_rel.delete()
+
+    rel.delete()
+
+
 # This function is called from the Gloss Details template when updating Relations to Other Signs
-def update_relation(gloss, field, value):
+def update_relation(user, gloss, field, value):
     """Update one of the relations for this gloss"""
 
     try:
@@ -1509,20 +1553,28 @@ def update_relation(gloss, field, value):
 
     if what == 'relationdelete' and rel.role_fk == synonym:
         # special case for symmetric transitive relation
-        remove_transitive_synonym(rel)
+        remove_transitive_synonym(user, rel)
         return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': gloss.id}) + '?editrel')
 
     if what == 'relationdelete':
         rel_source = rel.source
         rel_target = rel.target
-        rel_role = rel.get_reverse_role()
+        rel_role = rel.role_fk
+        rel_reverse_role = rel.get_reverse_role()
+
+        relation_display = f'{rel_role.name}:{get_default_annotationidglosstranslation(rel_target)}'
+        add_gloss_update_to_revision_history(user, rel_source, 'relation', relation_display,
+                                             '')
         rel.delete()
 
         # Also delete the reverse relation
         reverse_relations = Relation.objects.filter(source=rel_target, target=rel_source,
-                                                    role_fk=rel_role)
+                                                    role_fk=rel_reverse_role)
         if reverse_relations.count() > 0:
             for revrel in reverse_relations:
+                relation_display = f'{rel_reverse_role.name}:{get_default_annotationidglosstranslation(rel_source)}'
+                add_gloss_update_to_revision_history(user, rel_target, 'relation', relation_display,
+                                                     '')
                 revrel.delete()
 
         return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': gloss.id}) + '?editrel')
@@ -1753,14 +1805,24 @@ def add_relation(request):
     reverse_role = new_relation.get_reverse_role()
     # Also add the reverse relation
     try:
-        reverse_relation, created = Relation.objects.get_or_create(source=target, target=source, role_fk=reverse_role)
+        reverse_relation, created_reverse = Relation.objects.get_or_create(source=target, target=source, role_fk=reverse_role)
     except MultipleObjectsReturned:
         messages.add_message(request, messages.INFO,
                              gettext_lazy("This relation already exists."))
         return HttpResponseRedirect(
             reverse('dictionary:admin_gloss_view', kwargs={'pk': source.id}) + '?editrel')
 
-    ensure_synonym_transitivity(source)
+    if created:
+        relation_display = f'{role.name}:{get_default_annotationidglosstranslation(target)}'
+        add_gloss_update_to_revision_history(request.user, source, 'relation', '',
+                                             relation_display)
+    if created_reverse:
+        relation_display = f'{reverse_role.name}:{get_default_annotationidglosstranslation(source)}'
+        add_gloss_update_to_revision_history(request.user, target, 'relation', '',
+                                             relation_display)
+
+    created_transitive_relations = ensure_synonym_transitivity(source)
+    add_new_relations_to_revision_history(request.user, created_transitive_relations)
 
     return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': source.id}) + '?editrel')
 
@@ -2580,7 +2642,7 @@ def update_morpheme(request, morphemeid):
 
     elif field.startswith('relation'):
 
-        return update_relation(morpheme, field, value)
+        return update_relation(request.user, morpheme, field, value)
 
     elif field.startswith('morphology-definition'):
 

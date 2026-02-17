@@ -1237,8 +1237,8 @@ class GlossDetailView(DetailView):
             # somehow this gets mis-matched
             reorder_senses(self.object)
 
-        # make sure synonym objects are also related to this gloss
-        ensure_synonym_transitivity(self.object)
+        # make sure synonym objects are also related to this gloss (applies to legacy data)
+        lazily_created_transitive_relations = ensure_synonym_transitivity(self.object)
 
         context = self.get_context_data(object=self.object)
         return self.render_to_response(context)

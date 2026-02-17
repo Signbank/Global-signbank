@@ -27,14 +27,19 @@ def ensure_synonym_transitivity(gloss):
             continue
         other_glosses_in_synonym_with_this_gloss.append(rel.source)
 
+    created_relations = []
     # for direct synonyms, make sure relations are symmetric
     for new_synonym_object in other_glosses_in_synonym_with_this_gloss:
         if new_synonym_object == gloss:
             continue
         rel, created = Relation.objects.get_or_create(source=gloss, target=new_synonym_object, role_fk=synonym)
-        rel.save()
-        revrel, created = Relation.objects.get_or_create(source=new_synonym_object, target=gloss, role_fk=synonym)
-        revrel.save()
+
+        revrel, created_reverse = Relation.objects.get_or_create(source=new_synonym_object, target=gloss, role_fk=synonym)
+
+        if created:
+            created_relations.append(rel)
+        if created_reverse:
+            created_relations.append(revrel)
 
     # the other glosses found above are all in symmetric synonym relations with this gloss
     # now do transitive synonyms
@@ -51,38 +56,11 @@ def ensure_synonym_transitivity(gloss):
         if new_synonym_object == gloss:
             continue
         rel, created = Relation.objects.get_or_create(source=gloss, target=new_synonym_object, role_fk=synonym)
-        rel.save()
-        revrel, created = Relation.objects.get_or_create(source=new_synonym_object, target=gloss, role_fk=synonym)
-        revrel.save()
 
-def remove_transitive_synonym(rel):
-    assert isinstance(rel, Relation), "Not a Relation object."
+        revrel, created_reverse = Relation.objects.get_or_create(source=new_synonym_object, target=gloss, role_fk=synonym)
 
-    try:
-        synonym = FieldChoice.objects.get(field='RelationRole', name__iexact="Synonym")
-    except (ObjectDoesNotExist, MultipleObjectsReturned):
-        raise ValueError(_("FieldChoice for Synonym is not defined."))
-
-    transitive_synonyms = rel.target.get_synonyms()
-    trans_relations = []
-    for trans_gloss in transitive_synonyms:
-        relations_source = Relation.objects.filter(source=trans_gloss)
-        relations_target = Relation.objects.filter(target=trans_gloss)
-        trans_gloss_target_synonym = relations_source.filter(role_fk=synonym)
-        trans_gloss_source_synonym = relations_target.filter(role_fk=synonym)
-        for trans_rel in trans_gloss_target_synonym:
-            if trans_rel.target in trans_relations:
-                continue
-            if trans_rel.target != rel.target:
-                continue
-            trans_relations.append(trans_rel)
-        for trans_rel in trans_gloss_source_synonym:
-            if trans_rel.source in trans_relations:
-                continue
-            if trans_rel.source != rel.target:
-                continue
-            trans_relations.append(trans_rel)
-
-    for synonym_relation in trans_relations:
-        synonym_relation.delete()
-    rel.delete()
+        if created:
+            created_relations.append(rel)
+        if created_reverse:
+            created_relations.append(revrel)
+    return created_relations
