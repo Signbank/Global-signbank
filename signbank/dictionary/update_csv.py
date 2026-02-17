@@ -149,6 +149,9 @@ def subst_relations(gloss, values):
     already_existing_to_keep = []
 
     for value in values:
+        if not value:
+            # this is an erase
+            continue
         (role, target) = value.split(':')
         role = role.strip()
         target = target.strip()
@@ -168,7 +171,7 @@ def subst_relations(gloss, values):
         reverse_relations = Relation.objects.filter(source=rel.target, target=rel.source,
                                                     role_fk=rel.get_reverse_role())
         if reverse_relations.count() > 0:
-            print("DELETE reverse relation: target: ", rel.target, ", relation: ", reverse_relations[0])
+            print("DELETE reverse relation: ", rel.role_fk.name, ", target: ", rel.target, ", relation: ", reverse_relations[0])
             reverse_relations[0].delete()
 
         print("DELETE Relation: ", rel)

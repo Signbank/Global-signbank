@@ -568,11 +568,12 @@ def compare_valuedict_to_gloss(valuedict, gloss_id, my_datasets, nl,
                 continue
 
             elif human_key == 'Relations to other signs':
-                if new_human_value in ['None', '']:
-                    continue
 
-                relations = [(relation.role_fk.name.lower(), get_default_annotationidglosstranslation(relation.target))
+                relations = [(relation.role_fk.name, get_default_annotationidglosstranslation(relation.target))
                              for relation in gloss.get_relations()]
+
+                if new_human_value in ['None', ''] and not relations:
+                    continue
 
                 # sort tuples on other gloss to allow comparison with imported values
 
@@ -589,7 +590,6 @@ def compare_valuedict_to_gloss(valuedict, gloss_id, my_datasets, nl,
 
                 if len(errors):
                     errors_found += errors
-
                 elif current_relations_string != checked_new_human_value:
                     differences.append({'pk': gloss_id,
                                         'dataset': current_dataset,
@@ -1510,7 +1510,7 @@ def check_existence_blend_morphology(gloss, values):
 def check_existence_relations(gloss, relations, values):
     default_annotationidglosstranslation = get_default_annotationidglosstranslation(gloss)
 
-    RELATION_ROLES = [fc.name.lower() for fc in FieldChoice.objects.filter(field__iexact='RelationRole',
+    RELATION_ROLES = [fc.name for fc in FieldChoice.objects.filter(field__iexact='RelationRole',
                                                                    machine_value__gt=1).order_by('name')]
     RELATION_ROLES_DISPLAY = ', '.join(RELATION_ROLES)
 
@@ -1518,11 +1518,14 @@ def check_existence_relations(gloss, relations, values):
     checked = ''
     sorted_values = []
 
+    if values == [""]:
+        return checked, errors
+
     # check syntax
     for new_value_tuple in values:
         try:
             (role, other_gloss) = new_value_tuple.split(':', 1)
-            role = role.strip().lower()
+            role = role.strip()
             other_gloss = other_gloss.strip()
             sorted_values.append((role, other_gloss))
         except ValueError:
@@ -1557,18 +1560,23 @@ def check_existence_relations(gloss, relations, values):
                 "For gloss '{annotation}' ({glossid}), column Relations to other signs: '{role}:{other_gloss}'. Other gloss '{other_gloss}' not found.").format(
                 annotation=default_annotationidglosstranslation, glossid=str(gloss.pk), role=role, other_gloss=other_gloss)
             errors.append(error_string)
+            continue
         elif filter_target.count() > 1:
             error_string = gettext(
                 "For gloss '{annotation}' ({glossid}), column Relations to other signs: '{role}:{other_gloss}'. Multiple matches found for other gloss '{other_gloss}'.").format(
                 annotation=default_annotationidglosstranslation, glossid=str(gloss.pk), role=role, other_gloss=other_gloss)
             errors.append(error_string)
             continue
-
+        elif gloss.pk == filter_target.first().pk:
+            error_string = gettext(
+                "For gloss '{annotation}' ({glossid}), column Relations to other signs: '{role}:{other_gloss}'. The other gloss '{other_gloss}' is the same as this gloss '{annotation}'.").format(
+                annotation=default_annotationidglosstranslation, glossid=str(gloss.pk), role=role, other_gloss=other_gloss)
+            errors.append(error_string)
+            continue
         if checked:
             checked += ',' + ':'.join([role, other_gloss])
         else:
             checked = ':'.join([role, other_gloss])
-
     return checked, errors
 
 
