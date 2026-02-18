@@ -142,18 +142,20 @@ tr > td > form > input[type="submit"] {
                 {% with dataset.get_users_who_can_view_dataset as view_users %}
                 {% if view_users|length > 0 %}
                     {% with view_users|length as num_rows %}
-                    {% if num_rows > 4 %}
-                    <list name="users_can_view" style="height:220px; overflow:auto;display:block;">
-                    {% else %}
-                    <list name="users_can_view" style="height:{% widthratio num_rows 1 50 %}px; overflow:auto;display:block;">
+                    <ul id="users_can_view" class="list-unstyled"
+                        {% if num_rows > 4 %}
+                        style="height:220px; overflow:auto;display:block;"
+                        {% else %}
+                        style="height:{% widthratio num_rows 1 50 %}px; overflow:auto;display:block;"
+                    />
                     {% endif %}
                     {% for user_v in view_users %}
-                            <ul name="{{user_v.username}}">
+                            <li name="{{user_v.username}}">
                                 <span id="user_v_{{user_v.username}}"
                                       placement="top">{{user_v.first_name}} {{user_v.last_name}} ({{user_v.username}})</span>
-                            </ul>
+                            </li>
                     {% endfor %}
-                    </list>
+                    </ul>
                     {% endwith %}
                 {% else %}
                     <p>{% trans "No users found." %}</p>
@@ -211,18 +213,20 @@ tr > td > form > input[type="submit"] {
                 {% with dataset.get_users_who_can_change_dataset as change_users %}
                 {% if change_users|length > 0 %}
                     {% with change_users|length as num_rows %}
-                    {% if num_rows > 4 %}
-                    <list name="users_can_change" style="height:220px; overflow:auto;display:block;">
-                    {% else %}
-                    <list name="users_can_change" style="height:{% widthratio num_rows 1 50 %}px; overflow:auto;display:block;">
-                    {% endif %}
-                {% for user_c in change_users %}
-                        <ul name="{{user_c.username}}">
-                            <span id="user_c_{{user_c.username}}"
-                                  placement="top">{{user_c.first_name}} {{user_c.last_name}} ({{user_c.username}})</span>
-                        </ul>
-                {% endfor %}
-                    </list>
+                    <ul id="users_can_change" class="list-unstyled"
+                          {% if num_rows > 4 %}
+                            style="height:220px; overflow:auto;display:block;"
+                          {% else %}
+                            style="height:{% widthratio num_rows 1 50 %}px; overflow:auto;display:block;"
+                          {% endif %}
+                    />
+                    {% for user_c in change_users %}
+                            <li name="{{user_c.username}}">
+                                <span id="user_c_{{user_c.username}}"
+                                      placement="top">{{user_c.first_name}} {{user_c.last_name}} ({{user_c.username}})</span>
+                            </li>
+                    {% endfor %}
+                    </ul>
                     {% endwith %}
                 {% else %}
                     <p>{% trans "No users found." %}</p>
@@ -335,11 +339,11 @@ tr > td > form > input[type="submit"] {
               <div id='dataset_{{dataset.acronym}}_view_eafs' class='collapse multi-collapse-{{dataset.pk}}'>
                   {% if dataset.uploaded_eafs %}
                   {% url 'dictionary:protected_media' '' as protected_media_url %}
-                  <list name="uploaded_eaf_files" style="height:120px; overflow:auto;display:block;">
+                  <ul id="uploaded_eaf_files" class="list-unstyled" style="height:120px; overflow:auto;display:block;">
                   {% for eaf_name in dataset.uploaded_eafs %}
-                  <ul>{{eaf_name}}</ul>
+                  <li>{{eaf_name}}</li>
                   {% endfor %}
-                  </list>
+                  </ul>
                   {% else %}
                   <p>{% trans "No EAF files found." %}</p>
                   {% endif %}
