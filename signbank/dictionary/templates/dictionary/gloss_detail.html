@@ -2652,11 +2652,11 @@ textarea:focus {
                                       {% csrf_token %}
                                       <input type='hidden' name='id' value='relationdelete_{{rel.id}}'>
                                       <input type='hidden' name='value' value='confirmed'>
-                                      <input type="submit" class="btn btn-primary" value='{% trans "Confirm Delete" %}'>
+                                      <div class="modal-footer">
+                                        <button type="button" class="btn btn-default btn-default-light" data-dismiss="modal">{% trans "Cancel" %}</button>
+                                        <input type="submit" class="btn btn-primary" value='{% trans "Confirm Delete" %}'>
+                                      </div>
                                   </form>
-                                  <div class="modal-footer">
-                                    <button type="button" class="btn btn-default btn-default-light" data-dismiss="modal">{% trans "Cancel" %}</button>
-                                  </div>
                                 </div>
                               </div>
                          </div>
