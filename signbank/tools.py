@@ -571,22 +571,14 @@ def compare_valuedict_to_gloss(valuedict, gloss_id, my_datasets, nl,
 
                 relations = [(relation.role_fk.name, get_default_annotationidglosstranslation(relation.target))
                              for relation in gloss.get_relations()]
+                current_relations_string = ','.join([f'{role}:{annotation}' for (role, annotation) in relations])
 
                 if new_human_value in ['None', ''] and not relations:
                     continue
 
-                # sort tuples on other gloss to allow comparison with imported values
-
-                sorted_relations = sorted(relations, key=lambda tup: tup[1])
-
-                relations_with_categories = []
-                for rel_cat in sorted_relations:
-                    relations_with_categories.append(':'.join(rel_cat))
-                current_relations_string = ",".join(relations_with_categories)
-
                 new_human_value_list = [v.strip() for v in new_human_value.split(',')]
 
-                (checked_new_human_value, errors) = check_existence_relations(gloss, relations_with_categories, new_human_value_list)
+                (checked_new_human_value, errors) = check_existence_relations(gloss, new_human_value_list)
 
                 if len(errors):
                     errors_found += errors
@@ -1507,11 +1499,15 @@ def check_existence_blend_morphology(gloss, values):
 # RELATION_ROLES_DISPLAY = 'homonym, synonym, variant, paradigm, antonym, hyponym, hypernym, seealso'
 
 
-def check_existence_relations(gloss, relations, values):
+def check_existence_relations(gloss, values):
     default_annotationidglosstranslation = get_default_annotationidglosstranslation(gloss)
 
     RELATION_ROLES = [fc.name for fc in FieldChoice.objects.filter(field__iexact='RelationRole',
                                                                    machine_value__gt=1).order_by('name')]
+    RELATION_ROLE_TO_MACHINE_VALUE = dict([(fc.name, fc.machine_value) for fc in FieldChoice.objects.filter(field__iexact='RelationRole',
+                                                                                                   machine_value__gt=1).order_by('name')])
+    RELATION_ROLES_LOOKUP = dict([(fc.machine_value, fc.name) for fc in FieldChoice.objects.filter(field__iexact='RelationRole',
+                                                                                                   machine_value__gt=1).order_by('name')])
     RELATION_ROLES_DISPLAY = ', '.join(RELATION_ROLES)
 
     errors = []
@@ -1534,8 +1530,6 @@ def check_existence_relations(gloss, relations, values):
                 annotation=default_annotationidglosstranslation, glossid=str(gloss.pk), input=str(new_value_tuple))
             errors.append(error_string)
 
-    sorted_values = sorted(sorted_values, key=lambda tup: tup[1])
-
     # check roles
     for (role, other_gloss) in sorted_values:
 
@@ -1549,6 +1543,8 @@ def check_existence_relations(gloss, relations, values):
             errors.append(error_string)
 
     # check other glosses
+    checked_relations = []
+    TARGET_LOOKUP = dict()
     for (role, other_gloss) in sorted_values:
 
         filter_target = Gloss.objects.filter(lemma__dataset=gloss.lemma.dataset,
@@ -1573,10 +1569,11 @@ def check_existence_relations(gloss, relations, values):
                 annotation=default_annotationidglosstranslation, glossid=str(gloss.pk), role=role, other_gloss=other_gloss)
             errors.append(error_string)
             continue
-        if checked:
-            checked += ',' + ':'.join([role, other_gloss])
-        else:
-            checked = ':'.join([role, other_gloss])
+        target = filter_target.first()
+        if target.pk not in TARGET_LOOKUP.keys():
+            TARGET_LOOKUP[target.pk] = other_gloss
+        checked_relations.append((RELATION_ROLE_TO_MACHINE_VALUE[role], target.pk))
+    checked = ','.join([f'{RELATION_ROLES_LOOKUP[machine_value]}:{TARGET_LOOKUP[target_pk]}' for (machine_value, target_pk) in checked_relations])
     return checked, errors
 
 
