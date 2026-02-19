@@ -1493,12 +1493,6 @@ def check_existence_blend_morphology(gloss, values):
     return checked, errors
 
 
-# RELATION_ROLES = ['homonym', 'Homonym', 'synonym', 'Synonym', 'variant', 'Variant', 'paradigm', 'Handshape Paradigm',
-#                          'antonym', 'Antonym', 'hyponym', 'Hyponym', 'hypernym', 'Hypernym', 'seealso', 'See Also']
-
-# RELATION_ROLES_DISPLAY = 'homonym, synonym, variant, paradigm, antonym, hyponym, hypernym, seealso'
-
-
 def check_existence_relations(gloss, values):
     default_annotationidglosstranslation = get_default_annotationidglosstranslation(gloss)
 
@@ -1532,7 +1526,6 @@ def check_existence_relations(gloss, values):
 
     # check roles
     for (role, other_gloss) in sorted_values:
-
         try:
             if role not in RELATION_ROLES:
                 raise ValueError
@@ -1542,15 +1535,14 @@ def check_existence_relations(gloss, values):
                 annotation=default_annotationidglosstranslation, glossid=str(gloss.pk), role=role, other_gloss=other_gloss, RELATION_ROLES_DISPLAY=RELATION_ROLES_DISPLAY)
             errors.append(error_string)
 
-    # check other glosses
+    # check target glosses
     checked_relations = []
+    # store the checked relation as (role machine value, target gloss pk) to allow sorting the same as the model retrieval
     TARGET_LOOKUP = dict()
     for (role, other_gloss) in sorted_values:
-
         filter_target = Gloss.objects.filter(lemma__dataset=gloss.lemma.dataset,
                                              annotationidglosstranslation__language=gloss.lemma.dataset.default_language,
                                              annotationidglosstranslation__text__exact=other_gloss).distinct()
-
         if not filter_target:
             error_string = gettext(
                 "For gloss '{annotation}' ({glossid}), column Relations to other signs: '{role}:{other_gloss}'. Other gloss '{other_gloss}' not found.").format(
@@ -1573,7 +1565,9 @@ def check_existence_relations(gloss, values):
         if target.pk not in TARGET_LOOKUP.keys():
             TARGET_LOOKUP[target.pk] = other_gloss
         checked_relations.append((RELATION_ROLE_TO_MACHINE_VALUE[role], target.pk))
-    checked = ','.join([f'{RELATION_ROLES_LOOKUP[machine_value]}:{TARGET_LOOKUP[target_pk]}' for (machine_value, target_pk) in checked_relations])
+    sorted_checked_relations = sorted(checked_relations, key=lambda x: (x[1], x[0]))
+    checked = ','.join([f'{RELATION_ROLES_LOOKUP[machine_value]}:{TARGET_LOOKUP[target_pk]}'
+                        for (machine_value, target_pk) in sorted_checked_relations])
     return checked, errors
 
 
