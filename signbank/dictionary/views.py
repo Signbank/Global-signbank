@@ -1164,7 +1164,7 @@ def import_csv_update(request):
                 if len(errors_found):
                     # more than one error found
                     errors_found_string = '\n'.join(errors_found)
-                    error.append(errors_found_string)
+                    error += [errors_found_string]
 
             except KeyError as e:
 
@@ -1307,7 +1307,11 @@ def import_csv_update(request):
 
                 new_human_value_list = [v.strip() for v in new_value.split(',')]
 
-                subst_relations(gloss, new_human_value_list)
+                # Any errors will already be found at stage 0; the error checking is done again for type checking
+                errors_found = subst_relations(request.user, gloss, new_human_value_list)
+                if errors_found:
+                    errors_found_string = '\n'.join(errors_found)
+                    error.append(errors_found_string)
                 continue
 
             if fieldname == 'Relations to foreign signs':

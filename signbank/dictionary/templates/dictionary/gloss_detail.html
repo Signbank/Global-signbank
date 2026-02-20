@@ -2528,11 +2528,10 @@ textarea:focus {
         </div>
     </div>
 
-    <!-- Minimal Pairs -->
- {% if homonyms_but_not_saved %}
+ {% if homonyms_but_not_saved and perms.dictionary.change_gloss %}
   <div class="panel panel-default panel-light">
         <div class='panel-heading panel-light' data-toggle='collapse'
-             style="color:red" data-target='#identicalphonology'>{% trans "Identical phonology but not marked as homonym" %}
+             data-target='#identicalphonology'>{% trans "Identical Phonology" %}
         </div>
         <div id='identicalphonology' class='collapse'>
             <table class='table table-condensed' style="padding-left: 20px;">
@@ -2540,29 +2539,12 @@ textarea:focus {
                    <th style="width:auto; padding-left: 25px;">{% trans "Annotation ID Gloss" %}</th>
                </tr>
                 {% for gl, homo_display in homonyms_but_not_saved %}
-                <tr><td style="color:red;"><a style="color:red; padding-left: 20px;" href='{% url "dictionary:admin_gloss_view" pk=gl.id %}'>{{homo_display}}</a></td></tr>
+                <tr><td><a style="padding-left: 20px;" href='{% url "dictionary:admin_gloss_view" pk=gl.id %}'>{{homo_display}}</a></td></tr>
                 {% endfor %}
             </table>
         </div>
   </div>
  {% endif %}
- {% if homonyms_different_phonology %}
- <div class="panel panel-default panel-light">
-        <div class='panel-heading panel-light' data-toggle='collapse'
-             style="color:red" data-target='#differentphonology'>{% trans "Marked as homonym but different phonology" %}
-        </div>
-        <div id='differentphonology' class='collapse'>
-            <table class='table table-condensed' style="padding-left: 20px;">
-               <tr>
-                   <th style="width:auto; padding-left: 25px;">{% trans "Annotation ID Gloss" %}</th>
-               </tr>
-                {% for gl, homo_display in homonyms_different_phonology %}
-                <tr><td><a href='{% url "dictionary:admin_gloss_view" pk=gl.id %}'>{{homo_display}}</a></td></tr>
-                {% endfor %}
-            </table>
-        </div>
-  </div>
-{% endif %}
 <div class="panel panel-default panel-light">
         <div class='panel-heading panel-light' data-toggle='collapse'
              data-target='#minimalpairs'>{% trans "Minimal Pairs" %}
@@ -2639,7 +2621,7 @@ textarea:focus {
     <div class="panel panel-default panel-light">
         <div class='panel-heading panel-light' data-toggle='collapse'
              data-target='#relations'>{% trans "Relations to Other Signs" %}
-                    {% if gloss.relations_count %}
+                    {% if gloss.get_relations_count > 0 %}
                     <div class="pull-right">
                     <span id="relations-icon"><img id='relations-arrows' src='{{STATIC_URL}}images/leftwards_arrow_over_rightwards_arrow.png'
                                                    style="width:15px; height:15px; margin: 0px;"></span>
@@ -2649,7 +2631,7 @@ textarea:focus {
         <div id='relations' class='collapse'>
 
            <table class='table table-condensed' style="z-index:1000;">
-               {% for rel, target_display in otherrelations %}
+               {% for seen, rel, target_display in otherrelations %}
                <tr id='row_{{rel.id}}'>
                {% if "change_dataset" in dataset_perms %}
 
@@ -2675,7 +2657,6 @@ textarea:focus {
                                         <input type="submit" class="btn btn-primary" value='{% trans "Confirm Delete" %}'>
                                       </div>
                                   </form>
-
                                 </div>
                               </div>
                          </div>
@@ -2687,6 +2668,7 @@ textarea:focus {
                     <td class="td td-light" id='relationrole_{{rel.id}}'>{{rel.get_role_display}}</td>
                     <td class="td td-light" id='relationtarget_{{rel.id}}'>
                         <a id='relation_target_hyperlink_{{rel.id}}'
+                           style="padding-left: 5px;{% if seen %}color:red;{% endif %}"
                            href='{% url "dictionary:admin_gloss_view" pk=rel.target.pk %}'>{{target_display}}</a>
                     </td>
                 </tr>
@@ -2703,9 +2685,10 @@ textarea:focus {
                <input type='hidden' name='sourceid' value='{{gloss.pk}}'>
                <table class='table table-condensed'>
                    <tr>
-                       <td class="td td-light">{{relationform.role}}</td>
+                       <td class="td td-light">{{relationform.role_fk}}</td>
                        <td class="td td-light">
-                           <input class='form-control form-control-light glosstypeahead glosstypeahead-light' placeholder='{% trans "Annotation ID Gloss" %}'/>
+                           <input class='form-control form-control-light glosstypeahead glosstypeahead-light'
+                                  placeholder='{% trans "Annotation ID Gloss" %}'/>
                            <input type="hidden" name="targetid" value=""/>
                        </td>
                        <td><input class='btn btn-primary' value='Add Relation' type='submit'></td>

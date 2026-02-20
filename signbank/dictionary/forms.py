@@ -568,10 +568,15 @@ class RelationForm(forms.ModelForm):
 
     class Meta:
         model = Relation
-        fields = ['role']
+        fields = ['role_fk']
         widgets = {
-                   'role': forms.Select(attrs={'class': 'form-control'}),
+                   'role_fk': forms.Select(attrs={'class': 'form-control'}),
                    }
+
+    def __init__(self, *args, **kwargs):
+        super(RelationForm, self).__init__(*args, **kwargs)
+        self.fields['role_fk'].choices = list(FieldChoice.objects.filter(field='RelationRole', machine_value__gt=1).order_by('name')
+                                           .values_list('pk', 'name'))
 
 
 class VariantsForm(forms.Form):

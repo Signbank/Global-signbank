@@ -22,7 +22,8 @@ from signbank.dictionary.models import (Language, SignLanguage, Dialect, Gloss, 
                                         BlendMorphology, MorphologyDefinition, SimultaneousMorphologyDefinition)
 from signbank.dictionary.forms import GlossSearchForm, SentenceForm
 from signbank.dictionary.field_choices import fields_to_fieldcategory_dict
-from signbank.dictionary.translate_choice_list import choicelist_queryset_to_translated_dict
+from signbank.dictionary.translate_choice_list import choicelist_queryset_to_translated_dict, \
+    machine_value_to_translated_human_value
 from signbank.tools import get_dataset_languages, get_multiselect_fieldnames, get_available_url_parameters_for_template
 from signbank.dictionary.context_data import get_selected_datasets
 
@@ -429,7 +430,7 @@ def convert_query_parameters_to_filter(query_parameters):
             q_filter = mapped_key + '__machine_value__in'
             query_list.append(Q(** {q_filter: get_value}))
         elif get_key in ['hasRelation[]']:
-            relations_with_this_role = Relation.objects.filter(role__in=get_value)
+            relations_with_this_role = Relation.objects.filter(role_fk__machine_value__in=get_value)
             pks_for_glosses_with_correct_relation = [relation.source.pk for relation in relations_with_this_role]
             query_list.append(Q(pk__in=pks_for_glosses_with_correct_relation))
         elif get_key in ['relation']:
@@ -621,14 +622,6 @@ def pretty_print_query_values(dataset_languages, query_parameters):
     UNKNOWNBOOLEANCHOICES = {'0': _('-'), '2': _('True'), '3': _('False')}
     NULLBOOLEANCHOICES = {'0': _('-'), '2': _('True'), '3': _('False')}
     YESNOCHOICES = {'0': '-', 'yes': _('Yes'), 'no': _('No'), '2': _('Yes'), '3': _('No')}
-    RELATION_ROLE_CHOICES = {'homonym': _('Homonym'),
-                             'synonym': _('Synonym'),
-                             'variant': _('Variant'),
-                             'antonym': _('Antonym'),
-                             'hyponym': _('Hyponym'),
-                             'hypernym': _('Hypernym'),
-                             'seealso': _('See Also'),
-                             'paradigm': _('Handshape Paradigm')}
     SEARCH_TYPE_CHOICES = {
         'sign': _("Search Sign"),
         'sense': _("Search Senses"),
@@ -662,12 +655,10 @@ def pretty_print_query_values(dataset_languages, query_parameters):
             query_dict[key] = tag_names
         elif key[-2:] == '[]':
             if key in ['hasRelation[]']:
-                choices_for_category = [RELATION_ROLE_CHOICES.get(val, '') for val in query_parameters[key]]
-                query_dict[key] = list(set(choices_for_category))
-                continue
+                choices_for_category = FieldChoice.objects.filter(field='RelationRole', machine_value__in=query_parameters[key])
             # in the Gloss Search Form, multiple choice fields have a list of values
             # these are all displayed in the Query Parameters display (as non-selectable buttons in the template)
-            if key[:-2] in ['domhndsh', 'subhndsh', 'final_domhndsh', 'final_subhndsh']:
+            elif key[:-2] in ['domhndsh', 'subhndsh', 'final_domhndsh', 'final_subhndsh']:
                 choices_for_category = Handshape.objects.filter(machine_value__in=query_parameters[key])
             elif key[:-2] in ['semField']:
                 choices_for_category = SemanticField.objects.filter(machine_value__in=query_parameters[key])
@@ -977,17 +968,7 @@ def set_up_fieldchoice_translations(form, fields_with_choices):
         if fieldname not in form.fields.keys():
             continue
         if fieldname == 'hasRelation':
-            # non-fieldchoice field, allow translations
-            relations = [('homonym', _('Homonym')),
-                         ('synonym', _('Synonym')),
-                         ('variant', _('Variant')),
-                         ('antonym', _('Antonym')),
-                         ('hyponym', _('Hyponym')),
-                         ('hypernym', _('Hypernym')),
-                         ('seealso', _('See Also')),
-                         ('paradigm', _('Handshape Paradigm'))]
-            form.fields[fieldname].choices = relations
-            continue
+            field_choices = FieldChoice.objects.filter(field='RelationRole', machine_value__gt=1).order_by('name')
         elif fieldname.startswith('semField'):
             field_choices = SemanticField.objects.all().order_by('name')
         elif fieldname.startswith('derivHist'):
@@ -1136,7 +1117,8 @@ def queryset_glosssense_from_get(model, formclass, searchform, GET, qs):
                 query_filter = gloss_prefix + 'id__in'
                 qs = qs.filter(**{query_filter: target_morphemes})
             elif field in ['hasRelation']:
-                relations_with_this_role = Relation.objects.filter(role__in=vals)
+                values = coerce_values_to_numbers(vals)
+                relations_with_this_role = Relation.objects.filter(role_fk__machine_value__in=values)
                 pks_for_glosses_with_correct_relation = [relation.source.pk for relation in relations_with_this_role]
                 query_filter = gloss_prefix + 'pk__in'
                 qs = qs.filter(**{query_filter: pks_for_glosses_with_correct_relation})

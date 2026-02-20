@@ -120,6 +120,8 @@ def pretty_print_revisions(gloss):
             revision_verbose_fieldname = gettext('Sense') + ' ' + order + " (%s)" % language.name
         elif revision.field_name.startswith('Sense'):
             revision_verbose_fieldname = gettext('Sense')
+        elif revision.field_name.startswith('relation'):
+            revision_verbose_fieldname = gettext('Relations to Other Signs')
         elif revision.field_name.startswith('description_'):
             prefix, language_2char = revision.field_name.split('_')
             language = Language.objects.get(language_code_2char=language_2char)
@@ -159,7 +161,6 @@ def pretty_print_revisions(gloss):
         else:
             # some legacy data may fall through
             revision_verbose_fieldname = gettext(revision.field_name)
-            # print('fall through: ', revision.field_name, revision_verbose_fieldname)
 
         # field name qualification is stored separately here
         # Django was having a bit of trouble translating it when embedded in the field_name string below
@@ -176,7 +177,7 @@ def pretty_print_revisions(gloss):
                 # this shouldn't happen
                 field_name_qualification = ''
         elif revision.field_name in ['Sense', 'Senses', 'senses',
-                                     'Sentence',
+                                     'Sentence', 'relation',
                                      'sequential_morphology', 'simultaneous_morphology', 'blend_morphology',
                                      'definition', 'definitiondelete', 'definition_create', 'definitioncount', 'definitionpub', 'definitionrole',
                                      'provenance_create', 'provenancedelete', 'provenancedescription', 'provenancemethod']:

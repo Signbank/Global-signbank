@@ -20,32 +20,41 @@ var csrf_token = '{{csrf_token}}';
 var ids_of_all_glosses = {{ids_of_all_glosses|safe}};
 var url = '{{ PREFIX_URL }}'
 
+function show_homonyms(data) {
+    if ($.isEmptyObject(data)) {
+        return;
+    };
+    var glossid = data.glossid;
+    var same_phonology = data.same_phonology;
+    var saved_relations = data.saved_relations;
+    var focus_gloss_row = $("#focus_gloss_row_"+glossid);
+    if (saved_relations == 0 && same_phonology.length == 0) {
+        focus_gloss_row.css('display', 'none');
+        return;
+    }
+    var relationsCell = $("#homonyms_"+glossid);
+    var num_spaces = same_phonology.length - 1;
+    var cell = "";
+    for (var key in same_phonology) {
+        if (key < num_spaces) {
+            cell += '<span><a href="'+url+'/dictionary/gloss/'+same_phonology[key].id+'/">' + same_phonology[key].gloss + '</a> &nbsp; </span>';
+        } else {
+            cell += '<span><a href="'+url+'/dictionary/gloss/'+same_phonology[key].id+'/">' + same_phonology[key].gloss + '</a></span>';
+        }
+    }
+    relationsCell.html(cell);
+}
+
 // This script gets homonym objects
 $(document).ready(function() {
     for (var i = 0; i < ids_of_all_glosses.length; i++) {
         $.ajax({
             url : url + "/ajax/homonyms/" + ids_of_all_glosses[i] + "/",
             datatype: "json",
-            success : function(result) {
-                for (var key in result) {
-                    var homonyms_i = result[key];
-                    if (homonyms_i.length > 0) {
-                        lookup = "#homonyms_"+ key;
-                        $.each(homonyms_i, function(key, value) {
-                            var input = $('<span><a href="'+url+'/dictionary/gloss/'+value.id+'/">' + value.gloss + '</a> &nbsp; </span>');
-                            $(lookup).append(input);
-                        });
-                        $(lookup).parent().removeClass('empty_row');
-                        $(lookup).parent().css({'display':'visible'});
-                    };
-                }
-            }
+            success : show_homonyms
         });
-
     }
 });
-
-
 </script>
 {% endblock %}
 </head>
@@ -66,8 +75,8 @@ $(document).ready(function() {
     </thead>
     <tbody>
     {% for focus_gloss in object_list %}
-      {% with focus_gloss.homonym_relations as homonyms_saved %}
-        <tr {%if homonyms_saved|length == 0 %} class="empty_row" style='display: none;'{% endif %}>
+    <tr id="focus_gloss_row_{{focus_gloss.id}}" style="display: visible;">
+    {% with focus_gloss.homonym_relations as homonyms_saved %}
             <td>
                 <a href="{{PREFIX_URL}}/dictionary/gloss/{{ focus_gloss.pk }}/">{{ focus_gloss|get_annotation_idgloss_translation:language }}</a>
             </td>
@@ -77,11 +86,11 @@ $(document).ready(function() {
                        href='{% url "dictionary:admin_gloss_view" pk=gl.pk %}'>{{ gl|get_annotation_idgloss_translation:language }}</a>
                 {% endfor %}
             </td>
-            <td class="focus_gloss_homonym_objects" id = "homonyms_{{focus_gloss.id}}" >
+            <td class="focus_gloss_homonym_objects" id="homonyms_{{focus_gloss.id}}" >
 
             </td>
-        </tr>
     {% endwith %}
+    </tr>
     {% endfor %}
     </tbody>
 </table>

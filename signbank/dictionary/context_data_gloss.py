@@ -3,8 +3,11 @@ from django.db.models import IntegerField, Value as V
 
 from signbank.settings.server_specific import FIELDS, HANDSHAPE_ETYMOLOGY_FIELDS, HANDEDNESS_ARTICULATION_FIELDS
 from signbank.video.models import GlossVideoDescription, GlossVideoNME
-from signbank.dictionary.models import AnnotatedSentence, fieldname_to_kind
-
+from signbank.dictionary.models import AnnotatedSentence, fieldname_to_kind, Relation, FieldChoice
+from signbank.dictionary.senses_display import (senses_per_language, senses_per_language_list,
+                                                sensetranslations_per_language_dict,
+                                                senses_translations_per_language_list,
+                                                senses_sentences_per_language_list)
 
 def get_annotation_idgloss_per_language_dict(gloss):
     default_language = gloss.lemma.dataset.default_language
@@ -69,10 +72,15 @@ def get_sequential_morphology(gloss, interface_language):
 
 
 def get_other_relations(gloss):
+    # Show whether a relation is a duplicate in Gloss Detail View
     otherrelations = []
-    for oth_rel in gloss.relation_sources.filter(target__archived__exact=False,
-                                                 source__archived__exact=False):
-        otherrelations.append((oth_rel, oth_rel.get_target_display()))
+    seen = []
+    for oth_rel in gloss.get_relations():
+        if (oth_rel.role_fk, oth_rel.target) in seen:
+            otherrelations.append((True, oth_rel, oth_rel.get_target_display()))
+        else:
+            otherrelations.append((False, oth_rel, oth_rel.get_target_display()))
+        seen.append((oth_rel.role_fk, oth_rel.target))
     return otherrelations
 
 
@@ -152,3 +160,33 @@ def get_provenance_groupedby_method(gloss):
             provenance_groupedby_method[method_id] = []
         provenance_groupedby_method[method_id].append(prov)
     return provenance_groupedby_method
+
+
+def get_relations_groupedby_role(gloss):
+    relations_source = Relation.objects.filter(source=gloss)
+    relations_dict = dict()
+    for rel in relations_source:
+        if rel.role_fk not in relations_dict.keys():
+            relations_dict[rel.role_fk] = []
+        if rel.target not in relations_dict[rel.role_fk]:
+            relations_dict[rel.role_fk].append(rel.target)
+    return relations_dict
+
+def get_relations_dict(gloss):
+    relation_roles = FieldChoice.objects.filter(field='RelationRole', machine_value__gt=1)
+    relations_dict = dict()
+    for role in relation_roles:
+        relations_dict[role] = gloss.get_relations_of_type(role)
+    return relations_dict
+
+def relations_target_gloss_lookup(gloss):
+    relations = Relation.objects.filter(source=gloss)
+    target_lookup = dict()
+    for relation in relations:
+        target = relation.target
+        if target in target_lookup.keys():
+            continue
+        target_lookup[target] = dict()
+        target_lookup[target]['senses'] = senses_per_language(target)
+        target_lookup[target]['display'] = target.annotation_idgloss(target.lemma.dataset.default_language.language_code_2char)
+    return target_lookup

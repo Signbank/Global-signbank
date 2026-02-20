@@ -32,6 +32,9 @@ from urllib.parse import urlparse, unquote
 from signbank.settings.base import FIELDS, DEFAULT_KEYWORDS_LANGUAGE, \
     WRITABLE_FOLDER, DATASET_METADATA_DIRECTORY, ECV_FOLDER
 from signbank.dictionary.translate_choice_list import choicelist_queryset_to_translated_dict
+from signbank.settings.server_specific import HANDSHAPE_ETYMOLOGY_FIELDS
+from signbank.settings.server_specific.asl_yale import HANDEDNESS_ARTICULATION_FIELDS
+
 
 # -*- coding: utf-8 -*-
 
@@ -80,16 +83,17 @@ class FieldChoice(models.Model):
     ORICHANGE = 'OriChange'
     OTHERMEDIATYPE = 'OtherMediaType'
     PATHONPATH = 'PathOnPath'
+    PROVENANCE = 'Provenance'
     QUANTITY = 'Quantity'
+    RELATARTIC = 'RelatArtic'
+    RELATIONROLE = 'RelationRole'
     RELORILOC = 'RelOriLoc'
     RELORIMOV = 'RelOriMov'
-    RELATARTIC = 'RelatArtic'
+    SENTENCETYPE = 'SentenceType'
     SPREADING = 'Spreading'
     THUMB = 'Thumb'
     VALENCE = 'Valence'
     WORDCLASS = 'WordClass'
-    SENTENCETYPE = 'SentenceType'
-    PROVENANCE = 'Provenance'
 
     FIELDCHOICE_FIELDS = [
         (ABSORIFING, 'AbsOriFing'),
@@ -100,8 +104,8 @@ class FieldChoice(models.Model):
         (DOMINANTHANDSELECTEDFINGERS, 'DominantHandSelectedFingers'),
         (FINGERSELECTION, 'FingerSelection'),
         (HANDEDNESS, 'Handedness'),
-        (ICONICITY, 'iconicity'),
         (HANDSHAPECHANGE, 'HandshapeChange'),
+        (ICONICITY, 'iconicity'),
         (JOINTCONFIGURATION, 'JointConfiguration'),
         (LOCATION, 'Location'),
         (MINORLOCATION, 'MinorLocation'),
@@ -115,16 +119,17 @@ class FieldChoice(models.Model):
         (ORICHANGE, 'OriChange'),
         (OTHERMEDIATYPE, 'OtherMediaType'),
         (PATHONPATH, 'PathOnPath'),
+        (PROVENANCE, 'Provenance'),
         (QUANTITY, 'Quantity'),
+        (RELATARTIC, 'RelatArtic'),
+        (RELATIONROLE, 'RelationRole'),
         (RELORILOC, 'RelOriLoc'),
         (RELORIMOV, 'RelOriMov'),
-        (RELATARTIC, 'RelatArtic'),
+        (SENTENCETYPE, 'SentenceType'),
         (SPREADING, 'Spreading'),
         (THUMB, 'Thumb'),
         (VALENCE, 'Valence'),
-        (WORDCLASS, 'WordClass'),
-        (SENTENCETYPE, 'SentenceType'),
-        (PROVENANCE, 'Provenance')
+        (WORDCLASS, 'WordClass')
     ]
 
     field = models.CharField(max_length=50, choices=FIELDCHOICE_FIELDS)
@@ -139,6 +144,27 @@ class FieldChoice(models.Model):
 
     class Meta:
         ordering = ['machine_value']
+
+    def has_name(self, category, name):
+        name_fields = [f'name_{language.replace('-', '_')}' for language in settings.MODELTRANSLATION_LANGUAGES]
+        matches = self.field == category and any(getattr(self, name_field) == name for name_field in name_fields)
+        return matches
+
+    @classmethod
+    def lookup(cls, category, name):
+        q = Q()
+        for language in settings.MODELTRANSLATION_LANGUAGES:
+            field_name = 'name_' + language.replace('-', '_')
+            q |= Q(**{f"{field_name}__iexact": name})
+        return FieldChoice.objects.filter(field=category).filter(q).distinct().get()
+
+    @classmethod
+    def query(cls, category, name):
+        q = Q()
+        for language in settings.MODELTRANSLATION_LANGUAGES:
+            field_name = 'name_' + language.replace('-', '_')
+            q |= Q(**{f"{field_name}__iexact": name})
+        return FieldChoice.objects.filter(field=category).filter(q).distinct()
 
 
 class Translation(models.Model):
@@ -1354,8 +1380,8 @@ class Gloss(MetaModelMixin, models.Model):
 
     def get_relation_display(self):
         default_language = self.lemma.dataset.default_language.language_code_2char
-        relations_to_signs = Relation.objects.filter(source=self)
-        return ", ".join([x.role + ':' + x.target.annotation_idgloss(default_language)
+        relations_to_signs = Relation.objects.filter(source=self).order_by('target__pk', 'role_fk__machine_value')
+        return ", ".join([x.role_fk.name + ':' + x.target.annotation_idgloss(default_language)
                                    for x in relations_to_signs])
 
     def get_hasComponentOfType_display(self):
@@ -1783,97 +1809,43 @@ class Gloss(MetaModelMixin, models.Model):
     def homophones(self):
         """Return the set of homophones for this gloss ordered by sense number"""
 
+        homophone = FieldChoice.query('RelationRole', "Homophone")
         if self.sense == 1:
-            relations = Relation.objects.filter(role="homophone", target__exact=self).order_by('source__sense')
+            relations = Relation.objects.filter(role_fk__in=homophone, target__exact=self).order_by('source__sense')
             homophones = [rel.source for rel in relations]
             homophones.insert(0, self)
             return homophones
         elif self.sense > 1:
             # need to find the root and see how many senses it has
-            homophones = self.relation_sources.filter(target__archived__exact=False,
-                                                      source__archived__exact=False,
-                                                      role='homophone', target__sense__exact=1)
+            relations_source = Relation.objects.filter(source=self)
+            homophones = relations_source.filter(role_fk__in=homophone, target__sense__exact=1)
             if len(homophones) > 0:
                 root = homophones[0].target
                 return root.homophones()
         return []
 
-    def homonyms_count(self):
-
-        homonyms_count = self.relation_sources.filter(target__archived__exact=False,
-                                                      source__archived__exact=False,
-                                                      role='homonym').exclude(target=self).count()
-
-        return homonyms_count
-
-    def synonyms_count(self):
-
-        synonyms_count = self.relation_sources.filter(target__archived__exact=False,
-                                                      source__archived__exact=False,
-                                                      role='synonym').exclude(target=self).count()
-        return synonyms_count
+    def get_relations_of_type(self, role):
+        assert isinstance(role, FieldChoice), "Not a FieldChoice object"
+        if not role.field == 'RelationRole':
+            raise ValueError("Not a RelationRole FieldChoice object")
+        relations_source = Relation.objects.filter(source=self)
+        relations_with_type_role = relations_source.filter(role_fk=role)
+        return relations_with_type_role
 
     def get_synonyms(self):
-        filters = dict(target__archived=False, source__archived=False, role='synonym')
-        synonyms = (rel.target for rel in self.relation_sources.all().filter(**filters).exclude(target=self))
+        relations_source = Relation.objects.filter(source=self)
+        synonym = FieldChoice.query('RelationRole', "Synonym")
+        synonym_relations = relations_source.filter(role_fk__in=synonym)
+        synonyms = [rel.target for rel in synonym_relations]
         return set(synonyms)
 
-    def antonyms_count(self):
+    def get_relations(self):
+        relations = Relation.objects.filter(source=self)
+        return relations
 
-        antonyms_count = self.relation_sources.filter(target__archived__exact=False,
-                                                      source__archived__exact=False,
-                                                      role='antonym').exclude(target=self).count()
-
-        return antonyms_count
-
-    def hyponyms_count(self):
-
-        hyponyms_count = self.relation_sources.filter(target__archived__exact=False,
-                                                      source__archived__exact=False,
-                                                      role='hyponym').exclude(target=self).count()
-
-        return hyponyms_count
-
-    def hypernyms_count(self):
-
-        hypernyms_count = self.relation_sources.filter(target__archived__exact=False,
-                                                       source__archived__exact=False,
-                                                       role='hypernym').exclude(target=self).count()
-
-        return hypernyms_count
-
-    def seealso_count(self):
-
-        seealso_count = self.relation_sources.filter(target__archived__exact=False,
-                                                     source__archived__exact=False,
-                                                     role='seealso').exclude(target=self).count()
-
-        return seealso_count
-
-    def paradigm_count(self):
-
-        paradigm_count = self.relation_sources.filter(target__archived__exact=False,
-                                                      source__archived__exact=False,
-                                                      role='paradigm').exclude(target=self).count()
-
-        return paradigm_count
-
-    def variant_count(self):
-
-        variant_count = self.relation_sources.filter(target__archived__exact=False,
-                                                     source__archived__exact=False,
-                                                     role='variant').exclude(target=self).count()
-
-        return variant_count
-
-    def relations_count(self):
-
-        relations_count = self.relation_sources.filter(
-            target__archived__exact=False,
-            source__archived__exact=False,
-            role__in=['homonym', 'synonyn', 'antonym', 'hyponym', 'hypernym', 'seealso', 'variant']).exclude(target=self).count()
-
-        return relations_count
+    def get_relations_count(self):
+        relations = Relation.objects.filter(source=self)
+        return relations.count()
 
     def has_variants(self):
 
@@ -1925,32 +1897,29 @@ class Gloss(MetaModelMixin, models.Model):
         return pattern_variants
 
     def other_relations(self):
-
-        other_relations = self.relation_sources.filter(
-            target__archived__exact=False,
-            source__archived__exact=False,
-            role__in=['homonym', 'synonyn', 'antonym', 'hyponym', 'hypernym', 'seealso']).exclude(target=self)
-
-        return other_relations
+        relations_source = Relation.objects.filter(source=self)
+        variant = FieldChoice.query('RelationRole', "Variant")
+        relations = relations_source.exclude(role_fk__in=variant)
+        return relations
 
     def variant_relations(self):
-
-        variant_relations = self.relation_sources.filter(target__archived__exact=False,
-                                                         source__archived__exact=False,
-                                                         role__in=['variant']).exclude(target=self)
-
+        relations_source = Relation.objects.filter(source=self)
+        variant = FieldChoice.query('RelationRole', "Variant")
+        variant_relations = relations_source.filter(role_fk__in=variant)
         return variant_relations
 
+    def has_homonyms(self):
+        homonym = FieldChoice.query('RelationRole', "Homonym")
+        homonym_relations = Relation.objects.filter(source=self, role_fk__in=homonym)
+        return homonym_relations.count()
+
     # this function is used by Homonyms List view
-    # a boolean is paired with saved homonym relation targets to tag duplicates
+    # a Boolean is paired with saved homonym relation targets to tag duplicates
     def homonym_relations(self):
-
-        homonym_relations = self.relation_sources.filter(target__archived__exact=False,
-                                                         source__archived__exact=False,
-                                                         role__in=['homonym'])
-
+        relations_source = Relation.objects.filter(source=self)
+        homonym = FieldChoice.query('RelationRole', "Homonym")
+        homonym_relations = relations_source.filter(role_fk__in=homonym)
         homonyms = [x.target for x in homonym_relations]
-
         tagged_homonym_objects = []
         seen = []
         for o in homonyms:
@@ -1960,7 +1929,6 @@ class Gloss(MetaModelMixin, models.Model):
             else:
                 tagged_homonym_objects.append((o, False))
                 seen.append(o.id)
-
         return tagged_homonym_objects
 
     def get_stems(self):
@@ -1986,16 +1954,8 @@ class Gloss(MetaModelMixin, models.Model):
         return stems
 
     def gloss_relations(self):
-
-        variant_relations = self.relation_sources.filter(target__archived__exact=False,
-                                                         source__archived__exact=False,
-                                                         role__in=['variant'])
-
-        other_relations = self.relation_sources.filter(
-            target__archived__exact=False,
-            source__archived__exact=False,
-            role__in=['homonym', 'synonyn', 'antonym', 'hyponym', 'hypernym', 'seealso', 'paradigm'])
-
+        variant_relations = self.variant_relations()
+        other_relations = self.other_relations()
         return other_relations, variant_relations
 
     def phonology_matrix_homonymns(self, use_machine_value=False):
@@ -2077,18 +2037,8 @@ class Gloss(MetaModelMixin, models.Model):
         focus_gloss_values_tuple = self.minimal_pairs_tuple()
         index_of_handedness = settings.MINIMAL_PAIRS_FIELDS.index('handedness')
         handedness_of_this_gloss = focus_gloss_values_tuple[index_of_handedness]
-
-        # Ignore minimal pairs when the Handedness of this gloss is X, if it's a possible field choice
-        try:
-            handedness_X = str(FieldChoice.objects.get(field='Handedness', name__exact='X').id)
-
-        except ObjectDoesNotExist:
-            # print('minimalpairs_objects: Handedness X is not defined')
-            handedness_X = ''
-
-        empty_handedness = [ str(fc.id) for fc in FieldChoice.objects.filter(field='Handedness', name__in=['-','N/A']) ]
-
-        if handedness_of_this_gloss in empty_handedness or handedness_of_this_gloss == handedness_X:
+        empty_or_X_handedness = [str(fc.id) for fc in FieldChoice.objects.filter(field='Handedness', name__in=['-','N/A', 'X'])]
+        if handedness_of_this_gloss in empty_or_X_handedness:
             # ignore gloss with empty or X handedness
             return minimalpairs_objects_list
 
@@ -2165,7 +2115,6 @@ class Gloss(MetaModelMixin, models.Model):
         return minimalpairs_objects_list
 
     def minimal_pairs_dict(self):
-
         focus_gloss_values_tuple = self.minimal_pairs_tuple()
 
         index_of_handedness = settings.MINIMAL_PAIRS_FIELDS.index('handedness')
@@ -2173,11 +2122,9 @@ class Gloss(MetaModelMixin, models.Model):
 
         minimal_pairs_fields = dict()
 
-        empty_handedness = [str(fc.id) for fc in
-                            FieldChoice.objects.filter(field='Handedness', name__in=['-', 'N/A'])]
-
+        empty_or_X_handedness = [str(fc.id) for fc in FieldChoice.objects.filter(field='Handedness', name__in=['-', 'N/A', 'X'])]
         # If handedness is not defined for this gloss, don't bother to look up minimal pairs
-        if handedness_of_this_gloss in empty_handedness:
+        if handedness_of_this_gloss in empty_or_X_handedness:
             return minimal_pairs_fields
 
         # Restrict minimal pairs search if gloss has empty phonology field for Strong Hand
@@ -2215,15 +2162,11 @@ class Gloss(MetaModelMixin, models.Model):
 
         return minimal_pairs_fields
 
-    # Homonyms
-    # these are now defined in settings
-
+    # Homonyms dynamically retrieved as glosses with the same phonology
     def homonym_objects(self):
-
         homonym_objects_list = []
 
         if not self.lemma or not self.lemma.dataset:
-            # take care of glosses without a dataset
             return homonym_objects_list
 
         phonology_for_gloss = self.phonology_matrix_homonymns()
@@ -2231,17 +2174,8 @@ class Gloss(MetaModelMixin, models.Model):
 
         homonym_objects_list = []
 
-        # Ignore homonyms when the Handedness of this gloss is X, if it's a possible field choice
-        try:
-            handedness_X = str(FieldChoice.objects.get(field='Handedness', name__exact='X').id)
-
-        except ObjectDoesNotExist:
-            # print('homonym_objects: Handedness X is not defined')
-            handedness_X = ''
-
-        empty_handedness = [ str(fc.id) for fc in FieldChoice.objects.filter(field='Handedness', name__in=['-','N/A']) ]
-
-        if handedness_of_this_gloss in empty_handedness or handedness_of_this_gloss == handedness_X:
+        empty_or_X_handedness = [str(fc.id) for fc in FieldChoice.objects.filter(field='Handedness', name__in=['-','N/A', 'X'])]
+        if handedness_of_this_gloss in empty_or_X_handedness:
             # ignore gloss with empty or X handedness
             return homonym_objects_list
 
@@ -2254,7 +2188,6 @@ class Gloss(MetaModelMixin, models.Model):
 
         for field in minimal_pair_fields + settings.HANDSHAPE_ETYMOLOGY_FIELDS + settings.HANDEDNESS_ARTICULATION_FIELDS:
             value_of_this_field = phonology_for_gloss.get(field)
-
             if value_of_this_field is None and field in foreign_key_fields:
                 # catch not set FK fields
                 comparison = field + '__isnull'
@@ -2289,55 +2222,35 @@ class Gloss(MetaModelMixin, models.Model):
                 q.add(Q(**{comparison: value_of_this_field}), q.AND)
 
         qs = Gloss.objects.select_related('lemma').exclude(id=self.id).filter(q)
-
         for o in qs:
             homonym_objects_list.append(o)
-        #
         return homonym_objects_list
-        # return qs
 
     def homonyms(self):
         #  this function returns a 3-tuple of information about homonymns for this gloss
-
-        homonyms_of_this_gloss = []
-
         if not self.lemma or not self.lemma.dataset:
-            # take care of glosses without a dataset
             return [], [], []
 
-        gloss_homonym_relations = self.relation_sources.filter(target__archived__exact=False,
-                                                               source__archived__exact=False,
-                                                               role='homonym')
+        relations_source = Relation.objects.filter(source=self)
+        homonym = FieldChoice.query('RelationRole', "Homonym")
+        gloss_homonym_relations = relations_source.filter(target__archived__exact=False,
+                                                          source__archived__exact=False,
+                                                          role_fk__in=homonym)
 
         list_of_homonym_relations = [r for r in gloss_homonym_relations]
 
         targets_of_homonyms_of_this_gloss = [r.target for r in gloss_homonym_relations]
 
-        paren = ')'
-
         phonology_for_gloss = self.phonology_matrix_homonymns()
-
         handedness_of_this_gloss = phonology_for_gloss['handedness']
-
-        # Ignore homonyms when the Handedness of this gloss is X, if it's a possible field choice
-        try:
-            handedness_X = str(FieldChoice.objects.get(field='Handedness', name__exact='X').id)
-
-        except ObjectDoesNotExist:
-            print('homonyms: Handedness X is not defined')
-            return [], [], []
-
-        empty_handedness = [ str(fc.id) for fc in FieldChoice.objects.filter(field='Handedness', name__in=['-','N/A']) ]
-
-        if handedness_of_this_gloss in empty_handedness or handedness_of_this_gloss == handedness_X:
+        empty_or_X_handedness = [str(fc.id) for fc in FieldChoice.objects.filter(field='Handedness', name__in=['-','N/A', 'X'])]
+        if handedness_of_this_gloss in empty_or_X_handedness:
             # ignore gloss with empty or X handedness
             return [], [], []
 
         handshape_of_this_gloss = phonology_for_gloss['domhndsh']
-
         empty_handshape = [str(fc.machine_value) for fc in
-                            Handshape.objects.filter(name__in=['-', 'N/A'])]
-
+                           Handshape.objects.filter(name__in=['-', 'N/A'])]
         if handshape_of_this_gloss in empty_handshape:
             return [], [], []
 
@@ -2347,11 +2260,11 @@ class Gloss(MetaModelMixin, models.Model):
         saved_but_not_homonyms = []
 
         for r in list_of_homonym_relations:
-            if not r.target in homonyms_of_this_gloss:
-                saved_but_not_homonyms += [r.target]
+            if r.target not in homonyms_of_this_gloss:
+                saved_but_not_homonyms.append(r.target)
         for h in homonyms_of_this_gloss:
-            if not h in targets_of_homonyms_of_this_gloss:
-                homonyms_not_saved += [h]
+            if h not in targets_of_homonyms_of_this_gloss:
+                homonyms_not_saved.append(h)
 
         return homonyms_of_this_gloss, homonyms_not_saved, saved_but_not_homonyms
 
@@ -2659,8 +2572,10 @@ class Gloss(MetaModelMixin, models.Model):
 
     def relation_role_choices_json(self):
         """Return JSON for the relation role choice list"""
-
-        return self.options_to_json(RELATION_ROLE_CHOICES)
+        d = dict()
+        for rrf in FieldChoice.objects.filter(field='RelationRole', machine_value__gt=1).order_by('name'):
+            d[rrf.name] = rrf.name
+        return json.dumps(d)
 
     def handedness_weak_choices(self):
         """Return JSON for the etymology choice list"""
@@ -2902,21 +2817,43 @@ class Relation(models.Model):
     source = models.ForeignKey(Gloss, related_name="relation_sources", on_delete=models.CASCADE)
     target = models.ForeignKey(Gloss, related_name="relation_targets", on_delete=models.CASCADE)
     role = models.CharField(max_length=20, choices=RELATION_ROLE_CHOICES)
+    role_fk = FieldChoiceForeignKey(FieldChoice, on_delete=models.SET_NULL, null=True,
+                                    limit_choices_to={'field': FieldChoice.RELATIONROLE},
+                                    field_choice_category=FieldChoice.RELATIONROLE,
+                                    verbose_name=_("Relation Role"), related_name="relation_role")
 
     class Admin:
-        list_display = ['source', 'role', 'target']
+        list_display = ['source', 'role_pk__name', 'target']
         search_fields = ['source__idgloss', 'target__idgloss']
 
     class Meta:
         ordering = ['source']
 
-    def get_reverse_role(role):
-        if role == 'hyponym':
-            return 'hypernym'
-        elif role == 'hypernym':
-            return 'hyponym'
-        else:
-            return role
+    def get_role_display(self):
+        return self.role_fk.name if self.role_fk else '-'
+
+    def get_reverse_role(self):
+        if not self.role_fk:
+            raise ValueError(_("Relation Role is not defined."))
+        if self.role_fk.has_name('RelationRole', 'Hyponym'):
+            try:
+                hypernym = FieldChoice.lookup('RelationRole', "Hypernym")
+            except (ObjectDoesNotExist, MultipleObjectsReturned):
+                raise ValueError(_("FieldChoice for Hypernym is not defined."))
+            return hypernym
+        if self.role_fk.has_name('RelationRole', 'Hypernym'):
+            try:
+                hyponym = FieldChoice.lookup('RelationRole', "Hyponym")
+            except (ObjectDoesNotExist, MultipleObjectsReturned):
+                raise ValueError(_("FieldChoice for Hyponym is not defined."))
+            return hyponym
+        return self.role_fk
+
+    @property
+    def is_transitive(self):
+        if not self.role_fk:
+            return False
+        return self.role_fk.has_name('RelationRole', "Synonym")
 
     def get_target_display(self):
         default_language = self.target.lemma.dataset.default_language.language_code_2char
