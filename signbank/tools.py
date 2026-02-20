@@ -18,7 +18,7 @@ from django.utils.translation import override, activate, gettext, gettext_lazy a
 from django.views.decorators.csrf import csrf_exempt
 from django.utils.dateformat import format
 from django.utils.timezone import get_current_timezone
-from django.core.exceptions import ObjectDoesNotExist, EmptyResultSet
+from django.core.exceptions import ObjectDoesNotExist, EmptyResultSet, MultipleObjectsReturned
 from django.contrib.auth.models import User
 from django.http import JsonResponse, HttpResponse
 from django.shortcuts import render
@@ -581,7 +581,7 @@ def compare_valuedict_to_gloss(valuedict, gloss_id, my_datasets, nl,
                 (checked_new_human_value, errors) = check_existence_relations(gloss, new_human_value_list)
 
                 if len(errors):
-                    errors_found += errors
+                    errors_found += [errors]
                 elif current_relations_string != checked_new_human_value:
                     differences.append({'pk': gloss_id,
                                         'dataset': current_dataset,
@@ -1498,9 +1498,9 @@ def check_existence_relations(gloss, values):
 
     RELATION_ROLES = [fc.name for fc in FieldChoice.objects.filter(field__iexact='RelationRole',
                                                                    machine_value__gt=1).order_by('name')]
-    RELATION_ROLE_TO_MACHINE_VALUE = dict([(fc.name, fc.machine_value) for fc in FieldChoice.objects.filter(field__iexact='RelationRole',
+    RELATION_ROLE_TO_MACHINE_VALUE = dict([(fc.name, fc.machine_value) for fc in FieldChoice.objects.filter(field='RelationRole',
                                                                                                    machine_value__gt=1).order_by('name')])
-    RELATION_ROLES_LOOKUP = dict([(fc.machine_value, fc.name) for fc in FieldChoice.objects.filter(field__iexact='RelationRole',
+    RELATION_ROLES_LOOKUP = dict([(fc.machine_value, fc.name) for fc in FieldChoice.objects.filter(field='RelationRole',
                                                                                                    machine_value__gt=1).order_by('name')])
     RELATION_ROLES_DISPLAY = ', '.join(RELATION_ROLES)
 
@@ -1522,18 +1522,26 @@ def check_existence_relations(gloss, values):
             error_string = gettext(
                 "For gloss '{annotation}' ({glossid}), formatting error in Relations to other signs: '{input}'. Tuple role:gloss expected.").format(
                 annotation=default_annotationidglosstranslation, glossid=str(gloss.pk), input=str(new_value_tuple))
-            errors.append(error_string)
+            errors += [error_string]
 
     # check roles
     for (role, other_gloss) in sorted_values:
+        if role in RELATION_ROLES:
+            continue
         try:
-            if role not in RELATION_ROLES:
-                raise ValueError
-        except ValueError:
+            role_fieldchoice = FieldChoice.lookup('RelationRole', role)
+        except (ObjectDoesNotExist, MultipleObjectsReturned):
             error_string = gettext(
                 "For gloss '{annotation}' ({glossid}), column Relations to other signs: '{role}:{other_gloss}'. Role '{role}' not found. Role should be one of: {RELATION_ROLES_DISPLAY}.").format(
                 annotation=default_annotationidglosstranslation, glossid=str(gloss.pk), role=role, other_gloss=other_gloss, RELATION_ROLES_DISPLAY=RELATION_ROLES_DISPLAY)
-            errors.append(error_string)
+            errors += [error_string]
+            continue
+        error_string = gettext(
+            "For gloss '{annotation}' ({glossid}), column Relations to other signs: '{role}:{other_gloss}'. Please use English for the role.").format(
+            annotation=default_annotationidglosstranslation, glossid=str(gloss.pk), role=role, other_gloss=other_gloss)
+        errors += [error_string]
+    if errors:
+        return checked, errors
 
     # check target glosses
     checked_relations = []
@@ -1547,19 +1555,19 @@ def check_existence_relations(gloss, values):
             error_string = gettext(
                 "For gloss '{annotation}' ({glossid}), column Relations to other signs: '{role}:{other_gloss}'. Other gloss '{other_gloss}' not found.").format(
                 annotation=default_annotationidglosstranslation, glossid=str(gloss.pk), role=role, other_gloss=other_gloss)
-            errors.append(error_string)
+            errors += [error_string]
             continue
         elif filter_target.count() > 1:
             error_string = gettext(
                 "For gloss '{annotation}' ({glossid}), column Relations to other signs: '{role}:{other_gloss}'. Multiple matches found for other gloss '{other_gloss}'.").format(
                 annotation=default_annotationidglosstranslation, glossid=str(gloss.pk), role=role, other_gloss=other_gloss)
-            errors.append(error_string)
+            errors += [error_string]
             continue
         elif gloss.pk == filter_target.first().pk:
             error_string = gettext(
                 "For gloss '{annotation}' ({glossid}), column Relations to other signs: '{role}:{other_gloss}'. The other gloss '{other_gloss}' is the same as this gloss '{annotation}'.").format(
                 annotation=default_annotationidglosstranslation, glossid=str(gloss.pk), role=role, other_gloss=other_gloss)
-            errors.append(error_string)
+            errors += [error_string]
             continue
         target = filter_target.first()
         if target.pk not in TARGET_LOOKUP.keys():

@@ -1502,7 +1502,7 @@ def remove_transitive_synonym(user, rel):
     assert isinstance(rel, Relation), "Not a Relation object."
 
     try:
-        synonym = FieldChoice.objects.get(field='RelationRole', name__iexact="Synonym")
+        synonym = FieldChoice.lookup('RelationRole', "Synonym")
     except (ObjectDoesNotExist, MultipleObjectsReturned):
         raise ValueError(gettext_lazy("FieldChoice for Synonym is not defined."))
 
@@ -1540,7 +1540,7 @@ def update_relation(user, gloss, field, value):
     """Update one of the relations for this gloss"""
 
     try:
-        synonym = FieldChoice.objects.get(field='RelationRole', name__iexact="Synonym")
+        synonym = FieldChoice.lookup('RelationRole', "Synonym")
     except (ObjectDoesNotExist, MultipleObjectsReturned):
         raise ValueError(gettext_lazy("FieldChoice for Synonym is not defined."))
 
@@ -1838,7 +1838,7 @@ def variants_of_gloss(request):
         return HttpResponseRedirect('/')
 
     try:
-        variant = FieldChoice.objects.get(field='RelationRole', name__iexact="Variant")
+        variant = FieldChoice.lookup('RelationRole', "Variant")
     except (ObjectDoesNotExist, MultipleObjectsReturned):
         raise ValueError(gettext_lazy("FieldChoice for Variant is not defined."))
 

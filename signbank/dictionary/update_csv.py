@@ -193,16 +193,16 @@ def subst_relations(user, gloss, values):
     # all remaining existing relations are to be updated
     for (role, target) in new_tuples_to_add:
         try:
-            role_fieldchoice = FieldChoice.objects.get(field='RelationRole', name__iexact=role)
+            role_fieldchoice = FieldChoice.lookup('RelationRole', role)
         except (ObjectDoesNotExist, MultipleObjectsReturned):
-            errors.append(_("FieldChoice for Synonym is not defined."))
+            errors.append(gettext("FieldChoice for {role} is not defined.").format(role=role))
             continue
 
         filter_glosses = Gloss.objects.filter(lemma__dataset=gloss.lemma.dataset, archived=False,
                                               annotationidglosstranslation__text__exact=target).distinct()
         target_gloss = filter_glosses.first()
         if not target_gloss:
-            errors.append(_("Target gloss not found."))
+            errors.append(gettext("Target gloss not found."))
             continue
 
         if target_gloss not in original_targets_display.keys():
@@ -211,7 +211,7 @@ def subst_relations(user, gloss, values):
         try:
             rel, created = Relation.objects.get_or_create(source=gloss, role_fk=role_fieldchoice, target=target_gloss)
         except (ObjectDoesNotExist, MultipleObjectsReturned):
-            errors.append(_("This relation already exists."))
+            errors.append(gettext("This relation already exists."))
             continue
 
         reverse_role = rel.get_reverse_role()
@@ -219,7 +219,7 @@ def subst_relations(user, gloss, values):
         try:
             reverse_relation, created_reverse = Relation.objects.get_or_create(source=target_gloss, target=gloss, role_fk=reverse_role)
         except (ObjectDoesNotExist, MultipleObjectsReturned):
-            errors.append(_("This relation already exists."))
+            errors.append(gettext("This relation already exists."))
             continue
 
     gloss.lastUpdated = DT.datetime.now(tz=get_current_timezone())

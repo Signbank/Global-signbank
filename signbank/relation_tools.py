@@ -1,5 +1,5 @@
 from django.core.exceptions import ObjectDoesNotExist, MultipleObjectsReturned
-from django.utils.translation import gettext, gettext_lazy as _
+from django.utils.translation import gettext_lazy as _
 
 from signbank.dictionary.models import (Gloss, Relation, FieldChoice)
 
@@ -7,7 +7,7 @@ def ensure_synonym_transitivity(gloss):
     assert isinstance(gloss, Gloss), "Not a Gloss object."
 
     try:
-        synonym = FieldChoice.objects.get(field='RelationRole', name__iexact="Synonym")
+        synonym = FieldChoice.lookup('RelationRole', "Synonym")
     except (ObjectDoesNotExist, MultipleObjectsReturned):
         raise ValueError(_("FieldChoice for Synonym is not defined."))
 

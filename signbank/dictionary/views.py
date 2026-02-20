@@ -1164,7 +1164,7 @@ def import_csv_update(request):
                 if len(errors_found):
                     # more than one error found
                     errors_found_string = '\n'.join(errors_found)
-                    error.append(errors_found_string)
+                    error += [errors_found_string]
 
             except KeyError as e:
 
