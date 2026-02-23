@@ -59,7 +59,7 @@
     </script>
 
 <style>
-list {
+.list-tuples {
     overflow-y: scroll;
     overflow-x: hidden;
     scrollbar-width: thin;
@@ -142,35 +142,34 @@ dd {
 
                 <p>{% trans "A metadata file can be uploaded by the Dataset Manager via the Manage Datasets page." %}</p>
 
-                <p>{% trans "The metadata CSV currently supports:" %}<br>
+                <p>{% trans "The metadata CSV currently supports:" %}</p>
+                <br>
                 <!-- This is an example of the Header of a metafile, the column headers are in English as shown, do not translate. -->
                         <div class="container" >
                           <table class="justify-content:center">
                             <tr>
-                                <td align='right'>Signer ID</td><td>&nbsp;&nbsp;</td><td align='left'>{% trans "Used in Dataset EAF files" %}</td>
+                                <td style="text-align:right;">Signer ID</td><td>&nbsp;&nbsp;</td><td style="text-align:left;">{% trans "Used in Dataset EAF files" %}</td>
                             </tr>
                             <tr>
-                                <td align='right'>Region</td><td>&nbsp;&nbsp;</td><td align='left'>{% trans "Geographical Region" %}</td>
+                                <td style="text-align:right;">Region</td><td>&nbsp;&nbsp;</td><td style="text-align:left;">{% trans "Geographical Region" %}</td>
                             </tr>
                             <tr>
-                                <td align='right'>Age</td><td>&nbsp;&nbsp;</td><td align='left'>{% trans "Age at time of recording" %}</td>
+                                <td style="text-align:right;">Age</td><td>&nbsp;&nbsp;</td><td style="text-align:left;">{% trans "Age at time of recording" %}</td>
                             </tr>
                             <tr>
-                                <td align='right'>Gender</td><td>&nbsp;&nbsp;</td><td align='left'>{% trans "Male (m), Female (f), Other (o)" %}</td>
+                                <td style="text-align:right;">Gender</td><td>&nbsp;&nbsp;</td><td style="text-align:left;">{% trans "Male (m), Female (f), Other (o)" %}</td>
                             </tr>
                             <tr>
-                                <td align='right'>Handedness</td><td>&nbsp;&nbsp;</td><td align='left'>{% trans "Right (r), Left (l), Ambidextrous (a), Unknown" %}</td>
+                                <td style="text-align:right;">Handedness</td><td>&nbsp;&nbsp;</td><td style="text-align:left;">{% trans "Right (r), Left (l), Ambidextrous (a), Unknown" %}</td>
                             </tr>
                           </table>
                         </div>
-                </p>
-                <p>{% trans "The header row of the CSV file should be (using tab as separator):" %}<br/>
+                <p>{% trans "The header row of the CSV file should be (using tab as separator):" %}</p><br/>
                 <pre>
 <code>
 Participant&#9;Region&#9;Age&#9;Gender&#9;Handedness
 </code>
                 </pre>
-                </p>
         {% endif %}
             </td>
         </tr>
@@ -180,7 +179,7 @@ Participant&#9;Region&#9;Age&#9;Gender&#9;Handedness
           <td >
               {% if dataset.uploaded_eafs %}
               {% url 'dictionary:protected_media' '' as protected_media_url %}
-              <div name="uploaded_eaf_files"
+              <div id="uploaded_eaf_files"
                     style="height:120px; overflow-y:auto;display:block;">
                   <ul class="list-group-hover" style="padding: 0;">
                       <li class="list-group-item active" style="padding: 0;">{% trans "File" %}</li>
@@ -232,7 +231,7 @@ Participant&#9;Region&#9;Age&#9;Gender&#9;Handedness
           <th style="width:200px;">{% trans "Speakers in Metadata" %}</th>
           <td >
               {% if speakers %}
-              <ul class="list-group-hover" style="padding: 0;">
+              <div class="list-group-hover" style="padding: 0;">
                  <dl class="row list-group-item active"  style="width:1008px; padding: 0;">
                       <dt class="col-sm-2">{% trans "IDENTIFIER" %}</dt>
                       <dt class="col-sm-2">{% trans "GENDER" %}</dt>
@@ -240,7 +239,7 @@ Participant&#9;Region&#9;Age&#9;Gender&#9;Handedness
                       <dt class="col-sm-4">{% trans "LOCATION" %}</dt>
                       <dt class="col-sm-3">{% trans "HANDEDNESS" %}</dt>
                   </dl>
-              <list name="speaker_tuples"
+              <div id="speaker_tuples" class="list-tuples"
                     style="height:110px; display:block;">
 
               {% for identifier, gender, age, location, handedness in speakers %}
@@ -252,8 +251,8 @@ Participant&#9;Region&#9;Age&#9;Gender&#9;Handedness
                       <dd class="col-sm-3">{{handedness}}</dd>
                   </dl>
               {% endfor %}
-              </list>
-              </ul>
+              </div>
+              </div>
               {% else %}
               <p>{% trans "No speakers imported." %}</p>
               {% endif %}
@@ -269,7 +268,7 @@ Participant&#9;Region&#9;Age&#9;Gender&#9;Handedness
 <!--                      <dt class="col-sm-2">{% trans "Identifier" %}</dt>-->
 <!--                      <dt class="col-sm-10">{% trans "Appears in Documents" %}</dt>-->
 <!--                  </dl>-->
-<!--              <list name="speaker_tuples"-->
+<!--              <div id="speaker_documents_tuples" class="list-tuples"-->
 <!--                    style="height:84px; display:block;">-->
 
 <!--              {% for identifier, speaker_appears_in_documents in speakers_in_documents %}-->
@@ -278,7 +277,7 @@ Participant&#9;Region&#9;Age&#9;Gender&#9;Handedness
 <!--                      <dd class="col-sm-10">{% for doc in speaker_appears_in_documents %}{{doc}}{% if not forloop.last %}, {% endif %}{% endfor %}</dd>-->
 <!--                  </dl>-->
 <!--              {% endfor %}-->
-<!--              </list>-->
+<!--              </div>-->
 <!--              </ul>-->
 <!--              {% else %}-->
 <!--              <p>{% trans "Speakers in metafile not found in documents. Update corpus, update metafile, or upload more documents." %}</p>-->
@@ -307,7 +306,7 @@ Participant&#9;Region&#9;Age&#9;Gender&#9;Handedness
           <th style="width:200px;">{% trans "Documents" %}</th>
           <td >
               {% if documents %}
-              <ul class="list-group-hover" style="padding: 0;">
+              <div class="list-group-hover" style="padding: 0;">
                  <dl class="row list-group-item active"  style="width:1008px; padding: 0;">
                       <dt class="col-sm-2">{% trans "DOCUMENT" %}</dt>
                       <dt class="col-sm-2">{% trans "CREATION DATE" %}</dt>
@@ -315,7 +314,7 @@ Participant&#9;Region&#9;Age&#9;Gender&#9;Handedness
                       <dt class="col-sm-2">{% trans "REFRESH" %}</dt>
                       <dt class="col-sm-2">{% trans "COMMENT" %}</dt>
                   </dl>
-              <list name="document_tuples"
+              <div id="document_tuples" class="list-tuples"
                     style="height:146px; display:block;">
               {% for identifier, creation_time, number_of_glosses, toelichting in documents %}
                   <dl id="document_{{identifier}}" class="row list-group-item list-group-item-contents" style="padding: 0;">
@@ -329,7 +328,7 @@ Participant&#9;Region&#9;Age&#9;Gender&#9;Handedness
                            {% csrf_token %}
                            <input type='hidden' name='sourceid' value='{{gloss.pk}}'>
                                     <div class='btn-group' >
-                                        <button id="update_document_{{identifier}}" class="btn btn-primary" method='post'
+                                        <button id="update_document_{{identifier}}" class="btn btn-primary"
                                                 onclick='return update_document(this)'
                                                 style="padding-top: 0; padding-bottom: 0; margin-top: 0;"
                                                 name='update_document'
@@ -342,8 +341,8 @@ Participant&#9;Region&#9;Age&#9;Gender&#9;Handedness
                       </dd>
                   </dl>
               {% endfor %}
-              </list>
-              </ul>
+              </div>
+              </div>
               {% else %}
               <p>{% trans "No documents found." %}</p>
               {% endif %}
@@ -372,10 +371,10 @@ Participant&#9;Region&#9;Age&#9;Gender&#9;Handedness
         <tr>
             <th style="width:200px;">{% trans "Overview EAF Files" %}</th>
             <td >
-               <div name="overview_eaf_files"
+               <div id="overview_eaf_files"
                     style="height:180px; display:block;">
-                  <ul class="list-group-hover" style="padding: 0;">
-                      <li class="list-group-item active row" style="padding: 0;">
+                  <div class="list-group-hover" style="padding: 0;">
+                      <dl class="list-group-item active row" style="padding: 0;">
                           <dt class="col-sm-2">{% trans "DOCUMENT" %}</dt>
                           <dt class="col-sm-6">{% trans "PATH" %}</dt>
                           {% if request.user|has_group:"Dataset_Manager" %}
@@ -384,21 +383,16 @@ Participant&#9;Region&#9;Age&#9;Gender&#9;Handedness
                           <dt class="col-sm-2">{% trans "DELETE" %}</dt>
                           {% endif %}
                           {% endif %}
-                      </li>
+                      </dl>
 
-                  <list name="document_path_tuples"
+                  <div id="document_path_tuples" class="list-tuples"
                     style="height:146px; display:block;">
                       {% for document_identifier in sorted_document_identifiers %}
                       {% with overview_eaf_files|keyvalue:document_identifier as eaf_paths %}
                       {% for path in eaf_paths %}
-                      <li id="document_paths_{{document_identifier}}" class="row"
-                            {% if document_identifier in duplicates %}
-                                style="padding: 0; color:red;"
-                            {% elif document_identifier in document_identifiers %}
-                                style="padding: 0; color:blue;"
-                            {% else %}
-                                style="padding: 0;"
-                            {% endif %} >
+                      <dl id="document_paths_{{document_identifier}}" class="row"
+                          style="padding:0;{% if document_identifier in duplicates %}color:red;{% elif document_identifier in document_identifiers %}color:blue;{% endif %}">
+
                         <dd class="col-sm-2">{{document_identifier}}</dd>
                         <dd class="col-sm-6" >{{path}}</dd>
                            {% if request.user|has_group:"Dataset_Manager" %}
@@ -411,12 +405,12 @@ Participant&#9;Region&#9;Age&#9;Gender&#9;Handedness
                             </dd>
                            {% endif %}
                            {% endif %}
-                      </li>
+                      </dl>
                       {% endfor %}
                       {% endwith %}
                       {% endfor %}
-                  </list>
-                  </ul>
+                  </div>
+                  </div>
               </div>
             </td>
         </tr>
@@ -428,11 +422,7 @@ Participant&#9;Region&#9;Age&#9;Gender&#9;Handedness
     {% get_obj_perms request.user for dataset as "dataset_perms" %}
     {% if "change_dataset" in dataset_perms %}
     <button id='remove_eafs_btn'
-            {% if duplicates %}
-            class='btn btn-danger'
-            {% else %}
-            class="btn btn-primary"
-            {% endif %}
+            class='btn btn-{% if duplicates %}danger{% else %}primary{% endif %}'
             data-toggle='modal' type="button"
             data-target='#remove_eafs_modal'>{% trans "Remove EAF Files" %}</button>
 
@@ -467,7 +457,7 @@ Participant&#9;Region&#9;Age&#9;Gender&#9;Handedness
           <td >
 
               {% url 'dictionary:protected_media' '' as protected_media_url %}
-              <div name="new_eaf_files"
+              <div id="new_eaf_files"
                     style="height:80px; overflow-y:auto;display:block;">
                   <ul class="list-group-hover" style="padding: 0;">
                       <li class="list-group-item active" style="padding: 0;">{% trans "FILE" %}</li>
@@ -512,13 +502,11 @@ Participant&#9;Region&#9;Age&#9;Gender&#9;Handedness
                       </div>
                   </form>
             </div>
-        </div>
     </div>
     {% endif %}
     {% endif %}
     {% endif %}
     {% endif %}
-    </div>
 {% endif %}
-</div>
+    </div>
 {% endblock %}

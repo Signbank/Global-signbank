@@ -135,7 +135,7 @@ function do_adminsearch(el) {
 }
 </script>
 <style>
-list {
+.list-tuples {
     overflow-y: scroll;
     overflow-x: hidden;
     scrollbar-width: thin;
@@ -308,7 +308,7 @@ dd {
             {% endfor %}
             <dt class="col-sm-2" style="width:400px;">{% trans "Video Paths" %}</dt>
         </dl>
-        <list id="document_tuples" style="height:280px; display:block;">
+        <div id="document_tuples_videos" class="list-tuples" style="height:280px; display:block;">
               {% for gloss, num_backup_videos, videos, glossbackupvideos, perspvideos, nmevideos, wrongvideos in gloss_videos %}
                   {% if videos %}
                   <dl id="primary_gloss_videos_{{gloss.id}}" class="row list-group-item list-group-item-contents" style="padding: 0;">
@@ -321,7 +321,7 @@ dd {
                   </dl>
                   {% endif %}
              {% endfor %}
-        </list>
+        </div>
         </td>
         </tr>
     </table>
@@ -349,7 +349,7 @@ dd {
             {% endfor %}
             <dt class="col-sm-2" style="width:600px;">{% trans "Video Paths" %}</dt>
         </dl>
-        <list id="document_tuples" style="height:280px; display:block;">
+        <div id="document_tuples_perspective" class="list-tuples" style="height:280px; display:block;">
               {% for gloss, num_backup_videos, videos, glossbackupvideos, perspvideos, nmevideos, wrongvideos in gloss_videos %}
                   {% if perspvideos %}
                   <dl id="gloss_persp_videos_{{gloss.id}}" class="row list-group-item list-group-item-contents" style="padding: 0;">
@@ -362,7 +362,7 @@ dd {
                   </dl>
                   {% endif %}
              {% endfor %}
-        </list>
+        </div>
         </td>
         </tr>
     </table>
@@ -389,7 +389,7 @@ dd {
             {% endfor %}
             <dt class="col-sm-2" style="width:600px;">{% trans "Video Paths" %}</dt>
         </dl>
-        <list id="document_tuples" style="height:280px; display:block;">
+        <div id="document_tuples_nme" class="list-tuples" style="height:280px; display:block;">
               {% for gloss, num_backup_videos, videos, glossbackupvideos, perspvideos, nmevideos, wrongvideos in gloss_videos %}
                   {% if nmevideos %}
                   <dl id="gloss_nme_videos_{{gloss.id}}" class="row list-group-item list-group-item-contents" style="padding: 0;">
@@ -402,7 +402,7 @@ dd {
                   </dl>
                   {% endif %}
              {% endfor %}
-        </list>
+        </div>
         </td>
         </tr>
     </table>
@@ -437,7 +437,7 @@ dd {
                 </span>
             </dt>
         </dl>
-        <list id="document_tuples" style="height:280px; display:block;">
+        <div id="document_tuples_backups" class="list-tuples" style="height:280px; display:block;">
               {% for gloss, num_backup_videos, videos, glossbackupvideos, perspvideos, nmevideos, wrongvideos in gloss_videos %}
                   {% if glossbackupvideos %}
                   <dl id="gloss_videos_{{gloss.id}}" class="row list-group-item list-group-item-contents" style="padding: 0;">
@@ -465,7 +465,7 @@ dd {
                   </dl>
                   {% endif %}
              {% endfor %}
-        </list>
+        </div>
         </td>
         </tr>
     </table>
@@ -491,7 +491,7 @@ dd {
             {% endfor %}
             <dt class="col-sm-2" style="width:600px;">{% trans "Video Paths" %}</dt>
         </dl>
-        <list id="document_tuples" style="height:280px; display:block;">
+        <div id="document_tuples_wrong" class="list-tuples" style="height:280px; display:block;">
               {% for gloss, num_backup_videos, videos, glossbackupvideos, perspvideos, nmevideos, wrongvideos in gloss_videos %}
                   {% if wrongvideos %}
                   <dl id="gloss_wrong_videos_{{gloss.id}}" class="row list-group-item list-group-item-contents" style="padding: 0;">
@@ -504,7 +504,7 @@ dd {
                   </dl>
                   {% endif %}
              {% endfor %}
-        </list>
+        </div>
         </td>
         </tr>
     </table>
