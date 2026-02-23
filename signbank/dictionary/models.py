@@ -2837,7 +2837,7 @@ class Relation(models.Model):
                                     verbose_name=_("Relation Role"), related_name="relation_role")
 
     class Admin:
-        list_display = ['source', 'role_pk__name', 'target']
+        list_display = ['source', 'role_fk__name', 'target']
         search_fields = ['source__idgloss', 'target__idgloss']
 
     class Meta:
