@@ -128,27 +128,89 @@ def update_blend_morphology(gloss, values):
     return
 
 
+def new_relations_values_mapped_to_objects(gloss, values):
+    errors = []
+    values_mapped_to_objects = []
+    for value in values:
+        if not value:
+            # this is an erase
+            continue
+        (role_str, target_str) = value.split(':')
+        role_str = role_str.strip()
+        target_str = target_str.strip()
+        try:
+            role = FieldChoice.lookup('RelationRole', role_str)
+        except (ObjectDoesNotExist, MultipleObjectsReturned):
+            errors.append(gettext("FieldChoice for {role} is not defined.").format(role=role))
+            continue
+        matching_glosses = Gloss.objects.filter(lemma__dataset=gloss.lemma.dataset, archived=False,
+                                                annotationidglosstranslation__text__exact=target_str).distinct()
+        if not matching_glosses or matching_glosses.count() > 1:
+            errors.append(gettext("Target gloss not found or not unique."))
+            continue
+        target = matching_glosses.first()
+        if (role, target) in values_mapped_to_objects:
+            errors.append(gettext("Duplicate found in new relations."))
+            continue
+        values_mapped_to_objects.append((role, target))
+    return values_mapped_to_objects, errors
+
+
+def relation_update_side_effects(gloss, values):
+
+    gloss_relations = [(relation.source, relation.role_fk, relation.target)
+                       for relation in Relation.objects.filter(source=gloss)]
+    gloss_reverse_relations = [(relation.source, relation.role_fk, relation.target)
+                               for relation in Relation.objects.filter(target=gloss)]
+    side_effects = []
+    values_mapped_to_objects, errors = new_relations_values_mapped_to_objects(gloss, values)
+
+    if errors:
+        return side_effects, errors
+
+    new_relations = []
+    deleted_relations = []
+    keep_relations = []
+    for new_role, new_target in values_mapped_to_objects:
+        if (gloss, new_role, new_target) in gloss_relations:
+            keep_relations.append((gloss, new_role, new_target))
+        else:
+            new_relations.append((gloss, new_role, new_target))
+            new_relations.append((new_target, new_role.reverse_relation_role(), gloss))
+            side_effects.append(new_target)
+    for (gloss, role, target) in gloss_relations:
+        if (gloss, role, target) in values_mapped_to_objects:
+            continue
+        deleted_relations.append((gloss, role, target))
+        deleted_relations.append((target, role.reverse_relation_role(), gloss))
+        side_effects.append(target)
+
+    return side_effects, errors, {'add': new_relations,
+                                  # 'keep': keep_relations,
+                                  'delete': deleted_relations}
+
+
 def subst_relations(user, gloss, values):
     # expecting possibly multiple values
     # values is a list of values, where each value is a tuple of the form 'Role:String'
     # The format of argument values has been checked before calling this function
 
-    from signbank.tools import add_gloss_update_to_revision_history
-
-    original_relations_display = gloss.get_relation_display()
-
-    existing_relations = [(relation.id, relation.role_fk.name, relation.target.id)
+    existing_relations = [(relation.id, relation.role_fk, relation.target)
                           for relation in Relation.objects.filter(source=gloss)]
     targets_to_update = [relation.target for relation in Relation.objects.filter(source=gloss)]
     targets = list(set(targets_to_update))
-    original_targets_display = dict()
+
+    # keep track of any updated glosses for revision history
+    original_glosses_display = dict()
+    original_glosses_display[gloss] = gloss.get_relation_display()
     for target in targets:
-        original_targets_display[target] = target.get_relation_display()
+        if target in original_glosses_display.keys():
+            continue
+        original_glosses_display[target] = target.get_relation_display()
 
     existing_relation_ids = [r[0] for r in existing_relations]
     existing_relations_by_role = dict()
 
-    errors = []
     for (rel_id, rel_role, rel_other_gloss) in existing_relations:
 
         if rel_role in existing_relations_by_role.keys():
@@ -156,16 +218,15 @@ def subst_relations(user, gloss, values):
         else:
             existing_relations_by_role[rel_role] = [rel_other_gloss]
 
+    values_mapped_to_objects, errors = new_relations_values_mapped_to_objects(gloss, values)
+
+    if errors:
+        return errors, original_glosses_display
+
     new_tuples_to_add = []
     already_existing_to_keep = []
 
-    for value in values:
-        if not value:
-            # this is an erase
-            continue
-        (role, target) = value.split(':')
-        role = role.strip()
-        target = target.strip()
+    for role, target in values_mapped_to_objects:
         if role in existing_relations_by_role.keys() and target in existing_relations_by_role[role]:
             already_existing_to_keep.append((role, target))
         else:
@@ -175,16 +236,21 @@ def subst_relations(user, gloss, values):
     for rel_id in existing_relation_ids:
         rel = Relation.objects.get(id=rel_id)
 
-        if (rel.role_fk.name, rel.target.id) in already_existing_to_keep:
+        if (rel.role_fk, rel.target) in already_existing_to_keep:
             continue
 
         # Also delete the reverse relation
+        if rel.target not in original_glosses_display.keys():
+            original_glosses_display[target] = target.get_relation_display()
+
+        reverse_role = rel.role_fk.reverse_relation_role()
         reverse_relations = Relation.objects.filter(source=rel.target, target=rel.source,
-                                                    role_fk=rel.get_reverse_role())
-        if reverse_relations.count() > 0:
-            if DEBUG_CSV:
-                print("DELETE reverse relation: ", rel.role_fk.name, ", target: ", rel.target, ", relation: ", reverse_relations[0])
-            reverse_relations[0].delete()
+                                                    role_fk=reverse_role)
+        if reverse_relations.count():
+            for revrel in reverse_relations:
+                if DEBUG_CSV:
+                    print("DELETE reverse relation: ", revrel.role_fk.name, ", target: ", revrel.target, ", relation: ", revrel)
+                revrel.delete()
 
         if DEBUG_CSV:
             print("DELETE Relation: ", rel)
@@ -192,50 +258,29 @@ def subst_relations(user, gloss, values):
 
     # all remaining existing relations are to be updated
     for (role, target) in new_tuples_to_add:
+        if target not in original_glosses_display.keys():
+            original_glosses_display[target] = target.get_relation_display()
         try:
-            role_fieldchoice = FieldChoice.lookup('RelationRole', role)
-        except (ObjectDoesNotExist, MultipleObjectsReturned):
-            errors.append(gettext("FieldChoice for {role} is not defined.").format(role=role))
-            continue
-
-        filter_glosses = Gloss.objects.filter(lemma__dataset=gloss.lemma.dataset, archived=False,
-                                              annotationidglosstranslation__text__exact=target).distinct()
-        target_gloss = filter_glosses.first()
-        if not target_gloss:
-            errors.append(gettext("Target gloss not found."))
-            continue
-
-        if target_gloss not in original_targets_display.keys():
-            original_targets_display[target_gloss] = target_gloss.get_relation_display()
-
-        try:
-            rel, created = Relation.objects.get_or_create(source=gloss, role_fk=role_fieldchoice, target=target_gloss)
+            rel, created = Relation.objects.get_or_create(source=gloss, role_fk=role, target=target)
         except (ObjectDoesNotExist, MultipleObjectsReturned):
             errors.append(gettext("This relation already exists."))
             continue
+        if created and DEBUG_CSV:
+            print('created reverse relations: ', role, gloss, target)
 
-        reverse_role = rel.get_reverse_role()
         # Also add the reverse relation
+        reverse_role = role.reverse_relation_role()
         try:
-            reverse_relation, created_reverse = Relation.objects.get_or_create(source=target_gloss, target=gloss, role_fk=reverse_role)
+            reverse_relation, created_reverse = Relation.objects.get_or_create(source=target, target=gloss, role_fk=reverse_role)
         except (ObjectDoesNotExist, MultipleObjectsReturned):
             errors.append(gettext("This relation already exists."))
             continue
-
+        if created_reverse and DEBUG_CSV:
+            print('created reverse relations: ', reverse_role, target, gloss)
     gloss.lastUpdated = DT.datetime.now(tz=get_current_timezone())
     gloss.save()
 
-    new_relations_display = gloss.get_relation_display()
-    add_gloss_update_to_revision_history(user, gloss, 'relation', original_relations_display,
-                                         new_relations_display)
-
-    for target, original_target_display in original_targets_display.items():
-        new_target_display = target.get_relation_display()
-        if new_target_display == original_target_display:
-            continue
-        add_gloss_update_to_revision_history(user, target, 'relation', original_target_display,
-                                             new_target_display)
-    return errors
+    return errors, original_glosses_display
 
 
 def subst_foreignrelations(gloss, values):

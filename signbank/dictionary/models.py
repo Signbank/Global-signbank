@@ -166,6 +166,20 @@ class FieldChoice(models.Model):
             q |= Q(**{f"{field_name}__iexact": name})
         return FieldChoice.objects.filter(field=category).filter(q).distinct()
 
+    def reverse_relation_role(self):
+        if self.has_name('RelationRole', 'Hyponym'):
+            try:
+                hypernym = FieldChoice.lookup('RelationRole', "Hypernym")
+            except (ObjectDoesNotExist, MultipleObjectsReturned):
+                raise ValueError(_("FieldChoice for Hypernym is not defined."))
+            return hypernym
+        if self.has_name('RelationRole', 'Hypernym'):
+            try:
+                hyponym = FieldChoice.lookup('RelationRole', "Hyponym")
+            except (ObjectDoesNotExist, MultipleObjectsReturned):
+                raise ValueError(_("FieldChoice for Hyponym is not defined."))
+            return hyponym
+        return self
 
 class Translation(models.Model):
     """A spoken language translation of signs"""
@@ -2833,21 +2847,7 @@ class Relation(models.Model):
         return self.role_fk.name if self.role_fk else '-'
 
     def get_reverse_role(self):
-        if not self.role_fk:
-            raise ValueError(_("Relation Role is not defined."))
-        if self.role_fk.has_name('RelationRole', 'Hyponym'):
-            try:
-                hypernym = FieldChoice.lookup('RelationRole', "Hypernym")
-            except (ObjectDoesNotExist, MultipleObjectsReturned):
-                raise ValueError(_("FieldChoice for Hypernym is not defined."))
-            return hypernym
-        if self.role_fk.has_name('RelationRole', 'Hypernym'):
-            try:
-                hyponym = FieldChoice.lookup('RelationRole', "Hyponym")
-            except (ObjectDoesNotExist, MultipleObjectsReturned):
-                raise ValueError(_("FieldChoice for Hyponym is not defined."))
-            return hyponym
-        return self.role_fk
+        return self.role_fk.reverse_relation_role()
 
     @property
     def is_transitive(self):

@@ -26,6 +26,7 @@ from django.urls import reverse_lazy, reverse
 from guardian.shortcuts import assign_perm
 from collections import OrderedDict
 
+from signbank.dictionary.update_csv import subst_relations
 from signbank.settings.base import BASE_DIR
 from signbank.settings.server_specific import (PREFIX_URL, MODELTRANSLATION_LANGUAGES, ECV_FOLDER_ABSOLUTE_PATH,
                                                FIELDS, OBLIGATORY_FIELDS, DEFAULT_DATASET, API_FIELDS,
@@ -42,7 +43,7 @@ from signbank.dictionary.models import (Dataset, Language, Gloss, Morpheme, Hand
                                         OtherMedia, GlossRevision, fieldname_to_kind_table,
                                         GlossFrequency, Document, Speaker, Corpus,
                                         UserProfile, LemmaIdgloss, LemmaIdglossTranslation, get_default_language_id,
-                                        Dialect)
+                                        Dialect, Relation)
 from signbank.dictionary.forms import GlossCreateForm, FieldChoiceForm, LemmaCreateForm
 from signbank.dictionary.views import gloss_api_get_sign_name_and_media_info
 from signbank.frequency import (import_corpus_speakers, configure_corpus_documents_for_dataset,
@@ -56,7 +57,10 @@ from signbank.dictionary.admin import HandshapeAdmin, FieldChoiceAdmin
 
 from signbank.tools import (get_gloss_handshape_fields, get_fields_with_choices_glosses, get_fields_with_choices_handshapes,
                             get_fields_with_choices_definition, get_fields_with_choices_morphology_definition,
-                            get_fields_with_choices_other_media_type, get_fields_with_choices_morpheme_type)
+                            get_fields_with_choices_other_media_type, get_fields_with_choices_morpheme_type,
+                            check_existence_relations, check_conflicting_updates_relations,
+                            get_default_annotationidglosstranslation, add_relations_to_revision_history)
+from signbank.dictionary.update_csv import relation_update_side_effects
 
 from xml.etree import ElementTree
 
@@ -4101,3 +4105,128 @@ def create_gloss_data(dataset, gloss_text):
     if 'release_information' in OBLIGATORY_FIELDS:
         create_gloss_form_data['release_information'] = "Create Gloss Obligatory Fields"
     return create_gloss_form_data
+
+
+class CSVTests(TestCase):
+
+    def setUp(self):
+
+        # a new test user is created for use during the tests
+        self.user = User.objects.create_user('test-user', 'example@example.com', 'test-user')
+        self.user.user_permissions.add(Permission.objects.get(name='Can change gloss'))
+        self.user.save()
+        self.userprofile = UserProfile(user=self.user)
+        self.userprofile.save()
+        dataset_name = DEFAULT_DATASET
+        self.test_dataset = Dataset.objects.get(name=dataset_name)
+        self.userprofile.selected_datasets.add(self.test_dataset)
+        self.userprofile.save()
+        assign_perm('change_dataset', self.user, self.test_dataset)
+
+        for inx in [1, 2, 3, 4]:
+            new_lemma = LemmaIdgloss(dataset=self.test_dataset)
+            new_lemma.save()
+
+            language = self.test_dataset.default_language
+            new_lemmaidglosstranslation = LemmaIdglossTranslation(text=f'TEMPORARYTESTLEMMA_{inx}',
+                                                                  lemma=new_lemma, language=language)
+            new_lemmaidglosstranslation.save()
+
+            new_gloss = Gloss()
+            new_gloss.lemma = new_lemma
+            new_gloss.save()
+
+            for language in self.test_dataset.translation_languages.all():
+                annotationIdgloss = AnnotationIdglossTranslation()
+                annotationIdgloss.gloss = new_gloss
+                annotationIdgloss.language = language
+                annotationIdgloss.text = f'TEMPORARYTESTGLOSS_{inx}'
+                annotationIdgloss.save()
+
+    def testErrorsCSVInputRelations(self):
+
+        gloss1 = Gloss.objects.get(lemma__dataset=self.test_dataset,
+                                   annotationidglosstranslation__language=self.test_dataset.default_language,
+                                   annotationidglosstranslation__text__exact='TEMPORARYTESTGLOSS_1')
+        gloss2 = Gloss.objects.get(lemma__dataset=self.test_dataset,
+                                   annotationidglosstranslation__language=self.test_dataset.default_language,
+                                   annotationidglosstranslation__text__exact='TEMPORARYTESTGLOSS_2')
+
+        gloss3 = Gloss.objects.get(lemma__dataset=self.test_dataset,
+                                   annotationidglosstranslation__language=self.test_dataset.default_language,
+                                   annotationidglosstranslation__text__exact='TEMPORARYTESTGLOSS_3')
+        gloss4 = Gloss.objects.get(lemma__dataset=self.test_dataset,
+                                   annotationidglosstranslation__language=self.test_dataset.default_language,
+                                   annotationidglosstranslation__text__exact='TEMPORARYTESTGLOSS_4')
+
+        # values0 = ['Synonym:NonExistentGloss1', 'Synonym:NonExistentGloss2']
+
+        earlier_seen = []
+        # checked0, earlier_seen, errors0 = check_existence_relations(gloss1, values0, earlier_seen)
+
+        # differences = []
+        values1 = ['Synonym:TEMPORARYTESTGLOSS_2']
+
+        values2 = ['Hyponym:TEMPORARYTESTGLOSS_3']
+        # print('prior to processing gloss1, earlier seen: ', earlier_seen)
+        checked1, earlier_seen, errors1 = check_existence_relations(gloss1, values1, earlier_seen)
+        # print('check existence gloss1: ', gloss1, checked1, errors1)
+        # print('prior to checking conflicts gloss1, earlier seen: ', earlier_seen)
+        side_effects1, errors1, relation_state1 = relation_update_side_effects(gloss1, values1)
+        # print('side_effects1: ', side_effects1)
+        for (g, r, t) in relation_state1['add']:
+            print('add: ', g, r.name, t)
+        for (g, r, t) in relation_state1['delete']:
+            print('delete: ', g, r.name, t)
+        # print('errors1: ', errors1)
+        # print('relation_state1: ', relation_state1)
+
+        conflicts, earlier_seen = check_conflicting_updates_relations(gloss1, values1, earlier_seen)
+        # print('conflicts: ', conflicts)
+        # print('earlier_seen: ', earlier_seen)
+
+        # differences.append({'pk': gloss1.id,
+        #                     'dataset': self.test_dataset,
+        #                     'annotationidglosstranslation': 'TEMPORARYTESTGLOSS_1',
+        #                     'machine_key': 'Relations to other signs',
+        #                     'human_key': 'Relations to other signs',
+        #                     'original_machine_value': current_relations_string,
+        #                     'original_human_value': current_relations_string,
+        #                     'new_machine_value': checked1,
+        #                     'new_human_value': checked1})
+
+        checked2, earlier_seen, errors2 = check_existence_relations(gloss2, values2, earlier_seen)
+        # print('check existence gloss2: ', gloss2, earlier_seen, checked2, errors2)
+        conflicts, earlier_seen = check_conflicting_updates_relations(gloss2, values2, earlier_seen)
+        # if conflicts:
+        #     print('conflicts: ', conflicts)
+        #     print('earlier_seen: ', earlier_seen)
+
+        side_effects2, errors2, relation_state2 = relation_update_side_effects(gloss2, values2)
+        print('side_effects2: ', side_effects2)
+        for (g, r, t) in relation_state2['add']:
+            print('add: ', g, r.name, t)
+        for (g, r, t) in relation_state2['delete']:
+            print('delete: ', g, r.name, t)
+
+        creation_errors_1, original_glosses_display1 = subst_relations(self.user, gloss1, values1)
+        if creation_errors_1:
+            print('creation_errors_1: ', creation_errors_1)
+        if original_glosses_display1:
+            print(original_glosses_display1)
+        add_relations_to_revision_history(self.user, gloss1, original_glosses_display1)
+
+        creation_errors_2, original_glosses_display2 = subst_relations(self.user, gloss2, values2)
+        if creation_errors_2:
+            print('creation_errors_2: ', creation_errors_2)
+        if original_glosses_display2:
+            print(original_glosses_display2)
+        add_relations_to_revision_history(self.user, gloss2, original_glosses_display2)
+
+        relations = Relation.objects.all().prefetch_related('source')
+        for r in relations:
+            print(r.role_fk, r.source, r.target)
+
+        revisionhistory = GlossRevision.objects.all()
+        for r in revisionhistory:
+            print(r.user, r.gloss, r.field_name, r.old_value, r.new_value)

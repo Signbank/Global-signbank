@@ -59,7 +59,7 @@ from signbank.tools import (get_two_letter_dir, get_default_annotationidglosstra
                             detect_delimiter,
                             split_csv_lines_header_body,
                             split_csv_lines_sentences_header_body, create_sentence_from_valuedict,
-                            get_deleted_gloss_or_media_data, get_gloss_data)
+                            get_deleted_gloss_or_media_data, get_gloss_data, add_relations_to_revision_history)
 from signbank.dictionary.field_choices import fields_to_fieldcategory_dict
 from signbank.csv_interface import (csv_create_senses, csv_update_sentences, csv_create_sentence, required_csv_columns,
                                     choice_fields_choices)
@@ -908,6 +908,7 @@ def import_csv_update(request):
     gloss_already_exists = []
     earlier_updates_same_csv = []
     earlier_updates_lemmaidgloss = {}
+    earlier_updates_relations = []
 
     encoding_error = False
 
@@ -1154,9 +1155,9 @@ def import_csv_update(request):
                 continue
 
             try:
-                (changes_found, errors_found, earlier_updates_same_csv, earlier_updates_lemmaidgloss) = \
+                (changes_found, errors_found, earlier_updates_same_csv, earlier_updates_lemmaidgloss, earlier_updates_relations) = \
                             compare_valuedict_to_gloss(value_dict, gloss.id, user_datasets_names, nl,
-                                                       earlier_updates_same_csv, earlier_updates_lemmaidgloss,
+                                                       earlier_updates_same_csv, earlier_updates_lemmaidgloss, earlier_updates_relations,
                                                        notes_toggle, notes_assign_toggle,
                                                        semfield_toggle, semfield_assign_toggle, tags_toggle)
                 changes += changes_found
@@ -1308,7 +1309,8 @@ def import_csv_update(request):
                 new_human_value_list = [v.strip() for v in new_value.split(',')]
 
                 # Any errors will already be found at stage 0; the error checking is done again for type checking
-                errors_found = subst_relations(request.user, gloss, new_human_value_list)
+                errors_found, original_glosses_display = subst_relations(request.user, gloss, new_human_value_list)
+                add_relations_to_revision_history(request.user, gloss, original_glosses_display)
                 if errors_found:
                     errors_found_string = '\n'.join(errors_found)
                     error.append(errors_found_string)

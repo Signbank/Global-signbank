@@ -298,7 +298,7 @@ def create_gloss_from_valuedict(valuedict, dataset, row_nr, earlier_creation_sam
 
 
 def compare_valuedict_to_gloss(valuedict, gloss_id, my_datasets, nl,
-                               earlier_updates_same_csv, earlier_updates_lemmaidgloss,
+                               earlier_updates_same_csv, earlier_updates_lemmaidgloss, earlier_updates_relations,
                                notes_toggle, notes_assign_toggle, semfield_toggle, semfield_assign_toggle, tags_toggle):
     """Takes a dict of arbitrary key-value pairs, and compares them to a gloss"""
     # called by import_csv_update in views.py
@@ -311,12 +311,12 @@ def compare_valuedict_to_gloss(valuedict, gloss_id, my_datasets, nl,
     except ObjectDoesNotExist:
         error_string = gettext("Could not find gloss for ID {glossid}.").format(glossid=str(gloss_id))
         errors_found.append(error_string)
-        return differences, errors_found, earlier_updates_same_csv, earlier_updates_lemmaidgloss
+        return differences, errors_found, earlier_updates_same_csv, earlier_updates_lemmaidgloss, earlier_updates_relations
 
     if gloss_id in earlier_updates_same_csv:
         e = gettext("Signbank ID {glossid} found in multiple rows (Row {row}).").format(glossid=str(gloss_id), row=str(nl+1))
         errors_found.append(e)
-        return differences, errors_found, earlier_updates_same_csv, earlier_updates_lemmaidgloss
+        return differences, errors_found, earlier_updates_same_csv, earlier_updates_lemmaidgloss, earlier_updates_relations
     else:
         earlier_updates_same_csv.append(gloss_id)
     column_name_error = False
@@ -578,10 +578,16 @@ def compare_valuedict_to_gloss(valuedict, gloss_id, my_datasets, nl,
 
                 new_human_value_list = [v.strip() for v in new_human_value.split(',')]
 
-                (checked_new_human_value, errors) = check_existence_relations(gloss, new_human_value_list)
+                (checked_new_human_value, earlier_updates_relations, errors) = check_existence_relations(gloss, new_human_value_list, earlier_updates_relations)
+
+                if errors and DEBUG_CSV:
+                    print('subst check: ', errors, earlier_updates_relations)
+                conflicts, earlier_updates_relations = check_conflicting_updates_relations(gloss, new_human_value_list, earlier_updates_relations)
+                if conflicts and DEBUG_CSV:
+                    print('conflict check: ', conflicts, earlier_updates_relations)
 
                 if len(errors):
-                    errors_found += [errors]
+                    errors_found += errors
                 elif current_relations_string != checked_new_human_value:
                     differences.append({'pk': gloss_id,
                                         'dataset': current_dataset,
@@ -1008,7 +1014,7 @@ def compare_valuedict_to_gloss(valuedict, gloss_id, my_datasets, nl,
                                     'new_machine_value': new_machine_value,
                                     'new_human_value': new_human_value})
 
-    return differences, errors_found, earlier_updates_same_csv, earlier_updates_lemmaidgloss
+    return differences, errors_found, earlier_updates_same_csv, earlier_updates_lemmaidgloss, earlier_updates_relations
 
 
 def compare_valuedict_to_lemma(valuedict, lemma_id, my_datasets, nl,
@@ -1493,7 +1499,33 @@ def check_existence_blend_morphology(gloss, values):
     return checked, errors
 
 
-def check_existence_relations(gloss, values):
+def check_conflicting_updates_relations(gloss, values, earlier_seen):
+
+    errors = []
+    new_tuples = []
+    if gloss.id in earlier_seen:
+        errors.append(gettext("This gloss already seen in updates to other glosses in the CSV."))
+
+    for value in values:
+        if not value:
+            # this is an erase
+            continue
+        (role, target) = value.split(':')
+        role = role.strip()
+        target = target.strip()
+        new_tuples.append((role, target))
+        target_gloss = Gloss.objects.filter(lemma__dataset=gloss.lemma.dataset, archived=False,
+                                            annotationidglosstranslation__text__exact=target).first()
+        if not target_gloss:
+            continue
+        if target_gloss.id in earlier_seen:
+            errors.append(gettext("Target gloss already seen in updates to relations in the CSV."))
+        else:
+            earlier_seen.append(target_gloss.id)
+    return errors, earlier_seen
+
+
+def check_existence_relations(gloss, values, earlier_seen):
     default_annotationidglosstranslation = get_default_annotationidglosstranslation(gloss)
 
     RELATION_ROLES = [fc.name for fc in FieldChoice.objects.filter(field__iexact='RelationRole',
@@ -1509,7 +1541,7 @@ def check_existence_relations(gloss, values):
     sorted_values = []
 
     if values == [""]:
-        return checked, errors
+        return checked, earlier_seen, errors
 
     # check syntax
     for new_value_tuple in values:
@@ -1541,7 +1573,7 @@ def check_existence_relations(gloss, values):
             annotation=default_annotationidglosstranslation, glossid=str(gloss.pk), role=role, other_gloss=other_gloss)
         errors += [error_string]
     if errors:
-        return checked, errors
+        return checked, earlier_seen, errors
 
     # check target glosses
     checked_relations = []
@@ -1576,7 +1608,7 @@ def check_existence_relations(gloss, values):
     sorted_checked_relations = sorted(checked_relations, key=lambda x: (x[1], x[0]))
     checked = ','.join([f'{RELATION_ROLES_LOOKUP[machine_value]}:{TARGET_LOOKUP[target_pk]}'
                         for (machine_value, target_pk) in sorted_checked_relations])
-    return checked, errors
+    return checked, earlier_seen, errors
 
 
 def check_existence_foreign_relations(gloss, relations, values):
@@ -2507,6 +2539,24 @@ def add_gloss_update_to_revision_history(user, gloss, field, oldvalue, newvalue)
                              user=user,
                              time=DT.datetime.now(tz=get_current_timezone()))
     revision.save()
+
+def add_relations_to_revision_history(user, gloss, original_glosses_display):
+
+    new_relations_display = gloss.get_relation_display()
+    original_relations_display = original_glosses_display[gloss]
+    if new_relations_display != original_relations_display:
+        add_gloss_update_to_revision_history(user, gloss, 'relation', original_relations_display,
+                                             new_relations_display)
+
+    for target, original_target_display in original_glosses_display.items():
+        if target == gloss:
+            continue
+        new_target_display = target.get_relation_display()
+        if new_target_display == original_target_display:
+            continue
+        add_gloss_update_to_revision_history(user, target, 'relation', original_target_display,
+                                             new_target_display)
+
 
 def update_boolean_checkbox(user, gloss, field, value):
     assert isinstance(gloss, Gloss), "Not a Gloss object"
