@@ -58,9 +58,8 @@ from signbank.dictionary.admin import HandshapeAdmin, FieldChoiceAdmin
 from signbank.tools import (get_gloss_handshape_fields, get_fields_with_choices_glosses, get_fields_with_choices_handshapes,
                             get_fields_with_choices_definition, get_fields_with_choices_morphology_definition,
                             get_fields_with_choices_other_media_type, get_fields_with_choices_morpheme_type,
-                            check_existence_relations, check_conflicting_updates_relations,
+                            check_existence_relations,
                             get_default_annotationidglosstranslation, add_relations_to_revision_history)
-from signbank.dictionary.update_csv import relation_update_side_effects
 
 from xml.etree import ElementTree
 
@@ -4159,68 +4158,25 @@ class CSVTests(TestCase):
                                    annotationidglosstranslation__language=self.test_dataset.default_language,
                                    annotationidglosstranslation__text__exact='TEMPORARYTESTGLOSS_4')
 
-        # values0 = ['Synonym:NonExistentGloss1', 'Synonym:NonExistentGloss2']
+        values0 = ['Synonym:NonExistentGloss1', 'Gargoyle:NonExistentGloss2']
 
-        earlier_seen = []
-        # checked0, earlier_seen, errors0 = check_existence_relations(gloss1, values0, earlier_seen)
+        checked0, side_effects0, errors0 = check_existence_relations(gloss1, values0)
+        print('errors0: ', errors0)
 
-        # differences = []
         values1 = ['Synonym:TEMPORARYTESTGLOSS_2']
 
         values2 = ['Hyponym:TEMPORARYTESTGLOSS_3']
-        # print('prior to processing gloss1, earlier seen: ', earlier_seen)
-        checked1, earlier_seen, errors1 = check_existence_relations(gloss1, values1, earlier_seen)
-        # print('check existence gloss1: ', gloss1, checked1, errors1)
-        # print('prior to checking conflicts gloss1, earlier seen: ', earlier_seen)
-        side_effects1, errors1, relation_state1 = relation_update_side_effects(gloss1, values1)
-        # print('side_effects1: ', side_effects1)
-        for (g, r, t) in relation_state1['add']:
-            print('add: ', g, r.name, t)
-        for (g, r, t) in relation_state1['delete']:
-            print('delete: ', g, r.name, t)
-        # print('errors1: ', errors1)
-        # print('relation_state1: ', relation_state1)
 
-        conflicts, earlier_seen = check_conflicting_updates_relations(gloss1, values1, earlier_seen)
-        # print('conflicts: ', conflicts)
-        # print('earlier_seen: ', earlier_seen)
+        checked1, side_effects1, errors1 = check_existence_relations(gloss1, values1)
+        print('side_effects1: ', side_effects1)
 
-        # differences.append({'pk': gloss1.id,
-        #                     'dataset': self.test_dataset,
-        #                     'annotationidglosstranslation': 'TEMPORARYTESTGLOSS_1',
-        #                     'machine_key': 'Relations to other signs',
-        #                     'human_key': 'Relations to other signs',
-        #                     'original_machine_value': current_relations_string,
-        #                     'original_human_value': current_relations_string,
-        #                     'new_machine_value': checked1,
-        #                     'new_human_value': checked1})
-
-        checked2, earlier_seen, errors2 = check_existence_relations(gloss2, values2, earlier_seen)
-        # print('check existence gloss2: ', gloss2, earlier_seen, checked2, errors2)
-        conflicts, earlier_seen = check_conflicting_updates_relations(gloss2, values2, earlier_seen)
-        # if conflicts:
-        #     print('conflicts: ', conflicts)
-        #     print('earlier_seen: ', earlier_seen)
-
-        side_effects2, errors2, relation_state2 = relation_update_side_effects(gloss2, values2)
+        checked2, side_effects2, errors2 = check_existence_relations(gloss2, values2)
         print('side_effects2: ', side_effects2)
-        for (g, r, t) in relation_state2['add']:
-            print('add: ', g, r.name, t)
-        for (g, r, t) in relation_state2['delete']:
-            print('delete: ', g, r.name, t)
 
-        creation_errors_1, original_glosses_display1 = subst_relations(self.user, gloss1, values1)
-        if creation_errors_1:
-            print('creation_errors_1: ', creation_errors_1)
-        if original_glosses_display1:
-            print(original_glosses_display1)
+        creation_errors_1, original_glosses_display1 = subst_relations(gloss1, values1)
         add_relations_to_revision_history(self.user, gloss1, original_glosses_display1)
 
-        creation_errors_2, original_glosses_display2 = subst_relations(self.user, gloss2, values2)
-        if creation_errors_2:
-            print('creation_errors_2: ', creation_errors_2)
-        if original_glosses_display2:
-            print(original_glosses_display2)
+        creation_errors_2, original_glosses_display2 = subst_relations(gloss2, values2)
         add_relations_to_revision_history(self.user, gloss2, original_glosses_display2)
 
         relations = Relation.objects.all().prefetch_related('source')

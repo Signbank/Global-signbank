@@ -908,7 +908,6 @@ def import_csv_update(request):
     gloss_already_exists = []
     earlier_updates_same_csv = []
     earlier_updates_lemmaidgloss = {}
-    earlier_updates_relations = []
 
     encoding_error = False
 
@@ -1155,15 +1154,14 @@ def import_csv_update(request):
                 continue
 
             try:
-                (changes_found, errors_found, earlier_updates_same_csv, earlier_updates_lemmaidgloss, earlier_updates_relations) = \
+                (changes_found, errors_found, earlier_updates_same_csv, earlier_updates_lemmaidgloss) = \
                             compare_valuedict_to_gloss(value_dict, gloss.id, user_datasets_names, nl,
-                                                       earlier_updates_same_csv, earlier_updates_lemmaidgloss, earlier_updates_relations,
+                                                       earlier_updates_same_csv, earlier_updates_lemmaidgloss,
                                                        notes_toggle, notes_assign_toggle,
                                                        semfield_toggle, semfield_assign_toggle, tags_toggle)
                 changes += changes_found
 
-                if len(errors_found):
-                    # more than one error found
+                if errors_found:
                     errors_found_string = '\n'.join(errors_found)
                     error += [errors_found_string]
 
@@ -1309,7 +1307,7 @@ def import_csv_update(request):
                 new_human_value_list = [v.strip() for v in new_value.split(',')]
 
                 # Any errors will already be found at stage 0; the error checking is done again for type checking
-                errors_found, original_glosses_display = subst_relations(request.user, gloss, new_human_value_list)
+                errors_found, original_glosses_display = subst_relations(gloss, new_human_value_list)
                 add_relations_to_revision_history(request.user, gloss, original_glosses_display)
                 if errors_found:
                     errors_found_string = '\n'.join(errors_found)

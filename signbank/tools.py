@@ -43,6 +43,7 @@ from signbank.csv_interface import (sense_translations_for_language, update_sens
                                     parse_sentence_row, get_senses_to_sentences, csv_sentence_tuples_list_compare,
                                     required_csv_columns, trim_columns_in_row,
                                     normalize_field_choice)
+from signbank.dictionary.update_csv import new_relations_values_mapped_to_objects
 from signbank.dictionary.field_choices import fields_to_fieldcategory_dict
 
 from tagging.models import TaggedItem, Tag
@@ -298,7 +299,7 @@ def create_gloss_from_valuedict(valuedict, dataset, row_nr, earlier_creation_sam
 
 
 def compare_valuedict_to_gloss(valuedict, gloss_id, my_datasets, nl,
-                               earlier_updates_same_csv, earlier_updates_lemmaidgloss, earlier_updates_relations,
+                               earlier_updates_same_csv, earlier_updates_lemmaidgloss,
                                notes_toggle, notes_assign_toggle, semfield_toggle, semfield_assign_toggle, tags_toggle):
     """Takes a dict of arbitrary key-value pairs, and compares them to a gloss"""
     # called by import_csv_update in views.py
@@ -311,12 +312,12 @@ def compare_valuedict_to_gloss(valuedict, gloss_id, my_datasets, nl,
     except ObjectDoesNotExist:
         error_string = gettext("Could not find gloss for ID {glossid}.").format(glossid=str(gloss_id))
         errors_found.append(error_string)
-        return differences, errors_found, earlier_updates_same_csv, earlier_updates_lemmaidgloss, earlier_updates_relations
+        return differences, errors_found, earlier_updates_same_csv, earlier_updates_lemmaidgloss
 
     if gloss_id in earlier_updates_same_csv:
         e = gettext("Signbank ID {glossid} found in multiple rows (Row {row}).").format(glossid=str(gloss_id), row=str(nl+1))
         errors_found.append(e)
-        return differences, errors_found, earlier_updates_same_csv, earlier_updates_lemmaidgloss, earlier_updates_relations
+        return differences, errors_found, earlier_updates_same_csv, earlier_updates_lemmaidgloss
     else:
         earlier_updates_same_csv.append(gloss_id)
     column_name_error = False
@@ -388,7 +389,8 @@ def compare_valuedict_to_gloss(valuedict, gloss_id, my_datasets, nl,
                                                     'original_machine_value': annotation_idgloss_string,
                                                     'original_human_value': annotation_idgloss_string,
                                                     'new_machine_value': new_human_value,
-                                                    'new_human_value': new_human_value})
+                                                    'new_human_value': new_human_value,
+                                                    'side_effects': {}})
                 continue
 
             lemma_idgloss_key_prefix = "Lemma ID Gloss ("
@@ -440,7 +442,8 @@ def compare_valuedict_to_gloss(valuedict, gloss_id, my_datasets, nl,
                                         'original_machine_value': current_keyword_string,
                                         'original_human_value': current_keyword_string,
                                         'new_machine_value': new_human_value,
-                                        'new_human_value': new_human_value})
+                                        'new_human_value': new_human_value,
+                                        'side_effects': {}})
                 continue
 
             example_sentences_key_prefix = "Example Sentences ("
@@ -478,7 +481,8 @@ def compare_valuedict_to_gloss(valuedict, gloss_id, my_datasets, nl,
                                         'original_machine_value': difference_org,
                                         'original_human_value': difference_org,
                                         'new_machine_value': difference,
-                                        'new_human_value': difference})
+                                        'new_human_value': difference,
+                                        'side_effects': {}})
                 continue
 
             elif human_key == 'SignLanguages':
@@ -504,7 +508,8 @@ def compare_valuedict_to_gloss(valuedict, gloss_id, my_datasets, nl,
                                         'original_machine_value': current_signlanguages_string,
                                         'original_human_value': current_signlanguages_string,
                                         'new_machine_value': new_human_value,
-                                        'new_human_value': new_human_value})
+                                        'new_human_value': new_human_value,
+                                        'side_effects': {}})
                 continue
 
             elif human_key == 'Dialects':
@@ -530,7 +535,8 @@ def compare_valuedict_to_gloss(valuedict, gloss_id, my_datasets, nl,
                                         'original_machine_value': current_dialects_string,
                                         'original_human_value': current_dialects_string,
                                         'new_machine_value': new_human_value,
-                                        'new_human_value': new_human_value})
+                                        'new_human_value': new_human_value,
+                                        'side_effects': {}})
                 continue
 
             elif human_key == 'Dataset' or human_key == 'Glosses dataset':
@@ -559,7 +565,8 @@ def compare_valuedict_to_gloss(valuedict, gloss_id, my_datasets, nl,
                                             'original_machine_value': current_dataset,
                                             'original_human_value': current_dataset,
                                             'new_machine_value': new_human_value,
-                                            'new_human_value': new_human_value})
+                                            'new_human_value': new_human_value,
+                                            'side_effects': {}})
                 else:
                     error_string = gettext(
                         "For gloss '{annotation}' ({glossid}), could not find '{value}' for '{column}'.").format(annotation=default_annotationidglosstranslation, glossid=str(gloss_id), value=new_human_value, column=human_key)
@@ -578,15 +585,12 @@ def compare_valuedict_to_gloss(valuedict, gloss_id, my_datasets, nl,
 
                 new_human_value_list = [v.strip() for v in new_human_value.split(',')]
 
-                (checked_new_human_value, earlier_updates_relations, errors) = check_existence_relations(gloss, new_human_value_list, earlier_updates_relations)
+                (checked_new_human_value, side_effects, errors) = check_existence_relations(gloss, new_human_value_list)
 
                 if errors and DEBUG_CSV:
-                    print('subst check: ', errors, earlier_updates_relations)
-                conflicts, earlier_updates_relations = check_conflicting_updates_relations(gloss, new_human_value_list, earlier_updates_relations)
-                if conflicts and DEBUG_CSV:
-                    print('conflict check: ', conflicts, earlier_updates_relations)
+                    print('subst check: ', errors)
 
-                if len(errors):
+                if errors:
                     errors_found += errors
                 elif current_relations_string != checked_new_human_value:
                     differences.append({'pk': gloss_id,
@@ -597,7 +601,8 @@ def compare_valuedict_to_gloss(valuedict, gloss_id, my_datasets, nl,
                                         'original_machine_value': current_relations_string,
                                         'original_human_value': current_relations_string,
                                         'new_machine_value': checked_new_human_value,
-                                        'new_human_value': checked_new_human_value})
+                                        'new_human_value': checked_new_human_value,
+                                        'side_effects': side_effects})
                 continue
 
             elif human_key == 'Relations to foreign signs':
@@ -631,7 +636,8 @@ def compare_valuedict_to_gloss(valuedict, gloss_id, my_datasets, nl,
                                         'original_machine_value': current_relations_foreign_string,
                                         'original_human_value': current_relations_foreign_string,
                                         'new_machine_value': checked_new_human_value,
-                                        'new_human_value': checked_new_human_value})
+                                        'new_human_value': checked_new_human_value,
+                                        'side_effects': {}})
                 continue
 
             elif human_key == 'Sequential Morphology':
@@ -656,7 +662,8 @@ def compare_valuedict_to_gloss(valuedict, gloss_id, my_datasets, nl,
                                         'original_machine_value': morphemes_string,
                                         'original_human_value': morphemes_string,
                                         'new_machine_value': new_human_value,
-                                        'new_human_value': new_human_value})
+                                        'new_human_value': new_human_value,
+                                        'side_effects': {}})
                 continue
 
             elif human_key == 'Simultaneous Morphology':
@@ -686,7 +693,8 @@ def compare_valuedict_to_gloss(valuedict, gloss_id, my_datasets, nl,
                                         'original_machine_value': simultaneous_morphemes,
                                         'original_human_value': simultaneous_morphemes,
                                         'new_machine_value': checked_new_human_value,
-                                        'new_human_value': checked_new_human_value})
+                                        'new_human_value': checked_new_human_value,
+                                        'side_effects': {}})
                 continue
 
             elif human_key == 'Blend Morphology':
@@ -718,7 +726,8 @@ def compare_valuedict_to_gloss(valuedict, gloss_id, my_datasets, nl,
                                         'original_machine_value': blend_morphemes,
                                         'original_human_value': blend_morphemes,
                                         'new_machine_value': checked_new_human_value,
-                                        'new_human_value': checked_new_human_value})
+                                        'new_human_value': checked_new_human_value,
+                                        'side_effects': {}})
                 continue
 
             elif human_key == 'Tags':
@@ -749,7 +758,8 @@ def compare_valuedict_to_gloss(valuedict, gloss_id, my_datasets, nl,
                                         'original_machine_value': sorted_tags_display,
                                         'original_human_value': sorted_tags_display,
                                         'new_machine_value': sorted_new_tags_display,
-                                        'new_human_value': sorted_new_tags_display})
+                                        'new_human_value': sorted_new_tags_display,
+                                        'side_effects': {}})
                 continue
 
             elif human_key == 'Notes':
@@ -781,7 +791,8 @@ def compare_valuedict_to_gloss(valuedict, gloss_id, my_datasets, nl,
                                         'original_machine_value': sorted_notes_display,
                                         'original_human_value': sorted_notes_display,
                                         'new_machine_value': sorted_new_notes_display,
-                                        'new_human_value': sorted_new_notes_display})
+                                        'new_human_value': sorted_new_notes_display,
+                                        'side_effects': {}})
                 continue
 
             elif human_key == 'Semantic Field':
@@ -821,7 +832,8 @@ def compare_valuedict_to_gloss(valuedict, gloss_id, my_datasets, nl,
                                         'original_machine_value': original_semanticfield_value,
                                         'original_human_value': original_semanticfield_value,
                                         'new_machine_value': new_semanticfield_value,
-                                        'new_human_value': new_semanticfield_value})
+                                        'new_human_value': new_semanticfield_value,
+                                        'side_effects': {}})
                 continue
 
             elif human_key in ['Derivation history', 'Derivation History']:
@@ -1012,9 +1024,10 @@ def compare_valuedict_to_gloss(valuedict, gloss_id, my_datasets, nl,
                                     'original_machine_value': original_machine_value,
                                     'original_human_value': original_human_value,
                                     'new_machine_value': new_machine_value,
-                                    'new_human_value': new_human_value})
+                                    'new_human_value': new_human_value,
+                                    'side_effects': {}})
 
-    return differences, errors_found, earlier_updates_same_csv, earlier_updates_lemmaidgloss, earlier_updates_relations
+    return differences, errors_found, earlier_updates_same_csv, earlier_updates_lemmaidgloss
 
 
 def compare_valuedict_to_lemma(valuedict, lemma_id, my_datasets, nl,
@@ -1499,116 +1512,40 @@ def check_existence_blend_morphology(gloss, values):
     return checked, errors
 
 
-def check_conflicting_updates_relations(gloss, values, earlier_seen):
+def check_existence_relations(gloss, values):
 
-    errors = []
-    new_tuples = []
-    if gloss.id in earlier_seen:
-        errors.append(gettext("This gloss already seen in updates to other glosses in the CSV."))
-
-    for value in values:
-        if not value:
-            # this is an erase
-            continue
-        (role, target) = value.split(':')
-        role = role.strip()
-        target = target.strip()
-        new_tuples.append((role, target))
-        target_gloss = Gloss.objects.filter(lemma__dataset=gloss.lemma.dataset, archived=False,
-                                            annotationidglosstranslation__text__exact=target).first()
-        if not target_gloss:
-            continue
-        if target_gloss.id in earlier_seen:
-            errors.append(gettext("Target gloss already seen in updates to relations in the CSV."))
-        else:
-            earlier_seen.append(target_gloss.id)
-    return errors, earlier_seen
-
-
-def check_existence_relations(gloss, values, earlier_seen):
-    default_annotationidglosstranslation = get_default_annotationidglosstranslation(gloss)
-
-    RELATION_ROLES = [fc.name for fc in FieldChoice.objects.filter(field__iexact='RelationRole',
-                                                                   machine_value__gt=1).order_by('name')]
-    RELATION_ROLE_TO_MACHINE_VALUE = dict([(fc.name, fc.machine_value) for fc in FieldChoice.objects.filter(field='RelationRole',
-                                                                                                   machine_value__gt=1).order_by('name')])
-    RELATION_ROLES_LOOKUP = dict([(fc.machine_value, fc.name) for fc in FieldChoice.objects.filter(field='RelationRole',
-                                                                                                   machine_value__gt=1).order_by('name')])
-    RELATION_ROLES_DISPLAY = ', '.join(RELATION_ROLES)
-
-    errors = []
     checked = ''
-    sorted_values = []
+    side_effects = dict()
+    errors = []
 
     if values == [""]:
-        return checked, earlier_seen, errors
+        return checked, side_effects, errors
 
-    # check syntax
-    for new_value_tuple in values:
-        try:
-            (role, other_gloss) = new_value_tuple.split(':', 1)
-            role = role.strip()
-            other_gloss = other_gloss.strip()
-            sorted_values.append((role, other_gloss))
-        except ValueError:
-            error_string = gettext(
-                "For gloss '{annotation}' ({glossid}), formatting error in Relations to other signs: '{input}'. Tuple role:gloss expected.").format(
-                annotation=default_annotationidglosstranslation, glossid=str(gloss.pk), input=str(new_value_tuple))
-            errors += [error_string]
+    values_mapped_to_objects, errors = new_relations_values_mapped_to_objects(gloss, values)
 
-    # check roles
-    for (role, other_gloss) in sorted_values:
-        if role in RELATION_ROLES:
-            continue
-        try:
-            role_fieldchoice = FieldChoice.lookup('RelationRole', role)
-        except (ObjectDoesNotExist, MultipleObjectsReturned):
-            error_string = gettext(
-                "For gloss '{annotation}' ({glossid}), column Relations to other signs: '{role}:{other_gloss}'. Role '{role}' not found. Role should be one of: {RELATION_ROLES_DISPLAY}.").format(
-                annotation=default_annotationidglosstranslation, glossid=str(gloss.pk), role=role, other_gloss=other_gloss, RELATION_ROLES_DISPLAY=RELATION_ROLES_DISPLAY)
-            errors += [error_string]
-            continue
-        error_string = gettext(
-            "For gloss '{annotation}' ({glossid}), column Relations to other signs: '{role}:{other_gloss}'. Please use English for the role.").format(
-            annotation=default_annotationidglosstranslation, glossid=str(gloss.pk), role=role, other_gloss=other_gloss)
-        errors += [error_string]
     if errors:
-        return checked, earlier_seen, errors
+        row_error = gettext(
+            "For gloss '{annotation}' ({glossid}), formatting error in Relations to other signs.").format(
+            annotation=get_default_annotationidglosstranslation(gloss), glossid=str(gloss.pk))
+        errors.append(row_error)
+        return checked, side_effects, errors
 
-    # check target glosses
+    gloss_relations = [(relation.source, relation.role_fk, relation.target)
+                       for relation in Relation.objects.filter(source=gloss)]
     checked_relations = []
-    # store the checked relation as (role machine value, target gloss pk) to allow sorting the same as the model retrieval
-    TARGET_LOOKUP = dict()
-    for (role, other_gloss) in sorted_values:
-        filter_target = Gloss.objects.filter(lemma__dataset=gloss.lemma.dataset,
-                                             annotationidglosstranslation__language=gloss.lemma.dataset.default_language,
-                                             annotationidglosstranslation__text__exact=other_gloss).distinct()
-        if not filter_target:
-            error_string = gettext(
-                "For gloss '{annotation}' ({glossid}), column Relations to other signs: '{role}:{other_gloss}'. Other gloss '{other_gloss}' not found.").format(
-                annotation=default_annotationidglosstranslation, glossid=str(gloss.pk), role=role, other_gloss=other_gloss)
-            errors += [error_string]
+    for (role, target) in values_mapped_to_objects:
+        checked_relations.append((role.name, get_default_annotationidglosstranslation(target)))
+        if (gloss, role, target) in gloss_relations:
             continue
-        elif filter_target.count() > 1:
-            error_string = gettext(
-                "For gloss '{annotation}' ({glossid}), column Relations to other signs: '{role}:{other_gloss}'. Multiple matches found for other gloss '{other_gloss}'.").format(
-                annotation=default_annotationidglosstranslation, glossid=str(gloss.pk), role=role, other_gloss=other_gloss)
-            errors += [error_string]
-            continue
-        elif gloss.pk == filter_target.first().pk:
-            error_string = gettext(
-                "For gloss '{annotation}' ({glossid}), column Relations to other signs: '{role}:{other_gloss}'. The other gloss '{other_gloss}' is the same as this gloss '{annotation}'.").format(
-                annotation=default_annotationidglosstranslation, glossid=str(gloss.pk), role=role, other_gloss=other_gloss)
-            errors += [error_string]
-            continue
-        target = filter_target.first()
-        if target.pk not in TARGET_LOOKUP.keys():
-            TARGET_LOOKUP[target.pk] = other_gloss
-        checked_relations.append((RELATION_ROLE_TO_MACHINE_VALUE[role], target.pk))
-    sorted_checked_relations = sorted(checked_relations, key=lambda x: (x[1], x[0]))
-    checked = ','.join([f'{RELATION_ROLES_LOOKUP[machine_value]}:{TARGET_LOOKUP[target_pk]}'
-                        for (machine_value, target_pk) in sorted_checked_relations])
-    return checked, earlier_seen, errors
+        target_annotation = get_default_annotationidglosstranslation(target)
+        if target_annotation not in side_effects.keys():
+            side_effects[target_annotation] = []
+        side_effects[target_annotation].append({'source_pk': target.pk,
+                                                'role': role.reverse_relation_role(),
+                                                'target': get_default_annotationidglosstranslation(gloss)})
+    checked = ','.join([f'{role_name}:{target_annotation}'
+                        for (role_name, target_annotation) in checked_relations])
+    return checked, side_effects, errors
 
 
 def check_existence_foreign_relations(gloss, relations, values):
