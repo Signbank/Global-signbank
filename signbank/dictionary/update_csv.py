@@ -138,7 +138,7 @@ def new_relations_values_mapped_to_objects(gloss, values):
             (role_str, target_str) = value.split(':', 1)
         except ValueError:
             error_string = gettext(
-                "For gloss {glossid}, formatting error in Relations to other signs: '{input}'. Tuple role:target expected.").format(
+                "Formatting error in new relation: '{input}'. Tuple role:target expected.").format(
                 glossid=str(gloss.pk), input=value)
             errors.append(error_string)
             continue
@@ -158,8 +158,8 @@ def new_relations_values_mapped_to_objects(gloss, values):
         target = matching_glosses.first()
         if gloss.pk == target.pk:
             errors.append(gettext(
-                "For gloss {glossid}, column Relations to other signs: '{role}:{other_gloss}'. The other gloss '{other_gloss}' is the same as this gloss.").format(
-                glossid=str(gloss.pk), role=role_str, other_gloss=target_str))
+                "For relation '{role}:{other_gloss}' the target gloss is the same as this gloss.").format(
+                role=role_str, other_gloss=target_str))
             continue
         if (role, target) in values_mapped_to_objects:
             errors.append(gettext("Duplicate found in new relations: {relations}.").format(relations=', '.join(values)))
@@ -215,7 +215,7 @@ def subst_relations(gloss, values):
             errors.append(gettext("This relation already exists multiple times."))
             continue
         if created and DEBUG_CSV:
-            print('created reverse relations: ', role, gloss, target)
+            print('created relation: ', role, gloss, target)
 
         # Also add the reverse relation
         reverse_role = role.reverse_relation_role()
@@ -225,7 +225,7 @@ def subst_relations(gloss, values):
             errors.append(gettext("This relation already exists multiple times."))
             continue
         if created_reverse and DEBUG_CSV:
-            print('created reverse relations: ', reverse_role, target, gloss)
+            print('created reverse relation: ', reverse_role, target, gloss)
     gloss.lastUpdated = DT.datetime.now(tz=get_current_timezone())
     gloss.save()
 

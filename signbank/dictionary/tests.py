@@ -4142,7 +4142,12 @@ class CSVTests(TestCase):
                 annotationIdgloss.text = f'TEMPORARYTESTGLOSS_{inx}'
                 annotationIdgloss.save()
 
-    def testErrorsCSVInputRelations(self):
+    def testUpdateRelationsCSV(self):
+
+        client = Client()
+        logged_in = client.login(username=self.user.username, password='test-user')
+        # Check whether the user is logged in
+        self.assertTrue(logged_in)
 
         gloss1 = Gloss.objects.get(lemma__dataset=self.test_dataset,
                                    annotationidglosstranslation__language=self.test_dataset.default_language,
@@ -4158,31 +4163,41 @@ class CSVTests(TestCase):
                                    annotationidglosstranslation__language=self.test_dataset.default_language,
                                    annotationidglosstranslation__text__exact='TEMPORARYTESTGLOSS_4')
 
-        values0 = ['Synonym:NonExistentGloss1', 'Gargoyle:NonExistentGloss2']
+        # test erroneous input
+        form_data = {'update_or_create': 'update'}
+        form_name = f"{gloss1.pk}.Relations to other signs"
+        form_data[form_name] = "Synonym:KAAS, Gargoyle:TEMPORARYTESTGLOSS_4"
+        print('Test CSV import update glosses with non-existent target gloss and non-existent field choice: "Synonym:KAAS, Gargoyle:TEMPORARYTESTGLOSS_4"')
+        response = client.post(reverse_lazy('import_csv_update'), form_data, follow=True)
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Target gloss KAAS not found or not unique.")
+        print('Response contains error message: "Target gloss KAAS not found or not unique."')
+        self.assertContains(response, "FieldChoice for Gargoyle is not defined.")
+        print('Response contains error message: "FieldChoice for Gargoyle is not defined."')
 
-        checked0, side_effects0, errors0 = check_existence_relations(gloss1, values0)
-        print('errors0: ', errors0)
+        # test addition of reverse relations
+        form_data = {'update_or_create': 'update'}
+        form_name = f"{gloss1.pk}.Relations to other signs"
+        form_data[form_name] = "Synonym:TEMPORARYTESTGLOSS_2"
+        form_name = f"{gloss2.pk}.Relations to other signs"
+        form_data[form_name] = "Hyponym:TEMPORARYTESTGLOSS_3"
+        form_name = f"{gloss3.pk}.Relations to other signs"
+        form_data[form_name] = "See Also:TEMPORARYTESTGLOSS_4"
 
-        values1 = ['Synonym:TEMPORARYTESTGLOSS_2']
+        response = client.post(reverse_lazy('import_csv_update'), form_data, follow=True)
+        self.assertEqual(response.status_code, 200)
 
-        values2 = ['Hyponym:TEMPORARYTESTGLOSS_3']
+        role_synonym = FieldChoice.lookup('RelationRole', 'Synonym')
+        role_hyponym = FieldChoice.lookup('RelationRole', 'Hyponym')
+        role_hypernym = FieldChoice.lookup('RelationRole', 'Hypernym')
+        role_seealso = FieldChoice.lookup('RelationRole', 'See Also')
 
-        checked1, side_effects1, errors1 = check_existence_relations(gloss1, values1)
-        print('side_effects1: ', side_effects1)
+        relations = [(r.role_fk, r.source, r.target) for r in Relation.objects.all().prefetch_related('source')]
 
-        checked2, side_effects2, errors2 = check_existence_relations(gloss2, values2)
-        print('side_effects2: ', side_effects2)
+        self.assertTrue((role_synonym, gloss1, gloss2) in relations)
+        self.assertTrue((role_synonym, gloss2, gloss1) in relations)
+        self.assertTrue((role_hyponym, gloss2, gloss3) in relations)
+        self.assertTrue((role_hypernym, gloss3, gloss2) in relations)
+        self.assertTrue((role_seealso, gloss3, gloss4) in relations)
+        self.assertTrue((role_seealso, gloss4, gloss3) in relations)
 
-        creation_errors_1, original_glosses_display1 = subst_relations(gloss1, values1)
-        add_relations_to_revision_history(self.user, gloss1, original_glosses_display1)
-
-        creation_errors_2, original_glosses_display2 = subst_relations(gloss2, values2)
-        add_relations_to_revision_history(self.user, gloss2, original_glosses_display2)
-
-        relations = Relation.objects.all().prefetch_related('source')
-        for r in relations:
-            print(r.role_fk, r.source, r.target)
-
-        revisionhistory = GlossRevision.objects.all()
-        for r in revisionhistory:
-            print(r.user, r.gloss, r.field_name, r.old_value, r.new_value)

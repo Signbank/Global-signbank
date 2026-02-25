@@ -1525,9 +1525,9 @@ def check_existence_relations(gloss, values):
 
     if errors:
         row_error = gettext(
-            "For gloss '{annotation}' ({glossid}), formatting error in Relations to other signs.").format(
+            "For gloss '{annotation}' ({glossid}), errors found in column Relations to other signs.").format(
             annotation=get_default_annotationidglosstranslation(gloss), glossid=str(gloss.pk))
-        errors.append(row_error)
+        errors = [row_error] + errors
         return checked, side_effects, errors
 
     gloss_relations = [(relation.source, relation.role_fk, relation.target)
