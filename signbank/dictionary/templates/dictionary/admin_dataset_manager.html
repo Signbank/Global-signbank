@@ -143,16 +143,11 @@ tr > td > form > input[type="submit"] {
                 {% if view_users|length > 0 %}
                     {% with view_users|length as num_rows %}
                     <ul id="users_can_view" class="list-unstyled"
-                        {% if num_rows > 4 %}
-                        style="height:220px; overflow:auto;display:block;"
-                        {% else %}
-                        style="height:{% widthratio num_rows 1 50 %}px; overflow:auto;display:block;"
-                    />
-                    {% endif %}
+                        style="height:{% if num_rows > 4 %}220{% else %}{% widthratio num_rows 1 50 %}{% endif %}px; overflow:auto;display:block;">
                     {% for user_v in view_users %}
                             <li id="{{user_v.username}}">
                                 <span id="user_v_{{user_v.username}}"
-                                      placement="top">{{user_v.first_name}} {{user_v.last_name}} ({{user_v.username}})</span>
+                                      style="align-content:top;">{{user_v.first_name}} {{user_v.last_name}} ({{user_v.username}})</span>
                             </li>
                     {% endfor %}
                     </ul>
@@ -162,13 +157,14 @@ tr > td > form > input[type="submit"] {
                 {% endif %}
                     <form name='dataset_{{dataset.name|cut:" "}}_view_perm_form' id='dataset_{{dataset.name|cut:" "}}_view_perm_form' method='get'>
                         <div class="hidden">
-                            <input name='dataset_acronym' class='form-control form-control-light' value='{{dataset.acronym}}' >
+                            <input type="hidden" name='dataset_acronym' class='form-control form-control-light' value='{{dataset.acronym}}' >
                         </div>
                         <table class='table table-condensed'>
                         <tr>
                             <td>
                             {% csrf_token %}
-                            <input class='form-control form-control-light usertypeahead usertypeahead-light'
+                            <label for="user_lookahead_grant_view"></label>
+                            <input id="user_lookahead_grant_view" class='form-control form-control-light usertypeahead usertypeahead-light'
                                    placeholder='{% trans "Username" %}'/>
                             <input type="hidden" name="username" value=""/>
                             </td>
@@ -182,13 +178,14 @@ tr > td > form > input[type="submit"] {
                     </form>
                     <form name='dataset_{{dataset.name|cut:" "}}_delete_view_perm_form' id='dataset_{{dataset.name|cut:" "}}_delete_view_perm_form' method='get'>
                         <div class="hidden">
-                            <input name='dataset_acronym' class='form-control form-control-light' value='{{dataset.acronym}}' >
+                            <input type="hidden" name='dataset_acronym' class='form-control form-control-light' value='{{dataset.acronym}}' >
                         </div>
                         <table class='table table-condensed'>
                         <tr>
                             <td>
                             {% csrf_token %}
-                            <input class='form-control form-control-light usertypeahead usertypeahead-light'
+                            <label for="user_lookahead_revoke_view"></label>
+                            <input id="user_lookahead_revoke_view" class='form-control form-control-light usertypeahead usertypeahead-light'
                                    placeholder='{% trans "Username" %}'/>
                             <input type="hidden" name="username" value=""/>
                             </td>
@@ -214,16 +211,11 @@ tr > td > form > input[type="submit"] {
                 {% if change_users|length > 0 %}
                     {% with change_users|length as num_rows %}
                     <ul id="users_can_change" class="list-unstyled"
-                          {% if num_rows > 4 %}
-                            style="height:220px; overflow:auto;display:block;"
-                          {% else %}
-                            style="height:{% widthratio num_rows 1 50 %}px; overflow:auto;display:block;"
-                          {% endif %}
-                    />
+                            style="height:{% if num_rows > 4 %}220{% else %}{% widthratio num_rows 1 50 %}{% endif %}px; overflow:auto;display:block;">
                     {% for user_c in change_users %}
                             <li id="{{user_c.username}}">
                                 <span id="user_c_{{user_c.username}}"
-                                      placement="top">{{user_c.first_name}} {{user_c.last_name}} ({{user_c.username}})</span>
+                                      style="align-content:top;">{{user_c.first_name}} {{user_c.last_name}} ({{user_c.username}})</span>
                             </li>
                     {% endfor %}
                     </ul>
@@ -233,13 +225,14 @@ tr > td > form > input[type="submit"] {
                 {% endif %}
                     <form name='dataset_{{dataset.name|cut:" "}}_change_perm_form' id='dataset_{{dataset.name|cut:" "}}_change_perm_form' method='get'>
                         <div class="hidden">
-                            <input name='dataset_acronym' class='form-control form-control-light' value='{{dataset.acronym}}' >
+                            <input type="hidden" name='dataset_acronym' class='form-control form-control-light' value='{{dataset.acronym}}' >
                         </div>
                         <table class='table table-condensed'>
                         <tr>
                             <td>
                             {% csrf_token %}
-                            <input class='form-control form-control-light usertypeahead usertypeahead-light'
+                            <label for="user_lookahead_grant_change"></label>
+                            <input id="user_lookahead_grant_change" class='form-control form-control-light usertypeahead usertypeahead-light'
                                    placeholder='{% trans "Username" %}'/>
                             <input type="hidden" name="username" value=""/>
                             </td>
@@ -253,13 +246,14 @@ tr > td > form > input[type="submit"] {
                     </form>
                     <form name='dataset_{{dataset.name|cut:" "}}_delete_change_perm_form' id='dataset_{{dataset.name|cut:" "}}_delete_change_perm_form' method='get'>
                         <div class="hidden">
-                            <input name='dataset_acronym' class='form-control form-control-light' value='{{dataset.acronym}}' >
+                            <input type="hidden" name='dataset_acronym' class='form-control form-control-light' value='{{dataset.acronym}}' >
                         </div>
                         <table class='table table-condensed'>
                         <tr>
                             <td>
                             {% csrf_token %}
-                            <input class='form-control form-control-light usertypeahead usertypeahead-light'
+                            <label for="user_lookahead_revoke_change"></label>
+                            <input id="user_lookahead_revoke_change" class='form-control form-control-light usertypeahead usertypeahead-light'
                                    placeholder='{% trans "Username" %}'/>
                             <input type="hidden" name="username" value=""/>
                             </td>
@@ -280,17 +274,19 @@ tr > td > form > input[type="submit"] {
                 <form method="get" class='pages-form pages-form-light'>
                     {% csrf_token %}
                     <div class="hidden">
-                        <input name='dataset_acronym' value='{{dataset.acronym}}' >
+                        <input type="hidden" name='dataset_acronym' value='{{dataset.acronym}}' >
                     </div>
-                    <select name='default_language' class="form-control form-control-light" style="width:200px;">
-                        <option value="">--------</option>
+                    <label for="select_default_language"></label>
+                    <select id="select_default_language" name='default_language' class="form-control form-control-light" style="width:200px;">
                         {% for language in dataset.translation_languages.all %}
-                            <option value="{{ language.id }}"
-                                    {% if language == dataset.default_language %}selected{% endif %}>
-                                {{ language.name }}</option>
+                            {% if language == dataset.default_language %}
+                            <option value="{{language.id}}" selected>{{language.name}}</option>
+                            {% else %}
+                            <option value="{{language.id}}">{{language.name}}</option>
+                            {% endif %}
                         {% endfor %}
                     </select>
-                    <input class="btn btn-primary" type="submit" value="{% trans 'Set' %}">
+                    <input class="btn btn-primary" type="submit" value="{% trans 'Set' %}" disabled>
                 </form>
             </td>
             <td>
@@ -304,7 +300,7 @@ tr > td > form > input[type="submit"] {
               </div>
             </td>
           <td>
-            <div data-toggle="collapse" data-target="#dataset_{{dataset.acronym}}_metadata" data-target=".multi-collapse-meta-{{dataset.pk}}">
+            <div data-toggle="collapse" data-target="#dataset_{{dataset.acronym}}_metadata" class="multi-collapse-meta-{{dataset.pk}}">
                 <button class="btn-default btn-default-light">{% trans "Manage" %}</button>
             </div>
             <div id='dataset_{{dataset.acronym}}_metadata' class='collapse multi-collapse-meta-{{dataset.pk}}' >
@@ -364,7 +360,7 @@ tr > td > form > input[type="submit"] {
             <input type='hidden' name='dataset_acronym' value='{{dataset.acronym}}'>
             <input class='form-control form-control-light' placeholder='{% trans "Upload EAF Files" %}'
                    name='file' type='file' multiple="" required="" webkitdirectory=true
-                    onchange="selectFolder(event)" id="{{dataset.acronym}}_file_or_folder">
+                   onchange="selectFolder(event)" id="{{dataset.acronym}}_file_or_folder">
           </form>
           </div>
           </td>
