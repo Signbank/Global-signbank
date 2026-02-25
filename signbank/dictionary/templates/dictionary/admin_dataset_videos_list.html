@@ -210,30 +210,30 @@ dd {
                 {% with searchform|get_annotation_search_field_for_language:dataset_lang as search_field %}
                 <td class='td td-light'>
                     <div class='input-group input-group-light'>
-                    <label class='input-group-addon' for='id_annotation_idgloss_{{dataset_lang.language_code_2char}}'>
+                    <label class='input-group-addon' for='glosssearch_{{dataset_lang.language_code_2char}}'>
                         {{search_field.label}}
                     </label>
-                    <input id='glosssearch_{{ dataset_lang.language_code_2char }}' type='text'
-                           name='glosssearch_{{ dataset_lang.language_code_2char }}' class='form-control' value="{{search_field.value}}">
+                    <input id='glosssearch_{{dataset_lang.language_code_2char}}' type='text'
+                           name='glosssearch_{{dataset_lang.language_code_2char}}' class='form-control' value="{{search_field.value}}">
                     </div>
                 </td>
                 {% endwith %}
 
                 {% with searchform|get_lemma_form_field_for_language:dataset_lang as lemma_field %}
                 <td class='td td-light'><div class='input-group input-group-light'>
-                    <label class='input-group-addon' for='id_lemma_{{dataset_lang.language_code_2char}}'>
+                    <label class='input-group-addon' for='lemma_{{dataset_lang.language_code_2char}}'>
                         {{lemma_field.label}}
                     </label>
-                    <input id='lemma_{{ dataset_lang.language_code_2char }}' type='text'
-                           name='lemma_{{ dataset_lang.language_code_2char }}' class='form-control' value='{{lemma_field.value}}'></div>
+                    <input id='lemma_{{dataset_lang.language_code_2char}}' type='text'
+                           name='lemma_{{dataset_lang.language_code_2char}}' class='form-control' value='{{lemma_field.value}}'></div>
                 </td>
                 {% endwith %}
 
                 {% with searchform|get_senses_form_field_for_language:dataset_lang as keyword_field %}
                 <td class='td td-light'><div class='input-group input-group-light'>
-                    <label class='input-group-addon' for='id_keyword_{{dataset_lang.language_code_2char}}'>{{keyword_field.label}}</label>
-                    <input id='keyword_{{ dataset_lang.language_code_2char }}' type='text'
-                           name='keyword_{{ dataset_lang.language_code_2char }}' class='form-control' value='{{keyword_field.value}}'></div>
+                    <label class='input-group-addon' for='keyword_{{dataset_lang.language_code_2char}}'>{{keyword_field.label}}</label>
+                    <input id='keyword_{{dataset_lang.language_code_2char}}' type='text'
+                           name='keyword_{{dataset_lang.language_code_2char}}' class='form-control' value='{{keyword_field.value}}'></div>
                 </td>
                 {% endwith %}
             </tr>
