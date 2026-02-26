@@ -1,0 +1,261 @@
+/* variant style for black - main page style */
+
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:ital,wght@0,100..700;1,100..700&display=swap');
+
+html {
+  background: var(--ultron);
+  color: var(--beam);
+  font-family: "IBM Plex Sans", sans-serif;
+}
+
+#leftcontentborder {
+  background-image: url(../../images/global/black_03.gif);
+}
+
+#rightcontentborder {
+  background-image: url(../../images/global/black_05.gif);
+}
+
+ #header {
+		background-image: url(../../images/global/black_02.gif);
+        padding:0;
+        background:#313F69;
+        height:110px;
+        clear:both;
+        position:relative;
+        margin: 0px;
+        width: 100%;
+}
+
+#header h1 {
+        height: 110px;
+        width: 300px;
+        background-position: 20px 20px;
+        background-repeat: no-repeat;
+        color: hsla(0,0%,100%,0.75);;
+        font-family: "IBM Plex Sans", sans-serif;
+        font-size: 40px;
+        padding: 19px;
+        padding-left: 3px;
+        margin: 0px;
+        display: flex;
+        float:left
+}
+
+#second-title-part {
+    color: white;
+    margin-left: -92px;
+    line-height: 2.5;
+}
+
+#logoholder {
+    background-repeat: no-repeat;
+    background-position: 11px 10px;
+	width: 115px;
+    height: 110px;
+    position: absolute;
+    right: 0px;
+    top: 0px;
+}
+
+/* superfish menu styling - background image is assumed 26px high */
+.sf-navbar  { 
+   background-image: url(../../images/global/black_08.gif);
+   background-position: top right;
+   background-repeat: no-repeat;
+}
+
+#pages #mainlinks td {
+  
+  background-image: url(../../images/global/black_02.gif);
+}
+
+#username_link
+{
+    margin-right: 17px;
+}
+
+.hamburger_button
+{
+    margin-right: 35px;
+}
+
+#minimalistic_language_picker
+{
+    float: right;
+    margin: 0px;
+    position: relative;
+    width: 45px;
+	line-height: 11px;
+	padding: 6px;
+    float: right;
+	border-radius: 6px;
+}
+
+legend
+{
+    padding-top: 25px;
+}
+
+.citation_form_image
+{
+    width: 467px;
+}
+
+.modal-backdrop {
+  z-index: 1040 !important;
+  position: relative;
+}
+
+.modal-dialog {
+  margin: 300px auto;
+  z-index: 1100 !important;
+  background-color: inherit;
+  color: inherit;
+}
+
+.global_sb_logo
+{
+    width: 80px;
+    margin: 15px;
+    margin-left: 19px;
+    float: left;
+}
+
+.navbar {
+    margin-bottom: 3px;
+    width: 100%;
+    position: fixed;
+    background-color: #ffffff;
+    color: black;
+}
+
+.navbar-fixed-top {
+    z-index: 500;
+}
+
+.navbar-upper {
+    z-index: 550;
+}
+.navbar-form {
+    z-index: 500;
+}
+.navbar-nav > li > a {
+    padding-top: 5px;
+    padding-bottom: 5px;
+    background-color: inherit;
+    color: inherit;
+}
+
+.navbar-nav > ul {
+    margin-left: 15px;
+    float: left;
+    background-color: inherit;
+    color: inherit;
+}
+
+.navbar-form, .navbar-text {
+    margin-top: 3px;
+    margin-bottom: 3px;
+    color: inherit;
+}
+
+.navbar-collapse {
+    max-height: 100% !important;
+    background-color: inherit;
+    color: inherit;
+}
+
+.btn {
+    padding-top: 3px;
+    padding-bottom: 3px;
+    margin-top: 2px;
+    margin-bottom: 2px;
+}
+
+.panel-heading, .input-group-addon, .form-control {
+    padding-top: 3px;
+    padding-bottom: 3px;
+}
+
+.select2-container {
+    width: 300px;
+}
+
+.input-group-addon, .form-control {
+    height: 28px;
+}
+
+#signinfo {
+    min-height: 30px;
+    border-left-width: 0px;
+    border-right-width: 0px;
+    margin-top: 0px;
+    z-index: 1;
+}
+
+.invisible_button
+{
+    border: none;
+    background-color: rgba(0,0,0,0%);
+    box-shadow: none;
+    margin-left: -4px;
+    outline: none;
+}
+
+#mag-glass
+{
+    width:14px;
+}
+
+.error input, .error select {
+    color: darkred;
+}
+
+.help-block {
+    color: darkred;
+}
+
+.text-container {
+    display: inline-block;
+    position: relative;
+}
+
+.text-container input {
+    text-indent: 0px;
+}
+
+.hasTooltip {
+    position: relative;
+}
+
+.hasTooltip .isTooltip {
+    display: none;
+}
+
+.hasTooltip:hover .isTooltip {
+    display: block;
+    background-color: black;
+    border-radius: 5px;
+    color: white;
+    box-shadow: 1px 1px 3px gray;
+    position: absolute;
+    padding: 5px;
+    top: 3em;
+    left: 0px;
+    max-width: 360px;
+    min-width: 300px;
+    font-size: 12px;
+    z-index: 9999;
+}
+
+.social .fa, .social a, .social a:hover
+{
+	font-size: 2em;
+    color: #d1d1d1;
+}
+
+a
+{
+    color: #4C5BB1 !important;
+}
