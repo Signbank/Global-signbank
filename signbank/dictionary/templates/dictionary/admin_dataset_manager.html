@@ -45,11 +45,11 @@ tr > td > form > input[type="submit"] {
 
         function do_toggle_import(el) {
               var words = el.id.split("_");
-              var input_file_or_folder = document.getElementById(words[2]+'_file_or_folder');
+              var input_file_or_folder = '#' + words[2]+'_file_or_folder';
               if (words[1] == 'files') {
-                    $(input_file_or_folder).removeProp("webkitdirectory");
+                    $(input_file_or_folder).removeAttr("webkitdirectory");
               } else {
-                    $(input_file_or_folder).prop({"webkitdirectory":true});
+                    $(input_file_or_folder).attr("webkitdirectory", true);
               }
        }
 
@@ -329,10 +329,10 @@ tr > td > form > input[type="submit"] {
           </div>
           </td>
           <td>
-              <div data-toggle="collapse" data-target="#dataset_{{dataset.acronym}}_view_eafs" class="multi-collapse-{{dataset.pk}}">
+              <div id="dataset_{{dataset.acronym}}_eafs" data-toggle="collapse" data-target=".multi-collapse-{{dataset.pk}}">
                   <button class="btn-default btn-default-light">{% trans "Manage" %}</button>
               </div>
-              <div id='dataset_{{dataset.acronym}}_view_eafs' class='collapse multi-collapse-{{dataset.pk}}'>
+              <div id='dataset_{{dataset.acronym}}_view_eafs' class='collapse multi-collapse-{{dataset.pk}}' data-parent="#dataset_{{dataset.acronym}}_eafs">
                   {% if dataset.uploaded_eafs %}
                   {% url 'dictionary:protected_media' '' as protected_media_url %}
                   <ul id="uploaded_eaf_files" class="list-unstyled" style="height:120px; overflow:auto;display:block;">
@@ -344,7 +344,7 @@ tr > td > form > input[type="submit"] {
                   <p>{% trans "No EAF files found." %}</p>
                   {% endif %}
               </div>
-          <div id='dataset_{{dataset.acronym}}_upload_eafs' class='collapse multi-collapse-{{dataset.pk}}'>
+          <div id='dataset_{{dataset.acronym}}_upload_eafs' class='collapse multi-collapse-{{dataset.pk}}' data-parent="#dataset_{{dataset.acronym}}_eafs">
           <label>&nbsp;</label>
           <form id='upload_eaf_files' action="{{PREFIX_URL}}/update/dataset_eafs/" method="post" enctype="multipart/form-data">
             {% csrf_token %}
