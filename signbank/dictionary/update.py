@@ -1855,8 +1855,10 @@ def variants_of_gloss(request):
     except ObjectDoesNotExist:
         return HttpResponseBadRequest("Target gloss not found.", {'content-type': 'text/plain'})
 
-    rel = Relation(source=source, target=target, role_fk=variant)
-    rel.save()
+    try:
+        rel, created = Relation.objects.get_or_create(source=source, role_fk=variant, target=target)
+    except MultipleObjectsReturned:
+        return HttpResponseBadRequest("This relation already exists multiple times.", {'content-type': 'text/plain'})
 
     return HttpResponse(json.dumps(rel), content_type="application/json")
 

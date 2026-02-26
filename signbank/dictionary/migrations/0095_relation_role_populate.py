@@ -59,7 +59,8 @@ def copy_relation_role_values(apps, schema_editor):
     for relation in Relation.objects.all():
         if relation.role not in role_to_machine_value.keys():
             relation.role_fk = FieldChoice.objects.get(field='RelationRole', machine_value=0)
-        relation.role_fk = relation_roles[role_to_machine_value[relation.role]]
+        else:
+            relation.role_fk = relation_roles[role_to_machine_value[relation.role]]
         relation.save()
 
 class Migration(migrations.Migration):
