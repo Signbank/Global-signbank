@@ -26,7 +26,6 @@ from django.urls import reverse_lazy, reverse
 from guardian.shortcuts import assign_perm
 from collections import OrderedDict
 
-from signbank.dictionary.update_csv import subst_relations
 from signbank.settings.base import BASE_DIR
 from signbank.settings.server_specific import (PREFIX_URL, MODELTRANSLATION_LANGUAGES, ECV_FOLDER_ABSOLUTE_PATH,
                                                FIELDS, OBLIGATORY_FIELDS, DEFAULT_DATASET, API_FIELDS,
@@ -57,9 +56,7 @@ from signbank.dictionary.admin import HandshapeAdmin, FieldChoiceAdmin
 
 from signbank.tools import (get_gloss_handshape_fields, get_fields_with_choices_glosses, get_fields_with_choices_handshapes,
                             get_fields_with_choices_definition, get_fields_with_choices_morphology_definition,
-                            get_fields_with_choices_other_media_type, get_fields_with_choices_morpheme_type,
-                            check_existence_relations,
-                            get_default_annotationidglosstranslation, add_relations_to_revision_history)
+                            get_fields_with_choices_other_media_type, get_fields_with_choices_morpheme_type)
 
 from xml.etree import ElementTree
 

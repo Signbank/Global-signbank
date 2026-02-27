@@ -4,10 +4,7 @@ from django.db.models import IntegerField, Value as V
 from signbank.settings.server_specific import FIELDS, HANDSHAPE_ETYMOLOGY_FIELDS, HANDEDNESS_ARTICULATION_FIELDS
 from signbank.video.models import GlossVideoDescription, GlossVideoNME
 from signbank.dictionary.models import AnnotatedSentence, fieldname_to_kind, Relation, FieldChoice
-from signbank.dictionary.senses_display import (senses_per_language, senses_per_language_list,
-                                                sensetranslations_per_language_dict,
-                                                senses_translations_per_language_list,
-                                                senses_sentences_per_language_list)
+from signbank.dictionary.senses_display import senses_per_language
 
 def get_annotation_idgloss_per_language_dict(gloss):
     default_language = gloss.lemma.dataset.default_language
@@ -76,11 +73,9 @@ def get_other_relations(gloss):
     otherrelations = []
     seen = []
     for oth_rel in gloss.get_relations():
-        if (oth_rel.role_fk, oth_rel.target) in seen:
-            otherrelations.append((True, oth_rel, oth_rel.get_target_display()))
-        else:
-            otherrelations.append((False, oth_rel, oth_rel.get_target_display()))
-        seen.append((oth_rel.role_fk, oth_rel.target))
+        key = (oth_rel.role_fk, oth_rel.target)
+        otherrelations.append((key in seen, oth_rel, oth_rel.get_target_display()))
+        seen.append(key)
     return otherrelations
 
 
@@ -174,10 +169,10 @@ def get_relations_groupedby_role(gloss):
 
 def get_relations_dict(gloss):
     relation_roles = FieldChoice.objects.filter(field='RelationRole', machine_value__gt=1)
-    relations_dict = dict()
-    for role in relation_roles:
-        relations_dict[role] = gloss.get_relations_of_type(role)
-    return relations_dict
+    return {
+        role: gloss.get_relations_of_type(role)
+        for role in relation_roles
+    }
 
 def relations_target_gloss_lookup(gloss):
     relations = Relation.objects.filter(source=gloss)

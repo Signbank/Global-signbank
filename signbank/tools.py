@@ -11,14 +11,12 @@ import datetime as DT
 from datetime import date
 
 from django.db import models
-from django.db.models.functions import Lower
 from django.db.models.fields import BooleanField
-from collections import Counter
 from django.utils.translation import override, activate, gettext, gettext_lazy as _
 from django.views.decorators.csrf import csrf_exempt
 from django.utils.dateformat import format
 from django.utils.timezone import get_current_timezone
-from django.core.exceptions import ObjectDoesNotExist, EmptyResultSet, MultipleObjectsReturned
+from django.core.exceptions import ObjectDoesNotExist, EmptyResultSet
 from django.contrib.auth.models import User
 from django.http import JsonResponse, HttpResponse
 from django.shortcuts import render
@@ -43,7 +41,7 @@ from signbank.csv_interface import (sense_translations_for_language, update_sens
                                     parse_sentence_row, get_senses_to_sentences, csv_sentence_tuples_list_compare,
                                     required_csv_columns, trim_columns_in_row,
                                     normalize_field_choice)
-from signbank.dictionary.update_csv import new_relations_values_mapped_to_objects
+from signbank.dictionary.update_csv import validate_and_resolve_gloss_relations
 from signbank.dictionary.field_choices import fields_to_fieldcategory_dict
 
 from tagging.models import TaggedItem, Tag
@@ -1513,7 +1511,9 @@ def check_existence_blend_morphology(gloss, values):
 
 
 def check_existence_relations(gloss, values):
-
+    # used by Import CSV Update
+    # values representing relations are checked and sorted as per the display method of the model
+    # any new reverse relations are put into dict side_effects for display in the template
     checked = ''
     side_effects = dict()
     errors = []
@@ -1521,7 +1521,7 @@ def check_existence_relations(gloss, values):
     if values == [""]:
         return checked, side_effects, errors
 
-    values_mapped_to_objects, errors = new_relations_values_mapped_to_objects(gloss, values)
+    values_mapped_to_objects, errors = validate_and_resolve_gloss_relations(gloss, values)
 
     if errors:
         row_error = gettext(
@@ -1534,10 +1534,11 @@ def check_existence_relations(gloss, values):
                        for relation in Relation.objects.filter(source=gloss)]
     checked_relations = []
     for (role, target) in values_mapped_to_objects:
-        checked_relations.append((role.name, get_default_annotationidglosstranslation(target)))
         if (gloss, role, target) in gloss_relations:
             continue
+        # checked_relations contains tuples in the display format
         target_annotation = get_default_annotationidglosstranslation(target)
+        checked_relations.append((role.name, target_annotation))
         if target_annotation not in side_effects.keys():
             side_effects[target_annotation] = []
         side_effects[target_annotation].append({'source_pk': target.pk,

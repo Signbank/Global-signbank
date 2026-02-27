@@ -3,7 +3,7 @@ import datetime as DT
 
 from django.utils.timezone import get_current_timezone
 from django.core.exceptions import ObjectDoesNotExist, MultipleObjectsReturned
-from django.utils.translation import gettext, gettext_lazy as _
+from django.utils.translation import gettext
 
 from tagging.models import TaggedItem, Tag
 
@@ -128,7 +128,9 @@ def update_blend_morphology(gloss, values):
     return
 
 
-def new_relations_values_mapped_to_objects(gloss, values):
+def validate_and_resolve_gloss_relations(gloss, values):
+    # Processes a list of string values representing relations in the format "role:target",
+    # validates them, and converts them into tuples of (FieldChoice, Gloss) objects.
     errors = []
     values_mapped_to_objects = []
     for value in values:
@@ -165,8 +167,9 @@ def new_relations_values_mapped_to_objects(gloss, values):
             errors.append(gettext("Duplicate found in new relations: {relations}.").format(relations=', '.join(values)))
             continue
         values_mapped_to_objects.append((role, target))
-    sorted_values_mapped_to_objects = sorted(values_mapped_to_objects, key=lambda x: (x[1].pk, x[0].machine_value))
-    return sorted_values_mapped_to_objects, errors
+    # the tuples are sorted in the same order as the display relations method to allow straightforward comparison
+    sorted_fieldchoice_gloss_tuples = sorted(values_mapped_to_objects, key=lambda x: (x[1].pk, x[0].machine_value))
+    return sorted_fieldchoice_gloss_tuples, errors
 
 
 def subst_relations(gloss, values):
@@ -194,7 +197,7 @@ def subst_relations(gloss, values):
         else:
             existing_relations_by_role[rel_role] = [rel_other_gloss]
 
-    values_mapped_to_objects, errors = new_relations_values_mapped_to_objects(gloss, values)
+    values_mapped_to_objects, errors = validate_and_resolve_gloss_relations(gloss, values)
 
     if errors:
         return errors, original_glosses_display
