@@ -391,7 +391,7 @@ def get_video_file_path(instance, original_filename, nmevideo=False, perspective
     if instance and instance.is_glossvideonme():
         nmevideo = True
         offset = instance.offset
-        perspective = instance.perspective
+        perspective = '' if instance.is_primary() else instance.perspective
     elif instance and instance.is_glossvideoperspective():
         nmevideo = False
         perspective = instance.perspective
@@ -1097,7 +1097,7 @@ class GlossVideoDescription(models.Model):
 
 class GlossVideoNME(GlossVideo):
     offset = models.IntegerField(default=1)
-    perspective = models.CharField(max_length=20, choices=NME_PERSPECTIVE_CHOICES, default='center')       
+    perspective = models.CharField(max_length=20, choices=NME_PERSPECTIVE_CHOICES, blank=True, default='')
 
     class Meta:
         verbose_name = gettext("NME Gloss Video")
@@ -1112,6 +1112,9 @@ class GlossVideoNME(GlossVideo):
         else:
             self.upload_to = get_video_file_path
         super().__init__(*args, **kwargs)
+
+    def is_primary(self):
+        return self.perspective in ['', 'center']
 
     def has_perspective_videos(self):
         perspectivevideos = GlossVideoNME.objects.filter(gloss=self.gloss, offset=self.offset, perspective__in=['left', 'right'], version=0)

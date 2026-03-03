@@ -2488,17 +2488,19 @@ class Gloss(MetaModelMixin, models.Model):
                                                 version=0)
         elif glossvideo.is_glossvideonme():
             glossvideo = glossvideo.glossvideonme
-            video = GlossVideoNME(gloss=self, offset=glossvideo.offset, perspective=glossvideo.perspective,
+            perspective = '' if glossvideo.is_primary() else glossvideo.perspective
+            video = GlossVideoNME(gloss=self, offset=glossvideo.offset, perspective=perspective,
                                   upload_to=get_video_file_path, version=0)
 
             # get existing gloss NME video objects
-            existing_videos = GlossVideoNME.objects.filter(gloss=self, offset=glossvideo.offset,
-                                                           perspective=glossvideo.perspective).exclude(pk=glossvideo.pk)
+            perspective_filter = Q(**{'perspective__in': ['', 'center']}) if glossvideo.is_primary() else Q(**{'perspective': glossvideo.perspective})
+
+            existing_videos = GlossVideoNME.objects.filter(gloss=self, offset=glossvideo.offset).filter(perspective_filter).exclude(pk=glossvideo.pk)
             # Update the backup video objects stored in the database
             for video_object in existing_videos:
                 video_object.reversion()
             relative_path = get_video_file_path(video, str(videofile), nmevideo=True,
-                                                perspective=glossvideo.perspective,
+                                                perspective=perspective,
                                                 offset=glossvideo.offset, version=0)
         else:
             video = GlossVideo(gloss=self,
@@ -2573,25 +2575,23 @@ class Gloss(MetaModelMixin, models.Model):
         primary_nmevideo = GlossVideoNME.objects.filter(gloss=self, offset=offset, perspective__in=['', 'center'], version=0).first()
         return primary_nmevideo.has_right_perspective if primary_nmevideo else False
 
-    def add_nme_video(self, user, videofile, new_offset, recorded, perspective='center'):
+    def add_nme_video(self, user, videofile, new_offset, recorded, perspective=''):
         # Preventing circular import
         from signbank.video.models import GlossVideoNME, GlossVideoHistory, get_video_file_path
 
-        existing_nme_videos = GlossVideoNME.objects.filter(gloss=self, perspective=perspective, offset=new_offset, version=0)
+        perspective = '' if perspective in ['', 'center'] else perspective
+
+        perspective_filter = Q(**{'perspective': perspective}) if perspective else Q(**{'perspective__in': ['', 'center']})
+
+        existing_nme_videos = GlossVideoNME.objects.filter(gloss=self, offset=new_offset, version=0).filter(perspective_filter)
         for existing_nme_vid in existing_nme_videos:
             # convert an existing version 0 video for this offset to a backup file
             existing_nme_vid.reversion()
-        existing_offsets_for_this_perspective = [nmev.offset for nmev in GlossVideoNME.objects.filter(gloss=self, perspective=perspective, version=0)]
-        if new_offset in existing_offsets_for_this_perspective:
-            # override given offset to avoid duplicate usage
-            offset = max(existing_offsets_for_this_perspective)+1
-        else:
-            offset = new_offset
 
         if isinstance(videofile, File) or videofile.content_type == 'django.core.files.uploadedfile.InMemoryUploadedFile':
-            video = GlossVideoNME(gloss=self, offset=offset, perspective=perspective, upload_to=get_video_file_path)
+            video = GlossVideoNME(gloss=self, offset=new_offset, perspective=perspective, upload_to=get_video_file_path)
             # Create a GlossVideoHistory object
-            relative_path = get_video_file_path(video, str(videofile), nmevideo=True, perspective=perspective, offset=offset, version=0)
+            relative_path = get_video_file_path(video, str(videofile), nmevideo=True, perspective=perspective, offset=new_offset, version=0)
             video_file_full_path = os.path.join(WRITABLE_FOLDER, relative_path)
             glossvideohistory = GlossVideoHistory(action="upload", gloss=self, actor=user, 
                                                   uploadfile=videofile, goal_location=video_file_full_path)

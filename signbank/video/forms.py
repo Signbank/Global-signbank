@@ -1,8 +1,9 @@
 from django import forms
-from signbank.video.models import GlossVideo, Gloss, NME_PERSPECTIVE_CHOICES
+from signbank.video.models import GlossVideo
 from signbank.dictionary.models import AnnotatedSentenceSource
-import json
 from django.utils.translation import gettext_lazy as _
+
+NME_PERSPECTIVE_UPLOAD_CHOICES = (('', '-'),('left',_('Left')),('right',_('Right')))
 
 
 class VideoUploadForm(forms.ModelForm):
@@ -32,7 +33,7 @@ class VideoUploadForObjectForm(forms.Form):
                                     choices=PERSPECTIVE_CHOICES, required=False,
                                     widget=forms.Select(attrs=ATTRS_FOR_FORMS))
     nme_perspective = forms.ChoiceField(label=_('NME video perspective'),
-                                        choices=NME_PERSPECTIVE_CHOICES, required=False,
+                                        choices=NME_PERSPECTIVE_UPLOAD_CHOICES, required=False,
                                         widget=forms.Select(attrs=ATTRS_FOR_FORMS)) 
 
     eaffile = forms.FileField(label="Upload EAF", widget=forms.FileInput(attrs={'accept':'text/xml'}), required=False)
