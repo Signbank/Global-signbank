@@ -13,6 +13,7 @@ from django.http import (HttpResponse, HttpResponseRedirect, HttpResponseBadRequ
 from django.shortcuts import render, get_object_or_404, redirect
 from django.urls import reverse
 from django.contrib.auth.decorators import login_required
+from django.views.decorators.http import require_http_methods
 from django.utils.datastructures import MultiValueDictKeyError
 from django.utils.encoding import escape_uri_path
 from urllib.parse import quote
@@ -20,7 +21,6 @@ from django.contrib import messages
 from django.core.exceptions import ValidationError, ObjectDoesNotExist, MultipleObjectsReturned, PermissionDenied
 from django.utils.translation import gettext_lazy as _, activate, override, gettext
 from django.views.decorators.csrf import csrf_exempt
-from django.utils.timezone import get_current_timezone
 from django.views.static import serve
 from django.db.transaction import atomic
 from django.db.models import Q
@@ -28,13 +28,12 @@ from django.core.files import File
 
 import guardian
 from guardian.shortcuts import get_user_perms, get_objects_for_user
-from tagging.models import TaggedItem
 from wsgiref.util import FileWrapper
 
 from signbank.settings.server_specific import (PREFIX_URL, WRITABLE_FOLDER, GLOSS_VIDEO_DIRECTORY, GLOSS_IMAGE_DIRECTORY,
                                                SHOW_DATASET_INTERFACE_OPTIONS, SIGNBANK_PACKAGES_FOLDER,
                                                LANGUAGE_CODE, USE_HANDSHAPE, HANDSHAPE_IMAGE_DIRECTORY,
-                                               RECENTLY_ADDED_SIGNS_PERIOD, USE_REGULAR_EXPRESSIONS,
+                                               USE_REGULAR_EXPRESSIONS,
                                                FIELDS, DEFINITION_FIELDS, SHOW_QUERY_PARAMETERS_AS_BUTTON,
                                                DEFAULT_LANGUAGE_HEADER_COLUMN, DEFAULT_DATASET_ACRONYM, OBLIGATORY_FIELDS)
 from signbank.settings.base import (MAXIMUM_UPLOAD_SIZE, SUPPORTED_CITATION_IMAGE_EXTENSIONS, USE_X_SENDFILE,
@@ -48,7 +47,7 @@ from signbank.dictionary.models import (Dataset, Language, Gloss, Morpheme, Lemm
                                         get_default_language_id, CATEGORY_MODELS_MAPPING)
 from signbank.dictionary.forms import (LemmaCreateForm, GlossCreateForm, MorphemeCreateForm, ImageUploadForHandshapeForm,
                                        ImageUploadForGlossForm, CSVUploadForm)
-from signbank.dictionary.update import (update_signlanguage, update_dialect)
+from signbank.dictionary.update import update_dialect
 from signbank.dictionary.update_csv import (update_simultaneous_morphology, update_blend_morphology,
                                             update_sequential_morphology, subst_relations, subst_foreignrelations,
                                             update_tags, subst_notes, subst_semanticfield)
@@ -56,14 +55,12 @@ from signbank.dictionary.context_data import get_selected_datasets
 from signbank.tools import (get_two_letter_dir, get_default_annotationidglosstranslation,
                             get_dataset_languages, get_datasets_with_public_glosses,
                             create_gloss_from_valuedict, compare_valuedict_to_gloss, compare_valuedict_to_lemma,
-                            construct_scrollbar, create_zip_with_json_files,
-                            get_interface_language_and_default_language_codes, detect_delimiter,
+                            create_zip_with_json_files,
+                            detect_delimiter,
                             split_csv_lines_header_body,
                             split_csv_lines_sentences_header_body, create_sentence_from_valuedict,
                             get_deleted_gloss_or_media_data, get_gloss_data)
-from signbank.dictionary.field_choices import (get_static_choice_lists, get_frequencies_for_category, category_to_fields,
-                                               fields_to_categories, fields_to_fieldcategory_dict,
-                                               get_static_choice_lists_per_field)
+from signbank.dictionary.field_choices import fields_to_fieldcategory_dict
 from signbank.csv_interface import (csv_create_senses, csv_update_sentences, csv_create_sentence, required_csv_columns,
                                     choice_fields_choices)
 from signbank.dictionary.translate_choice_list import (machine_value_to_translated_human_value,
@@ -297,7 +294,7 @@ def video_file_path(gloss):
     two_letter_dir = idgloss[:2]
     if len(two_letter_dir) == 1:
         two_letter_dir += '-'
-    filename = idgloss + '-' + str(gloss.id) + ".mp4"
+    filename = f'{idgloss}-{gloss.id}.mp4'
     path = os.path.join(video_dir, dataset_dir, two_letter_dir, filename)
     if ESCAPE_UPLOADED_VIDEO_FILE_PATH:
         path = escape_uri_path(path)
@@ -544,9 +541,9 @@ def import_csv_create(request):
             if not delimiter_okay:
                 feedback_message = _('The delimiter is not comma, tab, or semicolon.')
             elif extra_keys:
-                feedback_message = _('The header row of the csv file looks like this: ') + ', '.join(extra_keys)
+                feedback_message = gettext('Extra columns were found: {extrakeys}').format(extrakeys=', '.join(extra_keys))
             else:
-                feedback_message = _('Some required column headers are missing: ') + ', '.join(missing_keys)
+                feedback_message = gettext('Some required column headers are missing: {missingkeys}').format(missingkeys=', '.join(missing_keys))
             messages.add_message(request, messages.ERROR, feedback_message)
             return render(request, 'dictionary/import_csv_create.html',
                           {'form': uploadform, 'stage': 0, 'changes': changes,
@@ -610,11 +607,11 @@ def import_csv_create(request):
             dataset_name = value_dict['Dataset'].strip()
 
             if dataset_name not in selected_dataset_acronyms:
-                e3 = 'Row ' + str(nl + 2) + ': Dataset %s is not selected.' % value_dict['Dataset'].strip()
+                e3 = gettext("Row {row}: Dataset {acronym} is not selected.").format(row=str(nl+2), acronym=value_dict['Dataset'].strip())
                 error.append(e3)
                 break
             if dataset_name not in user_datasets_names:
-                e3 = 'Row '+str(nl + 2) + ': You are not allowed to change dataset %s.' % value_dict['Dataset'].strip()
+                e3 = gettext("Row {row}: You are not allowed to change dataset {acronym}.").format(row=str(nl+2), acronym=value_dict['Dataset'].strip())
                 error.append(e3)
                 break
             # Check whether the user may change the dataset of the current row
@@ -622,9 +619,9 @@ def import_csv_create(request):
                 if seen_datasets:
                     # already seen a dataset
                     # this is a different dataset
-                    e3 = 'Row '+str(nl + 2) + ': A different dataset is mentioned.'
-                    e4 = 'You can only create glosses for one dataset at a time.'
-                    e5 = 'To create glosses in multiple datasets, use a separate CSV file for each dataset.'
+                    e3 = gettext("Row {row}: A different dataset is mentioned.").format(row=str(nl+2))
+                    e4 = gettext('You can only create glosses for one dataset at a time.')
+                    e5 = gettext('To create glosses in multiple datasets, use a separate CSV file for each dataset.')
                     error.append(e3)
                     error.append(e4)
                     error.append(e5)
@@ -633,20 +630,20 @@ def import_csv_create(request):
                 # only process a dataset_name once for the csv file being imported
                 # catch possible empty values for dataset, primarily for pretty printing error message
                 if dataset_name in ['', None, 0, 'NULL']:
-                    e_dataset_empty = 'Row '+str(nl + 2) + ': The Dataset is missing.'
+                    e_dataset_empty = gettext('Row {row}: The Dataset is missing.').format(row=str(nl+2))
                     error.append(e_dataset_empty)
                     break
                 try:
                     dataset = Dataset.objects.get(acronym=dataset_name)
                 except ObjectDoesNotExist:
                     # An error message should be returned here, the dataset does not exist
-                    e_dataset_not_found = 'Row '+str(nl + 2) + ': Dataset %s' % value_dict['Dataset'].strip() + ' does not exist.'
+                    e_dataset_not_found = gettext("Row {row}: Dataset {acronym} does not exist.").format(row=str(nl+2), acronym=value_dict['Dataset'].strip())
                     error.append(e_dataset_not_found)
                     break
 
                 if seen_datasets and dataset not in seen_datasets:
-                    e4 = 'You can only create glosses for one dataset at a time.'
-                    e5 = 'To create glosses in multiple datasets, use a separate CSV file for each dataset.'
+                    e4 = gettext('You can only create glosses for one dataset at a time.')
+                    e5 = gettext('To create glosses in multiple datasets, use a separate CSV file for each dataset.')
                     error.append(e4)
                     error.append(e5)
                     break
@@ -682,8 +679,7 @@ def import_csv_create(request):
                     gloss__lemma__dataset=dataset, language=language, text__exact=annotationidglosstranslation_text)
 
                 if annotationtranslation_for_this_text_language:
-                    error_string = ('Row ' + str(nl + 2) + ' contains an already existing Annotation ID Gloss for '
-                                    + language_name + ': ' + annotationidglosstranslation_text)
+                    error_string = gettext("Row {row}: contains an already existing Annotation ID Gloss for {language}: {annotation}").format(row=str(nl+2), language=language_name, annotation=annotationidglosstranslation_text)
                     error.append(error_string)
 
             # check lemma translations
@@ -701,7 +697,7 @@ def import_csv_create(request):
                     existing_lemmas[language.language_code_2char] = one_lemma
                     if not one_lemma in existing_lemmas_list:
                         existing_lemmas_list.append(one_lemma)
-                        help = 'Row ' + str(nl + 2) + ": Existing Lemma ID Gloss (" + language_name + '): ' + lemmaidglosstranslation_text
+                        help = gettext("Row {row}: Existing Lemma ID Gloss ({language}): {lemmatext}").format(row=str(nl+2), language=language_name, lemmatext=lemmaidglosstranslation_text)
                         contextual_error_messages_lemmaidglosstranslations.append(help)
                 elif not lemmaidglosstranslation_text:
                     # lemma translation is empty, determine if existing lemma is also empty for this language
@@ -710,28 +706,28 @@ def import_csv_create(request):
                             lemma__dataset=dataset, lemma=existing_lemmas_list[0],
                             language=language)
                         if lemmatranslation_for_this_text_language:
-                            help = 'Row ' + str(nl + 2) + ': Lemma ID Gloss (' + language_name + ') is empty'
+                            help = gettext("Row {row}: Lemma ID Gloss ({language}): is empty.").format(row=str(nl + 2), language=language_name)
                             contextual_error_messages_lemmaidglosstranslations.append(help)
                             empty_lemma_translation = True
                     else:
                         empty_lemma_translation = True
                 else:
                     new_lemmas[language.language_code_2char] = lemmaidglosstranslation_text
-                    help = 'Row ' + str(nl + 2) + ': New Lemma ID Gloss (' + language_name + '): ' + lemmaidglosstranslation_text
+                    help = gettext("Row {row}: New Lemma ID Gloss ({language}): {lemmatext}").format(row=str(nl+2), language=language_name, lemmatext=lemmaidglosstranslation_text)
                     contextual_error_messages_lemmaidglosstranslations.append(help)
 
             if len(existing_lemmas_list) > 0:
                 if len(existing_lemmas_list) > 1:
-                    e1 = 'Row '+str(nl + 2)+': The Lemma translations refer to different lemmas.'
+                    e1 = gettext('Row {row}: The Lemma translations refer to different lemmas.').format(row=str(nl+2))
                     error.append(e1)
                 elif empty_lemma_translation:
-                    e1 = 'Row '+str(nl + 2)+': Exactly one lemma matches, but one of the translations in the csv is empty.'
+                    e1 = gettext('Row {row}: Exactly one lemma matches, but one of the translations in the csv is empty.').format(row=str(nl+2))
                     error.append(e1)
                 if len(new_lemmas.keys()) and len(existing_lemmas.keys()):
-                    e1 = 'Row '+str(nl + 2)+': Combination of existing and new lemma translations.'
+                    e1 = gettext('Row {row}: Combination of existing and new lemma translations.').format(row=str(nl+2))
                     error.append(e1)
             elif not len(new_lemmas.keys()):
-                e1 = 'Row '+str(nl + 2)+': No lemma translations provided.'
+                e1 = gettext('Row {row}: No lemma translations provided.').format(row=str(nl + 2))
                 error.append(e1)
 
             if error:
@@ -784,15 +780,15 @@ def import_csv_create(request):
             dataset = glosses_to_create[row]['dataset']
 
             try:
-                dataset_id = Dataset.objects.get(acronym=dataset)
+                dataset_object = Dataset.objects.get(acronym=dataset)
             except ObjectDoesNotExist:
                 # this is an error, this should have already been caught
-                e1 = 'Dataset not found: ' + dataset
+                e1 = gettext('Dataset not found: {dataset}').format(dataset=dataset)
                 error.append(e1)
                 continue
 
             lemmaidglosstranslations = {}
-            for language in dataset_id.translation_languages.all():
+            for language in dataset_object.translation_languages.all():
                 lemma_id_gloss = glosses_to_create[row]['lemma_id_gloss_' + language.language_code_2char]
                 if lemma_id_gloss:
                     lemmaidglosstranslations[language] = lemma_id_gloss
@@ -800,7 +796,7 @@ def import_csv_create(request):
             existing_lemmas = []
             for language, term in lemmaidglosstranslations.items():
                 try:
-                    existing_lemmas.append(LemmaIdglossTranslation.objects.get(lemma__dataset=dataset_id,
+                    existing_lemmas.append(LemmaIdglossTranslation.objects.get(lemma__dataset=dataset_object,
                                                                                language=language,
                                                                                text=term).lemma)
                 except ObjectDoesNotExist as e:
@@ -812,7 +808,7 @@ def import_csv_create(request):
                 lemma_for_gloss = existing_lemmas[0]
             elif len(existing_lemmas) == 0:
                 with atomic():
-                    lemma_for_gloss = LemmaIdgloss(dataset=dataset_id)
+                    lemma_for_gloss = LemmaIdgloss(dataset=dataset_object)
                     lemma_for_gloss.save()
                     for language, term in lemmaidglosstranslations.items():
                         new_lemmaidglosstranslation = LemmaIdglossTranslation(lemma=lemma_for_gloss,
@@ -820,9 +816,9 @@ def import_csv_create(request):
                         new_lemmaidglosstranslation.save()
             else:
                 # This case should not happen, it should have been caught in stage 1
-                e1 = 'To create glosses in dataset ' + dataset_id.acronym + \
-                     ', the combination of Lemma ID Gloss translations should either refer ' \
-                     'to an existing Lemma ID Gloss or make up a completely new Lemma ID gloss.'
+                e1 = gettext('To create glosses in dataset {acronym}, '
+                             'the combination of Lemma ID Gloss translations should either refer '
+                             'to an existing Lemma ID Gloss or make up a completely new Lemma ID gloss.').format(acronym=dataset_object.acronym)
                 error.append(e1)
                 continue
 
@@ -998,11 +994,11 @@ def import_csv_update(request):
         if extra_keys or missing_keys or not delimiter_okay:
             # this is intended to assist the user in the case that a wrong file was selected
             if not delimiter_okay:
-                feedback_message = _('The delimiter is not comma, tab, or semicolon.')
+                feedback_message = gettext('The delimiter is not comma, tab, or semicolon: {delimiter}').format(delimiter=found_delimiter)
             elif extra_keys:
-                feedback_message = _('The header row of the csv file looks like this: ') + ', '.join(extra_keys)
+                feedback_message = gettext('The header row of the csv file looks like this: {columns}').format(columns=', '.join(extra_keys))
             else:
-                feedback_message = _('Some required column headers are missing: ') + ', '.join(missing_keys)
+                feedback_message = gettext('Some required column headers are missing: {columns}').format(columns=', '.join(missing_keys))
             messages.add_message(request, messages.ERROR, feedback_message)
             return render(request, 'dictionary/import_csv_update.html',
                           {'form': uploadform, 'stage': 0, 'changes': changes,
@@ -1073,7 +1069,7 @@ def import_csv_update(request):
                 pk = int(value_dict['Signbank ID'])
             except (ValueError, KeyError):
                 # the ID is not a number
-                e = 'Row '+str(nl + 2) + ': Signbank ID must be numerical: ' + str(value_dict['Signbank ID'])
+                e = gettext('Row {row}: Signbank ID must be numerical: {glossid}').format(row=str(nl+2), glossid=str(value_dict['Signbank ID']))
                 error.append(e)
                 fatal_error = True
                 break
@@ -1084,25 +1080,25 @@ def import_csv_update(request):
             if dataset_name not in seen_dataset_names:
                 # catch possible empty values for dataset, primarily for pretty printing error message
                 if dataset_name in ['', None, 0, 'NULL']:
-                    e_dataset_empty = 'Row '+str(nl + 2) + ': The Dataset is missing.'
+                    e_dataset_empty = gettext('Row {row}: The Dataset is missing.').format(row=str(nl + 2))
                     error.append(e_dataset_empty)
                     break
                 try:
                     dataset = Dataset.objects.get(acronym=dataset_name)
                 except ObjectDoesNotExist:
                     # The dataset does not exist
-                    e_dataset_not_found = 'Row '+str(nl + 2) + ': Dataset %s' % value_dict['Dataset'].strip() + ' does not exist.'
+                    e_dataset_not_found = gettext("Row {row}: Dataset {acronym} does not exist.").format(row=str(nl+2), acronym=value_dict['Dataset'].strip())
                     error.append(e_dataset_not_found)
                     fatal_error = True
                     break
                 if dataset_name not in user_datasets_names:
                     # Check whether the user may change the dataset of the current row
-                    e3 = 'Row '+str(nl + 2) + ': You are not allowed to change dataset %s.' % value_dict['Dataset'].strip()
+                    e3 = gettext("Row {row}: You are not allowed to change dataset {acronym}.").format(row=str(nl+2), acronym=value_dict['Dataset'].strip())
                     error.append(e3)
                     fatal_error = True
                     break
                 if dataset not in selected_datasets:
-                    e3 = 'Row '+str(nl + 2) + ': Dataset %s is not selected.' % value_dict['Dataset'].strip()
+                    e3 = gettext("Row {row}: Dataset {acronym} is not selected.").format(row=str(nl+2), acronym=value_dict['Dataset'].strip())
                     error.append(e3)
                     fatal_error = True
                     break
@@ -1135,14 +1131,12 @@ def import_csv_update(request):
             try:
                 gloss = Gloss.objects.select_related().get(pk=pk, archived=False)
             except ObjectDoesNotExist as e:
-
-                e = 'Row ' + str(nl + 2) + ': Could not find gloss for Signbank ID '+str(pk)
+                e = gettext("Row {row}: Could not find gloss for Signbank ID {glossid}.").format(row=str(nl+2), glossid=str(pk))
                 error.append(e)
                 continue
 
             if gloss.lemma.dataset != dataset:
-                e1 = 'Row ' + str(nl + 2) + ': The Dataset column (' + dataset.acronym + ') does not correspond to that of the Signbank ID (' \
-                                                    + str(pk) + ').'
+                e1 = gettext('Row {row}: The Dataset column ({acronym}) does not correspond to that of the Signbank ID ({glossid})').format(row=str(nl+2), acronym=dataset.acronym, glossid=str(pk))
                 error.append(e1)
                 # ignore the rest of the row
                 continue
@@ -1155,10 +1149,8 @@ def import_csv_update(request):
                 current_lemmaidglosstranslations[language] = lemma_translation.text if lemma_translation else ''
             if lemmaidglosstranslations \
                     and current_lemmaidglosstranslations != lemmaidglosstranslations:
-                help = 'Row ' + str(nl + 2) + ': Attempt to update Lemma translations for Signbank ID ' + str(pk)
+                help = gettext("Row {row}: Attempt to update Lemma translations for Signbank ID {glossid}. Use Import CSV Lemma Update instead.").format(row=str(nl+2), glossid=str(pk))
                 error.append(help)
-                messages.add_message(request, messages.ERROR,
-                                     _('Attempt to update Lemma translations. Use Import CSV Lemma Update instead.'))
                 continue
 
             try:
@@ -1219,13 +1211,14 @@ def import_csv_update(request):
                         # lemma not set
                         lemma_idgloss_string = ''
                     if lemma_idgloss_string != new_value and new_value not in ['None', '']:
-                        error_string = 'ERROR: Attempt to update Lemma translations: ' + new_value
+                        error_string = gettext(
+                            "Attempt to update Lemma translations: {new_value}. Use Import CSV Lemma Update instead.").format(
+                            new_value=new_value)
+
                         if error:
                             error.append(error_string)
                         else:
                             error = [error_string]
-                        messages.add_message(request, messages.ERROR,
-                                             _('Attempt to update Lemma translations. Use Import CSV Lemma Update.'))
 
                 continue   # avoid default field update
 
@@ -1266,10 +1259,6 @@ def import_csv_update(request):
 
             if fieldname == 'SignLanguages':
 
-                new_human_value_list = [v.strip() for v in new_value.split(',')]
-
-                update_signlanguage(gloss,'signlanguage',new_human_value_list)
-                gloss.save()
                 continue
 
             if fieldname == 'Dialects':
@@ -1282,25 +1271,6 @@ def import_csv_update(request):
 
             if fieldname == 'Dataset':
 
-                # this has already been checked for existence and permission in the previous step
-                # get dataset identifier
-                if new_value == 'None':
-                    # don't allow the user to erase the current dataset, this should have already been caught
-                    print('csv import make changes error: gloss ', gloss.id, ' attempt to set dataset to empty')
-                    continue
-                else:
-                    # the existence of the new dataset should have already been tested
-                    new_dataset = Dataset.objects.get(acronym=new_value)
-                try:
-                    gloss_lemma = gloss.lemma
-                except KeyError:
-                    # this error should not happen
-                    print('csv import make changes error: gloss ', gloss.id, ' gloss.lemma is empty, cannot set dataset')
-                    continue
-
-                # this could have an unwanted side effect on the Lemma translations?
-                gloss_lemma.dataset = new_dataset
-                gloss_lemma.save()
                 continue
 
             if fieldname == 'Sequential Morphology':
@@ -1477,7 +1447,7 @@ def import_csv_lemmas(request):
     seen_dataset_names = [dataset.acronym]
 
     if dataset not in user_datasets:
-        feedback_message = _('You do not have change permission for the chosen dataset.')
+        feedback_message = gettext('You do not have change permission for the chosen dataset.')
         messages.add_message(request, messages.ERROR, feedback_message)
 
         return render(request, 'dictionary/import_csv_update_lemmas.html',
@@ -1501,7 +1471,7 @@ def import_csv_lemmas(request):
             # non UTF-8 encoded files also fail
             csv_text = new_file.read().decode('UTF-8-sig')
         except (UnicodeDecodeError, UnicodeError):
-            feedback_message = _('Unrecognised text encoding. Please export your file to UTF-8 format using e.g. LibreOffice.')
+            feedback_message = gettext('Unrecognised text encoding. Please export your file to UTF-8 format.')
             messages.add_message(request, messages.ERROR, feedback_message)
 
             return render(request, 'dictionary/import_csv_update_lemmas.html',
@@ -1525,11 +1495,11 @@ def import_csv_lemmas(request):
         if extra_keys or missing_keys or not delimiter_okay:
             # this is intended to assist the user in the case that a wrong file was selected
             if not delimiter_okay:
-                feedback_message = _('The delimiter is not comma, tab, or semicolon.')
+                feedback_message = gettext('The delimiter is not comma, tab, or semicolon: {delimiter}').format(delimiter=found_delimiter)
             elif extra_keys:
-                feedback_message = _('The header row of the csv file looks like this: ') + ', '.join(extra_keys)
+                feedback_message = gettext('The header row of the csv file looks like this: {columns}').format(columns=', '.join(extra_keys))
             else:
-                feedback_message = _('Some required column headers are missing: ') + ', '.join(missing_keys)
+                feedback_message = gettext('Some required column headers are missing: {columns}').format(columns=', '.join(missing_keys))
             messages.add_message(request, messages.ERROR, feedback_message)
             return render(request, 'dictionary/import_csv_update_lemmas.html',
                           {'form': uploadform, 'stage': 0, 'changes': changes,
@@ -1565,7 +1535,7 @@ def import_csv_lemmas(request):
                 try:
                     pk = int(value_dict['Lemma ID'])
                 except ValueError:
-                    e = 'Row '+str(nl + 2) + ': Lemma ID must be numerical: ' + str(value_dict['Lemma ID'])
+                    e = gettext('Row {row}: Lemma ID must be numerical: {lemmaid}').format(row=str(nl+2), lemmaid=str(value_dict['Lemma ID']))
                     error.append(e)
                     fatal_error = True
                     break
@@ -1574,7 +1544,7 @@ def import_csv_lemmas(request):
                 try:
                     pk = int(value_dict['Signbank ID'])
                 except ValueError:
-                    e = 'Row '+str(nl + 2) + ': Signbank ID must be numerical: ' + str(value_dict['Signbank ID'])
+                    e = gettext('Row {row}: Signbank ID must be numerical: {glossid}').format(row=str(nl+2), glossid=str(value_dict['Signbank ID']))
                     error.append(e)
                     fatal_error = True
                     break
@@ -1583,13 +1553,13 @@ def import_csv_lemmas(request):
 
             # catch possible empty values for dataset, primarily for pretty printing error message
             if dataset_name == '' or dataset_name is None or dataset_name == 0 or dataset_name == 'NULL':
-                e_dataset_empty = 'Row ' + str(nl + 2) + ': The Dataset is missing.'
+                e_dataset_empty = gettext('Row {row}: The Dataset is missing.').format(row=str(nl+2))
                 error.append(e_dataset_empty)
                 fatal_error = True
                 break
             if dataset_name not in seen_dataset_names:
                 # seen more than one dataset
-                e3 = 'Row ' + str(nl + 2) + ': Dataset not in selected datasets: %s.' % dataset_name
+                e3 = gettext('Row {row}: Dataset not in selected datasets: {dataset}').format(row=str(nl+2), dataset=dataset_name)
                 error.append(e3)
                 fatal_error = True
                 break
@@ -1604,32 +1574,32 @@ def import_csv_lemmas(request):
                     # also stores empty values
                     lemmaidglosstranslations[language] = lemma_idgloss_value
 
-            # # updating lemmas, propose changes (make dict)
+            lemma = None
+            # updating lemmas, propose changes (make dict)
             if 'Lemma ID' in value_dict.keys():
+                lemmaid = value_dict['Lemma ID']
                 try:
-                    lemma = LemmaIdgloss.objects.select_related().get(pk=pk)
+                    lemma = LemmaIdgloss.objects.select_related().get(pk=int(lemmaid))
                 except ObjectDoesNotExist as e:
-
-                    e = 'Row ' + str(nl + 2) + ': Could not find lemma for Lemma ID '+str(pk)
+                    e = gettext('Row {row}: Could not find lemma for Lemma ID {lemmaid}').format(row=str(nl+2), lemmaid=lemmaid)
                     error.append(e)
                     continue
             elif 'Signbank ID' in value_dict.keys():
+                glossid = value_dict['Signbank ID']
                 try:
-                    gloss = Gloss.objects.select_related().get(pk=pk, archived=False)
+                    gloss = Gloss.objects.select_related().get(pk=int(glossid), archived=False)
                     lemma = gloss.lemma
                     value_dict['Lemma ID'] = str(lemma.pk)
                 except ObjectDoesNotExist as e:
-
-                    e = 'Row ' + str(nl + 2) + ': Could not find lemma for Signbank ID ' + str(pk)
+                    e = gettext('Row {row}: Could not find lemma for Signbank ID {glossid}').format(row=str(nl+2), glossid=glossid)
                     error.append(e)
                     continue
-            else:
-                e = 'Row ' + str(nl + 2) + ': Could not identify lemma.'
+            if not lemma:
+                e = gettext('Row {row}: Could not identify lemma.').format(row=str(nl+2))
                 error.append(e)
                 continue
             if lemma.dataset.acronym != dataset_name:
-                e1 = 'Row ' + str(nl + 2) + ': The Dataset column (' + dataset.acronym \
-                     + ') does not correspond to that of the Lemma ID (' + str(pk) + ').'
+                e1 = gettext('Row {row}: The Dataset column ({acronym}) does not correspond to that of the Lemma ID ({lemmaid})').format(row=str(nl+2), acronym=dataset.acronym, lemmaid=str(lemma.pk))
                 error.append(e1)
                 # ignore the rest of the row
                 continue
@@ -1782,7 +1752,7 @@ def save_chosen_still_for_gloss(request, pk):
     idgloss = gloss.idgloss
     two_char_folder = get_two_letter_dir(idgloss)
 
-    vfile_name = idgloss + '-' + str(gloss.id) + '.png'
+    vfile_name = f'{idgloss}-{gloss.id}.png'
     still_goal_location = os.path.join(WRITABLE_FOLDER, GLOSS_IMAGE_DIRECTORY, dataset_folder, two_char_folder, vfile_name)
     try:
         if os.path.exists(still_goal_location):
@@ -1800,107 +1770,94 @@ def save_chosen_still_for_gloss(request, pk):
     return JsonResponse({'redirect_url': redirect_url})
 
 
+@require_http_methods(["POST"])
 def add_image(request):
 
-    if 'HTTP_REFERER' in request.META:
-        url = request.META['HTTP_REFERER']
-    else:
-        url = '/'
+    url = request.META['HTTP_REFERER'] if 'HTTP_REFERER' in request.META else '/'
 
-    if request.method == 'POST':
+    form = ImageUploadForGlossForm(request.POST, request.FILES)
 
-        form = ImageUploadForGlossForm(request.POST, request.FILES)
+    if not form.is_valid():
+        # if we can't process the form, just redirect back to the
+        # referring page, should just be the case of hitting
+        # Upload without choosing a file but could be
+        # a malicious request, if no referrer, go back to root
+        return redirect(url)
 
-        if form.is_valid():
+    gloss_id = form.cleaned_data['gloss_id']
+    gloss = get_object_or_404(Gloss, pk=gloss_id, archived=False)
 
-            gloss_id = form.cleaned_data['gloss_id']
-            gloss = get_object_or_404(Gloss, pk=gloss_id, archived=False)
+    imagefile = form.cleaned_data['imagefile']
+    extension = '.'+imagefile.name.split('.')[-1]
 
-            imagefile = form.cleaned_data['imagefile']
-            extension = '.'+imagefile.name.split('.')[-1]
+    if extension not in SUPPORTED_CITATION_IMAGE_EXTENSIONS:
 
-            if extension not in SUPPORTED_CITATION_IMAGE_EXTENSIONS:
+        feedback_message = _('File extension not supported! Please convert to png or jpg')
 
-                feedback_message = _('File extension not supported! Please convert to png or jpg')
+        messages.add_message(request, messages.ERROR, feedback_message)
 
-                messages.add_message(request, messages.ERROR, feedback_message)
+        return redirect(url)
 
-                return redirect(url)
+    elif imagefile.size > MAXIMUM_UPLOAD_SIZE:
 
-            elif imagefile.size > MAXIMUM_UPLOAD_SIZE:
+        feedback_message = _('Uploaded file too large!')
+        messages.add_message(request, messages.ERROR, feedback_message)
 
-                feedback_message = _('Uploaded file too large!')
-                messages.add_message(request, messages.ERROR, feedback_message)
+        return redirect(url)
 
-                return redirect(url)
+    # construct a filename for the image, use idgloss+gloss id
+    imagefile.name = f'{gloss.idgloss}-{gloss.pk}{extension}'
 
-            # construct a filename for the image, use sn
-            # if present, otherwise use idgloss+gloss id
-            if gloss.sn is not None:
-                imagefile.name = str(gloss.sn) + extension
-            else:
-                imagefile.name = gloss.idgloss + "-" + str(gloss.pk) + extension
+    redirect_url = form.cleaned_data['redirect']
 
-            redirect_url = form.cleaned_data['redirect']
+    # deal with any existing image for this sign
+    goal_path = os.path.join(
+        WRITABLE_FOLDER,
+        GLOSS_IMAGE_DIRECTORY,
+        gloss.lemma.dataset.acronym,
+        get_two_letter_dir(gloss.idgloss)
+    )
+    goal_location_str = os.path.join(goal_path, gloss.idgloss + '-' + str(gloss.pk) + extension)
 
-            # deal with any existing image for this sign
-            goal_path = os.path.join(
-                WRITABLE_FOLDER,
-                GLOSS_IMAGE_DIRECTORY,
-                gloss.lemma.dataset.acronym,
-                get_two_letter_dir(gloss.idgloss)
-            )
-            goal_location_str = os.path.join(goal_path, gloss.idgloss + '-' + str(gloss.pk) + extension)
+    exists = os.path.exists(goal_path)
 
-            exists = os.path.exists(goal_path)
+    #First make the dir if needed
+    if not exists:
+        try:
+            os.makedirs(goal_path)
+        except OSError as ose:
+            print(ose)
 
-            #First make the dir if needed
-            if not exists:
-                try:
-                    os.makedirs(goal_path)
-                except OSError as ose:
-                    print(ose)
+    #Remove previous video
+    if gloss.get_image_path():
+        os.remove(WRITABLE_FOLDER+gloss.get_image_path())
 
-            #Remove previous video
-            if gloss.get_image_path():
-                os.remove(WRITABLE_FOLDER+gloss.get_image_path())
-
-            try:
-                f = open(goal_location_str.encode(sys.getfilesystemencoding()), 'wb+')
-                destination = File(f)
-            except (SystemError, OSError, IOError):
-                quoted_filename = quote(gloss.idgloss, safe='')
-                filename = quoted_filename + '-' + str(gloss.pk) + extension
-                goal_location_str = os.path.join(goal_path, filename)
-                try:
-                    f = open(goal_location_str.encode(sys.getfilesystemencoding()), 'wb+')
-                    destination = File(f)
-                except (SystemError, OSError, IOError):
-                    print('add_image, failed to open destintation: ', goal_location_str)
-                    return redirect(redirect_url)
-            # if we get to here, destination has been opened
-            for chunk in imagefile.chunks():
-                destination.write(chunk)
-            destination.close()
-
+    try:
+        f = open(goal_location_str.encode(sys.getfilesystemencoding()), 'wb+')
+        destination = File(f)
+    except (SystemError, OSError, IOError):
+        quoted_filename = quote(gloss.idgloss, safe='')
+        filename = quoted_filename + '-' + str(gloss.pk) + extension
+        goal_location_str = os.path.join(goal_path, filename)
+        try:
+            f = open(goal_location_str.encode(sys.getfilesystemencoding()), 'wb+')
+            destination = File(f)
+        except (SystemError, OSError, IOError):
+            print('add_image, failed to open destintation: ', goal_location_str)
             return redirect(redirect_url)
+    # if we get to here, destination has been opened
+    for chunk in imagefile.chunks():
+        destination.write(chunk)
+    destination.close()
 
-    # if we can't process the form, just redirect back to the
-    # referring page, should just be the case of hitting
-    # Upload without choosing a file but could be
-    # a malicious request, if no referrer, go back to root
-    return redirect(url)
+    return redirect(redirect_url)
 
+
+@require_http_methods(["POST"])
 def delete_image(request, pk):
 
     # return to referer
-    if 'HTTP_REFERER' in request.META:
-        url = request.META['HTTP_REFERER']
-    else:
-        url = '/'
-
-    if not request.method == "POST":
-        return redirect(url)
+    url = request.META['HTTP_REFERER'] if 'HTTP_REFERER' in request.META else '/'
 
     # deal with any existing video for this sign
     gloss = get_object_or_404(Gloss, pk=pk, archived=False)
@@ -1924,81 +1881,76 @@ def delete_image(request, pk):
     return redirect(url)
 
 
+@require_http_methods(["POST"])
 def add_handshape_image(request):
 
-    if 'HTTP_REFERER' in request.META:
-        url = request.META['HTTP_REFERER']
-    else:
-        url = '/'
+    url = request.META['HTTP_REFERER'] if 'HTTP_REFERER' in request.META else '/'
 
     if not USE_HANDSHAPE:
         return redirect(url)
 
-    if request.method == 'POST':
+    form = ImageUploadForHandshapeForm(request.POST, request.FILES)
 
-        form = ImageUploadForHandshapeForm(request.POST, request.FILES)
+    if not form.is_valid():
+        # if we can't process the form, just redirect back to the
+        # referring page, should just be the case of hitting
+        # Upload without choosing a file but could be
+        # a malicious request, if no referrer, go back to root
+        return redirect(url)
 
-        if form.is_valid():
+    handshape_id = form.cleaned_data['handshape_id']
+    handshape = get_object_or_404(Handshape, machine_value=handshape_id)
 
-            handshape_id = form.cleaned_data['handshape_id']
-            handshape = get_object_or_404(Handshape, machine_value=handshape_id)
+    imagefile = form.cleaned_data['imagefile']
+    extension = '.'+imagefile.name.split('.')[-1]
 
-            imagefile = form.cleaned_data['imagefile']
-            extension = '.'+imagefile.name.split('.')[-1]
+    if extension not in SUPPORTED_CITATION_IMAGE_EXTENSIONS:
 
-            if extension not in SUPPORTED_CITATION_IMAGE_EXTENSIONS:
+        feedback_message = _('File extension not supported! Please convert to png or jpg')
+        messages.add_message(request, messages.ERROR, feedback_message)
 
-                feedback_message = _('File extension not supported! Please convert to png or jpg')
-                messages.add_message(request, messages.ERROR, feedback_message)
+        return redirect(url)
 
-                return redirect(url)
+    elif imagefile.size > MAXIMUM_UPLOAD_SIZE:
 
-            elif imagefile.size > MAXIMUM_UPLOAD_SIZE:
+        feedback_message = _('Uploaded file too large!')
+        messages.add_message(request, messages.ERROR, feedback_message)
+        return redirect(url)
 
-                feedback_message = _('Uploaded file too large!')
-                messages.add_message(request, messages.ERROR, feedback_message)
-                return redirect(url)
+    # construct a filename for the image, use sn
+    # if present, otherwise use idgloss+gloss id
+    imagefile.name = "handshape_" + str(handshape.machine_value) + extension
 
-            # construct a filename for the image, use sn
-            # if present, otherwise use idgloss+gloss id
-            imagefile.name = "handshape_" + str(handshape.machine_value) + extension
+    redirect_url = form.cleaned_data['redirect']
 
-            redirect_url = form.cleaned_data['redirect']
+    # deal with any existing image for this sign
+    goal_path = WRITABLE_FOLDER+HANDSHAPE_IMAGE_DIRECTORY + '/' + str(handshape.machine_value) + '/'
+    goal_location = goal_path + 'handshape_' + str(handshape.machine_value) + extension
+    # First make the dir if needed
+    try:
+        os.mkdir(goal_path)
+    except OSError:
+        pass
 
-            # deal with any existing image for this sign
-            goal_path = WRITABLE_FOLDER+HANDSHAPE_IMAGE_DIRECTORY + '/' + str(handshape.machine_value) + '/'
-            goal_location = goal_path + 'handshape_' + str(handshape.machine_value) + extension
-            # First make the dir if needed
-            try:
-                os.mkdir(goal_path)
-            except OSError:
-                pass
+    # Remove previous video
+    if handshape.get_image_path():
+        os.remove(WRITABLE_FOLDER+handshape.get_image_path())
 
-            # Remove previous video
-            if handshape.get_image_path():
-                os.remove(WRITABLE_FOLDER+handshape.get_image_path())
+    # create the destination file
+    try:
+        f = open(goal_location, 'wb+')
+    except (UnicodeEncodeError, IOError, OSError):
+        feedback_message = _('Error uploading handshape image. Please consult the administrator.')
+        messages.add_message(request, messages.ERROR, feedback_message)
+        return redirect(redirect_url)
 
-            # create the destination file
-            try:
-                f = open(goal_location, 'wb+')
-            except (UnicodeEncodeError, IOError, OSError):
-                feedback_message = _('Error uploading handshape image. Please consult the administrator.')
-                messages.add_message(request, messages.ERROR, feedback_message)
-                return redirect(redirect_url)
+    destination = File(f)
+    # Save the file
+    for chunk in request.FILES['imagefile'].chunks():
+        destination.write(chunk)
+    destination.close()
 
-            destination = File(f)
-            # Save the file
-            for chunk in request.FILES['imagefile'].chunks():
-                destination.write(chunk)
-            destination.close()
-
-            return redirect(redirect_url)
-
-    # if we can't process the form, just redirect back to the
-    # referring page, should just be the case of hitting
-    # Upload without choosing a file but could be
-    # a malicious request, if no referrer, go back to root
-    return redirect(url)
+    return redirect(redirect_url)
 
 
 def gloss_annotations(this_gloss):
@@ -2143,14 +2095,16 @@ def get_unused_videos(request):
                    })
 
 
-def package(request):
+@csrf_exempt
+@put_api_user_in_request
+def package(request, language_code='en'):
 
-    interface_language_code = get_interface_language_api(request, request.user)
-    activate(interface_language_code)
+    activate(language_code)
 
     if 'dataset_name' not in request.GET:
         return HttpResponseBadRequest(gettext('No dataset name provided.'))
     dataset_acronym = request.GET['dataset_name']
+
     if not dataset_acronym:
         return HttpResponseBadRequest(gettext('Dataset name empty.'))
     dataset = Dataset.objects.filter(acronym=dataset_acronym).first()
@@ -2203,7 +2157,7 @@ def package(request):
 
     collected_data = {'video_urls': video_urls,
                       'image_urls': image_urls,
-                      'glosses': get_gloss_data(since_timestamp, interface_language_code,
+                      'glosses': get_gloss_data(since_timestamp, language_code,
                                                                dataset, inWebSet, extended_fields)}
 
     if since_timestamp != 0:
@@ -2353,7 +2307,7 @@ def show_glosses_with_no_lemma(request):
     for dummy in dummy_lemmas:
         dummy_translations = [t.language.name for t in dummy.lemmaidglosstranslation_set.all()]
         select_string = ', '.join(dummy_translations)
-        lemma_choices.append((dummy, dummy.dataset.acronym + ': ' + select_string))
+        lemma_choices.append((dummy, f'{dummy.dataset.acronym}: {select_string}'))
 
     return render(request, "dictionary/glosses_with_no_lemma.html",
                   {'dataset_languages': dataset_languages,
@@ -2389,8 +2343,9 @@ def show_unassigned_glosses(request):
                     for gloss in glosses_to_be_assigned:
                         gloss.dataset = dataset
                         gloss.save()
-                except ObjectDoesNotExist as objectDoesNotExist:
-                    print('Assigning glosses to a dataset resulted in an error: ' + objectDoesNotExist.message)
+                except ObjectDoesNotExist as oe:
+                    feedback_message = getattr(oe, 'message', repr(oe))
+                    print('Assigning glosses to a dataset resulted in an error: ' + feedback_message)
 
         return HttpResponseRedirect(reverse('show_unassigned_glosses'))
     else:
@@ -2590,7 +2545,7 @@ def gloss_api_get_sign_name_and_media_info(request):
     # Make sure that other request options then the intended one are blocked
     if request.method not in ('GET', 'POST'):
         return HttpResponseNotAllowed(
-                json.dumps({"Error": "Tried anohter request methoded then GET or POST, please only use GET or POST for this endpoint."}),
+                json.dumps({"Error": "Tried another request method then GET or POST, please only use GET or POST for this endpoint."}),
                 content_type="application/json")
 
     # Get all glosses that are in the given list
@@ -2683,7 +2638,7 @@ def import_csv_create_sentences(request):
             # non UTF-8 encoded files also fail
             csv_text = new_file.read().decode('UTF-8')
         except (UnicodeDecodeError, UnicodeError):
-            feedback_message = _('Unrecognised format in selected CSV file.')
+            feedback_message = gettext('Unrecognised format in selected CSV file.')
             messages.add_message(request, messages.ERROR, feedback_message)
 
             return render(request, 'dictionary/import_csv_create_sentences.html',
@@ -2708,11 +2663,11 @@ def import_csv_create_sentences(request):
         if extra_keys or missing_keys or not delimiter_okay:
             # this is intended to assist the user in the case that a wrong file was selected
             if not delimiter_okay:
-                feedback_message = _('The delimiter is not comma, tab, or semicolon.')
+                feedback_message = gettext('The delimiter is not comma, tab, or semicolon.')
             elif extra_keys:
-                feedback_message = _('The header row of the csv file looks like this: ') + ', '.join(extra_keys)
+                feedback_message = gettext('The header row of the csv file has extra keys: {extrakeys}').format(extrakeys=', '.join(extra_keys))
             else:
-                feedback_message = _('Some required column headers are missing: ') + ', '.join(missing_keys)
+                feedback_message = gettext('Some required column headers are missing: {missingkeys}').format(missingkeys=', '.join(missing_keys))
             messages.add_message(request, messages.ERROR, feedback_message)
             return render(request, 'dictionary/import_csv_create_sentences.html',
                           {'form': uploadform, 'stage': 0, 'changes': changes,
@@ -2726,7 +2681,7 @@ def import_csv_create_sentences(request):
 
         if extra_keys:
             # this is intended to assist the user in the case that a wrong file was selected
-            feedback_message = _('Extra columns were found: ') + ', '. join(extra_keys)
+            feedback_message = gettext('Extra columns were found: {extrakeys}').format(extrakeys=', '.join(extra_keys))
             messages.add_message(request, messages.ERROR, feedback_message)
             return render(request, 'dictionary/import_csv_create_sentences.html',
                           {'form': uploadform, 'stage': 0, 'changes': changes,
@@ -2765,9 +2720,9 @@ def import_csv_create_sentences(request):
                 if seen_datasets:
                     # already seen a dataset
                     # this is a different dataset
-                    e3 = 'Row '+str(nl + 2) + ': A different dataset is mentioned.'
-                    e4 = 'You can only create glosses for one dataset at a time.'
-                    e5 = 'To create glosses in multiple datasets, use a separate CSV file for each dataset.'
+                    e3 = gettext("Row {row}: A different dataset is mentioned.").format(row=str(nl+2))
+                    e4 = gettext('You can only create glosses for one dataset at a time.')
+                    e5 = gettext('To create glosses in multiple datasets, use a separate CSV file for each dataset.')
                     error.append(e3)
                     error.append(e4)
                     error.append(e5)
@@ -2776,23 +2731,23 @@ def import_csv_create_sentences(request):
                 # only process a dataset_name once for the csv file being imported
                 # catch possible empty values for dataset, primarily for pretty printing error message
                 if dataset_name in ['', None, 0, 'NULL']:
-                    e_dataset_empty = 'Row '+str(nl + 2) + ': The Dataset is missing.'
+                    e_dataset_empty = gettext("Row {row}: The Dataset is missing.").format(row=str(nl+2))
                     error.append(e_dataset_empty)
                     break
                 try:
                     dataset = Dataset.objects.get(acronym=dataset_name)
                 except ObjectDoesNotExist:
                     # An error message should be returned here, the dataset does not exist
-                    e_dataset_not_found = 'Row '+str(nl + 2) + ': Dataset %s' % value_dict['Dataset'].strip() + ' does not exist.'
+                    e_dataset_not_found = gettext("Row {row}: Dataset {acronym} does not exist.").format(row=str(nl+2), acronym=value_dict['Dataset'].strip())
                     error.append(e_dataset_not_found)
                     break
 
                 if dataset_name not in user_datasets_names:
-                    e3 = 'Row '+str(nl + 2) + ': You are not allowed to change dataset %s.' % value_dict['Dataset'].strip()
+                    e3 = gettext("Row {row}: You are not allowed to change dataset {acronym}.").format(row=str(nl+2), acronym=value_dict['Dataset'].strip())
                     error.append(e3)
                     break
                 if dataset not in selected_datasets:
-                    e3 = 'Row '+str(nl + 2) + ': Dataset %s is not selected.' % value_dict['Dataset'].strip()
+                    e3 = gettext("Row {row}: Dataset {acronym} is not selected.").format(row=str(nl+2), acronym=value_dict['Dataset'].strip())
                     error.append(e3)
                     break
                 if seen_datasets:
@@ -2801,8 +2756,8 @@ def import_csv_create_sentences(request):
                         # seen more than one dataset
                         # e4 = 'You are attempting to modify two datasets.'
 
-                        e4 = 'You can only create sentences for one dataset at a time.'
-                        e5 = 'To create sentences in multiple datasets, use a separate CSV file for each dataset.'
+                        e4 = gettext('You can only create sentences for one dataset at a time.')
+                        e5 = gettext('To create sentences in multiple datasets, use a separate CSV file for each dataset.')
                         error.append(e4)
                         error.append(e5)
                         break
@@ -2871,7 +2826,7 @@ def import_csv_create_sentences(request):
                 gloss = Gloss.objects.get(id=int(gloss_id), archived=False)
             except ObjectDoesNotExist:
                 # this is an error, this should have already been caught
-                e1 = 'Gloss not found: ' + gloss_id
+                e1 = f'Gloss not found: {gloss_id}'
                 error.append(e1)
                 continue
 
@@ -2881,7 +2836,7 @@ def import_csv_create_sentences(request):
                 dataset = Dataset.objects.get(acronym=dataset_acronym)
             except ObjectDoesNotExist:
                 # this is an error, this should have already been caught
-                e1 = 'Dataset not found: ' + dataset_acronym
+                e1 = f'Dataset not found: {dataset_acronym}'
                 error.append(e1)
                 continue
 

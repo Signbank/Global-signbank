@@ -1,9 +1,17 @@
 from django.template import Library
+from django.utils.translation import gettext
+
+from urllib import request
+from xml.dom import minidom
+
+from signbank.settings.base import ECV_SETTINGS
+
+from signbank.dictionary.models import Language
 from signbank.dictionary.forms import GlossSearchForm, MorphemeSearchForm, AnnotatedSentenceSearchForm
-from signbank.tools import get_default_annotationidglosstranslation
+from signbank.tools import get_ecv_description_for_gloss, get_default_annotationidglosstranslation, find_duplicate_lemmas
+from signbank.dataset_operations import dataset_lemma_constraints_check
 from signbank.dictionary.batch_edit import get_sense_numbers
 
-import json
 register = Library()
 
 
@@ -16,7 +24,6 @@ def get_annotation_idgloss_translation(gloss, language):
 
     # This is a fallback to the English translation, but we rather want nothing, see #583
     # Use the other function _no_default below if no default is wanted
-
     translations = gloss.annotationidglosstranslation_set.filter(language__language_code_3char='eng')
     if translations:
         return translations.first().text
@@ -88,6 +95,24 @@ def get_lemma_idgloss_translation_no_default(lemma, language):
     # one of the dataset translation languages has no annotation for this lemma
     return str(lemma.id)
 
+@register.filter
+def check_lemma_constraints(lemma):
+    # for use in the LemmaListView and LemmaUpdateView to summarise constraint violations
+    duplicatelemmas = find_duplicate_lemmas(lemma)
+    constraints_dict = dataset_lemma_constraints_check(lemma)
+    result = []
+    for duplicate_lemma in duplicatelemmas:
+        result.append(gettext("Lemma {thislemma} overlaps with Lemma {lemmaid}").format(thislemma=str(lemma.pk), lemmaid=str(duplicate_lemma)))
+    for key  in constraints_dict.keys():
+        (no_translations, multiple_translations, empty_text) = constraints_dict[key]
+        if no_translations:
+            result.append(key.name + gettext(" translation is missing"))
+        elif multiple_translations:
+            result.append(key.name + gettext(" has multiple translations"))
+        elif empty_text:
+            result.append(key.name + gettext(" has an empty text translation"))
+    string_result = "; ".join(result)
+    return "" if string_result == "" else string_result
 
 @register.filter
 def get_search_field_for_language(form, language):
@@ -178,14 +203,11 @@ def get_iso_639_3_info(languages):
     :param languages: a list of Language objects or a language_code_3char string 
     :return: 
     """
-    from urllib import request
-    from xml.dom import minidom
     url = 'http://catalog.clarin.eu/ds/ComponentRegistry/rest/registry/components/clarin.eu:cr1:c_1271859438110'
     dom = minidom.parse(request.urlopen(url))
     items = dom.getElementsByTagName('item')
     if isinstance(languages, str):
         # Assume is it a language_code_3char
-        from signbank.dictionary.models import Language
         languages = [Language.objects.get(language_code_3char=languages)]
 
     # Return a dict with format
@@ -204,8 +226,6 @@ def get_gloss_description(gloss, language_code_2char):
     :param language_code_2char: 
     :return: 
     """
-    from signbank.tools import get_ecv_description_for_gloss
-    from signbank.settings.base import ECV_SETTINGS
     return get_ecv_description_for_gloss(gloss, language_code_2char, ECV_SETTINGS['include_phonology_and_frequencies'])
 
 @register.filter

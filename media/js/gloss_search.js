@@ -70,7 +70,7 @@ function set_signlanguages_dialects() {
         this_selection_choices = $('#signlanguage_selection');
 
         for(i = 0; i < signlanguages.length; i++) {
-            $('#id_signLanguage option').each(function(){
+            $('#id_signlanguage option').each(function(){
                 if ($(this).html() == signlanguages[i]) {
                     optionValues.push($(this).html());
                 };
@@ -78,13 +78,13 @@ function set_signlanguages_dialects() {
         };
     }
 
-    $('#id_dialects').val(null).trigger('change');
+    $('#id_dialect').val(null).trigger('change');
 
     this_selection_dialect_elt = $('#dialect_selection');
-    $('#id_dialects option').each(function(){
+    $('#id_dialect option').each(function(){
         $(this).attr('disabled','disabled');
     });
-    $('#id_dialects option').each(function(){
+    $('#id_dialect option').each(function(){
         var this_node_str = $(this).html();
         for(k = 0; k < optionValues.length; k++) {
             if (this_node_str.startsWith(optionValues[k])) {
@@ -92,10 +92,10 @@ function set_signlanguages_dialects() {
             }
         };
     });
-    $('#id_dialects').select2({
+    $('#id_dialect').select2({
         allowClear: true,
         dropdownAutoWidth: true,
         width: 'resolve'
      });
-    $('#id_dialects').val(null).trigger('change');
+    $('#id_dialect').val(null).trigger('change');
 };

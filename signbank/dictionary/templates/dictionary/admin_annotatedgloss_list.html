@@ -52,6 +52,9 @@
 <script type="text/javascript" src="{{ STATIC_URL }}js/typeahead.bundle.min.js"></script>
 <link href="//cdnjs.cloudflare.com/ajax/libs/select2/4.0.0/css/select2.css" rel="stylesheet"/>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.5/js/select2.full.js"></script>
+{{ query_parameters|json_script:"query_parameters" }}
+{{ gloss_fields_to_populate|json_script:"gloss_fields_to_populate" }}
+{{ id_glossids|json_script:"id_glossids" }}
 <script type='text/javascript'>
 var show_dataset_interface_options = {{ SHOW_DATASET_INTERFACE_OPTIONS|yesno:"true,false" }};
 var multiple_select_fields = {{MULTIPLE_SELECT_GLOSS_FIELDS|safe}};
@@ -62,11 +65,11 @@ var objects_on_this_page = {{objects_on_page|safe}};
 var view_type = '{{view_type}}';
 var paginate_by = '{{paginate_by}}';
 var query_parameters_keys = {{query_parameters_keys|safe}};
-var query_parameters_dict = {{query_parameters|safe}};
+var query_parameters_dict = JSON.parse(document.getElementById('query_parameters').textContent);
 
 var other_parameters_keys = {{other_parameters_keys|safe}};
 var language_query_keys = {{language_query_keys|safe}};
-var gloss_fields_to_populate = {{gloss_fields_to_populate|safe}};
+var gloss_fields_to_populate = JSON.parse(document.getElementById('gloss_fields_to_populate').textContent);
 var gloss_fields_to_populate_keys = {{gloss_fields_to_populate_keys|safe}};
 
 $(document).ready(function() {
@@ -143,16 +146,11 @@ $(document).ready(function() {
 
      $('.js-example-basic-multiple').val(null).trigger('change');
 
-
      <!--Alert: The sign language and dialect multiple select code differs from the other fields.-->
      <!--The code must appear after the class initialisation for for js-example-basic-multiple to avoid applying it to these fields prematurely-->
 
-     <!--Alert: the id for sign language is signLanguage (with an uppercase L), not the same as the model field!-->
-     <!--Django was messing up the template generation otherwise (without the uppercase L)-->
-     <!--The value field is signlanguage[] (lowercase l to match the model)-->
-
-     makeMultipleSelect('id_signLanguage', 'signlanguage[]');
-     $('#id_signLanguage').select2({
+     makeMultipleSelect('id_signlanguage', 'signlanguage[]');
+     $('#id_signlanguage').select2({
         allowClear: true,
         dropdownAutoWidth: true,
         width: 'resolve',
@@ -161,21 +159,18 @@ $(document).ready(function() {
 
      if (query_parameters_keys.includes('signlanguage[]')) {
          var query_initial = query_parameters_dict['signlanguage[]'];
-         $('#id_signLanguage').val(query_initial);
-         $('#id_signLanguage').trigger('change');
+         $('#id_signlanguage').val(query_initial);
+         $('#id_signlanguage').trigger('change');
      } else {
-         $('#id_signLanguage').val(null).trigger('change');
+         $('#id_signlanguage').val(null).trigger('change');
      };
 
-     $('#id_signLanguage').change(function() {
+     $('#id_signlanguage').change(function() {
         set_signlanguages_dialects();
      });
 
-     <!--Alert: the id for the dialect field is dialects (plural), not the same as the model field!-->
-     <!--Django was messing up the template generation otherwise (without the s at the end)-->
-
-     makeMultipleSelect('id_dialects', 'dialect[]');
-     $('#id_dialects').select2({
+     makeMultipleSelect('id_dialect', 'dialect[]');
+     $('#id_dialect').select2({
         allowClear: true,
         dropdownAutoWidth: true,
         width: 'resolve',
@@ -184,10 +179,10 @@ $(document).ready(function() {
 
      if (query_parameters_keys.includes('dialect[]')) {
          var query_initial = query_parameters_dict['dialect[]'];
-         $('#id_dialects').val(query_initial);
-         $('#id_dialects').trigger('change');
+         $('#id_dialect').val(query_initial);
+         $('#id_dialect').trigger('change');
     } else {
-         $('#id_dialects').val(null).trigger('change');
+         $('#id_dialect').val(null).trigger('change');
     };
 
      makeMultipleSelect('id_tags', 'tags[]');
@@ -267,6 +262,11 @@ $(document).ready(function() {
         $translation.val(query_initial);
      };
 
+    if (query_parameters_keys.includes('glossids')) {
+        var query_initial = query_parameters_dict['glossids'];
+        $('#id_glossids').val(query_initial);
+    };
+
      // Empty menu_bar_search_mirror: if the user is still busy with the form and hits Reset, this clears it
      $("#adminsearch :input").change(function() {
         $("#menu_bar_search_mirror").val("");
@@ -308,10 +308,10 @@ $(document).ready(function() {
                         $(lookup).find(focus_gloss_lookup).first().before(result).end().remove();
                         var video_lookup = '#glossvideo_' + id_of_annotatedgloss + ' ' + id_of_gloss;
                         var video_elt = $(lookup).find(video_lookup);
-                        video_elt.addClass("hover-shows-video");
+                        if (video_elt && video_elt.length) {video_elt.addClass("hover-shows-video");}
                         var video_lookup_gloss = '#glossvideo_' + id_of_gloss;
                         var video_elt_gloss = $(lookup).find(video_lookup_gloss);
-                        video_elt_gloss.addClass("hover-shows-video");
+                        if (video_elt_gloss && video_elt_gloss.length) {video_elt_gloss.addClass("hover-shows-video");}
                         ready_videos(video_elt);
                         ready_videos(video_elt_gloss);
                     };
@@ -331,7 +331,7 @@ function clearForm() {
 
       $('input').each(function() {
         var this_field = $(this).attr('name');
-        if (this_field == undefined) { return; };
+        if (this_field === undefined) { return; };
         var this_type = $(this).attr('type');
         if (this_type == 'hidden' || this_type == 'submit' || this_type == 'reset') { return; };
         if (this_type == 'date' || this_type == 'text') {
@@ -343,7 +343,7 @@ function clearForm() {
 
       $('select').each(function() {
         var this_field = $(this).attr('name');
-        if (this_field == undefined) { return; };
+        if (this_field === undefined) { return; };
         var this_type = $(this).attr('type');
         if (this_type == 'hidden') { return; };
         if (this_field.endsWith('[]')) {
@@ -358,31 +358,6 @@ function clearForm() {
      $('.js-example-basic-multiple').val(null).trigger('change');
      $("input[name='translation']").val('');
      $("input[name='search']").val('');
-}
-
- /**
- * @param {string} field_name - name of the field to sort on
- * @param {string} action     - one of: desc, asc, del
- * @param {string} frmName    - name of the <form ...> that contains the 'sortOrder' <input> field
- * @returns {void}
- */
-function do_sort_column(field_name, action, frmName) {
-  // Combine @field_name and @action into [sOrder]
-  var sOrder = field_name;
-  if (action == 'desc') {
-    // Descending sort order is signified by a '-' prefix
-    sOrder = '-' + sOrder;
-  } else if (action == 'del') {
-    // "Deleting" (pressing 'x') the sort order of a column means: return to the default 'idgloss' sort order
-    sOrder = '';
-  }
-  // Set the value of the [sortOrder] field defined in dictionary/forms.py::GlossSearchForm
-  $("#" + frmName + " input[name='sortOrder']").val(sOrder);
-
-  // Submit the form with the indicated name
-
-  $("#" + frmName).submit();
-
 }
 
 /**
@@ -400,7 +375,7 @@ function do_adminsearch(el) {
 }
 
 function ready_videos(el) {
-    console.log($(el).attr('id'));
+    if (!el) {return;}
     $(el).find('video').hide();
 
     $(el).mouseenter(function ()
@@ -637,12 +612,12 @@ function do_toggle_language(el) {
                         <div id='searchbasic' class='collapse-light collapse'>
                         <table class='table table-condensed table-condensed-light' style="width:65%;">
                             <tr id='signlanguage_selection'>
-                                <td class='td td-light' style="padding-left:30px;"><label>{{searchform.signLanguage.label}}</label></td>
-                                <td class='td td-light' style="width:600px;">{{searchform.signLanguage}}</td>
+                                <td class='td td-light' style="padding-left:30px;"><label>{{searchform.signlanguage.label}}</label></td>
+                                <td class='td td-light' style="width:600px;">{{searchform.signlanguage}}</td>
                             </tr>
                             <tr id='dialect_selection'>
-                                <td class='td td-light' style="padding-left:30px;"><label>{{searchform.dialects.label}}</label></td>
-                                <td class='td td-light' style="width:600px;">{{searchform.dialects}}</td>
+                                <td class='td td-light' style="padding-left:30px;"><label>{{searchform.dialect.label}}</label></td>
+                                <td class='td td-light' style="width:600px;">{{searchform.dialect}}</td>
                             </tr>
                         </table>
 
@@ -657,7 +632,27 @@ function do_toggle_language(el) {
                         </table>
 
                         </div>
+                    </div>
+
+                    <div  class="panel panel-default panel-light">
+                      <div class="panel-heading panel-light" data-toggle="collapse" data-target="#gloss_ids_search">{% trans "Search by Gloss Ids" %}</div>
+
+                      <div id='gloss_ids_search' class='collapse-light collapse'>
+                      <table class='table table-condensed table-condensed-light'>
+                        <tr>
+
+                          <td class='td td-light'>
+                            <table class='table table-condensed table-condensed-light' style="width:65%;">
+                                <tr><td class='td td-light' style="padding-left:30px;"><label for='id_search_form_gloss_ids'>{{search_form_gloss_ids.glossids.label}}</label></td>
+                                    <td class='td td-light' style="width:600px;">{{search_form_gloss_ids.glossids}}</td>
+                                </tr>
+                            </table>
+
+                          </td>
+                        </tr>
+                      </table>
                       </div>
+                    </div>
 
                     <div  class="panel panel-default panel-light">
                       <div class="panel-heading panel-light" data-toggle="collapse" data-target="#phon_search">{% trans "Search by Phonology" %}</div>
@@ -881,12 +876,15 @@ function do_toggle_language(el) {
 {% endif %}
 {% endif %}
 
+{% if page_obj.has_other_pages %}
 <div class="pagination">
-    <span class="step-links">
-
+    <div class="step-links">
         <ul class='pagination pagination-sm'>
         {% if page_obj.has_previous %}
-            <li><a href="?page={{ page_obj.previous_page_number }}{% for key,value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">&laquo;</a></li>
+            {% if page_obj.number > 1 %}
+            <li><a href="?page=1{{page_get_parameters}}">&laquo;&laquo;</a></li>
+            {% endif %}
+            <li><a href="?page={{page_obj.previous_page_number}}{{page_get_parameters}}">&laquo;</a></li>
         {% endif %}
 
           {% if  page_obj.number > 10 %}
@@ -896,9 +894,13 @@ function do_toggle_language(el) {
           {% for p in page_obj.paginator.page_range %}
 
              {% if p < page_obj.number|add:"10" and  p > page_obj.number|add:"-10" %}
-             <li {% if p == page_obj.number %}class='active'{% endif %}>
-             <a href="?page={{ p }}{% for key,value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">{% if p == 0 %}Start{% else %}{{p}}{% endif %}</a>
-             </li>
+                {% if p == page_obj.number %}
+                     <li class='active'>
+                 {% else %}
+                    <li>
+                {% endif %}
+                     <a href="?page={{p}}{{page_get_parameters}}">{% if p == 0 %}Start{% else %}{{p}}{% endif %}</a>
+                     </li>
              {% endif %}
 
           {% endfor %}
@@ -906,19 +908,17 @@ function do_toggle_language(el) {
           {% if page_obj.paginator.num_pages > page_obj.number|add:"10" %}
             <li><a>...</a></li>
             <li>
-            <a href="?page={{ page_obj.paginator.num_pages }}{% for key,value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">{{page_obj.paginator.num_pages}}</a>
+            <a href="?page={{page_obj.paginator.num_pages}}{{page_get_parameters}}">{{page_obj.paginator.num_pages}}</a>
             </li>
           {% endif %}
 
         {% if page_obj.has_next %}
-            <li><a href="?page={{ page_obj.next_page_number }}{% for key,value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">&raquo;</a></li>
-
-
-      </ul>
-
-
+            <li><a href="?page={{page_obj.next_page_number}}{{page_get_parameters}}">&raquo;</a></li>
+            <li><a href="?page={{page_obj.paginator.num_pages}}{{page_get_parameters}}">&raquo;&raquo;</a></li>
         {% endif %}
-    </span>
+      </ul>
+    </div>
 </div>
+{% endif %}
 </div>
 {% endblock content %}

@@ -17,8 +17,7 @@ from django.db.utils import OperationalError, ProgrammingError
 from signbank.registration.models import RegistrationProfile
 
 from signbank.dictionary.models import Dataset
-from django_select2 import *
-from easy_select2.widgets import Select2, Select2Multiple
+from easy_select2.widgets import Select2
 
 import re
 alnum_re = re.compile(r'^\w+$')

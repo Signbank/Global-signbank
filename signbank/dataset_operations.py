@@ -3,17 +3,16 @@ import shutil
 import os.path
 from pathlib import Path
 
+from django.contrib.admin.templatetags.admin_list import results
 from django.contrib.auth.decorators import permission_required
 from django.http import JsonResponse
 
 from signbank.settings.server_specific import (WRITABLE_FOLDER, GLOSS_VIDEO_DIRECTORY, DEBUG_VIDEOS, DELETED_FILES_FOLDER)
 from signbank.dictionary.models import (Gloss, AnnotationIdglossTranslation)
 from signbank.video.models import (GlossVideo, GlossVideoNME, GlossVideoPerspective, filename_matches_backup_video,
-                                   filename_matches_perspective, filename_matches_nme, filename_matches_video,
-                                   flattened_video_path)
+                                   flattened_video_path, wrong_filename_filter)
 from signbank.video.convertvideo import video_file_type_extension
-from signbank.tools import get_two_letter_dir
-
+from signbank.tools import get_two_letter_dir, get_checksum_for_path
 
 
 def video_type(glossvideo):
@@ -371,35 +370,6 @@ def update_gloss_video_backups(request, glossid):
     return JsonResponse({'videos': list_videos})
 
 
-def has_correct_filename(videofile, nmevideo, perspective, version):
-    if not videofile:
-        return False
-    video_file_full_path = Path(WRITABLE_FOLDER, videofile)
-    if nmevideo is not None:
-        filename_is_correct = filename_matches_nme(video_file_full_path) is not None
-        return filename_is_correct
-    elif perspective is not None:
-        filename_is_correct = filename_matches_perspective(video_file_full_path) is not None
-        return filename_is_correct
-    elif version > 0:
-        filename_is_correct = filename_matches_backup_video(video_file_full_path) is not None
-        return filename_is_correct
-    else:
-        filename_is_correct = filename_matches_video(video_file_full_path) is not None
-        return filename_is_correct
-
-
-def wrong_filename_filter(glossvideos):
-    filenames = []
-    queryset_tuples = glossvideos.values('id', 'videofile', 'glossvideonme', 'glossvideoperspective', 'version')
-    for qv in queryset_tuples:
-       if not has_correct_filename(qv['videofile'],
-                                   qv['glossvideonme'],
-                                   qv['glossvideoperspective'], qv['version']):
-           filenames.append(qv['id'])
-    return filenames
-
-
 def file_display_preface(glossvideo):
     """
     This function yields extra information to be displayed in front of the video filename
@@ -417,38 +387,69 @@ def file_display_preface(glossvideo):
     return str(glossvideo.version)
 
 
-def get_primary_videos_for_gloss(gloss):
-    glossvideos = GlossVideo.objects.filter(gloss=gloss,
-                                            version=0,
-                                            glossvideonme=None,
-                                            glossvideoperspective=None).distinct().order_by('version')
+def get_check_sum_relative_path(videofile):
+    if not videofile or not videofile.path:
+        return ""
+    fullpath = os.path.join(WRITABLE_FOLDER, videofile.path)
+    if not os.path.exists(fullpath):
+        return ""
+    return get_checksum_for_path(fullpath)
+
+
+def get_primary_videos_for_gloss(gloss, string_result=True, include_subclasses=False):
+    if include_subclasses:
+        glossvideos = GlossVideo.objects.filter(gloss=gloss,
+                                                version=0).distinct()
+    else:
+        glossvideos = GlossVideo.objects.filter(gloss=gloss,
+                                                version=0,
+                                                glossvideonme=None,
+                                                glossvideoperspective=None).distinct().order_by('version')
+    if not string_result:
+        # Each tuple has the form: (pk, version, videofile_path, checksum)
+        return [(gv.pk, gv.version, str(gv.videofile), get_check_sum_relative_path(gv.videofile)) for gv in glossvideos]
     display_glossvideos = ', '.join([str(gv.version) + ': ' + str(gv.videofile) for gv in glossvideos])
     return display_glossvideos
 
 
-def get_backup_videos_for_gloss(gloss):
-    backupglossvideos = GlossVideo.objects.filter(gloss=gloss, version__gt=0).distinct().order_by('version')
+def get_backup_videos_for_gloss(gloss, string_result=True):
+    backupglossvideos = GlossVideo.objects.filter(gloss=gloss, version__gt=0).distinct().order_by('version', 'pk')
     num_backup_videos = backupglossvideos.count()
+    if not string_result:
+        # Each tuple has the form: (pk, version, videofile_path, checksum, filename)
+        results = [(gv.pk, gv.version, str(gv.videofile), get_check_sum_relative_path(gv.videofile), os.path.basename(gv.videofile.name)) for gv in backupglossvideos]
+        return results
     display_glossbackupvideos = ', '.join([str(gv.version) + ': ' + str(gv.videofile) for gv in backupglossvideos])
     return num_backup_videos, display_glossbackupvideos
 
 
-def get_perspective_videos_for_gloss(gloss):
+def get_perspective_videos_for_gloss(gloss, string_result=True):
     glossperspvideos = GlossVideoPerspective.objects.filter(gloss=gloss).distinct()
+    if not string_result:
+        # Each tuple has the form: (pk, version, videofile_path, checksum)
+        return [(gv.pk, gv.version, str(gv.videofile), get_check_sum_relative_path(gv.videofile)) for gv in glossperspvideos]
     display_perspective_videos = ', '.join([str(gv.perspective) + ': ' + str(gv.videofile) for gv in glossperspvideos])
     return display_perspective_videos
 
 
-def get_nme_videos_for_gloss(gloss):
+def get_nme_videos_for_gloss(gloss, string_result=True):
     glossnmevideos = GlossVideoNME.objects.filter(gloss=gloss).distinct().order_by('offset')
+    if not string_result:
+        # Each tuple has the form: (pk, version, videofile_path, checksum)
+        tuples_nmevideos = [(gv.pk, gv.version, str(gv.videofile), get_check_sum_relative_path(gv.videofile)) for gv in glossnmevideos]
+        return tuples_nmevideos
     display_nme_videos = ', '.join([file_display_preface(gv) + ': ' + str(gv.videofile) for gv in glossnmevideos])
     return display_nme_videos
 
 
-def get_wrong_videos_for_gloss(gloss):
+def get_wrong_videos_for_gloss(gloss, string_result=True):
     all_gloss_video_objects = GlossVideo.objects.filter(gloss=gloss).distinct()
     gloss_video_ids = wrong_filename_filter(all_gloss_video_objects)
-    gloss_video_objects = GlossVideo.objects.filter(id__in=gloss_video_ids)
+    gloss_video_objects = GlossVideo.objects.filter(id__in=gloss_video_ids).order_by('version', 'pk')
+    if not string_result:
+        # Each tuple has the form: (pk, version, is_glossvideoperspective, is_glossvideonme, videofile_path, checksum)
+        results = [(gv.pk, gv.version, gv.is_glossvideoperspective(), gv.is_glossvideonme(), str(gv.videofile), get_check_sum_relative_path(gv.videofile)) for gv in gloss_video_objects]
+        return results
     display_wrong_videos = ', '.join([file_display_preface(gv) + ': ' + str(gv.videofile) for gv in gloss_video_objects])
     return display_wrong_videos
 
@@ -512,3 +513,16 @@ def move_gloss_video_backups_to_trash(request, glossid):
     move_backups_to_trash(glossvideos)
 
     return JsonResponse({'videos': ''})
+
+
+def dataset_lemma_constraints_check(lemma):
+    # report the status of the constraints for the given lemma: per dataset language, no translations, multiple translations, empty translation objects
+    # the case of no translations for a language is legacy data, so not necessarily a constraint violation, but they cannot be empty if updated
+    lemma_translation_objects = lemma.lemmaidglosstranslation_set.all()
+    lemma_dict = dict()
+
+    for language in lemma.dataset.translation_languages.all():
+        lemma_dict[language] = (lemma_translation_objects.filter(language=language).count() == 0,
+                                lemma_translation_objects.filter(language=language).count() > 1,
+                                lemma_translation_objects.filter(language=language, text__regex=r'^\s*$').count() > 0)
+    return lemma_dict

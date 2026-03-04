@@ -10,7 +10,6 @@ import signbank.pages.views
 import signbank.dictionary.urls
 import signbank.feedback.urls
 import signbank.feedback.views
-import signbank.attachments.urls
 import signbank.video.urls
 import signbank.registration.urls
 import django.contrib.admindocs.urls
@@ -45,7 +44,6 @@ urlpatterns = [
 
     re_path(r'^dictionary/', include(signbank.dictionary.urls)),
     re_path(r'^feedback/', include(signbank.feedback.urls)),
-    re_path(r'^attachments/', include(signbank.attachments.urls)),
     re_path(r'^video/', include(signbank.video.urls)),
 
     re_path(r'^image/upload/', add_image),
@@ -137,11 +135,14 @@ urlpatterns = [
     re_path(r'^datasets/detail/(?P<pk>\d+)$', DatasetDetailView.as_view(), name='admin_dataset_detail'),
     re_path(r'^datasets/frequency/(?P<pk>\d+)$', DatasetFrequencyView.as_view(), name='admin_dataset_frequency'),
     re_path(r'^datasets/change_details/(?P<datasetid>\d+)$', signbank.dictionary.update.update_dataset, name='update_dataset'),
+    re_path(r'^datasets/change_details_prominent_media/(?P<datasetid>\d+)/$',
+            signbank.dictionary.update.update_dataset_prominent_media,
+            name='update_dataset_prominent_media'),
     re_path(r'^datasets/field_choices/$', login_required(DatasetFieldChoiceView.as_view()),
         name='admin_dataset_field_choices'),
     re_path(r'^datasets/update_excluded_choices/$', login_required(signbank.dictionary.update.update_excluded_choices),
         name='update_excluded_choices'),
-    re_path(r'^datasets/(?P<acronym>.*)$', dataset_detail_view_by_acronym, name='dataset_detail_view_by_acronym'),
+    re_path(r'^datasets/(?P<acronym>.*)/$', dataset_detail_view_by_acronym, name='dataset_detail_view_by_acronym'),
     re_path(r'^update/metadata/', signbank.dictionary.update.upload_metadata, name='upload_metadata'),
     re_path(r'^update/dataset_eafs/', signbank.dictionary.update.upload_eaf_files, name='upload_eaf_files'),
     re_path(r'^update/remove_eaf_files/', signbank.dictionary.update.remove_eaf_files, name='remove_eaf_files'),

@@ -32,19 +32,23 @@ var busy_editing = 0;
              $('#relations').addClass('in');
          }
 
-         if (window.location.search.match('editdef')) {
+         else if (window.location.search.match('editdef')) {
              $('#definitions').addClass('in');
          }
 
-         if (window.location.search.match('editmorphdef')) {
+         else if (window.location.search.match('editprovenance')) {
+             $('#provenance').addClass('in');
+         }
+
+         else if (window.location.search.match('editmorphdef')) {
              $('#morphology').addClass('in');
          }
 
-         if (window.location.search.match('editothermedia')) {
+         else if (window.location.search.match('editothermedia')) {
              $('#othermedia').addClass('in');
          }
 
-         if (window.location.search.match('editnme')) {
+         else if (window.location.search.match('editnme')) {
              $('#nmevideos').addClass('in');
          }
      }
@@ -192,6 +196,7 @@ function disable_edit() {
     $('.sense-icon').hide();
     $('#enable_edit').addClass('btn-primary').removeClass('btn-danger');
     $('#add_definition').hide();
+    $('#add_provenance').hide();
     $('#add_relation_form').hide();
     $('#add_relationtoforeignsign_form').hide();
     $('#add_morphologydefinition_form').hide();
@@ -200,6 +205,7 @@ function disable_edit() {
     $('#add_component').hide();
     $('#add_morphemedefinition_form').hide();
     $('.definition_delete').hide();
+    $('.provenance_delete').hide();
     $('.relation_delete').hide();
     $('.other-video-delete').hide();
     $('.relationtoforeignsign_delete').hide();
@@ -212,7 +218,6 @@ function disable_edit() {
     $('#edit_lemma_form').hide();
     $("#set_lemma_form").hide();
     $("#add_lemma_form").hide();
-    $('#show_edit_lemma_form').hide();
     $('#show_set_lemma_form').hide();
     $('#show_create_lemma_form').hide();
     $('#lemma_buttons_group').hide();
@@ -266,6 +271,7 @@ function enable_edit() {
     $('.sense-icon').show();
     $('#enable_edit').removeClass('btn-primary').addClass('btn-danger');
     $('#add_definition').show();
+    $('#add_provenance').show();
     $('#add_relation_form').show();
     $('#add_relationtoforeignsign_form').show();
     $('#add_morphologydefinition_form').show();
@@ -274,6 +280,7 @@ function enable_edit() {
     $('#add_component').show();
     $('#add_morphemedefinition_form').show();
     $('.definition_delete').show();
+    $('.provenance_delete').show();
     $('.relation_delete').show();
     $('.relation_delete').css('color', 'inherit');
     $('.other-video-delete').show();
@@ -294,7 +301,6 @@ function enable_edit() {
         }
     });
     busy_editing = 1;
-//    $('#lemma a').hide();
 };
 
 function toggle_edit(redirect_to_next) {
@@ -302,8 +308,6 @@ function toggle_edit(redirect_to_next) {
     {
         disable_edit();
         $('#edit_lemma_form').hide();
-//        $('#set_lemma_form').hide();
-        $('#show_edit_lemma_form').hide();
         $('#show_set_lemma_form').hide();
         $('#show_create_lemma_form').hide();
         $('#lemma_buttons_group').hide();
@@ -325,12 +329,9 @@ function toggle_edit(redirect_to_next) {
     } else {
         enable_edit();
         $('#edit_lemma_form').show();
-        $('#show_edit_lemma_form').show();
         $('#show_set_lemma_form').show();
         $('#show_create_lemma_form').show();
         $('#lemma_buttons_group').show();
-
-//        $('#set_lemma_form').show();
         $('#enable_edit').addClass('edit_enabled');
         $('#enable_edit').text(turn_off_edit_mode_str);
     }
@@ -380,7 +381,7 @@ function configure_edit() {
      $('.edit_text').editable(edit_post_url, {
          params : { a: 0, field: $(this).attr('id') },
          type      : 'text',
-		 callback : update_view_and_remember_original_value
+		 callback : update_text_area
 	 });
      $('.edit_int').editable(edit_post_url, {
          params : { a: 0 },
@@ -395,7 +396,7 @@ function configure_edit() {
      $('.edit_area').editable(edit_post_url, {
          params : { a: 0 },
          type      : 'textarea',
-		 callback : update_view_and_remember_original_value,
+		 callback : update_text_area,
          onerror : function(settings, original, xhr){
                alert(xhr.responseText);
                original.reset();
@@ -416,7 +417,7 @@ function configure_edit() {
          params : { a: 0 },
          type      : 'multiselect',
          data      : dialects,
-		 callback : update_view_and_remember_original_value
+		 callback : update_sign_language_dialects
      });
      $('.edit_semanticfield').editable(edit_post_url, {
          params : { a: 0 },
@@ -434,37 +435,65 @@ function configure_edit() {
          params : { a: 0 },
          type      : 'checkbox',
          checkbox: { trueValue: yes_str, falseValue: no_str },
-		 callback : update_view_and_remember_original_value
+		 callback : update_checkbox_tabbed
      });
-     $('.edit_WD').editable(edit_post_url, {
-         params : { a: handedness_weakdrop,
-                    field: 'weakdrop',
-                    choices: handedness_weak_choices,
-                    colors: handedness_weak_choices_colors },
-         type      : 'select',
-         data: handedness_weak_choices,
-		 callback : update_view_and_remember_original_value
+     $('.edit_WD').click(function()
+	 {
+	     var this_data = $(this).attr('value');
+	     var index_of_modified_field = '1';
+         for (var key in handedness_weak_choices) {
+            var value = handedness_weak_choices[key];
+            if (value == this_data) {
+                index_of_modified_field = key;
+                break;
+            }
+         };
+         $(this).attr('data-value', index_of_modified_field);
+		 $(this).editable(edit_post_url, {
+		     params : { a: index_of_modified_field,
+		                field: 'weakdrop',
+		                display: $(this).attr('value'),
+		                colors: handedness_weak_choices_colors,
+		                choices: handedness_weak_choices },
+		     type      : 'select',
+		     data    : handedness_weak_choices,
+			 callback : update_articulation
+		 });
      });
-     $('.edit_WP').editable(edit_post_url, {
-         params : { a: handedness_weakprop,
-                    field: 'weakprop',
-                    choices: handedness_weak_choices,
-                    colors: handedness_weak_choices_colors },
-         type      : 'select',
-         data: handedness_weak_choices,
-		 callback : update_view_and_remember_original_value
+     $('.edit_WP').click(function()
+	 {
+	     var this_data = $(this).attr('value');
+	     var index_of_modified_field = '1';
+         for (var key in handedness_weak_choices) {
+            var value = handedness_weak_choices[key];
+            if (value == this_data) {
+                index_of_modified_field = key;
+                break;
+            }
+         };
+         $(this).attr('data-value', index_of_modified_field);
+		 $(this).editable(edit_post_url, {
+		     params : { a: index_of_modified_field,
+		                field: 'weakprop',
+		                display: $(this).attr('value'),
+		                colors: handedness_weak_choices_colors,
+		                choices: handedness_weak_choices },
+		     type      : 'select',
+		     data    : handedness_weak_choices,
+			 callback : update_articulation
+		 });
      });
      $('.edit_letter').editable(edit_post_url, {
          params : { a: 0 },
          type      : 'checkbox',
          checkbox: { trueValue: 'letter', falseValue: '&nbsp;' },
-		 callback : update_view_and_remember_original_value
+		 callback : update_checkbox_tabbed
      });
      $('.edit_number').editable(edit_post_url, {
          params : { a: 0 },
          type      : 'checkbox',
          checkbox: { trueValue: 'number', falseValue: '&nbsp;' },
-		 callback : update_view_and_remember_original_value
+		 callback : update_checkbox_tabbed
      });
      $('.edit_relation_target').editable(edit_post_url, {
          params : { a: 0 },
@@ -566,28 +595,105 @@ function hide_other_forms(focus_field) {
     };
 };
 
+function auto_advance(id) {
+    var index_of_modified_field = gloss_phonology.indexOf(id);
+    var next_field_index = index_of_modified_field+1;
+    if (next_field_index < gloss_phonology.length) {
+        var next_field = gloss_phonology[next_field_index];
+        var next_field_ref = '#'+next_field;
+        $(next_field_ref).clearQueue();
+        if (phonology_list_kinds.includes(next_field)) {
+            // for lists, do custom event instead of click
+            $(next_field_ref).triggerHandler("customEvent"); //.focus().click().click();
+        } else {
+            $(next_field_ref).click();
+        };
+    }
+}
+
+function update_sign_language_dialects(dialects)
+{
+    if (dialects) {
+        $('#dialect').html(dialects);
+    } else {
+        $('#dialect').html("------");
+    }
+}
+
+function update_text_area(newtext)
+{
+    $(this).html(newtext);
+    $(this).attr("value", newtext);
+    if (newtext == '') {
+        $(this).parent().addClass('empty_row');
+    } else {
+        $(this).parent().removeClass('empty_row');
+    }
+}
+
+function update_checkbox_tabbed(change_summary) {
+    var id = $(this).attr('id');
+    var split_values = change_summary.split('\t');
+    var boolean_value = split_values[0];
+    var display_value = split_values[1];
+    var category_value = split_values[2];
+    $(this).attr("value", boolean_value);
+    $(this).html(display_value);
+    if (boolean_value == 'True') {
+        $(this).parent().removeClass('empty_row');
+    } else {
+        $(this).parent().addClass('empty_row');
+    }
+    if (category_value == 'phonology') {
+        auto_advance(id);
+    }
+}
+
+function update_checkbox(data)
+{
+    var id = $(this).attr('id');
+    if ($.isEmptyObject(data)) {
+        $(this).html("");
+        return;
+    };
+    var boolean_value = data.boolean_value;
+    $(this).attr("value", boolean_value);
+    var display_value = data.display_value;
+    $(this).html(display_value);
+    if (boolean_value) {
+        $(this).parent().removeClass('empty_row');
+    } else {
+        $(this).parent().addClass('empty_row');
+    }
+    var category_value = data.category_value;
+    if (category_value == 'phonology') {
+        auto_advance(id);
+    }
+}
+
+function update_articulation(change_summary) {
+    var id = $(this).attr('id');
+    var split_values = change_summary.split('\t');
+    var boolean_value = split_values[0];
+    var display_value = split_values[1];
+    var category_value = split_values[2];
+    $(this).attr("value", boolean_value);
+    $(this).html(display_value);
+    if (boolean_value == 'True') {
+        $(this).parent().removeClass('empty_row');
+    } else {
+        $(this).parent().addClass('empty_row');
+    }
+    if (category_value == 'phonology') {
+        auto_advance(id);
+    }
+}
+
 function update_view_and_remember_original_value(change_summary)
 {
 	split_values_count = change_summary.split('\t').length - 1;
 	if (split_values_count > 0)
 	{
-	    if (split_values_count < 3) {
-//	        # updates to Sign Language or Dialect returns two values
-            split_values = change_summary.split('\t');
-            language = split_values[0];
-            dialect = split_values[1];
-            if (language) {
-                $('#signlanguage').html(language);
-            } else {
-                $('#signlanguage').html("------");
-            }
-            if (dialect) {
-                $('#dialect').html(dialect);
-            } else {
-                $('#dialect').html("------");
-            }
-	        return
-	    }
         split_values = change_summary.split('\t');
         original_value = split_values[0];
         new_value = split_values[1];
@@ -601,64 +707,26 @@ function update_view_and_remember_original_value(change_summary)
             input_value = split_values[5];
             $(this).attr('data-value', input_value);
         }
-
         id = $(this).attr('id');
         $(this).html(new_value);
 
         new_values_for_changes_made[id] = machine_value;
-        if (new_value == '&nbsp;') {
-            new_value = 'False';
-        }
 
         if ($.isEmptyObject(original_values_for_changes_made[id]))
         {
             original_values_for_changes_made[id] = original_value;
             $(this).parent().removeClass('empty_row');
-            if (id == 'weakprop' || id == 'weakdrop' || id == 'domhndsh_letter' || id == 'domhndsh_number' || id == 'subhndsh_letter' || id == 'subhndsh_number') {
-                $(this).attr("value", machine_value);
-                if (new_value == '&nbsp;') {
-                    $(this).html("------");
-                }
-            }
-            else {
-                $(this).attr("value", new_value);
-            }
+            $(this).attr("value", new_value);
         }
         if (new_value == '-' || new_value == ' ' || new_value == '' || new_value == 'None' ||
                         new_value == 'False' || new_value == 0 || new_value == '&nbsp;')
         {
-            if (id == 'weakprop' || id == 'weakdrop' || id == 'domhndsh_letter' || id == 'domhndsh_number' || id == 'subhndsh_letter' || id == 'subhndsh_number') {
-                $(this).html("------");
-            }
-            else {
-                if (id == 'idgloss') {
-//                the user tried to erase the Lemma ID Gloss field, reset it in the template to what it was
-                    $(this).html(original_value);
-                    lemma_group = original_lemma_group;
-                } else {
-                    $(this).parent().addClass('empty_row');
-                    $(this).attr("value", machine_value);
-                    $(this).html("------");
-                }
-            }
+            $(this).parent().addClass('empty_row');
+            $(this).attr("value", machine_value);
+            $(this).html("------");
         }
         if (category_value == 'phonology') {
-            if (id != 'weakprop' && id != 'weakdrop') {
-                $(this).attr("value", new_value);
-            }
-            var index_of_modified_field = gloss_phonology.indexOf(id);
-            var next_field_index = index_of_modified_field+1;
-            if (next_field_index < gloss_phonology.length) {
-                var next_field = gloss_phonology[next_field_index];
-                var next_field_ref = '#'+next_field;
-                $(next_field_ref).clearQueue();
-                if (phonology_list_kinds.includes(next_field)) {
-                    // for lists, do custom event instead of click
-                    $(next_field_ref).triggerHandler("customEvent"); //.focus().click().click();
-                } else {
-                    $(next_field_ref).click();
-                };
-            }
+            auto_advance(id);
         }
     }
 }
@@ -666,7 +734,7 @@ function update_view_and_remember_original_value(change_summary)
 var gloss_bloodhound = new Bloodhound({
       datumTokenizer: function(d) { return d.tokens; },
       queryTokenizer: Bloodhound.tokenizers.whitespace,
-      remote: url+'/dictionary/ajax/gloss/%QUERY'
+      remote: url+'/dictionary/ajax/gloss/'+gloss_dataset_id+'/%QUERY'
     });
 
 gloss_bloodhound.initialize();
@@ -753,6 +821,7 @@ function lemmatypeahead(target) {
      $(target).typeahead(null, {
           name: 'lemmatarget',
           displayKey: 'lemma',
+          limit: 10,
           source: lemma_bloodhound.ttAdapter(),
           templates: {
               suggestion: function(lemma) {
@@ -913,7 +982,6 @@ function update_affiliation_delete(data)
         return;
     };
     var affiliation_id = data.affiliation;
-    console.log('update affiliation after delete: '+affiliation_id)
     var gloss_affilication_tag = '#gloss_affiliation_' + affiliation_id;
     $(gloss_affilication_tag).remove();
 }
@@ -1039,26 +1107,12 @@ function showLemmaForm(lemma_element) {
 
 function hideLemmaForm(lemma_element) {
     $(lemma_element).parent().hide();
-//    $("#add_lemma_form").hide();
-
-//    lemma_element.parent().find("[name='set_lemma_form']").hide();
-//    lemma_element.parent().find("[name='add_lemma_form']").hide();
-//    lemma_element.parent().find("[name='edit_lemma_form']").show();
-//    lemma_element.show();
     $('#lemma_buttons_group').show();
     $('#lemma_buttons').show();
-    $('#show_edit_lemma_form').show();
     $('#show_set_lemma_form').show();
     $('#show_create_lemma_form').show();
     $('.lemma_buttons').css("visibility", "visible")
 }
-
-
-$("#show_edit_lemma_form").on('click', function() {
-    if(busy_editing) {
-        $('#edit_lemma_form').submit();
-    }
-});
 
 $("#show_set_lemma_form").on('click', function() {
     if(busy_editing) {

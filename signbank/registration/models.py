@@ -9,11 +9,13 @@ import datetime, random, re, hashlib
 
 from django.conf import settings
 from django.db import models
-from django.template.loader import render_to_string
 from django.utils.translation import gettext_lazy as _
 from django.contrib.auth.models import User, Group
 from django.contrib.sites.models import Site
 from django.utils import timezone
+
+from signbank.communication.models import generate_communication
+
 
 SHA1_RE = re.compile('^[a-f0-9]{40}$')
 
@@ -99,18 +101,14 @@ class RegistrationManager(models.Manager):
 
         if send_email:
             from django.core.mail import send_mail
-            signbank_name = settings.LANGUAGE_NAME + ' Signbank'
+            current_site = Site.objects.get_current()
 
-            subject = render_to_string('registration/activation_email_subject.txt',
-                                       context={ 'signbank_name': signbank_name})
-            # Email subject *must not* contain newlines
-            subject = ''.join(subject.splitlines())
-            
-            message = render_to_string('registration/activation_email.txt',
-                                       context={ 'activation_key': registration_profile.activation_key,
-                                         'expiration_days': settings.ACCOUNT_ACTIVATION_DAYS,
-                                         'signbank_name': signbank_name,
-                                         'url': settings.URL})
+            mail_template_context = {'site': current_site,
+                                     'activation_key': registration_profile.activation_key,
+                                     'expiration_days': settings.ACCOUNT_ACTIVATION_DAYS,
+                                     'url': settings.URL}
+
+            subject, message = generate_communication('activation_email', mail_template_context)
 
             # for debug purposes on local machine
             if settings.DEBUG_EMAILS_ON:

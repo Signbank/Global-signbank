@@ -9,27 +9,64 @@
 {% endblock %}
 
 {% block extrajs %}
-    <script type="text/javascript" src="{{ STATIC_URL }}js/jquery.jeditable.mini.js"></script>
-    <script type="text/javascript" src="{{ STATIC_URL }}js/jquery.jeditable.checkbox.js"></script>
-    <script type="text/javascript" src="{{ STATIC_URL }}js/typeahead.bundle.min.js"></script>
+<script type="text/javascript" src="{{ STATIC_URL }}js/jquery.jeditable.mini.js"></script>
+<script type="text/javascript" src="{{ STATIC_URL }}js/jquery.jeditable.checkbox.js"></script>
+<script type="text/javascript" src="{{ STATIC_URL }}js/typeahead.bundle.min.js"></script>
 
-    <script type='text/javascript'>
-    var url = '{{PREFIX_URL}}';
+<script type='text/javascript'>
+var url = '{{PREFIX_URL}}';
+var saving_str = '{% trans "Saving..." %}'
+var sort_order = '{{sortOrder}}';
+console.log('page load sort order: '+sort_order);
+</script>
 
-    <!--var edit_mode_str = '{% trans "Edit" %}'-->
-    <!--var turn_off_edit_mode_str = '{% trans "Turn Off Edit Mode" %}'-->
-    var saving_str = '{% trans "Saving..." %}'
+<style>
+.sort_button {
+    background-color:transparent;
+    outline: none;
+    padding: 0;
+    margin: 0;
+}
+.sort_button:hover {
+    color: red;
+}
+.sort_button.active {
+    color: red;
+}
+</style>
 
-    </script>
+<link rel="stylesheet" href="{{STATIC_URL}}css/select2-dark-mode.css">
 
-    <script type='text/javascript'>
+<script type='text/javascript'>
+$(document).ready(function(){
+
+     $('button[id^="sort_button_"]').each(function() {
+        if (this.id.match("_del")) {
+            $(this).hide();
+        }
+     });
+
+     if (sort_order != 'machine_value') {
+         const base = sort_order.startsWith('-') ? sort_order.slice(1) : sort_order;
+         const dir = sort_order.startsWith('-') ? 'desc' : 'asc';
+         const button = `#sort_button_${base}_${dir}`;
+         const stopButton = `#sort_button_${base}_del`;
+
+         $(button).addClass("active").trigger('change');
+         $(stopButton).show().trigger('change');
+     };
+
+});
+</script>
+
+<script type='text/javascript'>
 
 
 function clearForm() {
 
       $('input').each(function() {
         var this_field = $(this).attr('name');
-        if (this_field == undefined) { return; };
+        if (this_field === undefined) { return; };
         var this_type = $(this).attr('type');
         if (this_type == 'hidden' || this_type == 'submit') { return; };
         if (this_type == 'radio') {
@@ -41,7 +78,7 @@ function clearForm() {
 
       $('select').each(function() {
         var this_field = $(this).attr('name');
-        if (this_field == undefined) { return; };
+        if (this_field === undefined) { return; };
         var this_type = $(this).attr('type');
         if (this_type == 'hidden') { return; };
         if (this_field.endsWith('[]')) {
@@ -55,6 +92,7 @@ function clearForm() {
      $("input[name='translation']").val('');
      $("input[name='search']").val('');
      $('#format').val('');
+     $('#reset').val('1');
 }
 
 function do_export_csv(e1) {
@@ -89,7 +127,7 @@ function do_sort_column(field_name, action, frmName) {
 }
 
 function do_adminsearch(el) {
- var sSearchType = $(el).attr('value');
+ var sSearchType = $(el).attr('data-value');
  $(el).selected = true;
   $("#adminsearch input[name='search_type']").val(sSearchType);
   switch(sSearchType) {
@@ -144,7 +182,7 @@ function do_adminsearch(el) {
                             <td class='td td-light'><input
                                     class='form-control form-control-light handshapetypeahead handshapetypeahead-light'
                                     placeholder='{% trans "Handshape Name" %}'
-                                    name='name' type='text'
+                                    name='name' type='text' id='id_name'
                                     value="{{searchform.name.value|default:'' }}"/></td>
                         </tr>
                     </table>
@@ -160,38 +198,38 @@ function do_adminsearch(el) {
                     <div class="panel panel-default panel-light" id="selectFirstFingers">
                         <div class="panel-heading panel-light" data-toggle='collapse'
                              data-parent="#fingerSelectionPanels"
-                             data-target='#finger_selection_1' for='id_hsFingSel'>{{searchform.hsFingSel.label}}</div>
+                             data-target='#finger_selection_1'>{{searchform.hsFingSel.label}}</div>
                         <div id='finger_selection_1' class='panel-collapse collapse'>
                             <table class='table'>
                                 <tr>
-                                    <td/>
+                                    <td></td>
                                     <td>
                                         <div class='input-group input-group-light'>
-                                        <label class='input-group-addon' for='id_fsT'>T</label>
+                                        {{searchform.fsT.label}}
                                         {{searchform.fsT}}
                                         </div>
                                     </td>
                                     <td>
                                         <div class='input-group input-group-light'>
-                                        <label class='input-group-addon' for='id_fsI'>I</label>
+                                        {{searchform.fsI.label}}
                                         {{searchform.fsI}}
                                         </div>
                                     </td>
                                     <td>
                                         <div class='input-group input-group-light'>
-                                        <label class='input-group-addon' for='id_fsM'>M</label>
+                                        {{searchform.fsM.label}}
                                         {{searchform.fsM}}
                                         </div>
                                     </td>
                                     <td>
                                         <div class='input-group input-group-light'>
-                                        <label class='input-group-addon' for='id_fsR'>R</label>
+                                        {{searchform.fsR.label}}
                                         {{searchform.fsR}}
                                         </div>
                                     </td>
                                     <td>
                                         <div class='input-group input-group-light'>
-                                        <label class='input-group-addon' for='id_fsP'>P</label>
+                                        {{searchform.fsP.label}}
                                         {{searchform.fsP}}
                                         </div>
                                     </td>
@@ -201,39 +239,39 @@ function do_adminsearch(el) {
                 </div>
                 <div class="panel panel-default panel-light" id="selectSecondFingers">
                     <div class="panel-heading panel-light" data-toggle='collapse'
-                         data-parent="#fingerSelectionPanels" data-target='#finger_selection_2'
-                         for='id_hsFingSel2'>{{searchform.hsFingSel2.label}}</div>
+                         data-parent="#fingerSelectionPanels"
+                         data-target='#finger_selection_2'>{{searchform.hsFingSel2.label}}</div>
                     <div id='finger_selection_2' class='panel-collapse collapse'>
                         <table class='table'>
                             <tr>
-                                <td/>
+                                <td></td>
                                 <td>
                                     <div class='input-group input-group-light'>
-                                    <label class='input-group-addon' for='id_fs2T'>T</label>
+                                    {{searchform.fs2T.label}}
                                     {{searchform.fs2T}}
                                     </div>
                                 </td>
                                 <td>
                                     <div class='input-group input-group-light'>
-                                    <label class='input-group-addon' for='id_fs2I'>I</label>
+                                    {{searchform.fs2I.label}}
                                     {{searchform.fs2I}}
                                     </div>
                                 </td>
                                 <td>
                                     <div class='input-group input-group-light'>
-                                    <label class='input-group-addon' for='id_fs2M'>M</label>
+                                    {{searchform.fs2M.label}}
                                     {{searchform.fs2M}}
                                     </div>
                                 </td>
                                 <td>
                                     <div class='input-group input-group-light'>
-                                    <label class='input-group-addon' for='id_fs2R'>R</label>
+                                    {{searchform.fs2R.label}}
                                     {{searchform.fs2R}}
                                     </div>
                                 </td>
                                 <td>
                                     <div class='input-group input-group-light'>
-                                    <label class='input-group-addon' for='id_fs2P'>P</label>
+                                    {{searchform.fs2P.label}}
                                     {{searchform.fs2P}}
                                     </div>
                                 </td>
@@ -244,39 +282,38 @@ function do_adminsearch(el) {
                 <div class="panel panel-default panel-light" id="selectThirdFingers">
                     <div class="panel-heading panel-light" data-toggle='collapse'
                          data-parent="#fingerSelectionPanels"
-                         data-target='#unselected_fingers'
-                         for='id_hsFingUnsel'>{{searchform.unselectedFingers.label}}</div>
+                         data-target='#unselected_fingers'>{{searchform.unselectedFingers.label}}</div>
                     <div id='unselected_fingers' class='panel-collapse collapse'>
                         <table class='table'>
                             <tr>
-                                <td/>
+                                <td></td>
                                 <td>
                                     <div class='input-group input-group-light'>
-                                    <label class='input-group-addon' for='id_ufT'>T</label>
+                                    {{searchform.ufT.label}}
                                     {{searchform.ufT}}
                                     </div>
                                 </td>
                                 <td>
                                     <div class='input-group input-group-light'>
-                                    <label class='input-group-addon' for='id_ufI'>I</label>
+                                    {{searchform.ufI.label}}
                                     {{searchform.ufI}}
                                     </div>
                                 </td>
                                 <td>
                                     <div class='input-group input-group-light'>
-                                    <label class='input-group-addon' for='id_ufM'>M</label>
+                                    {{searchform.ufM.label}}
                                     {{searchform.ufM}}
                                     </div>
                                 </td>
                                 <td>
                                     <div class='input-group input-group-light'>
-                                    <label class='input-group-addon' for='id_ufR'>R</label>
+                                    {{searchform.ufR.label}}
                                     {{searchform.ufR}}
                                     </div>
                                 </td>
                                 <td>
                                     <div class='input-group input-group-light'>
-                                    <label class='input-group-addon' for='id_ufP'>P</label>
+                                    {{searchform.ufP.label}}
                                     {{searchform.ufP}}
                                     </div>
                                 </td>
@@ -287,15 +324,15 @@ function do_adminsearch(el) {
                 </div>
 
                 <table class='table'>
-                        <tr><td class='td td-light'><label for='id_hsFingConf'>{{searchform.hsFingConf.label}}</label></td>
+                        <tr><th class='td td-light'>{{searchform.hsFingConf.label}}</th>
                             <td class='td td-light'>{{searchform.hsFingConf}}</td></tr>
-                        <tr><td class='td td-light'><label for='id_hsFingConf2'>{{searchform.hsFingConf2.label}}</label></td>
+                        <tr><th class='td td-light'>{{searchform.hsFingConf2.label}}</th>
                             <td class='td td-light'>{{searchform.hsFingConf2}}</td></tr>
-                        <tr><td class='td td-light'><label for='id_hsNumSel'>{{searchform.hsNumSel.label}}</label></td>
+                        <tr><th class='td td-light'>{{searchform.hsNumSel.label}}</th>
                             <td class='td td-light'>{{searchform.hsNumSel}}</td></tr>
-                        <tr><td class='td td-light'><label for='id_hsSpread'>{{searchform.hsSpread.label}}</label></td>
+                        <tr><th class='td td-light'>{{searchform.hsSpread.label}}</th>
                             <td class='td td-light'>{{searchform.hsSpread}}</td></tr>
-                        <tr><td class='td td-light'><label for='id_hsAperture'>{{searchform.hsAperture.label}}</label></td>
+                        <tr><th class='td td-light'>{{searchform.hsAperture.label}}</th>
                             <td class='td td-light'>{{searchform.hsAperture}}</td></tr>
                 </table>
             </div>
@@ -304,8 +341,8 @@ function do_adminsearch(el) {
 <div class='btn-group'>
     <!-- Make sure no button has the *name* 'submit', otherwise submit() cannot be used -->
     <div class="btn-group">
-        <a class='btn btn-primary dropdown-toggle' data-toggle="dropdown" type='submit' name='submit_button'>
-            <span data-bind="label" onclick="do_adminsearch(this);"  name="search_type" value="{{search_type}}">
+        <a class='btn btn-primary dropdown-toggle' data-toggle="dropdown" type='submit' id='submit_button'>
+            <span data-bind="label" onclick="do_adminsearch(this);" data-value="{{search_type}}">
                 {% if search_type == 'handshape' %}
                 {% trans "Search Handshape" %}
                 {% else %}
@@ -314,9 +351,9 @@ function do_adminsearch(el) {
             </span>&nbsp;<span class="caret"></span>
         </a>
         <ul class="dropdown-menu dropdown-menu-left">
-            <li><a href="#" onclick="do_adminsearch(this);" type='submit' name="search_type" value="handshape">{% trans "Search Handshape" %}</a></li>
+            <li><a href="#" onclick="do_adminsearch(this);" type='submit' data-value="handshape">{% trans "Search Handshape" %}</a></li>
 
-            <li><a href="#" onclick="do_adminsearch(this);" type='submit' name="search_type" value="sign_handshape">{% trans "Search Sign by Handshape" %}</a></li>
+            <li><a href="#" onclick="do_adminsearch(this);" type='submit' data-value="sign_handshape">{% trans "Search Sign by Handshape" %}</a></li>
         </ul>
     </div>
     <!-- The element below adds an invisible submit option, so the 'button' above also works when enter is pressed -->
@@ -330,8 +367,9 @@ function do_adminsearch(el) {
     <input type='hidden' name='show_all' value="{{show_all}}">
     {% endif %}
 
-    <input class='btn btn-default' type='submit' name='reset'
-           onclick="clearForm();" value='{% trans "Reset" %}'>
+    <input class='btn btn-default' type='submit' onclick="clearForm();"
+       value='{% trans "Reset" %}'>
+    <input type='hidden' id="reset" name="reset" value="">
 </div>
 {% endif %}
 </form>
@@ -367,114 +405,67 @@ function do_adminsearch(el) {
     <tr>
        <th></th>
        <th>
-         <a href="#" onclick="do_sort_column('name','asc', 'adminsearch')">
-           {% if searchform.sortOrder and searchform.sortOrder.value == 'name' %}<font color="red">&#x25B2;</font>{% else %}&#x25B2; {% endif %}
-         </a>
-         <a href="#" onclick="do_sort_column('name','desc', 'adminsearch')">
-           {% if searchform.sortOrder and searchform.sortOrder.value == '-name' %}<font color="red">&#x25BC;</font>{% else %}&#x25BC;{% endif %}
-         </a>
-         {% if searchform.sortOrder and searchform.sortOrder.value == '-name' or searchform.sortOrder and searchform.sortOrder.value == 'name'  %}
-           <a href="#" onclick="do_sort_column('name','del', 'adminsearch')">x</a>
-         {% endif %}
+       <div class="col_sort_arrowheads">
+         <button class="btn sort_button" onclick="do_sort_column('name','asc', 'adminsearch')" id="sort_button_name_asc">&#x25B2;</button>
+         <button class="btn sort_button" onclick="do_sort_column('name','desc','adminsearch')" id="sort_button_name_desc">&#x25BC;</button>
+         <button class="btn sort_button" onclick="do_sort_column('name','del', 'adminsearch')" id="sort_button_name_del">x</button>
+       </div>
        </th>
         <th>
-         <a href="#" onclick="do_sort_column('hsFingSel','asc', 'adminsearch')">
-           {% if searchform.sortOrder and searchform.sortOrder.value == 'hsFingSel' %}<font color="red">&#x25B2;</font>{% else %}&#x25B2; {% endif %}
-         </a>
-         <a href="#" onclick="do_sort_column('hsFingSel','desc', 'adminsearch')">
-           {% if searchform.sortOrder and searchform.sortOrder.value == '-hsFingSel' %}<font color="red">&#x25BC;</font>{% else %}&#x25BC;{% endif %}
-         </a>
-         {% if searchform.sortOrder and searchform.sortOrder.value == '-hsFingSel' or searchform.sortOrder and searchform.sortOrder.value == 'hsFingSel'  %}
-           <a href="#" onclick="do_sort_column('hsFingSel','del', 'adminsearch')">x</a>
-         {% endif %}
+       <div class="col_sort_arrowheads">
+         <button class="btn sort_button" onclick="do_sort_column('hsFingSel','asc', 'adminsearch')" id="sort_button_hsFingSel_asc">&#x25B2;</button>
+         <button class="btn sort_button" onclick="do_sort_column('hsFingSel','desc','adminsearch')" id="sort_button_hsFingSel_desc">&#x25BC;</button>
+         <button class="btn sort_button" onclick="do_sort_column('hsFingSel','del', 'adminsearch')" id="sort_button_hsFingSel_del">x</button>
+       </div>
         </th>
        <th>
-         <a href="#" onclick="do_sort_column('hsFingConf','asc', 'adminsearch')">
-           {% if searchform.sortOrder and searchform.sortOrder.value == 'hsFingConf' %}<font color="red">&#x25B2;</font>{% else %}&#x25B2; {% endif %}
-         </a>
-         <a href="#" onclick="do_sort_column('hsFingConf','desc', 'adminsearch')">
-           {% if searchform.sortOrder and searchform.sortOrder.value == '-hsFingConf' %}<font color="red">&#x25BC;</font>{% else %}&#x25BC;{% endif %}
-         </a>
-         {% if searchform.sortOrder and searchform.sortOrder.value == '-hsFingConf' or searchform.sortOrder and searchform.sortOrder.value == 'hsFingConf'  %}
-           <a href="#" onclick="do_sort_column('hsFingConf','del', 'adminsearch')">x</a>
-         {% endif %}
+       <div class="col_sort_arrowheads">
+         <button class="btn sort_button" onclick="do_sort_column('hsFingConf','asc', 'adminsearch')" id="sort_button_hsFingConf_asc">&#x25B2;</button>
+         <button class="btn sort_button" onclick="do_sort_column('hsFingConf','desc','adminsearch')" id="sort_button_hsFingConf_desc">&#x25BC;</button>
+         <button class="btn sort_button" onclick="do_sort_column('hsFingConf','del', 'adminsearch')" id="sort_button_hsFingConf_del">x</button>
+       </div>
        </th>
         <th>
-         <a href="#" onclick="do_sort_column('hsFingSel2','asc', 'adminsearch')">
-           {% if searchform.sortOrder and searchform.sortOrder.value == 'hsFingSel2' %}<font color="red">&#x25B2;</font>{% else %}&#x25B2; {% endif %}
-         </a>
-         <a href="#" onclick="do_sort_column('hsFingSel2','desc', 'adminsearch')">
-           {% if searchform.sortOrder and searchform.sortOrder.value == '-hsFingSel2' %}<font color="red">&#x25BC;</font>{% else %}&#x25BC;{% endif %}
-         </a>
-         {% if searchform.sortOrder and searchform.sortOrder.value == '-hsFingSel2' or searchform.sortOrder and searchform.sortOrder.value == 'hsFingSel2'  %}
-           <a href="#" onclick="do_sort_column('hsFingSel2','del', 'adminsearch')">x</a>
-         {% endif %}
+       <div class="col_sort_arrowheads">
+         <button class="btn sort_button" onclick="do_sort_column('hsFingSel2','asc', 'adminsearch')" id="sort_button_hsFingSel2_asc">&#x25B2;</button>
+         <button class="btn sort_button" onclick="do_sort_column('hsFingSel2','desc','adminsearch')" id="sort_button_hsFingSel2_desc">&#x25BC;</button>
+         <button class="btn sort_button" onclick="do_sort_column('hsFingSel2','del', 'adminsearch')" id="sort_button_hsFingSel2_del">x</button>
+       </div>
         </th>
        <th>
-         <a href="#" onclick="do_sort_column('hsFingConf2','asc', 'adminsearch')">
-           {% if searchform.sortOrder and searchform.sortOrder.value == 'hsFingConf2' %}<font color="red">&#x25B2;</font>{% else %}&#x25B2; {% endif %}
-         </a>
-         <a href="#" onclick="do_sort_column('hsFingConf2','desc', 'adminsearch')">
-           {% if searchform.sortOrder and searchform.sortOrder.value == '-hsFingConf2' %}<font color="red">&#x25BC;</font>{% else %}&#x25BC;{% endif %}
-         </a>
-         {% if searchform.sortOrder and searchform.sortOrder.value == '-hsFingConf2' or searchform.sortOrder and searchform.sortOrder.value == 'hsFingConf2'  %}
-           <a href="#" onclick="do_sort_column('hsFingConf2','del', 'adminsearch')">x</a>
-         {% endif %}
+       <div class="col_sort_arrowheads">
+         <button class="btn sort_button" onclick="do_sort_column('hsFingConf2','asc', 'adminsearch')" id="sort_button_hsFingConf2_asc">&#x25B2;</button>
+         <button class="btn sort_button" onclick="do_sort_column('hsFingConf2','desc','adminsearch')" id="sort_button_hsFingConf2_desc">&#x25BC;</button>
+         <button class="btn sort_button" onclick="do_sort_column('hsFingConf2','del', 'adminsearch')" id="sort_button_hsFingConf2_del">x</button>
+       </div>
        </th>
         <th>
-         <a href="#" onclick="do_sort_column('hsNumSel','asc', 'adminsearch')">
-           {% if searchform.sortOrder and searchform.sortOrder.value == 'hsNumSel' %}<font color="red">&#x25B2;</font>{% else %}&#x25B2; {% endif %}
-         </a>
-         <a href="#" onclick="do_sort_column('hsNumSel','desc', 'adminsearch')">
-           {% if searchform.sortOrder and searchform.sortOrder.value == '-hsNumSel' %}<font color="red">&#x25BC;</font>{% else %}&#x25BC;{% endif %}
-         </a>
-         {% if searchform.sortOrder and searchform.sortOrder.value == '-hsNumSel' or searchform.sortOrder and searchform.sortOrder.value == 'hsNumSel'  %}
-           <a href="#" onclick="do_sort_column('hsNumSel','del', 'adminsearch')">x</a>
-         {% endif %}
+       <div class="col_sort_arrowheads">
+         <button class="btn sort_button" onclick="do_sort_column('hsNumSel','asc', 'adminsearch')" id="sort_button_hsNumSel_asc">&#x25B2;</button>
+         <button class="btn sort_button" onclick="do_sort_column('hsNumSel','desc','adminsearch')" id="sort_button_hsNumSel_desc">&#x25BC;</button>
+         <button class="btn sort_button" onclick="do_sort_column('hsNumSel','del', 'adminsearch')" id="sort_button_hsNumSel_del">x</button>
+       </div>
        </th>
-       <!--<th>-->
-         <!--<a href="#" onclick="do_sort_column('hsThumb','asc', 'adminsearch')">-->
-           <!--{% if searchform.sortOrder and searchform.sortOrder.value == 'hsThumb' %}<font color="red">&#x25B2;</font>{% else %}&#x25B2; {% endif %}-->
-         <!--</a>-->
-         <!--<a href="#" onclick="do_sort_column('hsThumb','desc', 'adminsearch')">-->
-           <!--{% if searchform.sortOrder and searchform.sortOrder.value == '-hsThumb' %}<font color="red">&#x25BC;</font>{% else %}&#x25BC;{% endif %}-->
-         <!--</a>-->
-         <!--{% if searchform.sortOrder and searchform.sortOrder.value == '-hsThumb' or searchform.sortOrder and searchform.sortOrder.value == 'hsThumb'  %}-->
-           <!--<a href="#" onclick="do_sort_column('hsThumb','del', 'adminsearch')">x</a>-->
-         <!--{% endif %}-->
-       <!--</th>-->
         <th>
-         <a href="#" onclick="do_sort_column('hsFingUnsel','asc', 'adminsearch')">
-           {% if searchform.sortOrder and searchform.sortOrder.value == 'hsFingUnsel' %}<font color="red">&#x25B2;</font>{% else %}&#x25B2; {% endif %}
-         </a>
-         <a href="#" onclick="do_sort_column('hsFingUnsel','desc', 'adminsearch')">
-           {% if searchform.sortOrder and searchform.sortOrder.value == '-hsFingUnsel' %}<font color="red">&#x25BC;</font>{% else %}&#x25BC;{% endif %}
-         </a>
-         {% if searchform.sortOrder and searchform.sortOrder.value == '-hsFingUnsel' or searchform.sortOrder and searchform.sortOrder.value == 'hsFingUnsel'  %}
-           <a href="#" onclick="do_sort_column('hsFingUnsel','del', 'adminsearch')">x</a>
-         {% endif %}
+       <div class="col_sort_arrowheads">
+         <button class="btn sort_button" onclick="do_sort_column('hsFingUnsel','asc', 'adminsearch')" id="sort_button_hsFingUnsel_asc">&#x25B2;</button>
+         <button class="btn sort_button" onclick="do_sort_column('hsFingUnsel','desc','adminsearch')" id="sort_button_hsFingUnsel_desc">&#x25BC;</button>
+         <button class="btn sort_button" onclick="do_sort_column('hsFingUnsel','del', 'adminsearch')" id="sort_button_hsFingUnsel_del">x</button>
+       </div>
         </th>
        <th>
-         <a href="#" onclick="do_sort_column('hsSpread','asc', 'adminsearch')">
-           {% if searchform.sortOrder and searchform.sortOrder.value == 'hsSpread' %}<font color="red">&#x25B2;</font>{% else %}&#x25B2; {% endif %}
-         </a>
-         <a href="#" onclick="do_sort_column('hsSpread','desc', 'adminsearch')">
-           {% if searchform.sortOrder and searchform.sortOrder.value == '-hsSpread' %}<font color="red">&#x25BC;</font>{% else %}&#x25BC;{% endif %}
-         </a>
-         {% if searchform.sortOrder and searchform.sortOrder.value == '-hsSpread' or searchform.sortOrder and searchform.sortOrder.value == 'hsSpread'  %}
-           <a href="#" onclick="do_sort_column('hsSpread','del', 'adminsearch')">x</a>
-         {% endif %}
+       <div class="col_sort_arrowheads">
+         <button class="btn sort_button" onclick="do_sort_column('hsSpread','asc', 'adminsearch')" id="sort_button_hsSpread_asc">&#x25B2;</button>
+         <button class="btn sort_button" onclick="do_sort_column('hsSpread','desc','adminsearch')" id="sort_button_hsSpread_desc">&#x25BC;</button>
+         <button class="btn sort_button" onclick="do_sort_column('hsSpread','del', 'adminsearch')" id="sort_button_hsSpread_del">x</button>
+       </div>
        </th>
        <th>
-         <a href="#" onclick="do_sort_column('hsAperture','asc', 'adminsearch')">
-           {% if searchform.sortOrder and searchform.sortOrder.value == 'hsAperture' %}<font color="red">&#x25B2;</font>{% else %}&#x25B2; {% endif %}
-         </a>
-         <a href="#" onclick="do_sort_column('hsAperture','desc', 'adminsearch')">
-           {% if searchform.sortOrder and searchform.sortOrder.value == '-hsAperture' %}<font color="red">&#x25BC;</font>{% else %}&#x25BC;{% endif %}
-         </a>
-         {% if searchform.sortOrder and searchform.sortOrder.value == '-hsAperture' or searchform.sortOrder and searchform.sortOrder.value == 'hsAperture'  %}
-           <a href="#" onclick="do_sort_column('hsAperture','del', 'adminsearch')">x</a>
-         {% endif %}
+       <div class="col_sort_arrowheads">
+         <button class="btn sort_button" onclick="do_sort_column('hsAperture','asc', 'adminsearch')" id="sort_button_hsAperture_asc">&#x25B2;</button>
+         <button class="btn sort_button" onclick="do_sort_column('hsAperture','desc','adminsearch')" id="sort_button_hsAperture_desc">&#x25BC;</button>
+         <button class="btn sort_button" onclick="do_sort_column('hsAperture','del', 'adminsearch')" id="sort_button_hsAperture_del">x</button>
+       </div>
        </th>
     </tr>
     </thead>

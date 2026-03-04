@@ -1,1 +1,1 @@
-Request for account at {{ signbank_name }}
+Request for account at {{site.name}}

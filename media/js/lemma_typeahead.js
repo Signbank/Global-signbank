@@ -15,6 +15,7 @@ function lemmatypeahead(target) {
      $(target).typeahead(null, {
           name: 'lemmatarget',
           displayKey: 'lemma',
+          limit: 10,
           source: lemma_bloodhound.ttAdapter(),
           templates: {
               suggestion: function(lemma) {

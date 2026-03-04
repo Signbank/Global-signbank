@@ -4,7 +4,8 @@ import datetime as DT
 import re
 
 from django import forms
-from django.core.exceptions import ObjectDoesNotExist
+from django.core.exceptions import ObjectDoesNotExist, ValidationError
+from django.forms import Textarea
 from django.utils.translation import override, gettext_lazy as _, gettext
 from django.db.transaction import atomic
 from django.utils.timezone import get_current_timezone
@@ -26,7 +27,7 @@ from signbank.dictionary.models import (Gloss, Morpheme, Definition, Relation, R
                                         QueryParameterFieldChoice, SearchHistory, QueryParameter,
                                         QueryParameterMultilingual, QueryParameterHandshape, SemanticFieldTranslation,
                                         ExampleSentence, Affiliation, AffiliatedUser, AffiliatedGloss, GlossSense,
-                                        SenseTranslation, AnnotatedGloss)
+                                        SenseTranslation, AnnotatedGloss, GlossProvenance, Dialect)
 from signbank.dictionary.translate_choice_list import choicelist_queryset_to_translated_dict
 from signbank.tools import get_selected_datasets_for_user
 
@@ -47,6 +48,7 @@ class GlossCreateForm(forms.ModelForm):
     """Form for creating a new gloss from scratch"""
 
     gloss_create_field_prefix = "glosscreate_"
+    gloss_sense_field_prefix = "sense_"
     languages = None  # Languages to use for annotation idgloss translations
     user = None
     last_used_dataset = None
@@ -64,7 +66,8 @@ class GlossCreateForm(forms.ModelForm):
     class Meta:
         model = Gloss
         fields = ['handedness', 'domhndsh', 'subhndsh',
-                  'domhndsh_number', 'domhndsh_letter', 'subhndsh_number', 'subhndsh_letter']
+                  'domhndsh_number', 'domhndsh_letter', 'subhndsh_number', 'subhndsh_letter',
+                  'release_information', 'dialect', 'semField']
 
     def __init__(self, queryDict, *args, **kwargs):
         self.languages = kwargs.pop('languages')
@@ -77,10 +80,14 @@ class GlossCreateForm(forms.ModelForm):
             self.fields['dataset'].initial = queryDict['dataset']
 
         for language in self.languages:
-            glosscreate_field_name = self.gloss_create_field_prefix + language.language_code_2char
-            self.fields[glosscreate_field_name] = forms.CharField(label=_("Gloss")+(" (%s)" % language.name))
-            if glosscreate_field_name in queryDict:
-                self.fields[glosscreate_field_name].value = queryDict[glosscreate_field_name]
+            gloss_create_field_name = self.gloss_create_field_prefix + language.language_code_2char
+            self.fields[gloss_create_field_name] = forms.CharField(label=_("Gloss")+(" (%s)" % language.name), required=True)
+            if gloss_create_field_name in queryDict:
+                self.fields[gloss_create_field_name].value = queryDict[gloss_create_field_name]
+            glosssense_create_field_name = self.gloss_sense_field_prefix + language.language_code_2char
+            self.fields[glosssense_create_field_name] = forms.CharField(label=_("Sense")+(" (%s)" % language.name))
+            if glosssense_create_field_name in queryDict:
+                self.fields[glosssense_create_field_name].value = queryDict[glosssense_create_field_name]
 
         self.fields['handedness'] = forms.ChoiceField(label=_('Handedness'),
                                                       choices = choicelist_queryset_to_translated_dict(
@@ -108,6 +115,18 @@ class GlossCreateForm(forms.ModelForm):
                                                     required=False)
         for boolean_field in ['domhndsh_letter', 'domhndsh_number', 'subhndsh_letter', 'subhndsh_number']:
             self.fields[boolean_field].choices = [(0, '-'), (2, _('True')), (3, _('False'))]
+        self.fields['release_information'] = forms.CharField(label=_('Source'), widget=forms.TextInput(), required=False)
+        dialects = [(str(dialect.id), dialect.signlanguage.name + "/" + dialect.name) for dialect in
+                           Dialect.objects.filter(signlanguage__dataset__acronym=self.last_used_dataset)
+                           .prefetch_related('signlanguage').distinct()]
+        self.fields['dialect'] = forms.MultipleChoiceField(label=_('Geographical Region'),
+                                                           widget=forms.CheckboxSelectMultiple,
+                                                           choices=dialects)
+        semantic_fields = [(str(semfield.machine_value), semfield.name)
+                            for semfield in SemanticField.objects.filter(machine_value__gt=1).order_by('name')]
+        self.fields['semField'] = forms.MultipleChoiceField(label=_('Semantic Field'),
+                                                           widget=forms.CheckboxSelectMultiple,
+                                                           choices=semantic_fields)
 
 
 class MorphemeCreateForm(forms.ModelForm):
@@ -212,7 +231,7 @@ class GlossSearchForm(forms.ModelForm):
     use_required_attribute = False  # otherwise the html required attribute will show up on every form
 
     search = forms.CharField(label=_('Search Gloss'))
-    sortOrder = forms.CharField(label=_('Sort Order'))
+    sortOrder = forms.CharField(label=_('Sort Order'), initial="")
     translation = forms.CharField(label=_('Search Senses'))
     hasvideo = forms.ChoiceField(label=_('Has Video'), choices=[(0, '-')],
                                  widget=forms.Select(attrs=ATTRS_FOR_BOOLEAN_FORMS))
@@ -450,7 +469,7 @@ class MorphemeSearchForm(forms.ModelForm):
     use_required_attribute = False  # otherwise the html required attribute will show up on every form
 
     search = forms.CharField(label=_("Search Gloss"))
-    sortOrder = forms.CharField(label=_("Sort Order"))
+    sortOrder = forms.CharField(label=_("Sort Order"), initial="")
     tags = forms.ChoiceField(label=_('Tags'),
                              choices=[(0, '-')],
                              widget=forms.Select(attrs=ATTRS_FOR_FORMS))
@@ -611,12 +630,16 @@ class OtherMediaForm(forms.ModelForm):
     file = forms.FileField(widget=forms.FileInput(attrs={'accept': 'video/*, image/*, application/pdf'}),
                            required=True)
     alternative_gloss = forms.TextInput()
+    description = forms.CharField(widget=forms.Textarea(attrs={'cols': 80, 'rows': 5,
+                                                               'placeholder': _("Description/Explanation")}),
+                                  required=False)
 
     class Meta:
         model = OtherMedia
         fields = ['file']
 
     def __init__(self, *args, **kwargs):
+        self.gloss = kwargs.pop('gloss')
         super(OtherMediaForm, self).__init__(*args, **kwargs)
         self.fields['type'] = forms.ChoiceField(label=_('Type'),
                                                 choices= choicelist_queryset_to_translated_dict(
@@ -625,18 +648,6 @@ class OtherMediaForm(forms.ModelForm):
                                                     ordered=False, id_prefix='', shortlist=False
                                                 ),
                                                 widget=forms.Select(attrs=ATTRS_FOR_FORMS))
-
-    def get_form(self, request, obj=None, **kwargs):
-        form = super(OtherMediaForm, self).get_form(request, obj, **kwargs)
-        return form
-
-    def clean_type(self):
-        data = self.cleaned_data['type']
-        if data in ['0', '1']:
-            # choice is '-' or 'N/A'
-            raise forms.ValidationError(_("Please choose a type description when uploading other media."))
-        else:
-            return data
 
     def clean_file(self):
         data = self.cleaned_data['file']
@@ -681,18 +692,23 @@ class DatasetUpdateForm(forms.ModelForm):
     conditions_of_use = forms.CharField(widget=forms.Textarea(attrs={'cols': 80, 'rows': 5, 
                                                                      'placeholder': 'Conditions of use'}))
     reference = forms.CharField(widget=forms.Textarea(attrs={'cols': 80, 'rows': 5, 'placeholder': 'Reference'}))
+    prominent_media = forms.ChoiceField(label=_('Prominent Media Type'), choices=[(0, '-')], required=False,
+                                        widget=forms.Select(attrs=ATTRS_FOR_FORMS))
 
     class Meta:
         ATTRS_FOR_FORMS = {'class': 'form-control'}
 
         model = Dataset
-        fields = ['description', 'conditions_of_use', 'acronym', 'copyright', 'reference', 'owners', 'is_public', 'default_language']
+        fields = ['description', 'conditions_of_use', 'acronym', 'copyright', 'reference', 'owners',
+                  'is_public', 'default_language', 'use_provenance', 'prominent_media']
 
     def __init__(self, *args, **kwargs):
         languages = kwargs.pop('languages')
         super(DatasetUpdateForm, self).__init__(*args, **kwargs)
         self.fields['default_language'] = forms.ChoiceField(widget=forms.Select(attrs={'class': 'form-control'}), choices=languages)
-
+        self.fields['prominent_media'].choices = choicelist_queryset_to_translated_dict(
+            list(FieldChoice.objects.filter(field='OtherMediaType').order_by('machine_value')),
+            ordered=False, id_prefix='', shortlist=False)
 
 attrs_default = {'class': 'form-control'}
 FINGER_SELECTION = ((True, 'True'), (False, 'False'))
@@ -806,6 +822,17 @@ class HandshapeSearchForm(forms.ModelForm):
             self.fields[finger].widget.choices = [(True, _('Yes')), (False, _('No'))]
 
 
+def check_sortOrder_handshapes(request):
+    sort_order = request.GET.get('sortOrder', '')
+    if not sort_order:
+        return 'machine_value'
+    field = sort_order[1:] if sort_order.startswith('-') else sort_order
+    if field not in ['name', 'hsFingSel', 'hsFingConf', 'hsFingSel2', 'hsFingConf2',
+                         'hsNumSel', 'hsThumb', 'hsFingUnsel', 'hsSpread', 'hsAperture']:
+        return 'machine_value'
+    return sort_order
+
+
 def check_multilingual_fields(ClassModel, queryDict, languages):
     # this function inspects the name field of HandshapeSearchForm looking for occurrences of special characters
     language_fields_okay = True
@@ -860,7 +887,7 @@ class AnnotatedSentenceSearchForm(forms.ModelForm):
     use_required_attribute = False  # otherwise the html required attribute will show up on every form
 
     search = forms.CharField(label=_("Search"))
-    sortOrder = forms.CharField(label=_("Sort Order"))
+    sortOrder = forms.CharField(label=_("Sort Order"), initial="")
     no_glosses = forms.ChoiceField(label=_('Only show results without glosses'), choices=[],
                                    widget=forms.Select(attrs=ATTRS_FOR_BOOLEAN_FORMS))
     has_glosses = forms.ChoiceField(label=_('Only show results with glosses'), choices=[],
@@ -875,13 +902,14 @@ class AnnotatedSentenceSearchForm(forms.ModelForm):
         super(AnnotatedSentenceSearchForm, self).__init__(*args, **kwargs)
 
         for boolean_field in ['no_glosses', 'has_glosses']:
-            self.fields[boolean_field].choices = [(0, _('No')), (1, _('Yes'))]
+            self.fields[boolean_field].choices = [('0', _('No')), ('1', _('Yes'))]
+            self.fields[boolean_field].initial = '0'
 
 class LemmaSearchForm(forms.ModelForm):
     use_required_attribute = False  # otherwise the html required attribute will show up on every form
 
     search = forms.CharField(label=_("Lemma"))
-    sortOrder = forms.CharField(label=_("Sort Order"))
+    sortOrder = forms.CharField(label=_("Sort Order"), initial="")
     no_glosses = forms.ChoiceField(label=_('Only show results without glosses'), choices=[],
                                    widget=forms.Select(attrs=ATTRS_FOR_BOOLEAN_FORMS))
     has_glosses = forms.ChoiceField(label=_('Only show results with glosses'), choices=[],
@@ -941,7 +969,7 @@ class LemmaCreateForm(forms.ModelForm):
         existing_lemma_translations = lemma.lemmaidglosstranslation_set.all()
         for language in self.languages:
             lemmacreate_field_name = self.lemma_create_field_prefix + language.language_code_2char
-            lemma_idgloss_text = self[lemmacreate_field_name].value()
+            lemma_idgloss_text = self.fields[lemmacreate_field_name].initial
             existing_lemmaidglosstranslations = existing_lemma_translations.filter(language=language)
             if existing_lemmaidglosstranslations.count() == 0:
                 lemmaidglosstranslation = LemmaIdglossTranslation(lemma=lemma, language=language,
@@ -967,64 +995,55 @@ class LemmaUpdateForm(forms.ModelForm):
         model = LemmaIdgloss
         fields = []
 
-    def __init__(self, queryDict=None, *args, **kwargs):
-        if 'page_in_lemma_list' in kwargs:
-            self.page_in_lemma_list = kwargs.pop('page_in_lemma_list')
-
-        super(LemmaUpdateForm, self).__init__(queryDict, *args, **kwargs)
-        self.languages = self.instance.dataset.translation_languages.all()
-
+    def __init__(self, *args, **kwargs):
+        self.languages = kwargs.pop('languages')
+        self.lemmaid = kwargs.pop('lemmaid')
+        super(LemmaUpdateForm, self).__init__(*args, **kwargs)
+        self.fields['lemmaid'] = forms.CharField(label=_("Lemma ID"),  widget=forms.TextInput(attrs={'readonly': 'readonly'}))
+        self.fields['lemmaid'].initial = self.lemmaid
         for language in self.languages:
-            lemmaupdate_field_name = self.lemma_update_field_prefix + language.language_code_2char
-            self.fields[lemmaupdate_field_name] = forms.CharField(label=_("Lemma") + (" (%s)" % language.name), required=True)
-            if queryDict:
-                if lemmaupdate_field_name in queryDict:
-                    self.fields[lemmaupdate_field_name].initial = queryDict[lemmaupdate_field_name]
-            else:
-                try:
-                    self.fields[lemmaupdate_field_name].initial = \
-                        self.instance.lemmaidglosstranslation_set.get(language=language).text
-                except:
-                    pass
+            lemmaupdate_field_name = LemmaUpdateForm.lemma_update_field_prefix + language.language_code_2char
+            self.fields[lemmaupdate_field_name] = forms.CharField(label=_("Lemma") + (" (%s)" % language.name),
+                                                                  required=True,
+                                                                  widget=forms.TextInput(attrs=ATTRS_FOR_FORMS))
 
     @atomic
     def save(self, commit=True):
-        # the number of translations should be at least 1
-        instance_has_translations = self.instance.lemmaidglosstranslation_set.count()
+        existing_lemmaidglosstranslations = self.instance.lemmaidglosstranslation_set.all()
         for language in self.languages:
             lemmaupdate_field_name = self.lemma_update_field_prefix + language.language_code_2char
-            lemma_idgloss_text = self.fields[lemmaupdate_field_name].initial
-            existing_lemmaidglosstranslations = self.instance.lemmaidglosstranslation_set.filter(language=language)
-            if existing_lemmaidglosstranslations is None or len(existing_lemmaidglosstranslations) == 0:
-                if lemma_idgloss_text == '':
-                    # lemma translation is already empty for this language
-                    # don't create an empty translation
-                    pass
-                else:
-                    # save a new translation
-                    lemmaidglosstranslation = LemmaIdglossTranslation(lemma=self.instance, language=language,
-                                                                    text=lemma_idgloss_text)
-                    lemmaidglosstranslation.save()
-            elif len(existing_lemmaidglosstranslations) == 1:
-                lemmaidglosstranslation = existing_lemmaidglosstranslations[0]
-                if lemma_idgloss_text == '':
-                    # delete existing translation if there is already a translation for a different language
-                    if instance_has_translations > 1:
-                        translation_to_delete = LemmaIdglossTranslation.objects.get(pk=lemmaidglosstranslation.pk, language=language)
-                        translation_to_delete.delete()
-                        # one of the translations has been deleted, update the total
-                        instance_has_translations -= 1
-                    else:
-                        # this exception refuses to be put into messages after being caught in LemmaUpdateView
-                        # gives a runtime error
-                        # therefore the exception is caught byt a different message is displayed
-                        raise Exception("Lemma with id %s must have at least one translation." % self.instance.pk)
-                else:
-                    lemmaidglosstranslation.text = lemma_idgloss_text
-                    lemmaidglosstranslation.save()
+            lemma_idgloss_text = self.fields[lemmaupdate_field_name].strip()
+            if not lemma_idgloss_text:
+                # do not allow to set lemma text to empty
+                raise Exception("Lemma with id %s must have at least one translation." % str(self.instance.pk))
+            existing_lemmaidglosstranslations_language = existing_lemmaidglosstranslations.filter(language=language)
+            if existing_lemmaidglosstranslations_language.count() > 1:
+                raise Exception("Lemma with id %s has more than one lemma idgloss translation for language %s" % (str(self.instance.pk), language.name))
+            lemmaidglosstranslation = existing_lemmaidglosstranslations_language.first()
+            if not lemmaidglosstranslation:
+                # save a new translation
+                lemmaidglosstranslation = LemmaIdglossTranslation(lemma=self.instance, language=language,
+                                                                  text=lemma_idgloss_text)
+                lemmaidglosstranslation.save()
             else:
-                raise Exception("Lemma with id %s has more than one lemma idgloss translation for language %s" % (self.instance.pk, language.name))
-        return
+                lemmaidglosstranslation.text = lemma_idgloss_text
+                lemmaidglosstranslation.save()
+
+
+def set_up_lemma_language_fields(lemma_form, instance):
+    lemma_form.instance = instance
+
+    lemma_form.languages = lemma_form.instance.dataset.translation_languages.all()
+
+    initial_language_fields = lemma_form.instance.lemmaidglosstranslation_set.all()
+    for language in lemma_form.languages:
+        lemmaupdate_field_name = LemmaUpdateForm.lemma_update_field_prefix + language.language_code_2char
+        if initial_language_fields.filter(language=language).count() > 0:
+            lemma_form.fields[lemmaupdate_field_name].initial = initial_language_fields.get(language=language).text
+        else:
+            # this is actually an error, it makes the form invalid, if you try to save it as is
+            # but some legacy lemmas do not have all the language translations filled in
+            lemma_form.fields[lemmaupdate_field_name].initial = ''
 
 
 class KeyMappingSearchForm(forms.ModelForm):
@@ -1040,9 +1059,8 @@ class KeyMappingSearchForm(forms.ModelForm):
         model = Gloss
         fields = MINIMAL_PAIRS_SEARCH_FIELDS
 
-    def __init__(self, queryDict, *args, **kwargs):
-        languages = kwargs.pop('languages')
-        super(KeyMappingSearchForm, self).__init__(queryDict, *args, **kwargs)
+    def __init__(self, *args, **kwargs):
+        super(KeyMappingSearchForm, self).__init__(*args, **kwargs)
 
         self.fields['tags'] = forms.ModelChoiceField(label=_('Tags'),
                                                      queryset=Tag.objects.all(), empty_label=None,
@@ -1054,7 +1072,7 @@ class FocusGlossSearchForm(forms.ModelForm):
     use_required_attribute = False  # otherwise the html required attribute will show up on every form
 
     search = forms.CharField(label=_("Search Gloss"))
-    sortOrder = forms.CharField(label=_("Sort Order"))
+    sortOrder = forms.CharField(label=_("Sort Order"), initial="")
     translation = forms.CharField(label=_('Search Senses'))
 
     repeat = forms.ChoiceField(label=_('Repeating Movement'), choices=[('0', '-')],
@@ -1657,3 +1675,31 @@ class GlossVideoSearchForm(forms.ModelForm):
 
         for boolean_field in ['isPrimaryVideo', 'isPerspectiveVideo', 'isNMEVideo', 'isBackup', 'wrongFilename']:
             self.fields[boolean_field].choices = [('0', '-'), ('2', _('Yes')), ('3', _('No'))]
+            self.fields[boolean_field].initial = '0'
+
+
+class GlossProvenanceForm(forms.ModelForm):
+
+    description = forms.CharField(widget=forms.Textarea(attrs={'cols': 60, 'rows': 5, 'placeholder': _('Enter New Note')}))
+    method = forms.ChoiceField(label=_('Method'),
+                               choices=[(0, '-')],
+                               widget=forms.Select(attrs=ATTRS_FOR_FORMS))
+    class Meta:
+        model = GlossProvenance
+        fields = ('gloss', 'description', 'method')
+
+    def __init__(self, *args, **kwargs):
+        self.gloss = kwargs.pop('gloss')
+        super(GlossProvenanceForm, self).__init__(*args, **kwargs)
+        self.fields['method'] = forms.ChoiceField(label=_('Method'),
+                                                  choices=choicelist_queryset_to_translated_dict(
+                                                        list(FieldChoice.objects.filter(field='Provenance').order_by(
+                                                            'machine_value')),
+                                                        ordered=False, id_prefix='', shortlist=False
+                                                  ),
+                                                  widget=forms.Select(attrs=ATTRS_FOR_FORMS))
+
+
+class SearchGlossIds(forms.Form):
+    glossids = forms.CharField(label=_("Gloss Ids"), required=False, initial='',
+                               widget=forms.Textarea(attrs={'cols': 60, 'rows': 5, 'placeholder': _('Enter Gloss Ids')}))

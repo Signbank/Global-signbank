@@ -98,6 +98,10 @@ def fields_to_fieldcategory_dict(fieldnames=[]):
             continue
         if field in ['domhndsh', 'subhndsh', 'final_domhndsh', 'final_subhndsh']:
             choice_categories[field] = 'Handshape'
+        elif field in ['dialect']:
+            choice_categories[field] = 'Dialect'
+        elif field in ['signlanguage']:
+            choice_categories[field] = 'SignLanguage'
         elif hasattr(field_field, 'field_choice_category'):
             choice_categories[field] = field_field.field_choice_category
     return choice_categories

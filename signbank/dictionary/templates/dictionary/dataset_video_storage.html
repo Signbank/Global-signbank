@@ -25,7 +25,6 @@ function update_gloss_video_backups(el) {
         type: "POST",
         async: true,
         success : function(result) {
-            console.log(result);
             if ($.isEmptyObject(result)) {
                 return;
             };

@@ -14,7 +14,6 @@ from signbank.tools import get_selected_datasets_for_user, get_dataset_languages
 
 from signbank.dictionary.field_choices import fields_to_fieldcategory_dict
 from signbank.dictionary.translate_choice_list import choicelist_queryset_to_field_colors, choicelist_choicelist_to_field_colors
-from signbank.query_parameters import search_fields_from_get
 
 
 def get_web_search(request):
@@ -97,7 +96,7 @@ def get_other_parameter_keys():
     # other parameters are in the GlossSearchForm in the template that are not initialised
     # via multiselect or language fields, plus semantics and phonology fields with text types
     other_parameters = ['sortOrder'] + SEARCH_BY['publication'] + FIELDS['phonology'] + \
-                       FIELDS['semantics'] + FIELDS['morpheme']
+                       FIELDS['semantics'] + FIELDS['morpheme'] + FIELDS['main']
     fieldnames = FIELDS['main'] + FIELDS['phonology'] + FIELDS['semantics'] + ['inWeb', 'isNew']
     fields_with_choices = fields_to_fieldcategory_dict()
     multiple_select_gloss_fields = [fieldname for fieldname in fieldnames if fieldname in fields_with_choices.keys()]
@@ -148,7 +147,7 @@ def get_context_data_for_gloss_search_form(request, listview, search_form, kwarg
     query_parameters = json.loads(query_parameters_in_session) \
         if not context['show_all'] and query_parameters_in_session not in ['', '{}'] \
         else listview.query_parameters
-    context['query_parameters'] = json.dumps(query_parameters)
+    context['query_parameters'] = query_parameters
     context['query_parameters_keys'] = json.dumps(list(query_parameters.keys()))
 
     context['searchform'] = search_form
@@ -161,10 +160,14 @@ def get_context_data_for_gloss_search_form(request, listview, search_form, kwarg
     context['MULTIPLE_SELECT_GLOSS_FIELDS'] = multiple_select_gloss_fields
     context['field_colors'] = get_choices_colors(fields_with_choices)
 
+    from signbank.query_parameters import search_fields_from_get
     populate_keys, populate_fields = search_fields_from_get(search_form, request.GET)
     context['gloss_fields_to_populate'] = json.dumps(populate_fields)
     context['gloss_fields_to_populate_keys'] = json.dumps(populate_keys)
-
+    populate_other_parameters = [k for k in other_parameter_keys if k in populate_keys and populate_fields[k]]
+    other_parameters_dict = { k: populate_fields[k] for k in populate_other_parameters}
+    context['populate_other_parameters'] = populate_other_parameters
+    context['other_parameters'] = other_parameters_dict
     context['SHOW_DATASET_INTERFACE_OPTIONS'] = SHOW_DATASET_INTERFACE_OPTIONS
     context['USE_REGULAR_EXPRESSIONS'] = USE_REGULAR_EXPRESSIONS
 

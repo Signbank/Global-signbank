@@ -1,14 +1,20 @@
 from colorfield.fields import ColorField
 import datetime as DT
+import re
+import copy
+import os
+import json
+import tagging
+
 from django.utils.timezone import get_current_timezone
-from django.db.models import Q
+from django.db.models import Q, When, Case, IntegerField
 from django.db import models
 from django.conf import settings
 from django.utils.encoding import escape_uri_path
 from django.contrib.auth.models import User
 from django.dispatch import receiver
 from django.db.models.signals import post_save, pre_delete, m2m_changed
-from django.utils.translation import gettext_noop, gettext_lazy as _, gettext
+from django.utils.translation import gettext_noop, gettext_lazy as _, gettext, activate
 from django.forms.utils import ValidationError
 from django.forms.models import model_to_dict
 from django.core.exceptions import ObjectDoesNotExist, MultipleObjectsReturned
@@ -17,11 +23,8 @@ from django.db.transaction import TransactionManagementError
 from django.core.files import File
 from tagging.models import TaggedItem, Tag
 
-import re
-import copy
+from guardian.shortcuts import get_users_with_perms
 
-import os
-import json
 from collections import OrderedDict
 from datetime import datetime, date
 from urllib.parse import urlparse, unquote
@@ -86,6 +89,7 @@ class FieldChoice(models.Model):
     VALENCE = 'Valence'
     WORDCLASS = 'WordClass'
     SENTENCETYPE = 'SentenceType'
+    PROVENANCE = 'Provenance'
 
     FIELDCHOICE_FIELDS = [
         (ABSORIFING, 'AbsOriFing'),
@@ -119,7 +123,8 @@ class FieldChoice(models.Model):
         (THUMB, 'Thumb'),
         (VALENCE, 'Valence'),
         (WORDCLASS, 'WordClass'),
-        (SENTENCETYPE, 'SentenceType')
+        (SENTENCETYPE, 'SentenceType'),
+        (PROVENANCE, 'Provenance')
     ]
 
     field = models.CharField(max_length=50, choices=FIELDCHOICE_FIELDS)
@@ -129,7 +134,7 @@ class FieldChoice(models.Model):
     field_color = ColorField(default='ffffff')
 
     def __str__(self):
-        name = self.field + ': ' + self.name + ' (' + str(self.machine_value) + ')'
+        name = f'{self.field}: {self.name} ({self.machine_value})'
         return name
 
     class Meta:
@@ -175,7 +180,20 @@ class Keyword(models.Model):
         search_fields = ['text']
 
 
-class Definition(models.Model):
+class MetaModelMixin:
+
+    @classmethod
+    def get_field_names(cls):
+        fields = cls._meta.get_fields(include_hidden=True)
+        return [field.name for field in fields if field.concrete]
+
+    @classmethod
+    def get_field(cls, field):
+        field = cls._meta.get_field(field)
+        return field
+
+
+class Definition(MetaModelMixin, models.Model):
     """An English text associated with a gloss. It's called a note in the web interface"""
 
     def __str__(self):
@@ -200,16 +218,6 @@ class Definition(models.Model):
         list_display = ['gloss', 'role', 'count', 'text']
         list_filter = ['role']
         search_fields = ['gloss__idgloss']
-
-    @classmethod
-    def get_field_names(cls):
-        fields = cls._meta.get_fields(include_hidden=True)
-        return [field.name for field in fields if field.concrete]
-
-    @classmethod
-    def get_field(cls, field):
-        field = cls._meta.get_field(field)
-        return field
 
     def get_role_display(self):
         return self.role.name if self.role else '-'
@@ -297,7 +305,7 @@ class RelationToForeignSign(models.Model):
         search_fields = ['gloss__idgloss']
 
 
-class Handshape(models.Model):
+class Handshape(MetaModelMixin, models.Model):
     machine_value = models.IntegerField(_("Machine value"), primary_key=True)
     name = models.CharField(max_length=50)
     field_color = ColorField(default='ffffff')
@@ -372,7 +380,7 @@ class Handshape(models.Model):
     ufP = models.BooleanField(_("Pu"), null=True, default=False)
 
     def __str__(self):
-        name = 'Handshape: ' + self.name + ' (' + str(self.machine_value) + ')'
+        name = f'Handshape: {self.name} ({self.machine_value})'
         return name
 
     def field_labels(self):
@@ -390,16 +398,6 @@ class Handshape(models.Model):
             else:
                 d[f.name] = _(field.name)
         return d
-
-    @classmethod
-    def get_field_names(cls):
-        fields = cls._meta.get_fields(include_hidden=True)
-        return [field.name for field in fields if field.concrete]
-
-    @classmethod
-    def get_field(cls, field):
-        field = cls._meta.get_field(field)
-        return field
 
     def get_image_path(self, check_existence=True):
         """Returns the path within the writable and static folder"""
@@ -556,7 +554,7 @@ class Language(models.Model):
     def __str__(self):
         return self.name
 
-class ExampleSentence(models.Model):
+class ExampleSentence(MetaModelMixin, models.Model):
     """An example sentence belongs to one or more sense(s)"""
     
     sentenceType = FieldChoiceForeignKey(FieldChoice, on_delete=models.SET_NULL, null=True,
@@ -564,16 +562,6 @@ class ExampleSentence(models.Model):
                                     field_choice_category=FieldChoice.SENTENCETYPE,
                                     verbose_name=_("Sentence Type"), related_name="sentence_type")
     negative = models.BooleanField(default=False)
-
-    @classmethod
-    def get_field_names(cls):
-        fields = cls._meta.get_fields(include_hidden=True)
-        return [field.name for field in fields if field.concrete]
-
-    @classmethod
-    def get_field(cls, field):
-        field = cls._meta.get_field(field)
-        return field
 
     def get_dataset(self):
         return self.senses.first().glosses.first().lemma.dataset
@@ -874,7 +862,7 @@ def post_remove_examplesentence_reorder(sender, instance, **kwargs):
     instance.reorder_examplesentences()
 
 
-class Gloss(models.Model):
+class Gloss(MetaModelMixin, models.Model):
     class Meta:
         verbose_name_plural = "Glosses"
         # ordering: for Lemma View in the Gloss List View, we need to have glosses in the same Lemma Group sorted
@@ -891,6 +879,16 @@ class Gloss(models.Model):
 
     def __str__(self):
         return self.idgloss
+
+    def to_string(self):
+        translations = []
+        count_dataset_languages = self.lemma.dataset.translation_languages.all().count() if self.lemma and self.lemma.dataset else 0
+        for translation in self.annotationidglosstranslation_set.all():
+            if settings.SHOW_DATASET_INTERFACE_OPTIONS and count_dataset_languages > 1:
+                translations.append("{}: {}".format(translation.language, translation.text))
+            else:
+                translations.append("{}".format(translation.text))
+        return ", ".join(translations)
 
     def display_handedness(self):
         return self.handedness.name if self.handedness else self.handedness
@@ -919,16 +917,6 @@ class Gloss(models.Model):
             else:
                 d[f.name] = _(field.name)
         return d
-
-    @classmethod
-    def get_field_names(cls):
-        fields = cls._meta.get_fields(include_hidden=True)
-        return [field.name for field in fields if field.concrete]
-
-    @classmethod
-    def get_field(cls, field):
-        field = cls._meta.get_field(field)
-        return field
 
     archived = models.BooleanField(_("Archived"), default=False)
 
@@ -1054,7 +1042,7 @@ class Gloss(models.Model):
     inWeb = models.BooleanField(_("In the Web dictionary"), default=False)
     isNew = models.BooleanField(_("Is this a proposed new sign?"), null=True, default=False)
     excludeFromEcv = models.BooleanField(_("Exclude from ECV"), default=False)
-    release_information = models.CharField(max_length=128, blank=True, default='')
+    release_information = models.CharField(_("Release information"), max_length=128, blank=True, default='')
 
     inittext = models.CharField(max_length=50, blank=True)
 
@@ -1172,7 +1160,7 @@ class Gloss(models.Model):
 
     mouthG = models.CharField(_("Mouth Gesture"), max_length=50, blank=True)
     mouthing = models.CharField(_("Mouthing"), max_length=50, blank=True)
-    phonetVar = models.CharField(_("Phonetic Variation"), max_length=50, blank=True, )
+    phonetVar = models.CharField(_("Phonetic Variation"), max_length=50, blank=True)
 
     locPrimLH = FieldChoiceForeignKey(FieldChoice, on_delete=models.SET_NULL, null=True,
                                           limit_choices_to={'field': FieldChoice.LOCATION},
@@ -1265,6 +1253,15 @@ class Gloss(models.Model):
         except:
             return str(self.id)
 
+    @property
+    def publicationDate(self):
+        if not self.inWeb:
+            return None
+        glossrevision = GlossRevision.objects.filter(gloss__pk=self.pk, field_name='inWeb').order_by('time').last()
+        if not glossrevision or glossrevision.new_value not in ['Yes', 'yes', 'ja', 'Ja', '是', 'true', 'True', True, 1]:
+            return None
+        return glossrevision.time.date()
+
     def num_senses(self):
         senses_for_this_gloss = GlossSense.objects.filter(gloss_pk=self.pk).count()
         return senses_for_this_gloss
@@ -1308,6 +1305,24 @@ class Gloss(models.Model):
     def get_subhndsh_display(self):
         return self.subhndsh.name if self.subhndsh else '-'
 
+    def get_weakdrop_display(self):
+        if self.weakdrop is None:
+            coerced_value = 'None'
+        elif self.weakdrop is True:
+            coerced_value = 'True'
+        else:
+            coerced_value = 'False'
+        return coerced_value
+
+    def get_weakprop_display(self):
+        if self.weakprop is None:
+            coerced_value = 'None'
+        elif self.weakprop is True:
+            coerced_value = 'True'
+        else:
+            coerced_value = 'False'
+        return coerced_value
+
     def get_semField_display(self):
         return ", ".join([str(sf.name) for sf in self.semField.all()])
 
@@ -1315,7 +1330,7 @@ class Gloss(models.Model):
         return ", ".join([str(sf.name) for sf in self.derivHist.all()])
 
     def get_dialect_display(self):
-        return ", ".join([str(d.signlanguage.name) + '/' + str(d.name) for d in self.dialect.all()])
+        return ", ".join([f'{d.signlanguage.name}/{d.name}' for d in self.dialect.all()])
 
     def get_signlanguage_display(self):
         return ", ".join([str(sl.name) for sl in self.signlanguage.all()])
@@ -1403,8 +1418,7 @@ class Gloss(models.Model):
 
     def get_fields_dict(self, fieldnames, language_code, include_checksums=False):
 
-        from django.utils import translation
-        translation.activate(language_code)
+        activate(language_code)
 
         # TO DO include other gloss relations in the fieldnames (e.g., simultaneous morphology, below)
         # a way to determine w/o hard-coding if a fieldname is for a related model
@@ -1797,8 +1811,12 @@ class Gloss(models.Model):
         synonyms_count = self.relation_sources.filter(target__archived__exact=False,
                                                       source__archived__exact=False,
                                                       role='synonym').exclude(target=self).count()
-
         return synonyms_count
+
+    def get_synonyms(self):
+        filters = dict(target__archived=False, source__archived=False, role='synonym')
+        synonyms = (rel.target for rel in self.relation_sources.all().filter(**filters).exclude(target=self))
+        return set(synonyms)
 
     def antonyms_count(self):
 
@@ -1872,7 +1890,7 @@ class Gloss(models.Model):
 
         # Build query
         # the stems are language, text pairs
-        # the variant patterns to be searched for have alternative "-<letter> or "-<number>" patterns.
+        # the variant patterns to be searched for have alternative "-<letter>" or "-<number>" patterns.
         this_sign_stems = self.get_stems()
 
         this_sign_dataset = self.lemma.dataset
@@ -2098,8 +2116,6 @@ class Gloss(models.Model):
                 id__in=finger_spelling_glosses).exclude(id=self.id).filter(q).exclude(q_empty).exclude(q_number_or_letter)
 
         minimal_pairs_fields = settings.MINIMAL_PAIRS_FIELDS
-
-        from django.db.models import When, Case, IntegerField
 
         zipped_tuples = zip(minimal_pairs_fields, focus_gloss_values_tuple)
 
@@ -2646,24 +2662,10 @@ class Gloss(models.Model):
 
         return self.options_to_json(RELATION_ROLE_CHOICES)
 
-    def handedness_weak_drop_prop_json(self):
-        """Return JSON for the etymology choice list"""
-
-        NEUTRALBOOLEANCHOICES = [('None', _('Neutral')), ('True', _('Yes')), ('False', _('No'))]
-
-        return self.options_to_json(NEUTRALBOOLEANCHOICES)
-
-    def handedness_weak_drop_reverse_prop_json(self):
+    def handedness_weak_choices(self):
         """Return JSON for the etymology choice list"""
 
         NEUTRALBOOLEANCHOICES = [('1', _('Neutral')), ('2', _('Yes')), ('3', _('No'))]
-
-        return self.options_to_json(NEUTRALBOOLEANCHOICES)
-
-    def handedness_weak_drop_json(self):
-        """Return JSON for the etymology choice list"""
-
-        NEUTRALBOOLEANCHOICES = [(_('Neutral'), '1'), (_('Yes'), '2'), (_('No'), '3')]
 
         return self.options_to_json(NEUTRALBOOLEANCHOICES)
 
@@ -2718,24 +2720,15 @@ class Gloss(models.Model):
     def dialect_choices(self):
         """Return JSON for dialect choices"""
 
-        try:
-            dataset = self.lemma.dataset
-            try:
-                signlanguage = dataset.signlanguage
-            except:
-                signlanguage = None
-        except:
-            dataset = None
+        if not (hasattr(self, 'lemma') and hasattr(self.lemma, 'dataset') and hasattr(self.lemma.dataset, 'signlanguage')):
+            return json.dumps([])
 
-        if signlanguage:
-            possible_dialects = Dialect.objects.filter(signlanguage=signlanguage)
-        elif dataset:
-            possible_dialects = []
-        else:
-            possible_dialects = Dialect.objects.all()
+        signlanguages = self.signlanguage.all()
+        possible_dialects = Dialect.objects.filter(signlanguage__in=signlanguages)
+
         d = dict()
         for l in possible_dialects:
-            dialect_name = l.signlanguage.name + "/" + l.name
+            dialect_name = f'{l.signlanguage.name}/{l.name}'
             d[dialect_name] = dialect_name
 
         dict_list = list(d.items())
@@ -2879,7 +2872,7 @@ def fieldname_to_kind(fieldname):
     return field_kind
 
 
-class GlossSense(models.Model):
+class GlossSense(MetaModelMixin, models.Model):
     """A relation between a gloss and a sense to determine in what order to show the senses"""
     gloss = models.ForeignKey(Gloss, on_delete=models.CASCADE)
     sense = models.ForeignKey(Sense, on_delete=models.CASCADE)       
@@ -2930,7 +2923,7 @@ class Relation(models.Model):
         return self.target.annotation_idgloss(default_language)
 
 
-class MorphologyDefinition(models.Model):
+class MorphologyDefinition(MetaModelMixin, models.Model):
     """Tells something about morphology of a gloss"""
 
     parent_gloss = models.ForeignKey(Gloss, related_name="parent_glosses", on_delete=models.CASCADE)
@@ -2942,16 +2935,6 @@ class MorphologyDefinition(models.Model):
 
     def __str__(self):
         return self.morpheme.idgloss
-
-    @classmethod
-    def get_field_names(cls):
-        fields = cls._meta.get_fields(include_hidden=True)
-        return [field.name for field in fields if field.concrete]
-
-    @classmethod
-    def get_field(cls, field):
-        field = cls._meta.get_field(field)
-        return field
 
     def get_role(self):
         return self.role.name if self.role else self.role
@@ -2976,16 +2959,6 @@ class Morpheme(Gloss):
 
         return self.idgloss
 
-    @classmethod
-    def get_field_names(cls):
-        fields = cls._meta.get_fields(include_hidden=True)
-        return [field.name for field in fields if field.concrete]
-
-    @classmethod
-    def get_field(cls, field):
-        field = cls._meta.get_field(field)
-        return field
-
     def get_mrpType_display(self):
         # to avoid extra code in the template, return '-' if the type has not been set
         return self.mrpType.name if self.mrpType else '-'
@@ -3002,7 +2975,7 @@ class Morpheme(Gloss):
         for sim_morph in other_glosses_that_point_to_morpheme:
             gloss = sim_morph.parent_gloss
             translated_word_class = gloss.wordClass.name if gloss.wordClass else '-'
-            appears_in.append(translated_word_class + ': ' + gloss.idgloss)
+            appears_in.append(f'{translated_word_class}: {gloss.idgloss}')
         return ', '.join(appears_in)
 
     def admin_next_morpheme(self):
@@ -3079,7 +3052,7 @@ def generate_fieldname_to_kind_table():
         temp_field_to_kind_table[fieldname] = 'list'
     for f in Gloss._meta.fields:
         f_internal_type = f.get_internal_type()
-        if f_internal_type in ['BooleanField', 'BooleanField']:
+        if f_internal_type in ['BooleanField']:
             temp_field_to_kind_table[f.name] = 'check'
         elif f_internal_type in ['CharField', 'TextField']:
             temp_field_to_kind_table[f.name] = 'text'
@@ -3093,7 +3066,7 @@ def generate_fieldname_to_kind_table():
             temp_field_to_kind_table[f.name] = f_internal_type
     for f in Morpheme._meta.fields:
         f_internal_type = f.get_internal_type()
-        if f_internal_type in ['BooleanField', 'BooleanField']:
+        if f_internal_type in ['BooleanField']:
             temp_field_to_kind_table[f.name] = 'check'
         elif f_internal_type in ['CharField', 'TextField']:
             temp_field_to_kind_table[f.name] = 'text'
@@ -3108,7 +3081,7 @@ def generate_fieldname_to_kind_table():
     for h in Handshape._meta.fields:
         h_internal_type = h.get_internal_type()
         if h.name not in temp_field_to_kind_table.keys():
-            if h_internal_type in ['BooleanField', 'BooleanField']:
+            if h_internal_type in ['BooleanField']:
                 temp_field_to_kind_table[h.name] = 'check'
             elif h_internal_type in ['CharField', 'TextField']:
                 temp_field_to_kind_table[h.name] = 'text'
@@ -3164,7 +3137,7 @@ class BlendMorphology(models.Model):
         return self.parent_gloss.idgloss
 
 
-class OtherMedia(models.Model):
+class OtherMedia(MetaModelMixin, models.Model):
     """Videos of or related to a gloss, often created by another project"""
 
     parent_gloss = models.ForeignKey(Gloss, on_delete=models.CASCADE)
@@ -3174,34 +3147,23 @@ class OtherMedia(models.Model):
                                     verbose_name=_("Type"), related_name='other_media')
     alternative_gloss = models.CharField(max_length=50)
     path = models.CharField(max_length=100)
-
-    @classmethod
-    def get_field_names(cls):
-        fields = cls._meta.get_fields(include_hidden=True)
-        return [field.name for field in fields if field.concrete]
-
-    @classmethod
-    def get_field(cls, field):
-        field = cls._meta.get_field(field)
-        return field
+    description = models.TextField(null=True, blank=True, verbose_name=_("Description/Explanation"))
 
     def get_othermedia_path(self, gloss_id, check_existence=False):
         # read only method
         """Returns a tuple (media_okay, path, filename) """
         # handles paths stored in OtherMedia objects created by legacy code that may have the wrong folder
         media_okay = True
-        this_path = self.path
-        import os
-        norm_path = os.path.normpath(this_path)
+        norm_path = os.path.normpath(str(self.path))
         split_norm_path = norm_path.split(os.sep)
         if len(split_norm_path) == 1:
             # other media path is a filename
-            path = '/dictionary/protected_media/othermedia/' + self.path
+            path = f'othermedia/{self.path}'
             media_okay = False
             other_media_filename = self.path
         elif len(split_norm_path) == 2 and split_norm_path[0] == str(gloss_id):
             # other media path is gloss_id / filename
-            path = '/dictionary/protected_media/othermedia/' + self.path
+            path = f'othermedia/{self.path}'
             other_media_filename = split_norm_path[-1]
         else:
             # other media path is not a filename and not the correct folder, do not prefix it
@@ -3214,7 +3176,7 @@ class OtherMedia(models.Model):
                 # check whether the file exists in the writable folder
                 # NOTE: Here is a discrepancy with the setting OTHER_MEDIA_DIRECTORY, it ends with a /
                 # os.path.exists needs a path, not a string of a path
-                writable_location = os.path.join(WRITABLE_FOLDER, 'othermedia', self.path)
+                writable_location = os.path.join(WRITABLE_FOLDER, 'othermedia', str(self.path))
                 try:
                     imagefile_path_exists = os.path.exists(writable_location)
                 except (UnicodeEncodeError, IOError, OSError):
@@ -3225,7 +3187,7 @@ class OtherMedia(models.Model):
         return media_okay, path, other_media_filename
 
 
-class Dataset(models.Model):
+class Dataset(MetaModelMixin, models.Model):
     """A dataset, can be public/private and can be of only one SignLanguage"""
     name = models.CharField(unique=True, blank=False, null=False, max_length=60)
     is_public = models.BooleanField(default=False, help_text="Is this dataset public or private?")
@@ -3245,6 +3207,11 @@ class Dataset(models.Model):
     owners = models.ManyToManyField(User, help_text="Users responsible for the dataset content.")
 
     exclude_choices = models.ManyToManyField('FieldChoice', help_text="Exclude these field choices", blank=True)
+    prominent_media = FieldChoiceForeignKey(FieldChoice, on_delete=models.SET_NULL, null=True,
+                                            limit_choices_to={'field': FieldChoice.OTHERMEDIATYPE},
+                                            field_choice_category=FieldChoice.OTHERMEDIATYPE,
+                                            verbose_name=_("Prominent Media Type"), related_name='prominent_media')
+    use_provenance = models.BooleanField(default=False, help_text=_("Use provenance model"))
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -3255,15 +3222,11 @@ class Dataset(models.Model):
     def __str__(self):
         return self.acronym
 
-    @classmethod
-    def get_field_names(cls):
-        fields = cls._meta.get_fields(include_hidden=True)
-        return [field.name for field in fields if field.concrete]
+    def get_prominent_media_machine_value(self):
+        return str(self.prominent_media.machine_value) if self.prominent_media else '0'
 
-    @classmethod
-    def get_field(cls, field):
-        field = cls._meta.get_field(field)
-        return field
+    def get_prominent_media_display(self):
+        return str(self.prominent_media.name) if self.prominent_media else '-'
 
     def generate_short_name(self):
 
@@ -3286,7 +3249,7 @@ class Dataset(models.Model):
 
     def get_metadata_path(self, check_existence=True):
         """Returns the path within the writable and static folder"""
-        metafile_name = self.acronym + '_metadata.csv'
+        metafile_name = f'{self.acronym}_metadata.csv'
 
         goal_string = WRITABLE_FOLDER + DATASET_METADATA_DIRECTORY + '/' + metafile_name
 
@@ -3336,7 +3299,6 @@ class Dataset(models.Model):
         all_users = User.objects.all().order_by('first_name')
 
         users_who_can_view_dataset = []
-        from guardian.shortcuts import get_users_with_perms
         users_who_can_access_me = get_users_with_perms(self, attach_perms=True, with_superusers=False,
                                                        with_group_users=False)
         for user in all_users:
@@ -3351,7 +3313,6 @@ class Dataset(models.Model):
         all_users = User.objects.all().order_by('first_name')
 
         users_who_can_change_dataset = []
-        from guardian.shortcuts import get_users_with_perms
         users_who_can_access_me = get_users_with_perms(self, attach_perms=True, with_superusers=False,
                                                        with_group_users=False)
         for user in all_users:
@@ -3602,7 +3563,7 @@ class AnnotationIdglossTranslation(models.Model):
         super(AnnotationIdglossTranslation, self).save(*args, **kwargs)
 
 
-class LemmaIdgloss(models.Model):
+class LemmaIdgloss(MetaModelMixin, models.Model):
     dataset = models.ForeignKey("Dataset", verbose_name=_("Dataset"), on_delete=models.CASCADE,
                                 help_text=_("Dataset a lemma is part of"), null=True)
 
@@ -3623,9 +3584,29 @@ class LemmaIdgloss(models.Model):
         glosses_with_this_lemma = Gloss.objects.filter(lemma__pk=self.pk).count()
         return glosses_with_this_lemma
 
+    def glosses(self):
+        glosses_with_this_lemma = Gloss.objects.filter(lemma__pk=self.pk)
+        return glosses_with_this_lemma
+
     def num_archived_glosses(self):
         glosses_with_this_lemma = Gloss.objects.filter(lemma__pk=self.pk, archived=True).count()
         return glosses_with_this_lemma
+
+    def has_all_translations(self):
+        count_dataset_languages = self.dataset.translation_languages.all().count() if self.dataset else 0
+        count_translations = self.lemmaidglosstranslation_set.all().count()
+        return count_dataset_languages == count_translations
+
+    def has_duplicates(self):
+        for translation in self.lemmaidglosstranslation_set.all():
+
+            duplicate_translations = LemmaIdglossTranslation.objects.filter(language=translation.language,
+                                                                            text__iexact=translation.text,
+                                                                            lemma__dataset=self.dataset).exclude(
+                lemma=self)
+            if duplicate_translations:
+                return True
+        return False
 
 
 class LemmaIdglossTranslation(models.Model):
@@ -3646,23 +3627,27 @@ class LemmaIdglossTranslation(models.Model):
         2. The lemma idgloss translation text for a language must be unique within a dataset.
         Note that bulk updates will not use this method. Therefore, always iterate over a queryset when updating."""
         dataset = self.lemma.dataset
-        if dataset:
-            # Before an item is saved the language is checked against the languages of the dataset the lemma is in.
-            dataset_languages = dataset.translation_languages.all()
-            if self.language not in dataset_languages:
-                msg = gettext("Language {language} is not in the dataset languages of lemma {lemmaid}.").format(language=self.language.name,
-                                                                                                                lemmaid=self.lemma.pk)
-                raise ValidationError(msg)
+        if not dataset:
+            msg = gettext("Lemma {lemmaid} has no dataset.").format(lemmaid=self.lemma.pk)
+            raise ValidationError(msg)
 
-            # The lemma idgloss translation text for a language must be unique within a dataset.
-            lemmas_with_same_text = dataset.lemmaidgloss_set.filter(lemmaidglosstranslation__text__exact=self.text,
-                                                                    lemmaidglosstranslation__language=self.language)
-            if lemmas_with_same_text.count() > 1:
-                msg = gettext("The lemma text {translation} is not unique within dataset {acronym}.").format(translation=self.text,
-                                                                                                             acronym=dataset.acronym)
-                raise ValidationError(msg)
+        # Before an item is saved the language is checked against the languages of the dataset the lemma is in.
+        dataset_languages = dataset.translation_languages.all()
+        if self.language not in dataset_languages:
+            msg = gettext("Language {language} is not in the dataset languages of lemma {lemmaid}.").format(language=self.language.name,
+                                                                                                            lemmaid=self.lemma.pk)
+            raise ValidationError(msg)
+
+        # The lemma idgloss translation text for a language must be unique within a dataset.
+        lemmas_with_same_text = dataset.lemmaidgloss_set.filter(lemmaidglosstranslation__text__iexact=self.text,
+                                                                lemmaidglosstranslation__language=self.language)
+        if lemmas_with_same_text.count() > 1:
+            msg = gettext("The lemma text {translation} is not unique within dataset {acronym}.").format(translation=self.text,
+                                                                                                         acronym=dataset.acronym)
+            raise ValidationError(msg)
 
         super(LemmaIdglossTranslation, self).save(*args, **kwargs)
+
 
 class GlossRevision(models.Model):
 
@@ -3719,14 +3704,14 @@ class Speaker(models.Model):
     def __str__(self):
         try:
             (participant, corpus) = self.identifier.rsplit('_', 1)
-        except:
+        except (AttributeError, TypeError):
             participant = self.identifier
         return participant
 
     def participant(self):
         try:
             (participant, corpus) = self.identifier.rsplit('_', 1)
-        except:
+        except (AttributeError, TypeError):
             participant = self.identifier
         return participant
 
@@ -4114,7 +4099,7 @@ CATEGORY_MODELS_MAPPING = {
 }
 
 
-class AnnotatedGloss(models.Model):
+class AnnotatedGloss(MetaModelMixin, models.Model):
     """An annotated gloss belongs to one annotated sentences"""
     gloss = models.ForeignKey("Gloss", on_delete=models.CASCADE)
     annotatedsentence = models.ForeignKey("AnnotatedSentence", on_delete=models.CASCADE, related_name='annotated_glosses')
@@ -4161,7 +4146,7 @@ class AnnotatedSentenceContext(models.Model):
     def __str__(self):
         return self.text
 
-class AnnotatedSentence(models.Model):
+class AnnotatedSentence(MetaModelMixin, models.Model):
     """An annotated sentence is linked to an annotatedvideo, annotatedgloss, annotatedsentencetranslation(s), and annotatedsentencecontext(s)"""
 
     def get_dataset(self):
@@ -4208,7 +4193,6 @@ class AnnotatedSentence(models.Model):
 
                 excluded = False
                 if start_cut >= 0 and end_cut >= 0:
-                    # If completely outside of the cut, exclude it
                     if starttime >= end_cut or endtime <= 0:
                         excluded = True
                     elif (min(endtime, end_cut) - max(starttime, start_cut)) < 100:
@@ -4379,3 +4363,33 @@ class Synset(models.Model):
 
     def __str__(self):
         return self.name
+
+
+class GlossProvenance(models.Model):
+
+    gloss = models.ForeignKey("Gloss", on_delete=models.CASCADE)
+    description = models.TextField()
+    method = FieldChoiceForeignKey(FieldChoice, on_delete=models.SET_NULL, null=True,
+                                    limit_choices_to={'field': FieldChoice.PROVENANCE},
+                                    field_choice_category=FieldChoice.PROVENANCE,
+                                    verbose_name=_("Method"), related_name="method")
+    creationDate = models.DateField(_('Creation date'), auto_now_add=True)
+    lastUpdated = models.DateTimeField(_('Last updated'), auto_now=True)
+    creator = models.ManyToManyField(User)
+
+    class Meta:
+        ordering = ['gloss', 'method']
+
+    def get_method_display(self):
+        return self.method.name if self.method else '-'
+
+    def provenance_text(self):
+        stripped_text = str(self.description).strip()
+        if '\n' in stripped_text:
+            # this function is used for displaying notes in the CSV update
+            # this makes mysterious differences in old and new values visible
+            stripped_text = stripped_text.replace('\n', '<br>')
+        return stripped_text
+
+    def provenance_tuple(self):
+        return self.get_method_display(), self.provenance_text()

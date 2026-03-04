@@ -36,7 +36,6 @@ function update_gloss_video_backups(el) {
         type: "POST",
         async: true,
         success : function(result) {
-            console.log(result);
             if ($.isEmptyObject(result)) {
                 return;
             };
@@ -59,7 +58,6 @@ function move_gloss_video_backups_to_trash(el) {
         type: "POST",
         async: true,
         success : function(result) {
-            console.log(result);
             if ($.isEmptyObject(result)) {
                 return;
             };
@@ -99,7 +97,7 @@ function clearForm() {
 
       $('input').each(function() {
         var this_field = $(this).attr('name');
-        if (this_field == undefined) { return; };
+        if (this_field === undefined) { return; };
         var this_type = $(this).attr('type');
         if (this_type == 'hidden' || this_type == 'submit' || this_type == 'radio' || this_type == 'button') { return; };
         if (this_type == 'date') {
@@ -110,13 +108,12 @@ function clearForm() {
       });
       $('select').each(function() {
         var this_field = $(this).attr('name');
-        if (this_field == undefined) { return; };
+        if (this_field === undefined) { return; };
         var this_type = $(this).attr('type');
         if (this_type == 'hidden') { return; };
         if (this_field.endsWith('[]')) {
             return;
         } else {
-            console.log('options');
             $(this).val('');
             $(this).find('option').each(function () {
                 $(this).removeAttr("selected");
@@ -136,7 +133,6 @@ function do_adminsearch(el) {
   }
   document.getElementById('adminsearch').submit();
 }
-</script>
 </script>
 <style>
 list {
@@ -214,7 +210,7 @@ dd {
                 {% with searchform|get_annotation_search_field_for_language:dataset_lang as search_field %}
                 <td class='td td-light'>
                     <div class='input-group input-group-light'>
-                    <label class='input-group-addon' for='id_annotation_idgloss_{{ dataset_lang.language_code_2char }}'>
+                    <label class='input-group-addon' for='id_annotation_idgloss_{{dataset_lang.language_code_2char}}'>
                         {{search_field.label}}
                     </label>
                     <input id='glosssearch_{{ dataset_lang.language_code_2char }}' type='text'
@@ -225,7 +221,7 @@ dd {
 
                 {% with searchform|get_lemma_form_field_for_language:dataset_lang as lemma_field %}
                 <td class='td td-light'><div class='input-group input-group-light'>
-                    <label class='input-group-addon' for='id_lemma_{{ dataset_lang.language_code_2char }}'>
+                    <label class='input-group-addon' for='id_lemma_{{dataset_lang.language_code_2char}}'>
                         {{lemma_field.label}}
                     </label>
                     <input id='lemma_{{ dataset_lang.language_code_2char }}' type='text'
@@ -235,7 +231,7 @@ dd {
 
                 {% with searchform|get_senses_form_field_for_language:dataset_lang as keyword_field %}
                 <td class='td td-light'><div class='input-group input-group-light'>
-                    <label class='input-group-addon' for='id_keyword_{{ dataset_lang.language_code_2char }}'>{{keyword_field.label}}</label>
+                    <label class='input-group-addon' for='id_keyword_{{dataset_lang.language_code_2char}}'>{{keyword_field.label}}</label>
                     <input id='keyword_{{ dataset_lang.language_code_2char }}' type='text'
                            name='keyword_{{ dataset_lang.language_code_2char }}' class='form-control' value='{{keyword_field.value}}'></div>
                 </td>

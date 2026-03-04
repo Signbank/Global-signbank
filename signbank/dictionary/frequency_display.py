@@ -34,7 +34,7 @@ def collect_variants_data(variants):
     # returns a tuple
     #   variants data quick access: dictionary mapping variant annotation to speaker data for variant
     #   sorted variants with keys: sorted list of pairs ( variant annotation, variant object )
-    assert all(isinstance(v, Gloss) for v in variants), TypeError("Not a List of Gloss objects")
+    assert all(isinstance(v, Gloss) for v in variants), "Not a List of Gloss objects"
     if not variants:
         return {}, []
     variants_with_keys = []

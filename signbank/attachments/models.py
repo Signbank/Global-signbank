@@ -7,20 +7,5 @@ import os.path
 # basically just a simple container for files
 # but allowing for replacement of previously uploaded files
 
-class Attachment(models.Model):
 
-    file = models.FileField(upload_to=settings.ATTACHMENT_LOCATION)
-    description = models.TextField(blank=True)
-    date = models.DateField(auto_now=True)
-    uploader = models.ForeignKey(authmodels.User, on_delete=models.CASCADE)
 
-    def get_absolute_url(self):
-
-        return self.file.url
-
-    def get_filename(self):
-
-        return self.file.name
-
-    def __str__(self):
-        return self.file.name

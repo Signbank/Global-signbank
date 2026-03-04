@@ -1,28 +1,31 @@
 """
 Views which allow users to create and activate accounts.
-
 """
-
+import json
+from datetime import date
 
 from django.conf import settings
 from django.http import HttpResponseRedirect, HttpResponse, JsonResponse
-from django.shortcuts import render, get_object_or_404
-from django.template import RequestContext
+from django.shortcuts import render
 from django.utils.translation import gettext_lazy as _
 from django.middleware.csrf import get_token
-
-from signbank.registration.forms import RegistrationForm, EmailAuthenticationForm
-from signbank.registration.models import RegistrationProfile
-from django.contrib.auth.models import User
-from signbank.dictionary.models import Dataset, UserProfile, SearchHistory, Affiliation, AffiliatedUser, SignbankAPIToken
+from django.contrib.auth.models import Group, User
 from django.contrib import messages
-from django.template.loader import render_to_string
+from django.core.mail import send_mail
+from django.contrib.auth import REDIRECT_FIELD_NAME, login
+from django.views.decorators.cache import never_cache
+from django.contrib.sites.models import Site
+from django.contrib.sites.requests import RequestSite
 
-from datetime import date
+from guardian.shortcuts import assign_perm, get_user_perms
 
-from guardian.shortcuts import assign_perm
-
-import json
+from signbank.registration.models import RegistrationProfile
+from signbank.registration.forms import RegistrationForm, EmailAuthenticationForm
+from signbank.communication.models import generate_communication
+from signbank.dictionary.models import Dataset, UserProfile, SearchHistory, Affiliation, AffiliatedUser, SignbankAPIToken
+from signbank.dictionary.context_data import get_selected_datasets
+from signbank.tools import get_users_without_dataset
+from signbank.api_token import generate_auth_token, hash_token
 
 
 def activate(request, activation_key, template_name='registration/activate.html'):
@@ -118,13 +121,11 @@ def register(request, success_url=settings.PREFIX_URL + '/accounts/register/comp
                 if '' in list_of_datasets:
                     list_of_datasets.remove('')
 
-                from django.contrib.auth.models import Group, User
                 group_manager = Group.objects.get(name='Dataset_Manager')
 
                 motivation = request.POST.get('motivation_for_use', '')  # motivation is a required field in the form
 
                 # send email to each of the dataset owners
-                from django.core.mail import send_mail
                 current_site = Site.objects.get_current()
 
                 for dataset_name in list_of_datasets:
@@ -146,20 +147,13 @@ def register(request, success_url=settings.PREFIX_URL + '/accounts/register/comp
                                 # this owner can't manage users
                                 continue
 
-                            subject = render_to_string('registration/dataset_to_owner_new_user_given_access_subject.txt',
-                                                    context={'dataset': dataset_name,
-                                                                'site': current_site})
-                            # Email subject *must not* contain newlines
-                            subject = ''.join(subject.splitlines())
+                            mail_template_context = {'dataset': dataset_name,
+                                                     'user': new_user,
+                                                     'motivation': motivation,
+                                                     'site': current_site}
 
-                            message = render_to_string('registration/dataset_to_owner_new_user_given_access.txt',
-                                                    context={'dataset': dataset_name,
-                                                                'new_user_username': new_user.username,
-                                                                'new_user_firstname': new_user.first_name,
-                                                                'new_user_lastname': new_user.last_name,
-                                                                'new_user_email': new_user.email,
-                                                                'motivation': motivation,
-                                                                'site': current_site})
+                            subject, message = generate_communication('dataset_to_owner_new_user_given_access',
+                                                                      mail_template_context)
 
                             # for debug purposes on local machine
                             if settings.DEBUG_EMAILS_ON:
@@ -178,23 +172,15 @@ def register(request, success_url=settings.PREFIX_URL + '/accounts/register/comp
                                 # this owner can't manage users
                                 continue
 
-                            from django.core.mail import send_mail
                             current_site = Site.objects.get_current()
 
-                            subject = render_to_string('registration/dataset_to_owner_user_requested_access_subject.txt',
-                                                    context={'dataset': dataset_name,
-                                                                'site': current_site})
-                            # Email subject *must not* contain newlines
-                            subject = ''.join(subject.splitlines())
+                            mail_template_context = {'dataset': dataset_name,
+                                                     'user': new_user,
+                                                     'motivation': motivation,
+                                                     'site': current_site}
 
-                            message = render_to_string('registration/dataset_to_owner_user_requested_access.txt',
-                                                    context={'dataset': dataset_name,
-                                                                'new_user_username': new_user.username,
-                                                                'new_user_firstname': new_user.first_name,
-                                                                'new_user_lastname': new_user.last_name,
-                                                                'new_user_email': new_user.email,
-                                                                'motivation': motivation,
-                                                                'site': current_site})
+                            subject, message = generate_communication('dataset_to_owner_user_requested_access',
+                                                                      mail_template_context)
 
                             # for debug purposes on local machine
                             if settings.DEBUG_EMAILS_ON:
@@ -225,11 +211,6 @@ def register(request, success_url=settings.PREFIX_URL + '/accounts/register/comp
 
 # a copy of the login view since we need to change the form to allow longer
 # userids (> 30 chars) since we're using email addresses
-from django.contrib.auth import REDIRECT_FIELD_NAME
-from django.views.decorators.cache import never_cache
-from django.contrib.sites.models import Site
-from django.contrib.sites.requests import RequestSite
-
 
 def mylogin(request, template_name='registration/login.html', redirect_field_name='/signs/recently_added/'):
     """Displays the login form and handles the login action."""
@@ -258,7 +239,6 @@ def mylogin(request, template_name='registration/login.html', redirect_field_nam
                 # Light security check -- make sure redirect_to isn't garbage.
                 if not redirect_to or '//' in redirect_to or ' ' in redirect_to:
                     redirect_to = settings.LOGIN_REDIRECT_URL
-                from django.contrib.auth import login
                 login(request, form.get_user())
                 if request.session.test_cookie_worked():
                     request.session.delete_test_cookie()
@@ -302,8 +282,6 @@ def users_without_dataset(request):
     if not request.user.is_superuser:
         return HttpResponse('Unauthorized', status=401)
 
-    from signbank.tools import get_users_without_dataset
-
     main_dataset = Dataset.objects.get(pk=settings.DEFAULT_DATASET_PK)
 
     if len(request.POST) > 0:
@@ -328,10 +306,6 @@ def users_without_dataset(request):
 
 
 def user_profile(request):
-
-    from datetime import date
-    from signbank.dictionary.context_data import get_selected_datasets
-    from guardian.shortcuts import get_objects_for_user, get_user_perms
 
     user_object = User.objects.get(username=request.user)
     user_profile = UserProfile.objects.get(user=user_object)
@@ -373,17 +347,12 @@ def user_profile(request):
 
 def auth_token(request):
 
-    import datetime as DT
-    from django.utils.timezone import get_current_timezone
-
     user_object = User.objects.get(username=request.user)
-
-    today = DT.datetime.now(tz=get_current_timezone())
-    from signbank.api_token import generate_auth_token, hash_token
 
     # generate a token and create a SignbankAPIToken for it
     new_token = generate_auth_token()
     hashed_token = hash_token(new_token)
     signbank_Token = SignbankAPIToken.objects.create(signbank_user=user_object,
                                                      api_token=hashed_token)
+    signbank_Token.save()
     return JsonResponse({'new_token': new_token})

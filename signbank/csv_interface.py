@@ -4,7 +4,7 @@ import datetime as DT
 
 from django.db import models
 from django.utils.timezone import get_current_timezone
-from django.utils.translation import override, activate
+from django.utils.translation import override, activate, gettext
 from django.core.exceptions import ObjectDoesNotExist, MultipleObjectsReturned
 from django.http import StreamingHttpResponse
 
@@ -680,7 +680,7 @@ def required_csv_columns(dataset_languages, create_or_update='create_gloss'):
     fieldnames = FIELDS['main'] + FIELDS['phonology'] + FIELDS['semantics'] + ['inWeb', 'isNew']
     fields = [Gloss.get_field(fname) for fname in fieldnames if fname in Gloss.get_field_names()]
     gloss_fields = [f.verbose_name.encode('ascii', 'ignore').decode() for f in fields]
-    extra_columns = ['SignLanguages', 'Dialects', 'Sequential Morphology', 'Simultaneous Morphology',
+    extra_columns = ['Dialects', 'Sequential Morphology', 'Simultaneous Morphology',
                      'Blend Morphology', 'Relations to other signs', 'Relations to foreign signs', 'Tags', 'Notes']
     required_columns = []
     language_fields = []
@@ -730,7 +730,7 @@ def csv_header_row_glosslist(dataset_languages):
     activate(LANGUAGES[0][0])
     header = ['Signbank ID', 'Dataset'] + lemmaidglosstranslation_fields + annotationidglosstranslation_fields \
         + keyword_fields + sentence_fields + [f.verbose_name.encode('ascii', 'ignore').decode() for f in fields]
-    for extra_column in ['SignLanguages', 'Dialects', 'Sequential Morphology', 'Simultaneous Morphology',
+    for extra_column in ['Dialects', 'Sequential Morphology', 'Simultaneous Morphology',
                          'Blend Morphology',
                          'Relations to other signs', 'Relations to foreign signs', 'Tags', 'Notes']:
         header.append(extra_column)
@@ -784,12 +784,15 @@ def csv_gloss_to_row(gloss, dataset_languages, fields):
         elif f.related_model == DerivationHistory:
             value = ", ".join([str(sf.name) for sf in gloss.derivHist.all()])
         else:
-            value = getattr(gloss, f.name)
+            internal_value = getattr(gloss, f.name)
 
-        # some legacy glosses have empty text fields of other formats
-        if (f.__class__.__name__ == 'CharField' or f.__class__.__name__ == 'TextField') \
-                and value in ['-', '------', ' ']:
-            value = ''
+            if ((f.__class__.__name__ == 'CharField' or f.__class__.__name__ == 'TextField')
+                    and internal_value not in [None, '', '-', '------', ' ']):
+                # surround internal string value with double quotes for export, in case of punctuation (semi-colon) in string
+                value = internal_value.strip().replace('\n', '\\n')
+                value = '"' + value + '"'
+            else:
+                value = internal_value
 
         if value is None:
             if f.name in HANDEDNESS_ARTICULATION_FIELDS:
@@ -810,12 +813,7 @@ def csv_gloss_to_row(gloss, dataset_languages, fields):
         if not isinstance(value, str):
             # this is needed for csv
             value = str(value)
-
         row.append(value)
-
-    # get languages
-    signlanguages = gloss.get_signlanguage_display()
-    row.append(signlanguages)
 
     # get dialects
     dialects = gloss.get_dialect_display()
@@ -1211,6 +1209,20 @@ def choice_fields_choices():
         elif f.name in ['weakdrop', 'weakprop']:
             fields_choices[f.verbose_name.encode('ascii', 'ignore').decode()] = ['Neutral', 'True', 'False']
 
+    tags_objects = Tag.objects.all()
+    refreshed_tags = []
+    for tag in tags_objects:
+        tag.refresh_from_db()
+        refreshed_tags.append(tag)
+    all_tags = [t.name.replace('_', ' ').title() for t in refreshed_tags]
+
+    fields_choices[gettext("Tags")] = all_tags
+
+    note_role_choices = FieldChoice.objects.filter(field__iexact='NoteType',
+                                                   machine_value__gte=0).order_by('machine_value')
+    all_notes_names = [n.name for n in note_role_choices]
+
+    fields_choices[gettext("Notes")] = all_notes_names
     return fields_choices
 
 
@@ -1248,8 +1260,8 @@ def export_csv_template(request):
     # two rows are output to ensure a line break character is in the csv file
     csv_rows = [header_row, empty_row]
     # this is based on an example in the Django 4.2 documentation
-    from signbank.dictionary.adminviews import Echo
 
+    from signbank.dictionary.adminviews import Echo
     pseudo_buffer = Echo()
     new_writer = csv.writer(pseudo_buffer)
     return StreamingHttpResponse(

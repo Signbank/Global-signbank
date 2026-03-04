@@ -1,6 +1,6 @@
 import datetime as DT
 
-import django
+from django.apps import apps
 from django.utils.timezone import get_current_timezone
 from django.conf import settings
 from django.contrib.auth.decorators import login_required, permission_required
@@ -12,7 +12,7 @@ from django.utils.translation import gettext_lazy as _, gettext
 from django.contrib.auth.models import Group
 from django.db.models import Q
 
-from signbank.settings.server_specific import RECENTLY_ADDED_SIGNS_PERIOD
+from signbank.settings.server_specific import RECENTLY_ADDED_SIGNS_PERIOD, PREFIX_URL
 
 from django.shortcuts import render, get_object_or_404, redirect
 
@@ -23,10 +23,12 @@ from signbank.feedback.models import (GeneralFeedback, MissingSignFeedback, Sign
 
 
 def index(request):
+    general_feedback_form = f'{PREFIX_URL}/feedback/site'
     return render(request, 'feedback/index.html',
                   {'selected_datasets': get_selected_datasets(request),
                    'SHOW_DATASET_INTERFACE_OPTIONS': settings.SHOW_DATASET_INTERFACE_OPTIONS,
-                   'language': settings.LANGUAGE_NAME})
+                   'language': settings.LANGUAGE_NAME,
+                   'general_feedback_form': general_feedback_form})
 
 
 @login_required
@@ -338,13 +340,13 @@ def delete(request, kind, id):
         url = '/'
 
     if kind == 'sign':
-        KindModel = django.apps.apps.get_model('feedback', 'SignFeedback')
+        KindModel = apps.get_model('feedback', 'SignFeedback')
     elif kind == 'morpheme':
-        KindModel = django.apps.apps.get_model('feedback', 'MorphemeFeedback')
+        KindModel = apps.get_model('feedback', 'MorphemeFeedback')
     elif kind == 'general':
-        KindModel = django.apps.apps.get_model('feedback', 'GeneralFeedback')
+        KindModel = apps.get_model('feedback', 'GeneralFeedback')
     elif kind == 'missingsign':
-        KindModel = django.apps.apps.get_model('feedback', 'MissingSignFeedback')
+        KindModel = apps.get_model('feedback', 'MissingSignFeedback')
     else:
         return redirect(url)
 

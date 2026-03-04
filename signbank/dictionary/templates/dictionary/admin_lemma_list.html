@@ -12,16 +12,21 @@
 
 {% block extrajs %}
 <script type="text/javascript" src="{{STATIC_URL}}js/jquery.jeditable.mini.js"></script>
-
+{{ populate_fields|json_script:"populate_fields" }}
 <script type='text/javascript'>
-var show_dataset_interface_options = {{ SHOW_DATASET_INTERFACE_OPTIONS|yesno:"true,false" }};
+var url = '{{PREFIX_URL}}';
 var csrf_token = '{{csrf_token}}';
+var show_dataset_interface_options = {{ SHOW_DATASET_INTERFACE_OPTIONS|yesno:"true,false" }};
 var page_number = {{ page_number }};
 var paginate_by = '{{paginate_by}}';
 var page_number = {{page_obj.number}};
 var populate_fields_keys = {{populate_fields_keys|safe}};
-var populate_fields = {{populate_fields|safe}};
+var populate_fields = JSON.parse(document.getElementById('populate_fields').textContent);
+</script>
 
+<script type='text/javascript' src="{{ STATIC_URL }}js/lemmas_toggle_edit.js"></script>
+
+<script>
 $(document).ready(function(){
         $('.delete-entry').on('click', function() {
             var url = $(this).attr('modal_url');
@@ -52,14 +57,14 @@ function clearForm() {
 
       $('input').each(function() {
         var this_field = $(this).attr('name');
-        if (this_field == undefined) { return; };
+        if (this_field === undefined) { return; };
         var this_type = $(this).attr('type');
         if (this_type == 'hidden' || this_type == 'submit') { return; };
         $(this).val('');
       });
       $('select').each(function() {
         var this_field = $(this).attr('name');
-        if (this_field == undefined) { return; };
+        if (this_field === undefined) { return; };
         var this_type = $(this).attr('type');
         if (this_type == 'hidden') { return; };
         $(this).val('0');
@@ -69,7 +74,7 @@ function clearForm() {
      $('#format').val('');
      $('#show_all_lemmas').val('');
      $('#show_all').val('False');
-     $('#reset').val('reset');
+     $('#reset').val('1');
 }
 
 function do_adminsearch(el) {
@@ -228,28 +233,33 @@ function do_export_csv(e1) {
     <thead>
       <tr>
           {% if SHOW_DATASET_INTERFACE_OPTIONS %}<th>{% trans "Dataset" %}</th>{% endif %}
+          <th>{% trans "Lemma ID" %}</th>
           {% for dataset_lang in dataset_languages %}
           <th>{% trans "Lemma ID Gloss" %} ({{ dataset_lang.name }})</th>
           {% endfor %}
           <th>{% trans "Number of Glosses" %}</th>
           <th>{% trans "Number of Archived Glosses" %}</th>
+          <th>{% trans "Constraints" %}</th>
           <th>{% trans "Update" %}</th>
       </tr>
     </thead>
     <tbody>
       {% for lemma in object_list %}
-        <tr>
+        <tr style="height:30px;">
             {% if SHOW_DATASET_INTERFACE_OPTIONS %}
             <td>
                 {{ lemma.dataset.acronym }}
             </td>
             {% endif %}
+            <td>{{lemma.pk}}</td>
             {% for dataset_lang in dataset_languages %}
               {% with lemma|get_lemma_idgloss_translation:dataset_lang as lemmaidglosstranslation %}
               <td>
+                  <div id="lemma_text_{{lemma.pk}}_{{dataset_lang.language_code_2char}}">
                   {% if lemmaidglosstranslation != "" %}
                     {{lemmaidglosstranslation}}
                   {% endif %}
+                  </div>
               </td>
             {% endwith %}
           {% endfor %}
@@ -259,12 +269,27 @@ function do_export_csv(e1) {
             <td>
                 {{ lemma.num_archived_glosses }}
             </td>
+            <td id="lemma_constraints_{{lemma.pk}}" style="height:30px;color:red;">
+                {% with lemma|check_lemma_constraints as constraints_summary %}
+                {{constraints_summary}}
+                {% endwith %}
+            </td>
             <td>
             {% get_obj_perms request.user for lemma.dataset as "dataset_perms" %}
             {% if "change_dataset" in dataset_perms %}
                 <a class="change-entry" href="{% url 'dictionary:change_lemma' lemma.pk %}" >
                     <span class="glyphicon glyphicon-pencil" data-toggle="tooltip" data-original-title="{% trans 'Update' %}"></span>
                 </a>
+                {% if not lemma.has_duplicates and not lemma.has_all_translations and lemma.num_gloss == 1 %}
+                <span id="lemma_wrench_{{lemma.pk}}" style="height:30px;">
+                <button id='quick_language_fields_btn_{{lemma.pk}}' class="quick_copy_missing_language_fields btn"
+                        name='quick_language_fields_{{lemma.pk}}'
+                        value='{{lemma.pk}}' style="color:red;background-color:transparent;height:30px;"
+                        type="submit" ><span class="glyphicon glyphicon-wrench" style="height:30px;"
+                                             data-toggle="tooltip" data-original-title="{% trans 'Copy Missing Translations' %}"></span>
+                </button>
+                </span>
+                {% endif %}
                 {% if not lemma.num_gloss %}
                 <a class="delete-entry" href="" data-toggle="modal" data-target="#deleteModal" modal_url="{% url 'dictionary:delete_lemma' lemma.pk %}">
                     <span class="glyphicon glyphicon-trash" data-toggle="tooltip" data-original-title="{% trans 'Delete' %}"></span>
@@ -276,13 +301,16 @@ function do_export_csv(e1) {
     {% endfor %}
     </tbody>
 </table>
-{% if is_paginated %}
-<div class="pagination">
-    <span class="step-links">
 
+{% if page_obj.has_other_pages %}
+<div class="pagination">
+    <div class="step-links">
         <ul class='pagination pagination-sm'>
         {% if page_obj.has_previous %}
-            <li><a href="?page={{page_obj.previous_page_number}}{% for key,value in request.GET.items %}{% if key != 'page' %}&{{key}}={{value}}{% endif %}{% endfor %}">&laquo;</a></li>
+            {% if page_obj.number > 1 %}
+            <li><a href="?page=1{{page_get_parameters}}">&laquo;&laquo;</a></li>
+            {% endif %}
+            <li><a href="?page={{page_obj.previous_page_number}}{{page_get_parameters}}">&laquo;</a></li>
         {% endif %}
 
           {% if  page_obj.number > 10 %}
@@ -290,34 +318,32 @@ function do_export_csv(e1) {
           {% endif %}
 
           {% for p in page_obj.paginator.page_range %}
-            {% if p < page_obj.number|add:"10" and p > page_obj.number|add:"-10" %}
-            {% if p == page_obj.number %}
-             <li class='active'>
-             <a href="?page={{p}}{% for key,value in request.GET.items %}{% if key != 'page' %}&{{key}}={{value}}{% endif %}{% endfor %}">{{p}}</a>
-             </li>
-            {% else %}
-             <li>
-             <a href="?page={{p}}{% for key,value in request.GET.items %}{% if key != 'page' %}&{{key}}={{value}}{% endif %}{% endfor %}">{{p}}</a>
-             </li>
-            {% endif %}
-            {% endif %}
+
+             {% if p < page_obj.number|add:"10" and  p > page_obj.number|add:"-10" %}
+                {% if p == page_obj.number %}
+                     <li class='active'>
+                 {% else %}
+                    <li>
+                {% endif %}
+                     <a href="?page={{p}}{{page_get_parameters}}">{% if p == 0 %}Start{% else %}{{p}}{% endif %}</a>
+                     </li>
+             {% endif %}
 
           {% endfor %}
 
-          {% if page_obj.paginator.num_pages > page_obj.number|add:10 %}
+          {% if page_obj.paginator.num_pages > page_obj.number|add:"10" %}
             <li><a>...</a></li>
             <li>
-            <a href="?page={{page_obj.paginator.num_pages}}{% for key,value in request.GET.items %}{% if key != 'page' %}&{{key}}={{value}}{% endif %}{% endfor %}">{{page_obj.paginator.num_pages}}</a>
+            <a href="?page={{page_obj.paginator.num_pages}}{{page_get_parameters}}">{{page_obj.paginator.num_pages}}</a>
             </li>
           {% endif %}
 
         {% if page_obj.has_next %}
-            <li><a href="?page={{page_obj.next_page_number}}{% for key,value in request.GET.items %}{% if key != 'page' %}&{{key}}={{value}}{% endif %}{% endfor %}">&raquo;</a></li>
+            <li><a href="?page={{page_obj.next_page_number}}{{page_get_parameters}}">&raquo;</a></li>
+            <li><a href="?page={{page_obj.paginator.num_pages}}{{page_get_parameters}}">&raquo;&raquo;</a></li>
         {% endif %}
-
-        </ul>
-
-    </span>
+      </ul>
+    </div>
 </div>
 {% endif %}
 

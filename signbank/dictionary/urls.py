@@ -42,6 +42,7 @@ urlpatterns = [
     re_path(r'^update/affiliation/(?P<glossid>\d+)$', signbank.dictionary.update.add_affiliation, name='add_affiliation'),
     re_path(r'^update/morphemetag/(?P<morphemeid>\d+)$', signbank.dictionary.update.add_morphemetag, name='add_morphemetag'),
     re_path(r'^update/definition/(?P<glossid>\d+)$', signbank.dictionary.update.add_definition, name='add_definition'),
+    re_path(r'^update/provenance/(?P<glossid>\d+)$', signbank.dictionary.update.add_provenance, name='add_provenance'),
     re_path(r'^update/relation/$', signbank.dictionary.update.add_relation, name='add_relation'),
     re_path(r'^update/relationtoforeignsign/$', signbank.dictionary.update.add_relationtoforeignsign, name='add_relationtoforeignsign'),
     re_path(r'^update/morphologydefinition/$', signbank.dictionary.update.add_morphology_definition, name='add_morphologydefinition'),
@@ -155,7 +156,7 @@ urlpatterns = [
 
     # Ajax urls
     re_path(r'^ajax/tags/$', signbank.dictionary.tagviews.taglist_json),
-    re_path(r'^ajax/gloss/(?P<prefix>.*)$', signbank.dictionary.adminviews.gloss_ajax_complete, name='gloss_complete'),
+    re_path(r'^ajax/gloss/(?P<datasetid>\d+)/(?P<prefix>.*)$', signbank.dictionary.adminviews.gloss_ajax_complete, name='gloss_complete'),
     re_path(r'^ajax/similarglosses/(?P<gloss_id>.*)$', signbank.dictionary.batch_edit.similarglosses, name='similarglosses'),
     re_path(r'^ajax/handshape/(?P<prefix>.*)$', signbank.dictionary.adminviews.handshape_ajax_complete, name='handshape_complete'),
     re_path(r'^ajax/morph/(?P<prefix>.*)$', signbank.dictionary.adminviews.morph_ajax_complete, name='morph_complete'),
@@ -195,6 +196,7 @@ urlpatterns = [
 
     re_path(r'get_unused_videos/$',permission_required('dictionary.change_gloss')(signbank.dictionary.views.get_unused_videos)),
     re_path(r'package/$', signbank.dictionary.views.package),
+    re_path(r'package/(?P<language_code>en|nl|zh-hans)/$', signbank.dictionary.views.package),
     re_path(r'get_gloss_data/(?P<datasetid>\d+)/(?P<glossid>\d+)/$',
             signbank.api_interface.get_gloss_data_json, name='get_gloss_data_json'),
     re_path(r'get_gloss_data/(?P<datasetid>\d+)/(?P<glossid>\d+)/(?P<language_code>en|nl|zh-hans)/$',
@@ -297,7 +299,10 @@ urlpatterns = [
     re_path(r'^lemma/delete/(?P<pk>\d+)', permission_required('dictionary.delete_lemmaidgloss')(LemmaDeleteView.as_view()), name='delete_lemma'),
     re_path(r'lemma/add/(?P<glossid>\d+)$', signbank.dictionary.adminviews.create_lemma_for_gloss, name='create_lemma_gloss'),
     re_path(r'lemma/update/(?P<pk>\d+)$', permission_required('dictionary.change_lemmaidgloss')(LemmaUpdateView.as_view()), name='change_lemma'),
+    re_path(r'lemma/updatetranslations/(?P<lemmaid>\d+)$', signbank.dictionary.update.update_lemma_idgloss, name='update_lemma'),
     re_path(r'^annotatedsentence/(?P<pk>\d+)', AnnotatedSentenceDetailView.as_view(), name='admin_annotated_sentence_view'),
+    re_path(r'^lemma/copymissinglanguage/(?P<lemmaid>\d+)/$',
+            signbank.dictionary.update.copy_missing_language_lemma_idgloss),
 
     re_path(r'^keywords/$', KeywordListView.as_view(), name='admin_keyword_list'),
 
