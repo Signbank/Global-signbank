@@ -21,6 +21,7 @@ from django.core.exceptions import ObjectDoesNotExist, MultipleObjectsReturned
 from django.db import DatabaseError, IntegrityError
 from django.db.transaction import TransactionManagementError
 from django.core.files import File
+from django.core.files.uploadedfile import TemporaryUploadedFile
 from tagging.models import TaggedItem, Tag
 
 from guardian.shortcuts import get_users_with_perms
@@ -31,6 +32,8 @@ from urllib.parse import urlparse, unquote
 
 from signbank.settings.base import FIELDS, DEFAULT_KEYWORDS_LANGUAGE, \
     WRITABLE_FOLDER, DATASET_METADATA_DIRECTORY, ECV_FOLDER
+from signbank.settings.server_specific import DEBUG_VIDEOS
+
 from signbank.dictionary.translate_choice_list import choicelist_queryset_to_translated_dict
 
 # -*- coding: utf-8 -*-
@@ -2591,7 +2594,16 @@ class Gloss(MetaModelMixin, models.Model):
 
     def add_nme_video(self, user, videofile, new_offset, recorded, perspective=''):
         # Preventing circular import
-        from signbank.video.models import GlossVideoNME, GlossVideoHistory, get_video_file_path
+        from signbank.video.models import GlossVideoNME, GlossVideoHistory, get_video_file_path, find_dangling_video_files
+
+        files_without_objects = find_dangling_video_files(self)
+        # these should be deleted
+        if DEBUG_VIDEOS:
+            print('add_nme_videos: dangling_video_files: ', files_without_objects)
+
+        if not isinstance(videofile, TemporaryUploadedFile) or not isinstance(videofile, File):
+            msg = gettext("No video file supplied for NME video upload of gloss {glossid}.").format(glossid=self.pk)
+            raise ValidationError(msg)
 
         perspective = '' if perspective in ['', 'center'] else perspective
 
@@ -2602,20 +2614,21 @@ class Gloss(MetaModelMixin, models.Model):
             # convert an existing version 0 video for this offset to a backup file
             existing_nme_vid.reversion()
 
-        if isinstance(videofile, File) or videofile.content_type == 'django.core.files.uploadedfile.InMemoryUploadedFile':
-            video = GlossVideoNME(gloss=self, offset=new_offset, perspective=perspective, upload_to=get_video_file_path)
-            # Create a GlossVideoHistory object
-            relative_path = get_video_file_path(video, str(videofile), nmevideo=True, perspective=perspective, offset=new_offset, version=0)
-            video_file_full_path = os.path.join(WRITABLE_FOLDER, relative_path)
-            glossvideohistory = GlossVideoHistory(action="upload", gloss=self, actor=user, 
-                                                  uploadfile=videofile, goal_location=video_file_full_path)
-            glossvideohistory.save()
+        video = GlossVideoNME(gloss=self, offset=new_offset, perspective=perspective, upload_to=get_video_file_path)
+        # Create a GlossVideoHistory object
+        relative_path = get_video_file_path(video, str(videofile), nmevideo=True, perspective=perspective, offset=new_offset, version=0)
+        video_file_full_path = os.path.join(WRITABLE_FOLDER, relative_path)
+        if os.path.exists(video_file_full_path):
+            if DEBUG_VIDEOS:
+                print('add_nme_video: the target destination already exists, but no object points to it, erase the file.')
+            os.remove(video_file_full_path)
 
-            # Save the new videofile in the video object
-            video.videofile.save(relative_path, videofile)
-        else:
-            msg = gettext("No video file supplied for NME video upload of gloss {glossid}.").format(glossid=self.pk)
-            raise ValidationError(msg)
+        # Save the new videofile in the video object
+        video.videofile.save(relative_path, videofile)
+
+        glossvideohistory = GlossVideoHistory(action="upload", gloss=self, actor=user,
+                                              uploadfile=videofile, goal_location=video_file_full_path)
+        glossvideohistory.save()
 
         self.lastUpdated = DT.datetime.now(tz=get_current_timezone())
         self.save()

@@ -3,7 +3,7 @@ from signbank.video.models import GlossVideo
 from signbank.dictionary.models import AnnotatedSentenceSource
 from django.utils.translation import gettext_lazy as _
 
-NME_PERSPECTIVE_UPLOAD_CHOICES = (('', '-'),('left',_('Left')),('right',_('Right')))
+NME_PERSPECTIVE_UPLOAD_CHOICES = (('',_('Center')),('left',_('Left')),('right',_('Right')))
 
 
 class VideoUploadForm(forms.ModelForm):
@@ -49,6 +49,7 @@ class VideoUploadForObjectForm(forms.Form):
         super(VideoUploadForObjectForm, self).__init__(*args, **kwargs)
 
         self.fields['offset'].initial = 0
+        self.fields['nme_perspective'].initial = ''
         for language in languages:
             description_field_name = 'description_' + language.language_code_2char
             self.fields[description_field_name] = forms.CharField(
