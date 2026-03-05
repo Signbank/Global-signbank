@@ -367,7 +367,7 @@ def get_gloss_path_to_video_file_on_disk(gloss):
     idgloss = gloss.idgloss
     two_letter_dir = get_two_letter_dir(idgloss)
     dataset_dir = gloss.lemma.dataset.acronym
-    filename = idgloss + '-' + str(gloss.id) + '.mp4'
+    filename = f'{idgloss}-{gloss.id}.mp4'
     relative_path = os.path.join(GLOSS_VIDEO_DIRECTORY, dataset_dir, two_letter_dir, filename)
     file_system_path = os.path.join(WRITABLE_FOLDER, GLOSS_VIDEO_DIRECTORY, dataset_dir, two_letter_dir, filename)
     if os.path.exists(file_system_path):
