@@ -2432,50 +2432,47 @@ class Gloss(MetaModelMixin, models.Model):
 
     def add_video(self, user, videofile, recorded):
         # Preventing circular import
-        from signbank.video.models import (GlossVideo, GlossVideoHistory, GlossVideoNME, GlossVideoPerspective,
-                                           get_video_file_path, get_gloss_path_to_video_file_on_disk)
+        from signbank.video.models import (GlossVideo, GlossVideoHistory,
+                                           get_video_file_path, find_dangling_video_files, remove_dangling_video_files)
+
+        files_without_objects = find_dangling_video_files(self)
+        # these should be deleted
+        if DEBUG_VIDEOS:
+            print('add_video: dangling_video_files: ', files_without_objects)
+        remove_dangling_video_files(self)
+
+        if not isinstance(videofile, TemporaryUploadedFile) or not isinstance(videofile, File):
+            msg = gettext("No video file supplied for video upload of gloss {glossid}.").format(glossid=self.pk)
+            raise ValidationError(msg)
+
+        # get existing gloss video objects but exclude NME and perspective videos
+        existing_videos = GlossVideo.objects.filter(gloss=self, glossvideonme=None, glossvideoperspective=None).order_by('version')
+        # Update the backup video objects stored in the database
+        for video_object in existing_videos:
+            video_object.reversion()
 
         # Create a new GlossVideo object
-        if isinstance(videofile, File) or videofile.content_type == 'django.core.files.uploadedfile.InMemoryUploadedFile':
+        video = GlossVideo(gloss=self, upload_to=get_video_file_path, glossvideonme=None, glossvideoperspective=None)
 
-            video = GlossVideo(gloss=self, upload_to=get_video_file_path, glossvideonme=None, glossvideoperspective=None)
-            # get existing gloss video objects but exclude NME and perspective videos
-            existing_videos = GlossVideo.objects.filter(gloss=self, glossvideonme=None, glossvideoperspective=None).order_by('version')
-            # Update the backup video objects stored in the database
-            for video_object in existing_videos:
-                video_object.reversion()
+        # see if there is a file with the correct path that is not referred to by an object
+        relative_path = get_video_file_path(video, str(videofile), nmevideo=False, perspective='', offset=1, version=0)
+        video_file_full_path = os.path.join(WRITABLE_FOLDER, relative_path)
+        if os.path.exists(video_file_full_path):
+            # a video file without a GlossVideo object already exists, remove the file
+            if DEBUG_VIDEOS:
+                print('add_video: the target destination already exists, but no object points to it, erase the file.')
+            os.remove(video_file_full_path)
 
-            # see if there is a file with the correct path that is not referred to by an object
-            already_existing_relative_target_path = get_gloss_path_to_video_file_on_disk(self)
-            if already_existing_relative_target_path:
-                # a video file without a GlossVideo object already exists, remove the file
-                file_system_path = os.path.join(WRITABLE_FOLDER, already_existing_relative_target_path)
-                if os.path.exists(file_system_path):
-                    os.remove(file_system_path)
+        video.videofile.save(relative_path, videofile)
 
-            relative_path = get_video_file_path(video, str(videofile), nmevideo=False, perspective='', version=0)
-            # Save the new video file in the video object
-            try:
-                video.videofile.save(relative_path, videofile)
-            except (OSError, ValueError):
-                video_file_full_path = os.path.join(WRITABLE_FOLDER, relative_path)
-                if os.path.exists(video_file_full_path):
-                    os.remove(video_file_full_path)
-                msg = gettext("The video could not be saved in the GlossVideo object for gloss {glossid}.").format(glossid=self.pk)
-                raise ValidationError(msg)
+        self.lastUpdated = DT.datetime.now(tz=get_current_timezone())
+        self.save()
+        video.make_poster_image()
 
-            self.lastUpdated = DT.datetime.now(tz=get_current_timezone())
-            self.save()
-            video.make_poster_image()
-
-            video_file_full_path = os.path.join(WRITABLE_FOLDER, relative_path)
-            glossvideohistory = GlossVideoHistory(action="upload", gloss=self, actor=user,
-                                                  uploadfile=videofile, goal_location=video_file_full_path)
-            glossvideohistory.save()
-            return video
-        else:
-            msg = gettext("A GlossVideo object could not be created for gloss {glossid}.").format(glossid=self.pk)
-            raise ValidationError(msg)
+        glossvideohistory = GlossVideoHistory(action="upload", gloss=self, actor=user,
+                                              uploadfile=videofile, goal_location=video_file_full_path)
+        glossvideohistory.save()
+        return video
 
     def restore_backup_video(self, videofile, glossvideo):
         # Preventing circular import
@@ -2594,13 +2591,14 @@ class Gloss(MetaModelMixin, models.Model):
 
     def add_nme_video(self, user, videofile, new_offset, recorded, perspective=''):
         # Preventing circular import
-        from signbank.video.models import GlossVideoNME, GlossVideoHistory, get_video_file_path, find_dangling_video_files
+        from signbank.video.models import GlossVideoNME, GlossVideoHistory, get_video_file_path, find_dangling_video_files, remove_dangling_video_files
 
         files_without_objects = find_dangling_video_files(self)
         # these should be deleted
         if DEBUG_VIDEOS:
-            print('add_nme_videos: dangling_video_files: ', files_without_objects)
-
+            print('add_nme_video: dangling_video_files: ', files_without_objects)
+        remove_dangling_video_files(self)
+        
         if not isinstance(videofile, TemporaryUploadedFile) or not isinstance(videofile, File):
             msg = gettext("No video file supplied for NME video upload of gloss {glossid}.").format(glossid=self.pk)
             raise ValidationError(msg)
@@ -2615,7 +2613,7 @@ class Gloss(MetaModelMixin, models.Model):
             existing_nme_vid.reversion()
 
         video = GlossVideoNME(gloss=self, offset=new_offset, perspective=perspective, upload_to=get_video_file_path)
-        # Create a GlossVideoHistory object
+
         relative_path = get_video_file_path(video, str(videofile), nmevideo=True, perspective=perspective, offset=new_offset, version=0)
         video_file_full_path = os.path.join(WRITABLE_FOLDER, relative_path)
         if os.path.exists(video_file_full_path):
@@ -2626,6 +2624,7 @@ class Gloss(MetaModelMixin, models.Model):
         # Save the new videofile in the video object
         video.videofile.save(relative_path, videofile)
 
+        # Create a GlossVideoHistory object
         glossvideohistory = GlossVideoHistory(action="upload", gloss=self, actor=user,
                                               uploadfile=videofile, goal_location=video_file_full_path)
         glossvideohistory.save()
@@ -2648,28 +2647,38 @@ class Gloss(MetaModelMixin, models.Model):
 
     def add_perspective_video(self, user, videofile, new_perspective, recorded):
         # Preventing circular import
-        from signbank.video.models import GlossVideoPerspective, GlossVideoHistory, get_video_file_path
+        from signbank.video.models import GlossVideoPerspective, GlossVideoHistory, get_video_file_path, find_dangling_video_files, remove_dangling_video_files
+
+        files_without_objects = find_dangling_video_files(self)
+        # these should be deleted
+        if DEBUG_VIDEOS:
+            print('add_perspective_video: dangling_video_files: ', files_without_objects)
+        remove_dangling_video_files(self)
+
+        if not isinstance(videofile, TemporaryUploadedFile) or not isinstance(videofile, File):
+            msg = gettext("No video file supplied for perspective video upload of gloss {glossid}.").format(glossid=self.pk)
+            raise ValidationError(msg)
 
         existing_perspectivevideos = GlossVideoPerspective.objects.filter(gloss=self, perspective=new_perspective, version=0)
         for existing_video in existing_perspectivevideos:
             existing_video.reversion()
         perspective = str(new_perspective)
-        if isinstance(videofile, File):
-            video = GlossVideoPerspective(gloss=self, perspective=perspective, upload_to=get_video_file_path)
-            # Create a GlossVideoHistory object
-            relative_path = get_video_file_path(video, str(videofile), nmevideo=False, perspective=perspective, offset=1, version=0)
-            if settings.DEBUG_VIDEOS:
-                print('add_perspective_video relative_path: ', relative_path)
-            video_file_full_path = os.path.join(WRITABLE_FOLDER, relative_path)
-            glossvideohistory = GlossVideoHistory(action="upload", gloss=self, actor=user,
-                                                  uploadfile=videofile, goal_location=video_file_full_path)
-            glossvideohistory.save()
 
-            # Save the new videofile in the video object
-            video.videofile.save(relative_path, videofile)
-        else:
-            msg = gettext("No video file supplied for perspective video upload of gloss {glossid}.").format(glossid=self.pk)
-            raise ValidationError(msg)
+        video = GlossVideoPerspective(gloss=self, perspective=perspective, upload_to=get_video_file_path)
+        relative_path = get_video_file_path(video, str(videofile), nmevideo=False, perspective=perspective, offset=1, version=0)
+        video_file_full_path = os.path.join(WRITABLE_FOLDER, relative_path)
+        if os.path.exists(video_file_full_path):
+            if DEBUG_VIDEOS:
+                print('add_perspective_video: the target destination already exists, but no object points to it, erase the file.')
+            os.remove(video_file_full_path)
+
+        # Save the new videofile in the video object
+        video.videofile.save(relative_path, videofile)
+
+        # Create a GlossVideoHistory object
+        glossvideohistory = GlossVideoHistory(action="upload", gloss=self, actor=user,
+                                              uploadfile=videofile, goal_location=video_file_full_path)
+        glossvideohistory.save()
 
         self.lastUpdated = DT.datetime.now(tz=get_current_timezone())
         self.save()

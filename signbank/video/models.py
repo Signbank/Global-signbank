@@ -68,6 +68,29 @@ def find_dangling_video_files(gloss):
     return files_without_glossvideo_object
 
 
+def remove_dangling_video_files(gloss):
+    dataset_dir = gloss.lemma.dataset.acronym
+    two_letter_dir = get_two_letter_dir(gloss.idgloss)
+    filename_prefix = f'{gloss.idgloss}-{gloss.id}'
+    chosen_path = str(os.path.join(WRITABLE_FOLDER, GLOSS_VIDEO_DIRECTORY, dataset_dir, two_letter_dir))
+    file_names = []
+    for gloss_video in GlossVideo.objects.filter(gloss=gloss).iterator():
+        file_names.append(gloss_video.videofile.name.split("/")[-1])
+    files_without_glossvideo_object = []
+    for subdir, dirs, files in os.walk(chosen_path):
+        for file in files:
+            if file.startswith(filename_prefix) and file not in file_names:
+                relative_path = f'{GLOSS_VIDEO_DIRECTORY}/{dataset_dir}/{two_letter_dir}/{file}'
+                files_without_glossvideo_object.append(relative_path)
+    for relpath in files_without_glossvideo_object:
+        video_file_full_path = os.path.join(WRITABLE_FOLDER, relpath)
+        if os.path.exists(video_file_full_path):
+            if DEBUG_VIDEOS:
+                print('remove_dangling_video_files: remove the video file that is not pointed to: ', relpath)
+            os.remove(video_file_full_path)
+    return
+
+
 def has_correct_filename(videofile, nmevideo, perspective, version):
     if not videofile:
         return False
