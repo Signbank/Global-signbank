@@ -15,12 +15,13 @@ function show_feedback(data) {
     };
     var glossid = data.glossid;
     var glossvideoid = data.glossvideoid;
+    var video_display = "#backup_video_player_" + glossvideoid;
+    $(video_display).empty();
     var feedback = data.feedback;
     if ($.isEmptyObject(feedback)) {
         return;
     };
-    var feedback_display = "#feedback_save_backup_video_" + glossvideoid;
-    $(feedback_display).empty();
+    var feedback_display = "#feedback_save_backup_video_" + glossid;
     $(feedback_display).html(feedback);
 };
 
@@ -28,9 +29,6 @@ $('.quick_save').click(function(e)
 {
     var glossid = $(this).attr('data-glossid');
     var glossvideoid = $(this).attr('data-glossvideoid');
-    var lookup = "#feedback_save_backup_video_" + glossvideoid;
-    var video_display = "#backup_video_player_" + glossvideoid;
-    $(lookup).empty();
     $.ajax({
         url : url + "/dictionary/ajax/save_backup_video_as_gloss_video/" + glossid + "/" + glossvideoid + "/",
         datatype: "json",
@@ -68,7 +66,7 @@ $('.quick_save').click(function(e)
         <table class='table table-condensed'>
             <tbody class="tbody tbody-light">
                 <tr>
-                    <td id="feedback_save_backup_video_{{glossvideo.id}}">
+                    <td id="feedback_save_backup_video_{{focus_gloss.id}}">
 
                     </td>
                 </tr>

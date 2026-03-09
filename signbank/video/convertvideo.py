@@ -192,13 +192,14 @@ def make_thumbnail_video(sourcefile, targetfile):
         .run(quiet=True)
     )
     # convert the small video to mp4
-    okay = convert_video(temp_target, targetfile)
+    okay, result  = convert_video(temp_target, targetfile)
 
     # remove the temp files
     stills_pattern = temp_video_frames_folder+"/*.png"
     for f in glob.glob(stills_pattern):
         os.remove(f)
-    os.remove(temp_target)
+    if temp_target != result:
+        os.remove(temp_target)
 
 
 # Documentation only: works on Ubuntu and matches older files/code.
@@ -275,40 +276,46 @@ def video_file_type_extension(video_file_full_path):
     return desired_video_extension
 
 
-def convert_video(sourcefile, targetfile):
-    """convert a video to h264 format
-    if force=True, do the conversion even if the video is already
-    h264 encoded, if False, then just copy the file in this case"""
-
+def rename_video_to_match_video_format(sourcefile):
     if not os.path.exists(sourcefile):
-        return False
-
+        return sourcefile
     basename, source_file_extension = os.path.splitext(sourcefile)
 
     video_format_extension = detect_video_file_extension(sourcefile)
     if not video_format_extension:
-        return False
-    file_with_extension_matching_video_type = f'{basename}{video_format_extension}'
+        return sourcefile
 
     if source_file_extension == '.mp4' and video_format_extension == ".mp4":
-        return True
+        return sourcefile
 
-    input_file = file_with_extension_matching_video_type if source_file_extension != video_format_extension else sourcefile
-    if input_file != sourcefile:
-        # the file extension of the source does not match the type of video, rename it for conversion
-        os.rename(sourcefile, input_file)
+    file_with_extension_matching_video_type = f'{basename}{video_format_extension}'
+    new_filename = file_with_extension_matching_video_type if source_file_extension != video_format_extension else sourcefile
+    if new_filename == sourcefile:
+        return sourcefile
 
-    result = subprocess.run(["ffmpeg", "-i", input_file, targetfile])
-    return result.returncode == 0
+    # the file extension of the source does not match the type of video, rename it for conversion
+    try:
+        os.rename(sourcefile, new_filename)
+    except (OSError, PermissionError, IOError):
+        return sourcefile
+
+    return new_filename
 
 
-if __name__ == '__main__':
+def convert_video(sourcefile, targetfile):
+    """convert a video to h264 format"""
 
-    if len(sys.argv) != 3:
-        print("Usage: convertvideo.py <sourcefile> <targetfile>")
-        exit()
-        
-    sourcefile = sys.argv[1]
-    targetfile = sys.argv[2]
-    
-    okay = convert_video(sourcefile, targetfile)
+    input_file = rename_video_to_match_video_format(sourcefile)
+
+    if not os.path.exists(input_file):
+        return False, input_file
+
+    try:
+        result = subprocess.run(["ffmpeg", "-i", input_file, targetfile])
+    except (IOError, OSError, PermissionError):
+        return False, input_file
+
+    if result.returncode == 0:
+        return True, targetfile
+    else:
+        return False, input_file

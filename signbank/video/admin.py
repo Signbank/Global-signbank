@@ -539,10 +539,11 @@ def convert_non_mp4_videos(modeladmin, request, queryset):
                 if DEBUG_VIDEOS:
                     print('video:admin:convert_non_mp4_videos:os.rename: ', source, flipped_source)
                 os.rename(source, flipped_source)
-                okay = convert_video(flipped_source, flipped_destination)
+                okay, result = convert_video(flipped_source, flipped_destination)
                 if DEBUG_VIDEOS:
                     print('video:admin:convert_non_mp4_videos:convert_video: ', flipped_source, flipped_destination)
-                if not okay or not os.path.exists(flipped_destination):
+                if not okay or result == flipped_source:
+                    os.rename(flipped_source, source)
                     continue
                 if DEBUG_VIDEOS:
                     print('video:admin:convert_non_mp4_videos:os.rename: ', flipped_destination, desired_relative_path)

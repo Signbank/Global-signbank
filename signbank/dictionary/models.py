@@ -2402,7 +2402,6 @@ class Gloss(MetaModelMixin, models.Model):
         video = GlossVideo(gloss=self, glossvideonme=None, glossvideoperspective=None, version=0)
         video.videofile.name = relative_path
         video.save()
-        video.make_poster_image()
         if settings.DEBUG_VIDEOS:
             print('get_video_path: GlossVideo object created for already existing file: ', relative_path)
         return relative_path
@@ -2487,6 +2486,7 @@ class Gloss(MetaModelMixin, models.Model):
 
         # Create a new GlossVideo object
         if glossvideo.is_glossvideoperspective():
+            is_primary = False
             glossvideo = glossvideo.glossvideoperspective
             video = GlossVideoPerspective(gloss=self, perspective=glossvideo.perspective,
                                           upload_to=get_video_file_path, version=0)
@@ -2501,6 +2501,7 @@ class Gloss(MetaModelMixin, models.Model):
                                                 perspective=glossvideo.perspective,
                                                 version=0)
         elif glossvideo.is_glossvideonme():
+            is_primary = False
             glossvideo = glossvideo.glossvideonme
             perspective = '' if glossvideo.is_primary() else glossvideo.perspective
             video = GlossVideoNME(gloss=self, offset=glossvideo.offset, perspective=perspective,
@@ -2517,6 +2518,7 @@ class Gloss(MetaModelMixin, models.Model):
                                                 perspective=perspective,
                                                 offset=glossvideo.offset, version=0)
         else:
+            is_primary = True
             video = GlossVideo(gloss=self,
                                upload_to=get_video_file_path, glossvideonme=None, glossvideoperspective=None)
 
@@ -2537,11 +2539,11 @@ class Gloss(MetaModelMixin, models.Model):
             msg = gettext("The video could not be saved in the GlossVideo object for gloss {glossid}.").format(glossid=self.pk)
             raise ValidationError(msg)
 
-        self.lastUpdated = DT.datetime.now(tz=get_current_timezone())
-        self.save()
-
-        if not video.is_glossvideonme() and not glossvideo.is_glossvideoperspective():
-            video.make_poster_image()
+        if is_primary:
+            try:
+                video.make_poster_image()
+            except (IOError, OSError, PermissionError):
+                pass
 
         video_file_full_path = os.path.join(WRITABLE_FOLDER, str(glossvideo.videofile))
         if os.path.exists(video_file_full_path):
@@ -2551,7 +2553,9 @@ class Gloss(MetaModelMixin, models.Model):
                 glossvideo.save()
             else:
                 os.remove(video_file_full_path)
-        glossvideo.delete()
+        if glossvideo:
+            glossvideo.delete()
+
         return video
 
     def has_nme_videos(self):

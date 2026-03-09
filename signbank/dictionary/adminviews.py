@@ -7858,7 +7858,6 @@ def save_backup_video_as_gloss_video(request, gloss_id, glossvideo_id):
 
     gloss = get_object_or_404(Gloss, id=gloss_id, archived=False)
     glossvideo = get_object_or_404(GlossVideo, id=glossvideo_id, gloss=gloss)
-
     # introduce a mutable context variable
     result = {'glossid': gloss_id,
               'glossvideoid': glossvideo_id,
@@ -7889,16 +7888,14 @@ def save_backup_video_as_gloss_video(request, gloss_id, glossvideo_id):
         with open(temp_video_path, 'rb') as f:
             vfile = File(f)
             new_glossvideo = gloss.restore_backup_video(vfile, glossvideo)
-    except ValidationError as e:
+    except (OSError, PermissionError, IOError, ValidationError) as e:
+        if os.path.exists(temp_video_path):
+            os.remove(temp_video_path)
         feedback_message = getattr(e, 'message', repr(e))
         result['feedback'] = feedback_message
-        return JsonResponse(result, safe=True)
-    except (OSError, PermissionError, IOError):
-        result['feedback'] = _('Unable to restore backup video file.')
         return JsonResponse(result, safe=True)
 
     new_video = str(new_glossvideo)
     add_gloss_update_to_revision_history(request.user, gloss, 'gloss_video_restore', backup_video, new_video)
-
     result['feedback'] = _('Backup video successfully restored.')
     return JsonResponse(result, safe=True)

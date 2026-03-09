@@ -592,11 +592,8 @@ class ExampleVideo(models.Model):
             old_relative_path = str(self.videofile)
             oldloc = self.videofile.path
             newloc = basename + ".mp4"
-            okay = convert_video(oldloc, newloc)
-            if not okay or not os.path.exists(newloc):
-                return
-            self.videofile.name = get_sentence_video_file_path(self, os.path.basename(newloc))
-            move_file_to_prullenmand(oldloc, old_relative_path)
+            okay, result = convert_video(oldloc, newloc)
+            self.videofile.name = get_sentence_video_file_path(self, os.path.basename(result))
 
     def ch_own_mod_video(self):
         """Change owner and permissions"""
@@ -743,11 +740,8 @@ class AnnotatedVideo(models.Model):
             old_relative_path = str(self.videofile)
             oldloc = self.videofile.path
             newloc = basename + ".mp4"
-            okay = convert_video(oldloc, newloc)
-            if not okay or not os.path.exists(newloc):
-                return
-            self.videofile.name = get_annotated_video_file_path(self, os.path.basename(newloc))
-            move_file_to_prullenmand(oldloc, old_relative_path)
+            okay, result = convert_video(oldloc, newloc)
+            self.videofile.name = get_annotated_video_file_path(self, os.path.basename(result))
 
     def ch_own_mod_video(self):
         """Change owner and permissions"""
@@ -885,7 +879,7 @@ class GlossVideo(models.Model):
     def save(self, *args, **kwargs):
         try:
             self.ensure_mp4()
-        except ValueError as e:
+        except (ValueError, IOError) as e:
             msg = getattr(e, 'message', repr(e))
             raise ValueError(msg)
         super(GlossVideo, self).save(*args, **kwargs)
@@ -941,10 +935,8 @@ class GlossVideo(models.Model):
         if video_format_extension != '.mp4':
             oldloc = self.videofile.path
             newloc = basename + ".mp4"
-            okay = convert_video(oldloc, newloc)
-            if not okay or not os.path.exists(newloc):
-                return
-            self.videofile.name = get_video_file_path(self, os.path.basename(newloc))
+            okay, result = convert_video(oldloc, newloc)
+            self.videofile.name = get_video_file_path(self, os.path.basename(result))
 
     def ch_own_mod_video(self):
         """Change owner and permissions"""
@@ -996,6 +988,7 @@ class GlossVideo(models.Model):
             generate_still_image(self)
         except (OSError, PermissionError, IOError):
             print('Error generating still image', sys.exc_info())
+            pass
 
     def convert_to_mp4(self):
         # this method is not called (bugs)
@@ -1023,7 +1016,6 @@ class GlossVideo(models.Model):
                     print('delete_files exception GlossVideo OSError, PermissionError: unlink', str(self.videofile))
                 pass
         else:
-            print('file does not exist set to empty: ', self.videofile.path)
             self.videofile.name = ''
 
     def reversion(self):
@@ -1190,11 +1182,9 @@ class GlossVideoNME(GlossVideo):
             old_relative_path = str(self.videofile)
             oldloc = self.videofile.path
             newloc = basename + ".mp4"
-            okay = convert_video(oldloc, newloc)
-            if not okay or not os.path.exists(newloc):
-                return
-            self.videofile.name = get_video_file_path(self, os.path.basename(newloc),
-                                                      nmevideo=True, perspective='', offset=self.offset)
+            okay, result = convert_video(oldloc, newloc)
+            self.videofile.name = get_video_file_path(self, os.path.basename(result),
+                                                      nmevideo=True, perspective=self.perspective, offset=self.offset)
 
     def save(self, *args, **kwargs):
         super(GlossVideoNME, self).save(*args, **kwargs)
@@ -1307,10 +1297,8 @@ class GlossVideoPerspective(GlossVideo):
             old_relative_path = str(self.videofile)
             oldloc = self.videofile.path
             newloc = basename + ".mp4"
-            okay = convert_video(oldloc, newloc)
-            if not okay or not os.path.exists(newloc):
-                return
-            self.videofile.name = get_video_file_path(self, os.path.basename(newloc),
+            okay, result = convert_video(oldloc, newloc)
+            self.videofile.name = get_video_file_path(self, os.path.basename(result),
                                                       nmevideo=False, perspective=self.perspective, offset=0, version=self.version)
 
     def move_video(self, move_files_on_disk=True):
