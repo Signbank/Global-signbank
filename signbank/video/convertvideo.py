@@ -306,6 +306,7 @@ def convert_video(sourcefile, targetfile):
     """convert a video to h264 format"""
 
     input_file = rename_video_to_match_video_format(sourcefile)
+    same_file = sourcefile == input_file
 
     if not os.path.exists(input_file):
         return False, input_file
@@ -313,9 +314,19 @@ def convert_video(sourcefile, targetfile):
     try:
         result = subprocess.run(["ffmpeg", "-i", input_file, targetfile])
     except (IOError, OSError, PermissionError):
+        if not same_file:
+            # the file was renamed to match the video format, this will be used in the object on return
+            os.remove(sourcefile)
         return False, input_file
 
     if result.returncode == 0:
+        if not same_file:
+            os.remove(input_file)
+        if sourcefile != targetfile:
+            os.remove(sourcefile)
         return True, targetfile
     else:
+        if not same_file:
+            # the file was renamed to match the video format, this will be used in the object on return
+            os.remove(sourcefile)
         return False, input_file
