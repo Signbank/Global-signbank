@@ -137,6 +137,7 @@ class FieldChoice(models.Model):
     machine_value = models.IntegerField(
                 help_text="The actual numeric value stored in the database. Created automatically.")
     field_color = ColorField(default='ffffff')
+    reverse = models.ForeignKey('self', verbose_name=_("Reverse Relation"), blank=True, null=True, on_delete=models.SET_NULL)
 
     def __str__(self):
         name = f'{self.field}: {self.name} ({self.machine_value})'

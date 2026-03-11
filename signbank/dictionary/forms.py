@@ -1167,7 +1167,7 @@ class FieldChoiceForm(forms.ModelForm):
         model = FieldChoice
         fields = ['field'] \
                  + ['name_' + language.replace('-', '_') for language in MODELTRANSLATION_LANGUAGES] \
-                 + ['field_color', 'machine_value', ]
+                 + ['field_color', 'machine_value', 'reverse', ]
 
     def __init__(self, *args, **kwargs):
 
@@ -1222,6 +1222,21 @@ class FieldChoiceForm(forms.ModelForm):
             self.fields['field'].initial = instance_field
             # construct a singleton choice list to prevent user from changing it
             self.fields['field'].widget = forms.Select(choices=[(instance_field, instance_field)])
+
+        field_role_choices = FieldChoice.objects.filter(field='RelationRole').values('name').distinct()
+        field_role_choices = [f['name'] for f in field_role_choices]
+        field_role_choices = sorted(list(set(field_role_choices)))
+        field_choices = [(f, f) for f in field_role_choices]
+        self.fields['reverse'].widget = forms.Select(choices=field_choices)
+        if self.instance.id and self.fields['field'].initial != 'RelationRole':
+            self.fields['reverse'].widget = forms.HiddenInput()
+            self.fields['reverse'].disabled = True
+        elif self.instance.id and self.instance.reverse and self.instance.reverse.machine_value > 1:
+            # if the relation already exists, this keeps its reverse relation from being modified
+            field_role_choices = FieldChoice.objects.filter(field='RelationRole').values('name', 'machine_value').distinct()
+            field_role_choices = [f['name'] for f in field_role_choices if f['machine_value'] == self.instance.reverse.machine_value]
+            field_choices = [(f, f) for f in field_role_choices]
+            self.fields['reverse'].widget = forms.Select(choices=field_choices)
 
     def already_exists(self, field, language_field, language_field_value):
         matches = FieldChoice.objects.filter(field=field).filter(**{language_field: language_field_value}).count()

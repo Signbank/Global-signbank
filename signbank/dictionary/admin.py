@@ -829,7 +829,7 @@ class FieldChoiceAdmin(VersionAdmin, TranslationAdmin):
 
     model = FieldChoice
     fields = ['field', 'name'] \
-             + ['field_color', 'machine_value']
+             + ['field_color', 'machine_value', 'reverse']
     form = FieldChoiceForm
 
     show_field_choice_colors = SHOW_FIELD_CHOICE_COLORS
