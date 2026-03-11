@@ -2420,12 +2420,8 @@ class Gloss(MetaModelMixin, models.Model):
     def add_video(self, user, videofile, recorded):
         # Preventing circular import
         from signbank.video.models import (GlossVideo, GlossVideoHistory,
-                                           get_video_file_path, find_dangling_video_files, remove_dangling_video_files)
+                                           get_video_file_path, remove_dangling_video_files)
 
-        files_without_objects = find_dangling_video_files(self)
-        # these should be deleted
-        if DEBUG_VIDEOS:
-            print('add_video: dangling_video_files: ', files_without_objects)
         remove_dangling_video_files(self)
 
         if not isinstance(videofile, TemporaryUploadedFile) or not isinstance(videofile, File):
@@ -2583,12 +2579,8 @@ class Gloss(MetaModelMixin, models.Model):
 
     def add_nme_video(self, user, videofile, new_offset, recorded, perspective=''):
         # Preventing circular import
-        from signbank.video.models import GlossVideoNME, GlossVideoHistory, get_video_file_path, find_dangling_video_files, remove_dangling_video_files
+        from signbank.video.models import GlossVideoNME, GlossVideoHistory, get_video_file_path, remove_dangling_video_files
 
-        files_without_objects = find_dangling_video_files(self)
-        # these should be deleted
-        if DEBUG_VIDEOS:
-            print('add_nme_video: dangling_video_files: ', files_without_objects)
         remove_dangling_video_files(self)
 
         if not isinstance(videofile, TemporaryUploadedFile) or not isinstance(videofile, File):
@@ -2639,12 +2631,8 @@ class Gloss(MetaModelMixin, models.Model):
 
     def add_perspective_video(self, user, videofile, new_perspective, recorded):
         # Preventing circular import
-        from signbank.video.models import GlossVideoPerspective, GlossVideoHistory, get_video_file_path, find_dangling_video_files, remove_dangling_video_files
+        from signbank.video.models import GlossVideoPerspective, GlossVideoHistory, get_video_file_path, remove_dangling_video_files
 
-        files_without_objects = find_dangling_video_files(self)
-        # these should be deleted
-        if DEBUG_VIDEOS:
-            print('add_perspective_video: dangling_video_files: ', files_without_objects)
         remove_dangling_video_files(self)
 
         if not isinstance(videofile, TemporaryUploadedFile) or not isinstance(videofile, File):
