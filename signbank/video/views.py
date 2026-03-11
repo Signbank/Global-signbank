@@ -65,8 +65,8 @@ def addvideo(request):
         try:
             gloss_video = gloss.add_video(request.user, vfile, recorded)
             uploaded_video = str(gloss_video)
-        except ValidationError as e:
-            feedback_message = getattr(e, 'message', repr(e))
+        except (ValueError, ValidationError) as e:
+            feedback_message = _("Error uploading the primary video file.")
             messages.add_message(request, messages.ERROR, feedback_message)
             return redirect(redirect_url)
     elif object_type == 'gloss_perspectivevideo':
@@ -77,10 +77,15 @@ def addvideo(request):
         stringpersp = str(perspective)
         if stringpersp:
             fieldname += '_' + stringpersp
-        perspective_video = gloss.add_perspective_video(request.user, vfile, stringpersp, recorded)
+        try:
+            perspective_video = gloss.add_perspective_video(request.user, vfile, stringpersp, recorded)
+            uploaded_video = str(perspective_video)
+        except (ValueError, ValidationError) as e:
+            feedback_message = _("Error uploading the perspective video file.")
+            messages.add_message(request, messages.ERROR, feedback_message)
+            return redirect(redirect_url)
         if settings.DEBUG_VIDEOS:
-            print('Perspective video created: ', str(perspective_video))
-        uploaded_video = str(perspective_video)
+            print('Perspective video created: ', uploaded_video)
     elif object_type == 'gloss_nmevideo':
         gloss = Gloss.objects.filter(id=object_id).first()
         if not gloss:
@@ -88,7 +93,12 @@ def addvideo(request):
         offset = form.cleaned_data['offset']
         perspective = form.cleaned_data['nme_perspective']
         fieldname += '_' + str(offset) + '_' + str(perspective)
-        nmevideo = gloss.add_nme_video(request.user, vfile, offset, recorded, perspective)
+        try:
+            nmevideo = gloss.add_nme_video(request.user, vfile, offset, recorded, perspective)
+        except (ValueError, ValidationError) as e:
+            feedback_message = _("Error uploading the NME video file.")
+            messages.add_message(request, messages.ERROR, feedback_message)
+            return redirect(redirect_url)
         translation_languages = gloss.lemma.dataset.translation_languages.all()
         descriptions = dict()
         for language in translation_languages:

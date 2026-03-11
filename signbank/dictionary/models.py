@@ -2606,7 +2606,11 @@ class Gloss(MetaModelMixin, models.Model):
             os.remove(video_file_full_path)
 
         # Save the new videofile in the video object
-        video.videofile.save(relative_path, videofile)
+        try:
+            video.videofile.save(relative_path, videofile)
+        except (ValueError, ValidationError) as e:
+            msg = gettext("Error uploading NME video file supplied for gloss {glossid}.").format(glossid=self.pk)
+            raise ValidationError(msg)
 
         # Create a GlossVideoHistory object
         glossvideohistory = GlossVideoHistory(action="upload", gloss=self, actor=user,
