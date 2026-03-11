@@ -2392,18 +2392,6 @@ class Gloss(MetaModelMixin, models.Model):
         if not check_file_on_disk:
             return ""
         relative_path = get_gloss_path_to_video_file_on_disk(self)
-        if not relative_path:
-            # there is no video file and no GlossVideo object with version 0 for this gloss
-            return ''
-        # a video with the correct name was found
-        if settings.DEBUG_VIDEOS:
-            print('get_video_path: already existing file without GlossVideo object found: ', relative_path)
-        # there is a video file but no GlossVideo object
-        video = GlossVideo(gloss=self, glossvideonme=None, glossvideoperspective=None, version=0)
-        video.videofile.name = relative_path
-        video.save()
-        if settings.DEBUG_VIDEOS:
-            print('get_video_path: GlossVideo object created for already existing file: ', relative_path)
         return relative_path
 
     def get_video(self):
@@ -2602,7 +2590,7 @@ class Gloss(MetaModelMixin, models.Model):
         if DEBUG_VIDEOS:
             print('add_nme_video: dangling_video_files: ', files_without_objects)
         remove_dangling_video_files(self)
-        
+
         if not isinstance(videofile, TemporaryUploadedFile) or not isinstance(videofile, File):
             msg = gettext("No video file supplied for NME video upload of gloss {glossid}.").format(glossid=self.pk)
             raise ValidationError(msg)
