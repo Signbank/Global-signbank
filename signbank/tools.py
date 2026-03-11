@@ -46,7 +46,7 @@ from signbank.csv_interface import (sense_translations_for_language, update_sens
 from signbank.dictionary.field_choices import fields_to_fieldcategory_dict
 
 from tagging.models import TaggedItem, Tag
-from signbank.video.extractMiddleFrame import MiddleFrameExtracter
+from signbank.video.extract_middle_frame import MiddleFrameExtracter
 
 
 def get_two_letter_dir(idgloss):

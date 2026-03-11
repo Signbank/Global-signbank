@@ -1,9 +1,3 @@
-#!/usr/bin/python
-#
-# This is a rewrite of the perl script
-# signCounter.pl
-
-
 import getopt
 import json
 import os
@@ -57,17 +51,15 @@ class SignCounter:
 
     def run(self):
         """ """
-        if len(self.all_files) > 0:
-            for f in self.all_files:
-                try:
-                    self.process_file(f)
-                    self.generate_result()
-                except KeyError as ke:
-                    sys.stderr.write("KeyError in file %s: '%s'\n" % (f, ke.args[0]))
-                # except:
-                #     sys.stderr.write("Unexpected error: %s %s\n" % (str(sys.exc_info()[0]), str(sys.exc_info()[1])))
-        else:
+        if len(self.all_files) == 0:
             sys.stderr.write("No EAF files to process.\n")
+            return
+        for f in self.all_files:
+            try:
+                self.process_file(f)
+                self.generate_result()
+            except KeyError as ke:
+                sys.stderr.write("KeyError in file %s: '%s'\n" % (f, ke.args[0]))
 
     def process_file(self, fname):
         file_basename = os.path.basename(fname)
@@ -342,25 +334,26 @@ class SignCounter:
 
 
 def output_results(result, csv_file=False):
-    if csv_file:
-        # Flatten result dict
-        flat_dicts = {}
-        columns = set()
-        for gloss, data in result.items():
-            flat_data = flatdict.FlatDict(data, delimiter='/')
-            flat_dicts[gloss] = flat_data
-            columns.update(flat_data.keys())
-
-        # Write to csv file
-        with open(csv_file, 'w') as f:
-            freqs_writer = csv.writer(f)
-            columns_list = sorted(columns)
-            freqs_writer.writerow(['gloss'] + columns_list)
-            for gloss, flat_dict in flat_dicts.items():
-                data_field = [flat_dict.get(name, '') for name in columns_list]
-                freqs_writer.writerow([gloss] + data_field)
-    else:
+    if not csv_file:
         print(json.dumps(result, sort_keys=True, indent=4))
+        return
+        
+    # Flatten result dict
+    flat_dicts = {}
+    columns = set()
+    for gloss, data in result.items():
+        flat_data = flatdict.FlatDict(data, delimiter='/')
+        flat_dicts[gloss] = flat_data
+        columns.update(flat_data.keys())
+
+    # Write to csv file
+    with open(csv_file, 'w') as f:
+        freqs_writer = csv.writer(f)
+        columns_list = sorted(columns)
+        freqs_writer.writerow(['gloss'] + columns_list)
+        for gloss, flat_dict in flat_dicts.items():
+            data_field = [flat_dict.get(name, '') for name in columns_list]
+            freqs_writer.writerow([gloss] + data_field)
 
 
 if __name__ == "__main__":

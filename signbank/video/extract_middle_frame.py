@@ -14,9 +14,6 @@ from shutil import copyfile, rmtree
 from subprocess import Popen
 from math import floor
 
-__author__ = "Micha Hulsbosch"
-__date__ = "October 2016"
-
 
 class MiddleFrameExtracter:
     """
@@ -97,26 +94,28 @@ class MiddleFrameExtracter:
         """
         frames_dir = dirs[0]
         frames = sorted(os.listdir(frames_dir))
-        if len(frames) != 0:
-            middle_frame_index = int(floor(len(frames)/2))
-            middle_frame = frames[middle_frame_index]
-            video_base_name = os.path.basename(video_file)
-            video_name = os.path.splitext(video_base_name)[0]
-            video_still = dirs[1] + os.sep + video_name + '.png'
-            if not dry_run:
-                copyfile(frames_dir + os.sep + middle_frame, video_still)
+        if len(frames) == 0:
+            return
 
-            # Create the 320x180 version
-            cmd = [
-                "convert",
-                video_still,
-                "-resize", "x180",
-                dirs[1] + os.sep + video_name + '_320x180.png'
-            ]
-            print(" ".join(cmd), file=sys.stderr)
-            if not dry_run:
-                p = Popen(cmd)
-                p.wait()
+        middle_frame_index = int(floor(len(frames)/2))
+        middle_frame = frames[middle_frame_index]
+        video_base_name = os.path.basename(video_file)
+        video_name = os.path.splitext(video_base_name)[0]
+        video_still = dirs[1] + os.sep + video_name + '.png'
+        if not dry_run:
+            copyfile(frames_dir + os.sep + middle_frame, video_still)
+
+        # Create the 320x180 version
+        cmd = [
+            "convert",
+            video_still,
+            "-resize", "x180",
+            dirs[1] + os.sep + video_name + '_320x180.png'
+        ]
+        print(" ".join(cmd), file=sys.stderr)
+        if not dry_run:
+            p = Popen(cmd)
+            p.wait()
 
 if __name__ == "__main__":
     usage = "Usage: \n" + sys.argv[0] + \

@@ -17,7 +17,7 @@ from signbank.settings.server_specific import (PREFIX_URL, WRITABLE_FOLDER, TEST
 
 from signbank.dictionary.models import Dataset, Gloss, Corpus, Document, Speaker, GlossFrequency
 from signbank.tools import get_default_annotationidglosstranslation, get_eaf_creation_time
-from signbank.signCounter import SignCounter
+from signbank.sign_counter import SignCounter
 
 
 def get_gloss_from_frequency_dict(dataset_acronym, gloss_id_or_value):
