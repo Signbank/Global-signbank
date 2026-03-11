@@ -1,5 +1,3 @@
-#!/usr/bin/python
-
 """
 This script will resize video dimensions and delete frames from beginning and end.
 """
@@ -13,14 +11,11 @@ import sys
 from subprocess import Popen, PIPE
 from fractions import Fraction
 
-__author__ = "Micha Hulsbosch"
-__date__ = "August 2016"
 
 class VideoResizer:
     """
     Resizes the dimension and duration of a video.
     """
-
     def __init__(self, video_files, ffmpeg_cmd="ffmpeg", resize_scale=-1, frames_begin=0, frames_end=-1):
         """
         :param video_files: a list of video file names

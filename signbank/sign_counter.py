@@ -127,39 +127,40 @@ class SignCounter:
 
             match_left = re.match(r'(Gloss?L|left\s*hand)', tier_id, re.IGNORECASE)
             match_right = re.match(r'(Gloss?R|right\s*hand)', tier_id, re.IGNORECASE)
-            if match_left or match_right:
-                hand = 'L' if match_left else 'R'
-                tier_id_hand[hand] = tier_id
+            if not match_left and not match_right:
+                continue
 
-                list_of_glosses[tier_id]["participant"] = participant
+            hand = 'L' if match_left else 'R'
+            tier_id_hand[hand] = tier_id
+            list_of_glosses[tier_id]["participant"] = participant
+            list_of_glosses[tier_id]["annotations"] = []
 
-                list_of_glosses[tier_id]["annotations"] = []
-
-                for annotation in tier.findall("ANNOTATION/ALIGNABLE_ANNOTATION"):
-                    annotation_id = annotation.attrib['ANNOTATION_ID']
-                    cve_ref = None
-                    if 'CVE_REF' in annotation.attrib:
-                        cve_ref = annotation.attrib['CVE_REF']
-                    annotation_data = {
-                        "begin": int(self.time_slots[annotation.attrib['TIME_SLOT_REF1']]),
-                        "end": int(self.time_slots[annotation.attrib['TIME_SLOT_REF2']]),
-                        "id": annotation_id,
-                        "value": annotation.find("ANNOTATION_VALUE").text,
-                        "cve_ref": cve_ref,
-                        "participant": participant,
-                        "hand": hand
-                    }
-                    list_of_glosses[tier_id]["annotations"].append(annotation_data)
+            for annotation in tier.findall("ANNOTATION/ALIGNABLE_ANNOTATION"):
+                annotation_id = annotation.attrib['ANNOTATION_ID']
+                cve_ref = None
+                if 'CVE_REF' in annotation.attrib:
+                    cve_ref = annotation.attrib['CVE_REF']
+                annotation_data = {
+                    "begin": int(self.time_slots[annotation.attrib['TIME_SLOT_REF1']]),
+                    "end": int(self.time_slots[annotation.attrib['TIME_SLOT_REF2']]),
+                    "id": annotation_id,
+                    "value": annotation.find("ANNOTATION_VALUE").text,
+                    "cve_ref": cve_ref,
+                    "participant": participant,
+                    "hand": hand
+                }
+                list_of_glosses[tier_id]["annotations"].append(annotation_data)
 
         return list_of_glosses, tier_id_hand
 
     def extract_glosses(self, participant, tier):
-        list_of_glosses = {}
         tier_id = self.get_tier_id(tier)
-        list_of_glosses[tier_id] = {}
-        list_of_glosses[tier_id]["participant"] = participant
-        list_of_glosses[tier_id]["annotations"] = self.get_list_of_glosses(tier, participant, None)
-        return list_of_glosses
+        return {
+            tier_id: {
+                "participant": participant,
+                "annotations": self.get_list_of_glosses(tier, participant, None),
+            }
+        }
 
     def get_list_of_glosses(self, tier, participant, hand):
         annotations = []
@@ -329,7 +330,6 @@ class SignCounter:
             self.sign_counts[gloss].update(something_frequencies)
 
     def get_result(self):
-
         return self.sign_counts
 
 
@@ -337,7 +337,7 @@ def output_results(result, csv_file=False):
     if not csv_file:
         print(json.dumps(result, sort_keys=True, indent=4))
         return
-        
+
     # Flatten result dict
     flat_dicts = {}
     columns = set()

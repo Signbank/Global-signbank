@@ -1,5 +1,3 @@
-#!/usr/bin/python
-
 """
 This script will resize video dimensions and delete frames from beginning and end.
 """
@@ -7,7 +5,6 @@ This script will resize video dimensions and delete frames from beginning and en
 from __future__ import print_function
 
 import getopt
-from urllib.parse import urlparse
 import os
 import sys
 from shutil import copyfile, rmtree
@@ -16,11 +13,6 @@ from math import floor
 
 
 class MiddleFrameExtracter:
-    """
-
-
-    """
-
     def __init__(self, video_files, output_dir=None, ffmpeg_cmd="ffmpeg", delete_frames=True):
         """
         :param video_files: a list of video file names
@@ -57,12 +49,10 @@ class MiddleFrameExtracter:
     def create_dirs(self, video_file):
         new_dirs = []
         for dir_name in ["all", "middle"]:
-            new_dir = self.output_dir + os.sep + \
-                      os.path.basename(video_file) + "-frames" + os.sep + dir_name
+            new_dir = os.path.join(self.output_dir, f'{os.path.basename(video_file)}-frames', dir_name)
             if not os.path.isdir(new_dir):
                 os.makedirs(new_dir, 0o750)
             new_dirs.append(new_dir)
-
         return new_dirs
 
     def extract_frames(self, video_file, dry_run, dirs):
