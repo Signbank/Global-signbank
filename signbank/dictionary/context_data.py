@@ -108,15 +108,10 @@ def get_choices_colors(fields_with_choices):
     fields_with_choices['definitionRole'] = 'NoteType'
     fields_with_choices['hasComponentOfType'] = 'MorphologyType'
     fields_with_choices['mrpType'] = 'MorphemeType'
-    fields_with_choices['hasRelation'] = 'Relation'
+    fields_with_choices['hasRelation'] = 'RelationRole'
     choices_colors = {}
     for (fieldname, field_category) in fields_with_choices.items():
-        if fieldname == 'hasRelation':
-            relations = ['homonym', 'synonym', 'variant', 'antonym', 'hyponym',
-                         'hypernym', 'seealso', 'paradigm']
-            choices_colors[fieldname] = json.dumps(choicelist_choicelist_to_field_colors(relations))
-            continue
-        elif field_category in CATEGORY_MODELS_MAPPING.keys():
+        if field_category in CATEGORY_MODELS_MAPPING.keys():
             field_choices = CATEGORY_MODELS_MAPPING[field_category].objects.all()
         else:
             field_choices = FieldChoice.objects.filter(field__iexact=field_category)

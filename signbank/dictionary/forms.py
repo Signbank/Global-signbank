@@ -568,10 +568,15 @@ class RelationForm(forms.ModelForm):
 
     class Meta:
         model = Relation
-        fields = ['role']
+        fields = ['role_fk']
         widgets = {
-                   'role': forms.Select(attrs={'class': 'form-control'}),
+                   'role_fk': forms.Select(attrs={'class': 'form-control'}),
                    }
+
+    def __init__(self, *args, **kwargs):
+        super(RelationForm, self).__init__(*args, **kwargs)
+        self.fields['role_fk'].choices = list(FieldChoice.objects.filter(field='RelationRole', machine_value__gt=1).order_by('name')
+                                           .values_list('pk', 'name'))
 
 
 class VariantsForm(forms.Form):
@@ -818,7 +823,7 @@ class HandshapeSearchForm(forms.ModelForm):
         for finger in ['fsT', 'fsI', 'fsM', 'fsR', 'fsP',
                        'fs2T', 'fs2I', 'fs2M', 'fs2R', 'fs2P',
                        'ufT', 'ufI', 'ufM', 'ufR', 'ufP']:
-            self.fields[finger].inital = False
+            self.fields[finger].initial = False
             self.fields[finger].widget.choices = [(True, _('Yes')), (False, _('No'))]
 
 
@@ -1158,11 +1163,15 @@ class FieldChoiceForm(forms.ModelForm):
     field_category = ''
     prepopulated_fields = {}
 
+    reverse = forms.ChoiceField(label=_('Reverse Relation'), choices=[],
+                                widget=forms.Select(attrs=ATTRS_FOR_FORMS), required=False)
+    reverse_identity = forms.BooleanField(label=_('Use Identity Reverse Relation'), required=False, initial=True)
+
     class Meta:
         model = FieldChoice
         fields = ['field'] \
                  + ['name_' + language.replace('-', '_') for language in MODELTRANSLATION_LANGUAGES] \
-                 + ['field_color', 'machine_value', ]
+                 + ['field_color', 'machine_value', 'reverse', ]
 
     def __init__(self, *args, **kwargs):
 
@@ -1217,6 +1226,29 @@ class FieldChoiceForm(forms.ModelForm):
             self.fields['field'].initial = instance_field
             # construct a singleton choice list to prevent user from changing it
             self.fields['field'].widget = forms.Select(choices=[(instance_field, instance_field)])
+
+        field_role_choices = FieldChoice.objects.filter(field='RelationRole').order_by('machine_value')
+        self.fields['reverse'] = forms.ModelChoiceField(label=_('Reverse Relation'),
+                                                        queryset=field_role_choices, empty_label=None,
+                                                        widget=forms.Select(attrs=ATTRS_FOR_FORMS))
+        self.fields['reverse_identity'] = forms.TypedChoiceField(label=_('Reverse Relation Role'), choices=[(True, _('Use Self')), (False, _('Make New Relation'))],
+                                                                 widget=forms.RadioSelect)
+        if self.instance.id and self.fields['field'].initial != 'RelationRole':
+            self.fields['reverse'].widget = forms.HiddenInput()
+            self.fields['reverse'].disabled = True
+            self.fields['reverse_identity'].widget = forms.HiddenInput()
+            self.fields['reverse_identity'].disabled = True
+        elif self.instance.id and self.instance.reverse and self.instance.reverse.machine_value > 1:
+            # if the relation already exists, this keeps its reverse relation from being modified
+            field_role_choices = FieldChoice.objects.filter(field='RelationRole').order_by('machine_value').values('name', 'machine_value')
+            field_role_choices = [f['name'] for f in field_role_choices if f['machine_value'] == self.instance.reverse.machine_value]
+            field_choices = [(f, f) for f in field_role_choices]
+            self.fields['reverse'].widget = forms.Select(choices=field_choices)
+        else:
+            self.fields['reverse'].choices = list(FieldChoice.objects.filter(field='RelationRole').order_by('machine_value')
+                                           .values_list('pk', 'name'))
+            self.fields['reverse'].initial = (FieldChoice.objects.filter(field='RelationRole').order_by('machine_value').first().pk, '-')
+            self.fields['reverse_identity'].initial = True
 
     def already_exists(self, field, language_field, language_field_value):
         matches = FieldChoice.objects.filter(field=field).filter(**{language_field: language_field_value}).count()
