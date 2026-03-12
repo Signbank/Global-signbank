@@ -1780,24 +1780,6 @@ class Gloss(MetaModelMixin, models.Model):
                 speaker_age_data[speaker_age] = 1
         return speaker_age_data
 
-    def homophones(self):
-        """Return the set of homophones for this gloss ordered by sense number"""
-
-        if self.sense == 1:
-            relations = Relation.objects.filter(role="homophone", target__exact=self).order_by('source__sense')
-            homophones = [rel.source for rel in relations]
-            homophones.insert(0, self)
-            return homophones
-        elif self.sense > 1:
-            # need to find the root and see how many senses it has
-            homophones = self.relation_sources.filter(target__archived__exact=False,
-                                                      source__archived__exact=False,
-                                                      role='homophone', target__sense__exact=1)
-            if len(homophones) > 0:
-                root = homophones[0].target
-                return root.homophones()
-        return []
-
     def homonyms_count(self):
 
         homonyms_count = self.relation_sources.filter(target__archived__exact=False,
@@ -2417,7 +2399,7 @@ class Gloss(MetaModelMixin, models.Model):
         return ''
 
     def get_video_url(self):
-        """return  the url of the video for this gloss which may be that of a homophone"""
+        """return the url of the video for this gloss"""
         video_path = self.get_video()
         return escape_uri_path(video_path) if video_path else ''
 
