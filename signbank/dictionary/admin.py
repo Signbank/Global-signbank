@@ -13,6 +13,7 @@ from django.contrib.admin import SimpleListFilter
 from modeltranslation.admin import TranslationAdmin
 from django.contrib.auth import get_permission_codename
 from django.utils.translation import override, gettext_lazy as _
+from urllib.parse import parse_qsl
 
 from guardian.admin import GuardedModelAdmin
 
@@ -829,7 +830,7 @@ class FieldChoiceAdmin(VersionAdmin, TranslationAdmin):
 
     model = FieldChoice
     fields = ['field', 'name'] \
-             + ['field_color', 'machine_value', 'reverse']
+             + ['field_color', 'machine_value', 'reverse_identity', 'reverse']
     form = FieldChoiceForm
 
     show_field_choice_colors = SHOW_FIELD_CHOICE_COLORS
@@ -851,7 +852,6 @@ class FieldChoiceAdmin(VersionAdmin, TranslationAdmin):
 
     def get_form(self, request, obj=None, **kwargs):
         form = super(FieldChoiceAdmin, self).get_form(request, obj, **kwargs)
-
         if obj:
             # for display in the HTML color picker, the field color needs to be prefixed with #
             # in the database,only the hex number is stored
@@ -859,6 +859,22 @@ class FieldChoiceAdmin(VersionAdmin, TranslationAdmin):
             obj_color = obj.field_color
             if obj_color[0] != '#':
                 obj.field_color = '#'+obj.field_color
+        else:
+            # a new field choice is being created or edited
+            # see if the user is inside a category
+            try:
+                changelist_filters = request.GET['_changelist_filters']
+            except KeyError:
+                changelist_filters = ''
+
+            if changelist_filters:
+                query_params = dict(parse_qsl(changelist_filters))
+            else:
+                query_params = ''
+            if query_params:
+                new_field_category = query_params.get('field__exact')
+                if new_field_category == 'RelationRole':
+                    print('creating a relation role, expand the form')
         return form
 
     def get_actions(self, request):
@@ -1002,13 +1018,12 @@ class FieldChoiceAdmin(VersionAdmin, TranslationAdmin):
     delete_selected.short_description = "Delete selected field choices"
 
     def save_model(self, request, obj, form, change):
-
+        print('inside save model')
         if not obj.machine_value:
             # Check out the query-set and make sure that it exists
             qs = FieldChoice.objects.filter(field=obj.field)
             if qs.count() == 0:
                 # The field does not yet occur within FieldChoice
-                # Future: ask user if that is what he wants (don't know how...)
                 # For now: assume user wants to add a new field (e.g: wordClass)
                 # NOTE: start with '2', because 0,1 are already taken by default values
                 obj.machine_value = 2
@@ -1029,23 +1044,27 @@ class FieldChoiceAdmin(VersionAdmin, TranslationAdmin):
             # store only the hex part
             original_color = getattr(obj, 'field_color')
             if new_color != original_color:
-                setattr(obj, 'field_color', new_color)
+                # setattr(obj, 'field_color', new_color)
+                print('set new color')
 
         with override(LANGUAGE_CODE):
             for name_field in form.data.keys():
+                print('save fieldchoice name field: ', name_field)
                 if name_field not in form.fields:
+                    print('name field not in form fields: ', name_field)
                     continue
                 if name_field == 'field_color' or name_field == 'csrfmiddlewaretoken':
                     continue
                 new_name_value = form.data[name_field]
                 original_value = getattr(obj, name_field)
                 if new_name_value != original_value:
-                    setattr(obj, name_field, new_name_value)
+                    # setattr(obj, name_field, new_name_value)
+                    print('update field to : ', new_name_value)
 
-            try:
-                obj.save()
-            except Exception as e:
-                print('Constraint violated, FieldChoice not saved: ', obj.field, obj.machine_value, obj.id, e)
+            # try:
+            #     obj.save()
+            # except Exception as e:
+            #     print('Constraint violated, FieldChoice not saved: ', obj.field, obj.machine_value, obj.id, e)
 
 
 class LanguageAdmin(TranslationAdmin):
