@@ -4101,3 +4101,60 @@ def create_gloss_data(dataset, gloss_text):
     if 'release_information' in OBLIGATORY_FIELDS:
         create_gloss_form_data['release_information'] = "Create Gloss Obligatory Fields"
     return create_gloss_form_data
+
+
+class MediaVersionFilterTests(TestCase):
+    """Tests for the media_version template filter in cache_control templatetag."""
+
+    def test_returns_zero_for_nonexistent_file(self):
+        from signbank.dictionary.templatetags.cache_control import media_version
+        result = media_version('/nonexistent/path/to/video.mp4')
+        self.assertEqual(result, 0)
+
+    def test_returns_zero_for_none(self):
+        from signbank.dictionary.templatetags.cache_control import media_version
+        result = media_version(None)
+        self.assertEqual(result, 0)
+
+    def test_returns_zero_for_empty_string(self):
+        from signbank.dictionary.templatetags.cache_control import media_version
+        result = media_version('')
+        self.assertEqual(result, 0)
+
+    def test_returns_mtime_for_existing_file(self):
+        import os
+        import tempfile
+        from signbank.dictionary.templatetags.cache_control import media_version
+
+        # Create a temporary file and use its absolute path
+        with tempfile.NamedTemporaryFile(suffix='.mp4', delete=False) as tmp:
+            tmp_path = tmp.name
+        try:
+            expected_mtime = int(os.path.getmtime(tmp_path))
+            # Pass the absolute path directly (no WRITABLE_FOLDER prefix needed for absolute paths)
+            # Use a mock object with .path attribute to simulate a FileField
+            class MockFileField:
+                path = tmp_path
+            result = media_version(MockFileField())
+            self.assertEqual(result, expected_mtime)
+        finally:
+            os.unlink(tmp_path)
+
+    def test_returns_mtime_for_filefield_object(self):
+        import os
+        import tempfile
+        from signbank.dictionary.templatetags.cache_control import media_version
+
+        with tempfile.NamedTemporaryFile(suffix='.mp4', delete=False) as tmp:
+            tmp_path = tmp.name
+        try:
+            expected_mtime = int(os.path.getmtime(tmp_path))
+
+            class MockFileField:
+                path = tmp_path
+
+            result = media_version(MockFileField())
+            self.assertIsInstance(result, int)
+            self.assertEqual(result, expected_mtime)
+        finally:
+            os.unlink(tmp_path)
