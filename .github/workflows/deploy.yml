@@ -1,0 +1,14 @@
+name: Pull latest code
+
+on:
+  workflow_dispatch:
+
+jobs:
+  git-pull:
+    runs-on: self-hosted
+
+    steps:
+      - name: Pull latest changes
+        run: |
+          cd /var/www/repo
+          git pull origin main
