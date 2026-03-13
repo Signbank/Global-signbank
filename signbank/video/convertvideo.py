@@ -192,13 +192,14 @@ def make_thumbnail_video(sourcefile, targetfile):
         .run(quiet=True)
     )
     # convert the small video to mp4
-    okay = convert_video(temp_target, targetfile)
+    okay, result  = convert_video(temp_target, targetfile)
 
     # remove the temp files
     stills_pattern = temp_video_frames_folder+"/*.png"
     for f in glob.glob(stills_pattern):
         os.remove(f)
-    os.remove(temp_target)
+    if temp_target != result:
+        os.remove(temp_target)
 
 
 # Documentation only: works on Ubuntu and matches older files/code.
@@ -210,7 +211,7 @@ def extension_on_filename(filename):
     filename_with_extension = os.path.basename(filename)
     filename_without_extension, ext = os.path.splitext(os.path.basename(filename))
 
-    if ext in ACCEPTABLE_VIDEO_EXTENSIONS:
+    if ext.lower() in ACCEPTABLE_VIDEO_EXTENSIONS:
         return ext
 
     m = re.search(r".+-(\d+)\.(mp4|m4v|mov|webm|mkv|m2v)\.(bak\d+)$", filename_with_extension)
@@ -224,9 +225,8 @@ def extension_on_filename(filename):
 
 
 def detect_video_file_extension(file_path):
-    filename, extension = os.path.splitext(file_path)
     if not os.path.exists(file_path):
-        return extension
+        return extension_on_filename(file_path)
     filetype_output = subprocess.run(["file", "-b", file_path], stdout=subprocess.PIPE)
     filetype = str(filetype_output.stdout)
     if 'MP4' in filetype:
@@ -242,7 +242,7 @@ def detect_video_file_extension(file_path):
     elif 'MPEG-2' in filetype:
         video_extension = '.m2v'
     else:
-        video_extension = extension
+        video_extension = ''
     return video_extension
 
 
@@ -276,38 +276,54 @@ def video_file_type_extension(video_file_full_path):
     return desired_video_extension
 
 
-def convert_video(sourcefile, targetfile):
-    """convert a video to h264 format
-    if force=True, do the conversion even if the video is already
-    h264 encoded, if False, then just copy the file in this case"""
-
+def rename_video_to_match_video_format(sourcefile):
     if not os.path.exists(sourcefile):
-        return False
-
+        return False, sourcefile
     basename, source_file_extension = os.path.splitext(sourcefile)
 
     video_format_extension = detect_video_file_extension(sourcefile)
-    file_with_extension_matching_video_type = f'{basename}{video_format_extension}'
+    if not video_format_extension:
+        return False, sourcefile
 
     if source_file_extension == '.mp4' and video_format_extension == ".mp4":
-        return True
+        return False, sourcefile
 
-    input_file = file_with_extension_matching_video_type if source_file_extension != video_format_extension else sourcefile
-    if input_file != sourcefile:
-        # the file extension of the source does not match the type of video, rename it for conversion
-        os.rename(sourcefile, input_file)
+    file_with_extension_matching_video_type = f'{basename}{video_format_extension}'
+    new_filename = file_with_extension_matching_video_type if source_file_extension != video_format_extension else sourcefile
+    if new_filename == sourcefile:
+        return False, sourcefile
 
-    result = subprocess.run(["ffmpeg", "-i", input_file, targetfile])
-    return result.returncode == 0
+    # the file extension of the source does not match the type of video, rename it for conversion
+    try:
+        os.rename(sourcefile, new_filename)
+    except (OSError, PermissionError, IOError):
+        return False, sourcefile
+
+    return True, new_filename
 
 
-if __name__ == '__main__':
+def convert_video(sourcefile, targetfile):
+    """convert a video to h264 format"""
 
-    if len(sys.argv) != 3:
-        print("Usage: convertvideo.py <sourcefile> <targetfile>")
-        exit()
-        
-    sourcefile = sys.argv[1]
-    targetfile = sys.argv[2]
-    
-    okay = convert_video(sourcefile, targetfile)
+    file_was_renamed, video_file_matching_format = rename_video_to_match_video_format(sourcefile)
+
+    if not os.path.exists(video_file_matching_format):
+        # input_file is identical to sourcefile if the sourcefile did not exist
+        return False, video_file_matching_format
+
+    if not os.path.exists(video_file_matching_format):
+        # video_file_matching_format is identical to sourcefile if the sourcefile did not exist
+        return False, video_file_matching_format
+
+    try:
+        # video_file_matching_format is the possibly renamed source file
+        result = subprocess.run(["ffmpeg", "-i", video_file_matching_format, targetfile])
+    except (IOError, OSError, PermissionError):
+        return False, video_file_matching_format
+    if result.returncode == 0:
+        if file_was_renamed:
+            # this was temporarily used for the conversion
+            os.remove(video_file_matching_format)
+        return True, targetfile
+    else:
+        return False, video_file_matching_format
