@@ -2471,18 +2471,18 @@ class Gloss(MetaModelMixin, models.Model):
         # Create a new GlossVideo object
         if glossvideo.is_glossvideoperspective():
             is_primary = False
-            glossvideo = glossvideo.glossvideoperspective
-            video = GlossVideoPerspective(gloss=self, perspective=glossvideo.perspective,
+            backup_glossvideo_object = glossvideo.glossvideoperspective
+            video = GlossVideoPerspective(gloss=self, perspective=backup_glossvideo_object.perspective,
                                           upload_to=get_video_file_path, version=0)
 
             # get existing gloss perspective video objects
             existing_videos = GlossVideoPerspective.objects.filter(gloss=self,
-                                                                   perspective=glossvideo.perspective).exclude(pk=glossvideo.pk)
+                                                                   perspective=backup_glossvideo_object.perspective).exclude(pk=backup_glossvideo_object.pk)
             # Update the backup video objects stored in the database
             for video_object in existing_videos:
                 video_object.reversion()
-            relative_path = get_video_file_path(video, str(videofile), nmevideo=False,
-                                                perspective=glossvideo.perspective,
+            relative_path = get_video_file_path(video, str(backup_glossvideo_object), nmevideo=False,
+                                                perspective=backup_glossvideo_object.perspective,
                                                 version=0)
         elif glossvideo.is_glossvideonme():
             is_primary = False
@@ -2534,11 +2534,9 @@ class Gloss(MetaModelMixin, models.Model):
             if filename_matches_non_backup(self, video_file_full_path):
                 # this gloss video object points to a non-backup video file, just erase the link
                 glossvideo.videofile.name = ""
-                glossvideo.save()
-            else:
-                os.remove(video_file_full_path)
-        if glossvideo:
-            glossvideo.delete()
+        else:
+            glossvideo.videofile.name = ""
+        glossvideo.delete()
 
         return video
 
@@ -2591,13 +2589,12 @@ class Gloss(MetaModelMixin, models.Model):
 
         perspective_filter = Q(**{'perspective': perspective}) if perspective else Q(**{'perspective__in': ['', 'center']})
 
-        existing_nme_videos = GlossVideoNME.objects.filter(gloss=self, offset=new_offset, version=0).filter(perspective_filter)
+        existing_nme_videos = GlossVideoNME.objects.filter(gloss=self, offset=new_offset).filter(perspective_filter)
         for existing_nme_vid in existing_nme_videos:
             # convert an existing version 0 video for this offset to a backup file
             existing_nme_vid.reversion()
 
         video = GlossVideoNME(gloss=self, offset=new_offset, perspective=perspective, upload_to=get_video_file_path)
-
         relative_path = get_video_file_path(video, str(videofile), nmevideo=True, perspective=perspective, offset=new_offset, version=0)
         video_file_full_path = os.path.join(WRITABLE_FOLDER, relative_path)
         if os.path.exists(video_file_full_path):
@@ -2608,6 +2605,7 @@ class Gloss(MetaModelMixin, models.Model):
         # Save the new videofile in the video object
         try:
             video.videofile.save(relative_path, videofile)
+            video.save()
         except (ValueError, ValidationError) as e:
             msg = gettext("Error uploading NME video file supplied for gloss {glossid}.").format(glossid=self.pk)
             raise ValidationError(msg)
@@ -2619,7 +2617,6 @@ class Gloss(MetaModelMixin, models.Model):
 
         self.lastUpdated = DT.datetime.now(tz=get_current_timezone())
         self.save()
-        video.save()
 
         return video
 

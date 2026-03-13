@@ -1341,13 +1341,8 @@ def update_nmevideo(user, gloss, field, value):
         nme_objects_with_same_offset = GlossVideoNME.objects.filter(gloss=gloss, offset=nmevideo.offset)
         for nmev in nme_objects_with_same_offset:
             filename = os.path.basename(nmev.videofile.name)
-            filepath = nmev.videofile.path
             nmev.reversion()
-            log_entry = GlossVideoHistory(action="delete", gloss=gloss,
-                                          actor=user,
-                                          uploadfile=filename,
-                                          goal_location=filepath)
-            log_entry.save()
+            add_gloss_update_to_revision_history(user, gloss, 'nmevideo_delete', filename, '')
         return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': gloss.id}))
 
     else:
@@ -1371,7 +1366,7 @@ def update_perspectivevideo(user, gloss, field, value):
         return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': gloss.id}))
 
     else:
-        print('unknown nme video update field: ', field)
+        print('unknown perspective video update field: ', field)
     return HttpResponse(value, {'content-type': 'text/plain'})
 
 
@@ -2231,7 +2226,7 @@ def add_othermedia(request):
 
     othermedia_exists = os.path.exists(OTHER_MEDIA_DIRECTORY)
     if not othermedia_exists:
-        messages.add_message(request, messages.ERROR, _("Upload other media failed: The othermedia folder is missing."))
+        messages.add_message(request, messages.ERROR, gettext("Upload other media failed: The othermedia folder is missing."))
         return HttpResponseRedirect(reverse(reverse_url, kwargs={'pk': gloss_or_morpheme.pk}))
 
     # Create the folder if needed

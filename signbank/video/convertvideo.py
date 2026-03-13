@@ -211,7 +211,7 @@ def extension_on_filename(filename):
     filename_with_extension = os.path.basename(filename)
     filename_without_extension, ext = os.path.splitext(os.path.basename(filename))
 
-    if ext in ACCEPTABLE_VIDEO_EXTENSIONS:
+    if ext.lower() in ACCEPTABLE_VIDEO_EXTENSIONS:
         return ext
 
     m = re.search(r".+-(\d+)\.(mp4|m4v|mov|webm|mkv|m2v)\.(bak\d+)$", filename_with_extension)
@@ -305,29 +305,25 @@ def rename_video_to_match_video_format(sourcefile):
 def convert_video(sourcefile, targetfile):
     """convert a video to h264 format"""
 
-    renamed, input_file = rename_video_to_match_video_format(sourcefile)
+    file_was_renamed, video_file_matching_format = rename_video_to_match_video_format(sourcefile)
 
-    if not os.path.exists(input_file):
+    if not os.path.exists(video_file_matching_format):
         # input_file is identical to sourcefile if the sourcefile did not exist
-        return False, input_file
+        return False, video_file_matching_format
+
+    if not os.path.exists(video_file_matching_format):
+        # video_file_matching_format is identical to sourcefile if the sourcefile did not exist
+        return False, video_file_matching_format
 
     try:
-        # input_file is the possibly renamed source file
-        result = subprocess.run(["ffmpeg", "-i", input_file, targetfile])
+        # video_file_matching_format is the possibly renamed source file
+        result = subprocess.run(["ffmpeg", "-i", video_file_matching_format, targetfile])
     except (IOError, OSError, PermissionError):
-        if renamed:
-            # the file was renamed to match the video format, this will be used in the object on return
-            os.remove(sourcefile)
-        return False, input_file
-
+        return False, video_file_matching_format
     if result.returncode == 0:
-        if renamed:
-            os.remove(input_file)
-        if sourcefile != targetfile:
-            os.remove(sourcefile)
+        if file_was_renamed:
+            # this was temporarily used for the conversion
+            os.remove(video_file_matching_format)
         return True, targetfile
     else:
-        if renamed:
-            # the file was renamed to match the video format, this will be used in the object on return
-            os.remove(sourcefile)
-        return False, input_file
+        return False, video_file_matching_format
