@@ -1,0 +1,9 @@
+{{user.first_name}} {{user.last_name}} (user {{user.username}}, email address {{user.email}})
+has submitted general feedback at {{site.name}}.
+
+Comment:
+{{comment}}
+
+Please review it at https://{{site.domain}}/feedback/overview/
+
+{{site.name}} Webmaster

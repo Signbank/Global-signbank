@@ -12,7 +12,11 @@ COMMUNICATION_TYPES = [('-', 'Type of Communication'),
                        ('dataset_to_owner_existing_user_given_access', 'Mail to Dataset Owner: Existing User Given Access'),
                        ('dataset_to_owner_new_user_given_access', 'Mail to Dataset Owner: New User Given Access'),
                        ('dataset_to_owner_user_requested_access', 'Mail to Dataset Owner: User Requested Access'),
-                       ('dataset_to_user_existing_user_given_access', 'Mail to Existing User: Access Granted')]
+                       ('dataset_to_user_existing_user_given_access', 'Mail to Existing User: Access Granted'),
+                       ('feedback_general_email', 'Mail to Admins: General Feedback Submitted'),
+                       ('feedback_missingsign_email', 'Mail to Admins: Missing Sign Feedback Submitted'),
+                       ('feedback_sign_email', 'Mail to Admins: Sign Feedback Submitted'),
+                       ('feedback_morpheme_email', 'Mail to Admins: Morpheme Feedback Submitted')]
 
 
 def typed_context():
@@ -51,10 +55,46 @@ def typed_context():
                                                                         'domain': 'SITE DOMAIN'}
                                                                },
                     'dataset_to_user_existing_user_given_access': {'dataset': 'DATASET',
-                                                                   'site': {'name': 'SITE NAME',
-                                                                            'domain': 'SITE DOMAIN'}
-                                                                   }
-                    }
+                                                                    'site': {'name': 'SITE NAME',
+                                                                             'domain': 'SITE DOMAIN'}
+                                                                    },
+                     'feedback_general_email': {'user': {'first_name': 'FIRST NAME',
+                                                         'last_name': 'LAST NAME',
+                                                         'email': 'EMAIL',
+                                                         'username': 'USERNAME'},
+                                                'comment': 'COMMENT',
+                                                'site': {'name': 'SITE NAME',
+                                                         'domain': 'SITE DOMAIN'}
+                                                },
+                     'feedback_missingsign_email': {'user': {'first_name': 'FIRST NAME',
+                                                             'last_name': 'LAST NAME',
+                                                             'email': 'EMAIL',
+                                                             'username': 'USERNAME'},
+                                                    'meaning': 'MEANING',
+                                                    'comments': 'COMMENTS',
+                                                    'signlanguage': 'SIGN LANGUAGE',
+                                                    'site': {'name': 'SITE NAME',
+                                                             'domain': 'SITE DOMAIN'}
+                                                    },
+                     'feedback_sign_email': {'user': {'first_name': 'FIRST NAME',
+                                                      'last_name': 'LAST NAME',
+                                                      'email': 'EMAIL',
+                                                      'username': 'USERNAME'},
+                                             'comment': 'COMMENT',
+                                             'gloss': 'GLOSS',
+                                             'site': {'name': 'SITE NAME',
+                                                      'domain': 'SITE DOMAIN'}
+                                             },
+                     'feedback_morpheme_email': {'user': {'first_name': 'FIRST NAME',
+                                                          'last_name': 'LAST NAME',
+                                                          'email': 'EMAIL',
+                                                          'username': 'USERNAME'},
+                                                 'comment': 'COMMENT',
+                                                 'morpheme': 'MORPHEME',
+                                                 'site': {'name': 'SITE NAME',
+                                                          'domain': 'SITE DOMAIN'}
+                                                 }
+                     }
     return placeholders
 
 

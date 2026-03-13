@@ -1,0 +1,11 @@
+{{user.first_name}} {{user.last_name}} (user {{user.username}}, email address {{user.email}})
+has submitted missing sign feedback at {{site.name}}.
+
+Sign language: {{signlanguage}}
+Meaning: {{meaning}}
+{% if comments %}
+Comments: {{comments}}
+{% endif %}
+Please review it at https://{{site.domain}}/feedback/showfeedback_missing/
+
+{{site.name}} Webmaster

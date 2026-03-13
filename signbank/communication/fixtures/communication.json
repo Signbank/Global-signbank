@@ -43,5 +43,41 @@
       "subject": "Access granted to dataset {{dataset}} at {{site.name}}",
       "text": "You have been granted access to dataset {{dataset}} at {{site.name}}.\n\nFor more information on the type of information Global Signbank stores about signs, see the manual on this page: https://signbank.cls.ru.nl/about/manual/\nNote that handshapes are described in terms of phonological features separately from signs; see this page: https://signbank.cls.ru.nl/signs/search_handshape/\n\nThe Release Notes page describes the latest changes and additions to the functionalities of the website: https://signbank.cls.ru.nl/about/release/\n\n{{site.name}} Webmaster"
     }
+  },
+  {
+    "model": "communication.communication",
+    "pk": 5,
+    "fields": {
+      "label": "feedback_general_email",
+      "subject": "New general feedback submitted at {{site.name}}",
+      "text": "{{user.first_name}} {{user.last_name}} (user {{user.username}}, email address {{user.email}})\nhas submitted general feedback at {{site.name}}.\n\nComment:\n{{comment}}\n\nPlease review it at https://{{site.domain}}/feedback/overview/\n\n{{site.name}} Webmaster"
+    }
+  },
+  {
+    "model": "communication.communication",
+    "pk": 6,
+    "fields": {
+      "label": "feedback_missingsign_email",
+      "subject": "New missing sign feedback submitted at {{site.name}}",
+      "text": "{{user.first_name}} {{user.last_name}} (user {{user.username}}, email address {{user.email}})\nhas submitted missing sign feedback at {{site.name}}.\n\nSign language: {{signlanguage}}\nMeaning: {{meaning}}\n{% if comments %}\nComments: {{comments}}\n{% endif %}\nPlease review it at https://{{site.domain}}/feedback/showfeedback_missing/\n\n{{site.name}} Webmaster"
+    }
+  },
+  {
+    "model": "communication.communication",
+    "pk": 7,
+    "fields": {
+      "label": "feedback_sign_email",
+      "subject": "New sign feedback submitted at {{site.name}}",
+      "text": "{{user.first_name}} {{user.last_name}} (user {{user.username}}, email address {{user.email}})\nhas submitted feedback on sign {{gloss}} at {{site.name}}.\n\nComment:\n{{comment}}\n\nPlease review it at https://{{site.domain}}/feedback/showfeedback_signs/\n\n{{site.name}} Webmaster"
+    }
+  },
+  {
+    "model": "communication.communication",
+    "pk": 8,
+    "fields": {
+      "label": "feedback_morpheme_email",
+      "subject": "New morpheme feedback submitted at {{site.name}}",
+      "text": "{{user.first_name}} {{user.last_name}} (user {{user.username}}, email address {{user.email}})\nhas submitted feedback on morpheme {{morpheme}} at {{site.name}}.\n\nComment:\n{{comment}}\n\nPlease review it at https://{{site.domain}}/feedback/showfeedback_morphemes/\n\n{{site.name}} Webmaster"
+    }
   }
 ]

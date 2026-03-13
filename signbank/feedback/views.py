@@ -11,6 +11,8 @@ from django.utils.safestring import mark_safe
 from django.utils.translation import gettext_lazy as _, gettext
 from django.contrib.auth.models import Group
 from django.db.models import Q
+from django.core.mail import send_mail
+from django.contrib.sites.models import Site
 
 from signbank.settings.server_specific import RECENTLY_ADDED_SIGNS_PERIOD, PREFIX_URL
 
@@ -20,6 +22,7 @@ from signbank.dictionary.models import Gloss, Morpheme
 from signbank.dictionary.context_data import get_selected_datasets
 from signbank.feedback.models import (GeneralFeedback, MissingSignFeedback, SignFeedback, SignFeedbackForm,
                                       GeneralFeedbackForm, MissingSignFeedbackForm, MorphemeFeedback, MorphemeFeedbackForm)
+from signbank.communication.models import generate_communication
 
 
 def index(request):
@@ -29,6 +32,25 @@ def index(request):
                    'SHOW_DATASET_INTERFACE_OPTIONS': settings.SHOW_DATASET_INTERFACE_OPTIONS,
                    'language': settings.LANGUAGE_NAME,
                    'general_feedback_form': general_feedback_form})
+
+
+def _get_admin_emails():
+    """Return list of admin email addresses from settings.ADMINS."""
+    return [email for name, email in settings.ADMINS]
+
+
+def _send_feedback_email(label, context):
+    """Send a feedback notification email to all admins."""
+    admin_emails = _get_admin_emails()
+    if not admin_emails:
+        return
+    subject, message = generate_communication(label, context)
+    if settings.DEBUG_EMAILS_ON:
+        print('Feedback notification email label:', label)
+        print('message:', message)
+        print('admin emails:', admin_emails)
+    else:
+        send_mail(subject, message, settings.DEFAULT_FROM_EMAIL, admin_emails)
 
 
 @login_required
@@ -54,6 +76,14 @@ def generalfeedback(request):
                 sourcepage = request.GET['return']
             else:
                 sourcepage = ""
+
+            current_site = Site.objects.get_current()
+            mail_context = {
+                'user': request.user,
+                'comment': feedback.comment,
+                'site': current_site,
+            }
+            _send_feedback_email('feedback_general_email', mail_context)
 
             messages.add_message(request, messages.INFO, mark_safe(
                     'Thank you. Your feedback has been saved. <a href="' + sourcepage + '">Return to Previous Page</a>'))
@@ -126,6 +156,16 @@ def missingsign(request):
             fb.save_video()
             fb.save_sentence_video()
             posted = True
+
+            current_site = Site.objects.get_current()
+            mail_context = {
+                'user': request.user,
+                'meaning': fb.meaning,
+                'comments': fb.comments,
+                'signlanguage': str(fb.signlanguage) if fb.signlanguage else '',
+                'site': current_site,
+            }
+            _send_feedback_email('feedback_missingsign_email', mail_context)
 
     else:
         form = MissingSignFeedbackForm(sign_languages=sign_languages)
@@ -301,6 +341,14 @@ def recordsignfeedback(request, glossid):
                     morpheme=sign_or_morpheme
                     )
                 sfb.save()
+                current_site = Site.objects.get_current()
+                mail_context = {
+                    'user': request.user,
+                    'comment': sfb.comment,
+                    'morpheme': str(sign_or_morpheme),
+                    'site': current_site,
+                }
+                _send_feedback_email('feedback_morpheme_email', mail_context)
             else:
                 sfb = SignFeedback(
                     comment=clean['comment'],
@@ -308,6 +356,14 @@ def recordsignfeedback(request, glossid):
                     gloss=sign_or_morpheme
                     )
                 sfb.save()
+                current_site = Site.objects.get_current()
+                mail_context = {
+                    'user': request.user,
+                    'comment': sfb.comment,
+                    'gloss': str(sign_or_morpheme),
+                    'site': current_site,
+                }
+                _send_feedback_email('feedback_sign_email', mail_context)
             # return a message with a link to the original gloss or morpheme page
             messages.add_message(request, messages.INFO, mark_safe('Thank you. Your feedback has been saved. <a href="'+redirect_page+'">Return to Detail View</a>'))
             return render(request, feedback_template, {'feedback_form': feedback_form,
