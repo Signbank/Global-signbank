@@ -11,4 +11,4 @@ jobs:
       - name: Pull latest changes
         run: |
           cd /var/www/repo
-          git pull origin main
+          sh deploy.sh
