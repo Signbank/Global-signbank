@@ -2826,7 +2826,7 @@ def post_remove_sense_reorder(sender, instance, **kwargs):
     instance.reorder_senses()
 
 
-class Relation(models.Model):
+class Relation(MetaModelMixin, models.Model):
     """A relation between two glosses"""
 
     source = models.ForeignKey(Gloss, related_name="relation_sources", on_delete=models.CASCADE)

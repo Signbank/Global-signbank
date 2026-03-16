@@ -1934,6 +1934,23 @@ def get_fields_with_choices_morpheme_type():
     return fields_dict
 
 
+def get_fields_with_choices_relation():
+    # return a dict that maps the field choice categories to the fields of Definition that have the category
+
+    fields_dict = {}
+
+    for fieldname in Relation.get_field_names():
+        field = Relation.get_field(fieldname)
+        if hasattr(field, 'field_choice_category') and isinstance(field, FieldChoiceForeignKey):
+            # field has choices
+            field_category = field.field_choice_category
+            if field_category in fields_dict.keys():
+                fields_dict[field_category].append(field.name)
+            else:
+                fields_dict[field_category] = [field.name]
+    return fields_dict
+
+
 def write_ecv_files_for_all_datasets():
 
     all_dataset_objects = Dataset.objects.all()
