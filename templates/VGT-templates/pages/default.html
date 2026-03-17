@@ -1,0 +1,23 @@
+{% extends "baselayout.html" %}
+{% load i18n %}
+
+{% block content %}
+
+
+{% block topcontent %}
+{% endblock %}
+
+{% block pagecontent %}
+    <div class='row'>
+        <div class="col-md-10 col-md-offset-1">
+   {{ page.content }}
+        </div>
+   </div>
+{% endblock %}
+
+
+{% block bottomcontent %}
+{% endblock %}
+
+
+{% endblock %}
