@@ -1055,7 +1055,7 @@ textarea:focus {
     <div class='editform'>
         <fieldset>
             <h4>{% trans "Upload New Video" %}</h4>
-            <label for="videofile" class="drop-container" id="drop-container-video">
+            <label for="{{videoform.videofile.id_for_label}}" class="drop-container" id="drop-container-video">
               <div id="videogallery" class="gallery"></div>
               <span id = "drop-container-title-video" class="drop-title">Drop video here<br>or...</span>
               <label id="drop-container-video-status" class="hide">Status here</label>
@@ -1126,7 +1126,7 @@ textarea:focus {
                                     <input type='hidden' name='redirect' value='{{PREFIX_URL}}/dictionary/gloss/{{gloss.pk}}/'>
                                     <input type='hidden' name='object_type' value='gloss_video'>
                                     <input type='hidden' name='object_id' value='{{gloss.pk}}'>
-                                    <input type='file' name="videofile" id="videofile">
+                                    <input type='file' name="videofile" id="{{videoform.videofile.id_for_label}}">
                                     <input type='hidden' name='recorded' value='True'>
                                     <input class="btn btn-primary" type="submit" id="uploadrecorded" value ='Upload' disabled>
                                 </form>

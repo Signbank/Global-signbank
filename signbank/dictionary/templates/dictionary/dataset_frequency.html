@@ -115,7 +115,7 @@ dd {
 
 {% if user.is_anonymous %}
 
-    <p>{% trans "Please login to use this functionality." %}</p>
+    <p>{% trans "Please log in to use this functionality." %}</p>
 
 {% elif not corpus or not speakers or not documents %}
     <div style="width:1200px">
@@ -398,10 +398,10 @@ Participant&#9;Region&#9;Age&#9;Gender&#9;Handedness
                            {% if request.user|has_group:"Dataset_Manager" %}
                            {% get_obj_perms request.user for dataset as "dataset_perms" %}
                            {% if "change_dataset" in dataset_perms %}
-                            <dd class="col-sm-2" id='{{dataset.acronym}}_{{document_identifier}}_{{path}}'>
-                                    <label for="select_document_{{document_identifier}}"></label>
+                            <dd class="col-sm-2" id='{{dataset.acronym}}_{{document_identifier}}_{{path}}_{{forloop.counter}}'>
+                                    <label for="select_document_{{document_identifier}}_{{forloop.counter}}"></label>
                                     <input type="checkbox" name="select_document:{{path}}"
-                                        id="select_document_{{document_identifier}}" value="{{path}}" >
+                                        id="select_document_{{document_identifier}}_{{forloop.counter}}" value="{{path}}" >
                             </dd>
                            {% endif %}
                            {% endif %}
