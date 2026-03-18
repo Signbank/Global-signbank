@@ -20,7 +20,7 @@ from django.core.serializers.json import DjangoJSONEncoder
 from django.test import Client
 from django.utils.encoding import escape_uri_path
 from django.utils import translation
-from django.core.exceptions import ObjectDoesNotExist
+from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.urls import reverse_lazy, reverse
 
 from guardian.shortcuts import assign_perm
@@ -56,7 +56,8 @@ from signbank.dictionary.admin import HandshapeAdmin, FieldChoiceAdmin
 
 from signbank.tools import (get_gloss_handshape_fields, get_fields_with_choices_glosses, get_fields_with_choices_handshapes,
                             get_fields_with_choices_definition, get_fields_with_choices_morphology_definition,
-                            get_fields_with_choices_other_media_type, get_fields_with_choices_morpheme_type)
+                            get_fields_with_choices_other_media_type, get_fields_with_choices_morpheme_type,
+                            get_fields_with_choices_relation)
 
 from xml.etree import ElementTree
 
@@ -1977,6 +1978,7 @@ class FieldChoiceTests(TestCase):
                     update_data[name_languagecode] = 'Default value'
                 else:
                     update_data[name_languagecode] = field_value
+            update_data['reverse'] = '' if not first_field_choice_option.reverse else first_field_choice_option.reverse
 
             url_of_field_choice_change = '/'+ADMIN_URL + '/dictionary/fieldchoice/'+admin_url_change_suffix_1
             print('Attempt to change fieldchoice url: ', url_of_field_choice_change)
@@ -2013,6 +2015,156 @@ class FieldChoiceTests(TestCase):
 
             # the following is true if the override language is en, then name has also been updated
             # self.assertEqual(first_field_choice_option.name, update_data['name'])
+
+    def test_update_relation_field_choice(self):
+        client = Client(enforce_csrf_checks=False)
+        client.login(username='test-user', password='test-user')
+
+        field_options = FieldChoice.objects.filter(field='RelationRole', machine_value__gt=1)
+        first_field_choice_option = field_options.first()
+        admin_url_change_suffix_1 = str(first_field_choice_option.id)+\
+                                  '/change/?_changelist_filters=field__exact%3D'+first_field_choice_option.field
+
+        initial_data = dict()
+        initial_data['field'] = first_field_choice_option.field
+        initial_data['machine_value'] = first_field_choice_option.machine_value
+        initial_data['name'] = first_field_choice_option.name
+        initial_data['field_color'] = first_field_choice_option.field_color
+        for language in MODELTRANSLATION_LANGUAGES:
+            name_languagecode = 'name_' + language.replace('-', '_')
+            try:
+                field_value = getattr(first_field_choice_option,name_languagecode)
+            except KeyError:
+                continue
+            if not field_value:
+                initial_data[name_languagecode] = 'Default value'
+            else:
+                initial_data[name_languagecode] = field_value
+        empty_reverse = FieldChoice.objects.get(field='RelationRole', machine_value=0).pk
+        initial_data['reverse'] = str(empty_reverse)
+        initial_data['reverse_identity'] = 'True'
+
+        # data to be given to the form
+        # English is used as the language to be updated
+        LANGUAGE_FIELD_TO_UPDATE = 'name_en'
+
+        update_data = dict()
+        update_data['field'] = first_field_choice_option.field
+        update_data['machine_value'] = first_field_choice_option.machine_value
+        update_data['name'] = first_field_choice_option.name
+        # the hash tag is needed in the form interface for display
+        update_data['field_color'] = '#' + first_field_choice_option.field_color
+        for language in MODELTRANSLATION_LANGUAGES:
+            name_languagecode = 'name_' + language.replace('-', '_')
+            try:
+                field_value = getattr(first_field_choice_option,name_languagecode)
+            except KeyError:
+                continue
+            if name_languagecode == LANGUAGE_FIELD_TO_UPDATE:
+                update_data[LANGUAGE_FIELD_TO_UPDATE] = 'Test Update Field Choice'
+            elif not field_value:
+                update_data[name_languagecode] = 'Default value'
+            else:
+                update_data[name_languagecode] = field_value
+        update_data['reverse'] = '' if not first_field_choice_option.reverse else str(first_field_choice_option.reverse.pk)
+        update_data['reverse_identity'] = str(first_field_choice_option.reverse == first_field_choice_option)
+
+        url_of_field_choice_change = '/'+ADMIN_URL + '/dictionary/fieldchoice/'+admin_url_change_suffix_1
+        print('Attempt to change fieldchoice url: ', url_of_field_choice_change)
+        print('With data: ', update_data)
+
+        response = self.client.get(url_of_field_choice_change, update_data)
+        self.assertEqual(response.status_code, 302)
+
+        fieldchoice_form = FieldChoiceForm(instance=first_field_choice_option, data=update_data)
+
+        cleaned = fieldchoice_form.is_valid()
+        self.assertTrue(cleaned)
+
+        self.fieldchoice_admin.save_model(obj=first_field_choice_option,
+                                          request=response.__dict__['request'],
+                                          form=fieldchoice_form,
+                                          change=True)
+
+        first_field_choice_option.refresh_from_db()
+
+        # check that the updated field is indeed updated
+        # check that none of the other fields were updated
+        self.assertEqual(first_field_choice_option.field, initial_data['field'])
+        self.assertEqual(first_field_choice_option.machine_value, initial_data['machine_value'])
+        self.assertEqual(first_field_choice_option.field_color, initial_data['field_color'])
+        for language in MODELTRANSLATION_LANGUAGES:
+            name_languagecode = 'name_' + language.replace('-', '_')
+            if name_languagecode not in update_data.keys():
+                continue
+            if name_languagecode == LANGUAGE_FIELD_TO_UPDATE:
+                self.assertEqual(getattr(first_field_choice_option,LANGUAGE_FIELD_TO_UPDATE), update_data[LANGUAGE_FIELD_TO_UPDATE])
+            else:
+                self.assertEqual(getattr(first_field_choice_option,name_languagecode), initial_data[name_languagecode])
+
+        last_field_choice_option = field_options.last()
+        update_data['reverse'] = str(last_field_choice_option.pk)
+        update_data['reverse_identity'] = 'False'
+
+        url_of_field_choice_change = '/'+ADMIN_URL + '/dictionary/fieldchoice/'+admin_url_change_suffix_1
+        print('Attempt to change fieldchoice url: ', url_of_field_choice_change)
+        print('With data: ', update_data)
+
+        response = self.client.get(url_of_field_choice_change, update_data)
+        self.assertEqual(response.status_code, 302)
+
+        fieldchoice_form = FieldChoiceForm(instance=first_field_choice_option, data=update_data)
+
+        cleaned = fieldchoice_form.is_valid()
+        self.assertFalse(cleaned)
+
+        if not cleaned:
+            try:
+                fieldchoice_form.clean()
+            except ValidationError as e:
+                self.assertEqual(e.message, "The Reverse Relation Name fields for all languages are required")
+
+        new_data = dict()
+        new_data['field'] = 'RelationRole'
+        new_data['name'] = 'New Relation Role'
+        # the hash tag is needed in the form interface for display
+        new_data['field_color'] = '#ffffff'
+        for language in MODELTRANSLATION_LANGUAGES:
+            name_languagecode = 'name_' + language.replace('-', '_')
+            new_data[name_languagecode] = 'New Relation Role'
+        new_data['reverse'] = str(empty_reverse)
+        new_data['reverse_identity'] = 'False'
+        for language in MODELTRANSLATION_LANGUAGES:
+            name_languagecode = 'reverse_name_' + language.replace('-', '_')
+            new_data[name_languagecode] = 'New Reverse Relation Role'
+
+        url_of_field_choice_change = '/'+ADMIN_URL + '/dictionary/fieldchoice/add/'
+        print('Attempt to add new RelationRole fieldchoice url: ', url_of_field_choice_change)
+        print('With data: ', new_data)
+
+        # response = self.client.get(url_of_field_choice_change, new_data)
+        # self.assertEqual(response.status_code, 302)
+
+        fieldchoice_form = FieldChoiceForm(data=new_data)
+
+        cleaned = fieldchoice_form.is_valid()
+
+        if not cleaned:
+            try:
+                fieldchoice_form.clean()
+            except ValidationError as e:
+                print(e)
+                print('Form is not valid')
+                return
+
+        self.fieldchoice_admin.save_model(obj=first_field_choice_option,
+                                          request=response.__dict__['request'],
+                                          form=fieldchoice_form,
+                                          change=False)
+
+        qs = FieldChoice.objects.filter(field='RelationRole', machine_value__gt=1)
+        print(qs)
+
 
     def test_delete_fieldchoice_gloss(self):
 

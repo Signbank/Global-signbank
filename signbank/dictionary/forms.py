@@ -1176,7 +1176,6 @@ class FieldChoiceForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
 
         super(FieldChoiceForm, self).__init__(*args, **kwargs)
-
         field_choice_categories = FieldChoice.FIELDCHOICE_FIELDS
         self.fields['field'] = forms.TypedChoiceField(label=_('Field'),
                                                       choices=field_choice_categories,
@@ -1244,7 +1243,8 @@ class FieldChoiceForm(forms.ModelForm):
             self.fields['reverse_identity'].disabled = True
             for language, language_name in [(l[0], l[1]) for l in LANGUAGES if l[0] in MODELTRANSLATION_LANGUAGES]:
                 name_languagecode = 'reverse_name_' + language.replace('-', '_')
-                self.declared_fields[name_languagecode].widget = forms.HiddenInput()
+                if name_languagecode in self.declared_fields.keys():
+                    self.declared_fields[name_languagecode].widget = forms.HiddenInput()
         elif self.instance.id and self.instance.reverse and self.instance.reverse.machine_value > 1:
             # if the relation already exists, this keeps its reverse relation from being modified
             field_role_choices = FieldChoice.objects.filter(field='RelationRole').order_by('machine_value').values('name', 'machine_value')
@@ -1256,7 +1256,8 @@ class FieldChoiceForm(forms.ModelForm):
             self.fields['reverse_identity'].disabled = True
             for language, language_name in [(l[0], l[1]) for l in LANGUAGES if l[0] in MODELTRANSLATION_LANGUAGES]:
                 name_languagecode = 'reverse_name_' + language.replace('-', '_')
-                self.declared_fields[name_languagecode].widget = forms.HiddenInput()
+                if name_languagecode in self.declared_fields.keys():
+                    self.declared_fields[name_languagecode].widget = forms.HiddenInput()
         else:
             self.fields['reverse'].choices = list(FieldChoice.objects.filter(field='RelationRole').order_by('machine_value')
                                            .values_list('pk', 'name'))
@@ -1264,11 +1265,17 @@ class FieldChoiceForm(forms.ModelForm):
             self.fields['reverse_identity'].initial = True
             for language, language_name in [(l[0], l[1]) for l in LANGUAGES if l[0] in MODELTRANSLATION_LANGUAGES]:
                 name_languagecode = 'reverse_name_' + language.replace('-', '_')
-                self.declared_fields[name_languagecode].widget = forms.TextInput(attrs=ATTRS_FOR_FORMS)
+                if name_languagecode in self.declared_fields.keys():
+                    self.declared_fields[name_languagecode].widget = forms.TextInput(attrs=ATTRS_FOR_FORMS)
 
     def already_exists(self, field, language_field, language_field_value):
-        matches = FieldChoice.objects.filter(field=field).filter(**{language_field: language_field_value}).count()
-        return matches
+        if self.instance:
+            matches = FieldChoice.objects.filter(field=field, machine_value__gt=1).exclude(pk=self.instance.pk).filter(
+                **{language_field: language_field_value})
+        else:
+            matches = FieldChoice.objects.filter(field=field, machine_value__gt=1).filter(
+                **{language_field: language_field_value})
+        return matches.count()
 
     def clean(self):
         # check that the field category and (english) name does not already occur
@@ -1285,8 +1292,11 @@ class FieldChoiceForm(forms.ModelForm):
         #     raise forms.ValidationError(_('This Field Choice Category does not exist'))
         if field != 'RelationRole':
             empty_reverse = FieldChoice.objects.get(field='RelationRole', machine_value=0).pk
-            if 'reverse' in data_fields.keys() and data_fields['reverse'] != str(empty_reverse):
-                raise forms.ValidationError(_('Only the RelationRole category has a reverse relation'))
+            if 'reverse' in data_fields.keys():
+                reverse_relation_value = data_fields.get('reverse', '')
+                if reverse_relation_value:
+                    if data_fields['reverse'] != str(empty_reverse):
+                        raise forms.ValidationError(_('Only the RelationRole category has a reverse relation'))
 
         for language in MODELTRANSLATION_LANGUAGES:
             name_languagecode = 'name_' + language.replace('-', '_')
@@ -1300,18 +1310,25 @@ class FieldChoiceForm(forms.ModelForm):
                 raise forms.ValidationError(_('The combination ' + field + ' -- ' + name_languagecode_value
                                               + ' already exists for ' + language_name))
 
-        if field == 'RelationRole' and not data_fields['reverse_identity'] == 'True':
-            for language in MODELTRANSLATION_LANGUAGES:
-                name_languagecode = 'reverse_name_' + language.replace('-', '_')
-                if name_languagecode not in data_fields.keys() or not data_fields[name_languagecode]:
-                    raise forms.ValidationError(_('The Reverse Relation Name fields for all languages are required'))
+        if field != 'RelationRole':
+            # the fields regarding the reverse relation are ignored
+            return
 
-                name_languagecode_value = data_fields[name_languagecode]
-                other_name_languagecode = 'name_' + language.replace('-', '_')
+        if data_fields['reverse_identity'] == 'True':
+            # the rest of the fields are ignored
+            return
 
-                if self.already_exists(field, other_name_languagecode, name_languagecode_value):
-                    raise forms.ValidationError(_('The combination ' + field + ' -- ' + name_languagecode_value
-                                                  + ' already exists for ' + language.name))
+        for language in MODELTRANSLATION_LANGUAGES:
+            name_languagecode = 'reverse_name_' + language.replace('-', '_')
+            if name_languagecode not in data_fields.keys() or not data_fields[name_languagecode]:
+                raise forms.ValidationError(_('The Reverse Relation Name fields for all languages are required'))
+
+            name_languagecode_value = data_fields[name_languagecode]
+            other_name_languagecode = 'name_' + language.replace('-', '_')
+
+            if self.already_exists(field, other_name_languagecode, name_languagecode_value):
+                raise forms.ValidationError(_('The combination ' + field + ' -- ' + name_languagecode_value
+                                              + ' already exists for ' + language.name))
 
 
 class SemanticFieldColorForm(forms.Form):

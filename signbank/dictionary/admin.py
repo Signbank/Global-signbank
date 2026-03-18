@@ -875,11 +875,13 @@ class FieldChoiceAdmin(VersionAdmin, TranslationAdmin):
             if query_params:
                 new_field_category = query_params.get('field__exact')
                 if new_field_category == 'RelationRole':
-                    print('creating a relation role, expand the form: ', form.__dict__)
+                    print('creating a relation role, expand the form: Not implemented yet')
         return form
 
     def get_fields(self, request, obj=None):
         fields = super(FieldChoiceAdmin, self).get_fields(request, obj)
+        if obj and obj.field != 'RelationRole':
+            return fields
         new_fields = {}
         for language, language_name in [(l[0], l[1]) for l in LANGUAGES if
                                         l[0] in MODELTRANSLATION_LANGUAGES]:
@@ -1044,6 +1046,8 @@ class FieldChoiceAdmin(VersionAdmin, TranslationAdmin):
     delete_selected.short_description = "Delete selected field choices"
 
     def save_model(self, request, obj, form, change):
+        qs = FieldChoice.objects.filter(field=obj.field)
+        highest_machine_value = max([field_choice.machine_value for field_choice in qs])
         if not obj.machine_value:
             # Check out the query-set and make sure that it exists
             qs = FieldChoice.objects.filter(field=obj.field)
@@ -1053,8 +1057,6 @@ class FieldChoiceAdmin(VersionAdmin, TranslationAdmin):
                 # NOTE: start with '2', because 0,1 are already taken by default values
                 obj.machine_value = 2
             else:
-                # Calculate highest currently occurring value
-                highest_machine_value = max([field_choice.machine_value for field_choice in qs])
                 # The automatic machine value we calculate is 1 higher
                 obj.machine_value = highest_machine_value+1
         elif obj.machine_value < 2:
@@ -1081,6 +1083,8 @@ class FieldChoiceAdmin(VersionAdmin, TranslationAdmin):
                     continue
                 if name_field == 'reverse' and form.data['field'] != 'RelationRole':
                     continue
+                if name_field.startswith('reverse'):
+                    continue
                 new_name_value = form.data[name_field]
                 original_value = getattr(obj, name_field)
                 if new_name_value != original_value:
@@ -1089,6 +1093,42 @@ class FieldChoiceAdmin(VersionAdmin, TranslationAdmin):
                 obj.save()
             except Exception as e:
                 print('Constraint violated, FieldChoice not saved: ', obj.field, obj.machine_value, obj.id, e)
+
+        obj.refresh_from_db()
+
+        if getattr(obj, 'field') != 'RelationRole':
+            return
+
+        relation_role_obj = obj
+
+        if 'reverse_identity' in form.data.keys() and form.data['reverse_identity'] == 'True':
+            relation_role_obj.reverse = relation_role_obj
+            relation_role_obj.save()
+            return
+
+        # The new machine value we calculate is 2 higher
+        reverse_relation_role_obj = FieldChoice(field='RelationRole', machine_value=highest_machine_value+2)
+
+        with override(LANGUAGE_CODE):
+            for language in MODELTRANSLATION_LANGUAGES:
+                name_languagecode = 'name_' + language.replace('-', '_')
+                reverse_relation_name_languagecode = 'reverse_name_' + language.replace('-', '_')
+                if reverse_relation_name_languagecode in form.data.keys():
+                    new_name_value = form.data[reverse_relation_name_languagecode]
+                    setattr(reverse_relation_role_obj, name_languagecode, new_name_value)
+            reverse_relation_role_obj.reverse = relation_role_obj
+
+        try:
+            reverse_relation_role_obj.save()
+        except Exception as e:
+            print('Constraint violated, FieldChoice reverse relation not saved: ', 'RelationRole', highest_machine_value+2, e)
+
+        relation_role_obj.reverse = reverse_relation_role_obj
+
+        try:
+            relation_role_obj.save()
+        except Exception as e:
+            print('Constraint violated, FieldChoice reverse relation not saved: ', 'RelationRole', highest_machine_value+2, e)
 
 
 class LanguageAdmin(TranslationAdmin):
