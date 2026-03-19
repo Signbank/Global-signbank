@@ -88,6 +88,8 @@ $(document).ready(function() {
                 }
             });
         };
+    navbarHeight = Math.round($('#signbank-bar').outerHeight());
+    $('#wrap').css({'padding-top': navbarHeight});
 });
 
     function ready_videos(el) {
@@ -428,11 +430,6 @@ table {
     border: 1px solid black !important;
 }
 </style>
-
-<script type='text/javascript'>
-    navbarHeight = Math.round($('#signbank-bar').outerHeight());
-    $('#wrap').css({'padding-top': navbarHeight});
-</script>
 {% endblock %}
 
 {% block content %}
