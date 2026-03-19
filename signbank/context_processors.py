@@ -43,5 +43,7 @@ def url(request):
             'SEPARATE_ENGLISH_IDGLOSS_FIELD':settings.SEPARATE_ENGLISH_IDGLOSS_FIELD,
             'CROP_GLOSS_IMAGES': settings.CROP_GLOSS_IMAGES,
             'INTERFACE_LANGUAGE_CODES': [language_code for language_code, full_name in settings.LANGUAGES],
-            'INTERFACE_LANGUAGE_SHORT_NAMES': settings.INTERFACE_LANGUAGE_SHORT_NAMES
+            'INTERFACE_LANGUAGE_SHORT_NAMES': settings.INTERFACE_LANGUAGE_SHORT_NAMES,
+            'SELECT2_JS': settings.SELECT2_JS,
+            'SELECT2_CSS': settings.SELECT2_CSS
             }

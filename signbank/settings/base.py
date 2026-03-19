@@ -126,8 +126,6 @@ INSTALLED_APPS = (
     'guardian',
     'bootstrap3',
     'django_summernote',
-    # 'django_select2',
-    # 'easy_select2',
     'signbank.dictionary',
     'signbank.feedback',
     #'signbank.registration',
