@@ -31,7 +31,6 @@ from signbank.dictionary.models import (Gloss, Morpheme, Definition, Relation, R
 from signbank.dictionary.translate_choice_list import choicelist_queryset_to_translated_dict
 from signbank.tools import get_selected_datasets_for_user
 
-from easy_select2.widgets import Select2
 
 # This overrides the __str__ method of class Tag (included in packages)
 # This is needed by the model choice fields to display the tags
@@ -355,7 +354,7 @@ class GlossSearchForm(forms.ModelForm):
                 field_label = Gloss.get_field(fieldname).verbose_name
             self.fields[fieldname] = forms.ChoiceField(label=field_label,
                                                        choices=[(0, '-')],
-                                                       required=False, widget=Select2)
+                                                       required=False)
         self.fields['tags'] = forms.ModelChoiceField(label=_('Tags'),
                                                      queryset=Tag.objects.all(), empty_label=None,
                                                      widget=forms.Select(attrs=ATTRS_FOR_FORMS))
@@ -493,7 +492,7 @@ class MorphemeSearchForm(forms.ModelForm):
                               widget=forms.Select(attrs=ATTRS_FOR_BOOLEAN_FORMS))
 
     definitionRole = forms.ChoiceField(label=_('Note Type'), choices=[(0, '-')],
-                                       required=False, widget=Select2)
+                                       required=False)
     definitionContains = forms.CharField(label=_('Note Contains'),
                                          widget=forms.TextInput(attrs=ATTRS_FOR_FORMS))
     defspublished = forms.ChoiceField(label=_("All Definitions Published"), choices=[(0, '-')],
@@ -534,7 +533,7 @@ class MorphemeSearchForm(forms.ModelForm):
                 field_label = Gloss.get_field(fieldname).verbose_name
             self.fields[fieldname] = forms.ChoiceField(label=field_label,
                                                        choices=[(0, '-')],
-                                                       required=False, widget=Select2)
+                                                       required=False)
         self.fields['tags'] = forms.ModelChoiceField(label=_('Tags'),
                                                      queryset=Tag.objects.all(), empty_label=None,
                                                      widget=forms.Select(attrs=ATTRS_FOR_FORMS))
@@ -1099,7 +1098,7 @@ class FocusGlossSearchForm(forms.ModelForm):
             field_label = Gloss.get_field(fieldname).verbose_name
             self.fields[fieldname] = forms.ChoiceField(label=field_label,
                                                        choices=[(0, '-')],
-                                                       required=False, widget=Select2)
+                                                       required=False)
         for boolean_field in ['repeat', 'altern']:
             self.fields[boolean_field].choices = [('0', '-'), ('2', _('Yes')), ('3', _('No'))]
 
@@ -1532,7 +1531,7 @@ class SentenceForm(forms.ModelForm):
 
         self.fields['sentenceType'] = forms.ChoiceField(label=_('Type'),
                                                         choices=[(0, '-')],
-                                                        required=False, widget=Select2)
+                                                        required=False)
         self.fields['negative'].choices = [('0', '-'), ('yes', _('Yes')), ('no', _('No'))]
 
 
