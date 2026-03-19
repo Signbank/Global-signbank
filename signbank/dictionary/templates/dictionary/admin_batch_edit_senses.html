@@ -15,8 +15,8 @@
 <link rel="stylesheet" href="{{STATIC_URL}}css/select2-dark-mode.css">
 
 <script type="text/javascript" src="{{STATIC_URL}}js/jquery.jeditable.mini_colors.js"></script>
-<link href="//cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/css/select2.css" rel="stylesheet"/>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/js/select2.full.js"></script>
+<link href="//cdnjs.cloudflare.com/ajax/libs/select2/{{SELECT2_CSS}}/css/select2.css" rel="stylesheet"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/select2/{{SELECT2_JS}}/js/select2.full.js"></script>
 {{ query_parameters|json_script:"query_parameters" }}
 <script type='text/javascript'>
 var url = '{{ PREFIX_URL }}';
