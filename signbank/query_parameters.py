@@ -27,8 +27,6 @@ from signbank.dictionary.translate_choice_list import choicelist_queryset_to_tra
 from signbank.tools import get_dataset_languages, get_multiselect_fieldnames, get_available_url_parameters_for_template
 from signbank.dictionary.context_data import get_selected_datasets
 
-from easy_select2.widgets import Select2
-
 
 def list_to_query(query_list):
     # this ANDs together the individual Q elements in the query_list
@@ -1044,12 +1042,10 @@ def set_up_signlanguage_dialects_fields(view, form):
     field_label_signlanguage = gettext("Sign Language")
     field_label_dialects = gettext("Dialect")
     form.fields['signlanguage'] = forms.ModelMultipleChoiceField(label=field_label_signlanguage,
-                                                                 widget=Select2,
                                                                  queryset=SignLanguage.objects.filter(
                                                                  dataset__in=selected_datasets).distinct())
 
     form.fields['dialect'] = forms.ModelMultipleChoiceField(label=field_label_dialects,
-                                                            widget=Select2,
                                                             queryset=Dialect.objects.filter(
                                                             signlanguage__dataset__in=selected_datasets))
 
