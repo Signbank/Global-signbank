@@ -106,7 +106,7 @@ class GlossVideoListView(ListView):
             self.dataset = get_object_or_404(Dataset, pk=self.kwargs['pk'])
         context = super(GlossVideoListView, self).get_context_data(**kwargs)
 
-        context['datasetid'] = self.dataset.id
+        context['datasetid'] = self.dataset.pk
         context['dataset'] = self.dataset
         selected_datasets = get_selected_datasets(self.request)
         dataset_languages = get_dataset_languages(selected_datasets)
