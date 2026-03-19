@@ -168,19 +168,7 @@ class FieldChoice(models.Model):
         return FieldChoice.objects.filter(field=category).filter(q).distinct()
 
     def reverse_relation_role(self):
-        if self.has_name('RelationRole', 'Hyponym'):
-            try:
-                hypernym = FieldChoice.lookup('RelationRole', "Hypernym")
-            except (ObjectDoesNotExist, MultipleObjectsReturned):
-                raise ValueError(_("FieldChoice for Hypernym is not defined."))
-            return hypernym
-        if self.has_name('RelationRole', 'Hypernym'):
-            try:
-                hyponym = FieldChoice.lookup('RelationRole', "Hyponym")
-            except (ObjectDoesNotExist, MultipleObjectsReturned):
-                raise ValueError(_("FieldChoice for Hyponym is not defined."))
-            return hyponym
-        return self
+        return self.reverse
 
 class Translation(models.Model):
     """A spoken language translation of signs"""
