@@ -72,7 +72,7 @@ def renumber_backup_videos(gloss):
 def rename_backup_videos(gloss):
     glossvideos = gloss_backup_videos(gloss)
     idgloss = gloss.idgloss
-    glossid = str(gloss.id)
+    glossid = str(gloss.pk)
     two_letter_dir = get_two_letter_dir(idgloss)
     dataset_dir = gloss.lemma.dataset.acronym
     for inx, glossvideo in enumerate(glossvideos, 1):
@@ -81,7 +81,7 @@ def rename_backup_videos(gloss):
         # keep this a normal string concatenation, not an f-string
         desired_filename_without_extension = idgloss + '-' + glossid + video_extension
         _, bak = os.path.splitext(glossvideo.videofile.name)
-        desired_extension = '.bak' + str(glossvideo.id)
+        desired_extension = '.bak' + str(glossvideo.pk)
         desired_filename = desired_filename_without_extension + desired_extension
         desired_relative_path = os.path.join(GLOSS_VIDEO_DIRECTORY,
                                              dataset_dir, two_letter_dir, desired_filename)
@@ -104,7 +104,7 @@ def gloss_has_videos_with_extra_chars_in_filename(gloss):
     glossvideos = GlossVideo.objects.filter(gloss=gloss,
                                             glossvideonme=None,
                                             glossvideoperspective=None).order_by('version')
-    weird_pattern = '-' + str(gloss.id) + '_'
+    weird_pattern = '-' + str(gloss.pk) + '_'
     pattern_in_filename = [gv for gv in glossvideos if weird_pattern in str(gv.videofile)]
     return len(pattern_in_filename) > 0
 
@@ -176,7 +176,7 @@ def rename_gloss_video(gloss):
     if not glossvideo:
         return
     idgloss = gloss.idgloss
-    glossid = str(gloss.id)
+    glossid = str(gloss.pk)
     two_letter_dir = get_two_letter_dir(idgloss)
     dataset_dir = gloss.lemma.dataset.acronym
     video_file_full_path = os.path.join(WRITABLE_FOLDER, str(glossvideo.videofile))
@@ -276,7 +276,7 @@ def gloss_video_filename_check(dataset):
         glossvideos = GlossVideo.objects.filter(gloss=gloss,
                                                 glossvideonme=None,
                                                 glossvideoperspective=None).order_by('version')
-        weird_pattern = '-' + str(gloss.id) + '_'
+        weird_pattern = '-' + str(gloss.pk) + '_'
         pattern_in_filename = [gv for gv in glossvideos if weird_pattern in str(gv.videofile)]
         if pattern_in_filename:
             list_videos = ', '.join([str(gv.version)+': '+str(gv.videofile) for gv in pattern_in_filename])
@@ -305,7 +305,7 @@ def gloss_video_filename_check(dataset):
 def find_unlinked_video_files(dataset, linked_file_names):
     """Return list of file_names that are not found in file list of db"""
 
-    dataset_folder = os.path.join(WRITABLE_FOLDER, GLOSS_VIDEO_DIRECTORY, dataset.acronym)
+    dataset_folder = str(os.path.join(WRITABLE_FOLDER, GLOSS_VIDEO_DIRECTORY, dataset.acronym))
 
     unlinked_video_filenames = []
 
