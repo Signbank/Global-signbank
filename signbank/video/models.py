@@ -589,7 +589,7 @@ class ExampleVideo(models.Model):
             self.videofile.name = ''
             raise ValueError(gettext('The file is not a video file.'))
         (basename, ext) = os.path.splitext(self.videofile.path)
-        if ext != '.mp4' or video_format_extension != '.mp4':
+        if video_format_extension != '.mp4' or ext != video_format_extension:
             old_relative_path = str(self.videofile)
             oldloc = self.videofile.path
             newloc = basename + ".mp4"
@@ -737,7 +737,7 @@ class AnnotatedVideo(models.Model):
             self.videofile.name = ''
             raise ValueError(gettext('The file is not a video file.'))
         (basename, ext) = os.path.splitext(self.videofile.path)
-        if ext != '.mp4' or video_format_extension != '.mp4':
+        if video_format_extension != '.mp4' or ext != video_format_extension:
             old_relative_path = str(self.videofile)
             oldloc = self.videofile.path
             newloc = basename + ".mp4"
@@ -933,7 +933,8 @@ class GlossVideo(models.Model):
             self.videofile.name = ''
             raise ValueError(gettext('The file is not a video file.'))
         (basename, ext) = os.path.splitext(self.videofile.path)
-        if video_format_extension != '.mp4':
+        if video_format_extension != '.mp4' or ext != video_format_extension:
+            # the video format does not match the file extension or needs to be converted
             oldloc = self.videofile.path
             newloc = basename + ".mp4"
             okay, result = convert_video(oldloc, newloc)
@@ -1176,7 +1177,7 @@ class GlossVideoNME(GlossVideo):
             self.videofile.name = ''
             raise ValueError(gettext('The file is not a video file.'))
         (basename, ext) = os.path.splitext(self.videofile.path)
-        if ext != '.mp4' or video_format_extension != '.mp4':
+        if video_format_extension != '.mp4' or ext != video_format_extension:
             oldloc = self.videofile.path
             newloc = basename + ".mp4"
             okay, result = convert_video(oldloc, newloc)
@@ -1291,7 +1292,7 @@ class GlossVideoPerspective(GlossVideo):
             self.videofile.name = ''
             raise ValueError(gettext('The file is not a video file.'))
         (basename, ext) = os.path.splitext(self.videofile.path)
-        if ext != '.mp4' or video_format_extension != '.mp4':
+        if video_format_extension != '.mp4' or ext != video_format_extension:
             oldloc = self.videofile.path
             newloc = basename + ".mp4"
             okay, result = convert_video(oldloc, newloc)

@@ -308,22 +308,25 @@ def convert_video(sourcefile, targetfile):
     file_was_renamed, video_file_matching_format = rename_video_to_match_video_format(sourcefile)
 
     if not os.path.exists(video_file_matching_format):
-        # input_file is identical to sourcefile if the sourcefile did not exist
-        return False, video_file_matching_format
-
-    if not os.path.exists(video_file_matching_format):
         # video_file_matching_format is identical to sourcefile if the sourcefile did not exist
         return False, video_file_matching_format
+
+    if video_file_matching_format == targetfile:
+        return True, targetfile
 
     try:
         # video_file_matching_format is the possibly renamed source file
         result = subprocess.run(["ffmpeg", "-i", video_file_matching_format, targetfile])
     except (IOError, OSError, PermissionError):
         return False, video_file_matching_format
-    if result.returncode == 0:
-        if file_was_renamed:
-            # this was temporarily used for the conversion
-            os.remove(video_file_matching_format)
-        return True, targetfile
-    else:
+
+    try:
+        if result.returncode == 0:
+            if file_was_renamed:
+                # this was temporarily used for the conversion
+                os.remove(video_file_matching_format)
+            return True, targetfile
+        else:
+            return False, video_file_matching_format
+    except (IOError, OSError, PermissionError):
         return False, video_file_matching_format
