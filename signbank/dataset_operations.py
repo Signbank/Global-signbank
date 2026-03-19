@@ -77,7 +77,6 @@ def rename_backup_videos(gloss):
     for inx, glossvideo in enumerate(glossvideos, 1):
         video_file_full_path = os.path.join(WRITABLE_FOLDER, str(glossvideo.videofile))
         video_extension = video_file_type_extension(video_file_full_path)
-        # keep this a normal string concatenation, not an f-string
         _, bak = os.path.splitext(glossvideo.videofile.name)
         desired_filename = f'{idgloss}-{glossid}{video_extension}.bak{glossvideo.pk}'
         desired_relative_path = os.path.join(GLOSS_VIDEO_DIRECTORY,

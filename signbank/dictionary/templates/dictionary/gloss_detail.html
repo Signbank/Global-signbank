@@ -672,10 +672,12 @@ textarea:focus {
                     <input type='hidden' name='use_default_query_parameters' value='default_parameters'>
                         <table class="table table-condensed" style="z-index:0;padding-top: 100px;width:1000px;">
                             <thead id = 'default_query_table_header'>
+                                    <tr>
                                     <th style="width: 500px;border-bottom: 1px solid grey; border-left: 1px solid grey;
                                             border-top: 1px solid grey; border-right: 1px solid grey;">{% trans "Field" %}</th>
                                     <th style="border-bottom: 1px solid grey; border-left: 1px solid grey;
                                             border-top: 1px solid grey; border-right: 1px solid grey;">{% trans "Value" %}</th>
+                                    </tr>
                             </thead>
                             <tbody>
                             {% for key, value in default_query_parameters.items %}
@@ -706,10 +708,10 @@ textarea:focus {
                         <input type='hidden' name='use_default_query_parameters' value='query_parameters'>
                         <table class="table table-condensed" style="z-index:0;padding-top: 100px;width:1000px;">
                             <thead id = 'query_table_header'>
-                                    <th style="width: 500px;border-bottom: 1px solid grey; border-left: 1px solid grey;
+                                    <tr><th style="width: 500px;border-bottom: 1px solid grey; border-left: 1px solid grey;
                                             border-top: 1px solid grey; border-right: 1px solid grey;">{% trans "Field" %}</th>
                                     <th style="border-bottom: 1px solid grey; border-left: 1px solid grey;
-                                            border-top: 1px solid grey; border-right: 1px solid grey;">{% trans "Value" %}</th>
+                                            border-top: 1px solid grey; border-right: 1px solid grey;">{% trans "Value" %}</th></tr>
                             </thead>
                             <tbody>
                             {% for key, value in query_parameters.items %}
@@ -1053,7 +1055,7 @@ textarea:focus {
     <div class='editform'>
         <fieldset>
             <h4>{% trans "Upload New Video" %}</h4>
-            <label for="id_videofile" class="drop-container" id="drop-container-video">
+            <label for="{{videoform.videofile.id_for_label}}" class="drop-container" id="drop-container-video">
               <div id="videogallery" class="gallery"></div>
               <span id = "drop-container-title-video" class="drop-title">Drop video here<br>or...</span>
               <label id="drop-container-video-status" class="hide">Status here</label>
@@ -1124,7 +1126,7 @@ textarea:focus {
                                     <input type='hidden' name='redirect' value='{{PREFIX_URL}}/dictionary/gloss/{{gloss.pk}}/'>
                                     <input type='hidden' name='object_type' value='gloss_video'>
                                     <input type='hidden' name='object_id' value='{{gloss.pk}}'>
-                                    <input type='file' name="videofile" id="videofile">
+                                    <input type='file' name="videofile" id="{{videoform.videofile.id_for_label}}">
                                     <input type='hidden' name='recorded' value='True'>
                                     <input class="btn btn-primary" type="submit" id="uploadrecorded" value ='Upload' disabled>
                                 </form>
@@ -1148,7 +1150,7 @@ textarea:focus {
     <div class='editform'>
         <fieldset>
             <h4>{% trans "Upload New Citation Form Image" %}</h4>
-            <label for='id_imagefile' class="drop-container" id="drop-container-image">
+            <label for='imageform_imagefile' class="drop-container" id="drop-container-image">
               <div id="imagegallery" class="gallery"></div>
               <span id = "drop-container-title-image"  class="drop-title">Drop image here<br>or...</span>
               <label id="drop-container-image-status" class="hide">Status here</label>
@@ -1157,7 +1159,7 @@ textarea:focus {
                 <input type='hidden' name='redirect' value='{{PREFIX_URL}}/dictionary/gloss/{{gloss.pk}}/'>
                 <table>
                   <tr>
-                    <td>{{imageform.imagefile}}</td>
+                    <td id="imageform_imagefile">{{imageform.imagefile}}</td>
                   </tr>
                   <tr>
                     <td id="image-buttons">

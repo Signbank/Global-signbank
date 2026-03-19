@@ -135,7 +135,7 @@ function do_adminsearch(el) {
 }
 </script>
 <style>
-list {
+.list-tuples {
     overflow-y: scroll;
     overflow-x: hidden;
     scrollbar-width: thin;
@@ -210,30 +210,30 @@ dd {
                 {% with searchform|get_annotation_search_field_for_language:dataset_lang as search_field %}
                 <td class='td td-light'>
                     <div class='input-group input-group-light'>
-                    <label class='input-group-addon' for='id_annotation_idgloss_{{dataset_lang.language_code_2char}}'>
+                    <label class='input-group-addon' for='glosssearch_{{dataset_lang.language_code_2char}}'>
                         {{search_field.label}}
                     </label>
-                    <input id='glosssearch_{{ dataset_lang.language_code_2char }}' type='text'
-                           name='glosssearch_{{ dataset_lang.language_code_2char }}' class='form-control' value="{{search_field.value}}">
+                    <input id='glosssearch_{{dataset_lang.language_code_2char}}' type='text'
+                           name='glosssearch_{{dataset_lang.language_code_2char}}' class='form-control' value="{{search_field.value}}">
                     </div>
                 </td>
                 {% endwith %}
 
                 {% with searchform|get_lemma_form_field_for_language:dataset_lang as lemma_field %}
                 <td class='td td-light'><div class='input-group input-group-light'>
-                    <label class='input-group-addon' for='id_lemma_{{dataset_lang.language_code_2char}}'>
+                    <label class='input-group-addon' for='lemma_{{dataset_lang.language_code_2char}}'>
                         {{lemma_field.label}}
                     </label>
-                    <input id='lemma_{{ dataset_lang.language_code_2char }}' type='text'
-                           name='lemma_{{ dataset_lang.language_code_2char }}' class='form-control' value='{{lemma_field.value}}'></div>
+                    <input id='lemma_{{dataset_lang.language_code_2char}}' type='text'
+                           name='lemma_{{dataset_lang.language_code_2char}}' class='form-control' value='{{lemma_field.value}}'></div>
                 </td>
                 {% endwith %}
 
                 {% with searchform|get_senses_form_field_for_language:dataset_lang as keyword_field %}
                 <td class='td td-light'><div class='input-group input-group-light'>
-                    <label class='input-group-addon' for='id_keyword_{{dataset_lang.language_code_2char}}'>{{keyword_field.label}}</label>
-                    <input id='keyword_{{ dataset_lang.language_code_2char }}' type='text'
-                           name='keyword_{{ dataset_lang.language_code_2char }}' class='form-control' value='{{keyword_field.value}}'></div>
+                    <label class='input-group-addon' for='keyword_{{dataset_lang.language_code_2char}}'>{{keyword_field.label}}</label>
+                    <input id='keyword_{{dataset_lang.language_code_2char}}' type='text'
+                           name='keyword_{{dataset_lang.language_code_2char}}' class='form-control' value='{{keyword_field.value}}'></div>
                 </td>
                 {% endwith %}
             </tr>
@@ -308,7 +308,7 @@ dd {
             {% endfor %}
             <dt class="col-sm-2" style="width:400px;">{% trans "Video Paths" %}</dt>
         </dl>
-        <list id="document_tuples" style="height:280px; display:block;">
+        <div id="document_tuples_videos" class="list-tuples" style="height:280px; display:block;">
               {% for gloss, num_backup_videos, videos, glossbackupvideos, perspvideos, nmevideos, wrongvideos in gloss_videos %}
                   {% if videos %}
                   <dl id="primary_gloss_videos_{{gloss.id}}" class="row list-group-item list-group-item-contents" style="padding: 0;">
@@ -321,7 +321,7 @@ dd {
                   </dl>
                   {% endif %}
              {% endfor %}
-        </list>
+        </div>
         </td>
         </tr>
     </table>
@@ -349,7 +349,7 @@ dd {
             {% endfor %}
             <dt class="col-sm-2" style="width:600px;">{% trans "Video Paths" %}</dt>
         </dl>
-        <list id="document_tuples" style="height:280px; display:block;">
+        <div id="document_tuples_perspective" class="list-tuples" style="height:280px; display:block;">
               {% for gloss, num_backup_videos, videos, glossbackupvideos, perspvideos, nmevideos, wrongvideos in gloss_videos %}
                   {% if perspvideos %}
                   <dl id="gloss_persp_videos_{{gloss.id}}" class="row list-group-item list-group-item-contents" style="padding: 0;">
@@ -362,7 +362,7 @@ dd {
                   </dl>
                   {% endif %}
              {% endfor %}
-        </list>
+        </div>
         </td>
         </tr>
     </table>
@@ -389,7 +389,7 @@ dd {
             {% endfor %}
             <dt class="col-sm-2" style="width:600px;">{% trans "Video Paths" %}</dt>
         </dl>
-        <list id="document_tuples" style="height:280px; display:block;">
+        <div id="document_tuples_nme" class="list-tuples" style="height:280px; display:block;">
               {% for gloss, num_backup_videos, videos, glossbackupvideos, perspvideos, nmevideos, wrongvideos in gloss_videos %}
                   {% if nmevideos %}
                   <dl id="gloss_nme_videos_{{gloss.id}}" class="row list-group-item list-group-item-contents" style="padding: 0;">
@@ -402,7 +402,7 @@ dd {
                   </dl>
                   {% endif %}
              {% endfor %}
-        </list>
+        </div>
         </td>
         </tr>
     </table>
@@ -437,7 +437,7 @@ dd {
                 </span>
             </dt>
         </dl>
-        <list id="document_tuples" style="height:280px; display:block;">
+        <div id="document_tuples_backups" class="list-tuples" style="height:280px; display:block;">
               {% for gloss, num_backup_videos, videos, glossbackupvideos, perspvideos, nmevideos, wrongvideos in gloss_videos %}
                   {% if glossbackupvideos %}
                   <dl id="gloss_videos_{{gloss.id}}" class="row list-group-item list-group-item-contents" style="padding: 0;">
@@ -465,7 +465,7 @@ dd {
                   </dl>
                   {% endif %}
              {% endfor %}
-        </list>
+        </div>
         </td>
         </tr>
     </table>
@@ -491,7 +491,7 @@ dd {
             {% endfor %}
             <dt class="col-sm-2" style="width:600px;">{% trans "Video Paths" %}</dt>
         </dl>
-        <list id="document_tuples" style="height:280px; display:block;">
+        <div id="document_tuples_wrong" class="list-tuples" style="height:280px; display:block;">
               {% for gloss, num_backup_videos, videos, glossbackupvideos, perspvideos, nmevideos, wrongvideos in gloss_videos %}
                   {% if wrongvideos %}
                   <dl id="gloss_wrong_videos_{{gloss.id}}" class="row list-group-item list-group-item-contents" style="padding: 0;">
@@ -504,7 +504,7 @@ dd {
                   </dl>
                   {% endif %}
              {% endfor %}
-        </list>
+        </div>
         </td>
         </tr>
     </table>
