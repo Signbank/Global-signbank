@@ -883,11 +883,12 @@ class FieldChoiceAdmin(VersionAdmin, TranslationAdmin):
         if obj and obj.field != 'RelationRole':
             return fields
         new_fields = {}
-        for language, language_name in [(l[0], l[1]) for l in LANGUAGES if
-                                        l[0] in MODELTRANSLATION_LANGUAGES]:
-            name_languagecode = 'reverse_name_' + language.replace('-', '_')
-            new_fields[name_languagecode] = forms.CharField(
-                label=_("Reverse Relation") + (" (%s)" % language_name),
+        for language_code in MODELTRANSLATION_LANGUAGES:
+            language_code_2char = "zh" if language_code == "zh-hans" else language_code.replace('-', '_')
+            language = Language.objects.get(language_code_2char=language_code_2char)
+            reverse_name_languagecode = 'reverse_name_' + language_code.replace('-', '_')
+            new_fields[reverse_name_languagecode] = forms.CharField(
+                label=_("Reverse Relation") + (" (%s)" % language.name),
                 required=False, max_length=50)
         for field_name, form_field in new_fields.items():
             if field_name not in fields:
