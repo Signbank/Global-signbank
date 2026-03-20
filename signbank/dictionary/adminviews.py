@@ -127,7 +127,8 @@ from signbank.dictionary.context_data_gloss import (get_other_relations, get_ann
                                                     get_sequential_morphology,
                                                     get_annotation_idgloss_per_language_dict, get_notes_groupedby_role,
                                                     get_provenance_groupedby_method,
-                                                    get_phonology_list_kinds, get_human_value_for_field_value)
+                                                    get_phonology_list_kinds, get_human_value_for_field_value,
+                                                    get_relations_groupedby_role, get_relations_dict, relations_target_gloss_lookup)
 from signbank.dictionary.related_objects import (morpheme_is_related_to, gloss_is_related_to,
                                                  okay_to_move_gloss, same_translation_languages, okay_to_move_glosses,
                                                  transitive_related_objects)
@@ -793,6 +794,12 @@ class GlossListView(ListView):
 
         self.public = not self.request.user.is_authenticated
 
+        # erase the variables used to pass RelationRole query parameters to the ajax row generation routines
+        if 'query_fields_parameters' in self.request.session.keys():
+            self.request.session['query_fields_parameters'] = []
+        if 'query_fields_parameters' in self.request.GET.keys():
+            self.request.GET['query_fields_parameters'] = []
+
         if self.show_all:
             self.query_parameters = dict()
             # erase the previous query
@@ -1230,8 +1237,8 @@ class GlossDetailView(DetailView):
             # somehow this gets mis-matched
             reorder_senses(self.object)
 
-        # make sure synonym objects are also related to this gloss
-        ensure_synonym_transitivity(self.object)
+        # make sure synonym objects are also related to this gloss (applies to legacy data)
+        lazily_created_transitive_relations = ensure_synonym_transitivity(self.object)
 
         context = self.get_context_data(object=self.object)
         return self.render_to_response(context)
@@ -1505,8 +1512,8 @@ class GlossDetailView(DetailView):
         context['homonyms_different_phonology'] = homonyms_different_phonology
 
         homonyms_but_not_saved = []
-        if homonyms_but_not_saved:
-            for homonym in homonyms_not_saved:
+        if homonyms_of_this_gloss:
+            for homonym in homonyms_of_this_gloss:
                 homo_trans = {}
                 if homonym.dataset:
                     for language in homonym.dataset.translation_languages.all():
@@ -2000,29 +2007,17 @@ class GlossRelationsDetailView(DetailView):
 
         context['glosses_in_lemma_group'] = glosses_in_lemma_group
 
-        otherrelations = []
-
-        if gl.relation_sources:
-            for oth_rel in gl.relation_sources.all().filter(target__archived__exact=False,
-                                                            source__archived__exact=False):
-                if oth_rel.source.id == oth_rel.target.id:
-                    print('circular relation found: ', gl, ' (', str(gl.id), ') ', oth_rel, oth_rel.role)
-                    continue
-                # This display is set to the default language for the dataset of this gloss
-                target_display = oth_rel.target.annotation_idgloss(oth_rel.target.lemma.dataset.default_language.language_code_2char)
-                otherrelations.append((oth_rel, senses_per_language(oth_rel.target), target_display))
-
-        context['otherrelations'] = otherrelations
+        relations_dict = get_relations_dict(gl)
+        context['relations_dict'] = relations_dict
+        target_lookup = relations_target_gloss_lookup(gl)
+        context['target_lookup_dict'] = target_lookup
 
         pattern_variant_glosses = gl.pattern_variants()
         # the pattern_variants method result includes the gloss itself
         pattern_variants = [v for v in pattern_variant_glosses if not v.id == gl.id]
-        other_variants = gl.has_variants()
 
-        all_variants = pattern_variants + [ov for ov in other_variants if ov not in pattern_variants]
-        has_variants = all_variants
         variants = []
-        for gl_var in has_variants:
+        for gl_var in pattern_variants:
             # This display is set to the default language for the dataset of the variant
             gl_var_display = gl_var.annotation_idgloss(gl_var.lemma.dataset.default_language.language_code_2char)
             variants.append((gl_var, senses_per_language(gl_var), gl_var_display))
@@ -5853,29 +5848,25 @@ def sensetranslation_ajax_complete(request, dataset_id, language_code, q):
     sorted_sensetranslations_dict = sorted(sensetranslations_dict_list, key=lambda x : len(x['sensetranslation']))
     return JsonResponse(sorted_sensetranslations_dict, safe=False)
 
-def homonyms_ajax_complete(request, gloss_id):
 
-    try:
-        this_gloss = Gloss.objects.get(id=gloss_id, archived=False)
-        homonym_objects = this_gloss.homonym_objects()
-    except ObjectDoesNotExist:
-        homonym_objects = []
+def homonyms_ajax_complete(request, gloss_id):
+    this_gloss = get_object_or_404(Gloss, id=gloss_id, archived=False)
+    homonym_objects = this_gloss.homonym_objects()
 
     (interface_language, interface_language_code,
      default_language, default_language_code) = get_interface_language_and_default_language_codes(request)
 
-    result = []
+    same_phonology = []
     for homonym in homonym_objects:
         translations = homonym.get_annotationidglosstranslation_texts()
-
         if interface_language_code in translations.keys():
             translation = translations[interface_language_code]
         else:
             translation = translations[default_language_code]
-        result.append({ 'id': str(homonym.id), 'gloss': translation })
-
-    homonyms_dict = { str(gloss_id) : result }
-
+        same_phonology.append({ 'id': str(homonym.id), 'gloss': translation })
+    homonyms_dict = { 'glossid': str(gloss_id),
+                      'same_phonology': same_phonology,
+                      'saved_relations': this_gloss.has_homonyms() }
     return JsonResponse(homonyms_dict, safe=False)
 
 
@@ -6021,11 +6012,11 @@ def glosslist_ajax_complete(request, gloss_id):
         elif fieldname == 'hasRelation':
             # this field has a list of roles as a parameter
             if query_fields_parameters:
+                fields_parameters = [FieldChoice.objects.get(field='RelationRole', machine_value=int(roleid)) for roleid
+                                     in query_fields_parameters[0]]
                 # query_fields_parameters ends up being a list of list for this field
-                field_paramters = query_fields_parameters
-                relations_of_type = [r for r in this_gloss.relation_sources.filter(target__archived__exact=False,
-                                                                                   source__archived__exact=False)
-                                     if r.role in field_paramters]
+                relations_of_type = [r for r in this_gloss.get_relations()
+                                     if r.role_fk in fields_parameters]
                 relations = ", ".join([r.target.annotation_idgloss(default_language) for r in relations_of_type])
                 column_values.append((fieldname, relations))
         elif fieldname not in Gloss.get_field_names():
@@ -6065,7 +6056,6 @@ def glosslistheader_ajax(request):
         if 'query' in request.GET and 'display_fields' in request.GET and 'query_fields_parameters' in request.GET:
             display_fields = json.loads(request.GET['display_fields'])
             query_fields_parameters = json.loads(request.GET['query_fields_parameters'])
-
     selected_datasets = get_selected_datasets(request)
     dataset_languages = get_dataset_languages(selected_datasets)
 
@@ -6088,12 +6078,13 @@ def glosslistheader_ajax(request):
         if fieldname in fieldname_to_column_header.keys():
             column_headers.append((fieldname, fieldname_to_column_header[fieldname]))
         elif fieldname == 'hasRelation':
-            fields_parameters = query_fields_parameters[0]
-            field_parameters = ', '.join([field_param.capitalize() for field_param in fields_parameters])
-            if len(fields_parameters) == 1:
-                column_headers.append((fieldname, field_parameters))
-            else:
-                column_headers.append((fieldname, _("Relation: ") + field_parameters))
+            if query_fields_parameters:
+                fields_parameters = [FieldChoice.objects.get(field='RelationRole', machine_value=int(roleid)) for roleid in query_fields_parameters[0]]
+                field_parameters = ', '.join([field_param.name for field_param in fields_parameters])
+                if len(fields_parameters) == 1:
+                    column_headers.append((fieldname, field_parameters))
+                else:
+                    column_headers.append((fieldname, _("Relation: ") + field_parameters))
         elif fieldname not in Gloss.get_field_names():
             continue
         else:
@@ -6179,8 +6170,9 @@ def senselistheader_ajax(request):
             column_headers.append((fieldname, fieldname_to_column_header[fieldname]))
         elif fieldname == 'hasRelation':
             if query_fields_parameters:
-                # this is a singleton type of relation
-                relation_type = _("Type of Relation") + ':' + query_fields_parameters[0].capitalize()
+                fields_parameters = [FieldChoice.objects.get(field='RelationRole', machine_value=int(roleid)) for roleid in query_fields_parameters[0]]
+                field_parameters = ', '.join([field_param.name for field_param in fields_parameters])
+                relation_type = _("Type of Relation") + ':' + field_parameters
                 column_headers.append((fieldname, relation_type))
             else:
                 column_headers.append((fieldname, _("Type of Relation")))

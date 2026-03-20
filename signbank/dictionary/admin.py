@@ -13,10 +13,12 @@ from django.contrib.admin import SimpleListFilter
 from modeltranslation.admin import TranslationAdmin
 from django.contrib.auth import get_permission_codename
 from django.utils.translation import override, gettext_lazy as _
+from urllib.parse import parse_qsl
 
 from guardian.admin import GuardedModelAdmin
 
-from signbank.settings.server_specific import FIELDS, SHOW_DATASET_INTERFACE_OPTIONS, LANGUAGE_CODE, SHOW_FIELD_CHOICE_COLORS
+from signbank.settings.server_specific import (FIELDS, SHOW_DATASET_INTERFACE_OPTIONS, LANGUAGE_CODE, SHOW_FIELD_CHOICE_COLORS,
+                                               LANGUAGES, MODELTRANSLATION_LANGUAGES)
 from signbank.dictionary.models import (Dataset, Gloss, Translation, LemmaIdgloss, FieldChoice, RelationToForeignSign,
                                         Definition, Relation, AnnotationIdglossTranslation, Language, SignLanguage,
                                         LemmaIdglossTranslation, Handshape, SemanticField, SemanticFieldTranslation,
@@ -37,7 +39,7 @@ from signbank.dictionary.forms import (FieldChoiceForm, SemanticFieldForm, Hands
 from signbank.tools import (get_fields_with_choices_glosses, get_fields_with_choices_handshapes,
     get_fields_with_choices_definition, get_fields_with_choices_morphology_definition,
     get_fields_with_choices_other_media_type, get_fields_with_choices_morpheme_type,
-    get_fields_with_choices_examplesentences, get_gloss_handshape_fields)
+    get_fields_with_choices_examplesentences, get_gloss_handshape_fields, get_fields_with_choices_relation)
 
 class DatasetAdmin(GuardedModelAdmin):
     model = Dataset
@@ -829,7 +831,7 @@ class FieldChoiceAdmin(VersionAdmin, TranslationAdmin):
 
     model = FieldChoice
     fields = ['field', 'name'] \
-             + ['field_color', 'machine_value']
+             + ['field_color', 'machine_value', 'reverse_identity', 'reverse']
     form = FieldChoiceForm
 
     show_field_choice_colors = SHOW_FIELD_CHOICE_COLORS
@@ -851,7 +853,6 @@ class FieldChoiceAdmin(VersionAdmin, TranslationAdmin):
 
     def get_form(self, request, obj=None, **kwargs):
         form = super(FieldChoiceAdmin, self).get_form(request, obj, **kwargs)
-
         if obj:
             # for display in the HTML color picker, the field color needs to be prefixed with #
             # in the database,only the hex number is stored
@@ -859,7 +860,41 @@ class FieldChoiceAdmin(VersionAdmin, TranslationAdmin):
             obj_color = obj.field_color
             if obj_color[0] != '#':
                 obj.field_color = '#'+obj.field_color
+        else:
+            # a new field choice is being created or edited
+            # see if the user is inside a category
+            try:
+                changelist_filters = request.GET['_changelist_filters']
+            except KeyError:
+                changelist_filters = ''
+
+            if changelist_filters:
+                query_params = dict(parse_qsl(changelist_filters))
+            else:
+                query_params = ''
+            if query_params:
+                new_field_category = query_params.get('field__exact')
+                if new_field_category == 'RelationRole':
+                    print('creating a relation role, expand the form: Not implemented yet')
         return form
+
+    def get_fields(self, request, obj=None):
+        fields = super(FieldChoiceAdmin, self).get_fields(request, obj)
+        if obj and obj.field != 'RelationRole':
+            return fields
+        new_fields = {}
+        for language_code in MODELTRANSLATION_LANGUAGES:
+            language_code_2char = "zh" if language_code == "zh-hans" else language_code.replace('-', '_')
+            language = Language.objects.get(language_code_2char=language_code_2char)
+            reverse_name_languagecode = 'reverse_name_' + language_code.replace('-', '_')
+            new_fields[reverse_name_languagecode] = forms.CharField(
+                label=_("Reverse Relation") + (" (%s)" % language.name),
+                required=False, max_length=50)
+        for field_name, form_field in new_fields.items():
+            if field_name not in fields:
+                fields.append(field_name)
+                self.form.declared_fields.update({field_name: form_field})
+        return fields
 
     def get_actions(self, request):
         actions = super(FieldChoiceAdmin, self).get_actions(request)
@@ -970,6 +1005,16 @@ class FieldChoiceAdmin(VersionAdmin, TranslationAdmin):
             count_in_use = Morpheme.objects.filter(query_d).count()
             return not count_in_use
 
+        fields_with_choices_relation = get_fields_with_choices_relation()
+        if field_value in fields_with_choices_relation.keys():
+            queries_d = [Q(**{field_name + '__machine_value': field_machine_value})
+                         for field_name in fields_with_choices_relation[field_value]]
+            query_d = queries_d.pop()
+            for item in queries_d:
+                query_d |= item
+            count_in_use = Relation.objects.filter(query_d).count()
+            return not count_in_use
+
         # fall through: the fieldname is not used in Gloss, Handshape, Definition, MorphologyDefinition, OtherMedia, Morpheme
         print('ADMIN, field choices, has_delete_permission: fall through on: ', field_value)
         opts = self.opts
@@ -1002,19 +1047,17 @@ class FieldChoiceAdmin(VersionAdmin, TranslationAdmin):
     delete_selected.short_description = "Delete selected field choices"
 
     def save_model(self, request, obj, form, change):
-
+        qs = FieldChoice.objects.filter(field=obj.field)
+        highest_machine_value = max([field_choice.machine_value for field_choice in qs])
         if not obj.machine_value:
             # Check out the query-set and make sure that it exists
             qs = FieldChoice.objects.filter(field=obj.field)
             if qs.count() == 0:
                 # The field does not yet occur within FieldChoice
-                # Future: ask user if that is what he wants (don't know how...)
                 # For now: assume user wants to add a new field (e.g: wordClass)
                 # NOTE: start with '2', because 0,1 are already taken by default values
                 obj.machine_value = 2
             else:
-                # Calculate highest currently occurring value
-                highest_machine_value = max([field_choice.machine_value for field_choice in qs])
                 # The automatic machine value we calculate is 1 higher
                 obj.machine_value = highest_machine_value+1
         elif obj.machine_value < 2:
@@ -1037,15 +1080,56 @@ class FieldChoiceAdmin(VersionAdmin, TranslationAdmin):
                     continue
                 if name_field == 'field_color' or name_field == 'csrfmiddlewaretoken':
                     continue
+                if name_field == 'reverse_identity':
+                    continue
+                if name_field == 'reverse' and form.data['field'] != 'RelationRole':
+                    continue
+                if name_field.startswith('reverse'):
+                    continue
                 new_name_value = form.data[name_field]
                 original_value = getattr(obj, name_field)
                 if new_name_value != original_value:
                     setattr(obj, name_field, new_name_value)
-
             try:
                 obj.save()
             except Exception as e:
                 print('Constraint violated, FieldChoice not saved: ', obj.field, obj.machine_value, obj.id, e)
+
+        obj.refresh_from_db()
+
+        if getattr(obj, 'field') != 'RelationRole':
+            return
+
+        relation_role_obj = obj
+
+        if 'reverse_identity' in form.data.keys() and form.data['reverse_identity'] == 'True':
+            relation_role_obj.reverse = relation_role_obj
+            relation_role_obj.save()
+            return
+
+        # The new machine value we calculate is 2 higher
+        reverse_relation_role_obj = FieldChoice(field='RelationRole', machine_value=highest_machine_value+2)
+
+        with override(LANGUAGE_CODE):
+            for language in MODELTRANSLATION_LANGUAGES:
+                name_languagecode = 'name_' + language.replace('-', '_')
+                reverse_relation_name_languagecode = 'reverse_name_' + language.replace('-', '_')
+                if reverse_relation_name_languagecode in form.data.keys():
+                    new_name_value = form.data[reverse_relation_name_languagecode]
+                    setattr(reverse_relation_role_obj, name_languagecode, new_name_value)
+            reverse_relation_role_obj.reverse = relation_role_obj
+
+        try:
+            reverse_relation_role_obj.save()
+        except Exception as e:
+            print('Constraint violated, FieldChoice reverse relation not saved: ', 'RelationRole', highest_machine_value+2, e)
+
+        relation_role_obj.reverse = reverse_relation_role_obj
+
+        try:
+            relation_role_obj.save()
+        except Exception as e:
+            print('Constraint violated, FieldChoice reverse relation not saved: ', 'RelationRole', highest_machine_value+2, e)
 
 
 class LanguageAdmin(TranslationAdmin):
