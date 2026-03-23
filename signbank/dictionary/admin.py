@@ -880,7 +880,8 @@ class FieldChoiceAdmin(VersionAdmin, TranslationAdmin):
 
     def get_fields(self, request, obj=None):
         fields = super(FieldChoiceAdmin, self).get_fields(request, obj)
-        if obj and obj.field != 'RelationRole':
+        if obj and obj.machine_value is not None:
+            # the field choice already exists, only show the editable fields
             return fields
         new_fields = {}
         for language_code in MODELTRANSLATION_LANGUAGES:
@@ -1095,7 +1096,8 @@ class FieldChoiceAdmin(VersionAdmin, TranslationAdmin):
 
         obj.refresh_from_db()
 
-        if getattr(obj, 'field') != 'RelationRole':
+        if getattr(obj, 'field') != 'RelationRole' or 'reverse_identity' not in form.data.keys():
+            # this is not a creation of a new relation role
             return
 
         relation_role_obj = obj

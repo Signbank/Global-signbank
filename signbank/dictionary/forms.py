@@ -1313,7 +1313,7 @@ class FieldChoiceForm(forms.ModelForm):
             # the fields regarding the reverse relation are ignored
             return
 
-        if data_fields['reverse_identity'] == 'True':
+        if 'reverse_identity' not in data_fields.keys() or data_fields['reverse_identity'] == 'True':
             # the rest of the fields are ignored
             return
 
