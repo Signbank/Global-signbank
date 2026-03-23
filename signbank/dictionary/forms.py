@@ -1170,7 +1170,9 @@ class FieldChoiceForm(forms.ModelForm):
 
     class Meta:
         model = FieldChoice
-        fields = '__all__'
+        fields = ['field'] \
+                 + ['name_' + language.replace('-', '_') for language in MODELTRANSLATION_LANGUAGES] \
+                 + ['field_color', 'machine_value', 'reverse', ]
 
     def __init__(self, *args, **kwargs):
 
