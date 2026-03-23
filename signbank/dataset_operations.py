@@ -1,17 +1,16 @@
 import re
 import shutil
 import os.path
-from pathlib import Path
 
-from django.contrib.admin.templatetags.admin_list import results
 from django.contrib.auth.decorators import permission_required
 from django.http import JsonResponse
 
 from signbank.settings.server_specific import (WRITABLE_FOLDER, GLOSS_VIDEO_DIRECTORY, DEBUG_VIDEOS, DELETED_FILES_FOLDER)
 from signbank.dictionary.models import (Gloss, AnnotationIdglossTranslation)
-from signbank.video.models import (GlossVideo, GlossVideoNME, GlossVideoPerspective, filename_matches_backup_video,
-                                   flattened_video_path, wrong_filename_filter)
+from signbank.video.models import (GlossVideo, GlossVideoNME, GlossVideoPerspective,
+                                   wrong_filename_filter)
 from signbank.video.convertvideo import video_file_type_extension
+from signbank.video.operations import (filename_matches_backup_video, flattened_video_path)
 from signbank.tools import get_two_letter_dir, get_checksum_for_path
 
 
@@ -78,11 +77,8 @@ def rename_backup_videos(gloss):
     for inx, glossvideo in enumerate(glossvideos, 1):
         video_file_full_path = os.path.join(WRITABLE_FOLDER, str(glossvideo.videofile))
         video_extension = video_file_type_extension(video_file_full_path)
-        # keep this a normal string concatenation, not an f-string
-        desired_filename_without_extension = idgloss + '-' + glossid + video_extension
         _, bak = os.path.splitext(glossvideo.videofile.name)
-        desired_extension = '.bak' + str(glossvideo.pk)
-        desired_filename = desired_filename_without_extension + desired_extension
+        desired_filename = f'{idgloss}-{glossid}{video_extension}.bak{glossvideo.pk}'
         desired_relative_path = os.path.join(GLOSS_VIDEO_DIRECTORY,
                                              dataset_dir, two_letter_dir, desired_filename)
         current_relative_path = str(glossvideo.videofile)
@@ -276,8 +272,7 @@ def gloss_video_filename_check(dataset):
         glossvideos = GlossVideo.objects.filter(gloss=gloss,
                                                 glossvideonme=None,
                                                 glossvideoperspective=None).order_by('version')
-        weird_pattern = '-' + str(gloss.pk) + '_'
-        pattern_in_filename = [gv for gv in glossvideos if weird_pattern in str(gv.videofile)]
+        pattern_in_filename = [gv for gv in glossvideos if f'-{gloss.pk}_' in str(gv.videofile)]
         if pattern_in_filename:
             list_videos = ', '.join([str(gv.version)+': '+str(gv.videofile) for gv in pattern_in_filename])
             glosses_with_weird_filenames.append((gloss, list_videos))
@@ -424,7 +419,7 @@ def get_backup_videos_for_gloss(gloss, string_result=True):
 
 
 def get_perspective_videos_for_gloss(gloss, string_result=True):
-    glossperspvideos = GlossVideoPerspective.objects.filter(gloss=gloss).distinct()
+    glossperspvideos = GlossVideoPerspective.objects.filter(gloss=gloss, version=0).distinct()
     if not string_result:
         # Each tuple has the form: (pk, version, videofile_path, checksum)
         return [(gv.pk, gv.version, str(gv.videofile), get_check_sum_relative_path(gv.videofile)) for gv in glossperspvideos]
@@ -433,7 +428,7 @@ def get_perspective_videos_for_gloss(gloss, string_result=True):
 
 
 def get_nme_videos_for_gloss(gloss, string_result=True):
-    glossnmevideos = GlossVideoNME.objects.filter(gloss=gloss).distinct().order_by('offset')
+    glossnmevideos = GlossVideoNME.objects.filter(gloss=gloss, version=0).distinct().order_by('offset')
     if not string_result:
         # Each tuple has the form: (pk, version, videofile_path, checksum)
         tuples_nmevideos = [(gv.pk, gv.version, str(gv.videofile), get_check_sum_relative_path(gv.videofile)) for gv in glossnmevideos]
