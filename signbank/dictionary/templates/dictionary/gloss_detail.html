@@ -1107,7 +1107,7 @@ textarea:focus {
                                 </th>
                                 <th>
                                     <div class="wrap">
-                                        <video id="recorded" playslinline></video>
+                                        <video id="recorded"></video>
                                     </div>
                                 </th>
                             </tr>
@@ -1735,13 +1735,13 @@ textarea:focus {
                                                 <div class="modal-content" style="width:40%">
                                                     <div id="videocontainer_{{examplesentence.id}}"  style="width:100%">
                                                         {% if examplesentence.has_video %}
-                                                            <div id="player">
-                                                                <video id='videoplayer' src="{{protected_media_url}}/{{examplesentence.get_video_path}}?v={% now 'YmdHis' %}" controls type="video/mp4" muted></video>
+                                                            <div>
+                                                                <video id='videoplayer_{{examplesentence.id}}' src="{{protected_media_url}}/{{examplesentence.get_video_path}}?v={% now 'YmdHis' %}" controls type="video/mp4" muted></video>
                                                                 </div>
                                                             <div id="replay"></div>
                                                         {% else %}
-                                                            <div id='player'>
-                                                                <img id='novideo' src='{{STATIC_URL}}images/no-video-ngt.png'>
+                                                            <div>
+                                                                <img id='novideoexample' src='{{STATIC_URL}}images/no-video-ngt.png'>
                                                             </div>
                                                         {% endif %}
                                                     </div>
@@ -1994,10 +1994,6 @@ textarea:focus {
                                             {% endif %}
 
                                                 <div id="player_nme_{{videonme.offset}}" style="">
-                                                    <video id='videonmeplayer_{{videonme.offset}}_middle' class="videonmeplayer_middle"
-                                                           src="{{protected_media_url}}{{videonme.get_video_path}}?v={% now 'YmdHis' %}"
-                                                           style="height:200px;width:auto;" playsinline muted></video>
-
                                                 {% if videonme.has_left_perspective %}
                                                     {% with nme_videos_lookup|get_item:videonme.offset as nme_perspectives %}
                                                     {% with nme_perspectives|get_item:'left' as nmevideo_left %}
@@ -2007,6 +2003,10 @@ textarea:focus {
                                                     {% endwith %}
                                                     {% endwith %}
                                                 {% endif %}
+                                                <video id='videonmeplayer_{{videonme.offset}}_middle' class="videonmeplayer_middle"
+                                                       src="{{protected_media_url}}{{videonme.get_video_path}}?v={% now 'YmdHis' %}"
+                                                       style="height:200px;width:auto;" playsinline muted>
+                                                </video>
                                                 {% if videonme.has_right_perspective %}
                                                     {% with nme_videos_lookup|get_item:videonme.offset as nme_perspectives %}
                                                     {% with nme_perspectives|get_item:'right' as nmevideo_right %}
@@ -2055,7 +2055,7 @@ textarea:focus {
                          </table>
                       </div>
                     {% endfor %}
-                        </div>
+                    </div>
                     </td>
                 </tr>
                </table>

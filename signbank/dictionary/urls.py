@@ -175,6 +175,10 @@ urlpatterns = [
     re_path(r'^ajax/senselistheader/$', signbank.dictionary.adminviews.senselistheader_ajax, name='senselistheader_ajax'),
     re_path(r'^ajax/lemmaglossrow/(?P<gloss_id>.*)/$', signbank.dictionary.adminviews.lemmaglosslist_ajax_complete, name='lemmaglosslist_ajax_complete'),
     re_path(r'^ajax/fetch_video_stills_for_gloss/(?P<gloss_id>.*)/$', signbank.dictionary.adminviews.fetch_video_stills_for_gloss, name='fetch_video_stills_for_gloss'),
+    re_path(r'^ajax/preview_backup_video_for_gloss/(?P<gloss_id>.*)/(?P<glossvideo_id>.*)/$',
+            signbank.dictionary.adminviews.preview_backup_video_for_gloss, name='preview_backup_video_for_gloss'),
+    re_path(r'^ajax/save_backup_video_as_gloss_video/(?P<gloss_id>.*)/(?P<glossvideo_id>.*)/$',
+            signbank.dictionary.adminviews.save_backup_video_as_gloss_video, name='save_backup_video_as_gloss_video'),
 
     re_path(r'^ajax/annotatedglosslistheader/$', signbank.dictionary.adminviews.annotatedglosslistheader_ajax,
             name='annotatedglosslistheader_ajax'),
