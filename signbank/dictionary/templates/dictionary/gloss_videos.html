@@ -13,10 +13,6 @@
 {% block extrajs %}
 <script type='text/javascript'>
 var url = '{{ PREFIX_URL }}';
-var language_code = '{{ LANGUAGE_CODE }}';
-
-{% trans "Edit" as edit_mode_str %}
-{% trans "Turn Off Edit Mode" as turn_off_edit_mode_str %}
 
 var csrf_token = '{{csrf_token}}';
 var this_gloss_id = {{gloss.id}};
@@ -27,6 +23,26 @@ var active_id = '{{active_id}}';
 var search_results_url = '{% url 'dictionary:ajax_search_results' %}';
 
 {% include "dictionary/search_result_bar.html" %}
+
+$('.quick_preview').click(function(e)
+{
+    var glossid = $(this).attr('data-glossid');
+    var glossvideoid = $(this).attr('data-glossvideoid');
+    var lookup = "#preview_backup_video_" + glossvideoid;
+    $(lookup).empty();
+    $.ajax({
+        url : url + "/dictionary/ajax/preview_backup_video_for_gloss/" + glossid + "/" + glossvideoid + "/",
+        datatype: "json",
+        async: true,
+        data: { 'csrfmiddlewaretoken': csrf_token },
+        success : function(result) {
+            var parsed = $.parseHTML(result);
+            $(lookup).first().append(result);
+            var backups_modal = '#backups_modal_' + glossvideoid;
+            $(backups_modal).modal("show");
+        }
+    });
+});
 </script>
 
 <script type='text/javascript'>
@@ -99,7 +115,7 @@ var search_results_url = '{% url 'dictionary:ajax_search_results' %}';
             {% if gloss.has_video %}
 
                 <div id="player">
-                <video id='videoplayer' src="{{protected_media_url}}{{gloss.get_video_url}}" controls autoplay muted></video>
+                <video id='videoplayer' src="{{protected_media_url}}{{gloss.get_video_url}}?v={% now 'YmdHis' %}" controls autoplay muted></video>
                 </div>
                 <div id="replay"></div>
 
@@ -113,7 +129,7 @@ var search_results_url = '{% url 'dictionary:ajax_search_results' %}';
         <h3>{% trans "Citation Form Image" %}</h3>
         <div>
             {% if gloss.get_image_path %}
-                <img id="imageframe" src="{{protected_media_url}}{{gloss.get_image_url}}" style="height:259px;width:auto;">
+                <img id="imageframe" src="{{protected_media_url}}{{gloss.get_image_url}}?v={% now 'YmdHis' %}" style="height:259px;width:auto;">
             {% else %}
                 <p>{% trans "There is no citation form image for this gloss." %}</p>
             {% endif %}
@@ -238,7 +254,7 @@ var search_results_url = '{% url 'dictionary:ajax_search_results' %}';
     <div class="panel-heading" data-toggle="collapse" data-target="#perspective_videos">{% trans "Perspective Videos" %} ({{perspective_videos|length}})</div>
     <div class="panel-body collapse" id="perspective_videos">
     <table class='table table-condensed table-condensed-light' style="width:100%;">
-    <tr><td>{% trans "Object Id" %}</td><td>{% trans "Version" %}</td><td>{% trans "Relative Path" %}</td><td>{% trans "Checksum" %}</td></tr>
+    <tr><th>{% trans "Object Id" %}</th><th>{% trans "Version" %}</th><th>{% trans "Relative Path" %}</th><th>{% trans "Checksum" %}</th></tr>
     {% for object_id, version, relative_path, checksum in perspective_videos %}
     <tr><td>{{object_id}}</td><td>{{version}}</td><td>{{relative_path}}</td><td>{{checksum|default:"NOT FOUND"}}</td></tr>
     {% endfor %}
@@ -253,7 +269,7 @@ var search_results_url = '{% url 'dictionary:ajax_search_results' %}';
     <div class="panel-heading" data-toggle="collapse" data-target="#nme_videos">{% trans "Videos with Non-manual Elements" %} ({{nme_videos|length}})</div>
     <div class="panel-body collapse" id="nme_videos">
     <table class='table table-condensed table-condensed-light' style="width:100%;">
-    <tr><td>{% translate "Object Id" %}</td><td>{% translate "Version" %}</td><td>{% translate "Relative Path" %}</td><td>{% trans "Checksum" %}</td></tr>
+    <tr><th>{% translate "Object Id" %}</th><th>{% translate "Version" %}</th><th>{% translate "Relative Path" %}</th><th>{% trans "Checksum" %}</th></tr>
     {% for object_id, version, relative_path, checksum in nme_videos %}
     <tr><td>{{object_id}}</td><td>{{version}}</td><td>{{relative_path}}</td><td>{{checksum|default:"NOT FOUND"}}</td></tr>
     {% endfor %}
@@ -268,7 +284,7 @@ var search_results_url = '{% url 'dictionary:ajax_search_results' %}';
     <div class="panel-heading" data-toggle="collapse" data-target="#dangling_video_files">{% trans "Video Files Without Objects" %} ({{dangling_video_files|length}})</div>
     <div class="panel-body collapse" id="dangling_video_files">
     <table class='table table-condensed table-condensed-light' style="width:100%;">
-    <tr><td>{% translate "Object Id" %}</td><td>{% translate "Relative Path" %}</td></tr>
+    <tr><th>{% translate "Object Id" %}</th><th>{% translate "Relative Path" %}</th></tr>
     {% for relative_path, file_name in dangling_video_files %}
     <tr><td>NONE</td><td>{{relative_path}}</td>
         <td><a download="{{file_name}}"
@@ -286,7 +302,7 @@ var search_results_url = '{% url 'dictionary:ajax_search_results' %}';
     <div class="panel-heading" data-toggle="collapse" data-target="#primary_videos">{% trans "Primary Video Files" %} ({{primary_videos|length}})</div>
     <div class="panel-body collapse" id="primary_videos">
     <table class='table table-condensed table-condensed-light' style="width:100%;">
-    <tr><td>{% trans "Object Id" %}</td><td>{% trans "Version" %}</td><td>{% trans "Relative Path" %}</td><td>{% trans "Checksum" %}</td></tr>
+    <tr><th>{% trans "Object Id" %}</th><th>{% trans "Version" %}</th><th>{% trans "Relative Path" %}</th><th>{% trans "Checksum" %}</th></tr>
     {% for object_id, version, relative_path, checksum in primary_videos %}
     <tr><td>{{object_id}}</td><td>{{version}}</td><td>{{relative_path}}</td><td>{{checksum|default:"NOT FOUND"}}</td></tr>
     {% endfor %}
@@ -330,9 +346,9 @@ var search_results_url = '{% url 'dictionary:ajax_search_results' %}';
                 </div>
               </div>
          </div>
-         <button id='backups_btn' class='btn btn-primary copy-button' data-toggle='modal' data-target='#backups_modal'>{% trans "Remove Backups" %}</button>
+         <button id='backups_btn' class='btn btn-primary copy-button' data-toggle='modal' data-target='#backups_modal_{{object_id}}'>{% trans "Remove Backups" %}</button>
 
-          <div class="modal fade" id="backups_modal" role="dialog" aria-labelledby="#modalBackups" aria-hidden="true">
+          <div class="modal fade" id="backups_modal_{{object_id}}" role="dialog" aria-labelledby="#modalBackups" aria-hidden="true">
              <div class="modal-dialog modal-lg">
                 <div class="modal-content">
                     <div class='modal-header'>
@@ -407,12 +423,50 @@ var search_results_url = '{% url 'dictionary:ajax_search_results' %}';
          </div>
         {% endif %}
     <table class='table table-condensed table-condensed-light' style="width:100%;">
-    <tr><td>{% translate "Object Id" %}</td><td>{% translate "Version" %}</td><td>{% translate "Relative Path" %}</td><td>{% trans "Checksum" %}</td></tr>
+    <tr><th>{% translate "Object Id" %}</th><th>{% translate "Version" %}</th><th>{% translate "Relative Path" %}</th><th>{% trans "Checksum" %}</th><th>{% trans "Download" %}</th><th>{% trans "Preview" %}</th></tr>
     {% for object_id, version, relative_path, checksum, file_name in backup_videos %}
     <tr><td>{{object_id}}</td><td>{{version}}</td><td>{{relative_path}}</td><td>{{checksum|default:"NOT FOUND"}}</td>
         <td>{% if checksum %}
             <a download="{{file_name}}"
                href="{{PREFIX_URL}}{{protected_media_url}}{{relative_path}}">{{file_name}}</a>
+            {% endif %}
+        </td>
+        <td>{% if checksum %}
+            <div>
+            <button id='backup_preview_button_{{object_id}}'
+                class="quick_preview btn btn-primary" style="width:auto;"
+                data-target="#preview_{{object_id}}"
+                data-glossid='{{gloss.id}}' data-glossvideoid='{{object_id}}'
+                data-toggle='modal'>{% trans "Preview" %}
+            </button>
+                <div class="modal fade" id="preview_{{object_id}}">
+                     <div class="modal-dialog modal-lg left-modal">
+                        <div class="modal-content">
+                            <div class='modal-header'>
+                                <h2 id='modalTitlePreview'>{% trans "Backup Video Preview" %}</h2>
+                            </div>
+                            <div class='modal-body'>
+                                <div style="width:800px;">
+                                    <table class='table table-condensed'>
+                                        <tbody class="tbody tbody-light">
+                                            <tr>
+                                                <td id="preview_backup_video_{{object_id}}">
+
+                                                </td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-primary" id="dismiss_modal_{{object_id}}"
+                                        onclick="location.reload(true)"
+                                        data-dismiss="modal">{% trans "Dismiss" %}</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
             {% endif %}
         </td>
     </tr>
@@ -460,7 +514,7 @@ var search_results_url = '{% url 'dictionary:ajax_search_results' %}';
         {% endif %}
 
     <table class='table table-condensed table-condensed-light' style="width:100%;">
-    <tr><td>{% translate "Object Id" %}</td><td>{% translate "Version" %}</td><td>{% trans "Perspective" %}</td><td>{% trans "NME" %}</td><td>{% translate "Relative Path" %}</td><td>{% trans "Checksum" %}</td></tr>
+    <tr><th>{% translate "Object Id" %}</th><th>{% translate "Version" %}</th><th>{% trans "Perspective" %}</th><th>{% trans "NME" %}</th><th>{% translate "Relative Path" %}</th><th>{% trans "Checksum" %}</th></tr>
     {% for object_id, version, perspective, nme, relative_path, checksum in wrongly_named_videos %}
     <tr><td>{{object_id}}</td><td>{{version}}</td><td>{{perspective}}</td><td>{{nme}}</td><td>{{relative_path}}</td><td>{{checksum|default:"NOT FOUND"}}</td></tr>
     {% endfor %}

@@ -37,7 +37,7 @@ function update_gloss_video_backups(el) {
 </script>
 
 <style>
-list {
+.list-tuples {
     overflow-y: scroll;
     overflow-x: hidden;
     scrollbar-width: thin;
@@ -274,7 +274,7 @@ dd {
             {% endfor %}
             <dt class="col-sm-2" style="width:600px;">{% trans "Video Paths" %}</dt>
         </dl>
-        <list id="document_tuples" style="height:280px; display:block;">
+        <div id="document_tuples_nme" class="list-tuples" style="height:280px; display:block;">
               {% for gloss, videos in gloss_nme_videos %}
                   <dl id="gloss_nme_videos_{{gloss.id}}" class="row list-group-item list-group-item-contents" style="padding: 0;">
                       <dd class="col-sm-2" style="width:300px;">{{gloss.idgloss}}</dd>
@@ -285,7 +285,7 @@ dd {
                       <dd class="col-sm-2" style="width:600px;" id='nme_videos_{{gloss.id}}'>{{videos}}</dd>
                   </dl>
              {% endfor %}
-        </list>
+        </div>
         </td>
         </tr>
     </table>
@@ -313,7 +313,7 @@ dd {
             {% endfor %}
             <dt class="col-sm-2" style="width:600px;">{% trans "Video Paths" %}</dt>
         </dl>
-        <list id="document_tuples" style="height:280px; display:block;">
+        <div id="document_tuples_perspective" class="list-tuples" style="height:280px; display:block;">
               {% for gloss, videos in gloss_perspective_videos %}
                   <dl id="gloss_persp_videos_{{gloss.id}}" class="row list-group-item list-group-item-contents" style="padding: 0;">
                       <dd class="col-sm-2" style="width:300px;">{{gloss.idgloss}}</dd>
@@ -324,7 +324,7 @@ dd {
                       <dd class="col-sm-2" style="width:600px;" id='persp_videos_{{gloss.id}}'>{{videos}}</dd>
                   </dl>
              {% endfor %}
-        </list>
+        </div>
         </td>
         </tr>
     </table>
@@ -358,7 +358,7 @@ dd {
                 </span>
             </dt>
         </dl>
-        <list id="document_tuples" style="height:280px; display:block;">
+        <div id="document_tuples_videos" class="list-tuples" style="height:280px; display:block;">
               {% for gloss, num_videos, extra_chars, videos in gloss_videos %}
                   <dl id="gloss_videos_{{gloss.id}}" class="row list-group-item list-group-item-contents" style="padding: 0;">
                       <dd class="col-sm-2" style="width:300px;">{{gloss.idgloss}}</dd>
@@ -379,7 +379,7 @@ dd {
                       </dd>
                   </dl>
              {% endfor %}
-        </list>
+        </div>
         </td>
         </tr>
     </table>

@@ -17,7 +17,6 @@ from django.db.utils import OperationalError, ProgrammingError
 from signbank.registration.models import RegistrationProfile
 
 from signbank.dictionary.models import Dataset
-from easy_select2.widgets import Select2
 
 import re
 alnum_re = re.compile(r'^\w+$')
@@ -75,7 +74,7 @@ class RegistrationForm(forms.Form):
 
         dataset = forms.TypedMultipleChoiceField(label=_(u'Requested Datasets'),
                                                   choices=dataset_choices,
-                                                  required=False, widget=Select2)
+                                                  required=False)
         motivation = forms.CharField(widget=forms.Textarea(attrs={'cols': 80, 'rows': 5,
                                                                   'placeholder': 'Motivation'}),
                                      label=_(u'Motivation'), required=False, # this has to be False

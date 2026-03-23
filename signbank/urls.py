@@ -36,8 +36,6 @@ if settings.SHOW_NUMBERSIGNS:
 else:
     numbersigns_view = TemplateView.as_view(template_name='numbersigns/underconstruction.html')
 
-import debug_toolbar
-
 urlpatterns = [
 
     re_path(r'^$', signbank.pages.views.page, name='root_page'),
@@ -146,6 +144,5 @@ urlpatterns = [
     re_path(r'^update/metadata/', signbank.dictionary.update.upload_metadata, name='upload_metadata'),
     re_path(r'^update/dataset_eafs/', signbank.dictionary.update.upload_eaf_files, name='upload_eaf_files'),
     re_path(r'^update/remove_eaf_files/', signbank.dictionary.update.remove_eaf_files, name='remove_eaf_files'),
-                re_path(r'^__debug__/', include(debug_toolbar.urls)),
     re_path(r'^update/expiry/', signbank.dictionary.update.update_expiry, name='update_expiry'),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

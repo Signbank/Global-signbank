@@ -673,10 +673,12 @@ textarea:focus {
                     <input type='hidden' name='use_default_query_parameters' value='default_parameters'>
                         <table class="table table-condensed" style="z-index:0;padding-top: 100px;width:1000px;">
                             <thead id = 'default_query_table_header'>
+                                    <tr>
                                     <th style="width: 500px;border-bottom: 1px solid grey; border-left: 1px solid grey;
                                             border-top: 1px solid grey; border-right: 1px solid grey;">{% trans "Field" %}</th>
                                     <th style="border-bottom: 1px solid grey; border-left: 1px solid grey;
                                             border-top: 1px solid grey; border-right: 1px solid grey;">{% trans "Value" %}</th>
+                                    </tr>
                             </thead>
                             <tbody>
                             {% for key, value in default_query_parameters.items %}
@@ -707,10 +709,10 @@ textarea:focus {
                         <input type='hidden' name='use_default_query_parameters' value='query_parameters'>
                         <table class="table table-condensed" style="z-index:0;padding-top: 100px;width:1000px;">
                             <thead id = 'query_table_header'>
-                                    <th style="width: 500px;border-bottom: 1px solid grey; border-left: 1px solid grey;
+                                    <tr><th style="width: 500px;border-bottom: 1px solid grey; border-left: 1px solid grey;
                                             border-top: 1px solid grey; border-right: 1px solid grey;">{% trans "Field" %}</th>
                                     <th style="border-bottom: 1px solid grey; border-left: 1px solid grey;
-                                            border-top: 1px solid grey; border-right: 1px solid grey;">{% trans "Value" %}</th>
+                                            border-top: 1px solid grey; border-right: 1px solid grey;">{% trans "Value" %}</th></tr>
                             </thead>
                             <tbody>
                             {% for key, value in query_parameters.items %}
@@ -1054,7 +1056,7 @@ textarea:focus {
     <div class='editform'>
         <fieldset>
             <h4>{% trans "Upload New Video" %}</h4>
-            <label for="id_videofile" class="drop-container" id="drop-container-video">
+            <label for="{{videoform.videofile.id_for_label}}" class="drop-container" id="drop-container-video">
               <div id="videogallery" class="gallery"></div>
               <span id = "drop-container-title-video" class="drop-title">Drop video here<br>or...</span>
               <label id="drop-container-video-status" class="hide">Status here</label>
@@ -1106,7 +1108,7 @@ textarea:focus {
                                 </th>
                                 <th>
                                     <div class="wrap">
-                                        <video id="recorded" playslinline></video>
+                                        <video id="recorded"></video>
                                     </div>
                                 </th>
                             </tr>
@@ -1125,7 +1127,7 @@ textarea:focus {
                                     <input type='hidden' name='redirect' value='{{PREFIX_URL}}/dictionary/gloss/{{gloss.pk}}/'>
                                     <input type='hidden' name='object_type' value='gloss_video'>
                                     <input type='hidden' name='object_id' value='{{gloss.pk}}'>
-                                    <input type='file' name="videofile" id="videofile">
+                                    <input type='file' name="videofile" id="{{videoform.videofile.id_for_label}}">
                                     <input type='hidden' name='recorded' value='True'>
                                     <input class="btn btn-primary" type="submit" id="uploadrecorded" value ='Upload' disabled>
                                 </form>
@@ -1149,16 +1151,16 @@ textarea:focus {
     <div class='editform'>
         <fieldset>
             <h4>{% trans "Upload New Citation Form Image" %}</h4>
-            <label for='id_imagefile' class="drop-container" id="drop-container-image">
+            <label for='imageform_imagefile' class="drop-container" id="drop-container-image">
               <div id="imagegallery" class="gallery"></div>
               <span id = "drop-container-title-image"  class="drop-title">Drop image here<br>or...</span>
-              <label id="drop-container-image-status", class="hide">Status here</label>
+              <label id="drop-container-image-status" class="hide">Status here</label>
               <form action="{{PREFIX_URL}}/image/upload/" method="post" enctype="multipart/form-data">
                 {% csrf_token %}
                 <input type='hidden' name='redirect' value='{{PREFIX_URL}}/dictionary/gloss/{{gloss.pk}}/'>
                 <table>
                   <tr>
-                    <td>{{imageform.imagefile}}</td>
+                    <td id="imageform_imagefile">{{imageform.imagefile}}</td>
                   </tr>
                   <tr>
                     <td id="image-buttons">
@@ -1739,8 +1741,8 @@ textarea:focus {
                                                                 </div>
                                                             <div id="replay"></div>
                                                         {% else %}
-                                                            <div id='player'>
-                                                                <img id='novideo' src='{{STATIC_URL}}images/no-video-ngt.png'>
+                                                            <div>
+                                                                <img id='novideoexample' src='{{STATIC_URL}}images/no-video-ngt.png'>
                                                             </div>
                                                         {% endif %}
                                                     </div>
@@ -2006,6 +2008,10 @@ textarea:focus {
                                                     {% endwith %}
                                                     {% endwith %}
                                                 {% endif %}
+                                                <video id='videonmeplayer_{{videonme.offset}}_middle' class="videonmeplayer_middle"
+                                                       src="{{protected_media_url}}{{videonme.get_video_path}}?v={% now 'YmdHis' %}"
+                                                       style="height:200px;width:auto;" playsinline muted>
+                                                </video>
                                                 {% if videonme.has_right_perspective %}
                                                     {% with nme_videos_lookup|get_item:videonme.offset as nme_perspectives %}
                                                     {% with nme_perspectives|get_item:'right' as nmevideo_right %}
@@ -2054,7 +2060,7 @@ textarea:focus {
                          </table>
                       </div>
                     {% endfor %}
-                        </div>
+                    </div>
                     </td>
                 </tr>
                </table>
