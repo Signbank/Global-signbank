@@ -884,11 +884,9 @@ class FieldChoiceAdmin(VersionAdmin, TranslationAdmin):
             return fields
         new_fields = {}
         for language_code in MODELTRANSLATION_LANGUAGES:
-            language_code_2char = "zh" if language_code == "zh-hans" else language_code.replace('-', '_')
-            language = Language.objects.get(language_code_2char=language_code_2char)
             reverse_name_languagecode = 'reverse_name_' + language_code.replace('-', '_')
             new_fields[reverse_name_languagecode] = forms.CharField(
-                label=_("Reverse Relation") + (" (%s)" % language.name),
+                label=f"Name [{language_code}]",
                 required=False, max_length=50)
         for field_name, form_field in new_fields.items():
             if field_name not in fields:
