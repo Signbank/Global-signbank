@@ -1244,8 +1244,8 @@ class FieldChoiceForm(forms.ModelForm):
             self.fields['reverse_identity'].disabled = True
             for language, language_name in [(l[0], l[1]) for l in LANGUAGES if l[0] in MODELTRANSLATION_LANGUAGES]:
                 name_languagecode = 'reverse_name_' + language.replace('-', '_')
-                if name_languagecode in self.declared_fields.keys():
-                    self.declared_fields[name_languagecode].widget = forms.HiddenInput()
+                if name_languagecode in self.fields.keys():
+                    self.fields[name_languagecode].widget = forms.HiddenInput()
         elif self.instance.id and self.instance.reverse and self.instance.reverse.machine_value > 1:
             # if the relation already exists, this keeps its reverse relation from being modified
             field_role_choices = FieldChoice.objects.filter(field='RelationRole').order_by('machine_value').values('name', 'machine_value')
@@ -1257,17 +1257,17 @@ class FieldChoiceForm(forms.ModelForm):
             self.fields['reverse_identity'].disabled = True
             for language, language_name in [(l[0], l[1]) for l in LANGUAGES if l[0] in MODELTRANSLATION_LANGUAGES]:
                 name_languagecode = 'reverse_name_' + language.replace('-', '_')
-                if name_languagecode in self.declared_fields.keys():
-                    self.declared_fields[name_languagecode].widget = forms.HiddenInput()
+                if name_languagecode in self.fields.keys():
+                    self.fields[name_languagecode].widget = forms.HiddenInput()
         else:
-            self.fields['reverse'].choices = list(FieldChoice.objects.filter(field='RelationRole').order_by('machine_value')
-                                           .values_list('pk', 'name'))
-            self.fields['reverse'].initial = (FieldChoice.objects.filter(field='RelationRole').order_by('machine_value').first().pk, '-')
+            # this is a new relation role
+            self.fields['reverse'].widget = forms.HiddenInput()
+            self.fields['reverse'].disabled = True
             self.fields['reverse_identity'].initial = True
             for language, language_name in [(l[0], l[1]) for l in LANGUAGES if l[0] in MODELTRANSLATION_LANGUAGES]:
                 name_languagecode = 'reverse_name_' + language.replace('-', '_')
-                if name_languagecode in self.declared_fields.keys():
-                    self.declared_fields[name_languagecode].widget = forms.TextInput(attrs=ATTRS_FOR_FORMS)
+                if name_languagecode in self.fields.keys():
+                    self.fields[name_languagecode].widget = forms.TextInput(attrs=ATTRS_FOR_FORMS)
 
     def already_exists(self, field, language_field, language_field_value):
         if self.instance:
@@ -1313,6 +1313,10 @@ class FieldChoiceForm(forms.ModelForm):
 
         if field != 'RelationRole':
             # the fields regarding the reverse relation are ignored
+            for language in MODELTRANSLATION_LANGUAGES:
+                name_languagecode = 'reverse_name_' + language.replace('-', '_')
+                if name_languagecode in data_fields.keys() and data_fields[name_languagecode]:
+                    raise forms.ValidationError(_('Only the RelationRole category has a reverse relation. Please leave these blank.'))
             return
 
         if 'reverse_identity' not in data_fields.keys() or data_fields['reverse_identity'] == 'True':

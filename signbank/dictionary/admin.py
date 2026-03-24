@@ -14,6 +14,7 @@ from modeltranslation.admin import TranslationAdmin
 from django.contrib.auth import get_permission_codename
 from django.utils.translation import override, gettext_lazy as _
 from urllib.parse import parse_qsl
+import copy
 
 from guardian.admin import GuardedModelAdmin
 
@@ -853,6 +854,8 @@ class FieldChoiceAdmin(VersionAdmin, TranslationAdmin):
 
     def get_form(self, request, obj=None, **kwargs):
         form = super(FieldChoiceAdmin, self).get_form(request, obj, **kwargs)
+        form = copy.deepcopy(form)
+
         if obj:
             # for display in the HTML color picker, the field color needs to be prefixed with #
             # in the database,only the hex number is stored
@@ -880,8 +883,9 @@ class FieldChoiceAdmin(VersionAdmin, TranslationAdmin):
 
     def get_fields(self, request, obj=None):
         fields = super(FieldChoiceAdmin, self).get_fields(request, obj)
-        if obj and obj.machine_value is not None:
+        if obj is not None and obj.field != 'RelationRole':
             # the field choice already exists, only show the editable fields
+            fields = [f for f in fields if not f.startswith('reverse')]
             return fields
         new_fields = {}
         for language_code in MODELTRANSLATION_LANGUAGES:
