@@ -1866,10 +1866,10 @@ textarea:focus {
             {% for value,name,label,kind in main_fields %}
                 <tr style="width:800px;"><th>{{label}}</th>
                     {% if name == 'useInstr' %}
-                    <td class="edit edit_area" id='useInstr'>{{gloss.useInstr.value}}
+                    <td class="edit edit_area" id='useInstr' value="{{value}}">{% value value %}
                     </td>
                     {% elif name == 'wordClass' %}
-                    <td class="edit edit_list" id='wordClass'>{{gloss.wordClass.value|default:'-'}}
+                    <td class="edit edit_list" id='wordClass' value="{{value}}">{% value value %}
                     </td>
                     {% endif %}
                 </tr>
