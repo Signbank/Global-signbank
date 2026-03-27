@@ -1841,10 +1841,11 @@ textarea:focus {
                     </table>
                 </td>
             </tr>
-
+        </table>
+        <table class='table table-condensed table-condensed-light' style="width:100%;">
             <tr>
                 <th>
-                    Synsets
+                    {% trans "Synsets" %}
                 </th>
                 <td>
                     {% for synset in synsets %}
@@ -1859,20 +1860,19 @@ textarea:focus {
                             {% endif %}
                         </span><br>
                     {% endfor %}
+                </td>
             </tr>
-
+        </table>
+        <table class='table table-condensed table-condensed-light' style="width:800px;">
             {% for value,name,label,kind in main_fields %}
-                <tr><th>{{label}}</th>
-                    {% if kind == 'text' %}
-                    <td class="edit edit_area" id='{{name}}'
-                        value='{{value}}'>{{value}}
+                <tr style="width:800px;"><th>{{label}}</th>
+                    {% if name == 'useInstr' %}
+                    <td class="edit edit_area" id='useInstr' value="{{value}}">{% value value %}
                     </td>
-                    {% else %}
-                    <td class="edit edit_{{kind}}" id='{{name}}'
-                        value='{{value}}'>{% value value %}
+                    {% elif name == 'wordClass' %}
+                    <td class="edit edit_list" id='wordClass' value="{{value}}">{% value value %}
                     </td>
                     {% endif %}
-                    <td style="width:200px;"></td>
                 </tr>
             {% endfor %}
 
