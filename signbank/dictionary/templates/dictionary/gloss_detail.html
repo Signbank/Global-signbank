@@ -1845,7 +1845,7 @@ textarea:focus {
         <table class='table table-condensed table-condensed-light' style="width:100%;">
             <tr>
                 <th>
-                    Synsets
+                    {% trans "Synsets" %}
                 </th>
                 <td>
                     {% for synset in synsets %}
@@ -1860,6 +1860,7 @@ textarea:focus {
                             {% endif %}
                         </span><br>
                     {% endfor %}
+                </td>
             </tr>
         </table>
         <table class='table table-condensed table-condensed-light' style="width:800px;">
