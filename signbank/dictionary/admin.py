@@ -854,7 +854,7 @@ class FieldChoiceAdmin(VersionAdmin, TranslationAdmin):
 
     def get_form(self, request, obj=None, **kwargs):
         form = super(FieldChoiceAdmin, self).get_form(request, obj, **kwargs)
-        form = copy.deepcopy(form)
+        # form = copy.deepcopy(form)
 
         if obj:
             # for display in the HTML color picker, the field color needs to be prefixed with #
@@ -885,7 +885,7 @@ class FieldChoiceAdmin(VersionAdmin, TranslationAdmin):
         fields = super(FieldChoiceAdmin, self).get_fields(request, obj)
         if obj is not None and obj.field != 'RelationRole':
             # the field choice already exists, only show the editable fields
-            fields = [f for f in fields if not f.startswith('reverse')]
+            # fields = [f for f in fields if not f.startswith('reverse')]
             return fields
         new_fields = {}
         for language_code in MODELTRANSLATION_LANGUAGES:
@@ -1050,11 +1050,11 @@ class FieldChoiceAdmin(VersionAdmin, TranslationAdmin):
     delete_selected.short_description = "Delete selected field choices"
 
     def save_model(self, request, obj, form, change):
-        qs = FieldChoice.objects.filter(field=obj.field)
+        qs = FieldChoice.objects.filter(field=obj.field, machine_value__gt=1)
         highest_machine_value = max([field_choice.machine_value for field_choice in qs])
         if not obj.machine_value:
             # Check out the query-set and make sure that it exists
-            qs = FieldChoice.objects.filter(field=obj.field)
+            qs = FieldChoice.objects.filter(field=obj.field, machine_value__gt=1)
             if qs.count() == 0:
                 # The field does not yet occur within FieldChoice
                 # For now: assume user wants to add a new field (e.g: wordClass)
@@ -1079,7 +1079,7 @@ class FieldChoiceAdmin(VersionAdmin, TranslationAdmin):
 
         with override(LANGUAGE_CODE):
             for name_field in form.data.keys():
-                if name_field not in form.fields:
+                if name_field not in form.fields or name_field == 'machine_value':
                     continue
                 if name_field == 'field_color' or name_field == 'csrfmiddlewaretoken':
                     continue
