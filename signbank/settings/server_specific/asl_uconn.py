@@ -18,8 +18,8 @@ ADMINS = [('Wessel Stoop', 'wessel.stoop@ru.nl')]
 LANGUAGE_NAME = "ASL"
 COUNTRY_NAME = "United States of America"
 SIGNBANK_VERSION_CODE = 'ASL'
-URL = 'https://aslsignbank.haskins.yale.edu/'
-ALLOWED_HOSTS = ['localhost','spinup-000691.yu.yale.edu','10.5.32.144','aslsignbank.haskins.yale.edu','aslsignbank-test.haskins.yale.edu']
+URL = 'https://aslsignbank.com/'
+ALLOWED_HOSTS = ['localhost','spinup-000691.yu.yale.edu','10.5.32.144','aslsignbank.haskins.yale.edu','aslsignbank-test.haskins.yale.edu','ling01.clas.uconn.edu','aslsignbank.com','aslsignbank.net','aslsignbank.org']
 PREFIX_URL = ''
 
 LANGUAGES = (
@@ -105,4 +105,12 @@ SECRET_KEY = 'f2w3fkjv'
 
 FREQUENCY_CATEGORIES = ['Occurences', 'Signers']
 
-DEFAULT_FROM_EMAIL = 'aslsignbank@haskins.yale.edu'
+DEFAULT_FROM_EMAIL = 'aslsignbank@uconn.edu'
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'localhost'
+EMAIL_PORT = 25
+EMAIL_HOST_USER = ''
+EMAIL_HOST_PASSWORD = ''
+EMAIL_USE_TLS = True
+
+FFMPEG_PROGRAM = '/usr/bin/ffmpeg'

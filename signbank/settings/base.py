@@ -236,7 +236,7 @@ LOGIN_REDIRECT_URL = PREFIX_URL+'/accounts/user_profile/'
 
 
 # location of ffmpeg, used to convert uploaded videos
-# FFMPEG_PROGRAM = "/Applications/ffmpegX.app/Contents/Resources/ffmpeg"
+FFMPEG_PROGRAM = "/usr/bin/ffmpeg"
 FFMPEG_TIMEOUT = 60
 FFMPEG_OPTIONS = ["-vcodec", "h264", "-an"]
 

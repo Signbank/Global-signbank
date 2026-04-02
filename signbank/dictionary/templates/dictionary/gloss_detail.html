@@ -1509,16 +1509,17 @@ p {
                         {{label}}
                     {% endif %}
                     </th>
-                    {% if kind == 'text' %}
+                    {% if name == 'wordClass' or name == 'wordClass2' %}
+                    <td class="edit edit_list" id='{{name}}' value="{{value}}">{% value value %}</td>
+                    {% elif kind == 'text' %}
                     <td class="edit edit_text" id='{{name}}' style="width:500px;" value='{{value}}'
                              colspan="2">{% value value %}</td>
                     <td/>
                     {% else %}
                     <td class="edit edit_{{kind}}" id='{{name}}' style="width:500px;"
-                        value='{{value}}'>{% value value %}</td>
+                        value='{{value}}'>{% value value %}</td> 
                     <td/>
                     {% endif %}
-
                 </tr>
             {% endfor %}
             

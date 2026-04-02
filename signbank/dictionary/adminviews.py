@@ -797,7 +797,7 @@ class GlossListView(ListView):
 
             # get morphology
             # Sequential Morphology
-            morphemes = [morpheme.get_role()+':'+str(morpheme.morpheme.id) for morpheme in MorphologyDefinition.objects.filter(parent_gloss=gloss)]
+            morphemes = [morpheme.get_role()+':'+str(morpheme.morpheme.id) for morpheme in MorphologyDefinition.objects.filter(parent_gloss=gloss) if morpheme.get_role() is not None]
             row.append(", ".join(morphemes))
 
             # Simultaneous Morphology
