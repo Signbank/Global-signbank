@@ -92,7 +92,6 @@ var busy_editing = 0;
           $(this).parent().next().val("")
         });
 
-
     // this is needed to help check different browsers
     for (var i = 0; i < gloss_phonology.length; i++) {
         var field = gloss_phonology[i];
@@ -737,7 +736,7 @@ function update_view_and_remember_original_value(change_summary)
 var handedness_bloodhound = new Bloodhound({
       datumTokenizer: function(d) { return d.tokens; },
       queryTokenizer: Bloodhound.tokenizers.whitespace,
-      remote: url+'/dictionary/ajax/handshape/'+'/%QUERY'
+      remote: url+'/dictionary/ajax/handedness'+'/%QUERY'
     });
 
 handedness_bloodhound.initialize();
@@ -750,7 +749,7 @@ function handednesstypeahead(target) {
           source: handedness_bloodhound.ttAdapter(),
           templates: {
               suggestion: function(fc) {
-                  return("<p><strong>" + fc['name'] +  "</strong></p>");
+                  return("<p><strong>" + fc.name +  "</strong></p>");
               }
           }
       });
@@ -758,7 +757,6 @@ function handednesstypeahead(target) {
 
 
 $.editable.addInputType('handednesstypeahead', {
-
    element: function(settings, original) {
       var input = $('<input type="text" class="handednesstypeahead">');
       $(this).append(input);

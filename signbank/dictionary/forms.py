@@ -1702,3 +1702,18 @@ class GlossProvenanceForm(forms.ModelForm):
 class SearchGlossIds(forms.Form):
     glossids = forms.CharField(label=_("Gloss Ids"), required=False, initial='',
                                widget=forms.Textarea(attrs={'cols': 60, 'rows': 5, 'placeholder': _('Enter Gloss Ids')}))
+
+
+class PhonologyForm(forms.Form):
+    gloss = None
+    handedness = forms.CharField(label=_('Handedness'))
+
+    class Meta:
+        model = Gloss
+        fields = ['handedness']
+
+    def __init__(self, *args, **kwargs):
+        self.gloss = kwargs.pop('gloss')
+        super(PhonologyForm, self).__init__(*args, **kwargs)
+
+        self.fields['handedness'].initial = self.gloss.handedness.name if self.gloss.handedness else '-'
