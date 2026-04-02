@@ -2422,6 +2422,18 @@ textarea:focus {
                             {% endif %}
                         {% endfor %}
                     </tr>
+                    <tr>
+                        <th>{{label}}</th>
+                        <td>
+                            <input class='form-control form-control-light handednesstypeahead lemmatypeahead-light'
+                                   placeholder='{% trans "Handedness" %}' />
+
+                            <!-- Input for gloss_update (2) / Input that holds the lemma id the user chose from the type ahead -->
+                            <input type='hidden' name='value' value='confirmed'>
+                            <!-- Input for gloss_update (1) -->
+                            <input type='hidden' name='id' value='handedness'>
+                        </td>
+                    </tr>
                     {% endif %}
                 {% elif name == 'domhndsh' and SHOW_LETTER_NUMBER_PHONOLOGY %}
                     <tr class="empty_row">

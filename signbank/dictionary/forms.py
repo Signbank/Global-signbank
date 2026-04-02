@@ -817,7 +817,7 @@ class HandshapeSearchForm(forms.ModelForm):
         for finger in ['fsT', 'fsI', 'fsM', 'fsR', 'fsP',
                        'fs2T', 'fs2I', 'fs2M', 'fs2R', 'fs2P',
                        'ufT', 'ufI', 'ufM', 'ufR', 'ufP']:
-            self.fields[finger].inital = False
+            self.fields[finger].initial = False
             self.fields[finger].widget.choices = [(True, _('Yes')), (False, _('No'))]
 
 
