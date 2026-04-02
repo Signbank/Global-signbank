@@ -10,7 +10,7 @@ future==1.0.0
 flatdict==4.1.0
 git+https://github.com/vanlummelhuizen/CNGT-scripts@master#egg=CNGT_scripts
 lxml==6.0.2
-nltk==3.9.3
+nltk==3.9.4
 numpy==2.4.2
 py==1.11.0
 python-dateutil==2.9.0
