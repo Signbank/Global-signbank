@@ -1,4 +1,4 @@
-Django==4.2.29
+Django==4.2.30
 django-bootstrap3==26.1
 django-colorfield==0.14.0
 django-guardian==2.4.0
