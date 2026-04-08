@@ -19,8 +19,8 @@
 
     var language_code = '{{ LANGUAGE_CODE }}';
 
-    var yes_str = '{% trans "Yes" %}'
-    var no_str = '{% trans "No" %}'
+    var yes_str = "{% trans 'Yes' %}";
+    var no_str = "{% trans 'No' %}";
 
     var display_fields = JSON.stringify({{display_fields|safe}});
     var query_fields_parameters = JSON.stringify({{query_fields_parameters|safe}});

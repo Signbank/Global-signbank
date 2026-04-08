@@ -104,15 +104,15 @@ textarea:focus {
 // manage user interface events during editing, to go to the next displayed field
 // At the moment, the morpheme_phonology setting is used
 
-    var edit_mode_str = '{% trans "Edit" %}';
-    var turn_off_edit_mode_str = '{% trans "Turn Off Edit Mode" %}';
-    var delete_this_gloss_str = '{% trans "Delete This Morpheme" %}';
-    var saving_str = '{% trans "Saving..." %}';
-    var yes_str = '{% trans "Yes" %}'
-    var no_str = '{% trans "No" %}'
-    var idgloss_already_exists_str = '{% trans "This idgloss already exists" %}';
-    var original_lemma_group_url = '{{lemma_group_url}}'
-    var lemma_group = '{{lemma_group}}'
+    var edit_mode_str = "{% trans 'Edit' %}";
+    var turn_off_edit_mode_str = "{% trans 'Turn Off Edit Mode' %}";
+    var delete_this_gloss_str = "{% trans 'Delete This Morpheme' %}";
+    var saving_str = "{% trans 'Saving...' %}";
+    var yes_str = "{% trans 'Yes' %}";
+    var no_str = "{% trans 'No' %}";
+    var idgloss_already_exists_str = "{% trans 'This idgloss already exists' %}";
+    var original_lemma_group_url = '{{lemma_group_url}}';
+    var lemma_group = '{{lemma_group}}';
 
     var edit_post_url = '{% url 'dictionary:update_morpheme' morpheme.id %}';
     var definition_role_choices = {{morpheme.definition_role_choices_json|safe}};

@@ -7,13 +7,13 @@ import hashlib
 import re
 import copy
 import codecs
+from lxml import etree
 import datetime as DT
 from datetime import date
+from dateutil.parser import parse
 
 from django.db import models
-from django.db.models.functions import Lower
 from django.db.models.fields import BooleanField
-from collections import Counter
 from django.utils.translation import override, activate, gettext, gettext_lazy as _
 from django.views.decorators.csrf import csrf_exempt
 from django.utils.dateformat import format
@@ -46,7 +46,7 @@ from signbank.csv_interface import (sense_translations_for_language, update_sens
 from signbank.dictionary.field_choices import fields_to_fieldcategory_dict
 
 from tagging.models import TaggedItem, Tag
-from CNGT_scripts.python.extractMiddleFrame import MiddleFrameExtracter
+from signbank.video.extract_middle_frame import MiddleFrameExtracter
 
 
 def get_two_letter_dir(idgloss):
@@ -2363,6 +2363,24 @@ def get_checksum_for_path(file_path):
             return file_hash.hexdigest()
     except FileNotFoundError:
         return None
+
+
+def get_eaf_creation_time(fname):
+    """
+    Extracts the creation time from an EAF file.
+    EAF = ELAN Annotation File - https://archive.mpi.nl/tla/elan/
+    """
+    with open(fname, encoding="utf-8") as eaf:
+        try:
+            xml = etree.parse(eaf)
+            # root node is ANNOTATION_DOCUMENT
+            root = xml.getroot()
+            creation_date = root.attrib['DATE']
+            date_time_obj = parse(creation_date)
+        except:
+            date_time_obj = DT.datetime.now(tz=get_current_timezone())
+
+        return date_time_obj
 
 
 def get_multiselect_fieldnames():
