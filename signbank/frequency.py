@@ -16,7 +16,8 @@ from signbank.settings.server_specific import (PREFIX_URL, WRITABLE_FOLDER, TEST
                                                MINIMUM_OVERLAP_BETWEEN_SIGNING_HANDS)
 
 from signbank.dictionary.models import Dataset, Gloss, Corpus, Document, Speaker, GlossFrequency
-from signbank.tools import get_default_annotationidglosstranslation
+from signbank.tools import get_default_annotationidglosstranslation, get_eaf_creation_time
+from signbank.sign_counter import SignCounter
 
 
 def get_gloss_from_frequency_dict(dataset_acronym, gloss_id_or_value):
@@ -413,12 +414,6 @@ def get_names_of_updated_eaf_files(dataset_acronym, **kwargs):
     new_eaf_files = []
     missing_eaf_files = []
 
-    try:
-        from CNGT_scripts.python.cngt_calculated_metadata import get_creation_time
-    except ImportError:
-        print('unable to import get_creation_time from CNGT_scripts')
-        return eaf_files_to_update, new_eaf_files, missing_eaf_files
-
     if not dataset or not corpus:
         # Something went wrong
         return eaf_files_to_update, new_eaf_files, missing_eaf_files
@@ -454,7 +449,7 @@ def get_names_of_updated_eaf_files(dataset_acronym, **kwargs):
         file_basename = os.path.basename(eaf_path)
         basename = os.path.splitext(file_basename)[0]
         all_eaf_files_identifiers += [basename]
-        all_eaf_files_creation_dates[basename] = get_creation_time(eaf_path)
+        all_eaf_files_creation_dates[basename] = get_eaf_creation_time(eaf_path)
 
     # Check whether the existing document identifers all have eaf files
     for d_identier in existing_documents_identifiers:
@@ -520,12 +515,6 @@ def document_has_been_updated(dataset_acronym, document_identifier, **kwargs):
         dataset_eaf_folder = os.path.join(WRITABLE_FOLDER, DATASET_EAF_DIRECTORY, dataset_acronym)
 
     try:
-        from CNGT_scripts.python.cngt_calculated_metadata import get_creation_time
-    except ImportError:
-        print('unable to import get_creation_time from CNGT_scripts')
-        return False
-
-    try:
         existing_document = Document.objects.get(corpus__name=dataset_acronym, identifier=document_identifier)
     except ObjectDoesNotExist:
         return False
@@ -533,7 +522,7 @@ def document_has_been_updated(dataset_acronym, document_identifier, **kwargs):
     document_eaf_path = os.path.join(dataset_eaf_folder, document_identifier + '.eaf')
     if not os.path.exists(document_eaf_path):
         return False
-    date_of_file = get_creation_time(document_eaf_path)
+    date_of_file = get_eaf_creation_time(document_eaf_path)
     return date_of_file > existing_document.creation_time
 
 
@@ -729,19 +718,6 @@ def configure_corpus_documents(**kwargs):
 
 
 def configure_corpus_documents_for_dataset(dataset_acronym, **kwargs):
-
-    try:
-        from CNGT_scripts.python.signCounter import SignCounter
-    except ImportError:
-        print('unable to import SignCounter from CNGT_scripts')
-        return
-
-    try:
-        from CNGT_scripts.python.cngt_calculated_metadata import get_creation_time
-    except ImportError:
-        print('unable to import get_creation_time from CNGT_scripts')
-        return
-
     if 'testing' in kwargs.keys():
         dataset_eaf_folder = os.path.join(WRITABLE_FOLDER, TEST_DATA_DIRECTORY, DATASET_EAF_DIRECTORY,dataset_acronym)
         metadata_location = os.path.join(WRITABLE_FOLDER, TEST_DATA_DIRECTORY, DATASET_METADATA_DIRECTORY, dataset_acronym + '_metadata.csv')
@@ -792,7 +768,7 @@ def configure_corpus_documents_for_dataset(dataset_acronym, **kwargs):
         file_basename = os.path.basename(eaf_path)
         basename = os.path.splitext(file_basename)[0]
         document_identifiers += [basename]
-        document_creation_dates[basename] = get_creation_time(eaf_path)
+        document_creation_dates[basename] = get_eaf_creation_time(eaf_path)
 
     # create document objects for all document identifiers, if don't already exist
     dictionary_documentIds_to_documentObjs = dictionary_documentIdentifiers_to_documentObjects(corpus,
@@ -884,19 +860,6 @@ def get_path_of_eaf_file(dataset_eaf_folder, eaf_paths, document_id):
 
 
 def update_corpus_counts(dataset_acronym, **kwargs):
-
-    try:
-        from CNGT_scripts.python.signCounter import SignCounter
-    except ImportError:
-        print('unable to import SignCounter from CNGT_scripts')
-        return
-
-    try:
-        from CNGT_scripts.python.cngt_calculated_metadata import get_creation_time
-    except ImportError:
-        print('unable to import get_creation_time from CNGT_scripts')
-        return
-
     if 'testing' in kwargs.keys():
         dataset_eaf_folder = os.path.join(WRITABLE_FOLDER, TEST_DATA_DIRECTORY, DATASET_EAF_DIRECTORY, dataset_acronym)
         metadata_location = os.path.join(WRITABLE_FOLDER, TEST_DATA_DIRECTORY, DATASET_METADATA_DIRECTORY, dataset_acronym + '_metadata.csv')
@@ -940,7 +903,7 @@ def update_corpus_counts(dataset_acronym, **kwargs):
         file_basename = os.path.basename(eaf_path)
         basename = os.path.splitext(file_basename)[0]
         document_identifiers_of_eaf_files += [basename]
-        document_creation_dates_of_eaf_files[basename] = get_creation_time(eaf_path)
+        document_creation_dates_of_eaf_files[basename] = get_eaf_creation_time(eaf_path)
 
     # the initial idea what to only update modified documents
     # however, glosses in the eaf files previously not found in the corpus may have been added since last processing
@@ -1050,19 +1013,6 @@ def update_corpus_counts(dataset_acronym, **kwargs):
 
 
 def update_corpus_document_counts(dataset_acronym, document_id, **kwargs):
-
-    try:
-        from CNGT_scripts.python.signCounter import SignCounter
-    except ImportError:
-        print('unable to import SignCounter from CNGT_scripts')
-        return []
-
-    try:
-        from CNGT_scripts.python.cngt_calculated_metadata import get_creation_time
-    except ImportError:
-        print('unable to import get_creation_time from CNGT_scripts')
-        return []
-
     if 'testing' in kwargs.keys():
         dataset_eaf_folder = os.path.join(WRITABLE_FOLDER, TEST_DATA_DIRECTORY, DATASET_EAF_DIRECTORY, dataset_acronym)
         metadata_location = os.path.join(WRITABLE_FOLDER, TEST_DATA_DIRECTORY, DATASET_METADATA_DIRECTORY, dataset_acronym + '_metadata.csv')
@@ -1087,7 +1037,7 @@ def update_corpus_document_counts(dataset_acronym, document_id, **kwargs):
 
     eaf_path = get_path_of_eaf_file(dataset_eaf_folder, uploaded_paths, document_id)
 
-    document_creation_dates_of_eaf_files = [ get_creation_time(eaf_path) ]
+    document_creation_dates_of_eaf_files = [get_eaf_creation_time(eaf_path)]
 
     dictionary_documentIds_to_documentObjs = dictionary_documentIdentifiers_to_documentObjects(corpus,
                                                                                                document_identifiers_of_eaf_files,
