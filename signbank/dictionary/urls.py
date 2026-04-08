@@ -24,6 +24,7 @@ import signbank.frequency
 import signbank.dataset_operations
 import signbank.dictionary.gloss_revision
 import signbank.dictionary.tagviews
+import signbank.dictionary.bloodhounds
 
 
 app_name = 'dictionary'
@@ -158,7 +159,10 @@ urlpatterns = [
     re_path(r'^ajax/tags/$', signbank.dictionary.tagviews.taglist_json),
     re_path(r'^ajax/gloss/(?P<datasetid>\d+)/(?P<prefix>.*)$', signbank.dictionary.adminviews.gloss_ajax_complete, name='gloss_complete'),
     re_path(r'^ajax/similarglosses/(?P<gloss_id>.*)$', signbank.dictionary.batch_edit.similarglosses, name='similarglosses'),
+
     re_path(r'^ajax/handshape/(?P<prefix>.*)$', signbank.dictionary.adminviews.handshape_ajax_complete, name='handshape_complete'),
+
+    re_path(r'^ajax/handedness/(?P<prefix>.*)$', signbank.dictionary.bloodhounds.handedness_ajax_complete, name='handedness_complete'),
     re_path(r'^ajax/morph/(?P<prefix>.*)$', signbank.dictionary.adminviews.morph_ajax_complete, name='morph_complete'),
     re_path(r'^ajax/user/(?P<prefix>.*)$', permission_required('dictionary.change_gloss')(signbank.dictionary.adminviews.user_ajax_complete), name='user_complete'),
     re_path(r'^ajax/searchresults/$',signbank.dictionary.adminviews.gloss_ajax_search_results, name='ajax_search_results'),

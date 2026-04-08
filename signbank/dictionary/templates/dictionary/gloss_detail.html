@@ -2389,40 +2389,14 @@ textarea:focus {
             <table class='table table-condensed'>
 		    {% for value,name,label,kind in phonology_fields %}
                 {% if name == 'handedness' %}
-                    <tr class="empty_row">
-                        <th/><th style="width:500px;"></th><th>WD</th><th>WP</th>
+                    <tr value="{{value}}">
+                        <th><label for='{{phonologyform.handedness.id_for_label}}'>{{label}}</label></th>
+                        <td>
+                            <input class='form-control form-control-light handednesstypeahead'
+                                   placeholder='{% trans "Handedness" %}' >
+                            <input type="hidden" name="handedness" value="" id="{{phonologyform.handedness.id_for_label}}" >
+                        </td>
                     </tr>
-                    {% if value == '-' or value == ' ' or value == '' or value == None %}
-                    <tr class="empty_row">
-                        <th>{{label}}</th>
-                        <td class="edit edit_list" id='{{name}}'
-                            value='{{value}}' >{% value value %}</td>
-                        {% for value,name,label,kind in handedness_fields %}
-                            {% if name == 'weakdrop' %}
-                            <td class="edit edit_WD" id='{{name}}'
-                                value="{{value}}">{% if value == 'True' %}+WD{% elif value == 'None' %}&nbsp;{% else %}-WD{% endif %}</td>
-                            {% else %}
-                            <td class="edit edit_WP" id='{{name}}'
-                                value="{{value}}">{% if value == 'True' %}+WP{% elif value == 'None' %}&nbsp;{% else %}-WP{% endif %}</td>
-                            {% endif %}
-		                {% endfor %}
-                    </tr>
-                    {% else %}
-                    <tr >
-                        <th>{{label}}</th>
-                        <td class="edit edit_list" id='{{name}}'
-                            value='{{value}}' >{% value value %}</td>
-                        {% for value,name,label,kind in handedness_fields %}
-                            {% if name == 'weakdrop' %}
-                            <td class="edit edit_WD" id='{{name}}'
-                                value="{{value}}">{% if value == 'True' %}+WD{% elif value == 'None' %}&nbsp;{% else %}-WD{% endif %}</td>
-                            {% else %}
-                            <td class="edit edit_WP" id='{{name}}'
-                                value="{{value}}">{% if value == 'True' %}+WP{% elif value == 'None' %}&nbsp;{% else %}-WP{% endif %}</td>
-                            {% endif %}
-                        {% endfor %}
-                    </tr>
-                    {% endif %}
                 {% elif name == 'domhndsh' and SHOW_LETTER_NUMBER_PHONOLOGY %}
                     <tr class="empty_row">
                         <th/><th/><th>letter</th><th>number</th>
