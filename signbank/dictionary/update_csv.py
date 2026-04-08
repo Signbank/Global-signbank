@@ -2,10 +2,12 @@ import re
 import datetime as DT
 
 from django.utils.timezone import get_current_timezone
+from django.core.exceptions import ObjectDoesNotExist, MultipleObjectsReturned
+from django.utils.translation import gettext
 
 from tagging.models import TaggedItem, Tag
 
-from signbank.settings.server_specific import MODELTRANSLATION_LANGUAGES
+from signbank.settings.server_specific import MODELTRANSLATION_LANGUAGES, DEBUG_CSV
 from signbank.dictionary.models import (Gloss, Morpheme, FieldChoice, Relation, RelationToForeignSign, Definition,
                                         SemanticField,
                                         MorphologyDefinition, SimultaneousMorphologyDefinition, BlendMorphology)
@@ -126,70 +128,111 @@ def update_blend_morphology(gloss, values):
     return
 
 
+def validate_and_resolve_gloss_relations(gloss, values):
+    # Processes a list of string values representing relations in the format "role:target",
+    # validates them, and converts them into tuples of (FieldChoice, Gloss) objects.
+    errors = []
+    values_mapped_to_objects = []
+    for value in values:
+        if not value:
+            continue
+        try:
+            (role_str, target_str) = value.split(':', 1)
+        except ValueError:
+            error_string = gettext(
+                "Formatting error in new relation: '{input}'. Tuple role:target expected.").format(
+                glossid=str(gloss.pk), input=value)
+            errors.append(error_string)
+            continue
+        role_str = role_str.strip()
+        target_str = target_str.strip()
+        try:
+            role = FieldChoice.lookup('RelationRole', role_str)
+        except (ObjectDoesNotExist, MultipleObjectsReturned):
+            errors.append(gettext("FieldChoice for {role} is not defined.").format(role=role_str))
+            continue
+        matching_glosses = Gloss.objects.filter(lemma__dataset=gloss.lemma.dataset, archived=False,
+                                                annotationidglosstranslation__language=gloss.lemma.dataset.default_language,
+                                                annotationidglosstranslation__text__exact=target_str).distinct()
+        if not matching_glosses or matching_glosses.count() > 1:
+            errors.append(gettext("Target gloss {target} not found or not unique.").format(target=target_str))
+            continue
+        target = matching_glosses.first()
+        if gloss.pk == target.pk:
+            errors.append(gettext(
+                "For relation '{role}:{other_gloss}' the target gloss is the same as this gloss.").format(
+                role=role_str, other_gloss=target_str))
+            continue
+        if (role, target) in values_mapped_to_objects:
+            errors.append(gettext("Duplicate found in new relations: {relations}.").format(relations=', '.join(values)))
+            continue
+        values_mapped_to_objects.append((role, target))
+    # the tuples are sorted in the same order as the display relations method to allow straightforward comparison
+    sorted_fieldchoice_gloss_tuples = sorted(values_mapped_to_objects, key=lambda x: (x[1].pk, x[0].machine_value))
+    return sorted_fieldchoice_gloss_tuples, errors
+
+
 def subst_relations(gloss, values):
-    # expecting possibly multiple values
     # values is a list of values, where each value is a tuple of the form 'Role:String'
-    # The format of argument values has been checked before calling this function
+    # The argument values have been checked prior to calling this function
 
-    existing_relations = [(relation.id, relation.role, relation.target.id)
+    existing_relations = [(relation.role_fk, relation.target)
                           for relation in Relation.objects.filter(source=gloss)]
-    existing_relation_ids = [r[0] for r in existing_relations]
+    targets_to_update = [relation.target for relation in Relation.objects.filter(source=gloss)]
+    targets = list(set(targets_to_update))
+
+    # keep track of any updated glosses for revision history
+    original_glosses_display = dict()
+    original_glosses_display[gloss] = gloss.get_relation_display()
+    for target in targets:
+        if target in original_glosses_display.keys():
+            continue
+        original_glosses_display[target] = target.get_relation_display()
+
     existing_relations_by_role = dict()
+    for (rel_role, rel_other_gloss) in existing_relations:
 
-    for (rel_id, rel_role, rel_other_gloss) in existing_relations:
-
-        if rel_role in existing_relations_by_role:
+        if rel_role in existing_relations_by_role.keys():
             existing_relations_by_role[rel_role].append(rel_other_gloss)
         else:
             existing_relations_by_role[rel_role] = [rel_other_gloss]
 
-    new_tuples_to_add = []
-    already_existing_to_keep = []
+    values_mapped_to_objects, errors = validate_and_resolve_gloss_relations(gloss, values)
 
-    for value in values:
-        (role, target) = value.split(':')
-        role = role.strip()
-        target = target.strip()
-        if role in existing_relations_by_role and target in existing_relations_by_role[role]:
-            already_existing_to_keep.append((role, target))
+    if errors:
+        return errors, original_glosses_display
+
+    new_tuples_to_add = []
+    for role, target in values_mapped_to_objects:
+        if role in existing_relations_by_role.keys() and target in existing_relations_by_role[role]:
+            continue
         else:
             new_tuples_to_add.append((role, target))
 
-    # delete existing relations and reverse relations involving this gloss
-    for rel_id in existing_relation_ids:
-        rel = Relation.objects.get(id=rel_id)
-
-        if (rel.role, rel.target.id) in already_existing_to_keep:
-            continue
-
-        # Also delete the reverse relation
-        reverse_relations = Relation.objects.filter(source=rel.target, target=rel.source,
-                                                    role=Relation.get_reverse_role(rel.role))
-        if reverse_relations.count() > 0:
-            print("DELETE reverse relation: target: ", rel.target, ", relation: ", reverse_relations[0])
-            reverse_relations[0].delete()
-
-        print("DELETE Relation: ", rel)
-        rel.delete()
-
-    # all remaining existing relations are to be updated
     for (role, target) in new_tuples_to_add:
-        filter_glosses = Gloss.objects.filter(lemma__dataset=gloss.lemma.dataset, archived=False,
-                                              annotationidglosstranslation__text__exact=target).distinct()
-        target_gloss = filter_glosses.first()
-        if not target_gloss:
-            print("target gloss not found")
+        if target not in original_glosses_display.keys():
+            original_glosses_display[target] = target.get_relation_display()
+        try:
+            rel, created = Relation.objects.get_or_create(source=gloss, role_fk=role, target=target)
+        except MultipleObjectsReturned:
+            errors.append(gettext("This relation already exists multiple times."))
             continue
-        rel = Relation(source=gloss, role=role, target=target_gloss)
-        rel.save()
-        # Also add the reverse relation
-        reverse_relation = Relation(source=target_gloss, target=gloss, role=Relation.get_reverse_role(role))
-        reverse_relation.save()
+        if created and DEBUG_CSV:
+            print('created relation: ', role, gloss, target)
 
+        # Also add the reverse relation
+        reverse_role = role.reverse_relation_role()
+        try:
+            reverse_relation, created_reverse = Relation.objects.get_or_create(source=target, target=gloss, role_fk=reverse_role)
+        except MultipleObjectsReturned:
+            errors.append(gettext("This relation already exists multiple times."))
+            continue
+        if created_reverse and DEBUG_CSV:
+            print('created reverse relation: ', reverse_role, target, gloss)
     gloss.lastUpdated = DT.datetime.now(tz=get_current_timezone())
     gloss.save()
 
-    return
+    return errors, original_glosses_display
 
 
 def subst_foreignrelations(gloss, values):
@@ -345,5 +388,5 @@ def subst_semanticfield(gloss, values):
 
     gloss.lastUpdated = DT.datetime.now(tz=get_current_timezone())
     gloss.save()
-    
+
     return

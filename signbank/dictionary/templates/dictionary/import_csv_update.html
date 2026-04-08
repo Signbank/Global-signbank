@@ -353,6 +353,11 @@
                                 <td>{{new_human_value}}</td></tr>
                     {% endblocktrans %}
                 {% endif %}
+            {% for other_gloss, relations in change.side_effects.items %}
+            {% for relation in relations %}
+            <tr><td></td><td>{{other_gloss}} ({{relation.source_pk}})</td><td></td><td></td><td>{{relation.role.name}}:{{relation.target}}</td></tr>
+            {% endfor %}
+            {% endfor %}
             <input type="hidden" name="{{change.pk}}.{{ change.machine_key }}"  value="{{ change.new_machine_value }}">
             <input type="hidden" name="update_or_create" value="update">
             {% endfor %}
