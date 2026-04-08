@@ -59,7 +59,7 @@ from signbank.tools import (get_two_letter_dir, get_default_annotationidglosstra
                             detect_delimiter,
                             split_csv_lines_header_body,
                             split_csv_lines_sentences_header_body, create_sentence_from_valuedict,
-                            get_deleted_gloss_or_media_data, get_gloss_data)
+                            get_deleted_gloss_or_media_data, get_gloss_data, add_relations_to_revision_history)
 from signbank.dictionary.field_choices import fields_to_fieldcategory_dict
 from signbank.csv_interface import (csv_create_senses, csv_update_sentences, csv_create_sentence, required_csv_columns,
                                     choice_fields_choices)
@@ -1161,10 +1161,9 @@ def import_csv_update(request):
                                                        semfield_toggle, semfield_assign_toggle, tags_toggle)
                 changes += changes_found
 
-                if len(errors_found):
-                    # more than one error found
+                if errors_found:
                     errors_found_string = '\n'.join(errors_found)
-                    error.append(errors_found_string)
+                    error += [errors_found_string]
 
             except KeyError as e:
 
@@ -1307,7 +1306,12 @@ def import_csv_update(request):
 
                 new_human_value_list = [v.strip() for v in new_value.split(',')]
 
-                subst_relations(gloss, new_human_value_list)
+                # Any errors will already be found at stage 0; the error checking is done again for type checking
+                errors_found, original_glosses_display = subst_relations(gloss, new_human_value_list)
+                add_relations_to_revision_history(request.user, gloss, original_glosses_display)
+                if errors_found:
+                    errors_found_string = '\n'.join(errors_found)
+                    error.append(errors_found_string)
                 continue
 
             if fieldname == 'Relations to foreign signs':
