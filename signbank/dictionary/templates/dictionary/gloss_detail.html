@@ -1020,11 +1020,11 @@ textarea:focus {
     {% if gloss.has_video %}
 
         <div id="player" style="">
-            <video id='videoplayer_middle' src="{{protected_media_url}}{{gloss.get_video_url}}?v={% now 'YmdHis' %}"
+            <video id='videoplayer_middle' src="{{protected_media_url}}{{gloss.get_video_url}}?v={{ gloss.get_video_object.pk }}"
                    playsinline autoplay muted></video>
 
         {% for perspvideo in gloss.get_perspective_videos %}
-            <video id='videoplayer_{{perspvideo.perspective}}' src="{{protected_media_url}}{{perspvideo.get_video_path}}?v={% now 'YmdHis' %}"
+            <video id='videoplayer_{{perspvideo.perspective}}' src="{{protected_media_url}}{{perspvideo.get_video_path}}?v={{ perspvideo.pk }}"
                    playsinline autoplay muted></video>
         {% endfor %}
         </div>
@@ -1047,7 +1047,7 @@ textarea:focus {
 
     <div>
         {% if gloss.get_image_path %}
-            <img id="imageframe" src="{{protected_media_url}}{{gloss.get_image_url}}?v={% now 'YmdHis' %}" style="height:259px;width:auto;">
+            <img id="imageframe" src="{{protected_media_url}}{{gloss.get_image_url}}?v={{ gloss.get_video_object.pk }}" style="height:259px;width:auto;">
         {% endif %}
     </div>
 
@@ -1286,7 +1286,7 @@ textarea:focus {
                                    <tr>
                                        <td colspan="2">
                                            <div id="perspectiveplayer">
-                                            <video id='videoperspplayer' src="{{protected_media_url}}{{perspvideo.get_video_path}}?v={% now 'YmdHis' %}"
+                                            <video id='videoperspplayer' src="{{protected_media_url}}{{perspvideo.get_video_path}}?v={{ perspvideo.pk }}"
                                                    style="height:200px;width:auto;" controls muted></video>
                                            </div>
                                         </td>
@@ -1736,7 +1736,7 @@ textarea:focus {
                                                     <div id="videocontainer_{{examplesentence.id}}"  style="width:100%">
                                                         {% if examplesentence.has_video %}
                                                             <div>
-                                                                <video id='videoplayer_{{examplesentence.id}}' src="{{protected_media_url}}/{{examplesentence.get_video_path}}?v={% now 'YmdHis' %}" controls type="video/mp4" muted></video>
+                                                                <video id='videoplayer_{{examplesentence.id}}' src="{{protected_media_url}}/{{examplesentence.get_video_path}}?v={{ examplesentence.get_video_object.pk }}" controls type="video/mp4" muted></video>
                                                                 </div>
                                                             <div id="replay"></div>
                                                         {% else %}
@@ -1998,20 +1998,20 @@ textarea:focus {
                                                     {% with nme_videos_lookup|get_item:videonme.offset as nme_perspectives %}
                                                     {% with nme_perspectives|get_item:'left' as nmevideo_left %}
                                                     <video id='videonmeplayer_{{videonme.offset}}_left'  class="videonmeplayer_left"
-                                                           src="{{protected_media_url}}{{nmevideo_left.get_video_path}}?v={% now 'YmdHis' %}"
+                                                           src="{{protected_media_url}}{{nmevideo_left.get_video_path}}?v={{ nmevideo_left.pk }}"
                                                            style="height:200px;width:auto;" playsinline muted></video>
                                                     {% endwith %}
                                                     {% endwith %}
                                                 {% endif %}
                                                 <video id='videonmeplayer_{{videonme.offset}}_middle' class="videonmeplayer_middle"
-                                                       src="{{protected_media_url}}{{videonme.get_video_path}}?v={% now 'YmdHis' %}"
+                                                       src="{{protected_media_url}}{{videonme.get_video_path}}?v={{ videonme.pk }}"
                                                        style="height:200px;width:auto;" playsinline muted>
                                                 </video>
                                                 {% if videonme.has_right_perspective %}
                                                     {% with nme_videos_lookup|get_item:videonme.offset as nme_perspectives %}
                                                     {% with nme_perspectives|get_item:'right' as nmevideo_right %}
                                                     <video id='videonmeplayer_{{videonme.offset}}_right'  class="videonmeplayer_right"
-                                                           src="{{protected_media_url}}{{nmevideo_right.get_video_path}}?v={% now 'YmdHis' %}"
+                                                           src="{{protected_media_url}}{{nmevideo_right.get_video_path}}?v={{ nmevideo_right.pk }}"
                                                            style="height:200px;width:auto;" playsinline muted></video>
                                                     {% endwith %}
                                                     {% endwith %}
@@ -3082,7 +3082,7 @@ textarea:focus {
                                 <style>.highlight {background-color: rgb(255, 149, 63);}</style>
 
                                 <video id="myVideo_{{forloop.counter}}" controls>
-                                    <source src="{{protected_media_url}}/{{annotated_sentence.annotatedvideo.videofile}}?v={% now 'YmdHis' %}" type="video/mp4">
+                                    <source src="{{protected_media_url}}/{{annotated_sentence.annotatedvideo.videofile}}?v={{ annotated_sentence.annotatedvideo.pk }}" type="video/mp4">
                                 </video>                               
                             
                                 <br><br><i>{% trans "Glosses" %}</i><br>
@@ -3130,7 +3130,7 @@ textarea:focus {
                                         <i>{% trans "Source" %}</i><br>
                                         {{ annotated_sentence.annotatedvideo.source.source }}
                                         {% if annotated_sentence.annotatedvideo.source.url %}
-                                            , <a href="{{protected_media_url}}/{{annotated_sentence.annotatedvideo.source.get_absolute_url}}?v={% now 'YmdHis' %}">{{ annotated_sentence.annotatedvideo.source.url }}</a>
+                                            , <a href="{{protected_media_url}}/{{annotated_sentence.annotatedvideo.source.get_absolute_url}}?v={{ annotated_sentence.annotatedvideo.pk }}">{{ annotated_sentence.annotatedvideo.source.url }}</a>
                                         {% endif %}
                                     {% endif %}
                                 </p>
