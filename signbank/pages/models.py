@@ -16,7 +16,7 @@ class Page(models.Model):
                                   help_text=_("If this is checked, the page will be included in the site menus."),
                                   default=False)
     parent = models.ForeignKey('self', blank=True, null=True,
-                               help_text=_("Leave blank for a top level menu entry. "
+                               help_text=_("Leave blank for a top level menu entry.  "
                                            "Top level entries that have sub-pages should "
                                            "be empty as they will not be linked in the menu."),
                                on_delete=models.CASCADE)
