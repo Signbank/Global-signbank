@@ -10,5 +10,6 @@ jobs:
     steps:
       - name: Pull latest changes
         run: |
+          source /var/www/env/bin/activate
           cd /var/www/repo
           sh deploy.sh
