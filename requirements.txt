@@ -10,7 +10,7 @@ future==1.0.0
 flatdict==4.1.0
 lxml==6.0.2
 nltk==3.9.4
-numpy==2.4.2
+numpy==1.26.4
 ffmpeg-python==0.2.0
 py==1.11.0
 pympi-ling==1.71
