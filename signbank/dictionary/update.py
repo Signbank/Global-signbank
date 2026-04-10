@@ -2423,7 +2423,7 @@ def add_othermedia(request):
         orig_path_with_extension_matching_video_type = f'{goal_directory}/{name}{video_format_extension}'
         os.rename(orig_path, orig_path_with_extension_matching_video_type)
         okay = convert_video(orig_path_with_extension_matching_video_type, f'{goal_directory}/{name}.mp4')
-        newothermedia.path = f'{request.POST['gloss']}/{name}.mp4'
+        newothermedia.path = f"{request.POST['gloss']}/{name}.mp4"
         newothermedia.save()
 
     return HttpResponseRedirect(reverse(reverse_url, kwargs={'pk': request.POST['gloss']})+'?editothermedia')
