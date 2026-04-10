@@ -150,7 +150,7 @@ class FieldChoice(models.Model):
         ordering = ['machine_value']
 
     def has_name(self, category, name):
-        name_fields = [f'name_{language.replace('-', '_')}' for language in settings.MODELTRANSLATION_LANGUAGES]
+        name_fields = [f"name_{language.replace('-', '_')}" for language in settings.MODELTRANSLATION_LANGUAGES]
         matches = self.field == category and any(getattr(self, name_field) == name for name_field in name_fields)
         return matches
 
