@@ -1,12 +1,12 @@
 name: Deploy
-
 on:
   workflow_dispatch:
-
 jobs:
   deploy:
-    runs-on: self-hosted
-
+    strategy:
+      matrix:
+        runner: [global, vgt]
+    runs-on: ${{ matrix.runner }}
     steps:
       - name: Pull latest changes
         run: |
