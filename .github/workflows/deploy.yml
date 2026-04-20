@@ -1,14 +1,15 @@
-name: Pull latest code
-
+name: Deploy
 on:
   workflow_dispatch:
-
 jobs:
-  git-pull:
-    runs-on: self-hosted
-
+  deploy:
+    strategy:
+      matrix:
+        runner: [global, vgt]
+    runs-on: ${{ matrix.runner }}
     steps:
       - name: Pull latest changes
         run: |
+          source /var/www/env/bin/activate
           cd /var/www/repo
           sh deploy.sh
