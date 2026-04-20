@@ -56,6 +56,16 @@ class DatasetAdmin(GuardedModelAdmin):
     def has_delete_permission(self, request, obj=None):
         return False
 
+    def get_readonly_fields(self, request, obj=None):
+        if obj is not None and request.user not in obj.owners.all() and not request.user.is_superuser:
+            return self.readonly_fields
+        return []
+
+    def has_change_permission(self, request, obj=None):
+        if obj is not None and request.user not in obj.owners.all() and not request.user.is_superuser:
+            return False
+        return True
+
 
 class KeywordAdmin(VersionAdmin):
     search_fields = ['^text']
