@@ -16,7 +16,7 @@ def add_reverse_relation_roles(apps, schema_editor):
     FieldChoice = apps.get_model('dictionary', 'FieldChoice')
 
     def has_name(fieldchoice, name):
-        name_fields = [f'name_{language.replace('-', '_')}' for language in MODELTRANSLATION_LANGUAGES]
+        name_fields = [f"name_{language.replace('-', '_')}" for language in MODELTRANSLATION_LANGUAGES]
         matches = any(getattr(fieldchoice, name_field) == name for name_field in name_fields)
         return matches
 
