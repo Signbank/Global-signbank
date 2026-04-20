@@ -33,7 +33,8 @@ from signbank.dictionary.models import (Dataset, Gloss, Translation, LemmaIdglos
                                         SearchHistory,
                                         QueryParameterMultilingual,  QueryParameterSemanticField,
                                         QueryParameterDerivationHistory,
-                                        QueryParameterBoolean, QueryParameterFieldChoice, QueryParameterHandshape)
+                                        QueryParameterBoolean, QueryParameterFieldChoice, QueryParameterHandshape,
+                                        PhonologicalVariation)
 from signbank.dictionary.forms import (FieldChoiceForm, SemanticFieldForm, HandshapeForm,
                                        QueryParameterFieldChoiceForm, SearchHistoryForm, QueryParameterBooleanForm,
                                        QueryParameterMultilingualForm, QueryParameterHandshapeForm)
@@ -41,6 +42,8 @@ from signbank.tools import (get_fields_with_choices_glosses, get_fields_with_cho
     get_fields_with_choices_definition, get_fields_with_choices_morphology_definition,
     get_fields_with_choices_other_media_type, get_fields_with_choices_morpheme_type,
     get_fields_with_choices_examplesentences, get_gloss_handshape_fields, get_fields_with_choices_relation)
+from signbank.dictionary.translate_choice_list import choicelist_queryset_to_translated_dict
+
 
 class DatasetAdmin(GuardedModelAdmin):
     model = Dataset
@@ -1546,9 +1549,75 @@ class AffiliatedUserAdmin(admin.ModelAdmin):
     list_display = ("affiliation", "user", )
 
 
+ATTRS_FOR_FORMS = {'class': 'form-control'}
+
+class PhonologicalVariationAdminForm(forms.ModelForm):
+
+    class meta:
+        model = PhonologicalVariation
+        fields = ['gloss', 'variation', 'handedness', 'domhndsh', 'subhndsh']
+
+    def __init__(self, *args, **kwargs):
+        super(PhonologicalVariationAdminForm, self).__init__(*args, **kwargs)
+
+        self.fields['gloss'] = forms.ModelChoiceField(label=_('Gloss'),
+                                                      queryset=Gloss.objects.all(),
+                                                      widget=forms.Select(attrs=ATTRS_FOR_FORMS))
+
+        self.fields['handedness'] = forms.ChoiceField(label=_('Handedness'),
+                                                      choices = choicelist_queryset_to_translated_dict(
+                                                          list(FieldChoice.objects.filter(field='Handedness').order_by(
+                                                              'machine_value')),
+                                                          ordered=False, id_prefix='', shortlist=False
+                                                      ),
+                                                      widget=forms.Select(attrs=ATTRS_FOR_FORMS),
+                                                      required=False)
+        self.fields['domhndsh'] = forms.ChoiceField(label=_('Strong Hand'),
+                                                    choices = choicelist_queryset_to_translated_dict(
+                                                        list(Handshape.objects.all().order_by(
+                                                            'machine_value')),
+                                                        ordered=False, id_prefix='', shortlist=False
+                                                    ),
+                                                    widget=forms.Select(attrs=ATTRS_FOR_FORMS),
+                                                    required=False)
+        self.fields['subhndsh'] = forms.ChoiceField(label=_('Weak Hand'),
+                                                    choices = choicelist_queryset_to_translated_dict(
+                                                        list(Handshape.objects.all().order_by(
+                                                            'machine_value')),
+                                                        ordered=False, id_prefix='', shortlist=False
+                                                    ),
+                                                    widget=forms.Select(attrs=ATTRS_FOR_FORMS),
+                                                    required=False)
+
+
+class PhonologicalVariationAdmin(admin.ModelAdmin):
+
+    model = PhonologicalVariation
+    form = PhonologicalVariationAdminForm
+
+    def save_model(self, request, obj, form, change):
+
+        qs = PhonologicalVariation.objects.filter(gloss=obj.gloss)
+        highest_variation = 1 if not qs.count() else max([phonological_variation.variation for phonological_variation in qs])
+        if not obj.variation:
+            # Check out the query-set and make sure that it exists
+            qs = PhonologicalVariation.objects.filter(gloss=obj.gloss,variation__gt=0)
+            if qs.count() == 0:
+                obj.variation = 1
+            else:
+                # The automatic machine value we calculate is 1 higher
+                obj.variation = highest_variation+1
+
+        try:
+            obj.save()
+        except Exception as e:
+            print('Constraint violated, PhonologicalVariationAdmin not saved: ', highest_variation+2, e)
+
+
 admin.site.register(Dialect, DialectAdmin)
 admin.site.register(SignLanguage, SignLanguageAdmin)
 admin.site.register(Gloss, GlossAdmin)
+admin.site.register(PhonologicalVariation, PhonologicalVariationAdmin)
 admin.site.register(Morpheme, GlossAdmin)
 admin.site.register(Keyword, KeywordAdmin)
 admin.site.register(FieldChoice, FieldChoiceAdmin)

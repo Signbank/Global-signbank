@@ -4377,3 +4377,103 @@ class GlossProvenance(models.Model):
 
     def provenance_tuple(self):
         return self.get_method_display(), self.provenance_text()
+
+
+class PhonologicalVariation(models.Model):
+
+    class Meta:
+        unique_together = (("gloss", "variation"),)
+        ordering = ['gloss', 'variation']
+
+    gloss = models.ForeignKey("Gloss", on_delete=models.CASCADE)
+
+    # 0 is reserved for the primary gloss
+    variation = models.IntegerField(default=0)
+
+    # Phonology fields
+    handedness = FieldChoiceForeignKey(FieldChoice, on_delete=models.SET_NULL, null=True,
+                                       limit_choices_to={'field': FieldChoice.HANDEDNESS},
+                                       field_choice_category=FieldChoice.HANDEDNESS,
+                                       verbose_name=_("Handedness"),
+                                       related_name="variant_handedness")
+
+    weakdrop = models.BooleanField(_("Weak Drop"), null=True, blank=True)
+    weakprop = models.BooleanField(_("Weak Prop"), null=True, blank=True)
+
+    domhndsh = models.ForeignKey(Handshape, on_delete=models.SET_NULL, null=True,
+                                 verbose_name=_("Strong Hand"),
+                                 related_name="variant_strong_hand")
+
+    subhndsh = models.ForeignKey(Handshape, on_delete=models.SET_NULL, null=True,
+                                 verbose_name=_("Weak Hand"),
+                                 related_name="variant_weak_hand")
+
+    # Support for handshape etymology
+    domhndsh_number = models.BooleanField(_("Strong hand number"), null=True, blank=True)
+    domhndsh_letter = models.BooleanField(_("Strong hand letter"), null=True, blank=True)
+    subhndsh_number = models.BooleanField(_("Weak hand number"), null=True, blank=True)
+    subhndsh_letter = models.BooleanField(_("Weak hand letter"), null=True, blank=True)
+
+    final_domhndsh = models.ForeignKey(Handshape, on_delete=models.SET_NULL, null=True,
+                                       verbose_name=_("Final Dominant Handshape"),
+                                       related_name="variant_final_dominant_handshape")
+
+    final_subhndsh = models.ForeignKey(Handshape, on_delete=models.SET_NULL, null=True,
+                                       verbose_name=_("Final Subordinate Handshape"),
+                                       related_name="variant_final_subordinate_handshape")
+
+    locprim = FieldChoiceForeignKey(FieldChoice, on_delete=models.SET_NULL, null=True,
+                                          limit_choices_to={'field': FieldChoice.LOCATION},
+                                          field_choice_category=FieldChoice.LOCATION,
+                                          verbose_name=_("Location"),
+                                           related_name="variant_location")
+
+    final_loc = FieldChoiceForeignKey(FieldChoice, on_delete=models.SET_NULL, null=True,
+                                      limit_choices_to={'field': FieldChoice.LOCATION},
+                                      field_choice_category=FieldChoice.LOCATION,
+                                      verbose_name=_("Final Primary Location"),
+                                      related_name="variant_final_primary_location")
+
+    locVirtObj = models.CharField(_("Virtual Object"), blank=True, null=True, max_length=50)
+
+    locsecond = FieldChoiceForeignKey(FieldChoice, on_delete=models.SET_NULL, null=True,
+                                      limit_choices_to={'field': FieldChoice.LOCATION},
+                                      field_choice_category=FieldChoice.LOCATION,
+                                      verbose_name=_("Secondary Location"),
+                                      related_name="variant_secondary_location")
+
+    initial_secondary_loc = FieldChoiceForeignKey(FieldChoice, on_delete=models.SET_NULL, null=True,
+                                                  limit_choices_to={'field': FieldChoice.MINORLOCATION},
+                                                  field_choice_category=FieldChoice.MINORLOCATION,
+                                                  verbose_name=_("Initial Subordinate Location"),
+                                                  related_name="variant_initial_subordinate_location")
+
+    final_secondary_loc = FieldChoiceForeignKey(FieldChoice, on_delete=models.SET_NULL, null=True,
+                                                limit_choices_to={'field': FieldChoice.MINORLOCATION},
+                                                field_choice_category=FieldChoice.MINORLOCATION,
+                                                verbose_name=_("Final Subordinate Location"),
+                                                related_name="variant_final_subordinate_location")
+
+    initial_palm_orientation = models.CharField(_("Initial Palm Orientation"), max_length=20, null=True, blank=True)
+    final_palm_orientation = models.CharField(_("Final Palm Orientation"), max_length=20, null=True, blank=True)
+
+    initial_relative_orientation = models.CharField(_("Initial Interacting Dominant Hand Part"), null=True,
+                                                    max_length=20, blank=True)
+    final_relative_orientation = models.CharField(_("Final Interacting Dominant Hand Part"), null=True, max_length=20,
+                                                  blank=True)
+
+    domSF = FieldChoiceForeignKey(FieldChoice, on_delete=models.SET_NULL, null=True,
+                                  limit_choices_to={'field': FieldChoice.DOMINANTHANDSELECTEDFINGERS},
+                                  field_choice_category=FieldChoice.DOMINANTHANDSELECTEDFINGERS,
+                                  verbose_name="Dominant hand - Selected Fingers",
+                                  related_name="variant_dominant_hand_selected_fingers")
+
+    domFlex = FieldChoiceForeignKey(FieldChoice, on_delete=models.SET_NULL, null=True,
+                                    limit_choices_to={'field': FieldChoice.DOMINANTHANDFLEXION},
+                                    field_choice_category=FieldChoice.DOMINANTHANDFLEXION,
+                                    verbose_name="Dominant hand - Flexion",
+                                    related_name="variant_dominant_hand_flexion")
+
+    oriChAbd = models.BooleanField(_("Abduction change"), null=True, blank=True)
+    oriChFlex = models.BooleanField(_("Flexion change"), null=True, blank=True)
+
