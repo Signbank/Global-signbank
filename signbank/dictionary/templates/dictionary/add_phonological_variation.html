@@ -1,0 +1,152 @@
+{% extends 'baselayout.html' %}
+{% load i18n %}
+{% load stylesheet %}
+{% load annotation_idgloss_translation %}
+{% load bootstrap3 %}
+{% load tagging_tags %}
+{% load wrong_sign %}
+{% block bootstrap3_title %}
+{% blocktrans %}Signbank: Add New Sign{% endblocktrans %}
+{% endblock %}
+
+{% load guardian_tags %}
+
+{% block extrahead %}
+<style>
+.hasTooltip:hover .isTooltip {
+    position: fixed;
+    placement: top !important;
+    bottom: 100%;
+}
+input[type="text"] {
+    background-color: rgba(50,50,50,15%);
+    border: none;
+}
+input[type="text"]:focus {
+    border: 1px solid red;
+}
+.tt-input {
+    background-color: rgba(50,50,50,15%) !important;
+    border: none;
+}
+.tt-input:active {
+    border: 1px solid red;
+}
+</style>
+{% endblock %}
+
+{% block extrajs %}
+
+<script type="text/javascript">
+var dark_mode = '{{request.session.dark_mode}}';
+var dark_mode_django = '{{dark_mode}}';
+var url = '{{PREFIX_URL}}';
+var csrf_token = '{{csrf_token}}';
+
+</script>
+
+<script type="text/javascript" src="{{STATIC_URL}}js/jquery.jeditable.mini_colors.js"></script>
+<script type="text/javascript" src="{{STATIC_URL}}js/jquery.jeditable.checkbox.js"></script>
+<script type="text/javascript" src="{{STATIC_URL}}js/typeahead.bundle.min.js"></script>
+
+{% endblock %}
+
+{% block content %}
+
+   {% if perms.dictionary.add_gloss %}
+   <p>{% trans "Please provide the data for the phonological variation of the gloss" %}:</p>
+     <form action='{% url "dictionary:add_phonological_variation" glossid=gloss.id %}' method='POST' enctype="multipart/form-data">
+         {% csrf_token %}
+         <table class='table table-condensed-light' style='width: 1200px;'>
+
+             <tr>
+                 {% with add_gloss_form.fields|get_item:'handedness' as handedness_field %}
+                 <th><label for="handedness">{{handedness_field.label}}</label></th>
+                 <td class='td td-light'>
+                    <select name="handedness" id="handedness">
+                        {% for value, text in handedness_field.choices %}
+                        <option value={{value}}>{{text}}</option>
+                        {% endfor %}
+                    </select></td>
+                 {% endwith %}
+             </tr>
+
+             <tr>
+                 {% with add_gloss_form.fields|get_item:'domhndsh' as domhndsh_field %}
+                 <th><label for="domhndsh">{{domhndsh_field.label}}</label></th>
+                 <td class='td td-light'>
+                    <select name="domhndsh" id="domhndsh">
+                        {% for value, text in domhndsh_field.choices %}
+                        <option value={{value}}>{{text}}</option>
+                        {% endfor %}
+                    </select></td>
+                 {% endwith %}
+             </tr>
+
+             <tr>
+                 {% with add_gloss_form.fields|get_item:'domhndsh_letter' as domhndsh_letter_field %}
+                 <th><label for="domhndsh_letter">{{domhndsh_letter_field.label}}</label></th>
+                 <td class='td td-light'>
+                    <select name="domhndsh_letter" id="domhndsh_letter">
+                        {% for value, text in domhndsh_letter_field.choices %}
+                        <option value={{value}}>{{text}}</option>
+                        {% endfor %}
+                    </select></td>
+                 {% endwith %}
+             </tr>
+
+             <tr>
+                 {% with add_gloss_form.fields|get_item:'domhndsh_number' as domhndsh_number_field %}
+                 <th><label for="domhndsh_number">{{domhndsh_number_field.label}}</label></th>
+                 <td class='td td-light'>
+                    <select name="domhndsh_number" id="domhndsh_number">
+                        {% for value, text in domhndsh_number_field.choices %}
+                        <option value={{value}}>{{text}}</option>
+                        {% endfor %}
+                    </select></td>
+                 {% endwith %}
+             </tr>
+
+             <tr>
+                 {% with add_gloss_form.fields|get_item:'subhndsh' as subhndsh_field %}
+                 <th><label for="subhndsh">{{subhndsh_field.label}}</label></th>
+                 <td class='td td-light'>
+                    <select name="subhndsh" id="subhndsh">
+                        {% for value, text in subhndsh_field.choices %}
+                        <option value={{value}}>{{text}}</option>
+                        {% endfor %}
+                    </select></td>
+                 {% endwith %}
+             </tr>
+
+             <tr>
+                 {% with add_gloss_form.fields|get_item:'subhndsh_letter' as subhndsh_letter_field %}
+                 <th><label for="subhndsh_letter">{{subhndsh_letter_field.label}}</label></th>
+                 <td class='td td-light'>
+                    <select name="subhndsh_letter" id="subhndsh_letter">
+                        {% for value, text in subhndsh_letter_field.choices %}
+                        <option value={{value}}>{{text}}</option>
+                        {% endfor %}
+                    </select></td>
+                 {% endwith %}
+             </tr>
+
+             <tr>
+                 {% with add_gloss_form.fields|get_item:'subhndsh_number' as subhndsh_number_field %}
+                 <th><label for="subhndsh_number">{{subhndsh_number_field.label}}</label></th>
+                 <td class='td td-light'>
+                    <select name="subhndsh_number" id="subhndsh_number">
+                        {% for value, text in subhndsh_number_field.choices %}
+                        <option value={{value}}>{{text}}</option>
+                        {% endfor %}
+                    </select></td>
+                 {% endwith %}
+             </tr>
+
+         </table>
+
+     <input class='btn btn-primary' type='submit' value='{% trans "Add Phonological Variation" %}'>
+     </form>
+  {% endif %}
+<br><br><br>
+{% endblock %}

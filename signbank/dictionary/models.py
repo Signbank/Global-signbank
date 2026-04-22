@@ -4379,11 +4379,7 @@ class GlossProvenance(models.Model):
         return self.get_method_display(), self.provenance_text()
 
 
-class PhonologicalVariation(models.Model):
-
-    class Meta:
-        unique_together = (("gloss", "variation"),)
-        ordering = ['gloss', 'variation']
+class PhonologicalVariation(MetaModelMixin, models.Model):
 
     gloss = models.ForeignKey("Gloss", on_delete=models.CASCADE)
 
@@ -4476,4 +4472,97 @@ class PhonologicalVariation(models.Model):
 
     oriChAbd = models.BooleanField(_("Abduction change"), null=True, blank=True)
     oriChFlex = models.BooleanField(_("Flexion change"), null=True, blank=True)
+
+    relatArtic = FieldChoiceForeignKey(FieldChoice, on_delete=models.SET_NULL, null=True,
+                                          limit_choices_to={'field': FieldChoice.RELATARTIC},
+                                          field_choice_category=FieldChoice.RELATARTIC,
+                                          verbose_name=_("Relation between Articulators"),
+                                          related_name="variant_relation_between_articulators")
+
+    absOriPalm = FieldChoiceForeignKey(FieldChoice, on_delete=models.SET_NULL, null=True,
+                                          limit_choices_to={'field': FieldChoice.ABSORIPALM},
+                                          field_choice_category=FieldChoice.ABSORIPALM,
+                                          verbose_name=_("Absolute Orientation: Palm"),
+                                           related_name="variant_absolute_orientation_palm")
+
+    absOriFing = FieldChoiceForeignKey(FieldChoice, on_delete=models.SET_NULL, null=True,
+                                          limit_choices_to={'field': FieldChoice.ABSORIFING},
+                                          field_choice_category=FieldChoice.ABSORIFING,
+                                          verbose_name=_("Absolute Orientation: Fingers"),
+                                           related_name="variant_absolute_orientation_fingers")
+
+    relOriMov = FieldChoiceForeignKey(FieldChoice, on_delete=models.SET_NULL, null=True,
+                                          limit_choices_to={'field': FieldChoice.RELORIMOV},
+                                          field_choice_category=FieldChoice.RELORIMOV,
+                                          verbose_name=_("Relative Orientation: Movement"),
+                                           related_name="variant_relative_orientation_movement")
+
+    relOriLoc = FieldChoiceForeignKey(FieldChoice, on_delete=models.SET_NULL, null=True,
+                                          limit_choices_to={'field': FieldChoice.RELORILOC},
+                                          field_choice_category=FieldChoice.RELORILOC,
+                                          verbose_name=_("Relative Orientation: Location"),
+                                           related_name="variant_relative_orientation_location")
+
+    oriCh = FieldChoiceForeignKey(FieldChoice, on_delete=models.SET_NULL, null=True,
+                                          limit_choices_to={'field': FieldChoice.ORICHANGE},
+                                          field_choice_category=FieldChoice.ORICHANGE,
+                                          verbose_name=_("Orientation Change"),
+                                           related_name="variant_orientation_change")
+
+    handCh = FieldChoiceForeignKey(FieldChoice, on_delete=models.SET_NULL, null=True,
+                                          limit_choices_to={'field': FieldChoice.HANDSHAPECHANGE},
+                                          field_choice_category=FieldChoice.HANDSHAPECHANGE,
+                                          verbose_name=_("Handshape Change"),
+                                           related_name="variant_handshape_change")
+
+    repeat = models.BooleanField(_("Repeated Movement"), null=True, default=False)
+    altern = models.BooleanField(_("Alternating Movement"), null=True, default=False)
+
+    movSh = FieldChoiceForeignKey(FieldChoice, on_delete=models.SET_NULL, null=True,
+                                          limit_choices_to={'field': FieldChoice.MOVEMENTSHAPE},
+                                          field_choice_category=FieldChoice.MOVEMENTSHAPE,
+                                          verbose_name=_("Movement Shape"),
+                                           related_name="variant_movement_shape")
+
+    movDir = FieldChoiceForeignKey(FieldChoice, on_delete=models.SET_NULL, null=True,
+                                          limit_choices_to={'field': FieldChoice.MOVEMENTDIR},
+                                          field_choice_category=FieldChoice.MOVEMENTDIR,
+                                          verbose_name=_("Movement Direction"),
+                                           related_name="variant_movement_direction")
+
+    movMan = FieldChoiceForeignKey(FieldChoice, on_delete=models.SET_NULL, null=True,
+                                          limit_choices_to={'field': FieldChoice.MOVEMENTMAN},
+                                          field_choice_category=FieldChoice.MOVEMENTMAN,
+                                          verbose_name=_("Movement Manner"),
+                                           related_name="variant_movement_manner")
+
+    contType = FieldChoiceForeignKey(FieldChoice, on_delete=models.SET_NULL, null=True,
+                                          limit_choices_to={'field': FieldChoice.CONTACTTYPE},
+                                          field_choice_category=FieldChoice.CONTACTTYPE,
+                                          verbose_name=_("Contact Type"),
+                                           related_name="variant_contact_type")
+
+
+    phonOth = models.TextField(_("Phonology Other"), null=True, blank=True)
+
+    mouthG = models.CharField(_("Mouth Gesture"), max_length=50, blank=True)
+    mouthing = models.CharField(_("Mouthing"), max_length=50, blank=True)
+    phonetVar = models.CharField(_("Phonetic Variation"), max_length=50, blank=True)
+
+    locPrimLH = FieldChoiceForeignKey(FieldChoice, on_delete=models.SET_NULL, null=True,
+                                          limit_choices_to={'field': FieldChoice.LOCATION},
+                                          field_choice_category=FieldChoice.LOCATION,
+                                          verbose_name=_("Placement Active Articulator LH"),
+                                           related_name="variant_placement_active_articulator_lh")
+
+    locFocSite = models.CharField(_("Placement Focal Site RH"), null=True, blank=True, max_length=5)
+    locFocSiteLH = models.CharField(_("Placement Focal site LH"), null=True, blank=True, max_length=5)
+    initArtOri = models.CharField(_("Orientation RH (initial)"), null=True, blank=True, max_length=5)
+    finArtOri = models.CharField(_("Orientation RH (final)"), null=True, blank=True, max_length=5)
+    initArtOriLH = models.CharField(_("Orientation LH (initial)"), null=True, blank=True, max_length=5)
+    finArtOriLH = models.CharField(_("Orientation LH (final)"), null=True, blank=True, max_length=5)
+
+    class Meta:
+        unique_together = (("gloss", "variation"),)
+        ordering = ['gloss', 'variation']
 

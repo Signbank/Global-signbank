@@ -1551,18 +1551,16 @@ class AffiliatedUserAdmin(admin.ModelAdmin):
 
 ATTRS_FOR_FORMS = {'class': 'form-control'}
 
-class PhonologicalVariationAdminForm(forms.ModelForm):
+
+class PhonologicalVariationForm(forms.ModelForm):
 
     class meta:
         model = PhonologicalVariation
         fields = ['gloss', 'variation', 'handedness', 'domhndsh', 'subhndsh']
 
     def __init__(self, *args, **kwargs):
-        super(PhonologicalVariationAdminForm, self).__init__(*args, **kwargs)
 
-        self.fields['gloss'] = forms.ModelChoiceField(label=_('Gloss'),
-                                                      queryset=Gloss.objects.all(),
-                                                      widget=forms.Select(attrs=ATTRS_FOR_FORMS))
+        super(PhonologicalVariationForm, self).__init__(*args, **kwargs)
 
         self.fields['handedness'] = forms.ChoiceField(label=_('Handedness'),
                                                       choices = choicelist_queryset_to_translated_dict(
@@ -1590,28 +1588,20 @@ class PhonologicalVariationAdminForm(forms.ModelForm):
                                                     required=False)
 
 
+    def get_form(self, request, obj=None, **kwargs):
+        form = PhonologicalVariationForm()
+        if obj is not None:
+            instance = PhonologicalVariation.objects.get(pk=obj.pk)
+            gloss = Gloss.objects.get(pk=instance.gloss.id)
+        return form
+
+
 class PhonologicalVariationAdmin(admin.ModelAdmin):
 
     model = PhonologicalVariation
-    form = PhonologicalVariationAdminForm
-
-    def save_model(self, request, obj, form, change):
-
-        qs = PhonologicalVariation.objects.filter(gloss=obj.gloss)
-        highest_variation = 1 if not qs.count() else max([phonological_variation.variation for phonological_variation in qs])
-        if not obj.variation:
-            # Check out the query-set and make sure that it exists
-            qs = PhonologicalVariation.objects.filter(gloss=obj.gloss,variation__gt=0)
-            if qs.count() == 0:
-                obj.variation = 1
-            else:
-                # The automatic machine value we calculate is 1 higher
-                obj.variation = highest_variation+1
-
-        try:
-            obj.save()
-        except Exception as e:
-            print('Constraint violated, PhonologicalVariationAdmin not saved: ', highest_variation+2, e)
+    form = PhonologicalVariationForm
+    list_display = ("gloss", "variation", "handedness")
+    readonly_fields = ['gloss']
 
 
 admin.site.register(Dialect, DialectAdmin)

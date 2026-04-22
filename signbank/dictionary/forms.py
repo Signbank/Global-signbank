@@ -27,7 +27,7 @@ from signbank.dictionary.models import (Gloss, Morpheme, Definition, Relation, R
                                         QueryParameterFieldChoice, SearchHistory, QueryParameter,
                                         QueryParameterMultilingual, QueryParameterHandshape, SemanticFieldTranslation,
                                         ExampleSentence, Affiliation, AffiliatedUser, AffiliatedGloss, GlossSense,
-                                        SenseTranslation, AnnotatedGloss, GlossProvenance, Dialect)
+                                        SenseTranslation, AnnotatedGloss, GlossProvenance, Dialect, PhonologicalVariation)
 from signbank.dictionary.translate_choice_list import choicelist_queryset_to_translated_dict
 from signbank.tools import get_selected_datasets_for_user
 
@@ -185,6 +185,61 @@ class MorphemeCreateForm(forms.ModelForm):
         morpheme.save()
 
         return morpheme
+
+
+class PhonologicalVariationCreateForm(forms.ModelForm):
+
+    domhndsh_letter = forms.ChoiceField(label=_('letter'), choices=[(0, '-')], required=False,
+                                        widget=forms.Select(attrs=ATTRS_FOR_BOOLEAN_FORMS))
+    domhndsh_number = forms.ChoiceField(label=_('number'), choices=[(0, '-')], required=False,
+                                        widget=forms.Select(attrs=ATTRS_FOR_BOOLEAN_FORMS))
+
+    subhndsh_letter = forms.ChoiceField(label=_('letter'), choices=[(0, '-')], required=False,
+                                        widget=forms.Select(attrs=ATTRS_FOR_BOOLEAN_FORMS))
+    subhndsh_number = forms.ChoiceField(label=_('number'), choices=[(0, '-')], required=False,
+                                        widget=forms.Select(attrs=ATTRS_FOR_BOOLEAN_FORMS))
+
+    class Meta:
+        model = PhonologicalVariation
+        fields = ['gloss', 'variation', 'relOriLoc', 'relOriMov', 'movSh', 'oriCh', 'mouthing', 'relatArtic', 'repeat', 'mouthG', 'altern', 'phonOth', 'phonetVar',
+                 'movDir', 'contType', 'handCh']
+
+
+    # ['handedness', 'domhndsh', 'subhndsh',
+        #           'domhndsh_number', 'domhndsh_letter', 'subhndsh_number', 'subhndsh_letter']
+
+    def __init__(self, *args, **kwargs):
+        self.gloss = kwargs.pop('gloss')
+
+        super(PhonologicalVariationCreateForm, self).__init__(*args, **kwargs)
+
+        self.fields['gloss'] = self.gloss
+        self.fields['handedness'] = forms.ChoiceField(label=_('Handedness'),
+                                                      choices = choicelist_queryset_to_translated_dict(
+                                                          list(FieldChoice.objects.filter(field='Handedness').order_by(
+                                                              'machine_value')),
+                                                          ordered=False, id_prefix='', shortlist=False
+                                                      ),
+                                                      widget=forms.Select(attrs=ATTRS_FOR_FORMS),
+                                                      required=False)
+        self.fields['domhndsh'] = forms.ChoiceField(label=_('Strong Hand'),
+                                                    choices = choicelist_queryset_to_translated_dict(
+                                                        list(Handshape.objects.all().order_by(
+                                                            'machine_value')),
+                                                        ordered=False, id_prefix='', shortlist=False
+                                                    ),
+                                                    widget=forms.Select(attrs=ATTRS_FOR_FORMS),
+                                                    required=False)
+        self.fields['subhndsh'] = forms.ChoiceField(label=_('Weak Hand'),
+                                                    choices = choicelist_queryset_to_translated_dict(
+                                                        list(Handshape.objects.all().order_by(
+                                                            'machine_value')),
+                                                        ordered=False, id_prefix='', shortlist=False
+                                                    ),
+                                                    widget=forms.Select(attrs=ATTRS_FOR_FORMS),
+                                                    required=False)
+        for boolean_field in ['domhndsh_letter', 'domhndsh_number', 'subhndsh_letter', 'subhndsh_number']:
+            self.fields[boolean_field].choices = [(0, '-'), (2, _('True')), (3, _('False'))]
 
 
 class TagUpdateForm(forms.Form):
