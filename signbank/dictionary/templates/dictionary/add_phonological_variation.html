@@ -68,20 +68,20 @@ var csrf_token = '{{csrf_token}}';
                   </tr>
 			  {% endfor %}
      </table>
-     <table class='table table-condensed-light' style='width: 1200px;'>
+     <table class='table table-condensed-light' style="width: 1200px;">
              <tr>
-			    <th style="color:darkred">{% trans "Phonology" %}</th>
+			    <th style="color:darkred; width:400px;">{% trans "Phonology" %}</th>
              </tr>
              <tr>
                  <th></th>
-                 <th class='td td-light' style="color:darkred">{% trans "Variation" %} #0</th>
+                 <th class='td td-light' style="color:darkred; float:left;">{% trans "Source Sign" %}</th>
                  {% for gv in gloss_variations %}
                  <th class='td td-light' style="color:darkred">{% trans "Variation" %} #{{gv.variation}}</th>
                  {% endfor %}
              </tr>
              <tr>
                  <th>{% trans "Handedness" %}</th>
-                 <td class='td td-light'>{{gloss.display_handedness}}</td>
+                 <td class='td td-light' style="float:left;">{{gloss.display_handedness}}</td>
                  {% for gv in gloss_variations %}
                  <td class='td td-light'>{{gv.display_handedness}}</td>
                  {% endfor %}
@@ -122,10 +122,24 @@ var csrf_token = '{{csrf_token}}';
                  {% endfor %}
              </tr>
              <tr>
+                 <th>{% trans "Contact Type" %}</th>
+                 <td class='td td-light'>{{gloss.display_contType}}</td>
+                 {% for gv in gloss_variations %}
+                 <td class='td td-light'>{{gv.display_contType}}</td>
+                 {% endfor %}
+             </tr>
+             <tr>
                  <th>{% trans "Movement Shape" %}</th>
                  <td class='td td-light'>{{gloss.display_movSh}}</td>
                  {% for gv in gloss_variations %}
                  <td class='td td-light'>{{gv.display_movSh}}</td>
+                 {% endfor %}
+             </tr>
+             <tr>
+                 <th>{% trans "Movement Direction" %}</th>
+                 <td class='td td-light'>{{gloss.display_movDir}}</td>
+                 {% for gv in gloss_variations %}
+                 <td class='td td-light'>{{gv.display_movDir}}</td>
                  {% endfor %}
              </tr>
              <tr>
@@ -262,11 +276,33 @@ var csrf_token = '{{csrf_token}}';
                  {% endwith %}
              </tr>
              <tr>
+                 {% with add_variation_form.fields|get_item:'contType' as contType_field %}
+                 <th><label for="contType">{{contType_field.label}}</label></th>
+                 <td class='td td-light'>
+                    <select name="contType" id="contType">
+                        {% for value, text in contType_field.choices %}
+                        <option value={{value}}>{{text}}</option>
+                        {% endfor %}
+                    </select></td>
+                 {% endwith %}
+             </tr>
+             <tr>
                  {% with add_variation_form.fields|get_item:'movSh' as movSh_field %}
                  <th><label for="movSh">{{movSh_field.label}}</label></th>
                  <td class='td td-light'>
                     <select name="movSh" id="movSh">
                         {% for value, text in movSh_field.choices %}
+                        <option value={{value}}>{{text}}</option>
+                        {% endfor %}
+                    </select></td>
+                 {% endwith %}
+             </tr>
+             <tr>
+                 {% with add_variation_form.fields|get_item:'movDir' as movDir_field %}
+                 <th><label for="movDir">{{movDir_field.label}}</label></th>
+                 <td class='td td-light'>
+                    <select name="movDir" id="movDir">
+                        {% for value, text in movDir_field.choices %}
                         <option value={{value}}>{{text}}</option>
                         {% endfor %}
                     </select></td>

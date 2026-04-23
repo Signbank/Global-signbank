@@ -940,8 +940,14 @@ class Gloss(MetaModelMixin, models.Model):
     def display_locprim(self):
         return self.locprim.name if self.locprim else '-'
 
+    def display_contType(self):
+        return self.contType.name if self.contType else '-'
+
     def display_movSh(self):
         return self.movSh.name if self.movSh else '-'
+
+    def display_movDir(self):
+        return self.movDir.name if self.movDir else '-'
 
     def display_oriCh(self):
         return self.oriCh.name if self.oriCh else '-'
@@ -4596,8 +4602,14 @@ class PhonologicalVariation(MetaModelMixin, models.Model):
     def display_locprim(self):
         return self.locprim.name if self.locprim else '-'
 
+    def display_contType(self):
+        return self.contType.name if self.contType else '-'
+
     def display_movSh(self):
         return self.movSh.name if self.movSh else '-'
+
+    def display_movDir(self):
+        return self.movDir.name if self.movDir else '-'
 
     def display_oriCh(self):
         return self.oriCh.name if self.oriCh else '-'

@@ -261,9 +261,25 @@ class PhonologicalVariationCreateForm(forms.ModelForm):
                                                    ),
                                                    widget=forms.Select(attrs=ATTRS_FOR_FORMS),
                                                    required=False)
+        self.fields['contType'] = forms.ChoiceField(label=_('Contact Type'),
+                                                   choices=choicelist_queryset_to_translated_dict(
+                                                       list(FieldChoice.objects.filter(field='ContactType').order_by(
+                                                           'machine_value')),
+                                                       ordered=False, id_prefix='', shortlist=False
+                                                   ),
+                                                   widget=forms.Select(attrs=ATTRS_FOR_FORMS),
+                                                   required=False)
         self.fields['movSh'] = forms.ChoiceField(label=_('Movement Shape'),
                                                    choices=choicelist_queryset_to_translated_dict(
                                                        list(FieldChoice.objects.filter(field='MovementShape').order_by(
+                                                           'machine_value')),
+                                                       ordered=False, id_prefix='', shortlist=False
+                                                   ),
+                                                   widget=forms.Select(attrs=ATTRS_FOR_FORMS),
+                                                   required=False)
+        self.fields['movDir'] = forms.ChoiceField(label=_('Movement Direction'),
+                                                   choices=choicelist_queryset_to_translated_dict(
+                                                       list(FieldChoice.objects.filter(field='MovementDir').order_by(
                                                            'machine_value')),
                                                        ordered=False, id_prefix='', shortlist=False
                                                    ),

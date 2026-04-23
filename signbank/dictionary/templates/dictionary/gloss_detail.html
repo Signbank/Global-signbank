@@ -2375,22 +2375,6 @@ textarea:focus {
 
     </div>
 
-    <!-- Phonological Variations -->
-	<div class="panel panel-default panel-light">
-        <div class='panel-heading panel-light' id='phonological_variations_heading'
-             data-toggle='collapse' data-target='#phonological_variations'>{% trans "Phonological Variations" %}
-                    {% if perms.dictionary.change_gloss %}
-                    <div class="pull-right">
-                        <a class='nav-link' href="{{PREFIX_URL}}/dictionary/gloss/phonological_variations/{{gloss.id}}">{% trans "Edit Phonological Variations" %}</a>
-                    </div>
-                    {% endif %}
-        </div>
-        <div id='phonological_variations' class='collapse'>
-            <table class='table table-condensed'>
-            </table>
-        </div>
-    </div>
-
     <!-- Phonology -->
 	<div class="panel panel-default panel-light">
         <div class='panel-heading panel-light' id='phonology_heading'
@@ -2544,6 +2528,22 @@ textarea:focus {
 
             </table>
             <br><br><br>
+        </div>
+    </div>
+
+    <!-- Phonological Variations -->
+	<div class="panel panel-default panel-light">
+        <div class='panel-heading panel-light' id='phonological_variations_heading'
+             data-toggle='collapse' data-target='#phonological_variations'>{% trans "Phonological Variations" %}
+                    {% if perms.dictionary.change_gloss %}
+                    <div class="pull-right">
+                        <a class='nav-link' href="{{PREFIX_URL}}/dictionary/gloss/phonological_variations/{{gloss.id}}">{% trans "Edit Phonological Variations" %}</a>
+                    </div>
+                    {% endif %}
+        </div>
+        <div id='phonological_variations' class='collapse'>
+            <table class='table table-condensed'>
+            </table>
         </div>
     </div>
 
