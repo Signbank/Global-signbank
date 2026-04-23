@@ -44,16 +44,16 @@ from signbank.dictionary.models import (Dataset, Language, Gloss, Morpheme, Lemm
                                         Handshape, SignLanguage, AnnotatedSentence,
                                         AnnotationIdglossTranslation, FieldChoice, AffiliatedUser, AffiliatedGloss,
                                         DeletedGlossOrMedia,
-                                        get_default_language_id, CATEGORY_MODELS_MAPPING)
+                                        get_default_language_id, CATEGORY_MODELS_MAPPING, PhonologicalVariation)
 from signbank.dictionary.forms import (LemmaCreateForm, GlossCreateForm, MorphemeCreateForm, ImageUploadForHandshapeForm,
-                                       ImageUploadForGlossForm, CSVUploadForm)
+                                       ImageUploadForGlossForm, CSVUploadForm, PhonologicalVariationCreateForm)
 from signbank.dictionary.update import update_dialect
 from signbank.dictionary.update_csv import (update_simultaneous_morphology, update_blend_morphology,
                                             update_sequential_morphology, subst_relations, subst_foreignrelations,
                                             update_tags, subst_notes, subst_semanticfield)
 from signbank.dictionary.context_data import get_selected_datasets
 from signbank.tools import (get_two_letter_dir, get_default_annotationidglosstranslation,
-                            get_dataset_languages, get_datasets_with_public_glosses,
+                            get_dataset_languages, get_datasets_with_public_glosses, get_interface_language_and_default_language_codes,
                             create_gloss_from_valuedict, compare_valuedict_to_gloss, compare_valuedict_to_lemma,
                             create_zip_with_json_files,
                             detect_delimiter,
@@ -427,6 +427,59 @@ def add_new_sign(request):
     context['videoform'] = VideoUploadForGlossCreateForm()
 
     return render(request, 'dictionary/add_gloss.html', context)
+
+
+# this method is called from the Gloss Detail View
+def gloss_phonological_variations(request, glossid):
+    if not request.user.has_perm('dictionary.add_gloss'):
+        raise PermissionDenied
+
+    gloss = get_object_or_404(Gloss, id=glossid, archived=False)
+
+    context = {}
+
+    selected_datasets = get_selected_datasets(request)
+
+    if not selected_datasets or selected_datasets.count() > 1:
+        feedback_message = gettext('To create a phonological variation for a gloss, do this from the Gloss Detail View.')
+        return show_warning(request, feedback_message, selected_datasets)
+
+    last_used_dataset = selected_datasets.first()
+    if 'last_used_dataset' not in request.session.keys():
+        request.session['last_used_dataset'] = last_used_dataset.acronym
+    context['last_used_dataset'] = last_used_dataset
+    if 'change_dataset' not in get_user_perms(request.user, last_used_dataset):
+        feedback_message = gettext("No permission to change dataset")
+        return show_warning(request, feedback_message, selected_datasets)
+
+    dataset_languages = Language.objects.filter(dataset__in=selected_datasets).distinct()
+
+    context['dataset_languages'] = dataset_languages
+    context['default_dataset_lang'] = dataset_languages.first().language_code_2char if dataset_languages else LANGUAGE_CODE
+
+    context['selected_datasets'] = selected_datasets
+
+    context['SHOW_DATASET_INTERFACE_OPTIONS'] = SHOW_DATASET_INTERFACE_OPTIONS
+    context['USE_REGULAR_EXPRESSIONS'] = USE_REGULAR_EXPRESSIONS
+
+    context['gloss'] = gloss
+    context['add_variation_form'] = PhonologicalVariationCreateForm(gloss=gloss)
+    context['gloss_variations'] = PhonologicalVariation.objects.filter(gloss=gloss).order_by('variation')
+
+    (interface_language, interface_language_code,
+     default_language, default_language_code) = get_interface_language_and_default_language_codes(request)
+
+    gloss_default_annotationidglosstranslation = gloss.annotationidglosstranslation_set.get(language=default_language).text
+    # Put annotation_idgloss per language in the context
+    context['annotation_idgloss'] = {}
+    for language in gloss.dataset.translation_languages.all():
+        try:
+            annotation_text = gloss.annotationidglosstranslation_set.get(language=language).text
+        except ObjectDoesNotExist:
+            annotation_text = gloss_default_annotationidglosstranslation
+        context['annotation_idgloss'][language] = annotation_text
+
+    return render(request, 'dictionary/add_phonological_variation.html', context)
 
 
 def add_new_morpheme(request):

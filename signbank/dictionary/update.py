@@ -51,7 +51,7 @@ from signbank.dictionary.models import (Dataset, SignLanguage, Dialect, Gloss, M
                                         Affiliation, AffiliatedUser, AffiliatedGloss, SearchHistory,
                                         GlossRevision, SenseExamplesentence, SimultaneousMorphologyDefinition,
                                         AnnotatedSentenceSource, AnnotatedSentenceContext, UserProfile, QueryParameter,
-                                        get_default_language_id, GlossProvenance)
+                                        get_default_language_id, GlossProvenance, PhonologicalVariation)
 from signbank.dictionary.forms import (RelationForm, VariantsForm, RelationToForeignSignForm, GlossBlendForm,
                                        GlossCreateForm, DefinitionForm, GlossMorphemeForm, GlossMorphologyForm,
                                        MorphemeCreateForm, LemmaCreateForm, AffiliationUpdateForm, OtherMediaForm,
@@ -306,6 +306,85 @@ def add_gloss(request):
 
     # new gloss created successfully, go to GlossDetailView
     return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': gloss.pk}) + '?edit')
+
+
+# this method is called as dictionary:add_phonological_variation from the template for Gloss Edit
+@require_http_methods(["POST"])
+def add_phonological_variation(request, glossid):
+    """Create a new phonological variation for a gloss"""
+
+    if not request.user.has_perm('dictionary.add_gloss'):
+        raise PermissionDenied
+
+    gloss = get_object_or_404(Gloss, id=glossid, archived=False)
+
+    dataset = gloss.lemma.dataset
+
+    qs = PhonologicalVariation.objects.filter(gloss=gloss)
+
+    highest_variation = 0 if not qs.count() else max([phonological_variation.variation for phonological_variation in qs])
+
+    new_variation_data = dict()
+    new_variation_data['variation'] = highest_variation+1
+
+    fieldnames = FIELDS['phonology']
+    gloss_fields = [PhonologicalVariation.get_field(fname) for fname in PhonologicalVariation.get_field_names()]
+    fieldchoiceforeignkey_fields = [f.name for f in gloss_fields
+                                    if f.name in fieldnames
+                                    and isinstance(f, FieldChoiceForeignKey)]
+
+    for field, value in request.POST.items():
+
+        if field not in PhonologicalVariation.get_field_names() or field not in fieldnames:
+            continue
+
+        if field in ['domhndsh', 'subhndsh', 'final_domhndsh', 'final_subhndsh']:
+            gloss_field = PhonologicalVariation.get_field(field)
+            try:
+                handshape = Handshape.objects.get(machine_value=int(value))
+            except (ObjectDoesNotExist, MultipleObjectsReturned):
+                # if the handshape field has not been set yet, it is set to the empty handshape object
+                handshape = Handshape.objects.get(machine_value=0)
+            new_variation_data[field] = handshape
+        elif isinstance(PhonologicalVariation.get_field(field), BooleanField):
+            # value is the html 'value' received during editing
+            if field in ['weakdrop', 'weakprop']:
+                # the weakdrop and weakprop fields make use of three-valued logic and None is a legitimate value aka Neutral
+                NEUTRALBOOLEANCHOICES = {None: '1', True: '2', False: '3'}
+                if value not in ['1', '2', '3']:
+                    # this code is for the case the user has not selected a value in the list
+                    if value in [None, True, False]:
+                        value = NEUTRALBOOLEANCHOICES[value]
+                    else:
+                        # something is wrong, set to None
+                        value = '1'
+                boolean_value = {'1': None, '2': True, '3': False}[value]
+                new_variation_data[field] = boolean_value
+            elif field in ['domhndsh_letter', 'domhndsh_number', 'subhndsh_letter', 'subhndsh_number']:
+                boolean_value = (value in ['letter', 'number'])
+                new_variation_data[field] = boolean_value
+        elif field in fieldchoiceforeignkey_fields:
+            if value == '':
+                value = 0
+            gloss_field = PhonologicalVariation.get_field(field)
+            try:
+                fieldchoice = FieldChoice.objects.get(field=gloss_field.field_choice_category, machine_value=value)
+            except (ObjectDoesNotExist, MultipleObjectsReturned):
+                fieldchoice = FieldChoice.objects.get(field=gloss_field.field_choice_category, machine_value=0)
+            new_variation_data[field] = fieldchoice
+
+        # Regular field updating, not sure what happens if this happens
+        else:
+            print('add phonological variation fall through: ', field, value)
+            # new_variation_data[field] = value
+            continue
+
+    new_variation = PhonologicalVariation(gloss=gloss, **new_variation_data)
+
+    new_variation.save()
+
+    return HttpResponseRedirect(
+        reverse('dictionary:phonological_variations', kwargs={'glossid': str(gloss.pk)}))
 
 
 @require_http_methods(["POST"])
