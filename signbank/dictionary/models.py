@@ -923,16 +923,28 @@ class Gloss(MetaModelMixin, models.Model):
         return ", ".join(translations)
 
     def display_handedness(self):
-        return self.handedness.name if self.handedness else self.handedness
+        return self.handedness.name if self.handedness else '-'
 
     def display_domhndsh(self):
-        return self.domhndsh.name if self.domhndsh else self.domhndsh
+        return self.domhndsh.name if self.domhndsh else '-'
 
     def display_subhndsh(self):
-        return self.subhndsh.name if self.subhndsh else self.subhndsh
+        return self.subhndsh.name if self.subhndsh else '-'
+
+    def display_handCh(self):
+        return self.handCh.name if self.handCh else '-'
+
+    def display_relatArtic(self):
+        return self.relatArtic.name if self.relatArtic else '-'
 
     def display_locprim(self):
-        return self.locprim.name if self.locprim else self.locprim
+        return self.locprim.name if self.locprim else '-'
+
+    def display_movSh(self):
+        return self.movSh.name if self.movSh else '-'
+
+    def display_oriCh(self):
+        return self.oriCh.name if self.oriCh else '-'
 
     def field_labels(self):
         """Return the dictionary of field labels for use in a template"""
@@ -4567,14 +4579,26 @@ class PhonologicalVariation(MetaModelMixin, models.Model):
         ordering = ['gloss', 'variation']
 
     def display_handedness(self):
-        return self.handedness.name if self.handedness else self.handedness
+        return self.handedness.name if self.handedness else '-'
 
     def display_domhndsh(self):
-        return self.domhndsh.name if self.domhndsh else self.domhndsh
+        return self.domhndsh.name if self.domhndsh else '-'
 
     def display_subhndsh(self):
-        return self.subhndsh.name if self.subhndsh else self.subhndsh
+        return self.subhndsh.name if self.subhndsh else '-'
+
+    def display_handCh(self):
+        return self.handCh.name if self.handCh else '-'
+
+    def display_relatArtic(self):
+        return self.relatArtic.name if self.relatArtic else '-'
 
     def display_locprim(self):
-        return self.locprim.name if self.locprim else self.locprim
+        return self.locprim.name if self.locprim else '-'
+
+    def display_movSh(self):
+        return self.movSh.name if self.movSh else '-'
+
+    def display_oriCh(self):
+        return self.oriCh.name if self.oriCh else '-'
 

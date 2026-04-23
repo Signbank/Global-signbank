@@ -237,14 +237,46 @@ class PhonologicalVariationCreateForm(forms.ModelForm):
                                                     required=False)
         for boolean_field in ['domhndsh_letter', 'domhndsh_number', 'subhndsh_letter', 'subhndsh_number']:
             self.fields[boolean_field].choices = [(0, '-'), (2, _('True')), (3, _('False'))]
+        self.fields['handCh'] = forms.ChoiceField(label=_('Handshape Change'),
+                                                   choices=choicelist_queryset_to_translated_dict(
+                                                       list(FieldChoice.objects.filter(field='HandshapeChange').order_by(
+                                                           'machine_value')),
+                                                       ordered=False, id_prefix='', shortlist=False
+                                                   ),
+                                                    widget=forms.Select(attrs=ATTRS_FOR_FORMS),
+                                                    required=False)
+        self.fields['relatArtic'] = forms.ChoiceField(label=_('Relation between Articulators'),
+                                                   choices=choicelist_queryset_to_translated_dict(
+                                                       list(FieldChoice.objects.filter(field='RelatArtic').order_by(
+                                                           'machine_value')),
+                                                       ordered=False, id_prefix='', shortlist=False
+                                                   ),
+                                                    widget=forms.Select(attrs=ATTRS_FOR_FORMS),
+                                                    required=False)
         self.fields['locprim'] = forms.ChoiceField(label=_('Location'),
                                                    choices=choicelist_queryset_to_translated_dict(
                                                        list(FieldChoice.objects.filter(field='Location').order_by(
                                                            'machine_value')),
                                                        ordered=False, id_prefix='', shortlist=False
                                                    ),
-                                                    widget=forms.Select(attrs=ATTRS_FOR_FORMS),
-                                                    required=False)
+                                                   widget=forms.Select(attrs=ATTRS_FOR_FORMS),
+                                                   required=False)
+        self.fields['movSh'] = forms.ChoiceField(label=_('Movement Shape'),
+                                                   choices=choicelist_queryset_to_translated_dict(
+                                                       list(FieldChoice.objects.filter(field='MovementShape').order_by(
+                                                           'machine_value')),
+                                                       ordered=False, id_prefix='', shortlist=False
+                                                   ),
+                                                   widget=forms.Select(attrs=ATTRS_FOR_FORMS),
+                                                   required=False)
+        self.fields['oriCh'] = forms.ChoiceField(label=_('Orientation Change'),
+                                                   choices=choicelist_queryset_to_translated_dict(
+                                                       list(FieldChoice.objects.filter(field='OriChange').order_by(
+                                                           'machine_value')),
+                                                       ordered=False, id_prefix='', shortlist=False
+                                                   ),
+                                                   widget=forms.Select(attrs=ATTRS_FOR_FORMS),
+                                                   required=False)
 
 
 class TagUpdateForm(forms.Form):

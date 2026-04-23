@@ -74,9 +74,9 @@ var csrf_token = '{{csrf_token}}';
              </tr>
              <tr>
                  <th></th>
-                 <td class='td td-light'>{% trans "Variation" %} #0</td>
+                 <th class='td td-light' style="color:darkred">{% trans "Variation" %} #0</th>
                  {% for gv in gloss_variations %}
-                 <td class='td td-light'>{% trans "Variation" %} #{{gv.variation}}</td>
+                 <th class='td td-light' style="color:darkred">{% trans "Variation" %} #{{gv.variation}}</th>
                  {% endfor %}
              </tr>
              <tr>
@@ -101,10 +101,38 @@ var csrf_token = '{{csrf_token}}';
                  {% endfor %}
              </tr>
              <tr>
+                 <th>{% trans "Handshape Change" %}</th>
+                 <td class='td td-light'>{{gloss.display_handCh}}</td>
+                 {% for gv in gloss_variations %}
+                 <td class='td td-light'>{{gv.display_handCh}}</td>
+                 {% endfor %}
+             </tr>
+             <tr>
+                 <th>{% trans "Relation between Articulators" %}</th>
+                 <td class='td td-light'>{{gloss.display_relatArtic}}</td>
+                 {% for gv in gloss_variations %}
+                 <td class='td td-light'>{{gv.display_relatArtic}}</td>
+                 {% endfor %}
+             </tr>
+             <tr>
                  <th>{% trans "Location" %}</th>
                  <td class='td td-light'>{{gloss.display_locprim}}</td>
                  {% for gv in gloss_variations %}
                  <td class='td td-light'>{{gv.display_locprim}}</td>
+                 {% endfor %}
+             </tr>
+             <tr>
+                 <th>{% trans "Movement Shape" %}</th>
+                 <td class='td td-light'>{{gloss.display_movSh}}</td>
+                 {% for gv in gloss_variations %}
+                 <td class='td td-light'>{{gv.display_movSh}}</td>
+                 {% endfor %}
+             </tr>
+             <tr>
+                 <th>{% trans "Orientation Change" %}</th>
+                 <td class='td td-light'>{{gloss.display_oriCh}}</td>
+                 {% for gv in gloss_variations %}
+                 <td class='td td-light'>{{gv.display_oriCh}}</td>
                  {% endfor %}
              </tr>
     </table>
@@ -201,11 +229,55 @@ var csrf_token = '{{csrf_token}}';
              </tr>
 
              <tr>
+                 {% with add_variation_form.fields|get_item:'handCh' as handCh_field %}
+                 <th><label for="handCh">{{handCh_field.label}}</label></th>
+                 <td class='td td-light'>
+                    <select name="handCh" id="handCh">
+                        {% for value, text in handCh_field.choices %}
+                        <option value={{value}}>{{text}}</option>
+                        {% endfor %}
+                    </select></td>
+                 {% endwith %}
+             </tr>
+             <tr>
+                 {% with add_variation_form.fields|get_item:'relatArtic' as relatArtic_field %}
+                 <th><label for="relatArtic">{{relatArtic_field.label}}</label></th>
+                 <td class='td td-light'>
+                    <select name="relatArtic" id="relatArtic">
+                        {% for value, text in relatArtic_field.choices %}
+                        <option value={{value}}>{{text}}</option>
+                        {% endfor %}
+                    </select></td>
+                 {% endwith %}
+             </tr>
+             <tr>
                  {% with add_variation_form.fields|get_item:'locprim' as locprim_field %}
                  <th><label for="locprim">{{locprim_field.label}}</label></th>
                  <td class='td td-light'>
                     <select name="locprim" id="locprim">
                         {% for value, text in locprim_field.choices %}
+                        <option value={{value}}>{{text}}</option>
+                        {% endfor %}
+                    </select></td>
+                 {% endwith %}
+             </tr>
+             <tr>
+                 {% with add_variation_form.fields|get_item:'movSh' as movSh_field %}
+                 <th><label for="movSh">{{movSh_field.label}}</label></th>
+                 <td class='td td-light'>
+                    <select name="movSh" id="movSh">
+                        {% for value, text in movSh_field.choices %}
+                        <option value={{value}}>{{text}}</option>
+                        {% endfor %}
+                    </select></td>
+                 {% endwith %}
+             </tr>
+             <tr>
+                 {% with add_variation_form.fields|get_item:'oriCh' as oriCh_field %}
+                 <th><label for="oriCh">{{oriCh_field.label}}</label></th>
+                 <td class='td td-light'>
+                    <select name="oriCh" id="oriCh">
+                        {% for value, text in oriCh_field.choices %}
                         <option value={{value}}>{{text}}</option>
                         {% endfor %}
                     </select></td>
