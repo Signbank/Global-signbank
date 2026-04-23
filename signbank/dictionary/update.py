@@ -322,13 +322,16 @@ def add_phonological_variation(request, glossid):
 
     qs = PhonologicalVariation.objects.filter(gloss=gloss)
 
-    highest_variation = 1 if not qs.count() else max([phonological_variation.variation for phonological_variation in qs])
+    highest_variation = 0 if not qs.count() else max([phonological_variation.variation for phonological_variation in qs])
 
     new_variation_data = dict()
     new_variation_data['variation'] = highest_variation+1
 
     fieldnames = FIELDS['phonology']
     gloss_fields = [PhonologicalVariation.get_field(fname) for fname in PhonologicalVariation.get_field_names()]
+    fieldchoiceforeignkey_fields = [f.name for f in gloss_fields
+                                    if f.name in fieldnames
+                                    and isinstance(f, FieldChoiceForeignKey)]
 
     for field, value in request.POST.items():
 
@@ -360,12 +363,7 @@ def add_phonological_variation(request, glossid):
             elif field in ['domhndsh_letter', 'domhndsh_number', 'subhndsh_letter', 'subhndsh_number']:
                 boolean_value = (value in ['letter', 'number'])
                 new_variation_data[field] = boolean_value
-    else:
-        fieldchoiceforeignkey_fields = [f.name for f in gloss_fields
-                                        if f.name in fieldnames
-                                        and isinstance(f, FieldChoiceForeignKey)]
-
-        if field in fieldchoiceforeignkey_fields:
+        elif field in fieldchoiceforeignkey_fields:
             if value == '':
                 value = 0
             gloss_field = PhonologicalVariation.get_field(field)
@@ -379,13 +377,14 @@ def add_phonological_variation(request, glossid):
         else:
             print('add phonological variation fall through: ', field, value)
             # new_variation_data[field] = value
+            continue
 
     new_variation = PhonologicalVariation(gloss=gloss, **new_variation_data)
 
     new_variation.save()
 
     return HttpResponseRedirect(
-        reverse('dictionary:admin_gloss_view', kwargs={'pk': str(gloss.pk)}))
+        reverse('dictionary:phonological_variations', kwargs={'glossid': str(gloss.pk)}))
 
 
 @require_http_methods(["POST"])

@@ -52,15 +52,72 @@ var csrf_token = '{{csrf_token}}';
 {% endblock %}
 
 {% block content %}
-
+   <h3>{% trans "Phonological Variations" %}</h3>
+    <div id="view_tabs" style="margin-right:15px;margin-top:10px;z-index:100;" class='view-tabs view-tabs-light'>
+     <table class='table table-condensed-light' style='width: 1200px;'>
+              <tr>
+			  <th style="color:darkred">{% trans "Source Sign" %}</th>
+              </tr>
+			  {% for lang, annotation_idgloss_translation in annotation_idgloss.items %}
+                  <tr>
+					<th style="width:400px;">
+						{% trans "Annotation ID Gloss" %} ({{ lang }})
+					</th>
+					<td id='annotation_idgloss_{{ lang.language_code_2char }}'>
+						<a href='{% url "dictionary:admin_gloss_view" pk=gloss.id %}'>{{ annotation_idgloss_translation }}</a></td>
+                  </tr>
+			  {% endfor %}
+     </table>
+     <table class='table table-condensed-light' style='width: 1200px;'>
+             <tr>
+			    <th style="color:darkred">{% trans "Phonology" %}</th>
+             </tr>
+             <tr>
+                 <th></th>
+                 <td class='td td-light'>{% trans "Variation" %} #0</td>
+                 {% for gv in gloss_variations %}
+                 <td class='td td-light'>{% trans "Variation" %} #{{gv.variation}}</td>
+                 {% endfor %}
+             </tr>
+             <tr>
+                 <th>{% trans "Handedness" %}</th>
+                 <td class='td td-light'>{{gloss.display_handedness}}</td>
+                 {% for gv in gloss_variations %}
+                 <td class='td td-light'>{{gv.display_handedness}}</td>
+                 {% endfor %}
+             </tr>
+             <tr>
+                 <th>{% trans "Strong Hand" %}</th>
+                 <td class='td td-light'>{{gloss.display_domhndsh}}</td>
+                 {% for gv in gloss_variations %}
+                 <td class='td td-light'>{{gv.display_domhndsh}}</td>
+                 {% endfor %}
+             </tr>
+             <tr>
+                 <th>{% trans "Weak Hand" %}</th>
+                 <td class='td td-light'>{{gloss.display_subhndsh}}</td>
+                 {% for gv in gloss_variations %}
+                 <td class='td td-light'>{{gv.display_subhndsh}}</td>
+                 {% endfor %}
+             </tr>
+             <tr>
+                 <th>{% trans "Location" %}</th>
+                 <td class='td td-light'>{{gloss.display_locprim}}</td>
+                 {% for gv in gloss_variations %}
+                 <td class='td td-light'>{{gv.display_locprim}}</td>
+                 {% endfor %}
+             </tr>
+    </table>
+    </div>
    {% if perms.dictionary.add_gloss %}
-   <p>{% trans "Please provide the data for the phonological variation of the gloss" %}:</p>
+   <h4>{% trans "Add Phonological Variation" %}</h4>
+   <div>
      <form action='{% url "dictionary:add_phonological_variation" glossid=gloss.id %}' method='POST' enctype="multipart/form-data">
          {% csrf_token %}
          <table class='table table-condensed-light' style='width: 1200px;'>
 
              <tr>
-                 {% with add_gloss_form.fields|get_item:'handedness' as handedness_field %}
+                 {% with add_variation_form.fields|get_item:'handedness' as handedness_field %}
                  <th><label for="handedness">{{handedness_field.label}}</label></th>
                  <td class='td td-light'>
                     <select name="handedness" id="handedness">
@@ -72,7 +129,7 @@ var csrf_token = '{{csrf_token}}';
              </tr>
 
              <tr>
-                 {% with add_gloss_form.fields|get_item:'domhndsh' as domhndsh_field %}
+                 {% with add_variation_form.fields|get_item:'domhndsh' as domhndsh_field %}
                  <th><label for="domhndsh">{{domhndsh_field.label}}</label></th>
                  <td class='td td-light'>
                     <select name="domhndsh" id="domhndsh">
@@ -84,7 +141,7 @@ var csrf_token = '{{csrf_token}}';
              </tr>
 
              <tr>
-                 {% with add_gloss_form.fields|get_item:'domhndsh_letter' as domhndsh_letter_field %}
+                 {% with add_variation_form.fields|get_item:'domhndsh_letter' as domhndsh_letter_field %}
                  <th><label for="domhndsh_letter">{{domhndsh_letter_field.label}}</label></th>
                  <td class='td td-light'>
                     <select name="domhndsh_letter" id="domhndsh_letter">
@@ -96,7 +153,7 @@ var csrf_token = '{{csrf_token}}';
              </tr>
 
              <tr>
-                 {% with add_gloss_form.fields|get_item:'domhndsh_number' as domhndsh_number_field %}
+                 {% with add_variation_form.fields|get_item:'domhndsh_number' as domhndsh_number_field %}
                  <th><label for="domhndsh_number">{{domhndsh_number_field.label}}</label></th>
                  <td class='td td-light'>
                     <select name="domhndsh_number" id="domhndsh_number">
@@ -108,7 +165,7 @@ var csrf_token = '{{csrf_token}}';
              </tr>
 
              <tr>
-                 {% with add_gloss_form.fields|get_item:'subhndsh' as subhndsh_field %}
+                 {% with add_variation_form.fields|get_item:'subhndsh' as subhndsh_field %}
                  <th><label for="subhndsh">{{subhndsh_field.label}}</label></th>
                  <td class='td td-light'>
                     <select name="subhndsh" id="subhndsh">
@@ -120,7 +177,7 @@ var csrf_token = '{{csrf_token}}';
              </tr>
 
              <tr>
-                 {% with add_gloss_form.fields|get_item:'subhndsh_letter' as subhndsh_letter_field %}
+                 {% with add_variation_form.fields|get_item:'subhndsh_letter' as subhndsh_letter_field %}
                  <th><label for="subhndsh_letter">{{subhndsh_letter_field.label}}</label></th>
                  <td class='td td-light'>
                     <select name="subhndsh_letter" id="subhndsh_letter">
@@ -132,7 +189,7 @@ var csrf_token = '{{csrf_token}}';
              </tr>
 
              <tr>
-                 {% with add_gloss_form.fields|get_item:'subhndsh_number' as subhndsh_number_field %}
+                 {% with add_variation_form.fields|get_item:'subhndsh_number' as subhndsh_number_field %}
                  <th><label for="subhndsh_number">{{subhndsh_number_field.label}}</label></th>
                  <td class='td td-light'>
                     <select name="subhndsh_number" id="subhndsh_number">
@@ -143,10 +200,23 @@ var csrf_token = '{{csrf_token}}';
                  {% endwith %}
              </tr>
 
+             <tr>
+                 {% with add_variation_form.fields|get_item:'locprim' as locprim_field %}
+                 <th><label for="locprim">{{locprim_field.label}}</label></th>
+                 <td class='td td-light'>
+                    <select name="locprim" id="locprim">
+                        {% for value, text in locprim_field.choices %}
+                        <option value={{value}}>{{text}}</option>
+                        {% endfor %}
+                    </select></td>
+                 {% endwith %}
+             </tr>
          </table>
 
      <input class='btn btn-primary' type='submit' value='{% trans "Add Phonological Variation" %}'>
      </form>
+
+   </div>
   {% endif %}
 <br><br><br>
 {% endblock %}

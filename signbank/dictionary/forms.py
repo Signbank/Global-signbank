@@ -201,12 +201,9 @@ class PhonologicalVariationCreateForm(forms.ModelForm):
 
     class Meta:
         model = PhonologicalVariation
-        fields = ['gloss', 'variation', 'relOriLoc', 'relOriMov', 'movSh', 'oriCh', 'mouthing', 'relatArtic', 'repeat', 'mouthG', 'altern', 'phonOth', 'phonetVar',
-                 'movDir', 'contType', 'handCh']
-
-
-    # ['handedness', 'domhndsh', 'subhndsh',
-        #           'domhndsh_number', 'domhndsh_letter', 'subhndsh_number', 'subhndsh_letter']
+        fields = ['gloss', 'variation', 'locprim',
+                  'relOriLoc', 'relOriMov', 'movSh', 'oriCh', 'mouthing', 'relatArtic', 'repeat', 'mouthG', 'altern', 'phonOth', 'phonetVar',
+                  'movDir', 'contType', 'handCh']
 
     def __init__(self, *args, **kwargs):
         self.gloss = kwargs.pop('gloss')
@@ -240,6 +237,14 @@ class PhonologicalVariationCreateForm(forms.ModelForm):
                                                     required=False)
         for boolean_field in ['domhndsh_letter', 'domhndsh_number', 'subhndsh_letter', 'subhndsh_number']:
             self.fields[boolean_field].choices = [(0, '-'), (2, _('True')), (3, _('False'))]
+        self.fields['locprim'] = forms.ChoiceField(label=_('Location'),
+                                                   choices=choicelist_queryset_to_translated_dict(
+                                                       list(FieldChoice.objects.filter(field='Location').order_by(
+                                                           'machine_value')),
+                                                       ordered=False, id_prefix='', shortlist=False
+                                                   ),
+                                                    widget=forms.Select(attrs=ATTRS_FOR_FORMS),
+                                                    required=False)
 
 
 class TagUpdateForm(forms.Form):

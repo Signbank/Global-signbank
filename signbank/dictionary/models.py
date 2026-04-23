@@ -4566,3 +4566,15 @@ class PhonologicalVariation(MetaModelMixin, models.Model):
         unique_together = (("gloss", "variation"),)
         ordering = ['gloss', 'variation']
 
+    def display_handedness(self):
+        return self.handedness.name if self.handedness else self.handedness
+
+    def display_domhndsh(self):
+        return self.domhndsh.name if self.domhndsh else self.domhndsh
+
+    def display_subhndsh(self):
+        return self.subhndsh.name if self.subhndsh else self.subhndsh
+
+    def display_locprim(self):
+        return self.locprim.name if self.locprim else self.locprim
+
