@@ -1556,36 +1556,27 @@ class PhonologicalVariationForm(forms.ModelForm):
 
     class meta:
         model = PhonologicalVariation
-        fields = ['gloss', 'variation', 'handedness', 'domhndsh', 'subhndsh']
+        fields = ['gloss', 'variation', 'handedness', 'domhndsh', 'subhndsh', 'locprim']
 
     def __init__(self, *args, **kwargs):
 
         super(PhonologicalVariationForm, self).__init__(*args, **kwargs)
 
-        self.fields['handedness'] = forms.ChoiceField(label=_('Handedness'),
-                                                      choices = choicelist_queryset_to_translated_dict(
-                                                          list(FieldChoice.objects.filter(field='Handedness').order_by(
-                                                              'machine_value')),
-                                                          ordered=False, id_prefix='', shortlist=False
-                                                      ),
-                                                      widget=forms.Select(attrs=ATTRS_FOR_FORMS),
-                                                      required=False)
-        self.fields['domhndsh'] = forms.ChoiceField(label=_('Strong Hand'),
-                                                    choices = choicelist_queryset_to_translated_dict(
-                                                        list(Handshape.objects.all().order_by(
-                                                            'machine_value')),
-                                                        ordered=False, id_prefix='', shortlist=False
-                                                    ),
+        self.fields['handedness'] = forms.ModelChoiceField(label=_('Handedness'),
+                                                           queryset=FieldChoice.objects.filter(field='Handedness').order_by(
+                                                                   'machine_value'),
+                                                           widget=forms.Select(attrs=ATTRS_FOR_FORMS),
+                                                           required=False)
+        self.fields['domhndsh'] = forms.ModelChoiceField(label=_('Strong Hand'),
+                                                   queryset=Handshape.objects.all().order_by(
+                                                            'machine_value'),
                                                     widget=forms.Select(attrs=ATTRS_FOR_FORMS),
                                                     required=False)
-        self.fields['subhndsh'] = forms.ChoiceField(label=_('Weak Hand'),
-                                                    choices = choicelist_queryset_to_translated_dict(
-                                                        list(Handshape.objects.all().order_by(
-                                                            'machine_value')),
-                                                        ordered=False, id_prefix='', shortlist=False
-                                                    ),
-                                                    widget=forms.Select(attrs=ATTRS_FOR_FORMS),
-                                                    required=False)
+        self.fields['subhndsh'] = forms.ModelChoiceField(label=_('Weak Hand'),
+                                                         queryset=Handshape.objects.all().order_by(
+                                                             'machine_value'),
+                                                         widget=forms.Select(attrs=ATTRS_FOR_FORMS),
+                                                         required=False)
 
 
     def get_form(self, request, obj=None, **kwargs):
@@ -1600,7 +1591,7 @@ class PhonologicalVariationAdmin(admin.ModelAdmin):
 
     model = PhonologicalVariation
     form = PhonologicalVariationForm
-    list_display = ("gloss", "variation", "handedness")
+    list_display = ("gloss", "variation", "handedness", "domhndsh", "subhndsh", "locprim")
     readonly_fields = ['gloss']
 
 
