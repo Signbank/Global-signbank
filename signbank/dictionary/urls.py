@@ -52,6 +52,8 @@ urlpatterns = [
     re_path(r'^update/gloss_phonological_variation/(?P<glossid>\d+)$', signbank.dictionary.update.add_phonological_variation, name='add_phonological_variation'),
     re_path(r'^gloss/phonological_variations/(?P<glossid>\d+)$',
             signbank.dictionary.views.gloss_phonological_variations, name='phonological_variations'),
+    re_path(r'^update/phonological_variation/(?P<variationid>\d+)$',
+            signbank.dictionary.update.update_phonological_variation, name='update_phonological_variation'),
     re_path(r'^update/assign_lemma_dataset_to_gloss/(?P<glossid>\d+)$', signbank.dictionary.update.assign_lemma_dataset_to_gloss,
             name='assign_lemma_dataset_to_gloss'),
     re_path(r'^update/sense/(?P<senseid>\d+)$', signbank.dictionary.update.update_sense, name='update_sense'),

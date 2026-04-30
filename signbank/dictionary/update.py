@@ -387,6 +387,34 @@ def add_phonological_variation(request, glossid):
         reverse('dictionary:phonological_variations', kwargs={'glossid': str(gloss.pk)}))
 
 
+def get_gloss_update_human_readable_value_dict(request):
+
+    value_dict = dict()
+    for field in request.POST.keys():
+        if field == 'csrfmiddlewaretoken':
+            continue
+        value = request.POST.get(field, '')
+        value_dict[field] = value.strip() if isinstance(value, str) else value
+    return value_dict
+
+
+@require_http_methods(["POST"])
+def update_phonological_variation(request, variationid):
+    """Update a phonological variation for a gloss"""
+
+    if not request.user.has_perm('dictionary.add_gloss'):
+        raise PermissionDenied
+
+    variation = get_object_or_404(PhonologicalVariation, id=variationid)
+    glossid = variation.gloss.id
+    value_dict = get_gloss_update_human_readable_value_dict(request)
+    print('value dict: ', value_dict)
+    # fields_to_update = gloss_pre_update(gloss, value_dict, interface_language_code)
+
+    return HttpResponseRedirect(
+        reverse('dictionary:phonological_variations', kwargs={'glossid':glossid}))
+
+
 @require_http_methods(["POST"])
 def update_examplesentence(request, examplesentenceid):
     """View to update an examplesentence model from the editable modal"""

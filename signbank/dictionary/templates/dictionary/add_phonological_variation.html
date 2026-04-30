@@ -6,7 +6,7 @@
 {% load tagging_tags %}
 {% load wrong_sign %}
 {% block bootstrap3_title %}
-{% blocktrans %}Signbank: Add New Sign{% endblocktrans %}
+{% blocktrans %}Signbank: Update Phonological Variations{% endblocktrans %}
 {% endblock %}
 
 {% load guardian_tags %}
@@ -42,17 +42,67 @@ var dark_mode = '{{request.session.dark_mode}}';
 var dark_mode_django = '{{dark_mode}}';
 var url = '{{PREFIX_URL}}';
 var csrf_token = '{{csrf_token}}';
+{% trans "Saving..." as saving_str %}
+var gloss_dataset_id = {{gloss.lemma.dataset.id}};
+var gloss_default_language_code = '{{gloss.lemma.dataset.default_language.language_code_2char}}';
+var saving_str = '{{saving_str|escapejs}}';
+var edit_post_url = '{% url 'dictionary:update_phonological_variation' gloss.id %}';
 
+var yes_str = "{% trans 'Yes' %}";
+var no_str = "{% trans 'No' %}";
+{% trans "Edit" as edit_mode_str %}
+{% trans "Turn Off Edit Mode" as turn_off_edit_mode_str %}
+var edit_mode_str = '{{edit_mode_str|escapejs}}';
+var turn_off_edit_mode_str = '{{turn_off_edit_mode_str|escapejs}}';
+
+var phonology_list_kinds = {{phonology_list_kinds|safe}};
+var gloss_phonology = {{gloss_phonology|safe}};
+var choice_lists = [];
+var static_choice_lists = {{static_choice_lists|safe}};
+var original_static_choice_list_colors = {{static_choice_list_colors|safe}};
+var static_choice_list_colors = {};
+for (var field in original_static_choice_list_colors) {
+   var field_dict = original_static_choice_list_colors[field];
+   static_choice_list_colors[field] = {}
+   for (key in field_dict) {
+        value = field_dict[key];
+        if (value == 'ffffff' && dark_mode_django == 'True') {
+            static_choice_list_colors[field][key] = '000000';
+        } else {
+            static_choice_list_colors[field][key] = value;
+        }
+    }
+}
+var handedness_weak_choices = {{gloss.handedness_weak_choices|safe}};
+var handedness_weak_choices_colors = {};
+for (var key in handedness_weak_choices) {
+    if (dark_mode_django == 'True') {
+        handedness_weak_choices_colors[key] = '000000';
+    } else {
+        handedness_weak_choices_colors[key] = 'ffffff';
+    }
+};
 </script>
 
 <script type="text/javascript" src="{{STATIC_URL}}js/jquery.jeditable.mini_colors.js"></script>
 <script type="text/javascript" src="{{STATIC_URL}}js/jquery.jeditable.checkbox.js"></script>
 <script type="text/javascript" src="{{STATIC_URL}}js/typeahead.bundle.min.js"></script>
+<script type='text/javascript' src="{{STATIC_URL}}js/phonology_edit_color.js"></script>
 
 {% endblock %}
 
 {% block content %}
    <h3>{% trans "Phonological Variations" %}</h3>
+
+    <div class='pull-right' style="margin-right:15px;margin-top:50px;">
+
+         <span id='edit_message' style="padding-right: 1.8em;"></span>
+
+         <button id='enable_edit'
+                 class='btn btn-primary navbar-btn edit-mode'
+                 style="width:auto;padding:3px 12px;">{% trans "Edit" %}</button>
+    </div>
+
     <div id="view_tabs" style="margin-right:15px;margin-top:10px;z-index:100;" class='view-tabs view-tabs-light'>
      <table class='table table-condensed-light' style='width: 1200px;'>
               <tr>
@@ -80,66 +130,136 @@ var csrf_token = '{{csrf_token}}';
                  {% endfor %}
              </tr>
              <tr>
+                 <td></td>
+                 <td></td>
+                 {% for gv in gloss_variations %}
+                 {% with variation_forms|get_item:gv.id as variant_form %}
+                 <th class='td td-light' style="color:darkred">
+                     <button id='quick_save_btn_{{gv.id}}' class="quick_save btn actionButton"
+                        name='quick_save_{{gv.id}}'
+                        value='{{gv.id}}' style="height:36px;"
+                        type="submit">{% trans "Save" %} #{{gv.variation}}</button></th>
+                 {% endwith %}
+                 {% endfor %}
+             </tr>
+             <tr>
                  <th>{% trans "Handedness" %}</th>
                  <td class='td td-light' style="float:left;">{{gloss.display_handedness}}</td>
                  {% for gv in gloss_variations %}
-                 <td class='td td-light'>{{gv.display_handedness}}</td>
+
+                 {% with variation_forms|get_item:gv.id as variant_form %}
+                 {% with variant_form.fields|get_item:'handedness' as handedness_field %}
+                 <td class='td td-light'>
+                    <select name="handedness" id="handedness_{{gv.id}}">
+                        {% for machine_value, opn in handedness_field.choices %}
+                        {% if opn == handedness_field.initial %}
+                        <option value={{machine_value}} selected="selected">{{opn}}</option>
+                        {% else %}
+                        <option value={{machine_value}}>{{opn}}</option>
+                        {% endif %}
+                        {% endfor %}
+                    </select></td>
+                 {% endwith %}
+
+                 {% endwith %}
+                 {% endfor %}
+             </tr>
+             <tr>
+                 <th>{% trans "Weak Drop" %}</th>
+                 <td class='td td-light' style="float:left;">{{gloss.weakdrop}}</td>
+                 {% for gv in gloss_variations %}
+                 <td class="edit edit_WD td td-light" id="weakdrop" data-variation="{{gv.id}}" value="{{gv.weakdrop}}">{{gv.weakdrop}}</td>
+                 {% endfor %}
+             </tr>
+             <tr>
+                 <th>{% trans "Weak Prop" %}</th>
+                 <td class='td td-light' style="float:left;">{{gloss.weakprop}}</td>
+                 {% for gv in gloss_variations %}
+                 <td class="edit edit_WP td td-light" id="weakprop" data-variation="{{gv.id}}" value="{{gv.weakprop}}">{{gv.weakprop}}</td>
                  {% endfor %}
              </tr>
              <tr>
                  <th>{% trans "Strong Hand" %}</th>
                  <td class='td td-light'>{{gloss.display_domhndsh}}</td>
                  {% for gv in gloss_variations %}
-                 <td class='td td-light'>{{gv.display_domhndsh}}</td>
+                 <td class='edit edit_list td td-light' id="domhndsh" data-variation="{{gv.id}}" value="{{gv.display_domhndsh}}">{{gv.display_domhndsh}}</td>
                  {% endfor %}
              </tr>
              <tr>
                  <th>{% trans "Weak Hand" %}</th>
                  <td class='td td-light'>{{gloss.display_subhndsh}}</td>
                  {% for gv in gloss_variations %}
-                 <td class='td td-light'>{{gv.display_subhndsh}}</td>
+                 <td class='edit edit_list td td-light' id="subhndsh" data-variation="{{gv.id}}" value="{{gv.subhndsh}}">{{gv.display_subhndsh}}</td>
                  {% endfor %}
              </tr>
              <tr>
                  <th>{% trans "Handshape Change" %}</th>
                  <td class='td td-light'>{{gloss.display_handCh}}</td>
                  {% for gv in gloss_variations %}
-                 <td class='td td-light'>{{gv.display_handCh}}</td>
+                 <td class='edit edit_list td td-light' id="handCh" data-variation="{{gv.id}}" value="{{gv.display_handCh}}">{{gv.display_handCh}}</td>
                  {% endfor %}
              </tr>
              <tr>
                  <th>{% trans "Relation between Articulators" %}</th>
                  <td class='td td-light'>{{gloss.display_relatArtic}}</td>
                  {% for gv in gloss_variations %}
-                 <td class='td td-light'>{{gv.display_relatArtic}}</td>
+                 <td class='edit edit_list td td-light' id="relatArtic" data-variation="{{gv.id}}" value="{{gv.display_relatArtic}}">{{gv.display_relatArtic}}</td>
                  {% endfor %}
              </tr>
              <tr>
                  <th>{% trans "Location" %}</th>
                  <td class='td td-light'>{{gloss.display_locprim}}</td>
                  {% for gv in gloss_variations %}
-                 <td class='td td-light'>{{gv.display_locprim}}</td>
+                 <td class='edit edit_list td td-light' id="locprim" data-variation="{{gv.id}}" value="{{gv.display_locprim}}">{{gv.display_locprim}}</td>
                  {% endfor %}
              </tr>
              <tr>
                  <th>{% trans "Contact Type" %}</th>
                  <td class='td td-light'>{{gloss.display_contType}}</td>
                  {% for gv in gloss_variations %}
-                 <td class='td td-light'>{{gv.display_contType}}</td>
+                 <td class='edit edit_list td td-light' id="contType" data-variation="{{gv.id}}" value="{{gv.display_contType}}">{{gv.display_contType}}</td>
                  {% endfor %}
              </tr>
              <tr>
                  <th>{% trans "Movement Shape" %}</th>
                  <td class='td td-light'>{{gloss.display_movSh}}</td>
                  {% for gv in gloss_variations %}
-                 <td class='td td-light'>{{gv.display_movSh}}</td>
+                 <td class='edit edit_list td td-light' id="movSh" data-variation="{{gv.id}}" value="{{gv.display_movSh}}">{{gv.display_movSh}}</td>
                  {% endfor %}
              </tr>
              <tr>
                  <th>{% trans "Movement Direction" %}</th>
                  <td class='td td-light'>{{gloss.display_movDir}}</td>
                  {% for gv in gloss_variations %}
-                 <td class='td td-light'>{{gv.display_movDir}}</td>
+                 <td class='edit edit_list td td-light' id="movDir" data-variation="{{gv.id}}" value="{{gv.display_movDir}}">{{gv.display_movDir}}</td>
+                 {% endfor %}
+             </tr>
+              <tr>
+                 <th>{% trans "Repeating Movement" %}</th>
+                 <td class='td td-light'>{{gloss.repeat}}</td>
+                 {% for gv in gloss_variations %}
+                 <td class='edit edit_check td td-light' id="repeat" data-variation="{{gv.id}}" value="{{gv.repeat}}">{{gv.repeat}}</td>
+                 {% endfor %}
+             </tr>
+             <tr>
+                 <th>{% trans "Alternating Movement" %}</th>
+                 <td class='td td-light'>{{gloss.altern}}</td>
+                 {% for gv in gloss_variations %}
+                 <td class='edit edit_check td td-light' id="altern" data-variation="{{gv.id}}" value="{{gv.altern}}">{{gv.altern}}</td>
+                 {% endfor %}
+             </tr>
+             <tr>
+                 <th>{% trans "Relative Orientation: Movement" %}</th>
+                 <td class='td td-light'>{{gloss.relOriMov}}</td>
+                 {% for gv in gloss_variations %}
+                 <td class='edit edit_list td td-light' id="relOriMov" data-variation="{{gv.id}}">{{gv.relOriMov}}</td>
+                 {% endfor %}
+             </tr>
+             <tr>
+                 <th>{% trans "Relative Orientation: Location" %}</th>
+                 <td class='td td-light'>{{gloss.relOriLoc}}</td>
+                 {% for gv in gloss_variations %}
+                 <td class='edit edit_list td td-light' id="relOriLoc" data-variation="{{gv.id}}">{{gv.relOriLoc}}</td>
                  {% endfor %}
              </tr>
              <tr>
@@ -147,6 +267,41 @@ var csrf_token = '{{csrf_token}}';
                  <td class='td td-light'>{{gloss.display_oriCh}}</td>
                  {% for gv in gloss_variations %}
                  <td class='td td-light'>{{gv.display_oriCh}}</td>
+                 {% endfor %}
+             </tr>
+             <tr>
+                 <th>{% trans "Virtual Object" %}</th>
+                 <td class='td td-light'>{{gloss.locVirtObj}}</td>
+                 {% for gv in gloss_variations %}
+                 <td class='edit edit_text td td-light' id="locVirtObj">{{gv.locVirtObj}}</td>
+                 {% endfor %}
+             </tr>
+             <tr>
+                 <th>{% trans "Phonology Other" %}</th>
+                 <td class='td td-light'>{{gloss.phonOth}}</td>
+                 {% for gv in gloss_variations %}
+                 <td class='edit edit_text td td-light' id="phonOth">{{gv.phonOth}}</td>
+                 {% endfor %}
+             </tr>
+             <tr>
+                 <th>{% trans "Mouth Gesture" %}</th>
+                 <td class='td td-light'>{{gloss.mouthG}}</td>
+                 {% for gv in gloss_variations %}
+                 <td class='edit edit_text td td-light' id="mouthG">{{gv.mouthG}}</td>
+                 {% endfor %}
+             </tr>
+             <tr>
+                 <th>{% trans "Mouthing" %}</th>
+                 <td class='td td-light'>{{gloss.mouthing}}</td>
+                 {% for gv in gloss_variations %}
+                 <td class='edit edit_text td td-light' id="mouthing">{{gv.mouthing}}</td>
+                 {% endfor %}
+             </tr>
+             <tr>
+                 <th>{% trans "Phonetic Variation" %}</th>
+                 <td class='td td-light'>{{gloss.phonetVar}}</td>
+                 {% for gv in gloss_variations %}
+                 <td class='edit edit_text td td-light' id="phonetVar">{{gv.phonetVar}}</td>
                  {% endfor %}
              </tr>
     </table>

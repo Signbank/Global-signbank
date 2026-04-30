@@ -46,12 +46,13 @@ from signbank.dictionary.models import (Dataset, Language, Gloss, Morpheme, Lemm
                                         DeletedGlossOrMedia,
                                         get_default_language_id, CATEGORY_MODELS_MAPPING, PhonologicalVariation)
 from signbank.dictionary.forms import (LemmaCreateForm, GlossCreateForm, MorphemeCreateForm, ImageUploadForHandshapeForm,
-                                       ImageUploadForGlossForm, CSVUploadForm, PhonologicalVariationCreateForm)
+                                       ImageUploadForGlossForm, CSVUploadForm, PhonologicalVariationCreateForm, PhonologicalVariationUpdateForm)
 from signbank.dictionary.update import update_dialect
 from signbank.dictionary.update_csv import (update_simultaneous_morphology, update_blend_morphology,
                                             update_sequential_morphology, subst_relations, subst_foreignrelations,
                                             update_tags, subst_notes, subst_semanticfield)
 from signbank.dictionary.context_data import get_selected_datasets
+from signbank.dictionary.context_data_gloss import get_phonology_list_kinds
 from signbank.tools import (get_two_letter_dir, get_default_annotationidglosstranslation,
                             get_dataset_languages, get_datasets_with_public_glosses, get_interface_language_and_default_language_codes,
                             create_gloss_from_valuedict, compare_valuedict_to_gloss, compare_valuedict_to_lemma,
@@ -60,7 +61,7 @@ from signbank.tools import (get_two_letter_dir, get_default_annotationidglosstra
                             split_csv_lines_header_body,
                             split_csv_lines_sentences_header_body, create_sentence_from_valuedict,
                             get_deleted_gloss_or_media_data, get_gloss_data, add_relations_to_revision_history)
-from signbank.dictionary.field_choices import fields_to_fieldcategory_dict
+from signbank.dictionary.field_choices import fields_to_fieldcategory_dict, get_static_choice_lists_per_field
 from signbank.csv_interface import (csv_create_senses, csv_update_sentences, csv_create_sentence, required_csv_columns,
                                     choice_fields_choices)
 from signbank.dictionary.translate_choice_list import (machine_value_to_translated_human_value,
@@ -465,6 +466,7 @@ def gloss_phonological_variations(request, glossid):
     context['gloss'] = gloss
     context['add_variation_form'] = PhonologicalVariationCreateForm(gloss=gloss)
     context['gloss_variations'] = PhonologicalVariation.objects.filter(gloss=gloss).order_by('variation')
+    context['variation_forms'] = { gv.variation: PhonologicalVariationUpdateForm(variantid=gv.id) for gv in context['gloss_variations']}
 
     (interface_language, interface_language_code,
      default_language, default_language_code) = get_interface_language_and_default_language_codes(request)
@@ -479,6 +481,11 @@ def gloss_phonological_variations(request, glossid):
             annotation_text = gloss_default_annotationidglosstranslation
         context['annotation_idgloss'][language] = annotation_text
 
+    context['gloss_phonology'] = FIELDS['phonology']
+    context['phonology_list_kinds'] = get_phonology_list_kinds()
+    static_choice_lists, static_choice_list_colors = get_static_choice_lists_per_field()
+    context['static_choice_lists'] = static_choice_lists
+    context['static_choice_list_colors'] = static_choice_list_colors
     return render(request, 'dictionary/add_phonological_variation.html', context)
 
 

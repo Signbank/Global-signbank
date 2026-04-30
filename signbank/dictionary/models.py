@@ -1104,6 +1104,13 @@ class Phonology(MetaModelMixin, models.Model):
     def display_oriCh(self):
         return self.oriCh.name if self.oriCh else '-'
 
+    def handedness_weak_choices(self):
+        """Return JSON for the etymology choice list"""
+
+        NEUTRALBOOLEANCHOICES = [('1', _('Neutral')), ('2', _('Yes')), ('3', _('No'))]
+
+        return self.options_to_json(NEUTRALBOOLEANCHOICES)
+
 
 class Gloss(Phonology):
     class Meta:
@@ -2659,13 +2666,6 @@ class Gloss(Phonology):
         for rrf in FieldChoice.objects.filter(field='RelationRole', machine_value__gt=1).order_by('name'):
             d[rrf.name] = rrf.name
         return json.dumps(d)
-
-    def handedness_weak_choices(self):
-        """Return JSON for the etymology choice list"""
-
-        NEUTRALBOOLEANCHOICES = [('1', _('Neutral')), ('2', _('Yes')), ('3', _('No'))]
-
-        return self.options_to_json(NEUTRALBOOLEANCHOICES)
 
     @staticmethod
     def variant_role_choices():
