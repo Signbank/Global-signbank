@@ -15,7 +15,6 @@ import time
 import signal
 import shutil
 import glob
-import ffmpeg
 from subprocess import Popen, PIPE
 import re
 import subprocess
@@ -60,17 +59,6 @@ def frame_to_timecode(frame, fps):
     seconds = int(frame / fps % 60)
     frem = int(frame % fps)
     return "{:02d}:{:02d}:{:02d}.{:02d}".format(hours, minutes, seconds, frem)
-
-
-def get_middle_timecode(videofile):
-    """Determine the timecode of the middle frame of a video"""
-
-    p = ffmpeg.probe(videofile)
-    video_stream = next((stream for stream in p['streams'] if stream['codec_type'] == 'video'), None)
-    middle_frame = int(video_stream["nb_frames"]) // 2
-    fps = eval(video_stream["r_frame_rate"])
-    ss = frame_to_timecode(middle_frame, fps)
-    return ss
 
 
 def run_ffmpeg(sourcefile, targetfile, timeout=60, options=[]):
