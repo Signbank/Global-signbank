@@ -14,7 +14,7 @@ from django.core.exceptions import ObjectDoesNotExist, MultipleObjectsReturned, 
 from django.core.files import File
 from django.contrib.auth.decorators import permission_required
 from django.views.decorators.http import require_http_methods
-from django.db.models.fields import BooleanField, IntegerField
+from django.db.models.fields import BooleanField, IntegerField, CharField, TextField
 from django.db.models import ForeignKey
 from django.forms.models import ModelChoiceField
 from django.forms.utils import ValidationError
@@ -435,6 +435,12 @@ def update_phonological_variation(request, variationid):
                 if boolean_value == original_internal_value:
                     continue
                 setattr(variation, field, boolean_value)
+        elif isinstance(internal_field, CharField) or isinstance(internal_field, TextField):
+            value = value.strip()
+            if value == original_internal_value:
+                continue
+            setattr(variation, field, value)
+
 
     variation.save()
     return HttpResponseRedirect(

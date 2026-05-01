@@ -199,11 +199,21 @@ class PhonologicalVariationCreateForm(forms.ModelForm):
     subhndsh_number = forms.ChoiceField(label=_('number'), choices=[(0, '-')], required=False,
                                         widget=forms.Select(attrs=ATTRS_FOR_BOOLEAN_FORMS))
 
+    locVirtObj = forms.CharField(label=_('Virtual Object'), widget=forms.TextInput(), required=False)
+
+    phonOth = forms.CharField(label=_('Phonology Other'), widget=forms.TextInput(), required=False)
+
+    mouthG = forms.CharField(label=_("Mouth Gesture"), widget=forms.TextInput(), required=False)
+
     class Meta:
         model = PhonologicalVariation
-        fields = ['gloss', 'variation', 'locprim',
-                  'relOriLoc', 'relOriMov', 'movSh', 'oriCh', 'mouthing', 'relatArtic', 'repeat', 'mouthG', 'altern', 'phonOth', 'phonetVar',
-                  'movDir', 'contType', 'handCh']
+        fields = ['gloss', 'variation',
+                  'handedness', 'domhndsh', 'subhndsh', 'handCh', 'relatArtic', 'locprim',
+                  'contType', 'movSh', 'movDir',
+                  'repeat', 'altern',
+                  'relOriMov', 'relOriLoc', 'oriCh',
+                  'locVirtObj', 'phonOth', 'mouthG', 'mouthing', 'phonetVar',
+                  ]
 
     def __init__(self, *args, **kwargs):
         self.gloss = kwargs.pop('gloss')
@@ -313,6 +323,12 @@ class PhonologicalVariationUpdateForm(forms.ModelForm):
                                         widget=forms.Select(attrs=ATTRS_FOR_BOOLEAN_FORMS))
     subhndsh_number = forms.ChoiceField(label=_('number'), choices=[(0, '-')], required=False,
                                         widget=forms.Select(attrs=ATTRS_FOR_BOOLEAN_FORMS))
+
+    locVirtObj = forms.CharField(label=_('Virtual Object'), widget=forms.TextInput(), required=False)
+    phonOth = forms.CharField(label=_('Phonology Other'), widget=forms.TextInput(), required=False)
+    mouthG = forms.CharField(label=_("Mouth Gesture"), widget=forms.TextInput(), required=False)
+    mouthing = forms.CharField(label=_("Mouthing"), widget=forms.TextInput(), required=False)
+    phonetVar = forms.CharField(label=_("Phonetic Variation"), widget=forms.TextInput(), required=False)
 
     class Meta:
         model = PhonologicalVariation
@@ -453,6 +469,11 @@ class PhonologicalVariationUpdateForm(forms.ModelForm):
                                                    widget=forms.Select(attrs=ATTRS_FOR_FORMS),
                                                    required=False)
         self.fields['oriCh'].initial = self.variation.display_oriCh
+        self.fields['locVirtObj'].initial = self.variation.locVirtObj if self.variation.locVirtObj else ''
+        self.fields['phonOth'].initial = self.variation.phonOth if self.variation.phonOth else ''
+        self.fields['mouthG'].initial = self.variation.mouthG
+        self.fields['mouthing'].initial = self.variation.mouthing
+        self.fields['phonetVar'].initial = self.variation.phonetVar
 
 
 class TagUpdateForm(forms.Form):

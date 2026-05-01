@@ -465,14 +465,42 @@ for (var key in handedness_weak_choices) {
                  <th>{% trans "Repeating Movement" %}</th>
                  <td class='td td-light'>{{gloss.display_repeat}}</td>
                  {% for gv in gloss_variations %}
-                 <td class='edit edit_check td td-light' id="repeat" data-variation="{{gv.id}}" value="{{gv.repeat}}">{{gv.display_repeat}}</td>
+                 {% with variation_forms|get_item:gv.id as variant_form %}
+                 {% with variant_form.fields|get_item:'repeat' as repeat_field %}
+                 <td class='td td-light'>
+                    <select name="repeat" id="repeat_{{gv.id}}">
+                        {% for value, opn in repeat_field.choices %}
+                        {% if opn == repeat_field.initial %}
+                        <option value={{value}} selected="selected">{{opn}}</option>
+                        {% else %}
+                        <option value={{value}}>{{opn}}</option>
+                        {% endif %}
+                        {% endfor %}
+                    </select>
+                 </td>
+                 {% endwith %}
+                 {% endwith %}
                  {% endfor %}
              </tr>
              <tr>
                  <th>{% trans "Alternating Movement" %}</th>
                  <td class='td td-light'>{{gloss.display_altern}}</td>
                  {% for gv in gloss_variations %}
-                 <td class='edit edit_check td td-light' id="altern" data-variation="{{gv.id}}" value="{{gv.altern}}">{{gv.display_altern}}</td>
+                 {% with variation_forms|get_item:gv.id as variant_form %}
+                 {% with variant_form.fields|get_item:'altern' as altern_field %}
+                 <td class='td td-light'>
+                    <select name="altern" id="altern_{{gv.id}}">
+                        {% for value, opn in altern_field.choices %}
+                        {% if opn == altern_field.initial %}
+                        <option value={{value}} selected="selected">{{opn}}</option>
+                        {% else %}
+                        <option value={{value}}>{{opn}}</option>
+                        {% endif %}
+                        {% endfor %}
+                    </select>
+                 </td>
+                 {% endwith %}
+                 {% endwith %}
                  {% endfor %}
              </tr>
              <tr>
@@ -540,16 +568,28 @@ for (var key in handedness_weak_choices) {
              </tr>
              <tr>
                  <th>{% trans "Virtual Object" %}</th>
-                 <td class='td td-light'>{{gloss.locVirtObj}}</td>
+                 <td class='td td-light'>{% value gloss.locVirtObj %}</td>
                  {% for gv in gloss_variations %}
-                 <td class='edit edit_text td td-light' id="locVirtObj">{{gv.locVirtObj}}</td>
+                 {% with variation_forms|get_item:gv.id as variant_form %}
+                 {% with variant_form.fields|get_item:'locVirtObj' as locVirtObj_field %}
+                 <td class='td td-light'>
+                    <input name="locVirtObj" id="locVirtObj_{{gv.id}}" type="text" value="{{locVirtObj_field.initial}}">
+                 </td>
+                 {% endwith %}
+                 {% endwith %}
                  {% endfor %}
              </tr>
              <tr>
                  <th>{% trans "Phonology Other" %}</th>
-                 <td class='td td-light'>{{gloss.phonOth}}</td>
+                 <td class='td td-light'>{% value gloss.phonOth %}</td>
                  {% for gv in gloss_variations %}
-                 <td class='edit edit_text td td-light' id="phonOth">{{gv.phonOth}}</td>
+                 {% with variation_forms|get_item:gv.id as variant_form %}
+                 {% with variant_form.fields|get_item:'phonOth' as phonOth_field %}
+                 <td class='td td-light'>
+                    <input name="phonOth" id="phonOth_{{gv.id}}" type="text" value="{{phonOth_field.initial}}">
+                 </td>
+                 {% endwith %}
+                 {% endwith %}
                  {% endfor %}
              </tr>
              <tr>
