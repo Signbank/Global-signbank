@@ -299,6 +299,11 @@ class PhonologicalVariationCreateForm(forms.ModelForm):
 
 class PhonologicalVariationUpdateForm(forms.ModelForm):
 
+    weakprop = forms.ChoiceField(label=_('Weak Prop'), choices=[(0, '-')],
+                                 widget=forms.Select(attrs=ATTRS_FOR_BOOLEAN_FORMS))
+    weakdrop = forms.ChoiceField(label=_('Weak Drop'), choices=[(0, '-')],
+                                 widget=forms.Select(attrs=ATTRS_FOR_BOOLEAN_FORMS))
+
     domhndsh_letter = forms.ChoiceField(label=_('letter'), choices=[(0, '-')], required=False,
                                         widget=forms.Select(attrs=ATTRS_FOR_BOOLEAN_FORMS))
     domhndsh_number = forms.ChoiceField(label=_('number'), choices=[(0, '-')], required=False,
@@ -311,9 +316,13 @@ class PhonologicalVariationUpdateForm(forms.ModelForm):
 
     class Meta:
         model = PhonologicalVariation
-        fields = ['gloss', 'variation', 'locprim',
-                  'relOriLoc', 'relOriMov', 'movSh', 'oriCh', 'mouthing', 'relatArtic', 'repeat', 'mouthG', 'altern', 'phonOth', 'phonetVar',
-                  'movDir', 'contType', 'handCh']
+        fields = ['gloss', 'variation',
+                  'handedness', 'domhndsh', 'subhndsh', 'handCh', 'relatArtic', 'locprim',
+                  'contType', 'movSh', 'movDir',
+                  'repeat', 'altern',
+                  'relOriMov', 'relOriLoc', 'oriCh',
+                  'locVirtObj', 'phonOth', 'mouthG', 'mouthing', 'phonetVar',
+                  ]
 
     def __init__(self, *args, **kwargs):
         self.variantid = kwargs.pop('variantid')
@@ -331,6 +340,10 @@ class PhonologicalVariationUpdateForm(forms.ModelForm):
                                                       widget=forms.Select(attrs=ATTRS_FOR_FORMS),
                                                       required=False)
         self.fields['handedness'].initial = self.variation.display_handedness
+        for boolean_field in ['weakdrop', 'weakprop']:
+            self.fields[boolean_field].choices = [(0, '-'), (1, _('Neutral')), (2, _('True')), (3, _('False'))]
+        self.fields['weakdrop'].initial = self.variation.display_weakdrop
+        self.fields['weakprop'].initial = self.variation.display_weakprop
         self.fields['domhndsh'] = forms.ChoiceField(label=_('Strong Hand'),
                                                     choices = choicelist_queryset_to_translated_dict(
                                                         list(Handshape.objects.all().order_by(
@@ -339,6 +352,7 @@ class PhonologicalVariationUpdateForm(forms.ModelForm):
                                                     ),
                                                     widget=forms.Select(attrs=ATTRS_FOR_FORMS),
                                                     required=False)
+        self.fields['domhndsh'].initial = self.variation.display_domhndsh
         self.fields['subhndsh'] = forms.ChoiceField(label=_('Weak Hand'),
                                                     choices = choicelist_queryset_to_translated_dict(
                                                         list(Handshape.objects.all().order_by(
@@ -347,8 +361,13 @@ class PhonologicalVariationUpdateForm(forms.ModelForm):
                                                     ),
                                                     widget=forms.Select(attrs=ATTRS_FOR_FORMS),
                                                     required=False)
+        self.fields['subhndsh'].initial = self.variation.display_subhndsh
         for boolean_field in ['domhndsh_letter', 'domhndsh_number', 'subhndsh_letter', 'subhndsh_number']:
-            self.fields[boolean_field].choices = [(0, '-'), (2, _('True')), (3, _('False'))]
+            self.fields[boolean_field].choices = [(0, '-'), (1, _('Yes'))]
+        self.fields['domhndsh_letter'].initial = self.variation.display_domhndsh_letter
+        self.fields['domhndsh_number'].initial = self.variation.display_domhndsh_number
+        self.fields['subhndsh_letter'].initial = self.variation.display_subhndsh_letter
+        self.fields['subhndsh_number'].initial = self.variation.display_subhndsh_number
         self.fields['handCh'] = forms.ChoiceField(label=_('Handshape Change'),
                                                    choices=choicelist_queryset_to_translated_dict(
                                                        list(FieldChoice.objects.filter(field='HandshapeChange').order_by(
@@ -357,6 +376,7 @@ class PhonologicalVariationUpdateForm(forms.ModelForm):
                                                    ),
                                                     widget=forms.Select(attrs=ATTRS_FOR_FORMS),
                                                     required=False)
+        self.fields['handCh'].initial = self.variation.display_handCh
         self.fields['relatArtic'] = forms.ChoiceField(label=_('Relation between Articulators'),
                                                    choices=choicelist_queryset_to_translated_dict(
                                                        list(FieldChoice.objects.filter(field='RelatArtic').order_by(
@@ -365,6 +385,7 @@ class PhonologicalVariationUpdateForm(forms.ModelForm):
                                                    ),
                                                     widget=forms.Select(attrs=ATTRS_FOR_FORMS),
                                                     required=False)
+        self.fields['relatArtic'].initial = self.variation.display_relatArtic
         self.fields['locprim'] = forms.ChoiceField(label=_('Location'),
                                                    choices=choicelist_queryset_to_translated_dict(
                                                        list(FieldChoice.objects.filter(field='Location').order_by(
@@ -373,6 +394,7 @@ class PhonologicalVariationUpdateForm(forms.ModelForm):
                                                    ),
                                                    widget=forms.Select(attrs=ATTRS_FOR_FORMS),
                                                    required=False)
+        self.fields['locprim'].initial = self.variation.display_locprim
         self.fields['contType'] = forms.ChoiceField(label=_('Contact Type'),
                                                    choices=choicelist_queryset_to_translated_dict(
                                                        list(FieldChoice.objects.filter(field='ContactType').order_by(
@@ -381,6 +403,7 @@ class PhonologicalVariationUpdateForm(forms.ModelForm):
                                                    ),
                                                    widget=forms.Select(attrs=ATTRS_FOR_FORMS),
                                                    required=False)
+        self.fields['contType'].initial = self.variation.display_contType
         self.fields['movSh'] = forms.ChoiceField(label=_('Movement Shape'),
                                                    choices=choicelist_queryset_to_translated_dict(
                                                        list(FieldChoice.objects.filter(field='MovementShape').order_by(
@@ -389,6 +412,7 @@ class PhonologicalVariationUpdateForm(forms.ModelForm):
                                                    ),
                                                    widget=forms.Select(attrs=ATTRS_FOR_FORMS),
                                                    required=False)
+        self.fields['movSh'].initial = self.variation.display_movSh
         self.fields['movDir'] = forms.ChoiceField(label=_('Movement Direction'),
                                                    choices=choicelist_queryset_to_translated_dict(
                                                        list(FieldChoice.objects.filter(field='MovementDir').order_by(
@@ -397,6 +421,29 @@ class PhonologicalVariationUpdateForm(forms.ModelForm):
                                                    ),
                                                    widget=forms.Select(attrs=ATTRS_FOR_FORMS),
                                                    required=False)
+        self.fields['movDir'].initial = self.variation.display_movDir
+        for boolean_field in ['repeat', 'altern']:
+            self.fields[boolean_field].choices = [(0, '-'), (1, _('Yes'))]
+        self.fields['repeat'].initial = self.variation.display_repeat
+        self.fields['altern'].initial = self.variation.display_altern
+        self.fields['relOriMov'] = forms.ChoiceField(label=_('Relative Orientation: Movement'),
+                                                   choices=choicelist_queryset_to_translated_dict(
+                                                       list(FieldChoice.objects.filter(field='RelOriMov').order_by(
+                                                           'machine_value')),
+                                                       ordered=False, id_prefix='', shortlist=False
+                                                   ),
+                                                   widget=forms.Select(attrs=ATTRS_FOR_FORMS),
+                                                   required=False)
+        self.fields['relOriMov'].initial = self.variation.display_relOriMov
+        self.fields['relOriLoc'] = forms.ChoiceField(label=_('Relative Orientation: Location'),
+                                                   choices=choicelist_queryset_to_translated_dict(
+                                                       list(FieldChoice.objects.filter(field='RelOriLoc').order_by(
+                                                           'machine_value')),
+                                                       ordered=False, id_prefix='', shortlist=False
+                                                   ),
+                                                   widget=forms.Select(attrs=ATTRS_FOR_FORMS),
+                                                   required=False)
+        self.fields['relOriLoc'].initial = self.variation.display_relOriLoc
         self.fields['oriCh'] = forms.ChoiceField(label=_('Orientation Change'),
                                                    choices=choicelist_queryset_to_translated_dict(
                                                        list(FieldChoice.objects.filter(field='OriChange').order_by(
@@ -405,8 +452,7 @@ class PhonologicalVariationUpdateForm(forms.ModelForm):
                                                    ),
                                                    widget=forms.Select(attrs=ATTRS_FOR_FORMS),
                                                    required=False)
-        for boolean_field in ['repeat', 'altern']:
-            self.fields[boolean_field].choices = [('0', '-'), ('2', _('Yes')), ('3', _('No'))]
+        self.fields['oriCh'].initial = self.variation.display_oriCh
 
 
 class TagUpdateForm(forms.Form):

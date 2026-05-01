@@ -15,6 +15,7 @@ from django.core.files import File
 from django.contrib.auth.decorators import permission_required
 from django.views.decorators.http import require_http_methods
 from django.db.models.fields import BooleanField, IntegerField
+from django.db.models import ForeignKey
 from django.forms.models import ModelChoiceField
 from django.forms.utils import ValidationError
 from django.db import DatabaseError, IntegrityError
@@ -408,9 +409,34 @@ def update_phonological_variation(request, variationid):
     variation = get_object_or_404(PhonologicalVariation, id=variationid)
     glossid = variation.gloss.id
     value_dict = get_gloss_update_human_readable_value_dict(request)
-    print('value dict: ', value_dict)
-    # fields_to_update = gloss_pre_update(gloss, value_dict, interface_language_code)
+    for field, value in value_dict.items():
+        if field not in FIELDS['phonology']:
+            continue
+        internal_field = PhonologicalVariation.get_field(field)
+        original_internal_value = getattr(variation, field)
+        if isinstance(internal_field, FieldChoiceForeignKey):
+            new_value = FieldChoice.objects.get(field=internal_field.field_choice_category, machine_value=int(value))
+            if new_value.machine_value == original_internal_value:
+                continue
+            setattr(variation, field, new_value)
+        elif isinstance(internal_field, ForeignKey) and internal_field.related_model == Handshape:
+            new_value = Handshape.objects.get(machine_value=int(value))
+            if new_value.machine_value == original_internal_value:
+                continue
+            setattr(variation, field, new_value)
+        elif isinstance(internal_field, BooleanField):
+            if field in ['weakdrop', 'weakprop']:
+                boolean_value = {'1': None, '2': True, '3': False}[value]
+                if boolean_value == original_internal_value:
+                    continue
+                setattr(variation, field, boolean_value)
+            elif field in ['repeat', 'altern', 'domhndsh_letter', 'domhndsh_number', 'subhndsh_letter', 'subhndsh_number']:
+                boolean_value = {'0': None, '1': True}[value]
+                if boolean_value == original_internal_value:
+                    continue
+                setattr(variation, field, boolean_value)
 
+    variation.save()
     return HttpResponseRedirect(
         reverse('dictionary:phonological_variations', kwargs={'glossid':glossid}))
 

@@ -104,9 +104,9 @@ for (var key in handedness_weak_choices) {
     </div>
 
     <div id="view_tabs" style="margin-right:15px;margin-top:10px;z-index:100;" class='view-tabs view-tabs-light'>
-     <table class='table table-condensed-light' style='width: 1200px;'>
+     <table class='table table-condensed table-condensed-light' style='width: 1200px;'>
               <tr>
-			  <th style="color:darkred">{% trans "Source Sign" %}</th>
+			  <th class='td td-light'  style="color:darkred">{% trans "Source Sign" %}</th>
               </tr>
 			  {% for lang, annotation_idgloss_translation in annotation_idgloss.items %}
                   <tr>
@@ -118,35 +118,32 @@ for (var key in handedness_weak_choices) {
                   </tr>
 			  {% endfor %}
      </table>
-     <table class='table table-condensed-light' style="width: 1200px;">
+     <table class='table table-condensed table-condensed-light' style="width:auto;border: 0px;">
              <tr>
-			    <th style="color:darkred; width:400px;">{% trans "Phonology" %}</th>
-             </tr>
-             <tr>
-                 <th></th>
-                 <th class='td td-light' style="color:darkred; float:left;">{% trans "Source Sign" %}</th>
+			    <th class='th th-light' style="color:darkred; width:auto;">{% trans "Phonology" %}</th>
+                 <th class='td td-light' style="color:darkred; float:left;width:300px;border-top:0px;">{% trans "Source Sign" %}</th>
                  {% for gv in gloss_variations %}
-                 <th class='td td-light' style="color:darkred">{% trans "Variation" %} #{{gv.variation}}</th>
+                 <th class='th th-light' style="color:darkred">{% trans "Variation" %} #{{gv.variation}}</th>
                  {% endfor %}
              </tr>
              <tr>
-                 <td></td>
-                 <td></td>
+                 <td class='td td-light' style="width:400px;"></td>
+                 <td class='td td-light'></td>
                  {% for gv in gloss_variations %}
                  {% with variation_forms|get_item:gv.id as variant_form %}
                  <th class='td td-light' style="color:darkred">
-                     <button id='quick_save_btn_{{gv.id}}' class="quick_save btn actionButton"
+                     <button id='quick_save_btn_{{gv.id}}' class="quick_save btn btn-primary"
                         name='quick_save_{{gv.id}}'
                         value='{{gv.id}}' style="height:36px;"
-                        type="submit">{% trans "Save" %} #{{gv.variation}}</button></th>
+                        type="submit">{% trans "Save" %} #{{gv.variation}}</button>
+                 </th>
                  {% endwith %}
                  {% endfor %}
              </tr>
              <tr>
                  <th>{% trans "Handedness" %}</th>
-                 <td class='td td-light' style="float:left;">{{gloss.display_handedness}}</td>
+                 <td class='td td-light' style="float:left;border-top:0px;">{{gloss.display_handedness}}</td>
                  {% for gv in gloss_variations %}
-
                  {% with variation_forms|get_item:gv.id as variant_form %}
                  {% with variant_form.fields|get_item:'handedness' as handedness_field %}
                  <td class='td td-light'>
@@ -158,115 +155,387 @@ for (var key in handedness_weak_choices) {
                         <option value={{machine_value}}>{{opn}}</option>
                         {% endif %}
                         {% endfor %}
-                    </select></td>
+                    </select>
+                 </td>
                  {% endwith %}
-
                  {% endwith %}
                  {% endfor %}
              </tr>
              <tr>
                  <th>{% trans "Weak Drop" %}</th>
-                 <td class='td td-light' style="float:left;">{{gloss.weakdrop}}</td>
+                 <td class='td td-light' style="float:left;border-top:0px;">{{gloss.display_weakdrop}}</td>
                  {% for gv in gloss_variations %}
-                 <td class="edit edit_WD td td-light" id="weakdrop" data-variation="{{gv.id}}" value="{{gv.weakdrop}}">{{gv.weakdrop}}</td>
+                 {% with variation_forms|get_item:gv.id as variant_form %}
+                 {% with variant_form.fields|get_item:'weakdrop' as weakdrop_field %}
+                 <td class='td td-light'>
+                    <select name="weakdrop" id="weakdrop_{{gv.id}}">
+                        {% for value, opn in weakdrop_field.choices %}
+                        {% if opn == weakdrop_field.initial %}
+                        <option value={{value}} selected="selected">{{opn}}</option>
+                        {% else %}
+                        <option value={{value}}>{{opn}}</option>
+                        {% endif %}
+                        {% endfor %}
+                    </select>
+                 </td>
+                 {% endwith %}
+                 {% endwith %}
                  {% endfor %}
              </tr>
              <tr>
                  <th>{% trans "Weak Prop" %}</th>
-                 <td class='td td-light' style="float:left;">{{gloss.weakprop}}</td>
+                 <td class='td td-light' style="float:left;border-top:0px;">{{gloss.display_weakprop}}</td>
                  {% for gv in gloss_variations %}
-                 <td class="edit edit_WP td td-light" id="weakprop" data-variation="{{gv.id}}" value="{{gv.weakprop}}">{{gv.weakprop}}</td>
+                 {% with variation_forms|get_item:gv.id as variant_form %}
+                 {% with variant_form.fields|get_item:'weakdrop' as weakprop_field %}
+                 <td class='td td-light'>
+                    <select name="weakprop" id="weakprop_{{gv.id}}">
+                        {% for value, opn in weakprop_field.choices %}
+                        {% if opn == weakprop_field.initial %}
+                        <option value={{value}} selected="selected">{{opn}}</option>
+                        {% else %}
+                        <option value={{value}}>{{opn}}</option>
+                        {% endif %}
+                        {% endfor %}
+                    </select>
+                 </td>
+                 {% endwith %}
+                 {% endwith %}
                  {% endfor %}
              </tr>
              <tr>
                  <th>{% trans "Strong Hand" %}</th>
                  <td class='td td-light'>{{gloss.display_domhndsh}}</td>
                  {% for gv in gloss_variations %}
-                 <td class='edit edit_list td td-light' id="domhndsh" data-variation="{{gv.id}}" value="{{gv.display_domhndsh}}">{{gv.display_domhndsh}}</td>
+                 {% with variation_forms|get_item:gv.id as variant_form %}
+                 {% with variant_form.fields|get_item:'domhndsh' as domhndsh_field %}
+                 <td class='td td-light'>
+                    <select name="domhndsh" id="domhndsh_{{gv.id}}">
+                        {% for machine_value, opn in domhndsh_field.choices %}
+                        {% if opn == domhndsh_field.initial %}
+                        <option value={{machine_value}} selected="selected">{{opn}}</option>
+                        {% else %}
+                        <option value={{machine_value}}>{{opn}}</option>
+                        {% endif %}
+                        {% endfor %}
+                    </select>
+                 </td>
+                 {% endwith %}
+                 {% endwith %}
                  {% endfor %}
              </tr>
+
+            <tr>
+                 <th>{% trans "letter" %}</th>
+                 <td class='td td-light'>{{gloss.display_domhndsh_letter}}</td>
+                 {% for gv in gloss_variations %}
+                 {% with variation_forms|get_item:gv.id as variant_form %}
+                 {% with variant_form.fields|get_item:'domhndsh_letter' as domhndsh_letter_field %}
+                 <td class='td td-light'>
+                    <select name="domhndsh_letter" id="domhndsh_letter_{{gv.id}}">
+                        {% for value, opn in domhndsh_letter_field.choices %}
+                        {% if opn == domhndsh_letter_field.initial %}
+                        <option value={{value}} selected="selected">{{opn}}</option>
+                        {% else %}
+                        <option value={{value}}>{{opn}}</option>
+                        {% endif %}
+                        {% endfor %}
+                    </select>
+                 </td>
+                 {% endwith %}
+                 {% endwith %}
+                 {% endfor %}
+             </tr>
+
+            <tr>
+                 <th>{% trans "number" %}</th>
+                 <td class='td td-light'>{{gloss.display_domhndsh_number}}</td>
+                 {% for gv in gloss_variations %}
+                 {% with variation_forms|get_item:gv.id as variant_form %}
+                 {% with variant_form.fields|get_item:'domhndsh_number' as domhndsh_number_field %}
+                 <td class='td td-light'>
+                    <select name="domhndsh_number" id="domhndsh_number_{{gv.id}}">
+                        {% for value, opn in domhndsh_number_field.choices %}
+                        {% if opn == domhndsh_number_field.initial %}
+                        <option value={{value}} selected="selected">{{opn}}</option>
+                        {% else %}
+                        <option value={{value}}>{{opn}}</option>
+                        {% endif %}
+                        {% endfor %}
+                    </select>
+                 </td>
+                 {% endwith %}
+                 {% endwith %}
+                 {% endfor %}
+             </tr>
+
              <tr>
                  <th>{% trans "Weak Hand" %}</th>
                  <td class='td td-light'>{{gloss.display_subhndsh}}</td>
                  {% for gv in gloss_variations %}
-                 <td class='edit edit_list td td-light' id="subhndsh" data-variation="{{gv.id}}" value="{{gv.subhndsh}}">{{gv.display_subhndsh}}</td>
+                 {% with variation_forms|get_item:gv.id as variant_form %}
+                 {% with variant_form.fields|get_item:'subhndsh' as subhndsh_field %}
+                 <td class='td td-light'>
+                    <select name="subhndsh" id="subhndsh_{{gv.id}}">
+                        {% for machine_value, opn in subhndsh_field.choices %}
+                        {% if opn == subhndsh_field.initial %}
+                        <option value={{machine_value}} selected="selected">{{opn}}</option>
+                        {% else %}
+                        <option value={{machine_value}}>{{opn}}</option>
+                        {% endif %}
+                        {% endfor %}
+                    </select>
+                 </td>
+                 {% endwith %}
+                 {% endwith %}
                  {% endfor %}
              </tr>
+
+            <tr>
+                 <th>{% trans "letter" %}</th>
+                 <td class='td td-light'>{{gloss.display_subhndsh_letter}}</td>
+                 {% for gv in gloss_variations %}
+                 {% with variation_forms|get_item:gv.id as variant_form %}
+                 {% with variant_form.fields|get_item:'subhndsh_letter' as subhndsh_letter_field %}
+                 <td class='td td-light'>
+                    <select name="subhndsh_letter" id="subhndsh_letter_{{gv.id}}">
+                        {% for value, opn in subhndsh_letter_field.choices %}
+                        {% if opn == subhndsh_letter_field.initial %}
+                        <option value={{value}} selected="selected">{{opn}}</option>
+                        {% else %}
+                        <option value={{value}}>{{opn}}</option>
+                        {% endif %}
+                        {% endfor %}
+                    </select>
+                 </td>
+                 {% endwith %}
+                 {% endwith %}
+                 {% endfor %}
+             </tr>
+
+            <tr>
+                 <th>{% trans "number" %}</th>
+                 <td class='td td-light'>{{gloss.display_subhndsh_number}}</td>
+                 {% for gv in gloss_variations %}
+                 {% with variation_forms|get_item:gv.id as variant_form %}
+                 {% with variant_form.fields|get_item:'subhndsh_number' as subhndsh_number_field %}
+                 <td class='td td-light'>
+                    <select name="subhndsh_number" id="subhndsh_number_{{gv.id}}">
+                        {% for value, opn in subhndsh_number_field.choices %}
+                        {% if opn == subhndsh_number_field.initial %}
+                        <option value={{value}} selected="selected">{{opn}}</option>
+                        {% else %}
+                        <option value={{value}}>{{opn}}</option>
+                        {% endif %}
+                        {% endfor %}
+                    </select>
+                 </td>
+                 {% endwith %}
+                 {% endwith %}
+                 {% endfor %}
+             </tr>
+
              <tr>
                  <th>{% trans "Handshape Change" %}</th>
                  <td class='td td-light'>{{gloss.display_handCh}}</td>
                  {% for gv in gloss_variations %}
-                 <td class='edit edit_list td td-light' id="handCh" data-variation="{{gv.id}}" value="{{gv.display_handCh}}">{{gv.display_handCh}}</td>
+                 {% with variation_forms|get_item:gv.id as variant_form %}
+                 {% with variant_form.fields|get_item:'handCh' as handCh_field %}
+                 <td class='td td-light'>
+                    <select name="handCh" id="handCh_{{gv.id}}">
+                        {% for machine_value, opn in handCh_field.choices %}
+                        {% if opn == handCh_field.initial %}
+                        <option value={{machine_value}} selected="selected">{{opn}}</option>
+                        {% else %}
+                        <option value={{machine_value}}>{{opn}}</option>
+                        {% endif %}
+                        {% endfor %}
+                    </select>
+                 </td>
+                 {% endwith %}
+                 {% endwith %}
                  {% endfor %}
              </tr>
              <tr>
                  <th>{% trans "Relation between Articulators" %}</th>
                  <td class='td td-light'>{{gloss.display_relatArtic}}</td>
                  {% for gv in gloss_variations %}
-                 <td class='edit edit_list td td-light' id="relatArtic" data-variation="{{gv.id}}" value="{{gv.display_relatArtic}}">{{gv.display_relatArtic}}</td>
+                 {% with variation_forms|get_item:gv.id as variant_form %}
+                 {% with variant_form.fields|get_item:'relatArtic' as relatArtic_field %}
+                 <td class='td td-light'>
+                    <select name="relatArtic" id="relatArtic_{{gv.id}}">
+                        {% for machine_value, opn in relatArtic_field.choices %}
+                        {% if opn == relatArtic_field.initial %}
+                        <option value={{machine_value}} selected="selected">{{opn}}</option>
+                        {% else %}
+                        <option value={{machine_value}}>{{opn}}</option>
+                        {% endif %}
+                        {% endfor %}
+                    </select>
+                 </td>
+                 {% endwith %}
+                 {% endwith %}
                  {% endfor %}
              </tr>
              <tr>
                  <th>{% trans "Location" %}</th>
                  <td class='td td-light'>{{gloss.display_locprim}}</td>
                  {% for gv in gloss_variations %}
-                 <td class='edit edit_list td td-light' id="locprim" data-variation="{{gv.id}}" value="{{gv.display_locprim}}">{{gv.display_locprim}}</td>
+                 {% with variation_forms|get_item:gv.id as variant_form %}
+                 {% with variant_form.fields|get_item:'locprim' as locprim_field %}
+                 <td class='td td-light'>
+                    <select name="locprim" id="locprim_{{gv.id}}">
+                        {% for machine_value, opn in locprim_field.choices %}
+                        {% if opn == locprim_field.initial %}
+                        <option value={{machine_value}} selected="selected">{{opn}}</option>
+                        {% else %}
+                        <option value={{machine_value}}>{{opn}}</option>
+                        {% endif %}
+                        {% endfor %}
+                    </select>
+                 </td>
+                 {% endwith %}
+                 {% endwith %}
                  {% endfor %}
              </tr>
              <tr>
                  <th>{% trans "Contact Type" %}</th>
                  <td class='td td-light'>{{gloss.display_contType}}</td>
                  {% for gv in gloss_variations %}
-                 <td class='edit edit_list td td-light' id="contType" data-variation="{{gv.id}}" value="{{gv.display_contType}}">{{gv.display_contType}}</td>
+                 {% with variation_forms|get_item:gv.id as variant_form %}
+                 {% with variant_form.fields|get_item:'contType' as contType_field %}
+                 <td class='td td-light'>
+                    <select name="contType" id="contType_{{gv.id}}">
+                        {% for machine_value, opn in contType_field.choices %}
+                        {% if opn == contType_field.initial %}
+                        <option value={{machine_value}} selected="selected">{{opn}}</option>
+                        {% else %}
+                        <option value={{machine_value}}>{{opn}}</option>
+                        {% endif %}
+                        {% endfor %}
+                    </select>
+                 </td>
+                 {% endwith %}
+                 {% endwith %}
                  {% endfor %}
              </tr>
              <tr>
                  <th>{% trans "Movement Shape" %}</th>
                  <td class='td td-light'>{{gloss.display_movSh}}</td>
                  {% for gv in gloss_variations %}
-                 <td class='edit edit_list td td-light' id="movSh" data-variation="{{gv.id}}" value="{{gv.display_movSh}}">{{gv.display_movSh}}</td>
+                 {% with variation_forms|get_item:gv.id as variant_form %}
+                 {% with variant_form.fields|get_item:'movSh' as movSh_field %}
+                 <td class='td td-light'>
+                    <select name="movSh" id="movSh_{{gv.id}}">
+                        {% for machine_value, opn in movSh_field.choices %}
+                        {% if opn == movSh_field.initial %}
+                        <option value={{machine_value}} selected="selected">{{opn}}</option>
+                        {% else %}
+                        <option value={{machine_value}}>{{opn}}</option>
+                        {% endif %}
+                        {% endfor %}
+                    </select>
+                 </td>
+                 {% endwith %}
+                 {% endwith %}
                  {% endfor %}
              </tr>
              <tr>
                  <th>{% trans "Movement Direction" %}</th>
                  <td class='td td-light'>{{gloss.display_movDir}}</td>
                  {% for gv in gloss_variations %}
-                 <td class='edit edit_list td td-light' id="movDir" data-variation="{{gv.id}}" value="{{gv.display_movDir}}">{{gv.display_movDir}}</td>
+                 {% with variation_forms|get_item:gv.id as variant_form %}
+                 {% with variant_form.fields|get_item:'movDir' as movDir_field %}
+                 <td class='td td-light'>
+                    <select name="movDir" id="movDir_{{gv.id}}">
+                        {% for machine_value, opn in movDir_field.choices %}
+                        {% if opn == movDir_field.initial %}
+                        <option value={{machine_value}} selected="selected">{{opn}}</option>
+                        {% else %}
+                        <option value={{machine_value}}>{{opn}}</option>
+                        {% endif %}
+                        {% endfor %}
+                    </select>
+                 </td>
+                 {% endwith %}
+                 {% endwith %}
                  {% endfor %}
              </tr>
               <tr>
                  <th>{% trans "Repeating Movement" %}</th>
-                 <td class='td td-light'>{{gloss.repeat}}</td>
+                 <td class='td td-light'>{{gloss.display_repeat}}</td>
                  {% for gv in gloss_variations %}
-                 <td class='edit edit_check td td-light' id="repeat" data-variation="{{gv.id}}" value="{{gv.repeat}}">{{gv.repeat}}</td>
+                 <td class='edit edit_check td td-light' id="repeat" data-variation="{{gv.id}}" value="{{gv.repeat}}">{{gv.display_repeat}}</td>
                  {% endfor %}
              </tr>
              <tr>
                  <th>{% trans "Alternating Movement" %}</th>
-                 <td class='td td-light'>{{gloss.altern}}</td>
+                 <td class='td td-light'>{{gloss.display_altern}}</td>
                  {% for gv in gloss_variations %}
-                 <td class='edit edit_check td td-light' id="altern" data-variation="{{gv.id}}" value="{{gv.altern}}">{{gv.altern}}</td>
+                 <td class='edit edit_check td td-light' id="altern" data-variation="{{gv.id}}" value="{{gv.altern}}">{{gv.display_altern}}</td>
                  {% endfor %}
              </tr>
              <tr>
                  <th>{% trans "Relative Orientation: Movement" %}</th>
-                 <td class='td td-light'>{{gloss.relOriMov}}</td>
+                 <td class='td td-light'>{{gloss.display_relOriMov}}</td>
                  {% for gv in gloss_variations %}
-                 <td class='edit edit_list td td-light' id="relOriMov" data-variation="{{gv.id}}">{{gv.relOriMov}}</td>
+                 {% with variation_forms|get_item:gv.id as variant_form %}
+                 {% with variant_form.fields|get_item:'relOriMov' as relOriMov_field %}
+                 <td class='td td-light'>
+                    <select name="relOriMov" id="relOriMov_{{gv.id}}">
+                        {% for machine_value, opn in relOriMov_field.choices %}
+                        {% if opn == relOriMov_field.initial %}
+                        <option value={{machine_value}} selected="selected">{{opn}}</option>
+                        {% else %}
+                        <option value={{machine_value}}>{{opn}}</option>
+                        {% endif %}
+                        {% endfor %}
+                    </select>
+                 </td>
+                 {% endwith %}
+                 {% endwith %}
                  {% endfor %}
              </tr>
              <tr>
                  <th>{% trans "Relative Orientation: Location" %}</th>
-                 <td class='td td-light'>{{gloss.relOriLoc}}</td>
+                 <td class='td td-light'>{{gloss.display_relOriLoc}}</td>
                  {% for gv in gloss_variations %}
-                 <td class='edit edit_list td td-light' id="relOriLoc" data-variation="{{gv.id}}">{{gv.relOriLoc}}</td>
+                 {% with variation_forms|get_item:gv.id as variant_form %}
+                 {% with variant_form.fields|get_item:'relOriLoc' as relOriLoc_field %}
+                 <td class='td td-light'>
+                    <select name="relOriLoc" id="relOriLoc_{{gv.id}}">
+                        {% for machine_value, opn in relOriLoc_field.choices %}
+                        {% if opn == relOriLoc_field.initial %}
+                        <option value={{machine_value}} selected="selected">{{opn}}</option>
+                        {% else %}
+                        <option value={{machine_value}}>{{opn}}</option>
+                        {% endif %}
+                        {% endfor %}
+                    </select>
+                 </td>
+                 {% endwith %}
+                 {% endwith %}
                  {% endfor %}
              </tr>
              <tr>
                  <th>{% trans "Orientation Change" %}</th>
                  <td class='td td-light'>{{gloss.display_oriCh}}</td>
                  {% for gv in gloss_variations %}
-                 <td class='td td-light'>{{gv.display_oriCh}}</td>
+                 {% with variation_forms|get_item:gv.id as variant_form %}
+                 {% with variant_form.fields|get_item:'oriCh' as oriCh_field %}
+                 <td class='td td-light'>
+                    <select name="oriCh" id="oriCh_{{gv.id}}">
+                        {% for machine_value, opn in oriCh_field.choices %}
+                        {% if opn == oriCh_field.initial %}
+                        <option value={{machine_value}} selected="selected">{{opn}}</option>
+                        {% else %}
+                        <option value={{machine_value}}>{{opn}}</option>
+                        {% endif %}
+                        {% endfor %}
+                    </select>
+                 </td>
+                 {% endwith %}
+                 {% endwith %}
                  {% endfor %}
              </tr>
              <tr>
@@ -306,12 +575,13 @@ for (var key in handedness_weak_choices) {
              </tr>
     </table>
     </div>
+<br><br>
    {% if perms.dictionary.add_gloss %}
    <h4>{% trans "Add Phonological Variation" %}</h4>
    <div>
      <form action='{% url "dictionary:add_phonological_variation" glossid=gloss.id %}' method='POST' enctype="multipart/form-data">
          {% csrf_token %}
-         <table class='table table-condensed-light' style='width: 1200px;'>
+         <table class='table table-condensed table-condensed-light' style='width: 1200px;'>
 
              <tr>
                  {% with add_variation_form.fields|get_item:'handedness' as handedness_field %}

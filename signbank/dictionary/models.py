@@ -1077,11 +1077,41 @@ class Phonology(MetaModelMixin, models.Model):
     def display_handedness(self):
         return self.handedness.name if self.handedness else '-'
 
+    def display_weakdrop(self):
+        if self.weakdrop is None:
+            return 'Neutral'
+        return _('Yes') if self.weakdrop else _('No')
+
+    def display_weakprop(self):
+        if self.weakprop is None:
+            return 'Neutral'
+        return _('Yes') if self.weakprop else _('No')
+
     def display_domhndsh(self):
         return self.domhndsh.name if self.domhndsh else '-'
 
+    def display_domhndsh_letter(self):
+        if self.domhndsh_letter is None:
+            return '-'
+        return _('Yes') if self.domhndsh_letter else '-'
+
+    def display_domhndsh_number(self):
+        if self.domhndsh_number is None:
+            return '-'
+        return _('Yes') if self.domhndsh_number else '-'
+
     def display_subhndsh(self):
         return self.subhndsh.name if self.subhndsh else '-'
+
+    def display_subhndsh_letter(self):
+        if self.subhndsh_letter is None:
+            return '-'
+        return _('Yes') if self.subhndsh_letter else '-'
+
+    def display_subhndsh_number(self):
+        if self.subhndsh_number is None:
+            return '-'
+        return _('Yes') if self.subhndsh_number else '-'
 
     def display_handCh(self):
         return self.handCh.name if self.handCh else '-'
@@ -1100,6 +1130,22 @@ class Phonology(MetaModelMixin, models.Model):
 
     def display_movDir(self):
         return self.movDir.name if self.movDir else '-'
+
+    def display_repeat(self):
+        if self.repeat is None:
+            return '-'
+        return _('Yes') if self.repeat else '-'
+
+    def display_altern(self):
+        if self.altern is None:
+            return '-'
+        return _('Yes') if self.altern else '-'
+
+    def display_relOriMov(self):
+        return self.relOriMov.name if self.relOriMov else '-'
+
+    def display_relOriLoc(self):
+        return self.relOriLoc.name if self.relOriLoc else '-'
 
     def display_oriCh(self):
         return self.oriCh.name if self.oriCh else '-'
