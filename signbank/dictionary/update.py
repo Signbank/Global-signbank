@@ -426,10 +426,9 @@ def update_phonological_variation(request, variationid):
             setattr(variation, field, new_value)
         elif isinstance(internal_field, BooleanField):
             if field in ['weakdrop', 'weakprop']:
-                boolean_value = {'1': None, '2': True, '3': False}[value]
-                if boolean_value == original_internal_value:
-                    continue
-                setattr(variation, field, boolean_value)
+                boolean_value = {'0': None, '1': None, '2': True, '3': False}[value]
+                variation.__setattr__(field, boolean_value)
+                variation.save()
             elif field in ['repeat', 'altern', 'domhndsh_letter', 'domhndsh_number', 'subhndsh_letter', 'subhndsh_number']:
                 boolean_value = {'0': None, '1': True}[value]
                 if boolean_value == original_internal_value:

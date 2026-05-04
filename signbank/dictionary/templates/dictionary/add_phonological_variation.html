@@ -170,7 +170,7 @@ for (var key in handedness_weak_choices) {
                  <td class='td td-light'>
                     <select name="weakdrop" id="weakdrop_{{gv.id}}">
                         {% for value, opn in weakdrop_field.choices %}
-                        {% if opn == weakdrop_field.initial %}
+                        {% if value == weakdrop_field.initial %}
                         <option value={{value}} selected="selected">{{opn}}</option>
                         {% else %}
                         <option value={{value}}>{{opn}}</option>
@@ -187,11 +187,11 @@ for (var key in handedness_weak_choices) {
                  <td class='td td-light' style="float:left;border-top:0px;">{{gloss.display_weakprop}}</td>
                  {% for gv in gloss_variations %}
                  {% with variation_forms|get_item:gv.id as variant_form %}
-                 {% with variant_form.fields|get_item:'weakdrop' as weakprop_field %}
+                 {% with variant_form.fields|get_item:'weakprop' as weakprop_field %}
                  <td class='td td-light'>
                     <select name="weakprop" id="weakprop_{{gv.id}}">
                         {% for value, opn in weakprop_field.choices %}
-                        {% if opn == weakprop_field.initial %}
+                        {% if value == weakprop_field.initial %}
                         <option value={{value}} selected="selected">{{opn}}</option>
                         {% else %}
                         <option value={{value}}>{{opn}}</option>

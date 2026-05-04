@@ -358,8 +358,8 @@ class PhonologicalVariationUpdateForm(forms.ModelForm):
         self.fields['handedness'].initial = self.variation.display_handedness
         for boolean_field in ['weakdrop', 'weakprop']:
             self.fields[boolean_field].choices = [(0, '-'), (1, _('Neutral')), (2, _('True')), (3, _('False'))]
-        self.fields['weakdrop'].initial = self.variation.display_weakdrop
-        self.fields['weakprop'].initial = self.variation.display_weakprop
+        self.fields['weakdrop'].initial = self.variation.weakdrop_to_choice()
+        self.fields['weakprop'].initial = self.variation.weakprop_to_choice()
         self.fields['domhndsh'] = forms.ChoiceField(label=_('Strong Hand'),
                                                     choices = choicelist_queryset_to_translated_dict(
                                                         list(Handshape.objects.all().order_by(

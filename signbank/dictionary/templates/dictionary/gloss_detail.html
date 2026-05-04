@@ -2542,8 +2542,147 @@ textarea:focus {
                     {% endif %}
         </div>
         <div id='phonological_variations' class='collapse'>
+            {% if gloss_variations %}
             <table class='table table-condensed'>
+            <thead>
+                 <tr>
+                 <th></th>
+                 {% for gv in gloss_variations %}
+                 <th class='th th-light' style="color:darkred">#{{gv.variation}}</th>
+                 {% endfor %}
+                 </tr>
+            </thead>
+            <tbody>
+                 <tr>
+                 <th>{% trans "Handedness" %}</th>
+                 {% for gv in gloss_variations %}
+                 <td class='th th-light'>{{gv.display_handedness}}
+                     {% if gv.weakdrop is not None %}
+                        {% if gv.weakdrop %}&nbsp;&nbsp;+WD{% else %}&nbsp;&nbsp;-WD{% endif %}
+                     {% endif %}
+                     {% if gv.weakprop is not None %}
+                        {% if gv.weakprop %}&nbsp;&nbsp;+WP{% else %}&nbsp;&nbsp;-WP{% endif %}
+                     {% endif %}
+                 </td>
+                 {% endfor %}
+                 </tr>
+                 <tr>
+                 <th>{% trans "Strong Hand" %}</th>
+                 {% for gv in gloss_variations %}
+                 <td class='th th-light'>{{gv.display_domhndsh}}
+                     {% if gv.domhndsh_letter %}&nbsp;&nbsp;{% trans "letter" %}{% endif %}
+                     {% if gv.domhndsh_number %}&nbsp;&nbsp;{% trans "number" %}{% endif %}
+                 </td>
+                 {% endfor %}
+                 </tr>
+                 <tr>
+                 <th>{% trans "Weak Hand" %}</th>
+                 {% for gv in gloss_variations %}
+                 <td class='th th-light'>{{gv.display_subhndsh}}
+                     {% if gv.subhndsh_letter %}&nbsp;&nbsp;{% trans "letter" %}{% endif %}
+                     {% if gv.subhndsh_number %}&nbsp;&nbsp;{% trans "number" %}{% endif %}
+                 </td>
+                 {% endfor %}
+                 </tr>
+                 <tr>
+                 <th>{% trans "Handshape Change" %}</th>
+                 {% for gv in gloss_variations %}
+                 <td class='th th-light'>{{gv.display_handCh}}</td>
+                 {% endfor %}
+                 </tr>
+                 <tr>
+                 <th>{% trans "Relation between Articulators" %}</th>
+                 {% for gv in gloss_variations %}
+                 <td class='th th-light'>{{gv.display_relatArtic}}</td>
+                 {% endfor %}
+                 </tr>
+                 <tr>
+                 <th>{% trans "Location" %}</th>
+                 {% for gv in gloss_variations %}
+                 <td class='th th-light'>{{gv.display_locprim}}</td>
+                 {% endfor %}
+                 </tr>
+                 <tr>
+                 <th>{% trans "Contact Type" %}</th>
+                 {% for gv in gloss_variations %}
+                 <td class='th th-light'>{{gv.display_contType}}</td>
+                 {% endfor %}
+                 </tr>
+                 <tr>
+                 <th>{% trans "Movement Shape" %}</th>
+                 {% for gv in gloss_variations %}
+                 <td class='th th-light'>{{gv.display_movSh}}</td>
+                 {% endfor %}
+                 </tr>
+                 <tr>
+                 <th>{% trans "Movement Direction" %}</th>
+                 {% for gv in gloss_variations %}
+                 <td class='th th-light'>{{gv.display_movDir}}</td>
+                 {% endfor %}
+                 </tr>
+                 <tr>
+                 <th>{% trans "Repeating Movement" %}</th>
+                 {% for gv in gloss_variations %}
+                 <td class='th th-light'>{{gv.display_repeat}}</td>
+                 {% endfor %}
+                 </tr>
+                 <tr>
+                 <th>{% trans "Alternating Movement" %}</th>
+                 {% for gv in gloss_variations %}
+                 <td class='th th-light'>{{gv.display_altern}}</td>
+                 {% endfor %}
+                 </tr>
+                 <tr>
+                 <th>{% trans "Relative Orientation: Movement" %}</th>
+                 {% for gv in gloss_variations %}
+                 <td class='th th-light'>{{gv.display_relOriMov}}</td>
+                 {% endfor %}
+                 </tr>
+                 <tr>
+                 <th>{% trans "Relative Orientation: Location" %}</th>
+                 {% for gv in gloss_variations %}
+                 <td class='th th-light'>{{gv.display_relOriLoc}}</td>
+                 {% endfor %}
+                 </tr>
+                 <tr>
+                 <th>{% trans "Orientation Change" %}</th>
+                 {% for gv in gloss_variations %}
+                 <td class='th th-light'>{{gv.display_oriCh}}</td>
+                 {% endfor %}
+                 </tr>
+                 <tr>
+                 <th>{% trans "Virtual Object" %}</th>
+                 {% for gv in gloss_variations %}
+                 <td class='th th-light'>{% value gv.locVirtObj %}</td>
+                 {% endfor %}
+                 </tr>
+                 <tr>
+                 <th>{% trans "Phonology Other" %}</th>
+                 {% for gv in gloss_variations %}
+                 <td class='th th-light'>{% value gv.phonOth %}</td>
+                 {% endfor %}
+                 </tr>
+                 <tr>
+                 <th>{% trans "Mouth Gesture" %}</th>
+                 {% for gv in gloss_variations %}
+                 <td class='th th-light'>{% value gv.mouthG %}</td>
+                 {% endfor %}
+                 </tr>
+                 <tr>
+                 <th>{% trans "Mouthing" %}</th>
+                 {% for gv in gloss_variations %}
+                 <td class='th th-light'>{% value gv.mouthing %}</td>
+                 {% endfor %}
+                 </tr>
+                 <tr>
+                 <th>{% trans "Phonetic Variation" %}</th>
+                 {% for gv in gloss_variations %}
+                 <td class='th th-light'>{% value gv.phonetVar %}</td>
+                 {% endfor %}
+                 </tr>
+            </tbody>
             </table>
+            {% endif %}
         </div>
     </div>
 
