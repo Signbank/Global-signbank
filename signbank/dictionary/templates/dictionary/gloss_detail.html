@@ -2535,13 +2535,16 @@ textarea:focus {
 	<div class="panel panel-default panel-light">
         <div class='panel-heading panel-light' id='phonological_variations_heading'
              data-toggle='collapse' data-target='#phonological_variations'>{% trans "Phonological Variations" %}
-                    {% if perms.dictionary.change_gloss %}
-                    <div class="pull-right">
-                        <a class='nav-link' href="{{PREFIX_URL}}/dictionary/gloss/phonological_variations/{{gloss.id}}">{% trans "Edit Phonological Variations" %}</a>
-                    </div>
-                    {% endif %}
         </div>
         <div id='phonological_variations' class='collapse'>
+                    {% if perms.dictionary.change_gloss %}
+                    <div>
+                        <button type="button" class="btn btn-default edit-variations button-to-appear-in-edit-mode"
+                                style="width:auto;"
+                                onclick='location.href="{{PREFIX_URL}}/dictionary/gloss/phonological_variations/{{gloss.id}}"'
+                                >{% trans "Edit Phonological Variations" %}</button>
+                    </div>
+                    {% endif %}
             {% if gloss_variations %}
             <table class='table table-condensed'>
             <thead>
@@ -3198,7 +3201,7 @@ textarea:focus {
         </div>
 
         <div id="exSentence" class="collapse">
-            <button onclick="location.href='{% url 'dictionary:add_annotated_media' glossid=gloss.id %}'" type="button " class='sense-button btn btn-primary btn-space'>{% trans "Add annotated media" %}</button>
+            <button onclick="location.href='{% url 'dictionary:add_annotated_media' glossid=gloss.id %}'" type="button" class='sense-button btn btn-primary btn-space'>{% trans "Add annotated media" %}</button>
 
             <table class='table table-condensed' style="width:100%;">
                 <tr style="display:flex; flex-wrap:wrap;">
