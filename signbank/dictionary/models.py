@@ -1079,8 +1079,8 @@ class Phonology(MetaModelMixin, models.Model):
 
     def display_weakdrop(self):
         if self.weakdrop is None:
-            return 'Neutral'
-        return _('True') if self.weakdrop else _('False')
+            return ''
+        return "+WD" if self.weakdrop else "-WD"
 
     def weakdrop_to_choice(self):
         # for use in form choices initial selected
@@ -1089,8 +1089,8 @@ class Phonology(MetaModelMixin, models.Model):
 
     def display_weakprop(self):
         if self.weakprop is None:
-            return 'Neutral'
-        return _('True') if self.weakprop else _('False')
+            return ''
+        return "+WP" if self.weakprop else "-WP"
 
     def weakprop_to_choice(self):
         # for use in form choices initial selected

@@ -439,11 +439,8 @@ def update_phonological_variation(request, variationid):
             if value == original_internal_value:
                 continue
             setattr(variation, field, value)
-
-
     variation.save()
-    return HttpResponseRedirect(
-        reverse('dictionary:phonological_variations', kwargs={'glossid':glossid}))
+    return JsonResponse({})
 
 
 @require_http_methods(["POST"])

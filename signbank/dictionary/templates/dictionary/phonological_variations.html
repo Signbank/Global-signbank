@@ -84,8 +84,6 @@ for (var key in handedness_weak_choices) {
 };
 </script>
 
-<script type="text/javascript" src="{{STATIC_URL}}js/jquery.jeditable.mini_colors.js"></script>
-<script type="text/javascript" src="{{STATIC_URL}}js/jquery.jeditable.checkbox.js"></script>
 <script type="text/javascript" src="{{STATIC_URL}}js/typeahead.bundle.min.js"></script>
 <script type='text/javascript' src="{{STATIC_URL}}js/phonology_edit_color.js"></script>
 
@@ -594,23 +592,41 @@ for (var key in handedness_weak_choices) {
              </tr>
              <tr>
                  <th>{% trans "Mouth Gesture" %}</th>
-                 <td class='td td-light'>{{gloss.mouthG}}</td>
+                 <td class='td td-light'>{% value gloss.mouthG %}</td>
                  {% for gv in gloss_variations %}
-                 <td class='edit edit_text td td-light' id="mouthG">{{gv.mouthG}}</td>
+                 {% with variation_forms|get_item:gv.id as variant_form %}
+                 {% with variant_form.fields|get_item:'mouthG' as mouthG_field %}
+                 <td class='td td-light'>
+                    <input name="mouthG" id="mouthG_{{gv.id}}" type="text" value="{{mouthG_field.initial}}">
+                 </td>
+                 {% endwith %}
+                 {% endwith %}
                  {% endfor %}
              </tr>
              <tr>
                  <th>{% trans "Mouthing" %}</th>
-                 <td class='td td-light'>{{gloss.mouthing}}</td>
+                 <td class='td td-light'>{% value gloss.mouthing %}</td>
                  {% for gv in gloss_variations %}
-                 <td class='edit edit_text td td-light' id="mouthing">{{gv.mouthing}}</td>
+                 {% with variation_forms|get_item:gv.id as variant_form %}
+                 {% with variant_form.fields|get_item:'mouthing' as mouthing_field %}
+                 <td class='td td-light'>
+                    <input name="mouthing" id="mouthing_{{gv.id}}" type="text" value="{{mouthing_field.initial}}">
+                 </td>
+                 {% endwith %}
+                 {% endwith %}
                  {% endfor %}
              </tr>
              <tr>
                  <th>{% trans "Phonetic Variation" %}</th>
-                 <td class='td td-light'>{{gloss.phonetVar}}</td>
+                 <td class='td td-light'>{% value gloss.phonetVar %}</td>
                  {% for gv in gloss_variations %}
-                 <td class='edit edit_text td td-light' id="phonetVar">{{gv.phonetVar}}</td>
+                 {% with variation_forms|get_item:gv.id as variant_form %}
+                 {% with variant_form.fields|get_item:'phonetVar' as phonetVar_field %}
+                 <td class='td td-light'>
+                    <input name="phonetVar" id="phonetVar_{{gv.id}}" type="text" value="{{phonetVar_field.initial}}">
+                 </td>
+                 {% endwith %}
+                 {% endwith %}
                  {% endfor %}
              </tr>
     </table>

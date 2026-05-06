@@ -486,7 +486,7 @@ def gloss_phonological_variations(request, glossid):
     static_choice_lists, static_choice_list_colors = get_static_choice_lists_per_field()
     context['static_choice_lists'] = static_choice_lists
     context['static_choice_list_colors'] = static_choice_list_colors
-    return render(request, 'dictionary/add_phonological_variation.html', context)
+    return render(request, 'dictionary/phonological_variations.html', context)
 
 
 def add_new_morpheme(request):

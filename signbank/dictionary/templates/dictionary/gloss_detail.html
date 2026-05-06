@@ -2556,13 +2556,7 @@ textarea:focus {
                  <tr>
                  <th>{% trans "Handedness" %}</th>
                  {% for gv in gloss_variations %}
-                 <td class='th th-light'>{{gv.display_handedness}}
-                     {% if gv.weakdrop is not None %}
-                        {% if gv.weakdrop %}&nbsp;&nbsp;+WD{% else %}&nbsp;&nbsp;-WD{% endif %}
-                     {% endif %}
-                     {% if gv.weakprop is not None %}
-                        {% if gv.weakprop %}&nbsp;&nbsp;+WP{% else %}&nbsp;&nbsp;-WP{% endif %}
-                     {% endif %}
+                 <td class='th th-light'>{{gv.display_handedness}} {{gv.display_weakdrop}} {{gv.display_weakprop}}
                  </td>
                  {% endfor %}
                  </tr>
