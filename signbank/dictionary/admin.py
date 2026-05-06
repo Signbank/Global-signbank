@@ -1594,6 +1594,9 @@ class PhonologicalVariationAdmin(admin.ModelAdmin):
     list_display = ("gloss", "variation", "handedness", "domhndsh", "subhndsh", "locprim")
     readonly_fields = ['gloss']
 
+    def has_add_permission(self, request):
+        return False
+
 
 admin.site.register(Dialect, DialectAdmin)
 admin.site.register(SignLanguage, SignLanguageAdmin)
