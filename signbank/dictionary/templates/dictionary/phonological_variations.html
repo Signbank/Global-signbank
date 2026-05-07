@@ -39,14 +39,12 @@ input[type="text"]:focus {
 
 <script type="text/javascript">
 var dark_mode = '{{request.session.dark_mode}}';
-var dark_mode_django = '{{dark_mode}}';
 var url = '{{PREFIX_URL}}';
 var csrf_token = '{{csrf_token}}';
 {% trans "Saving..." as saving_str %}
 var gloss_dataset_id = {{gloss.lemma.dataset.id}};
 var gloss_default_language_code = '{{gloss.lemma.dataset.default_language.language_code_2char}}';
 var saving_str = '{{saving_str|escapejs}}';
-var edit_post_url = '{% url 'dictionary:update_phonological_variation' gloss.id %}';
 
 var yes_str = "{% trans 'Yes' %}";
 var no_str = "{% trans 'No' %}";
@@ -55,33 +53,6 @@ var no_str = "{% trans 'No' %}";
 var edit_mode_str = '{{edit_mode_str|escapejs}}';
 var turn_off_edit_mode_str = '{{turn_off_edit_mode_str|escapejs}}';
 
-var phonology_list_kinds = {{phonology_list_kinds|safe}};
-var gloss_phonology = {{gloss_phonology|safe}};
-var choice_lists = [];
-var static_choice_lists = {{static_choice_lists|safe}};
-var original_static_choice_list_colors = {{static_choice_list_colors|safe}};
-var static_choice_list_colors = {};
-for (var field in original_static_choice_list_colors) {
-   var field_dict = original_static_choice_list_colors[field];
-   static_choice_list_colors[field] = {}
-   for (key in field_dict) {
-        value = field_dict[key];
-        if (value == 'ffffff' && dark_mode_django == 'True') {
-            static_choice_list_colors[field][key] = '000000';
-        } else {
-            static_choice_list_colors[field][key] = value;
-        }
-    }
-}
-var handedness_weak_choices = {{gloss.handedness_weak_choices|safe}};
-var handedness_weak_choices_colors = {};
-for (var key in handedness_weak_choices) {
-    if (dark_mode_django == 'True') {
-        handedness_weak_choices_colors[key] = '000000';
-    } else {
-        handedness_weak_choices_colors[key] = 'ffffff';
-    }
-};
 </script>
 
 <script type="text/javascript" src="{{STATIC_URL}}js/typeahead.bundle.min.js"></script>
