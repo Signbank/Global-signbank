@@ -69,6 +69,7 @@ from signbank.dictionary.models import (Dataset, UserProfile, AffiliatedUser, Af
                                         DerivationHistory, BlendMorphology, MorphologyDefinition, SimultaneousMorphologyDefinition,
                                         FieldChoice, FieldChoiceForeignKey, get_default_language_id, fieldname_to_kind,
                                         CATEGORY_MODELS_MAPPING, ExampleSentence, PhonologicalVariation)
+from signbank.dictionary.phonology_functions import show_fields_rows
 from signbank.dictionary.translate_choice_list import (machine_value_to_translated_human_value,
                                                        choicelist_queryset_to_translated_dict,
                                                        choicelist_queryset_to_machine_value_dict,
@@ -1493,6 +1494,7 @@ class GlossDetailView(DetailView):
                 context[topic+'_fields'].append([human_value, field, labels[field], fieldname_to_kind(field)])
 
         context['gloss_variations'] = PhonologicalVariation.objects.filter(gloss=gloss).order_by('variation')
+        context['show_field_row'] = show_fields_rows(gloss)
 
         (homonyms_of_this_gloss, homonyms_not_saved, saved_but_not_homonyms) = gl.homonyms()
         homonyms_different_phonology = []
