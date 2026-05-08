@@ -24,6 +24,10 @@ from signbank.dictionary.models import (Dataset, Gloss, AnnotatedSentence)
 from signbank.tools import get_two_letter_dir, api_fields, add_gloss_update_to_revision_history
 from signbank.api_token import put_api_user_in_request
 from signbank.abstract_machine import get_interface_language_api, retrieve_language_code_from_header
+from signbank.api_receipts import (
+    sha256_of_uploaded_file, current_gloss_video_summary, current_gloss_image_summary,
+    file_summary, evaluate_idempotency_headers, upload_receipt, now_iso,
+)
 from signbank.zip_interface import (check_subfolders_for_unzipping_ids, get_filenames, check_subfolders_for_unzipping,
                                     import_video_file, remove_video_file_from_import_videos, unzip_video_files_ids,
                                     unzip_video_files)
@@ -680,6 +684,20 @@ def api_add_video(request, gloss_id):
 
     dataset = gloss.lemma.dataset
     nr_of_videos = 0
+    # Track receipt info for the center upload (the common single-file case).
+    center_label_used = None
+    center_incoming = None         # (sha256, size)
+    center_previous = None         # summary of previously stored video, or None
+    center_stored = None           # summary of new on-disk file after save
+
+    # If the client sent If-None-Match / If-Match against the *current* center
+    # video, evaluate before consuming the upload stream.
+    has_center = any(l in request.FILES for l in CENTER_VIDEO_LABELS)
+    if has_center:
+        center_previous = current_gloss_video_summary(gloss)
+        cond_response = evaluate_idempotency_headers(request, center_previous)
+        if cond_response is not None:
+            return cond_response
 
     for label in CENTER_VIDEO_LABELS:
 
@@ -687,8 +705,17 @@ def api_add_video(request, gloss_id):
             continue
 
         vfile = request.FILES[label]
+        center_label_used = label
+        # Compute sha256 + size of the incoming file before save() consumes the stream.
+        sha, size = sha256_of_uploaded_file(vfile)
+        center_incoming = (sha, size)
         gloss_video = gloss.add_video(request.user, vfile, False)
         add_gloss_update_to_revision_history(request.user, gloss, 'gloss_video', '', str(gloss_video))
+        # Resolve the saved file's path so we can include stored_path / verified sha256.
+        try:
+            center_stored = file_summary(gloss_video.videofile.path)
+        except Exception:
+            center_stored = None
         nr_of_videos += 1
 
     for label in LEFT_VIDEO_LABELS:
@@ -711,7 +738,25 @@ def api_add_video(request, gloss_id):
         add_gloss_update_to_revision_history(request.user, gloss, 'gloss_perspectivevideo_right', '', str(right_perspective_video))
         nr_of_videos += 1
 
-    return JsonResponse({'message': gettext("Uploaded {nr_of_videos} videos to dataset {dataset}.").format(nr_of_videos=nr_of_videos, dataset=dataset)}, status=200)
+    msg = gettext("Uploaded {nr_of_videos} videos to dataset {dataset}.").format(nr_of_videos=nr_of_videos, dataset=dataset)
+    if center_incoming is not None:
+        receipt = upload_receipt(
+            ok=True,
+            gloss=gloss,
+            kind='video',
+            uploaded_at=now_iso(),
+            uploaded_by=getattr(request.user, 'username', None) or '',
+            incoming_sha256=center_incoming[0],
+            incoming_size=center_incoming[1],
+            stored_summary=center_stored,
+            previous_summary=center_previous,
+            message=msg,
+        )
+        receipt['nr_of_videos'] = nr_of_videos
+        receipt['label'] = center_label_used
+        return JsonResponse(receipt, status=200)
+    # No center upload (only side-cameras) — keep the legacy shape.
+    return JsonResponse({'message': msg, 'nr_of_videos': nr_of_videos}, status=200)
 
 
 @csrf_exempt
@@ -740,6 +785,15 @@ def api_add_image(request, gloss_id):
     goal_path = os.path.join(WRITABLE_FOLDER, GLOSS_IMAGE_DIRECTORY, gloss.lemma.dataset.acronym, get_two_letter_dir(gloss.idgloss))
     goal_location = os.path.join(goal_path, quote(image_file.name, safe=''))
 
+    # Idempotency: refuse on If-None-Match: * if anything is already stored for this gloss.
+    previous_image = current_gloss_image_summary(gloss)
+    cond_response = evaluate_idempotency_headers(request, previous_image)
+    if cond_response is not None:
+        return cond_response
+
+    # Hash the incoming bytes before save() consumes the stream.
+    incoming_sha, incoming_size = sha256_of_uploaded_file(image_file)
+
     if not os.path.exists(goal_path):
         try:
             os.makedirs(goal_path)
@@ -757,4 +811,16 @@ def api_add_image(request, gloss_id):
 
     destination.close()
 
-    return JsonResponse({'message': gettext('Image upload successful.')}, status=200)
+    receipt = upload_receipt(
+        ok=True,
+        gloss=gloss,
+        kind='image',
+        uploaded_at=now_iso(),
+        uploaded_by=getattr(request.user, 'username', None) or '',
+        incoming_sha256=incoming_sha,
+        incoming_size=incoming_size,
+        stored_summary=file_summary(goal_location),
+        previous_summary=previous_image,
+        message=gettext('Image upload successful.'),
+    )
+    return JsonResponse(receipt, status=200)
