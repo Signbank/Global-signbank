@@ -124,7 +124,17 @@ def update_gloss_columns_to_value_dict_keys(dataset, language_code):
 
 
 def get_gloss_update_human_readable_value_dict(request):
-    post_data = json.loads(request.body.decode('utf-8'))
+    # An empty body (e.g. on a DELETE without confirmation payload) used to raise
+    # a JSONDecodeError that escaped the view and produced a 500. Treat empty /
+    # invalid bodies as an empty value_dict so the view's own validation can
+    # respond with a meaningful 400 ("Gloss operation not confirmed").
+    raw = request.body.decode('utf-8') if request.body else ''
+    try:
+        post_data = json.loads(raw) if raw else {}
+    except json.JSONDecodeError:
+        post_data = {}
+    if not isinstance(post_data, dict):
+        post_data = {}
 
     value_dict = dict()
     for field in post_data.keys():
