@@ -45,7 +45,10 @@ def retrieve_language_code_from_header(url_language_code, api_accept_language_he
         # the url language code matches the one in the Accept-Language request
         return url_language_code
     # parse the language codes to get the first one
-    parsed_language_codes = parse_accept_lang_header(http_accept_language_header)
+    # `http_accept_language_header` can be None when the request omits the
+    # Accept-Language header. Django 4.2.x's parse_accept_lang_header(None)
+    # raises TypeError, so coerce to '' (which it handles cleanly).
+    parsed_language_codes = parse_accept_lang_header(http_accept_language_header or '')
     interface_language_code = parsed_language_codes[0][0] if parsed_language_codes else 'en'
     if interface_language_code not in MODELTRANSLATION_LANGUAGES:
         # requested language code is not available

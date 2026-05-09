@@ -124,7 +124,17 @@ def update_gloss_columns_to_value_dict_keys(dataset, language_code):
 
 
 def get_gloss_update_human_readable_value_dict(request):
-    post_data = json.loads(request.body.decode('utf-8'))
+    # An empty body (e.g. on a DELETE without confirmation payload) used to raise
+    # a JSONDecodeError that escaped the view and produced a 500. Treat empty /
+    # invalid bodies as an empty value_dict so the view's own validation can
+    # respond with a meaningful 400 ("Gloss operation not confirmed").
+    raw = request.body.decode('utf-8') if request.body else ''
+    try:
+        post_data = json.loads(raw) if raw else {}
+    except json.JSONDecodeError:
+        post_data = {}
+    if not isinstance(post_data, dict):
+        post_data = {}
 
     value_dict = dict()
     for field in post_data.keys():
@@ -535,9 +545,14 @@ def gloss_update_do_changes(user, gloss, changes, language_code):
                 changes_done.append((field.name, original_value, new_value))
         gloss.save()
         for field, original_human_value, glossrevision_newvalue in changes_done:
-            revision = GlossRevision(old_value=original_human_value,
-                                     new_value=glossrevision_newvalue,
-                                     field_name=field,
+            # GlossRevision.old_value / new_value are NOT NULL CharFields.
+            # When a field was previously NULL and now gets a value, original
+            # would be None — coerce both ends to "" to keep the constraint
+            # happy and avoid the entire transaction rolling back as a
+            # confusing "Transaction management error".
+            revision = GlossRevision(old_value=('' if original_human_value is None else str(original_human_value)),
+                                     new_value=('' if glossrevision_newvalue is None else str(glossrevision_newvalue)),
+                                     field_name=str(field) if not isinstance(field, str) else field,
                                      gloss=gloss,
                                      user=user,
                                      time=DT.datetime.now(tz=get_current_timezone()))
@@ -740,9 +755,11 @@ def api_update_gloss(request, datasetid, glossid, language_code='en'):
 
     try:
         gloss_update_do_changes(request.user, gloss, fields_to_update, interface_language_code)
-    except (TransactionManagementError, ValueError, IntegrityError):
+    except (TransactionManagementError, ValueError, IntegrityError) as exc:
+        # Surface the underlying exception type + message so the client can
+        # report something more useful than "Transaction management error."
         errors = dict()
-        errors[gettext('Exception')] = gettext("Transaction management error.")
+        errors[gettext('Exception')] = "{}: {}".format(type(exc).__name__, str(exc))
         results['errors'] = errors
         results['updatestatus'] = "Failed"
         return JsonResponse(results, status=400)
