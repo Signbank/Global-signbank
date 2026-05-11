@@ -53,6 +53,7 @@ var no_str = "{% trans 'No' %}";
 var edit_mode_str = '{{edit_mode_str|escapejs}}';
 var turn_off_edit_mode_str = '{{turn_off_edit_mode_str|escapejs}}';
 
+var gloss_phonology = {{gloss_phonology|safe}};
 </script>
 
 <script type="text/javascript" src="{{STATIC_URL}}js/typeahead.bundle.min.js"></script>
@@ -67,9 +68,14 @@ var turn_off_edit_mode_str = '{{turn_off_edit_mode_str|escapejs}}';
 
          <span id='edit_message' style="padding-right: 1.8em;"></span>
 
-         <button id='enable_edit'
-                 class='btn btn-primary navbar-btn edit-mode'
-                 style="width:auto;padding:3px 12px;">{% trans "Edit" %}</button>
+       <div>
+        {% csrf_token %}
+        <button id='add_variation_btn_{{gloss.id}}' class="btn btn-primary"
+            name='add_variation_{{gloss.id}}' data-type="gloss"
+            value='{{gloss.id}}' style="height:36px;width:auto;"
+            onclick='location.href="{{PREFIX_URL}}/dictionary/update/add_phonological_variation/{{gloss.id}}"'
+            type="button">{% trans "Add Phonological Variation" %}</button>
+       </div>
     </div>
 
     <div id="view_tabs" style="margin-right:15px;margin-top:10px;z-index:100;" class='view-tabs view-tabs-light'>
@@ -96,22 +102,42 @@ var turn_off_edit_mode_str = '{{turn_off_edit_mode_str|escapejs}}';
                  {% endfor %}
              </tr>
              <tr>
-                 <td class='td td-light' style="width:400px;"></td>
-                 <td class='td td-light'></td>
+                 <th class='td td-light' style="width:400px;"></th>
+                 <th class='td td-light' style="color:darkred">
+                     <button id='quick_save_btn_{{gloss.id}}' class="quick_save btn btn-primary"
+                        name='quick_save_{{gloss.id}}' data-type="gloss"
+                        value='{{gloss.id}}' style="height:36px;"
+                        type="button">{% trans "Save" %}</button>
+                 </th>
                  {% for gv in gloss_variations %}
-                 {% with variation_forms|get_item:gv.id as variant_form %}
                  <th class='td td-light' style="color:darkred">
                      <button id='quick_save_btn_{{gv.id}}' class="quick_save btn btn-primary"
-                        name='quick_save_{{gv.id}}'
+                        name='quick_save_{{gv.id}}' data-type="variant"
                         value='{{gv.id}}' style="height:36px;"
-                        type="submit">{% trans "Save" %} #{{gv.variation}}</button>
+                        type="button">{% trans "Save" %} #{{gv.variation}}</button>
+                     <button id='variant_delete_btn_{{gv.id}}' class="btn btn-primary"
+                        value='{{gv.id}}' style="height:36px;width:auto;"
+                        onclick='location.href="{{PREFIX_URL}}/dictionary/update/delete_phonological_variation/{{gv.pk}}"'
+
+                        type="button">{% trans "Delete" %} #{{gv.variation}}</button>
                  </th>
-                 {% endwith %}
                  {% endfor %}
              </tr>
              <tr>
                  <th>{% trans "Handedness" %}</th>
-                 <td class='td td-light' style="float:left;border-top:0px;">{{gloss.display_handedness}}</td>
+                 {% with gloss_form.fields|get_item:'handedness' as handedness_field %}
+                 <td class='td td-light'>
+                    <select name="handedness" id="handedness_{{gloss.id}}">
+                        {% for machine_value, opn in handedness_field.choices %}
+                        {% if opn == handedness_field.initial %}
+                        <option value={{machine_value}} selected="selected">{{opn}}</option>
+                        {% else %}
+                        <option value={{machine_value}}>{{opn}}</option>
+                        {% endif %}
+                        {% endfor %}
+                    </select>
+                 </td>
+                 {% endwith %}
                  {% for gv in gloss_variations %}
                  {% with variation_forms|get_item:gv.id as variant_form %}
                  {% with variant_form.fields|get_item:'handedness' as handedness_field %}
@@ -132,7 +158,19 @@ var turn_off_edit_mode_str = '{{turn_off_edit_mode_str|escapejs}}';
              </tr>
              <tr>
                  <th>{% trans "Weak Drop" %}</th>
-                 <td class='td td-light' style="float:left;border-top:0px;">{{gloss.display_weakdrop}}</td>
+                 {% with gloss_form.fields|get_item:'weakdrop' as weakdrop_field %}
+                 <td class='td td-light' style="float:left;border-top:0px;">
+                    <select name="weakdrop" id="weakdrop_{{gloss.id}}">
+                        {% for value, opn in weakdrop_field.choices %}
+                        {% if value == weakdrop_field.initial %}
+                        <option value={{value}} selected="selected">{{opn}}</option>
+                        {% else %}
+                        <option value={{value}}>{{opn}}</option>
+                        {% endif %}
+                        {% endfor %}
+                    </select>
+                 </td>
+                 {% endwith %}
                  {% for gv in gloss_variations %}
                  {% with variation_forms|get_item:gv.id as variant_form %}
                  {% with variant_form.fields|get_item:'weakdrop' as weakdrop_field %}
@@ -153,7 +191,19 @@ var turn_off_edit_mode_str = '{{turn_off_edit_mode_str|escapejs}}';
              </tr>
              <tr>
                  <th>{% trans "Weak Prop" %}</th>
-                 <td class='td td-light' style="float:left;border-top:0px;">{{gloss.display_weakprop}}</td>
+                 {% with gloss_form.fields|get_item:'weakprop' as weakprop_field %}
+                 <td class='td td-light' style="float:left;border-top:0px;">
+                    <select name="weakprop" id="weakprop_{{gloss.id}}">
+                        {% for value, opn in weakprop_field.choices %}
+                        {% if value == weakprop_field.initial %}
+                        <option value={{value}} selected="selected">{{opn}}</option>
+                        {% else %}
+                        <option value={{value}}>{{opn}}</option>
+                        {% endif %}
+                        {% endfor %}
+                    </select>
+                 </td>
+                 {% endwith %}
                  {% for gv in gloss_variations %}
                  {% with variation_forms|get_item:gv.id as variant_form %}
                  {% with variant_form.fields|get_item:'weakprop' as weakprop_field %}
@@ -174,7 +224,19 @@ var turn_off_edit_mode_str = '{{turn_off_edit_mode_str|escapejs}}';
              </tr>
              <tr>
                  <th>{% trans "Strong Hand" %}</th>
-                 <td class='td td-light'>{{gloss.display_domhndsh}}</td>
+                 {% with gloss_form.fields|get_item:'domhndsh' as domhndsh_field %}
+                 <td class='td td-light'>
+                    <select name="domhndsh" id="domhndsh_{{gloss.id}}">
+                        {% for machine_value, opn in domhndsh_field.choices %}
+                        {% if opn == domhndsh_field.initial %}
+                        <option value={{machine_value}} selected="selected">{{opn}}</option>
+                        {% else %}
+                        <option value={{machine_value}}>{{opn}}</option>
+                        {% endif %}
+                        {% endfor %}
+                    </select>
+                 </td>
+                 {% endwith %}
                  {% for gv in gloss_variations %}
                  {% with variation_forms|get_item:gv.id as variant_form %}
                  {% with variant_form.fields|get_item:'domhndsh' as domhndsh_field %}
@@ -196,7 +258,19 @@ var turn_off_edit_mode_str = '{{turn_off_edit_mode_str|escapejs}}';
 
             <tr>
                  <th>{% trans "letter" %}</th>
-                 <td class='td td-light'>{{gloss.display_domhndsh_letter}}</td>
+                 {% with gloss_form.fields|get_item:'domhndsh_letter' as domhndsh_letter_field %}
+                 <td class='td td-light'>
+                    <select name="domhndsh_letter" id="domhndsh_letter_{{gloss.id}}">
+                        {% for value, opn in domhndsh_letter_field.choices %}
+                        {% if opn == domhndsh_letter_field.initial %}
+                        <option value={{value}} selected="selected">{{opn}}</option>
+                        {% else %}
+                        <option value={{value}}>{{opn}}</option>
+                        {% endif %}
+                        {% endfor %}
+                    </select>
+                 </td>
+                 {% endwith %}
                  {% for gv in gloss_variations %}
                  {% with variation_forms|get_item:gv.id as variant_form %}
                  {% with variant_form.fields|get_item:'domhndsh_letter' as domhndsh_letter_field %}
@@ -218,7 +292,19 @@ var turn_off_edit_mode_str = '{{turn_off_edit_mode_str|escapejs}}';
 
             <tr>
                  <th>{% trans "number" %}</th>
-                 <td class='td td-light'>{{gloss.display_domhndsh_number}}</td>
+                 {% with gloss_form.fields|get_item:'domhndsh_number' as domhndsh_number_field %}
+                 <td class='td td-light'>
+                    <select name="domhndsh_number" id="domhndsh_number_{{gloss.id}}">
+                        {% for value, opn in domhndsh_number_field.choices %}
+                        {% if opn == domhndsh_number_field.initial %}
+                        <option value={{value}} selected="selected">{{opn}}</option>
+                        {% else %}
+                        <option value={{value}}>{{opn}}</option>
+                        {% endif %}
+                        {% endfor %}
+                    </select>
+                 </td>
+                 {% endwith %}
                  {% for gv in gloss_variations %}
                  {% with variation_forms|get_item:gv.id as variant_form %}
                  {% with variant_form.fields|get_item:'domhndsh_number' as domhndsh_number_field %}
@@ -240,7 +326,19 @@ var turn_off_edit_mode_str = '{{turn_off_edit_mode_str|escapejs}}';
 
              <tr>
                  <th>{% trans "Weak Hand" %}</th>
-                 <td class='td td-light'>{{gloss.display_subhndsh}}</td>
+                 {% with gloss_form.fields|get_item:'subhndsh' as subhndsh_field %}
+                 <td class='td td-light'>
+                    <select name="subhndsh" id="subhndsh_{{gloss.id}}">
+                        {% for machine_value, opn in subhndsh_field.choices %}
+                        {% if opn == subhndsh_field.initial %}
+                        <option value={{machine_value}} selected="selected">{{opn}}</option>
+                        {% else %}
+                        <option value={{machine_value}}>{{opn}}</option>
+                        {% endif %}
+                        {% endfor %}
+                    </select>
+                 </td>
+                 {% endwith %}
                  {% for gv in gloss_variations %}
                  {% with variation_forms|get_item:gv.id as variant_form %}
                  {% with variant_form.fields|get_item:'subhndsh' as subhndsh_field %}
@@ -262,7 +360,19 @@ var turn_off_edit_mode_str = '{{turn_off_edit_mode_str|escapejs}}';
 
             <tr>
                  <th>{% trans "letter" %}</th>
-                 <td class='td td-light'>{{gloss.display_subhndsh_letter}}</td>
+                 {% with gloss_form.fields|get_item:'subhndsh_letter' as subhndsh_letter_field %}
+                 <td class='td td-light'>
+                    <select name="subhndsh_letter" id="subhndsh_letter_{{gloss.id}}">
+                        {% for value, opn in subhndsh_letter_field.choices %}
+                        {% if opn == subhndsh_letter_field.initial %}
+                        <option value={{value}} selected="selected">{{opn}}</option>
+                        {% else %}
+                        <option value={{value}}>{{opn}}</option>
+                        {% endif %}
+                        {% endfor %}
+                    </select>
+                 </td>
+                 {% endwith %}
                  {% for gv in gloss_variations %}
                  {% with variation_forms|get_item:gv.id as variant_form %}
                  {% with variant_form.fields|get_item:'subhndsh_letter' as subhndsh_letter_field %}
@@ -284,7 +394,19 @@ var turn_off_edit_mode_str = '{{turn_off_edit_mode_str|escapejs}}';
 
             <tr>
                  <th>{% trans "number" %}</th>
-                 <td class='td td-light'>{{gloss.display_subhndsh_number}}</td>
+                 {% with gloss_form.fields|get_item:'subhndsh_number' as subhndsh_number_field %}
+                 <td class='td td-light'>
+                    <select name="subhndsh_number" id="subhndsh_number_{{gloss.id}}">
+                        {% for value, opn in subhndsh_number_field.choices %}
+                        {% if opn == subhndsh_number_field.initial %}
+                        <option value={{value}} selected="selected">{{opn}}</option>
+                        {% else %}
+                        <option value={{value}}>{{opn}}</option>
+                        {% endif %}
+                        {% endfor %}
+                    </select>
+                 </td>
+                 {% endwith %}
                  {% for gv in gloss_variations %}
                  {% with variation_forms|get_item:gv.id as variant_form %}
                  {% with variant_form.fields|get_item:'subhndsh_number' as subhndsh_number_field %}
@@ -306,7 +428,19 @@ var turn_off_edit_mode_str = '{{turn_off_edit_mode_str|escapejs}}';
 
              <tr>
                  <th>{% trans "Handshape Change" %}</th>
-                 <td class='td td-light'>{{gloss.display_handCh}}</td>
+                 {% with gloss_form.fields|get_item:'handCh' as handCh_field %}
+                 <td class='td td-light'>
+                    <select name="handCh" id="handCh_{{gloss.id}}">
+                        {% for machine_value, opn in handCh_field.choices %}
+                        {% if opn == handCh_field.initial %}
+                        <option value={{machine_value}} selected="selected">{{opn}}</option>
+                        {% else %}
+                        <option value={{machine_value}}>{{opn}}</option>
+                        {% endif %}
+                        {% endfor %}
+                    </select>
+                 </td>
+                 {% endwith %}
                  {% for gv in gloss_variations %}
                  {% with variation_forms|get_item:gv.id as variant_form %}
                  {% with variant_form.fields|get_item:'handCh' as handCh_field %}
@@ -327,7 +461,19 @@ var turn_off_edit_mode_str = '{{turn_off_edit_mode_str|escapejs}}';
              </tr>
              <tr>
                  <th>{% trans "Relation between Articulators" %}</th>
-                 <td class='td td-light'>{{gloss.display_relatArtic}}</td>
+                 {% with gloss_form.fields|get_item:'relatArtic' as relatArtic_field %}
+                 <td class='td td-light'>
+                    <select name="relatArtic" id="relatArtic_{{gloss.id}}">
+                        {% for machine_value, opn in relatArtic_field.choices %}
+                        {% if opn == relatArtic_field.initial %}
+                        <option value={{machine_value}} selected="selected">{{opn}}</option>
+                        {% else %}
+                        <option value={{machine_value}}>{{opn}}</option>
+                        {% endif %}
+                        {% endfor %}
+                    </select>
+                 </td>
+                 {% endwith %}
                  {% for gv in gloss_variations %}
                  {% with variation_forms|get_item:gv.id as variant_form %}
                  {% with variant_form.fields|get_item:'relatArtic' as relatArtic_field %}
@@ -348,7 +494,19 @@ var turn_off_edit_mode_str = '{{turn_off_edit_mode_str|escapejs}}';
              </tr>
              <tr>
                  <th>{% trans "Location" %}</th>
-                 <td class='td td-light'>{{gloss.display_locprim}}</td>
+                 {% with gloss_form.fields|get_item:'locprim' as locprim_field %}
+                 <td class='td td-light'>
+                    <select name="locprim" id="locprim_{{gloss.id}}">
+                        {% for machine_value, opn in locprim_field.choices %}
+                        {% if opn == locprim_field.initial %}
+                        <option value={{machine_value}} selected="selected">{{opn}}</option>
+                        {% else %}
+                        <option value={{machine_value}}>{{opn}}</option>
+                        {% endif %}
+                        {% endfor %}
+                    </select>
+                 </td>
+                 {% endwith %}
                  {% for gv in gloss_variations %}
                  {% with variation_forms|get_item:gv.id as variant_form %}
                  {% with variant_form.fields|get_item:'locprim' as locprim_field %}
@@ -369,7 +527,19 @@ var turn_off_edit_mode_str = '{{turn_off_edit_mode_str|escapejs}}';
              </tr>
              <tr>
                  <th>{% trans "Contact Type" %}</th>
-                 <td class='td td-light'>{{gloss.display_contType}}</td>
+                 {% with gloss_form.fields|get_item:'contType' as contType_field %}
+                 <td class='td td-light'>
+                    <select name="contType" id="contType_{{gloss.id}}">
+                        {% for machine_value, opn in contType_field.choices %}
+                        {% if opn == contType_field.initial %}
+                        <option value={{machine_value}} selected="selected">{{opn}}</option>
+                        {% else %}
+                        <option value={{machine_value}}>{{opn}}</option>
+                        {% endif %}
+                        {% endfor %}
+                    </select>
+                 </td>
+                 {% endwith %}
                  {% for gv in gloss_variations %}
                  {% with variation_forms|get_item:gv.id as variant_form %}
                  {% with variant_form.fields|get_item:'contType' as contType_field %}
@@ -390,7 +560,19 @@ var turn_off_edit_mode_str = '{{turn_off_edit_mode_str|escapejs}}';
              </tr>
              <tr>
                  <th>{% trans "Movement Shape" %}</th>
-                 <td class='td td-light'>{{gloss.display_movSh}}</td>
+                 {% with gloss_form.fields|get_item:'movSh' as movSh_field %}
+                 <td class='td td-light'>
+                    <select name="movSh" id="movSh_{{gloss.id}}">
+                        {% for machine_value, opn in movSh_field.choices %}
+                        {% if opn == movSh_field.initial %}
+                        <option value={{machine_value}} selected="selected">{{opn}}</option>
+                        {% else %}
+                        <option value={{machine_value}}>{{opn}}</option>
+                        {% endif %}
+                        {% endfor %}
+                    </select>
+                 </td>
+                 {% endwith %}
                  {% for gv in gloss_variations %}
                  {% with variation_forms|get_item:gv.id as variant_form %}
                  {% with variant_form.fields|get_item:'movSh' as movSh_field %}
@@ -411,7 +593,19 @@ var turn_off_edit_mode_str = '{{turn_off_edit_mode_str|escapejs}}';
              </tr>
              <tr>
                  <th>{% trans "Movement Direction" %}</th>
-                 <td class='td td-light'>{{gloss.display_movDir}}</td>
+                 {% with gloss_form.fields|get_item:'movDir' as movDir_field %}
+                 <td class='td td-light'>
+                    <select name="movDir" id="movDir_{{gloss.id}}">
+                        {% for machine_value, opn in movDir_field.choices %}
+                        {% if opn == movDir_field.initial %}
+                        <option value={{machine_value}} selected="selected">{{opn}}</option>
+                        {% else %}
+                        <option value={{machine_value}}>{{opn}}</option>
+                        {% endif %}
+                        {% endfor %}
+                    </select>
+                 </td>
+                 {% endwith %}
                  {% for gv in gloss_variations %}
                  {% with variation_forms|get_item:gv.id as variant_form %}
                  {% with variant_form.fields|get_item:'movDir' as movDir_field %}
@@ -432,7 +626,19 @@ var turn_off_edit_mode_str = '{{turn_off_edit_mode_str|escapejs}}';
              </tr>
               <tr>
                  <th>{% trans "Repeating Movement" %}</th>
-                 <td class='td td-light'>{{gloss.display_repeat}}</td>
+                 {% with gloss_form.fields|get_item:'repeat' as repeat_field %}
+                 <td class='td td-light'>
+                    <select name="repeat" id="repeat_{{gloss.id}}">
+                        {% for value, opn in repeat_field.choices %}
+                        {% if opn == repeat_field.initial %}
+                        <option value={{value}} selected="selected">{{opn}}</option>
+                        {% else %}
+                        <option value={{value}}>{{opn}}</option>
+                        {% endif %}
+                        {% endfor %}
+                    </select>
+                 </td>
+                 {% endwith %}
                  {% for gv in gloss_variations %}
                  {% with variation_forms|get_item:gv.id as variant_form %}
                  {% with variant_form.fields|get_item:'repeat' as repeat_field %}
@@ -453,7 +659,19 @@ var turn_off_edit_mode_str = '{{turn_off_edit_mode_str|escapejs}}';
              </tr>
              <tr>
                  <th>{% trans "Alternating Movement" %}</th>
-                 <td class='td td-light'>{{gloss.display_altern}}</td>
+                 {% with gloss_form.fields|get_item:'altern' as altern_field %}
+                 <td class='td td-light'>
+                    <select name="altern" id="altern_{{gloss.id}}">
+                        {% for value, opn in altern_field.choices %}
+                        {% if opn == altern_field.initial %}
+                        <option value={{value}} selected="selected">{{opn}}</option>
+                        {% else %}
+                        <option value={{value}}>{{opn}}</option>
+                        {% endif %}
+                        {% endfor %}
+                    </select>
+                 </td>
+                 {% endwith %}
                  {% for gv in gloss_variations %}
                  {% with variation_forms|get_item:gv.id as variant_form %}
                  {% with variant_form.fields|get_item:'altern' as altern_field %}
@@ -474,7 +692,19 @@ var turn_off_edit_mode_str = '{{turn_off_edit_mode_str|escapejs}}';
              </tr>
              <tr>
                  <th>{% trans "Relative Orientation: Movement" %}</th>
-                 <td class='td td-light'>{{gloss.display_relOriMov}}</td>
+                 {% with gloss_form.fields|get_item:'relOriMov' as relOriMov_field %}
+                 <td class='td td-light'>
+                    <select name="relOriMov" id="relOriMov_{{gloss.id}}">
+                        {% for machine_value, opn in relOriMov_field.choices %}
+                        {% if opn == relOriMov_field.initial %}
+                        <option value={{machine_value}} selected="selected">{{opn}}</option>
+                        {% else %}
+                        <option value={{machine_value}}>{{opn}}</option>
+                        {% endif %}
+                        {% endfor %}
+                    </select>
+                 </td>
+                 {% endwith %}
                  {% for gv in gloss_variations %}
                  {% with variation_forms|get_item:gv.id as variant_form %}
                  {% with variant_form.fields|get_item:'relOriMov' as relOriMov_field %}
@@ -495,7 +725,19 @@ var turn_off_edit_mode_str = '{{turn_off_edit_mode_str|escapejs}}';
              </tr>
              <tr>
                  <th>{% trans "Relative Orientation: Location" %}</th>
-                 <td class='td td-light'>{{gloss.display_relOriLoc}}</td>
+                 {% with gloss_form.fields|get_item:'relOriLoc' as relOriLoc_field %}
+                 <td class='td td-light'>
+                    <select name="relOriLoc" id="relOriLoc_{{gloss.id}}">
+                        {% for machine_value, opn in relOriLoc_field.choices %}
+                        {% if opn == relOriLoc_field.initial %}
+                        <option value={{machine_value}} selected="selected">{{opn}}</option>
+                        {% else %}
+                        <option value={{machine_value}}>{{opn}}</option>
+                        {% endif %}
+                        {% endfor %}
+                    </select>
+                 </td>
+                 {% endwith %}
                  {% for gv in gloss_variations %}
                  {% with variation_forms|get_item:gv.id as variant_form %}
                  {% with variant_form.fields|get_item:'relOriLoc' as relOriLoc_field %}
@@ -516,7 +758,19 @@ var turn_off_edit_mode_str = '{{turn_off_edit_mode_str|escapejs}}';
              </tr>
              <tr>
                  <th>{% trans "Orientation Change" %}</th>
-                 <td class='td td-light'>{{gloss.display_oriCh}}</td>
+                 {% with gloss_form.fields|get_item:'oriCh' as oriCh_field %}
+                 <td class='td td-light'>
+                    <select name="oriCh" id="oriCh_{{gloss.id}}">
+                        {% for machine_value, opn in oriCh_field.choices %}
+                        {% if opn == oriCh_field.initial %}
+                        <option value={{machine_value}} selected="selected">{{opn}}</option>
+                        {% else %}
+                        <option value={{machine_value}}>{{opn}}</option>
+                        {% endif %}
+                        {% endfor %}
+                    </select>
+                 </td>
+                 {% endwith %}
                  {% for gv in gloss_variations %}
                  {% with variation_forms|get_item:gv.id as variant_form %}
                  {% with variant_form.fields|get_item:'oriCh' as oriCh_field %}
@@ -537,7 +791,11 @@ var turn_off_edit_mode_str = '{{turn_off_edit_mode_str|escapejs}}';
              </tr>
              <tr>
                  <th>{% trans "Virtual Object" %}</th>
-                 <td class='td td-light'>{% value gloss.locVirtObj %}</td>
+                 {% with gloss_form.fields|get_item:'locVirtObj' as locVirtObj_field %}
+                 <td class='td td-light'>
+                    <input name="locVirtObj" id="locVirtObj_{{gloss.id}}" type="text" value="{{locVirtObj_field.initial}}">
+                 </td>
+                 {% endwith %}
                  {% for gv in gloss_variations %}
                  {% with variation_forms|get_item:gv.id as variant_form %}
                  {% with variant_form.fields|get_item:'locVirtObj' as locVirtObj_field %}
@@ -550,7 +808,11 @@ var turn_off_edit_mode_str = '{{turn_off_edit_mode_str|escapejs}}';
              </tr>
              <tr>
                  <th>{% trans "Phonology Other" %}</th>
-                 <td class='td td-light'>{% value gloss.phonOth %}</td>
+                 {% with gloss_form.fields|get_item:'phonOth' as phonOth_field %}
+                 <td class='td td-light'>
+                    <input name="phonOth" id="phonOth_{{gloss.id}}" type="text" value="{{phonOth_field.initial}}">
+                 </td>
+                 {% endwith %}
                  {% for gv in gloss_variations %}
                  {% with variation_forms|get_item:gv.id as variant_form %}
                  {% with variant_form.fields|get_item:'phonOth' as phonOth_field %}
@@ -563,7 +825,11 @@ var turn_off_edit_mode_str = '{{turn_off_edit_mode_str|escapejs}}';
              </tr>
              <tr>
                  <th>{% trans "Mouth Gesture" %}</th>
-                 <td class='td td-light'>{% value gloss.mouthG %}</td>
+                 {% with gloss_form.fields|get_item:'mouthG' as mouthG_field %}
+                 <td class='td td-light'>
+                    <input name="mouthG" id="mouthG_{{gloss.id}}" type="text" value="{{mouthG_field.initial}}">
+                 </td>
+                 {% endwith %}
                  {% for gv in gloss_variations %}
                  {% with variation_forms|get_item:gv.id as variant_form %}
                  {% with variant_form.fields|get_item:'mouthG' as mouthG_field %}
@@ -576,7 +842,11 @@ var turn_off_edit_mode_str = '{{turn_off_edit_mode_str|escapejs}}';
              </tr>
              <tr>
                  <th>{% trans "Mouthing" %}</th>
-                 <td class='td td-light'>{% value gloss.mouthing %}</td>
+                 {% with gloss_form.fields|get_item:'mouthing' as mouthing_field %}
+                 <td class='td td-light'>
+                    <input name="mouthing" id="mouthing_{{gloss.id}}" type="text" value="{{mouthing_field.initial}}">
+                 </td>
+                 {% endwith %}
                  {% for gv in gloss_variations %}
                  {% with variation_forms|get_item:gv.id as variant_form %}
                  {% with variant_form.fields|get_item:'mouthing' as mouthing_field %}
@@ -589,7 +859,11 @@ var turn_off_edit_mode_str = '{{turn_off_edit_mode_str|escapejs}}';
              </tr>
              <tr>
                  <th>{% trans "Phonetic Variation" %}</th>
-                 <td class='td td-light'>{% value gloss.phonetVar %}</td>
+                 {% with gloss_form.fields|get_item:'phonetVar' as phonetVar_field %}
+                 <td class='td td-light'>
+                    <input name="phonetVar" id="phonetVar_{{gloss.id}}" type="text" value="{{phonetVar_field.initial}}">
+                 </td>
+                 {% endwith %}
                  {% for gv in gloss_variations %}
                  {% with variation_forms|get_item:gv.id as variant_form %}
                  {% with variant_form.fields|get_item:'phonetVar' as phonetVar_field %}
@@ -603,180 +877,6 @@ var turn_off_edit_mode_str = '{{turn_off_edit_mode_str|escapejs}}';
     </table>
     </div>
 <br><br>
-   {% if perms.dictionary.add_gloss %}
-   <h4>{% trans "Add Phonological Variation" %}</h4>
-   <div>
-     <form action='{% url "dictionary:add_phonological_variation" glossid=gloss.id %}' method='POST' enctype="multipart/form-data">
-         {% csrf_token %}
-         <table class='table table-condensed table-condensed-light' style='width: 1200px;'>
 
-             <tr>
-                 {% with add_variation_form.fields|get_item:'handedness' as handedness_field %}
-                 <th><label for="handedness">{{handedness_field.label}}</label></th>
-                 <td class='td td-light'>
-                    <select name="handedness" id="handedness">
-                        {% for value, text in handedness_field.choices %}
-                        <option value={{value}}>{{text}}</option>
-                        {% endfor %}
-                    </select></td>
-                 {% endwith %}
-             </tr>
-
-             <tr>
-                 {% with add_variation_form.fields|get_item:'domhndsh' as domhndsh_field %}
-                 <th><label for="domhndsh">{{domhndsh_field.label}}</label></th>
-                 <td class='td td-light'>
-                    <select name="domhndsh" id="domhndsh">
-                        {% for value, text in domhndsh_field.choices %}
-                        <option value={{value}}>{{text}}</option>
-                        {% endfor %}
-                    </select></td>
-                 {% endwith %}
-             </tr>
-
-             <tr>
-                 {% with add_variation_form.fields|get_item:'domhndsh_letter' as domhndsh_letter_field %}
-                 <th><label for="domhndsh_letter">{{domhndsh_letter_field.label}}</label></th>
-                 <td class='td td-light'>
-                    <select name="domhndsh_letter" id="domhndsh_letter">
-                        {% for value, text in domhndsh_letter_field.choices %}
-                        <option value={{value}}>{{text}}</option>
-                        {% endfor %}
-                    </select></td>
-                 {% endwith %}
-             </tr>
-
-             <tr>
-                 {% with add_variation_form.fields|get_item:'domhndsh_number' as domhndsh_number_field %}
-                 <th><label for="domhndsh_number">{{domhndsh_number_field.label}}</label></th>
-                 <td class='td td-light'>
-                    <select name="domhndsh_number" id="domhndsh_number">
-                        {% for value, text in domhndsh_number_field.choices %}
-                        <option value={{value}}>{{text}}</option>
-                        {% endfor %}
-                    </select></td>
-                 {% endwith %}
-             </tr>
-
-             <tr>
-                 {% with add_variation_form.fields|get_item:'subhndsh' as subhndsh_field %}
-                 <th><label for="subhndsh">{{subhndsh_field.label}}</label></th>
-                 <td class='td td-light'>
-                    <select name="subhndsh" id="subhndsh">
-                        {% for value, text in subhndsh_field.choices %}
-                        <option value={{value}}>{{text}}</option>
-                        {% endfor %}
-                    </select></td>
-                 {% endwith %}
-             </tr>
-
-             <tr>
-                 {% with add_variation_form.fields|get_item:'subhndsh_letter' as subhndsh_letter_field %}
-                 <th><label for="subhndsh_letter">{{subhndsh_letter_field.label}}</label></th>
-                 <td class='td td-light'>
-                    <select name="subhndsh_letter" id="subhndsh_letter">
-                        {% for value, text in subhndsh_letter_field.choices %}
-                        <option value={{value}}>{{text}}</option>
-                        {% endfor %}
-                    </select></td>
-                 {% endwith %}
-             </tr>
-
-             <tr>
-                 {% with add_variation_form.fields|get_item:'subhndsh_number' as subhndsh_number_field %}
-                 <th><label for="subhndsh_number">{{subhndsh_number_field.label}}</label></th>
-                 <td class='td td-light'>
-                    <select name="subhndsh_number" id="subhndsh_number">
-                        {% for value, text in subhndsh_number_field.choices %}
-                        <option value={{value}}>{{text}}</option>
-                        {% endfor %}
-                    </select></td>
-                 {% endwith %}
-             </tr>
-
-             <tr>
-                 {% with add_variation_form.fields|get_item:'handCh' as handCh_field %}
-                 <th><label for="handCh">{{handCh_field.label}}</label></th>
-                 <td class='td td-light'>
-                    <select name="handCh" id="handCh">
-                        {% for value, text in handCh_field.choices %}
-                        <option value={{value}}>{{text}}</option>
-                        {% endfor %}
-                    </select></td>
-                 {% endwith %}
-             </tr>
-             <tr>
-                 {% with add_variation_form.fields|get_item:'relatArtic' as relatArtic_field %}
-                 <th><label for="relatArtic">{{relatArtic_field.label}}</label></th>
-                 <td class='td td-light'>
-                    <select name="relatArtic" id="relatArtic">
-                        {% for value, text in relatArtic_field.choices %}
-                        <option value={{value}}>{{text}}</option>
-                        {% endfor %}
-                    </select></td>
-                 {% endwith %}
-             </tr>
-             <tr>
-                 {% with add_variation_form.fields|get_item:'locprim' as locprim_field %}
-                 <th><label for="locprim">{{locprim_field.label}}</label></th>
-                 <td class='td td-light'>
-                    <select name="locprim" id="locprim">
-                        {% for value, text in locprim_field.choices %}
-                        <option value={{value}}>{{text}}</option>
-                        {% endfor %}
-                    </select></td>
-                 {% endwith %}
-             </tr>
-             <tr>
-                 {% with add_variation_form.fields|get_item:'contType' as contType_field %}
-                 <th><label for="contType">{{contType_field.label}}</label></th>
-                 <td class='td td-light'>
-                    <select name="contType" id="contType">
-                        {% for value, text in contType_field.choices %}
-                        <option value={{value}}>{{text}}</option>
-                        {% endfor %}
-                    </select></td>
-                 {% endwith %}
-             </tr>
-             <tr>
-                 {% with add_variation_form.fields|get_item:'movSh' as movSh_field %}
-                 <th><label for="movSh">{{movSh_field.label}}</label></th>
-                 <td class='td td-light'>
-                    <select name="movSh" id="movSh">
-                        {% for value, text in movSh_field.choices %}
-                        <option value={{value}}>{{text}}</option>
-                        {% endfor %}
-                    </select></td>
-                 {% endwith %}
-             </tr>
-             <tr>
-                 {% with add_variation_form.fields|get_item:'movDir' as movDir_field %}
-                 <th><label for="movDir">{{movDir_field.label}}</label></th>
-                 <td class='td td-light'>
-                    <select name="movDir" id="movDir">
-                        {% for value, text in movDir_field.choices %}
-                        <option value={{value}}>{{text}}</option>
-                        {% endfor %}
-                    </select></td>
-                 {% endwith %}
-             </tr>
-             <tr>
-                 {% with add_variation_form.fields|get_item:'oriCh' as oriCh_field %}
-                 <th><label for="oriCh">{{oriCh_field.label}}</label></th>
-                 <td class='td td-light'>
-                    <select name="oriCh" id="oriCh">
-                        {% for value, text in oriCh_field.choices %}
-                        <option value={{value}}>{{text}}</option>
-                        {% endfor %}
-                    </select></td>
-                 {% endwith %}
-             </tr>
-         </table>
-
-     <input class='btn btn-primary' type='submit' value='{% trans "Add Phonological Variation" %}'>
-     </form>
-
-   </div>
-  {% endif %}
 <br><br><br>
 {% endblock %}

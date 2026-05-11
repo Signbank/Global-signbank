@@ -46,7 +46,8 @@ from signbank.dictionary.models import (Dataset, Language, Gloss, Morpheme, Lemm
                                         DeletedGlossOrMedia,
                                         get_default_language_id, CATEGORY_MODELS_MAPPING, PhonologicalVariation)
 from signbank.dictionary.forms import (LemmaCreateForm, GlossCreateForm, MorphemeCreateForm, ImageUploadForHandshapeForm,
-                                       ImageUploadForGlossForm, CSVUploadForm, PhonologicalVariationCreateForm, PhonologicalVariationUpdateForm)
+                                       ImageUploadForGlossForm, CSVUploadForm, PhonologicalVariationCreateForm,
+                                       PhonologicalVariationUpdateForm, PhonologyUpdateForm)
 from signbank.dictionary.update import update_dialect
 from signbank.dictionary.update_csv import (update_simultaneous_morphology, update_blend_morphology,
                                             update_sequential_morphology, subst_relations, subst_foreignrelations,
@@ -464,9 +465,12 @@ def gloss_phonological_variations(request, glossid):
     context['USE_REGULAR_EXPRESSIONS'] = USE_REGULAR_EXPRESSIONS
 
     context['gloss'] = gloss
-    context['add_variation_form'] = PhonologicalVariationCreateForm(gloss=gloss)
     context['gloss_variations'] = PhonologicalVariation.objects.filter(gloss=gloss).order_by('variation')
-    context['variation_forms'] = { gv.variation: PhonologicalVariationUpdateForm(variantid=gv.id) for gv in context['gloss_variations']}
+    variation_forms = dict()
+    for variation in context['gloss_variations']:
+        variation_forms[variation.pk] = PhonologicalVariationUpdateForm(variantid=variation.pk)
+    context['variation_forms'] = variation_forms
+    context['gloss_form'] = PhonologyUpdateForm(glossid=gloss.id)
 
     (interface_language, interface_language_code,
      default_language, default_language_code) = get_interface_language_and_default_language_codes(request)
@@ -482,10 +486,6 @@ def gloss_phonological_variations(request, glossid):
         context['annotation_idgloss'][language] = annotation_text
 
     context['gloss_phonology'] = FIELDS['phonology']
-    context['phonology_list_kinds'] = get_phonology_list_kinds()
-    static_choice_lists, static_choice_list_colors = get_static_choice_lists_per_field()
-    context['static_choice_lists'] = static_choice_lists
-    context['static_choice_list_colors'] = static_choice_list_colors
     return render(request, 'dictionary/phonological_variations.html', context)
 
 
