@@ -57,12 +57,15 @@ class DatasetAdmin(GuardedModelAdmin):
         return False
 
     def get_readonly_fields(self, request, obj=None):
-        if obj is not None and request.user not in obj.owners.all() and not request.user.is_superuser:
-            return self.readonly_fields
-        return []
+        readonly_fields = list(super().get_readonly_fields(request, obj))
+        if obj is not None and not request.user.is_superuser and not obj.owners.filter(pk=request.user.pk).exists():
+            return readonly_fields
+        return [field for field in readonly_fields if field not in ('acronym', 'default_language')]
 
     def has_change_permission(self, request, obj=None):
-        if obj is not None and request.user not in obj.owners.all() and not request.user.is_superuser:
+        if not super().has_change_permission(request, obj):
+            return False
+        if obj is not None and not request.user.is_superuser and not obj.owners.filter(pk=request.user.pk).exists():
             return False
         return True
 
