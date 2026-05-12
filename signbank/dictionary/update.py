@@ -357,6 +357,9 @@ def add_phonological_variation(request, glossid):
             setattr(new_variation, field, '')
 
     new_variation.save()
+
+    gloss.lastUpdated = DT.datetime.now(tz=get_current_timezone())
+
     return HttpResponseRedirect(
         reverse('dictionary:phonological_variations', kwargs={'glossid': str(gloss.pk)}))
 
@@ -371,6 +374,12 @@ def delete_phonological_variation(request, variationid):
     gloss = variation.gloss
     variation.delete()
 
+    revised_variations = PhonologicalVariation.objects.filter(gloss=gloss)
+    for inx, variant in enumerate(revised_variations, 2):
+        variant.variation = inx
+        variant.save()
+
+    gloss.lastUpdated = DT.datetime.now(tz=get_current_timezone())
     return HttpResponseRedirect(
         reverse('dictionary:phonological_variations', kwargs={'glossid': str(gloss.pk)}))
 
@@ -469,7 +478,9 @@ def update_phonological_variation(request, variationid):
                 continue
             setattr(variation, field, value)
     variation.save()
-    return JsonResponse({})
+    variation.gloss.lastUpdated = DT.datetime.now(tz=get_current_timezone())
+    result = {'variationid': variationid}
+    return JsonResponse(result)
 
 
 @require_http_methods(["POST"])

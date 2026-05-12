@@ -1,11 +1,18 @@
 
-var busy_editing = 0;
 
 function toggle_save(data) {
     if ($.isEmptyObject(data)) {
+        var feedbackElt ='#feedback';
+        $(feedbackElt).empty();
+        var feedback = "<span class='item'>"+phonology_saved_str+"&nbsp; &nbsp; <span class='delete-btn'>&times;</span></span>";
+        $(feedbackElt).html(feedback);
         return;
     }
-    return;
+    var variationid = data.variationid;
+    var feedbackElt ='#feedback_'+variationid;
+    $(feedbackElt).empty();
+    var feedback = "<span class='item'>"+phonology_saved_str+"&nbsp; &nbsp;  <span class='delete-btn' data-value='"+variationid+"'>&times;</span></span>";
+    $(feedbackElt).html(feedback);
 }
 
  $(document).ready(function() {
@@ -17,12 +24,16 @@ function toggle_save(data) {
     }
 
     $.ajaxSetup({
-        crossDomain: false, // obviates need for sameOrigin test
+        crossDomain: false,
         beforeSend: function(xhr, settings) {
             if (!csrfSafeMethod(settings.type)) {
                 xhr.setRequestHeader("X-CSRFToken", csrf_token);
             }
         }
+    });
+
+    $(".feedback").on("click", ".delete-btn", function() {
+        $(this).parent(".item").remove();
     });
 
      $('.quick_save').click(function(e)
@@ -43,7 +54,6 @@ function toggle_save(data) {
             var field_value = $(field_lookup).val();
             update[field_key] = field_value;
          }
-         console.log(JSON.stringify(update));
          $.ajax({
             url : update_url,
             type: 'POST',

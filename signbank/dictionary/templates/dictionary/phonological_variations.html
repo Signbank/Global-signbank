@@ -32,6 +32,22 @@ input[type="text"]:focus {
 .tt-input:active {
     border: 1px solid red;
 }
+.item {
+        display: inline-block;
+        padding: 8px 12px;
+        margin: 5px;
+        position: relative;
+        color: red;
+}
+.delete-btn {
+        position: absolute;
+        top: 2px;
+        right: 5px;
+        cursor: pointer;
+        color: red;
+        font-weight: bold;
+}
+
 </style>
 {% endblock %}
 
@@ -52,6 +68,7 @@ var no_str = "{% trans 'No' %}";
 {% trans "Turn Off Edit Mode" as turn_off_edit_mode_str %}
 var edit_mode_str = '{{edit_mode_str|escapejs}}';
 var turn_off_edit_mode_str = '{{turn_off_edit_mode_str|escapejs}}';
+var phonology_saved_str = "{% trans "Phonology saved" %}";
 
 var gloss_phonology = {{gloss_phonology|safe}};
 </script>
@@ -114,13 +131,25 @@ var gloss_phonology = {{gloss_phonology|safe}};
                      <button id='quick_save_btn_{{gv.id}}' class="quick_save btn btn-primary"
                         name='quick_save_{{gv.id}}' data-type="variant"
                         value='{{gv.id}}' style="height:36px;"
-                        type="button">{% trans "Save" %} #{{gv.variation}}</button>
+                        type="button">{% trans "Save" %}</button>
                      <button id='variant_delete_btn_{{gv.id}}' class="btn btn-primary"
                         value='{{gv.id}}' style="height:36px;width:auto;"
                         onclick='location.href="{{PREFIX_URL}}/dictionary/update/delete_phonological_variation/{{gv.pk}}"'
-
-                        type="button">{% trans "Delete" %} #{{gv.variation}}</button>
+                        type="button">{% trans "Delete" %}</button>
                  </th>
+                 {% endfor %}
+             </tr>
+             <tr>
+                 <td></td>
+                 <td>
+                    <div id="feedback" class="feedback">
+                    </div>
+                 </td>
+                 {% for gv in gloss_variations %}
+                 <td>
+                    <div id="feedback_{{gv.id}}" class="feedback">
+                    </div>
+                 </td>
                  {% endfor %}
              </tr>
              <tr>
