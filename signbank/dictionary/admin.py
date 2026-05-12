@@ -33,7 +33,8 @@ from signbank.dictionary.models import (Dataset, Gloss, Translation, LemmaIdglos
                                         SearchHistory,
                                         QueryParameterMultilingual,  QueryParameterSemanticField,
                                         QueryParameterDerivationHistory,
-                                        QueryParameterBoolean, QueryParameterFieldChoice, QueryParameterHandshape)
+                                        QueryParameterBoolean, QueryParameterFieldChoice, QueryParameterHandshape,
+                                        PhonologicalVariation)
 from signbank.dictionary.forms import (FieldChoiceForm, SemanticFieldForm, HandshapeForm,
                                        QueryParameterFieldChoiceForm, SearchHistoryForm, QueryParameterBooleanForm,
                                        QueryParameterMultilingualForm, QueryParameterHandshapeForm)
@@ -41,6 +42,8 @@ from signbank.tools import (get_fields_with_choices_glosses, get_fields_with_cho
     get_fields_with_choices_definition, get_fields_with_choices_morphology_definition,
     get_fields_with_choices_other_media_type, get_fields_with_choices_morpheme_type,
     get_fields_with_choices_examplesentences, get_gloss_handshape_fields, get_fields_with_choices_relation)
+from signbank.dictionary.translate_choice_list import choicelist_queryset_to_translated_dict
+
 
 class DatasetAdmin(GuardedModelAdmin):
     model = Dataset
@@ -1546,9 +1549,59 @@ class AffiliatedUserAdmin(admin.ModelAdmin):
     list_display = ("affiliation", "user", )
 
 
+ATTRS_FOR_FORMS = {'class': 'form-control'}
+
+
+class PhonologicalVariationForm(forms.ModelForm):
+
+    class meta:
+        model = PhonologicalVariation
+        fields = ['gloss', 'variation', 'handedness', 'domhndsh', 'subhndsh', 'locprim']
+
+    def __init__(self, *args, **kwargs):
+
+        super(PhonologicalVariationForm, self).__init__(*args, **kwargs)
+
+        self.fields['handedness'] = forms.ModelChoiceField(label=_('Handedness'),
+                                                           queryset=FieldChoice.objects.filter(field='Handedness').order_by(
+                                                                   'machine_value'),
+                                                           widget=forms.Select(attrs=ATTRS_FOR_FORMS),
+                                                           required=False)
+        self.fields['domhndsh'] = forms.ModelChoiceField(label=_('Strong Hand'),
+                                                   queryset=Handshape.objects.all().order_by(
+                                                            'machine_value'),
+                                                    widget=forms.Select(attrs=ATTRS_FOR_FORMS),
+                                                    required=False)
+        self.fields['subhndsh'] = forms.ModelChoiceField(label=_('Weak Hand'),
+                                                         queryset=Handshape.objects.all().order_by(
+                                                             'machine_value'),
+                                                         widget=forms.Select(attrs=ATTRS_FOR_FORMS),
+                                                         required=False)
+
+
+    def get_form(self, request, obj=None, **kwargs):
+        form = PhonologicalVariationForm()
+        if obj is not None:
+            instance = PhonologicalVariation.objects.get(pk=obj.pk)
+            gloss = Gloss.objects.get(pk=instance.gloss.id)
+        return form
+
+
+class PhonologicalVariationAdmin(admin.ModelAdmin):
+
+    model = PhonologicalVariation
+    form = PhonologicalVariationForm
+    list_display = ("gloss", "variation", "handedness", "domhndsh", "subhndsh", "locprim")
+    readonly_fields = ['gloss']
+
+    def has_add_permission(self, request):
+        return False
+
+
 admin.site.register(Dialect, DialectAdmin)
 admin.site.register(SignLanguage, SignLanguageAdmin)
 admin.site.register(Gloss, GlossAdmin)
+admin.site.register(PhonologicalVariation, PhonologicalVariationAdmin)
 admin.site.register(Morpheme, GlossAdmin)
 admin.site.register(Keyword, KeywordAdmin)
 admin.site.register(FieldChoice, FieldChoiceAdmin)

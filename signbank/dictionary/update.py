@@ -14,7 +14,8 @@ from django.core.exceptions import ObjectDoesNotExist, MultipleObjectsReturned, 
 from django.core.files import File
 from django.contrib.auth.decorators import permission_required
 from django.views.decorators.http import require_http_methods
-from django.db.models.fields import BooleanField, IntegerField
+from django.db.models.fields import BooleanField, IntegerField, CharField, TextField
+from django.db.models import ForeignKey
 from django.forms.models import ModelChoiceField
 from django.forms.utils import ValidationError
 from django.db import DatabaseError, IntegrityError
@@ -51,7 +52,7 @@ from signbank.dictionary.models import (Dataset, SignLanguage, Dialect, Gloss, M
                                         Affiliation, AffiliatedUser, AffiliatedGloss, SearchHistory,
                                         GlossRevision, SenseExamplesentence, SimultaneousMorphologyDefinition,
                                         AnnotatedSentenceSource, AnnotatedSentenceContext, UserProfile, QueryParameter,
-                                        get_default_language_id, GlossProvenance)
+                                        get_default_language_id, GlossProvenance, PhonologicalVariation)
 from signbank.dictionary.forms import (RelationForm, VariantsForm, RelationToForeignSignForm, GlossBlendForm,
                                        GlossCreateForm, DefinitionForm, GlossMorphemeForm, GlossMorphologyForm,
                                        MorphemeCreateForm, LemmaCreateForm, AffiliationUpdateForm, OtherMediaForm,
@@ -306,6 +307,180 @@ def add_gloss(request):
 
     # new gloss created successfully, go to GlossDetailView
     return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': gloss.pk}) + '?edit')
+
+
+def add_phonological_variation(request, glossid):
+    """Create a new phonological variation for a gloss"""
+
+    if not request.user.has_perm('dictionary.add_gloss'):
+        raise PermissionDenied
+
+    gloss = get_object_or_404(Gloss, id=glossid, archived=False)
+
+    if 'change_dataset' not in get_user_perms(request.user, gloss.lemma.dataset):
+        messages.add_message(request, messages.INFO, gettext_lazy("No permission to create a phonological variation."))
+        return HttpResponseRedirect(
+            reverse('dictionary:phonological_variations', kwargs={'glossid': str(gloss.pk)}))
+
+    qs = PhonologicalVariation.objects.filter(gloss=gloss)
+
+    highest_variation = 0 if not qs.count() else max([phonological_variation.variation for phonological_variation in qs])
+
+    new_variation_data = dict()
+    new_variation_data['variation'] = highest_variation+1
+
+    fieldnames = FIELDS['phonology']
+    gloss_fields = [PhonologicalVariation.get_field(fname) for fname in PhonologicalVariation.get_field_names()]
+    fieldchoiceforeignkey_fields = [f.name for f in gloss_fields
+                                    if f.name in fieldnames
+                                    and isinstance(f, FieldChoiceForeignKey)]
+    new_variation = PhonologicalVariation(gloss=gloss, **new_variation_data)
+
+    for field in fieldnames:
+
+        if field not in PhonologicalVariation.get_field_names() or field not in fieldnames:
+            continue
+
+        if field in ['domhndsh', 'subhndsh', 'final_domhndsh', 'final_subhndsh']:
+            handshape = Handshape.objects.get(machine_value=0)
+            setattr(new_variation, field, handshape)
+        elif isinstance(PhonologicalVariation.get_field(field), BooleanField):
+            if field in ['weakdrop', 'weakprop']:
+                setattr(new_variation, field, None)
+            else:
+                setattr(new_variation, field, False)
+        elif field in fieldchoiceforeignkey_fields:
+            gloss_field = PhonologicalVariation.get_field(field)
+            fieldchoice = FieldChoice.objects.get(field=gloss_field.field_choice_category, machine_value=0)
+            setattr(new_variation, field, fieldchoice)
+        else:
+            setattr(new_variation, field, '')
+
+    new_variation.save()
+
+    gloss.lastUpdated = DT.datetime.now(tz=get_current_timezone())
+
+    return HttpResponseRedirect(
+        reverse('dictionary:phonological_variations', kwargs={'glossid': str(gloss.pk)}))
+
+
+def delete_phonological_variation(request, variationid):
+    """Delete a phonological variation for a gloss"""
+
+    if not request.user.has_perm('dictionary.add_gloss'):
+        raise PermissionDenied
+
+    variation = get_object_or_404(PhonologicalVariation, id=variationid)
+    gloss = variation.gloss
+    variation.delete()
+
+    revised_variations = PhonologicalVariation.objects.filter(gloss=gloss)
+    for inx, variant in enumerate(revised_variations, 2):
+        variant.variation = inx
+        variant.save()
+
+    gloss.lastUpdated = DT.datetime.now(tz=get_current_timezone())
+    return HttpResponseRedirect(
+        reverse('dictionary:phonological_variations', kwargs={'glossid': str(gloss.pk)}))
+
+
+def get_gloss_update_human_readable_value_dict(request):
+
+    value_dict = dict()
+    for field in request.POST.keys():
+        if field == 'csrfmiddlewaretoken':
+            continue
+        value = request.POST.get(field, '')
+        value_dict[field] = value.strip() if isinstance(value, str) else value
+    return value_dict
+
+
+@require_http_methods(["POST"])
+def update_gloss_phonology(request, glossid):
+    """Update the phonology of a gloss"""
+
+    if not request.user.has_perm('dictionary.add_gloss'):
+        raise PermissionDenied
+
+    gloss = get_object_or_404(Gloss, id=glossid)
+    value_dict = get_gloss_update_human_readable_value_dict(request)
+    for field, value in value_dict.items():
+        if field not in FIELDS['phonology']:
+            continue
+        internal_field = Gloss.get_field(field)
+        original_internal_value = getattr(gloss, field)
+        if isinstance(internal_field, FieldChoiceForeignKey):
+            new_value = FieldChoice.objects.get(field=internal_field.field_choice_category, machine_value=int(value))
+            if new_value.machine_value == original_internal_value:
+                continue
+            setattr(gloss, field, new_value)
+        elif isinstance(internal_field, ForeignKey) and internal_field.related_model == Handshape:
+            new_value = Handshape.objects.get(machine_value=int(value))
+            if new_value.machine_value == original_internal_value:
+                continue
+            setattr(gloss, field, new_value)
+        elif isinstance(internal_field, BooleanField):
+            if field in ['weakdrop', 'weakprop']:
+                boolean_value = {'0': None, '1': None, '2': True, '3': False}[value]
+                gloss.__setattr__(field, boolean_value)
+                gloss.save()
+            elif field in ['repeat', 'altern', 'domhndsh_letter', 'domhndsh_number', 'subhndsh_letter', 'subhndsh_number']:
+                boolean_value = {'0': None, '1': True}[value]
+                if boolean_value == original_internal_value:
+                    continue
+                setattr(gloss, field, boolean_value)
+        elif isinstance(internal_field, CharField) or isinstance(internal_field, TextField):
+            value = value.strip()
+            if value == original_internal_value:
+                continue
+            setattr(gloss, field, value)
+    gloss.save()
+    return JsonResponse({})
+
+
+@require_http_methods(["POST"])
+def update_phonological_variation(request, variationid):
+    """Update a phonological variation for a gloss"""
+
+    if not request.user.has_perm('dictionary.add_gloss'):
+        raise PermissionDenied
+
+    variation = get_object_or_404(PhonologicalVariation, id=variationid)
+    value_dict = get_gloss_update_human_readable_value_dict(request)
+    for field, value in value_dict.items():
+        if field not in FIELDS['phonology']:
+            continue
+        internal_field = PhonologicalVariation.get_field(field)
+        original_internal_value = getattr(variation, field)
+        if isinstance(internal_field, FieldChoiceForeignKey):
+            new_value = FieldChoice.objects.get(field=internal_field.field_choice_category, machine_value=int(value))
+            if new_value.machine_value == original_internal_value:
+                continue
+            setattr(variation, field, new_value)
+        elif isinstance(internal_field, ForeignKey) and internal_field.related_model == Handshape:
+            new_value = Handshape.objects.get(machine_value=int(value))
+            if new_value.machine_value == original_internal_value:
+                continue
+            setattr(variation, field, new_value)
+        elif isinstance(internal_field, BooleanField):
+            if field in ['weakdrop', 'weakprop']:
+                boolean_value = {'0': None, '1': None, '2': True, '3': False}[value]
+                variation.__setattr__(field, boolean_value)
+                variation.save()
+            elif field in ['repeat', 'altern', 'domhndsh_letter', 'domhndsh_number', 'subhndsh_letter', 'subhndsh_number']:
+                boolean_value = {'0': None, '1': True}[value]
+                if boolean_value == original_internal_value:
+                    continue
+                setattr(variation, field, boolean_value)
+        elif isinstance(internal_field, CharField) or isinstance(internal_field, TextField):
+            value = value.strip()
+            if value == original_internal_value:
+                continue
+            setattr(variation, field, value)
+    variation.save()
+    variation.gloss.lastUpdated = DT.datetime.now(tz=get_current_timezone())
+    result = {'variationid': variationid}
+    return JsonResponse(result)
 
 
 @require_http_methods(["POST"])
