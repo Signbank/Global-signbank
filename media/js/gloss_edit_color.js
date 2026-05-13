@@ -92,6 +92,7 @@ var busy_editing = 0;
           $(this).parent().next().val("")
         });
 
+
     // this is needed to help check different browsers
     for (var i = 0; i < gloss_phonology.length; i++) {
         var field = gloss_phonology[i];

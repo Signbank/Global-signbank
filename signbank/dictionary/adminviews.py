@@ -85,7 +85,7 @@ from signbank.dictionary.forms import (AnnotatedSentenceSearchForm, GlossSearchF
                                        GlossMorphologyForm, GlossBlendForm, DefinitionForm, GlossMorphemeForm,
                                        SemanticFieldTranslationForm, ZippedVideosForm, SearchGlossIds,
                                        check_language_fields, check_multilingual_fields, SentenceForm,
-                                       check_language_fields_annotatedsentence, GlossProvenanceForm, check_sortOrder_handshapes, PhonologyForm)
+                                       check_language_fields_annotatedsentence, GlossProvenanceForm, check_sortOrder_handshapes)
 from signbank.tools import (write_ecv_file_for_dataset, find_duplicate_lemmas,
                             construct_scrollbar, get_dataset_languages, get_datasets_with_public_glosses,
                             searchform_panels, map_search_results_to_gloss_list,
@@ -1431,7 +1431,6 @@ class GlossDetailView(DetailView):
         context['definitionform'] = DefinitionForm()
         context['provenanceform'] = GlossProvenanceForm(gloss=context['gloss'])
         context['relationform'] = RelationForm()
-        context['phonologyform'] = PhonologyForm(gloss=context['gloss'])
         context['morphologyform'] = GlossMorphologyForm()
         context['morphemeform'] = GlossMorphemeForm()
         context['blendform'] = GlossBlendForm()
@@ -1457,14 +1456,7 @@ class GlossDetailView(DetailView):
 
         self.request.session['last_used_dataset'] = self.last_used_dataset
 
-        context['gloss_phonology'] = ['domhndsh', 'subhndsh', 'handCh', 'relatArtic', 'locprim',
-                       'contType', 'movSh', 'movDir',
-                       'repeat', 'altern',
-                       'relOriMov', 'relOriLoc', 'oriCh',
-                       'locVirtObj', 'phonOth', 'mouthG', 'mouthing', 'phonetVar',
-                       'domhndsh_letter', 'domhndsh_number', 'subhndsh_letter', 'subhndsh_number']
-                       # 'weakdrop', 'weakprop']
-        context['lookahead_fields'] = ['handedness']
+        context['gloss_phonology'] = FIELDS['phonology']
         context['phonology_list_kinds'] = get_phonology_list_kinds()
 
         context['publication_fields'] = []
