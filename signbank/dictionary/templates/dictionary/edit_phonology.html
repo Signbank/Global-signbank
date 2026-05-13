@@ -6,7 +6,7 @@
 {% load tagging_tags %}
 {% load wrong_sign %}
 {% block bootstrap3_title %}
-{% blocktrans %}Signbank: Edit Phonology{% endblocktrans %}
+{% blocktrans %}Signbank: Update Gloss{% endblocktrans %}
 {% endblock %}
 
 {% load guardian_tags %}
@@ -47,7 +47,24 @@ input[type="text"]:focus {
         color: red;
         font-weight: bold;
 }
-
+.actionButton {
+    padding: 4px 8px;
+    border: 1px solid Grey;
+    border-color: Grey;
+    border-radius: 8px;
+    text-align: center;
+    color: Black;
+    background-color: white;
+}
+.actionButton:hover {
+    text-decoration: none;
+    background-color: LightGrey;
+}
+.actionButton:active:focus {
+    text-decoration: none;
+    background-color: none;
+    outline: none;
+}
 </style>
 {% endblock %}
 
@@ -87,19 +104,57 @@ var gloss_phonology = {{gloss_phonology|safe}};
 
     </div>
 
-    <div id="view_tabs" style="margin-right:15px;margin-top:10px;z-index:100;" class='view-tabs view-tabs-light'>
+    <div id="phonology" style="margin-right:15px;margin-top:10px;z-index:100;" class='view-tabs view-tabs-light'>
 
         <table>
             {% csrf_token %}
             <tr>
                 <th style="width:200px;">{% trans "Handedness" %}</th>
                 {% with phonologyform.fields|get_item:'handedness' as handedness_field %}
-                <td style="width:100px;" id="handedness_value">{{handedness_field.initial}}</td>
+                <td style="width:300px;" id="handedness_value">{{handedness_field.initial}}</td>
                 <td>
                     <input class='form-control form-control-light handednesstypeahead'
                               placeholder='{% trans "Handedness" %}' >
                     <input type="hidden" name="handedness" value=""
                            id="handedness_machine_value" >
+                </td>
+                {% endwith %}
+            </tr>
+            <tr>
+                <th style="width:200px;">{% trans "Strong Hand" %}</th>
+                {% with phonologyform.fields|get_item:'domhndsh' as domhndsh_field %}
+                <td style="width:300px;" id="domhndsh_value">{{domhndsh_field.initial}}</td>
+                <td>
+                    <input class='form-control form-control-light domhndshtypeahead'
+                              placeholder='{% trans "Strong Hand" %}' >
+                    <input type="hidden" name="domhndsh" value=""
+                           id="domhndsh_machine_value" >
+                </td>
+                {% endwith %}
+            </tr>
+        </table>
+    </div>
+
+   <h3>{% trans "Semantics" %}</h3>
+
+    <div id="semantics" style="margin-right:15px;margin-top:10px;z-index:100;" class='view-tabs view-tabs-light'>
+
+        <table>
+            {% csrf_token %}
+            <tr>
+                <th style="width:200px;">{% trans "Semantic Field" %}</th>
+                {% with semanticsform.fields|get_item:'semField' as semField_field %}
+                <td style="width:300px;" id="semField_value">
+                    {% for semfield in gloss.semField.all %}
+                    <button class="actionButton">{{semfield.name}}</button>
+                    {% endfor %}
+                </td>
+                <td>
+                    <input class='form-control form-control-light semFieldtypeahead'
+                              placeholder='{% trans "Semantic Field" %}' >
+                </td>
+                <td id="semField_hidden_input_values">
+
                 </td>
                 {% endwith %}
             </tr>

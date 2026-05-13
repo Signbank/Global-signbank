@@ -164,6 +164,8 @@ urlpatterns = [
     re_path(r'^ajax/handshape/(?P<prefix>.*)$', signbank.dictionary.adminviews.handshape_ajax_complete, name='handshape_complete'),
 
     re_path(r'^ajax/handedness/(?P<prefix>.*)$', signbank.dictionary.bloodhounds.handedness_ajax_complete, name='handedness_complete'),
+    re_path(r'^ajax/semField/(?P<prefix>.*)$', signbank.dictionary.bloodhounds.semField_ajax_complete, name='semField_complete'),
+
     re_path(r'^ajax/morph/(?P<prefix>.*)$', signbank.dictionary.adminviews.morph_ajax_complete, name='morph_complete'),
     re_path(r'^ajax/user/(?P<prefix>.*)$', permission_required('dictionary.change_gloss')(signbank.dictionary.adminviews.user_ajax_complete), name='user_complete'),
     re_path(r'^ajax/searchresults/$',signbank.dictionary.adminviews.gloss_ajax_search_results, name='ajax_search_results'),

@@ -1793,6 +1793,7 @@ class SearchGlossIds(forms.Form):
 class PhonologyForm(forms.Form):
     gloss = None
     handedness = forms.CharField(label=_('Handedness'))
+    domhndsh = forms.CharField(label=_('Strong Hand'))
 
     class Meta:
         model = Gloss
@@ -1803,3 +1804,19 @@ class PhonologyForm(forms.Form):
         super(PhonologyForm, self).__init__(*args, **kwargs)
 
         self.fields['handedness'].initial = self.gloss.handedness.name if self.gloss.handedness else '-'
+        self.fields['domhndsh'].initial = self.gloss.domhndsh.name if self.gloss.domhndsh else '-'
+
+
+class SemanticsForm(forms.Form):
+    gloss = None
+    semField = forms.CharField(label=_('Semantics Field'))
+
+    class Meta:
+        model = Gloss
+        fields = ['semField']
+
+    def __init__(self, *args, **kwargs):
+        self.gloss = kwargs.pop('gloss')
+        super(SemanticsForm, self).__init__(*args, **kwargs)
+
+        self.fields['semField'].initial = self.gloss.get_semField_display()

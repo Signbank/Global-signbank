@@ -46,7 +46,7 @@ from signbank.dictionary.models import (Dataset, Language, Gloss, Morpheme, Lemm
                                         DeletedGlossOrMedia,
                                         get_default_language_id, CATEGORY_MODELS_MAPPING)
 from signbank.dictionary.forms import (LemmaCreateForm, GlossCreateForm, MorphemeCreateForm, ImageUploadForHandshapeForm,
-                                       ImageUploadForGlossForm, CSVUploadForm, PhonologyForm)
+                                       ImageUploadForGlossForm, CSVUploadForm, PhonologyForm, SemanticsForm)
 from signbank.dictionary.update import update_dialect
 from signbank.dictionary.update_csv import (update_simultaneous_morphology, update_blend_morphology,
                                             update_sequential_morphology, subst_relations, subst_foreignrelations,
@@ -2973,6 +2973,7 @@ def edit_phonology(request, glossid):
 
     context['gloss'] = gloss
     context['phonologyform'] = PhonologyForm(gloss=context['gloss'])
+    context['semanticsform'] = SemanticsForm(gloss=context['gloss'])
 
     (interface_language, interface_language_code,
      default_language, default_language_code) = get_interface_language_and_default_language_codes(request)
