@@ -730,45 +730,6 @@ function update_view_and_remember_original_value(change_summary)
     }
 }
 
-
-// bloodhounds for field choices
-
-var handedness_bloodhound = new Bloodhound({
-      datumTokenizer: function(d) { return d.tokens; },
-      queryTokenizer: Bloodhound.tokenizers.whitespace,
-      remote: url+'/dictionary/ajax/handedness'+'/%QUERY'
-    });
-
-handedness_bloodhound.initialize();
-
-function handednesstypeahead(target) {
-
-     $(target).typeahead(null, {
-          name: 'handednesstarget',
-          displayKey: 'name',
-          source: handedness_bloodhound.ttAdapter(),
-          templates: {
-              suggestion: function(fc) {
-                  return("<p><strong>" + fc.name +  "</strong></p>");
-              }
-          }
-      });
-};
-
-
-$.editable.addInputType('handednesstypeahead', {
-   element: function(settings, original) {
-      var input = $('<input type="text" class="handednesstypeahead">');
-      $(this).append(input);
-
-      handednesstypeahead(input);
-
-      return (input);
-   },
-});
-
-// last of the field choice bloodhounds
-
 var gloss_bloodhound = new Bloodhound({
       datumTokenizer: function(d) { return d.tokens; },
       queryTokenizer: Bloodhound.tokenizers.whitespace,

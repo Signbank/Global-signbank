@@ -1,0 +1,108 @@
+{% extends 'baselayout.html' %}
+{% load i18n %}
+{% load stylesheet %}
+{% load annotation_idgloss_translation %}
+{% load bootstrap3 %}
+{% load tagging_tags %}
+{% load wrong_sign %}
+{% block bootstrap3_title %}
+{% blocktrans %}Signbank: Edit Phonology{% endblocktrans %}
+{% endblock %}
+
+{% load guardian_tags %}
+
+{% block extrahead %}
+<style>
+.hasTooltip:hover .isTooltip {
+    position: fixed;
+    placement: top !important;
+    bottom: 100%;
+}
+input[type="text"] {
+    background-color: rgba(50,50,50,15%);
+    border: none;
+}
+input[type="text"]:focus {
+    border: 1px solid red;
+}
+.tt-input {
+    background-color: rgba(50,50,50,15%) !important;
+    border: none;
+}
+.tt-input:active {
+    border: 1px solid red;
+}
+.item {
+        display: inline-block;
+        padding: 8px 12px;
+        margin: 5px;
+        position: relative;
+        color: red;
+}
+.delete-btn {
+        position: absolute;
+        top: 2px;
+        right: 5px;
+        cursor: pointer;
+        color: red;
+        font-weight: bold;
+}
+
+</style>
+{% endblock %}
+
+{% block extrajs %}
+
+<script type="text/javascript">
+var dark_mode = '{{request.session.dark_mode}}';
+var url = '{{PREFIX_URL}}';
+var csrf_token = '{{csrf_token}}';
+{% trans "Saving..." as saving_str %}
+var gloss_dataset_id = {{gloss.lemma.dataset.id}};
+var gloss_default_language_code = '{{gloss.lemma.dataset.default_language.language_code_2char}}';
+var saving_str = '{{saving_str|escapejs}}';
+
+var yes_str = "{% trans 'Yes' %}";
+var no_str = "{% trans 'No' %}";
+{% trans "Edit" as edit_mode_str %}
+{% trans "Turn Off Edit Mode" as turn_off_edit_mode_str %}
+var edit_mode_str = '{{edit_mode_str|escapejs}}';
+var turn_off_edit_mode_str = '{{turn_off_edit_mode_str|escapejs}}';
+var phonology_saved_str = "{% trans "Phonology saved" %}";
+
+var gloss_phonology = {{gloss_phonology|safe}};
+</script>
+
+<script type="text/javascript" src="{{STATIC_URL}}js/typeahead.bundle.min.js"></script>
+<script type='text/javascript' src="{{STATIC_URL}}js/lookaheads.js"></script>
+
+{% endblock %}
+
+{% block content %}
+   <h3>{% trans "Phonology" %}</h3>
+
+    <div class='pull-right' style="margin-right:15px;margin-top:50px;">
+
+         <span id='edit_message' style="padding-right: 1.8em;"></span>
+
+    </div>
+
+    <div id="view_tabs" style="margin-right:15px;margin-top:10px;z-index:100;" class='view-tabs view-tabs-light'>
+
+        <table>
+            {% csrf_token %}
+            <tr>
+                <th style="width:200px;">{% trans "Handedness" %}</th>
+                {% with phonologyform.fields|get_item:'handedness' as handedness_field %}
+                <td style="width:100px;" id="handedness_value">{{handedness_field.initial}}</td>
+                <td>
+                    <input class='form-control form-control-light handednesstypeahead'
+                              placeholder='{% trans "Handedness" %}' >
+                    <input type="hidden" name="handedness" value=""
+                           id="handedness_machine_value" >
+                </td>
+                {% endwith %}
+            </tr>
+        </table>
+    </div>
+{% endblock %}
