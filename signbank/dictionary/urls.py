@@ -24,6 +24,7 @@ import signbank.frequency
 import signbank.dataset_operations
 import signbank.dictionary.gloss_revision
 import signbank.dictionary.tagviews
+import signbank.dictionary.bloodhounds
 
 
 app_name = 'dictionary'
@@ -49,6 +50,9 @@ urlpatterns = [
     re_path(r'^update/morphemedefinition/(?P<glossid>\d+)$', signbank.dictionary.update.add_morpheme_definition, name='add_morphemedefinition'),
     re_path(r'^update/othermedia/', signbank.dictionary.update.add_othermedia, name='add_othermedia'),
     re_path(r'^update/gloss/', signbank.dictionary.update.add_gloss, name='add_gloss'),
+    re_path(r'^update/edit_gloss_save/(?P<glossid>\d+)$',
+                signbank.dictionary.update.edit_gloss_save, name='edit_gloss_save'),
+    re_path(r'^gloss/edit_phonology/(?P<glossid>\d+)', signbank.dictionary.views.edit_phonology, name='edit_phonology'),
     re_path(r'^update/assign_lemma_dataset_to_gloss/(?P<glossid>\d+)$', signbank.dictionary.update.assign_lemma_dataset_to_gloss,
             name='assign_lemma_dataset_to_gloss'),
     re_path(r'^update/sense/(?P<senseid>\d+)$', signbank.dictionary.update.update_sense, name='update_sense'),
@@ -158,7 +162,12 @@ urlpatterns = [
     re_path(r'^ajax/tags/$', signbank.dictionary.tagviews.taglist_json),
     re_path(r'^ajax/gloss/(?P<datasetid>\d+)/(?P<prefix>.*)$', signbank.dictionary.adminviews.gloss_ajax_complete, name='gloss_complete'),
     re_path(r'^ajax/similarglosses/(?P<gloss_id>.*)$', signbank.dictionary.batch_edit.similarglosses, name='similarglosses'),
+
     re_path(r'^ajax/handshape/(?P<prefix>.*)$', signbank.dictionary.adminviews.handshape_ajax_complete, name='handshape_complete'),
+
+    re_path(r'^ajax/handedness/(?P<prefix>.*)$', signbank.dictionary.bloodhounds.handedness_ajax_complete, name='handedness_complete'),
+    re_path(r'^ajax/semField/(?P<prefix>.*)$', signbank.dictionary.bloodhounds.semField_ajax_complete, name='semField_complete'),
+
     re_path(r'^ajax/morph/(?P<prefix>.*)$', signbank.dictionary.adminviews.morph_ajax_complete, name='morph_complete'),
     re_path(r'^ajax/user/(?P<prefix>.*)$', permission_required('dictionary.change_gloss')(signbank.dictionary.adminviews.user_ajax_complete), name='user_complete'),
     re_path(r'^ajax/searchresults/$',signbank.dictionary.adminviews.gloss_ajax_search_results, name='ajax_search_results'),

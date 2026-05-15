@@ -14,7 +14,8 @@ from django.core.exceptions import ObjectDoesNotExist, MultipleObjectsReturned, 
 from django.core.files import File
 from django.contrib.auth.decorators import permission_required
 from django.views.decorators.http import require_http_methods
-from django.db.models.fields import BooleanField, IntegerField
+from django.db.models.fields import BooleanField, IntegerField, CharField, TextField
+from django.db.models import ForeignKey
 from django.forms.models import ModelChoiceField
 from django.forms.utils import ValidationError
 from django.db import DatabaseError, IntegrityError
@@ -845,6 +846,73 @@ def delete_sense(request, glossid):
     revision.save()
 
     return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': glossid}) + '?edit')
+
+
+def get_gloss_non_empty_value_dict(request):
+    # this allows multiselect semantic fields
+    value_dict = dict()
+    for field in request.POST.keys():
+        if field == 'csrfmiddlewaretoken':
+            continue
+        if field in ['semField[]']:
+            values = request.POST.getlist(field, [])
+            if not values:
+                continue
+            value_dict['semField'] = values
+        else:
+            value = request.POST.get(field, '')
+            if not value:
+                continue
+            value_dict[field] = value.strip() if isinstance(value, str) else value
+    return value_dict
+
+
+@require_http_methods(["POST"])
+def edit_gloss_save(request, glossid):
+    """Update the fields of a gloss"""
+    if not request.user.has_perm('dictionary.change_gloss'):
+        raise PermissionDenied
+
+    gloss = get_object_or_404(Gloss, id=glossid)
+    value_dict = get_gloss_non_empty_value_dict(request)
+    for field, value in value_dict.items():
+        if field in ['semField']:
+            gloss.semField.clear()
+            for semField_machine_value in value:
+                semField = SemanticField.objects.get(machine_value=semField_machine_value)
+                gloss.semField.add(semField)
+            continue
+        if field not in Gloss.get_field_names():
+            continue
+        internal_field = Gloss.get_field(field)
+        original_internal_value = getattr(gloss, field)
+        if isinstance(internal_field, FieldChoiceForeignKey):
+            new_value = FieldChoice.objects.get(field=internal_field.field_choice_category, machine_value=int(value))
+            if new_value.machine_value == original_internal_value:
+                continue
+            setattr(gloss, field, new_value)
+        elif isinstance(internal_field, ForeignKey) and internal_field.related_model == Handshape:
+            new_value = Handshape.objects.get(machine_value=int(value))
+            if new_value.machine_value == original_internal_value:
+                continue
+            setattr(gloss, field, new_value)
+        elif isinstance(internal_field, BooleanField):
+            if field in ['weakdrop', 'weakprop']:
+                boolean_value = {'0': None, '1': None, '2': True, '3': False}[value]
+                gloss.__setattr__(field, boolean_value)
+                gloss.save()
+            elif field in ['repeat', 'altern', 'domhndsh_letter', 'domhndsh_number', 'subhndsh_letter', 'subhndsh_number']:
+                boolean_value = {'0': None, '1': True}[value]
+                if boolean_value == original_internal_value:
+                    continue
+                setattr(gloss, field, boolean_value)
+        elif isinstance(internal_field, CharField) or isinstance(internal_field, TextField):
+            value = value.strip()
+            if value == original_internal_value:
+                continue
+            setattr(gloss, field, value)
+    gloss.save()
+    return JsonResponse({'success': True}, status=200)
 
 
 @require_http_methods(["POST"])
