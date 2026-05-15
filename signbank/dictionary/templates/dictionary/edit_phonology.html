@@ -65,6 +65,16 @@ input[type="text"]:focus {
     background-color: none;
     outline: none;
 }
+.edit-mode {
+    font-size: 10px;
+    padding-left: 2px;
+    padding-right: 2px;
+}
+.button-to-appear-in-edit-mode {
+    font-size: 10px;
+    padding-left: 2px;
+    padding-right: 2px;
+}
 </style>
 {% endblock %}
 
@@ -101,7 +111,21 @@ var gloss_phonology = {{gloss_phonology|safe}};
     <div class='pull-right' style="margin-right:15px;margin-top:50px;">
 
          <span id='edit_message' style="padding-right: 1.8em;"></span>
-
+         {% if perms.dictionary.change_gloss %}
+         <div>
+            {% csrf_token %}
+            <button type="button" class="btn btn-default edit-cancel button-to-appear-in-edit-mode"
+                    style="width:auto;"
+                    onclick='location.href="{{PREFIX_URL}}/dictionary/gloss/edit_phonology/{{gloss.id}}"'
+                    >{% trans "Cancel" %}</button>
+            <button type="button" class="btn btn-default quick_save button-to-appear-in-edit-mode"
+                    style="width:auto;" value="{{gloss.id}}"
+                    >{% trans "Save" %}</button>
+            <button id='enable_edit'
+                     class='btn btn-primary navbar-btn edit-mode'
+                     style="width:auto;padding:3px 12px;">{% trans "Edit" %}</button>
+         </div>
+         {% endif %}
     </div>
 
     <div id="phonology" style="margin-right:15px;margin-top:10px;z-index:100;" class='view-tabs view-tabs-light'>
@@ -112,7 +136,7 @@ var gloss_phonology = {{gloss_phonology|safe}};
                 <th style="width:200px;">{% trans "Handedness" %}</th>
                 {% with phonologyform.fields|get_item:'handedness' as handedness_field %}
                 <td style="width:300px;" id="handedness_value">{{handedness_field.initial}}</td>
-                <td>
+                <td class="editform">
                     <input class='form-control form-control-light handednesstypeahead'
                               placeholder='{% trans "Handedness" %}' >
                     <input type="hidden" name="handedness" value=""
@@ -124,7 +148,7 @@ var gloss_phonology = {{gloss_phonology|safe}};
                 <th style="width:200px;">{% trans "Strong Hand" %}</th>
                 {% with phonologyform.fields|get_item:'domhndsh' as domhndsh_field %}
                 <td style="width:300px;" id="domhndsh_value">{{domhndsh_field.initial}}</td>
-                <td>
+                <td class="editform">
                     <input class='form-control form-control-light domhndshtypeahead'
                               placeholder='{% trans "Strong Hand" %}' >
                     <input type="hidden" name="domhndsh" value=""
@@ -149,11 +173,11 @@ var gloss_phonology = {{gloss_phonology|safe}};
                     <button class="actionButton">{{semfield.name}}</button>
                     {% endfor %}
                 </td>
-                <td>
+                <td class="editform">
                     <input class='form-control form-control-light semFieldtypeahead'
                               placeholder='{% trans "Semantic Field" %}' >
                 </td>
-                <td id="semField_hidden_input_values">
+                <td id="semField_hidden_input_values" class="editform">
 
                 </td>
                 {% endwith %}

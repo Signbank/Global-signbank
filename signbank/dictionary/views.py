@@ -2940,7 +2940,7 @@ def test_am_update_gloss(request, datasetid, glossid):
 
 
 def edit_phonology(request, glossid):
-    if not request.user.has_perm('dictionary.add_gloss'):
+    if not request.user.has_perm('dictionary.change_gloss'):
         raise PermissionDenied
 
     gloss = get_object_or_404(Gloss, id=glossid, archived=False)
@@ -2979,7 +2979,7 @@ def edit_phonology(request, glossid):
      default_language, default_language_code) = get_interface_language_and_default_language_codes(request)
 
     gloss_default_annotationidglosstranslation = gloss.annotationidglosstranslation_set.get(language=default_language).text
-    # Put annotation_idgloss per language in the context
+
     context['annotation_idgloss'] = {}
     for language in gloss.dataset.translation_languages.all():
         try:
@@ -2988,5 +2988,5 @@ def edit_phonology(request, glossid):
             annotation_text = gloss_default_annotationidglosstranslation
         context['annotation_idgloss'][language] = annotation_text
 
-    context['gloss_phonology'] = FIELDS['phonology']
+    context['gloss_phonology'] = FIELDS['phonology'] + ['semField']
     return render(request, 'dictionary/edit_phonology.html', context)

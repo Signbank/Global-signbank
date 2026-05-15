@@ -50,6 +50,8 @@ urlpatterns = [
     re_path(r'^update/morphemedefinition/(?P<glossid>\d+)$', signbank.dictionary.update.add_morpheme_definition, name='add_morphemedefinition'),
     re_path(r'^update/othermedia/', signbank.dictionary.update.add_othermedia, name='add_othermedia'),
     re_path(r'^update/gloss/', signbank.dictionary.update.add_gloss, name='add_gloss'),
+    re_path(r'^update/edit_gloss_save/(?P<glossid>\d+)$',
+                signbank.dictionary.update.edit_gloss_save, name='edit_gloss_save'),
     re_path(r'^gloss/edit_phonology/(?P<glossid>\d+)', signbank.dictionary.views.edit_phonology, name='edit_phonology'),
     re_path(r'^update/assign_lemma_dataset_to_gloss/(?P<glossid>\d+)$', signbank.dictionary.update.assign_lemma_dataset_to_gloss,
             name='assign_lemma_dataset_to_gloss'),
