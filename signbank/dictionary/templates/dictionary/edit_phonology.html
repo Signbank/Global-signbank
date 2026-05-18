@@ -132,7 +132,13 @@ var gloss_phonology = {{gloss_phonology|safe}};
 
         <table>
             {% csrf_token %}
+            {% with show_field_row|get_item:"handedness" as show_field %}
+            {% if not show_field %}
+            <tr class="empty_row">
+            {% else %}
             <tr>
+            {% endif %}
+            {% endwith %}
                 <th style="width:200px;">{% trans "Handedness" %}</th>
                 {% with phonologyform.fields|get_item:'handedness' as handedness_field %}
                 <td style="width:300px;" id="handedness_value">{{handedness_field.initial}}</td>
@@ -144,7 +150,13 @@ var gloss_phonology = {{gloss_phonology|safe}};
                 </td>
                 {% endwith %}
             </tr>
+            {% with show_field_row|get_item:"domhndsh" as show_field %}
+            {% if not show_field %}
+            <tr class="empty_row">
+            {% else %}
             <tr>
+            {% endif %}
+            {% endwith %}
                 <th style="width:200px;">{% trans "Strong Hand" %}</th>
                 {% with phonologyform.fields|get_item:'domhndsh' as domhndsh_field %}
                 <td style="width:300px;" id="domhndsh_value">{{domhndsh_field.initial}}</td>
@@ -165,7 +177,13 @@ var gloss_phonology = {{gloss_phonology|safe}};
 
         <table>
             {% csrf_token %}
+            {% with show_field_row|get_item:"semField" as show_field %}
+            {% if not show_field %}
+            <tr class="empty_row">
+            {% else %}
             <tr>
+            {% endif %}
+            {% endwith %}
                 <th style="width:200px;">{% trans "Semantic Field" %}</th>
                 {% with semanticsform.fields|get_item:'semField' as semField_field %}
                 <td style="width:300px;" id="semField_value">

@@ -70,6 +70,7 @@ from signbank.abstract_machine import get_interface_language_api
 from signbank.api_token import put_api_user_in_request
 from signbank.dictionary.gloss_revision import pretty_print_revisions
 from signbank.dictionary.adminviews import show_warning
+from signbank.dictionary.display_functions import show_fields_rows
 
 
 def login_required_config(f):
@@ -2989,4 +2990,6 @@ def edit_phonology(request, glossid):
         context['annotation_idgloss'][language] = annotation_text
 
     context['gloss_phonology'] = FIELDS['phonology'] + ['semField']
+    context['show_field_row'] = show_fields_rows(gloss)
+
     return render(request, 'dictionary/edit_phonology.html', context)

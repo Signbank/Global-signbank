@@ -94,6 +94,7 @@ function renderSelected() {
 
 function enable_edit() {
     $('.editform').show();
+    $('.empty_row').show();
     $('.button-to-appear-in-edit-mode').show().addClass('btn-danger');
     $('#enable_edit').removeClass('btn-primary').addClass('btn-danger');
 }
@@ -104,6 +105,7 @@ function disable_edit() {
         location.reload(true);
     }
     $('.editform').hide();
+    $('.empty_row').hide();
     $('.button-to-appear-in-edit-mode').hide();
     busy_editing = false;
     $('#enable_edit').addClass('btn-primary').removeClass('btn-danger');
