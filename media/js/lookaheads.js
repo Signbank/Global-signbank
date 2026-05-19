@@ -167,6 +167,18 @@ $(document).ready(function() {
           $('#weakprop_value').text(selected_text);
     });
 
+    $('.select_domhndsh_letter').on('change', function() {
+          var selected_value = $(this).val();
+          var selected_text = $(this).find('option:selected').text();
+          $('#domhndsh_letter_value').text(selected_text);
+    });
+
+    $('.select_domhndsh_number').on('change', function() {
+          var selected_value = $(this).val();
+          var selected_text = $(this).find('option:selected').text();
+          $('#domhndsh_number_value').text(selected_text);
+    });
+
      $('.quick_save').click(function(e)
 	 {
          e.preventDefault();
@@ -188,6 +200,16 @@ $(document).ready(function() {
                 var field_value = $(field_lookup).val();
                 update[field_key] = field_value;
             } else if (field == 'weakprop') {
+                var field_lookup = '#'+field+'_select_value';
+                var field_key = $(field_lookup).attr("name");
+                var field_value = $(field_lookup).val();
+                update[field_key] = field_value;
+            } else if (field == 'domhndsh_letter') {
+                var field_lookup = '#'+field+'_select_value';
+                var field_key = $(field_lookup).attr("name");
+                var field_value = $(field_lookup).val();
+                update[field_key] = field_value;
+            } else if (field == 'domhndsh_number') {
                 var field_lookup = '#'+field+'_select_value';
                 var field_key = $(field_lookup).attr("name");
                 var field_value = $(field_lookup).val();

@@ -1798,6 +1798,15 @@ class PhonologyForm(forms.Form):
     weakdrop = forms.ChoiceField(label=_('Weak Drop'), choices=[(0, '-')],
                                  widget=forms.Select(attrs=ATTRS_FOR_BOOLEAN_FORMS))
     domhndsh = forms.CharField(label=_('Strong Hand'))
+    domhndsh_letter = forms.ChoiceField(label=_('letter'), choices=[(0, '-')], required=False,
+                                        widget=forms.Select(attrs=ATTRS_FOR_BOOLEAN_FORMS))
+    domhndsh_number = forms.ChoiceField(label=_('number'), choices=[(0, '-')], required=False,
+                                        widget=forms.Select(attrs=ATTRS_FOR_BOOLEAN_FORMS))
+    subhndsh = forms.CharField(label=_('Weak Hand'))
+    subhndsh_letter = forms.ChoiceField(label=_('letter'), choices=[(0, '-')], required=False,
+                                        widget=forms.Select(attrs=ATTRS_FOR_BOOLEAN_FORMS))
+    subhndsh_number = forms.ChoiceField(label=_('number'), choices=[(0, '-')], required=False,
+                                        widget=forms.Select(attrs=ATTRS_FOR_BOOLEAN_FORMS))
 
     class Meta:
         model = Gloss
@@ -1810,11 +1819,18 @@ class PhonologyForm(forms.Form):
         self.fields['handedness'].initial = self.gloss.handedness.name if self.gloss.handedness else '-'
         self.fields['weakdrop'].choices = [('0', _('')), ('1', _('+WD')), ('2', _('-WD'))]
         self.fields['weakdrop'].initial = self.gloss.weakdrop_to_choice()
-        print('init form, weakdrop: ', self.fields['weakdrop'].initial)
         self.fields['weakprop'].choices = [('0', _('')), ('1', _('+WP')), ('2', _('-WP'))]
         self.fields['weakprop'].initial = self.gloss.weakprop_to_choice()
-        self.fields['domhndsh'].initial = self.gloss.domhndsh.name if self.gloss.domhndsh else '-'
-
+        self.fields['domhndsh'].initial = self.gloss.display_domhndsh()
+        self.fields['subhndsh'].initial = self.gloss.display_subhndsh()
+        for boolean_field in ['domhndsh_letter', 'subhndsh_letter']:
+            self.fields[boolean_field].choices = [('0', ''), ('1', _('letter'))]
+        for boolean_field in ['domhndsh_number', 'subhndsh_number']:
+            self.fields[boolean_field].choices = [('0', ''), ('1', _('number'))]
+        self.fields['domhndsh_letter'].initial = self.gloss.display_domhndsh_letter
+        self.fields['domhndsh_number'].initial = self.gloss.display_domhndsh_number
+        self.fields['subhndsh_letter'].initial = self.gloss.display_subhndsh_letter
+        self.fields['subhndsh_number'].initial = self.gloss.display_subhndsh_number
 
 class SemanticsForm(forms.Form):
     gloss = None

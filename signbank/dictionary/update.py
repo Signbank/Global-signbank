@@ -875,7 +875,6 @@ def edit_gloss_save(request, glossid):
 
     gloss = get_object_or_404(Gloss, id=glossid)
     value_dict = get_gloss_non_empty_value_dict(request)
-    print('save ', value_dict)
     for field, value in value_dict.items():
         if field in ['semField']:
             gloss.semField.clear()

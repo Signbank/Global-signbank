@@ -187,13 +187,42 @@ var gloss_phonology = {{gloss_phonology|safe}};
             {% endwith %}
                 <th style="width:200px;">{% trans "Strong Hand" %}</th>
                 {% with phonologyform.fields|get_item:'domhndsh' as domhndsh_field %}
-                <td style="width:300px;" id="domhndsh_value">{{domhndsh_field.initial}}</td>
+                {% with phonologyform.fields|get_item:'domhndsh_letter' as domhndsh_letter_field %}
+                {% with phonologyform.fields|get_item:'domhndsh_number' as domhndsh_number_field %}
+                <td style="width:300px;">
+                    <span id="domhndsh_value">{{domhndsh_field.initial}}</span>
+                    <span id="domhndsh_letter_value" style="margin-left:20px;">{{domhndsh_letter_field.initial}}</span>
+                    <span id="domhndsh_number_value" style="margin-left:20px;">{{domhndsh_number_field.initial}}</span>
+                </td>
                 <td class="editform">
                     <input class='form-control form-control-light domhndshtypeahead'
                               placeholder='{% trans "Strong Hand" %}' >
                     <input type="hidden" name="domhndsh" value=""
                            id="domhndsh_machine_value" >
+
+                    <select class="select_domhndsh_letter" name="domhndsh_letter" id="domhndsh_letter_select_value">
+                        {% for value, opn in domhndsh_letter_field.choices %}
+                        {% if opn == domhndsh_letter_field.initial %}
+                        <option value={{value}} selected="selected">{{opn}}</option>
+                        {% else %}
+                        <option value={{value}}>{{opn}}</option>
+                        {% endif %}
+                        {% endfor %}
+                    </select>
+
+                    <select class="select_domhndsh_number" name="domhndsh_number" id="domhndsh_number_select_value">
+                        {% for value, opn in domhndsh_number_field.choices %}
+                        {% if opn == domhndsh_number_field.initial %}
+                        <option value={{value}} selected="selected">{{opn}}</option>
+                        {% else %}
+                        <option value={{value}}>{{opn}}</option>
+                        {% endif %}
+                        {% endfor %}
+                    </select>
+
                 </td>
+                {% endwith %}
+                {% endwith %}
                 {% endwith %}
             </tr>
         </table>

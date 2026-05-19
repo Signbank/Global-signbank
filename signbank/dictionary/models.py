@@ -952,26 +952,26 @@ class Gloss(MetaModelMixin, models.Model):
 
     def display_domhndsh_letter(self):
         if self.domhndsh_letter is None:
-            return '-'
-        return _('Yes') if self.domhndsh_letter else '-'
+            return ''
+        return _('letter') if self.domhndsh_letter else ''
 
     def display_domhndsh_number(self):
         if self.domhndsh_number is None:
-            return '-'
-        return _('Yes') if self.domhndsh_number else '-'
+            return ''
+        return _('number') if self.domhndsh_number else ''
 
     def display_subhndsh(self):
         return self.subhndsh.name if self.subhndsh else self.subhndsh
 
     def display_subhndsh_letter(self):
         if self.subhndsh_letter is None:
-            return '-'
-        return _('Yes') if self.subhndsh_letter else '-'
+            return ''
+        return _('letter') if self.subhndsh_letter else ''
 
     def display_subhndsh_number(self):
         if self.subhndsh_number is None:
-            return '-'
-        return _('Yes') if self.subhndsh_number else '-'
+            return ''
+        return _('number') if self.subhndsh_number else ''
 
     def display_locprim(self):
         return self.locprim.name if self.locprim else self.locprim
