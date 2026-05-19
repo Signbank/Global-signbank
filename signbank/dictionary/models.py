@@ -925,11 +925,53 @@ class Gloss(MetaModelMixin, models.Model):
     def display_handedness(self):
         return self.handedness.name if self.handedness else self.handedness
 
+    def display_weakdrop(self):
+        if self.weakdrop is None:
+            return ''
+        return "+WD" if self.weakdrop else "-WD"
+
+    def weakdrop_to_choice(self):
+        # for use in form choices initial selected
+        if self.weakdrop is None:
+            return '0'
+        return '1' if self.weakdrop else '2'
+
+    def display_weakprop(self):
+        if self.weakprop is None:
+            return ''
+        return "+WP" if self.weakprop else "-WP"
+
+    def weakprop_to_choice(self):
+        # for use in form choices initial selected
+        if self.weakprop is None:
+            return '0'
+        return '1' if self.weakprop else '2'
+
     def display_domhndsh(self):
         return self.domhndsh.name if self.domhndsh else self.domhndsh
 
+    def display_domhndsh_letter(self):
+        if self.domhndsh_letter is None:
+            return '-'
+        return _('Yes') if self.domhndsh_letter else '-'
+
+    def display_domhndsh_number(self):
+        if self.domhndsh_number is None:
+            return '-'
+        return _('Yes') if self.domhndsh_number else '-'
+
     def display_subhndsh(self):
         return self.subhndsh.name if self.subhndsh else self.subhndsh
+
+    def display_subhndsh_letter(self):
+        if self.subhndsh_letter is None:
+            return '-'
+        return _('Yes') if self.subhndsh_letter else '-'
+
+    def display_subhndsh_number(self):
+        if self.subhndsh_number is None:
+            return '-'
+        return _('Yes') if self.subhndsh_number else '-'
 
     def display_locprim(self):
         return self.locprim.name if self.locprim else self.locprim

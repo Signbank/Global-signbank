@@ -141,13 +141,41 @@ var gloss_phonology = {{gloss_phonology|safe}};
             {% endwith %}
                 <th style="width:200px;">{% trans "Handedness" %}</th>
                 {% with phonologyform.fields|get_item:'handedness' as handedness_field %}
-                <td style="width:300px;" id="handedness_value">{{handedness_field.initial}}</td>
+                {% with phonologyform.fields|get_item:'weakdrop' as weakdrop_field %}
+                {% with phonologyform.fields|get_item:'weakprop' as weakprop_field %}
+                <td style="width:300px;">
+                    <span id="handedness_value">{{handedness_field.initial}}</span>
+                    <span id="weakdrop_value" style="margin-left:20px;">{{gloss.display_weakdrop}}</span>
+                    <span id="weakprop_value" style="margin-left:20px;">{{gloss.display_weakprop}}</span>
+                </td>
                 <td class="editform">
                     <input class='form-control form-control-light handednesstypeahead'
                               placeholder='{% trans "Handedness" %}' >
                     <input type="hidden" name="handedness" value=""
                            id="handedness_machine_value" >
+
+                    <select class="select_weakdrop" name="weakdrop" id="weakdrop_select_value">
+                        {% for value, opn in weakdrop_field.choices %}
+                        {% if value == weakdrop_field.initial %}
+                        <option value={{value}} selected="selected">{{opn}}</option>
+                        {% else %}
+                        <option value={{value}}>{{opn}}</option>
+                        {% endif %}
+                        {% endfor %}
+                    </select>
+
+                    <select class="select_weakprop" name="weakprop" id="weakprop_select_value">
+                        {% for value, opn in weakprop_field.choices %}
+                        {% if value == weakprop_field.initial %}
+                        <option value={{value}} selected="selected">{{opn}}</option>
+                        {% else %}
+                        <option value={{value}}>{{opn}}</option>
+                        {% endif %}
+                        {% endfor %}
+                    </select>
                 </td>
+                {% endwith %}
+                {% endwith %}
                 {% endwith %}
             </tr>
             {% with show_field_row|get_item:"domhndsh" as show_field %}

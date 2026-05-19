@@ -875,6 +875,7 @@ def edit_gloss_save(request, glossid):
 
     gloss = get_object_or_404(Gloss, id=glossid)
     value_dict = get_gloss_non_empty_value_dict(request)
+    print('save ', value_dict)
     for field, value in value_dict.items():
         if field in ['semField']:
             gloss.semField.clear()
@@ -898,7 +899,7 @@ def edit_gloss_save(request, glossid):
             setattr(gloss, field, new_value)
         elif isinstance(internal_field, BooleanField):
             if field in ['weakdrop', 'weakprop']:
-                boolean_value = {'0': None, '1': None, '2': True, '3': False}[value]
+                boolean_value = {'0': None, '1': True, '2': False}[value]
                 gloss.__setattr__(field, boolean_value)
                 gloss.save()
             elif field in ['repeat', 'altern', 'domhndsh_letter', 'domhndsh_number', 'subhndsh_letter', 'subhndsh_number']:

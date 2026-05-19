@@ -1793,6 +1793,10 @@ class SearchGlossIds(forms.Form):
 class PhonologyForm(forms.Form):
     gloss = None
     handedness = forms.CharField(label=_('Handedness'))
+    weakprop = forms.ChoiceField(label=_('Weak Prop'), choices=[(0, '-')],
+                                 widget=forms.Select(attrs=ATTRS_FOR_BOOLEAN_FORMS))
+    weakdrop = forms.ChoiceField(label=_('Weak Drop'), choices=[(0, '-')],
+                                 widget=forms.Select(attrs=ATTRS_FOR_BOOLEAN_FORMS))
     domhndsh = forms.CharField(label=_('Strong Hand'))
 
     class Meta:
@@ -1804,6 +1808,11 @@ class PhonologyForm(forms.Form):
         super(PhonologyForm, self).__init__(*args, **kwargs)
 
         self.fields['handedness'].initial = self.gloss.handedness.name if self.gloss.handedness else '-'
+        self.fields['weakdrop'].choices = [('0', _('')), ('1', _('+WD')), ('2', _('-WD'))]
+        self.fields['weakdrop'].initial = self.gloss.weakdrop_to_choice()
+        print('init form, weakdrop: ', self.fields['weakdrop'].initial)
+        self.fields['weakprop'].choices = [('0', _('')), ('1', _('+WP')), ('2', _('-WP'))]
+        self.fields['weakprop'].initial = self.gloss.weakprop_to_choice()
         self.fields['domhndsh'].initial = self.gloss.domhndsh.name if self.gloss.domhndsh else '-'
 
 
