@@ -47,7 +47,27 @@ function domhndshtypeahead(target) {
       });
 };
 
+var subhndsh_bloodhound = new Bloodhound({
+      datumTokenizer: function(d) { return d.tokens; },
+      queryTokenizer: Bloodhound.tokenizers.whitespace,
+      remote: url+'/dictionary/ajax/handshape'+'/%QUERY'
+    });
 
+subhndsh_bloodhound.initialize();
+
+function subhndshtypeahead(target) {
+
+     $(target).typeahead(null, {
+          name: 'subhndsh',
+          displayKey: 'name',
+          source: subhndsh_bloodhound.ttAdapter(),
+          templates: {
+              suggestion: function(fc) {
+                  return("<p><strong>" + fc.name +  "</strong></p>");
+              }
+          }
+      });
+};
 // last of the field choice bloodhounds
 
 var selected_semField = [];
@@ -95,7 +115,7 @@ function renderSelected() {
 function enable_edit() {
     $('.editform').show();
     $('.empty_row').show();
-    $('.button-to-appear-in-edit-mode').show().addClass('btn-danger');
+    $('.button-to-appear-in-edit-mode').show();
     $('#enable_edit').removeClass('btn-primary').addClass('btn-danger');
 }
 
@@ -145,6 +165,12 @@ $(document).ready(function() {
           $('#domhndsh_value').text(suggestion.name);
           $('#domhndsh_machine_value').attr('value', suggestion.machine_value);
     });
+    subhndshtypeahead($('.subhndshtypeahead'));
+    $('.subhndshtypeahead').bind('typeahead:selected', function(ev, suggestion) {
+          busy_editing = true;
+          $('#subhndsh_value').text(suggestion.name);
+          $('#subhndsh_machine_value').attr('value', suggestion.machine_value);
+    });
     semFieldtypeahead($('.semFieldtypeahead'));
     $('.semFieldtypeahead').bind('typeahead:selected', function(ev, suggestion) {
           if (!selected_semField.includes(suggestion)) {
@@ -178,7 +204,17 @@ $(document).ready(function() {
           var selected_text = $(this).find('option:selected').text();
           $('#domhndsh_number_value').text(selected_text);
     });
+    $('.select_subhndsh_letter').on('change', function() {
+          var selected_value = $(this).val();
+          var selected_text = $(this).find('option:selected').text();
+          $('#subhndsh_letter_value').text(selected_text);
+    });
 
+    $('.select_subhndsh_number').on('change', function() {
+          var selected_value = $(this).val();
+          var selected_text = $(this).find('option:selected').text();
+          $('#subhndsh_number_value').text(selected_text);
+    });
      $('.quick_save').click(function(e)
 	 {
          e.preventDefault();

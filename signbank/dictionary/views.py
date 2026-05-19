@@ -2992,4 +2992,4 @@ def edit_phonology(request, glossid):
     context['gloss_phonology'] = FIELDS['phonology'] + ['semField']
     context['show_field_row'] = show_fields_rows(gloss)
 
-    return render(request, 'dictionary/edit_phonology.html', context)
+    return render(request, 'dictionary/edit_gloss.html', context)

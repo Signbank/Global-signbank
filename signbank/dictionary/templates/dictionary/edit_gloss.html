@@ -47,6 +47,10 @@ input[type="text"]:focus {
         color: red;
         font-weight: bold;
 }
+.btn-danger {
+    background-color: red;
+    border: none;
+}
 .actionButton {
     padding: 4px 8px;
     border: 1px solid Grey;
@@ -114,12 +118,12 @@ var gloss_phonology = {{gloss_phonology|safe}};
          {% if perms.dictionary.change_gloss %}
          <div>
             {% csrf_token %}
-            <button type="button" class="btn btn-default edit-cancel button-to-appear-in-edit-mode"
-                    style="width:auto;"
+            <button type="button" class="btn btn-danger edit-cancel button-to-appear-in-edit-mode"
+                    style="width:auto;padding:3px 12px;"
                     onclick='location.href="{{PREFIX_URL}}/dictionary/gloss/edit_phonology/{{gloss.id}}"'
                     >{% trans "Cancel" %}</button>
-            <button type="button" class="btn btn-default quick_save button-to-appear-in-edit-mode"
-                    style="width:auto;" value="{{gloss.id}}"
+            <button type="button" class="btn btn-danger quick_save button-to-appear-in-edit-mode"
+                    style="width:auto;padding:3px 12px;" value="{{gloss.id}}"
                     >{% trans "Save" %}</button>
             <button id='enable_edit'
                      class='btn btn-primary navbar-btn edit-mode'
@@ -213,6 +217,53 @@ var gloss_phonology = {{gloss_phonology|safe}};
                     <select class="select_domhndsh_number" name="domhndsh_number" id="domhndsh_number_select_value">
                         {% for value, opn in domhndsh_number_field.choices %}
                         {% if opn == domhndsh_number_field.initial %}
+                        <option value={{value}} selected="selected">{{opn}}</option>
+                        {% else %}
+                        <option value={{value}}>{{opn}}</option>
+                        {% endif %}
+                        {% endfor %}
+                    </select>
+
+                </td>
+                {% endwith %}
+                {% endwith %}
+                {% endwith %}
+            </tr>
+            {% with show_field_row|get_item:"subhndsh" as show_field %}
+            {% if not show_field %}
+            <tr class="empty_row">
+            {% else %}
+            <tr>
+            {% endif %}
+            {% endwith %}
+                <th style="width:200px;">{% trans "Weak Hand" %}</th>
+                {% with phonologyform.fields|get_item:'subhndsh' as subhndsh_field %}
+                {% with phonologyform.fields|get_item:'subhndsh_letter' as subhndsh_letter_field %}
+                {% with phonologyform.fields|get_item:'subhndsh_number' as subhndsh_number_field %}
+                <td style="width:300px;">
+                    <span id="subhndsh_value">{{subhndsh_field.initial}}</span>
+                    <span id="subhndsh_letter_value" style="margin-left:20px;">{{subhndsh_letter_field.initial}}</span>
+                    <span id="subhndsh_number_value" style="margin-left:20px;">{{subhndsh_number_field.initial}}</span>
+                </td>
+                <td class="editform">
+                    <input class='form-control form-control-light subhndshtypeahead'
+                              placeholder='{% trans "Weak Hand" %}' >
+                    <input type="hidden" name="subhndsh" value=""
+                           id="subhndsh_machine_value" >
+
+                    <select class="select_subhndsh_letter" name="subhndsh_letter" id="subhndsh_letter_select_value">
+                        {% for value, opn in subhndsh_letter_field.choices %}
+                        {% if opn == subhndsh_letter_field.initial %}
+                        <option value={{value}} selected="selected">{{opn}}</option>
+                        {% else %}
+                        <option value={{value}}>{{opn}}</option>
+                        {% endif %}
+                        {% endfor %}
+                    </select>
+
+                    <select class="select_subhndsh_number" name="subhndsh_number" id="subhndsh_number_select_value">
+                        {% for value, opn in subhndsh_number_field.choices %}
+                        {% if opn == subhndsh_number_field.initial %}
                         <option value={{value}} selected="selected">{{opn}}</option>
                         {% else %}
                         <option value={{value}}>{{opn}}</option>
