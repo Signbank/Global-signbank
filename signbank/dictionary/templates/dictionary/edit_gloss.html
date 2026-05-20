@@ -153,12 +153,14 @@ var gloss_phonology = {{gloss_phonology|safe}};
                     <span id="weakprop_value" style="margin-left:20px;">{{gloss.display_weakprop}}</span>
                 </td>
                 <td class="editform">
+                    <div>
                     <input class='form-control form-control-light handednesstypeahead'
                               placeholder='{% trans "Handedness" %}' >
                     <input type="hidden" name="handedness" value=""
                            id="handedness_machine_value" >
-
-                    <select class="select_weakdrop" name="weakdrop" id="weakdrop_select_value">
+                    </div>
+                    <div>
+                    <select class="select_weakdrop form-control form-control-light" name="weakdrop" id="weakdrop_select_value">
                         {% for value, opn in weakdrop_field.choices %}
                         {% if value == weakdrop_field.initial %}
                         <option value={{value}} selected="selected">{{opn}}</option>
@@ -167,8 +169,9 @@ var gloss_phonology = {{gloss_phonology|safe}};
                         {% endif %}
                         {% endfor %}
                     </select>
-
-                    <select class="select_weakprop" name="weakprop" id="weakprop_select_value">
+                    </div>
+                    <div>
+                    <select class="select_weakprop form-control form-control-light" name="weakprop" id="weakprop_select_value">
                         {% for value, opn in weakprop_field.choices %}
                         {% if value == weakprop_field.initial %}
                         <option value={{value}} selected="selected">{{opn}}</option>
@@ -177,6 +180,7 @@ var gloss_phonology = {{gloss_phonology|safe}};
                         {% endif %}
                         {% endfor %}
                     </select>
+                    </div>
                 </td>
                 {% endwith %}
                 {% endwith %}
@@ -199,12 +203,14 @@ var gloss_phonology = {{gloss_phonology|safe}};
                     <span id="domhndsh_number_value" style="margin-left:20px;">{{domhndsh_number_field.initial}}</span>
                 </td>
                 <td class="editform">
+                    <div>
                     <input class='form-control form-control-light domhndshtypeahead'
                               placeholder='{% trans "Strong Hand" %}' >
                     <input type="hidden" name="domhndsh" value=""
                            id="domhndsh_machine_value" >
-
-                    <select class="select_domhndsh_letter" name="domhndsh_letter" id="domhndsh_letter_select_value">
+                    </div>
+                    <div>
+                    <select class="select_domhndsh_letter form-control form-control-light" name="domhndsh_letter" id="domhndsh_letter_select_value">
                         {% for value, opn in domhndsh_letter_field.choices %}
                         {% if opn == domhndsh_letter_field.initial %}
                         <option value={{value}} selected="selected">{{opn}}</option>
@@ -213,8 +219,9 @@ var gloss_phonology = {{gloss_phonology|safe}};
                         {% endif %}
                         {% endfor %}
                     </select>
-
-                    <select class="select_domhndsh_number" name="domhndsh_number" id="domhndsh_number_select_value">
+                    </div>
+                    <div>
+                    <select class="select_domhndsh_number form-control form-control-light" name="domhndsh_number" id="domhndsh_number_select_value">
                         {% for value, opn in domhndsh_number_field.choices %}
                         {% if opn == domhndsh_number_field.initial %}
                         <option value={{value}} selected="selected">{{opn}}</option>
@@ -223,7 +230,7 @@ var gloss_phonology = {{gloss_phonology|safe}};
                         {% endif %}
                         {% endfor %}
                     </select>
-
+                    </div>
                 </td>
                 {% endwith %}
                 {% endwith %}
@@ -246,12 +253,14 @@ var gloss_phonology = {{gloss_phonology|safe}};
                     <span id="subhndsh_number_value" style="margin-left:20px;">{{subhndsh_number_field.initial}}</span>
                 </td>
                 <td class="editform">
+                    <div>
                     <input class='form-control form-control-light subhndshtypeahead'
                               placeholder='{% trans "Weak Hand" %}' >
                     <input type="hidden" name="subhndsh" value=""
                            id="subhndsh_machine_value" >
-
-                    <select class="select_subhndsh_letter" name="subhndsh_letter" id="subhndsh_letter_select_value">
+                    </div>
+                    <div>
+                    <select class="select_subhndsh_letter form-control form-control-light" name="subhndsh_letter" id="subhndsh_letter_select_value">
                         {% for value, opn in subhndsh_letter_field.choices %}
                         {% if opn == subhndsh_letter_field.initial %}
                         <option value={{value}} selected="selected">{{opn}}</option>
@@ -260,8 +269,9 @@ var gloss_phonology = {{gloss_phonology|safe}};
                         {% endif %}
                         {% endfor %}
                     </select>
-
-                    <select class="select_subhndsh_number" name="subhndsh_number" id="subhndsh_number_select_value">
+                    </div>
+                    <div>
+                    <select class="select_subhndsh_number form-control form-control-light" name="subhndsh_number" id="subhndsh_number_select_value">
                         {% for value, opn in subhndsh_number_field.choices %}
                         {% if opn == subhndsh_number_field.initial %}
                         <option value={{value}} selected="selected">{{opn}}</option>
@@ -270,7 +280,7 @@ var gloss_phonology = {{gloss_phonology|safe}};
                         {% endif %}
                         {% endfor %}
                     </select>
-
+                    </div>
                 </td>
                 {% endwith %}
                 {% endwith %}
