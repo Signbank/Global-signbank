@@ -35,3 +35,13 @@ def semField_ajax_complete(request, prefix):
 
     return JsonResponse(result, safe=False)
 
+
+def fieldchoice_ajax_complete(request, field, prefix):
+    """Return a list of field choices matching the search term"""
+    qs = FieldChoice.objects.filter(field=field, name__istartswith=prefix)
+
+    result = []
+    for f in qs:
+        result.append({'name': f.name, 'machine_value': f.machine_value})
+
+    return JsonResponse(result, safe=False)

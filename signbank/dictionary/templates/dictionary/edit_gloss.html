@@ -143,7 +143,7 @@ var gloss_phonology = {{gloss_phonology|safe}};
             <tr>
             {% endif %}
             {% endwith %}
-                <th style="width:200px;">{% trans "Handedness" %}</th>
+                <th style="width:240px;">{% trans "Handedness" %}</th>
                 {% with phonologyform.fields|get_item:'handedness' as handedness_field %}
                 {% with phonologyform.fields|get_item:'weakdrop' as weakdrop_field %}
                 {% with phonologyform.fields|get_item:'weakprop' as weakprop_field %}
@@ -193,7 +193,7 @@ var gloss_phonology = {{gloss_phonology|safe}};
             <tr>
             {% endif %}
             {% endwith %}
-                <th style="width:200px;">{% trans "Strong Hand" %}</th>
+                <th style="width:240px;">{% trans "Strong Hand" %}</th>
                 {% with phonologyform.fields|get_item:'domhndsh' as domhndsh_field %}
                 {% with phonologyform.fields|get_item:'domhndsh_letter' as domhndsh_letter_field %}
                 {% with phonologyform.fields|get_item:'domhndsh_number' as domhndsh_number_field %}
@@ -243,7 +243,7 @@ var gloss_phonology = {{gloss_phonology|safe}};
             <tr>
             {% endif %}
             {% endwith %}
-                <th style="width:200px;">{% trans "Weak Hand" %}</th>
+                <th style="width:240px;">{% trans "Weak Hand" %}</th>
                 {% with phonologyform.fields|get_item:'subhndsh' as subhndsh_field %}
                 {% with phonologyform.fields|get_item:'subhndsh_letter' as subhndsh_letter_field %}
                 {% with phonologyform.fields|get_item:'subhndsh_number' as subhndsh_number_field %}
@@ -286,6 +286,50 @@ var gloss_phonology = {{gloss_phonology|safe}};
                 {% endwith %}
                 {% endwith %}
             </tr>
+            {% with show_field_row|get_item:"handCh" as show_field %}
+            {% if not show_field %}
+            <tr class="empty_row">
+            {% else %}
+            <tr>
+            {% endif %}
+            {% endwith %}
+                <th style="width:240px;">{% trans "Handshape Change" %}</th>
+                {% with phonologyform.fields|get_item:'handCh' as handCh_field %}
+                <td style="width:300px;">
+                    <span id="handCh_value">{{handCh_field.initial}}</span>
+                </td>
+                <td class="editform">
+                    <div>
+                    <input class='form-control form-control-light handChtypeahead'
+                              placeholder='{% trans "Handshape Change" %}' >
+                    <input type="hidden" name="handCh" value=""
+                           id="handCh_machine_value" >
+                    </div>
+                </td>
+                {% endwith %}
+            </tr>
+            {% with show_field_row|get_item:"relatArtic" as show_field %}
+            {% if not show_field %}
+            <tr class="empty_row">
+            {% else %}
+            <tr>
+            {% endif %}
+            {% endwith %}
+                <th style="width:240px;">{% trans "Relation between Articulators" %}</th>
+                {% with phonologyform.fields|get_item:'relatArtic' as relatArtic_field %}
+                <td style="width:300px;">
+                    <span id="relatArtic_value">{{relatArtic_field.initial}}</span>
+                </td>
+                <td class="editform">
+                    <div>
+                    <input class='form-control form-control-light relatArtictypeahead'
+                              placeholder='{% trans "Relation between Articulators" %}' >
+                    <input type="hidden" name="relatArtic" value=""
+                           id="relatArtic_machine_value" >
+                    </div>
+                </td>
+                {% endwith %}
+            </tr>
         </table>
     </div>
 
@@ -302,7 +346,7 @@ var gloss_phonology = {{gloss_phonology|safe}};
             <tr>
             {% endif %}
             {% endwith %}
-                <th style="width:200px;">{% trans "Semantic Field" %}</th>
+                <th style="width:240px;">{% trans "Semantic Field" %}</th>
                 {% with semanticsform.fields|get_item:'semField' as semField_field %}
                 <td style="width:300px;" id="semField_value">
                     {% for semfield in gloss.semField.all %}

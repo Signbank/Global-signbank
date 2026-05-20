@@ -6,7 +6,7 @@ var busy_editing = false;
 var handedness_bloodhound = new Bloodhound({
       datumTokenizer: function(d) { return d.tokens; },
       queryTokenizer: Bloodhound.tokenizers.whitespace,
-      remote: url+'/dictionary/ajax/handedness'+'/%QUERY'
+      remote: url+'/dictionary/ajax/fieldchoice/Handedness'+'/%QUERY'
     });
 
 handedness_bloodhound.initialize();
@@ -61,6 +61,50 @@ function subhndshtypeahead(target) {
           name: 'subhndsh',
           displayKey: 'name',
           source: subhndsh_bloodhound.ttAdapter(),
+          templates: {
+              suggestion: function(fc) {
+                  return("<p><strong>" + fc.name +  "</strong></p>");
+              }
+          }
+      });
+};
+
+var handCh_bloodhound = new Bloodhound({
+      datumTokenizer: function(d) { return d.tokens; },
+      queryTokenizer: Bloodhound.tokenizers.whitespace,
+      remote: url+'/dictionary/ajax/fieldchoice/HandshapeChange'+'/%QUERY'
+    });
+
+handCh_bloodhound.initialize();
+
+function handChtypeahead(target) {
+
+     $(target).typeahead(null, {
+          name: 'handCh',
+          displayKey: 'name',
+          source: handCh_bloodhound.ttAdapter(),
+          templates: {
+              suggestion: function(fc) {
+                  return("<p><strong>" + fc.name +  "</strong></p>");
+              }
+          }
+      });
+};
+
+var relatArtic_bloodhound = new Bloodhound({
+      datumTokenizer: function(d) { return d.tokens; },
+      queryTokenizer: Bloodhound.tokenizers.whitespace,
+      remote: url+'/dictionary/ajax/fieldchoice/RelatArtic'+'/%QUERY'
+    });
+
+relatArtic_bloodhound.initialize();
+
+function relatArtictypeahead(target) {
+
+     $(target).typeahead(null, {
+          name: 'relatArtic',
+          displayKey: 'name',
+          source: relatArtic_bloodhound.ttAdapter(),
           templates: {
               suggestion: function(fc) {
                   return("<p><strong>" + fc.name +  "</strong></p>");
@@ -170,6 +214,18 @@ $(document).ready(function() {
           busy_editing = true;
           $('#subhndsh_value').text(suggestion.name);
           $('#subhndsh_machine_value').attr('value', suggestion.machine_value);
+    });
+    handChtypeahead($('.handChtypeahead'));
+    $('.handChtypeahead').bind('typeahead:selected', function(ev, suggestion) {
+          busy_editing = true;
+          $('#handCh_value').text(suggestion.name);
+          $('#handCh_machine_value').attr('value', suggestion.machine_value);
+    });
+    relatArtictypeahead($('.relatArtictypeahead'));
+    $('.relatArtictypeahead').bind('typeahead:selected', function(ev, suggestion) {
+          busy_editing = true;
+          $('#relatArtic_value').text(suggestion.name);
+          $('#relatArtic_machine_value').attr('value', suggestion.machine_value);
     });
     semFieldtypeahead($('.semFieldtypeahead'));
     $('.semFieldtypeahead').bind('typeahead:selected', function(ev, suggestion) {

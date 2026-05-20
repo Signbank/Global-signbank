@@ -1807,6 +1807,8 @@ class PhonologyForm(forms.Form):
                                         widget=forms.Select(attrs=ATTRS_FOR_BOOLEAN_FORMS))
     subhndsh_number = forms.ChoiceField(label=_('number'), choices=[(0, '-')], required=False,
                                         widget=forms.Select(attrs=ATTRS_FOR_BOOLEAN_FORMS))
+    handCh = forms.CharField(label=_('Handshape Change'))
+    relatArtic = forms.CharField(label=_('Relation between Articulators'))
 
     class Meta:
         model = Gloss
@@ -1831,6 +1833,8 @@ class PhonologyForm(forms.Form):
         self.fields['domhndsh_number'].initial = self.gloss.display_domhndsh_number
         self.fields['subhndsh_letter'].initial = self.gloss.display_subhndsh_letter
         self.fields['subhndsh_number'].initial = self.gloss.display_subhndsh_number
+        self.fields['handCh'].initial = self.gloss.handCh.name if self.gloss.handCh else '-'
+        self.fields['relatArtic'].initial = self.gloss.relatArtic.name if self.gloss.relatArtic else '-'
 
 class SemanticsForm(forms.Form):
     gloss = None
