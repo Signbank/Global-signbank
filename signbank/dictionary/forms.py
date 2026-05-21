@@ -1813,6 +1813,10 @@ class PhonologyForm(forms.Form):
     contType = forms.CharField(label=_('Contact Type'))
     movSh = forms.CharField(label=_('Movement Shape'))
     movDir = forms.CharField(label=_('Movement Direction'))
+    repeat = forms.ChoiceField(label=_('Repeating Movement'), choices=[('0', '-')], required=False,
+                               widget=forms.Select(attrs=ATTRS_FOR_BOOLEAN_FORMS))
+    altern = forms.ChoiceField(label=_('Alternating Movement'), choices=[('0', '-')], required=False,
+                               widget=forms.Select(attrs=ATTRS_FOR_BOOLEAN_FORMS))
 
     class Meta:
         model = Gloss
@@ -1822,7 +1826,7 @@ class PhonologyForm(forms.Form):
         self.gloss = kwargs.pop('gloss')
         super(PhonologyForm, self).__init__(*args, **kwargs)
 
-        self.fields['handedness'].initial = self.gloss.handedness.name if self.gloss.handedness else '-'
+        self.fields['handedness'].initial = self.gloss.handedness.name if self.gloss.handedness else ''
         self.fields['weakdrop'].choices = [('0', _('')), ('1', _('+WD')), ('2', _('-WD'))]
         self.fields['weakdrop'].initial = self.gloss.weakdrop_to_choice()
         self.fields['weakprop'].choices = [('0', _('')), ('1', _('+WP')), ('2', _('-WP'))]
@@ -1837,13 +1841,16 @@ class PhonologyForm(forms.Form):
         self.fields['domhndsh_number'].initial = self.gloss.display_domhndsh_number
         self.fields['subhndsh_letter'].initial = self.gloss.display_subhndsh_letter
         self.fields['subhndsh_number'].initial = self.gloss.display_subhndsh_number
-        self.fields['handCh'].initial = self.gloss.handCh.name if self.gloss.handCh else '-'
-        self.fields['relatArtic'].initial = self.gloss.relatArtic.name if self.gloss.relatArtic else '-'
-        self.fields['locprim'].initial = self.gloss.locprim.name if self.gloss.locprim else '-'
-        self.fields['contType'].initial = self.gloss.contType.name if self.gloss.contType else '-'
-        self.fields['movSh'].initial = self.gloss.movSh.name if self.gloss.movSh else '-'
-        self.fields['movDir'].initial = self.gloss.movDir.name if self.gloss.movDir else '-'
-
+        self.fields['handCh'].initial = self.gloss.handCh.name if self.gloss.handCh else ''
+        self.fields['relatArtic'].initial = self.gloss.relatArtic.name if self.gloss.relatArtic else ''
+        self.fields['locprim'].initial = self.gloss.locprim.name if self.gloss.locprim else ''
+        self.fields['contType'].initial = self.gloss.contType.name if self.gloss.contType else ''
+        self.fields['movSh'].initial = self.gloss.movSh.name if self.gloss.movSh else ''
+        self.fields['movDir'].initial = self.gloss.movDir.name if self.gloss.movDir else ''
+        for boolean_field in ['repeat', 'altern']:
+            self.fields[boolean_field].choices = [('0', ''), ('1', _('Yes'))]
+        self.fields['repeat'].initial = self.gloss.display_repeat
+        self.fields['altern'].initial = self.gloss.display_altern
 
 class SemanticsForm(forms.Form):
     gloss = None

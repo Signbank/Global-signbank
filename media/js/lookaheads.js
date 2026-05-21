@@ -244,6 +244,7 @@ function renderSelected() {
 
 function enable_edit() {
     $('.editform').show();
+    $('.editsemanticsform').show();
     $('.empty_row').show();
     $('.button-to-appear-in-edit-mode').show();
     $('#enable_edit').removeClass('btn-primary').addClass('btn-danger');
@@ -255,6 +256,7 @@ function disable_edit() {
         location.reload(true);
     }
     $('.editform').hide();
+    $('.editsemanticsform').hide();
     $('.empty_row').hide();
     $('.button-to-appear-in-edit-mode').hide();
     busy_editing = false;
@@ -287,54 +289,63 @@ $(document).ready(function() {
     $('.handednesstypeahead').bind('typeahead:selected', function(ev, suggestion) {
           busy_editing = true;
           $('#handedness_value').text(suggestion.name);
+          $(this).attr('placeholder', suggestion.name);
           $('#handedness_machine_value').attr('value', suggestion.machine_value);
     });
     domhndshtypeahead($('.domhndshtypeahead'));
     $('.domhndshtypeahead').bind('typeahead:selected', function(ev, suggestion) {
           busy_editing = true;
           $('#domhndsh_value').text(suggestion.name);
+          $(this).attr('placeholder', suggestion.name);
           $('#domhndsh_machine_value').attr('value', suggestion.machine_value);
     });
     subhndshtypeahead($('.subhndshtypeahead'));
     $('.subhndshtypeahead').bind('typeahead:selected', function(ev, suggestion) {
           busy_editing = true;
           $('#subhndsh_value').text(suggestion.name);
+          $(this).attr('placeholder', suggestion.name);
           $('#subhndsh_machine_value').attr('value', suggestion.machine_value);
     });
     handChtypeahead($('.handChtypeahead'));
     $('.handChtypeahead').bind('typeahead:selected', function(ev, suggestion) {
           busy_editing = true;
           $('#handCh_value').text(suggestion.name);
+          $(this).attr('placeholder', suggestion.name);
           $('#handCh_machine_value').attr('value', suggestion.machine_value);
     });
     relatArtictypeahead($('.relatArtictypeahead'));
     $('.relatArtictypeahead').bind('typeahead:selected', function(ev, suggestion) {
           busy_editing = true;
           $('#relatArtic_value').text(suggestion.name);
+          $(this).attr('placeholder', suggestion.name);
           $('#relatArtic_machine_value').attr('value', suggestion.machine_value);
     });
     locprimtypeahead($('.locprimtypeahead'));
     $('.locprimtypeahead').bind('typeahead:selected', function(ev, suggestion) {
           busy_editing = true;
           $('#locprim_value').text(suggestion.name);
+          $(this).attr('placeholder', suggestion.name);
           $('#locprim_machine_value').attr('value', suggestion.machine_value);
     });
     contTypetypeahead($('.contTypetypeahead'));
     $('.contTypetypeahead').bind('typeahead:selected', function(ev, suggestion) {
           busy_editing = true;
           $('#contType_value').text(suggestion.name);
+          $(this).attr('placeholder', suggestion.name);
           $('#contType_machine_value').attr('value', suggestion.machine_value);
     });
     movShtypeahead($('.movShtypeahead'));
     $('.movShtypeahead').bind('typeahead:selected', function(ev, suggestion) {
           busy_editing = true;
           $('#movSh_value').text(suggestion.name);
+          $(this).attr('placeholder', suggestion.name);
           $('#movSh_machine_value').attr('value', suggestion.machine_value);
     });
     movDirtypeahead($('.movDirtypeahead'));
     $('.movDirtypeahead').bind('typeahead:selected', function(ev, suggestion) {
           busy_editing = true;
           $('#movDir_value').text(suggestion.name);
+          $(this).attr('placeholder', suggestion.name);
           $('#movDir_machine_value').attr('value', suggestion.machine_value);
     });
     semFieldtypeahead($('.semFieldtypeahead'));
@@ -380,6 +391,12 @@ $(document).ready(function() {
           var selected_value = $(this).val();
           var selected_text = $(this).find('option:selected').text();
           $('#subhndsh_number_value').text(selected_text);
+    });
+
+    $('.select_repeat').on('change', function() {
+          var selected_value = $(this).val();
+          var selected_text = $(this).find('option:selected').text();
+          $('#repeat_value').text(selected_text);
     });
      $('.quick_save').click(function(e)
 	 {

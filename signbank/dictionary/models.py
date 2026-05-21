@@ -1205,6 +1205,16 @@ class Gloss(MetaModelMixin, models.Model):
     repeat = models.BooleanField(_("Repeated Movement"), null=True, default=False)
     altern = models.BooleanField(_("Alternating Movement"), null=True, default=False)
 
+    def display_repeat(self):
+        if self.repeat is None:
+            return ''
+        return _('Yes') if self.repeat else ''
+
+    def display_altern(self):
+        if self.altern is None:
+            return ''
+        return _('Yes') if self.altern else ''
+
     movSh = FieldChoiceForeignKey(FieldChoice, on_delete=models.SET_NULL, null=True,
                                           limit_choices_to={'field': FieldChoice.MOVEMENTSHAPE},
                                           field_choice_category=FieldChoice.MOVEMENTSHAPE,
