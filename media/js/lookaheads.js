@@ -416,6 +416,16 @@ $(document).ready(function() {
                 var field_key = $(field_lookup).attr("name");
                 var field_value = $(field_lookup).val();
                 update[field_key] = field_value;
+            } else if (field == 'subhndsh_letter') {
+                var field_lookup = '#'+field+'_select_value';
+                var field_key = $(field_lookup).attr("name");
+                var field_value = $(field_lookup).val();
+                update[field_key] = field_value;
+            } else if (field == 'subhndsh_number') {
+                var field_lookup = '#'+field+'_select_value';
+                var field_key = $(field_lookup).attr("name");
+                var field_value = $(field_lookup).val();
+                update[field_key] = field_value;
             } else {
                 var field_lookup = '#'+field+'_machine_value';
                 var field_key = $(field_lookup).attr("name");
