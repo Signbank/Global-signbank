@@ -242,12 +242,45 @@ function renderSelected() {
     });
 }
 
+function disable_lookaheads() {
+         $('.form-control').each(function() {
+         var this_id = $(this).attr('id');
+         if (!this_id) {return;}
+         if (this_id.endsWith("_lookahead")) {
+             console.log('disable '+this_id);
+             $(this).attr('disabled', true);
+             return;
+         }
+         if (this_id.endsWith("_value")) {
+             console.log('disable: '+this_id);
+             $(this).attr('disabled', true);
+         }
+     });
+}
+
+function enable_lookaheads() {
+         $('.form-control').each(function() {
+         var this_id = $(this).attr('id');
+         if (!this_id) {return;}
+         if (this_id.endsWith("_lookahead")) {
+             console.log('enable '+this_id);
+             $(this).removeAttr('disabled');
+             return;
+         }
+         if (this_id.endsWith("_value")) {
+             console.log('enable: '+this_id);
+             $(this).removeAttr('disabled');
+         }
+     });
+}
+
 function enable_edit() {
-    $('.editform').show();
+    // $('.editform').show();
     $('.editsemanticsform').show();
     $('.empty_row').show();
     $('.button-to-appear-in-edit-mode').show();
     $('#enable_edit').removeClass('btn-primary').addClass('btn-danger');
+    enable_lookaheads();
 }
 
 function disable_edit() {
@@ -255,12 +288,13 @@ function disable_edit() {
         // the user was busy editing but did not save the data, just reload the page
         location.reload(true);
     }
-    $('.editform').hide();
+    // $('.editform').hide();
     $('.editsemanticsform').hide();
     $('.empty_row').hide();
     $('.button-to-appear-in-edit-mode').hide();
     busy_editing = false;
     $('#enable_edit').addClass('btn-primary').removeClass('btn-danger');
+    disable_lookaheads();
 }
 
 function toggle_edit(redirect_to_next) {
@@ -464,4 +498,5 @@ $(document).ready(function() {
             }
          });
      });
+    disable_lookaheads();
 });
