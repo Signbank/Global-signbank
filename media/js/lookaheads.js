@@ -112,6 +112,92 @@ function relatArtictypeahead(target) {
           }
       });
 };
+
+var locprim_bloodhound = new Bloodhound({
+      datumTokenizer: function(d) { return d.tokens; },
+      queryTokenizer: Bloodhound.tokenizers.whitespace,
+      remote: url+'/dictionary/ajax/fieldchoice/Location'+'/%QUERY'
+    });
+
+locprim_bloodhound.initialize();
+
+function locprimtypeahead(target) {
+
+     $(target).typeahead(null, {
+          name: 'locprim',
+          displayKey: 'name',
+          source: locprim_bloodhound.ttAdapter(),
+          templates: {
+              suggestion: function(fc) {
+                  return("<p><strong>" + fc.name +  "</strong></p>");
+              }
+          }
+      });
+};
+
+var contType_bloodhound = new Bloodhound({
+      datumTokenizer: function(d) { return d.tokens; },
+      queryTokenizer: Bloodhound.tokenizers.whitespace,
+      remote: url+'/dictionary/ajax/fieldchoice/ContactType'+'/%QUERY'
+    });
+
+contType_bloodhound.initialize();
+
+function contTypetypeahead(target) {
+
+     $(target).typeahead(null, {
+          name: 'contType',
+          displayKey: 'name',
+          source: contType_bloodhound.ttAdapter(),
+          templates: {
+              suggestion: function(fc) {
+                  return("<p><strong>" + fc.name +  "</strong></p>");
+              }
+          }
+      });
+};
+var movSh_bloodhound = new Bloodhound({
+      datumTokenizer: function(d) { return d.tokens; },
+      queryTokenizer: Bloodhound.tokenizers.whitespace,
+      remote: url+'/dictionary/ajax/fieldchoice/MovementShape'+'/%QUERY'
+    });
+
+movSh_bloodhound.initialize();
+
+function movShtypeahead(target) {
+
+     $(target).typeahead(null, {
+          name: 'movSh',
+          displayKey: 'name',
+          source: movSh_bloodhound.ttAdapter(),
+          templates: {
+              suggestion: function(fc) {
+                  return("<p><strong>" + fc.name +  "</strong></p>");
+              }
+          }
+      });
+};
+var movDir_bloodhound = new Bloodhound({
+      datumTokenizer: function(d) { return d.tokens; },
+      queryTokenizer: Bloodhound.tokenizers.whitespace,
+      remote: url+'/dictionary/ajax/fieldchoice/MovementDir'+'/%QUERY'
+    });
+
+movDir_bloodhound.initialize();
+
+function movDirtypeahead(target) {
+
+     $(target).typeahead(null, {
+          name: 'movDir',
+          displayKey: 'name',
+          source: movDir_bloodhound.ttAdapter(),
+          templates: {
+              suggestion: function(fc) {
+                  return("<p><strong>" + fc.name +  "</strong></p>");
+              }
+          }
+      });
+};
 // last of the field choice bloodhounds
 
 var selected_semField = [];
@@ -226,6 +312,30 @@ $(document).ready(function() {
           busy_editing = true;
           $('#relatArtic_value').text(suggestion.name);
           $('#relatArtic_machine_value').attr('value', suggestion.machine_value);
+    });
+    locprimtypeahead($('.locprimtypeahead'));
+    $('.locprimtypeahead').bind('typeahead:selected', function(ev, suggestion) {
+          busy_editing = true;
+          $('#locprim_value').text(suggestion.name);
+          $('#locprim_machine_value').attr('value', suggestion.machine_value);
+    });
+    contTypetypeahead($('.contTypetypeahead'));
+    $('.contTypetypeahead').bind('typeahead:selected', function(ev, suggestion) {
+          busy_editing = true;
+          $('#contType_value').text(suggestion.name);
+          $('#contType_machine_value').attr('value', suggestion.machine_value);
+    });
+    movShtypeahead($('.movShtypeahead'));
+    $('.movShtypeahead').bind('typeahead:selected', function(ev, suggestion) {
+          busy_editing = true;
+          $('#movSh_value').text(suggestion.name);
+          $('#movSh_machine_value').attr('value', suggestion.machine_value);
+    });
+    movDirtypeahead($('.movDirtypeahead'));
+    $('.movDirtypeahead').bind('typeahead:selected', function(ev, suggestion) {
+          busy_editing = true;
+          $('#movDir_value').text(suggestion.name);
+          $('#movDir_machine_value').attr('value', suggestion.machine_value);
     });
     semFieldtypeahead($('.semFieldtypeahead'));
     $('.semFieldtypeahead').bind('typeahead:selected', function(ev, suggestion) {

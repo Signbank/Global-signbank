@@ -1809,6 +1809,10 @@ class PhonologyForm(forms.Form):
                                         widget=forms.Select(attrs=ATTRS_FOR_BOOLEAN_FORMS))
     handCh = forms.CharField(label=_('Handshape Change'))
     relatArtic = forms.CharField(label=_('Relation between Articulators'))
+    locprim = forms.CharField(label=_('Location'))
+    contType = forms.CharField(label=_('Contact Type'))
+    movSh = forms.CharField(label=_('Movement Shape'))
+    movDir = forms.CharField(label=_('Movement Direction'))
 
     class Meta:
         model = Gloss
@@ -1835,6 +1839,11 @@ class PhonologyForm(forms.Form):
         self.fields['subhndsh_number'].initial = self.gloss.display_subhndsh_number
         self.fields['handCh'].initial = self.gloss.handCh.name if self.gloss.handCh else '-'
         self.fields['relatArtic'].initial = self.gloss.relatArtic.name if self.gloss.relatArtic else '-'
+        self.fields['locprim'].initial = self.gloss.locprim.name if self.gloss.locprim else '-'
+        self.fields['contType'].initial = self.gloss.contType.name if self.gloss.contType else '-'
+        self.fields['movSh'].initial = self.gloss.movSh.name if self.gloss.movSh else '-'
+        self.fields['movDir'].initial = self.gloss.movDir.name if self.gloss.movDir else '-'
+
 
 class SemanticsForm(forms.Form):
     gloss = None

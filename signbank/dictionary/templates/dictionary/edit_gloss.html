@@ -330,6 +330,94 @@ var gloss_phonology = {{gloss_phonology|safe}};
                 </td>
                 {% endwith %}
             </tr>
+            {% with show_field_row|get_item:"locprim" as show_field %}
+            {% if not show_field %}
+            <tr class="empty_row">
+            {% else %}
+            <tr>
+            {% endif %}
+            {% endwith %}
+                <th style="width:240px;">{% trans "Location" %}</th>
+                {% with phonologyform.fields|get_item:'locprim' as locprim_field %}
+                <td style="width:300px;">
+                    <span id="locprim_value">{{locprim_field.initial}}</span>
+                </td>
+                <td class="editform">
+                    <div>
+                    <input class='form-control form-control-light locprimtypeahead'
+                              placeholder='{% trans "Location" %}' >
+                    <input type="hidden" name="locprim" value=""
+                           id="locprim_machine_value" >
+                    </div>
+                </td>
+                {% endwith %}
+            </tr>
+            {% with show_field_row|get_item:"contType" as show_field %}
+            {% if not show_field %}
+            <tr class="empty_row">
+            {% else %}
+            <tr>
+            {% endif %}
+            {% endwith %}
+                <th style="width:240px;">{% trans "Contact Type" %}</th>
+                {% with phonologyform.fields|get_item:'contType' as contType_field %}
+                <td style="width:300px;">
+                    <span id="contType_value">{{contType_field.initial}}</span>
+                </td>
+                <td class="editform">
+                    <div>
+                    <input class='form-control form-control-light contTypetypeahead'
+                              placeholder='{% trans "Contact Type" %}' >
+                    <input type="hidden" name="contType" value=""
+                           id="contType_machine_value" >
+                    </div>
+                </td>
+                {% endwith %}
+            </tr>
+            {% with show_field_row|get_item:"movSh" as show_field %}
+            {% if not show_field %}
+            <tr class="empty_row">
+            {% else %}
+            <tr>
+            {% endif %}
+            {% endwith %}
+                <th style="width:240px;">{% trans "Movement Shape" %}</th>
+                {% with phonologyform.fields|get_item:'movSh' as movSh_field %}
+                <td style="width:300px;">
+                    <span id="movSh_value">{{movSh_field.initial}}</span>
+                </td>
+                <td class="editform">
+                    <div>
+                    <input class='form-control form-control-light movShtypeahead'
+                              placeholder='{% trans "Movement Shape" %}' >
+                    <input type="hidden" name="movSh" value=""
+                           id="movSh_machine_value" >
+                    </div>
+                </td>
+                {% endwith %}
+            </tr>
+            {% with show_field_row|get_item:"movDir" as show_field %}
+            {% if not show_field %}
+            <tr class="empty_row">
+            {% else %}
+            <tr>
+            {% endif %}
+            {% endwith %}
+                <th style="width:240px;">{% trans "Movement Direction" %}</th>
+                {% with phonologyform.fields|get_item:'movDir' as movDir_field %}
+                <td style="width:300px;">
+                    <span id="movDir_value">{{movDir_field.initial}}</span>
+                </td>
+                <td class="editform">
+                    <div>
+                    <input class='form-control form-control-light movDirtypeahead'
+                              placeholder='{% trans "Movement Direction" %}' >
+                    <input type="hidden" name="movDir" value=""
+                           id="movDir_machine_value" >
+                    </div>
+                </td>
+                {% endwith %}
+            </tr>
         </table>
     </div>
 
