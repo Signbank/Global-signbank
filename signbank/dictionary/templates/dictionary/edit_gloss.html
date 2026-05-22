@@ -38,20 +38,7 @@ input[type="text"]:focus {
 .editform .form-control:disabled::placeholder {
     color: inherit !important;
 }
-.editform .form-control:enabled select {
-    color: red !important;
-    opacity: 1;
-}
-.editform .form-control:disabled select {
-    color: inherit !important;
-    opacity: 1;
-}
-.editform .form-control:enabled select > option {
-    color: red !important;
-}
-.editform .form-control:disabled select > option {
-    color: inherit !important;
-}
+
 .editform .form-control:enabled input::placeholder {
     color: red !important;
     opacity: 1;
@@ -62,12 +49,39 @@ input[type="text"]:focus {
 }
 .editform input {
     color: inherit !important;
+    background-color: inherit !important;
+    border: none;
 }
-.editform select {
+.editselect > select {
+    background-color: inherit !important;
+}
+.editselect select:disabled {
     color: inherit !important;
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    border: none;
+    opacity: 1;
+}
+
+.editselect select:enabled {
+    color: red !important;
+}
+.editsemanticsform .form-control:enabled::placeholder {
+    color: red !important;
+    opacity: 1;
+}
+.editsemanticsform .form-control:disabled::placeholder {
+    color: inherit !important;
+    opacity: 1;
+}
+.editsemanticsform input {
+    color: inherit !important;
+    background-color: inherit !important;
+    border: none;
 }
 .form-control:disabled {
-    cursor: none;
+    cursor: pointer;
 }
 
 .item {
@@ -192,12 +206,12 @@ var gloss_phonology = {{gloss_phonology|safe}};
                 </td>
                 <td class="editform">
                     <div>
-                    <input class='form-control form-control-light handednesstypeahead'
+                    <input class='form-control form-control-light handednesstypeahead' type="text" size="40"
                               placeholder="{{handedness_field.initial}}" id="handedness_lookahead">
                     <input type="hidden" name="handedness" value=""
                            id="handedness_machine_value" >
                     </div>
-                    <div>
+                    <div class="editselect">
                     <select class="select_weakdrop form-control form-control-light" name="weakdrop" id="weakdrop_select_value">
                         {% for value, opn in weakdrop_field.choices %}
                         {% if value == weakdrop_field.initial %}
@@ -208,7 +222,7 @@ var gloss_phonology = {{gloss_phonology|safe}};
                         {% endfor %}
                     </select>
                     </div>
-                    <div>
+                    <div class="editselect">
                     <select class="select_weakprop form-control form-control-light" name="weakprop" id="weakprop_select_value">
                         {% for value, opn in weakprop_field.choices %}
                         {% if value == weakprop_field.initial %}
@@ -242,12 +256,12 @@ var gloss_phonology = {{gloss_phonology|safe}};
                 </td>
                 <td class="editform">
                     <div>
-                    <input class='form-control form-control-light domhndshtypeahead'
+                    <input class='form-control form-control-light domhndshtypeahead' type="text" size="40"
                               placeholder="{{domhndsh_field.initial}}" id="domhndsh_lookahead">
                     <input type="hidden" name="domhndsh" value=""
                            id="domhndsh_machine_value" >
                     </div>
-                    <div>
+                    <div class="editselect">
                     <select class="select_domhndsh_letter form-control form-control-light" name="domhndsh_letter" id="domhndsh_letter_select_value">
                         {% for value, opn in domhndsh_letter_field.choices %}
                         {% if opn == domhndsh_letter_field.initial %}
@@ -258,7 +272,7 @@ var gloss_phonology = {{gloss_phonology|safe}};
                         {% endfor %}
                     </select>
                     </div>
-                    <div>
+                    <div class="editselect">
                     <select class="select_domhndsh_number form-control form-control-light" name="domhndsh_number" id="domhndsh_number_select_value">
                         {% for value, opn in domhndsh_number_field.choices %}
                         {% if opn == domhndsh_number_field.initial %}
@@ -292,12 +306,12 @@ var gloss_phonology = {{gloss_phonology|safe}};
                 </td>
                 <td class="editform">
                     <div>
-                    <input class='form-control form-control-light subhndshtypeahead'
+                    <input class='form-control form-control-light subhndshtypeahead' type="text" size="40"
                               placeholder="{{subhndsh_field.initial}}" id="subhndsh_lookahead" >
                     <input type="hidden" name="subhndsh" value=""
                            id="subhndsh_machine_value" >
                     </div>
-                    <div>
+                    <div class="editselect">
                     <select class="select_subhndsh_letter form-control form-control-light" name="subhndsh_letter" id="subhndsh_letter_select_value">
                         {% for value, opn in subhndsh_letter_field.choices %}
                         {% if opn == subhndsh_letter_field.initial %}
@@ -308,7 +322,7 @@ var gloss_phonology = {{gloss_phonology|safe}};
                         {% endfor %}
                     </select>
                     </div>
-                    <div>
+                    <div class="editselect">
                     <select class="select_subhndsh_number form-control form-control-light" name="subhndsh_number" id="subhndsh_number_select_value">
                         {% for value, opn in subhndsh_number_field.choices %}
                         {% if opn == subhndsh_number_field.initial %}
@@ -338,7 +352,7 @@ var gloss_phonology = {{gloss_phonology|safe}};
                 </td>
                 <td class="editform">
                     <div>
-                    <input class='form-control form-control-light handChtypeahead'
+                    <input class='form-control form-control-light handChtypeahead' type="text" size="40"
                               placeholder="{{handCh_field.initial}}" id="handCh_lookahead" >
                     <input type="hidden" name="handCh" value=""
                            id="handCh_machine_value" >
@@ -360,7 +374,7 @@ var gloss_phonology = {{gloss_phonology|safe}};
                 </td>
                 <td class="editform">
                     <div>
-                    <input class='form-control form-control-light relatArtictypeahead'
+                    <input class='form-control form-control-light relatArtictypeahead' type="text" size="40"
                               placeholder="{{relatArtic_field.initial}}" id="relatArtic_lookahead" >
                     <input type="hidden" name="relatArtic" value=""
                            id="relatArtic_machine_value" >
@@ -382,7 +396,7 @@ var gloss_phonology = {{gloss_phonology|safe}};
                 </td>
                 <td class="editform">
                     <div>
-                    <input class='form-control form-control-light locprimtypeahead'
+                    <input class='form-control form-control-light locprimtypeahead' type="text" size="40"
                               placeholder="{{locprim_field.initial}}" id="locprim_lookahead" >
                     <input type="hidden" name="locprim" value=""
                            id="locprim_machine_value" >
@@ -404,7 +418,7 @@ var gloss_phonology = {{gloss_phonology|safe}};
                 </td>
                 <td class="editform">
                     <div>
-                    <input class='form-control form-control-light contTypetypeahead'
+                    <input class='form-control form-control-light contTypetypeahead' type="text" size="40"
                               placeholder="{{contType_field.initial}}" id="contType_lookahead" >
                     <input type="hidden" name="contType" value=""
                            id="contType_machine_value" >
@@ -426,7 +440,7 @@ var gloss_phonology = {{gloss_phonology|safe}};
                 </td>
                 <td class="editform">
                     <div>
-                    <input class='form-control form-control-light movShtypeahead'
+                    <input class='form-control form-control-light movShtypeahead' type="text" size="40"
                               placeholder="{{movSh_field.initial}}" id="movSh_lookahead" >
                     <input type="hidden" name="movSh" value=""
                            id="movSh_machine_value" >
@@ -448,7 +462,7 @@ var gloss_phonology = {{gloss_phonology|safe}};
                 </td>
                 <td class="editform">
                     <div>
-                    <input class='form-control form-control-light movDirtypeahead'
+                    <input class='form-control form-control-light movDirtypeahead' type="text" size="40"
                               placeholder="{{movDir_field.initial}}" id="movDir_lookahead" >
                     <input type="hidden" name="movDir" value=""
                            id="movDir_machine_value" >
@@ -471,7 +485,7 @@ var gloss_phonology = {{gloss_phonology|safe}};
                     <span id="repeat_value">{{repeat_field.initial}}</span>
                 </td>
                 <td class="editform">
-                    <div>
+                    <div class="editselect">
                     <select class="select_repeat form-control form-control-light" name="repeat" id="repeat_select_value">
                         {% for value, opn in repeat_field.choices %}
                         {% if opn == repeat_field.initial %}
@@ -511,8 +525,10 @@ var gloss_phonology = {{gloss_phonology|safe}};
                     {% endfor %}
                 </td>
                 <td class="editsemanticsform">
-                    <input class='form-control form-control-light semFieldtypeahead'
-                              placeholder='{% trans "Semantic Field" %}' id="semField_multiselect">
+                    <div>
+                    <input class='form-control form-control-light semFieldtypeahead' type="text" size="60"
+                              placeholder='{{semField_field.initial}}' id="semField_multiselect" >
+                    </div>
                 </td>
                 <td id="semField_hidden_input_values" class="editform">
 

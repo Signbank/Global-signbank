@@ -229,6 +229,7 @@ function renderSelected() {
     container.empty();
     var values_input = $('#semField_hidden_input_values');
     values_input.empty();
+    var placeholder_lookahead = $('#semField_multiselect');
     selected_semField.forEach(function(item) {
         var tag = $('<button class="actionButton"></button>').text(item.name);
         var input_value = $('<input type="hidden" name="semField" value="'+item.machine_value+'">');
@@ -240,6 +241,8 @@ function renderSelected() {
         container.append(tag);
         values_input.append(input_value);
     });
+    var new_placeholder = selected_semField.map(item => item.name).join(", ");
+    placeholder_lookahead.attr("placeholder", new_placeholder);
 }
 
 function disable_lookaheads() {
@@ -247,12 +250,13 @@ function disable_lookaheads() {
          var this_id = $(this).attr('id');
          if (!this_id) {return;}
          if (this_id.endsWith("_lookahead")) {
-             console.log('disable '+this_id);
              $(this).attr('disabled', true);
              return;
          }
          if (this_id.endsWith("_value")) {
-             console.log('disable: '+this_id);
+             $(this).attr('disabled', true);
+         }
+         if (this_id.endsWith("_multiselect")) {
              $(this).attr('disabled', true);
          }
      });
@@ -263,20 +267,20 @@ function enable_lookaheads() {
          var this_id = $(this).attr('id');
          if (!this_id) {return;}
          if (this_id.endsWith("_lookahead")) {
-             console.log('enable '+this_id);
              $(this).removeAttr('disabled');
              return;
          }
          if (this_id.endsWith("_value")) {
-             console.log('enable: '+this_id);
+             $(this).removeAttr('disabled');
+         }
+         if (this_id.endsWith("_multiselect")) {
              $(this).removeAttr('disabled');
          }
      });
 }
 
 function enable_edit() {
-    // $('.editform').show();
-    $('.editsemanticsform').show();
+//    $('.editsemanticsform').show();
     $('.empty_row').show();
     $('.button-to-appear-in-edit-mode').show();
     $('#enable_edit').removeClass('btn-primary').addClass('btn-danger');
@@ -288,8 +292,7 @@ function disable_edit() {
         // the user was busy editing but did not save the data, just reload the page
         location.reload(true);
     }
-    // $('.editform').hide();
-    $('.editsemanticsform').hide();
+//    $('.editsemanticsform').hide();
     $('.empty_row').hide();
     $('.button-to-appear-in-edit-mode').hide();
     busy_editing = false;
@@ -473,6 +476,11 @@ $(document).ready(function() {
                 var field_value = $(field_lookup).val();
                 update[field_key] = field_value;
             } else if (field == 'subhndsh_number') {
+                var field_lookup = '#'+field+'_select_value';
+                var field_key = $(field_lookup).attr("name");
+                var field_value = $(field_lookup).val();
+                update[field_key] = field_value;
+            } else if (field == 'repeat') {
                 var field_lookup = '#'+field+'_select_value';
                 var field_key = $(field_lookup).attr("name");
                 var field_value = $(field_lookup).val();
