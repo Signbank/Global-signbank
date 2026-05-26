@@ -859,6 +859,11 @@ def get_gloss_non_empty_value_dict(request):
             if not values:
                 continue
             value_dict['semField'] = values
+        elif field in ['derivHist[]']:
+            values = request.POST.getlist(field, [])
+            if not values:
+                continue
+            value_dict['derivHist'] = values
         else:
             value = request.POST.get(field, '')
             if not value:
@@ -882,6 +887,22 @@ def edit_gloss_save(request, glossid):
                 semField = SemanticField.objects.get(machine_value=semField_machine_value)
                 gloss.semField.add(semField)
             continue
+        if field in ['derivHist']:
+            gloss.derivHist.clear()
+            for derivHist_machine_value in value:
+                derivHist = DerivationHistory.objects.get(machine_value=derivHist_machine_value)
+                gloss.derivHist.add(derivHist)
+            continue
+        if field in ['domhndsh_letter_or_number']:
+            letter_or_number = {'0': None, '1': 'letter', '2': 'number'}[value]
+            setattr(gloss, 'domhndsh_letter', letter_or_number == 'letter')
+            setattr(gloss, 'domhndsh_number', letter_or_number == 'number')
+            continue
+        if field in ['subhndsh_letter_or_number']:
+            letter_or_number = {'0': None, '1': 'letter', '2': 'number'}[value]
+            setattr(gloss, 'subhndsh_letter', letter_or_number == 'letter')
+            setattr(gloss, 'subhndsh_number', letter_or_number == 'number')
+            continue
         if field not in Gloss.get_field_names():
             continue
         internal_field = Gloss.get_field(field)
@@ -901,7 +922,7 @@ def edit_gloss_save(request, glossid):
                 boolean_value = {'0': None, '1': True, '2': False}[value]
                 gloss.__setattr__(field, boolean_value)
                 gloss.save()
-            elif field in ['repeat', 'altern', 'domhndsh_letter', 'domhndsh_number', 'subhndsh_letter', 'subhndsh_number']:
+            elif field in ['repeat', 'altern']:
                 boolean_value = {'0': None, '1': True}[value]
                 if boolean_value == original_internal_value:
                     continue

@@ -1798,15 +1798,11 @@ class PhonologyForm(forms.Form):
     weakdrop = forms.ChoiceField(label=_('Weak Drop'), choices=[(0, '-')],
                                  widget=forms.Select(attrs=ATTRS_FOR_BOOLEAN_FORMS))
     domhndsh = forms.CharField(label=_('Strong Hand'))
-    domhndsh_letter = forms.ChoiceField(label=_('letter'), choices=[(0, '-')], required=False,
-                                        widget=forms.Select(attrs=ATTRS_FOR_BOOLEAN_FORMS))
-    domhndsh_number = forms.ChoiceField(label=_('number'), choices=[(0, '-')], required=False,
-                                        widget=forms.Select(attrs=ATTRS_FOR_BOOLEAN_FORMS))
+    domhndsh_letter_or_number = forms.ChoiceField(label=_('letter|number'), choices=[(0, '-')], required=False,
+                                                  widget=forms.Select(attrs=ATTRS_FOR_BOOLEAN_FORMS))
     subhndsh = forms.CharField(label=_('Weak Hand'))
-    subhndsh_letter = forms.ChoiceField(label=_('letter'), choices=[(0, '-')], required=False,
-                                        widget=forms.Select(attrs=ATTRS_FOR_BOOLEAN_FORMS))
-    subhndsh_number = forms.ChoiceField(label=_('number'), choices=[(0, '-')], required=False,
-                                        widget=forms.Select(attrs=ATTRS_FOR_BOOLEAN_FORMS))
+    subhndsh_letter_or_number = forms.ChoiceField(label=_('letter|number'), choices=[(0, '-')], required=False,
+                                                  widget=forms.Select(attrs=ATTRS_FOR_BOOLEAN_FORMS))
     handCh = forms.CharField(label=_('Handshape Change'))
     relatArtic = forms.CharField(label=_('Relation between Articulators'))
     locprim = forms.CharField(label=_('Location'))
@@ -1833,14 +1829,10 @@ class PhonologyForm(forms.Form):
         self.fields['weakprop'].initial = self.gloss.weakprop_to_choice()
         self.fields['domhndsh'].initial = self.gloss.display_domhndsh()
         self.fields['subhndsh'].initial = self.gloss.display_subhndsh()
-        for boolean_field in ['domhndsh_letter', 'subhndsh_letter']:
-            self.fields[boolean_field].choices = [('0', ''), ('1', _('letter'))]
-        for boolean_field in ['domhndsh_number', 'subhndsh_number']:
-            self.fields[boolean_field].choices = [('0', ''), ('1', _('number'))]
-        self.fields['domhndsh_letter'].initial = self.gloss.display_domhndsh_letter
-        self.fields['domhndsh_number'].initial = self.gloss.display_domhndsh_number
-        self.fields['subhndsh_letter'].initial = self.gloss.display_subhndsh_letter
-        self.fields['subhndsh_number'].initial = self.gloss.display_subhndsh_number
+        self.fields['domhndsh_letter_or_number'].choices = [('0', ''), ('1', _('letter')), ('2', _('number'))]
+        self.fields['domhndsh_letter_or_number'].initial = self.gloss.display_domhndsh_letter_or_number
+        self.fields['subhndsh_letter_or_number'].choices = [('0', ''), ('1', _('letter')), ('2', _('number'))]
+        self.fields['subhndsh_letter_or_number'].initial = self.gloss.display_subhndsh_letter_or_number
         self.fields['handCh'].initial = self.gloss.handCh.name if self.gloss.handCh else ''
         self.fields['relatArtic'].initial = self.gloss.relatArtic.name if self.gloss.relatArtic else ''
         self.fields['locprim'].initial = self.gloss.locprim.name if self.gloss.locprim else ''
@@ -1852,16 +1844,19 @@ class PhonologyForm(forms.Form):
         self.fields['repeat'].initial = self.gloss.display_repeat
         self.fields['altern'].initial = self.gloss.display_altern
 
+
 class SemanticsForm(forms.Form):
     gloss = None
     semField = forms.CharField(label=_('Semantics Field'))
+    derivHist = forms.CharField(label=_('Derivation History'))
 
     class Meta:
         model = Gloss
-        fields = ['semField']
+        fields = ['semField', 'derivHist']
 
     def __init__(self, *args, **kwargs):
         self.gloss = kwargs.pop('gloss')
         super(SemanticsForm, self).__init__(*args, **kwargs)
 
         self.fields['semField'].initial = self.gloss.get_semField_display()
+        self.fields['derivHist'].initial = self.gloss.get_derivHist_display()

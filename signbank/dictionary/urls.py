@@ -167,8 +167,8 @@ urlpatterns = [
 
     re_path(r'^ajax/handedness/(?P<prefix>.*)$', signbank.dictionary.bloodhounds.handedness_ajax_complete, name='handedness_complete'),
     re_path(r'^ajax/semField/(?P<prefix>.*)$', signbank.dictionary.bloodhounds.semField_ajax_complete, name='semField_complete'),
-    re_path(r'^ajax/fieldchoice/(?P<field>.*)/(?P<prefix>.*)$', signbank.dictionary.bloodhounds.fieldchoice_ajax_complete,
-            name='fieldchoice_complete'),
+    re_path(r'^ajax/derivHist/(?P<prefix>.*)$', signbank.dictionary.bloodhounds.derivHist_ajax_complete, name='derivHist_complete'),
+    re_path(r'^ajax/fieldchoice/(?P<field>.*)/(?P<prefix>.*)$', signbank.dictionary.bloodhounds.fieldchoice_ajax_complete, name='fieldchoice_complete'),
 
     re_path(r'^ajax/morph/(?P<prefix>.*)$', signbank.dictionary.adminviews.morph_ajax_complete, name='morph_complete'),
     re_path(r'^ajax/user/(?P<prefix>.*)$', permission_required('dictionary.change_gloss')(signbank.dictionary.adminviews.user_ajax_complete), name='user_complete'),

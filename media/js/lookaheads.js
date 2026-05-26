@@ -224,7 +224,7 @@ function semFieldtypeahead(target) {
       });
 };
 
-function renderSelected() {
+function renderSelectedSemField() {
     var container = $('#semField_value');
     container.empty();
     var values_input = $('#semField_hidden_input_values');
@@ -235,7 +235,7 @@ function renderSelected() {
         var input_value = $('<input type="hidden" name="semField" value="'+item.machine_value+'">');
         var removeBtn = $('<span class="remove">&nbsp; &nbsp;&times;</span>').click(function() {
             selected_semField = selected_semField.filter(i => i !== item);
-            renderSelected();
+            renderSelectedSemField();
         });
         tag.append(removeBtn);
         container.append(tag);
@@ -245,10 +245,58 @@ function renderSelected() {
     placeholder_lookahead.attr("placeholder", new_placeholder);
 }
 
-function disable_lookaheads() {
-         $('.form-control').each(function() {
+var selected_derivHist = [];
+
+var derivHist_bloodhound = new Bloodhound({
+      datumTokenizer: function(d) { return d.tokens; },
+      queryTokenizer: Bloodhound.tokenizers.whitespace,
+      remote: url+'/dictionary/ajax/derivHist'+'/%QUERY'
+    });
+
+derivHist_bloodhound.initialize();
+
+function derivHisttypeahead(target) {
+
+     $(target).typeahead(null, {
+          name: 'derivHist',
+          displayKey: 'name',
+          source: derivHist_bloodhound.ttAdapter(),
+          templates: {
+              suggestion: function(fc) {
+                  return("<p><strong>" + fc.name +  "</strong></p>");
+              }
+          }
+      });
+};
+
+function renderSelectedDerivHist() {
+    var container = $('#derivHist_value');
+    container.empty();
+    var values_input = $('#derivHist_hidden_input_values');
+    values_input.empty();
+    var placeholder_lookahead = $('#derivHist_multiselect');
+    selected_derivHist.forEach(function(item) {
+        var tag = $('<button class="actionButton"></button>').text(item.name);
+        var input_value = $('<input type="hidden" name="derivHist" value="'+item.machine_value+'">');
+        var removeBtn = $('<span class="remove">&nbsp; &nbsp;&times;</span>').click(function() {
+            selected_derivHist = selected_derivHist.filter(i => i !== item);
+            renderSelectedDerivHist();
+        });
+        tag.append(removeBtn);
+        container.append(tag);
+        values_input.append(input_value);
+    });
+    var new_placeholder = selected_derivHist.map(item => item.name).join(", ");
+    placeholder_lookahead.attr("placeholder", new_placeholder);
+}
+
+function disable_lookaheads(category) {
+     $('.form-control').each(function() {
          var this_id = $(this).attr('id');
          if (!this_id) {return;}
+         var data_category = $(this).attr('data-category');
+         if (!data_category) {return;}
+         if (data_category != category) {return;}
          if (this_id.endsWith("_lookahead")) {
              $(this).attr('disabled', true);
              return;
@@ -262,10 +310,13 @@ function disable_lookaheads() {
      });
 }
 
-function enable_lookaheads() {
-         $('.form-control').each(function() {
+function enable_lookaheads(category) {
+     $('.form-control').each(function() {
          var this_id = $(this).attr('id');
          if (!this_id) {return;}
+         var data_category = $(this).attr('data-category');
+         if (!data_category) {return;}
+         if (data_category != category) {return;}
          if (this_id.endsWith("_lookahead")) {
              $(this).removeAttr('disabled');
              return;
@@ -279,158 +330,205 @@ function enable_lookaheads() {
      });
 }
 
-function enable_edit() {
-//    $('.editsemanticsform').show();
+function enable_edit(category) {
+    if (category == 'semantics') {
+        $('.editsemanticsform').show();
+    }
     $('.empty_row').show();
     $('.button-to-appear-in-edit-mode').show();
-    $('#enable_edit').removeClass('btn-primary').addClass('btn-danger');
-    enable_lookaheads();
+    $('#enable_edit_'+category).removeClass('btn-primary').addClass('btn-danger');
+    enable_lookaheads(category);
 }
 
-function disable_edit() {
+function disable_edit(category) {
     if (busy_editing) {
         // the user was busy editing but did not save the data, just reload the page
         location.reload(true);
     }
-//    $('.editsemanticsform').hide();
+    if (category == 'semantics') {
+        $('.editsemanticsform').hide();
+    }
     $('.empty_row').hide();
     $('.button-to-appear-in-edit-mode').hide();
     busy_editing = false;
-    $('#enable_edit').addClass('btn-primary').removeClass('btn-danger');
-    disable_lookaheads();
+    $('#enable_edit_'+category).addClass('btn-primary').removeClass('btn-danger');
+    disable_lookaheads(category);
 }
 
-function toggle_edit(redirect_to_next) {
-    if ($('#enable_edit').hasClass('edit_enabled'))
+function toggle_edit_phonology() {
+    if ($('#enable_edit_phonology').hasClass('edit_enabled'))
     {
-        disable_edit();
-        $('#enable_edit').removeClass('edit_enabled');
-        $('#enable_edit').text(edit_mode_str);
+        disable_edit('phonology');
+        $('#enable_edit_phonology').removeClass('edit_enabled');
+        $('#enable_edit_phonology').show();
     } else {
-        enable_edit();
-        $('#enable_edit').addClass('edit_enabled');
-        $('#enable_edit').text(turn_off_edit_mode_str);
+        enable_edit('phonology');
+        $('#enable_edit_phonology').addClass('edit_enabled');
+        $('#enable_edit_phonology').hide();
     }
 }
 
-$('#enable_edit').click(function()
+function toggle_edit_semantics() {
+    if ($('#enable_edit_semantics').hasClass('edit_enabled'))
+    {
+        disable_edit('semantics');
+        $('#enable_edit_semantics').removeClass('edit_enabled');
+        $('#enable_edit_semantics').show();
+    } else {
+        enable_edit('semantics');
+        $('#enable_edit_semantics').addClass('edit_enabled');
+        $('#enable_edit_semantics').hide();
+    }
+}
+
+$('#enable_edit_phonology').click(function()
 {
-    toggle_edit(false);
+    toggle_edit_phonology();
+});
+
+$('#enable_edit_semantics').click(function()
+{
+    toggle_edit_semantics();
 });
 
 $(document).ready(function() {
 
-    disable_edit();
-
     handednesstypeahead($('.handednesstypeahead'));
     $('.handednesstypeahead').bind('typeahead:selected', function(ev, suggestion) {
           busy_editing = true;
-          $('#handedness_value').text(suggestion.name);
-          $(this).attr('placeholder', suggestion.name);
+          $(this).attr('value', suggestion.name);
           $('#handedness_machine_value').attr('value', suggestion.machine_value);
+    });
+    $('#handedness_lookahead').on("click", function() {
+//    this erases the placeholder value
+      $(this).attr('value', "");
     });
     domhndshtypeahead($('.domhndshtypeahead'));
     $('.domhndshtypeahead').bind('typeahead:selected', function(ev, suggestion) {
           busy_editing = true;
-          $('#domhndsh_value').text(suggestion.name);
-          $(this).attr('placeholder', suggestion.name);
+          $(this).attr('value', suggestion.name);
           $('#domhndsh_machine_value').attr('value', suggestion.machine_value);
+    });
+    $('#domhndsh_lookahead').on("click", function() {
+      $(this).attr('value', "");
     });
     subhndshtypeahead($('.subhndshtypeahead'));
     $('.subhndshtypeahead').bind('typeahead:selected', function(ev, suggestion) {
           busy_editing = true;
-          $('#subhndsh_value').text(suggestion.name);
-          $(this).attr('placeholder', suggestion.name);
+          $(this).attr('value', suggestion.name);
           $('#subhndsh_machine_value').attr('value', suggestion.machine_value);
+    });
+    $('#subhndsh_lookahead').on("click", function() {
+      $(this).attr('value', "");
     });
     handChtypeahead($('.handChtypeahead'));
     $('.handChtypeahead').bind('typeahead:selected', function(ev, suggestion) {
           busy_editing = true;
-          $('#handCh_value').text(suggestion.name);
-          $(this).attr('placeholder', suggestion.name);
+          $(this).attr('value', suggestion.name);
           $('#handCh_machine_value').attr('value', suggestion.machine_value);
+    });
+    $('#handCh_lookahead').on("click", function() {
+      $(this).attr('value', "");
     });
     relatArtictypeahead($('.relatArtictypeahead'));
     $('.relatArtictypeahead').bind('typeahead:selected', function(ev, suggestion) {
           busy_editing = true;
-          $('#relatArtic_value').text(suggestion.name);
-          $(this).attr('placeholder', suggestion.name);
+          $(this).attr('value', suggestion.name);
           $('#relatArtic_machine_value').attr('value', suggestion.machine_value);
+    });
+    $('#relatArtic_lookahead').on("click", function() {
+      $(this).attr('value', "");
     });
     locprimtypeahead($('.locprimtypeahead'));
     $('.locprimtypeahead').bind('typeahead:selected', function(ev, suggestion) {
           busy_editing = true;
-          $('#locprim_value').text(suggestion.name);
-          $(this).attr('placeholder', suggestion.name);
+          $(this).attr('value', suggestion.name);
           $('#locprim_machine_value').attr('value', suggestion.machine_value);
+    });
+    $('#locprim_lookahead').on("click", function() {
+      $(this).attr('value', "");
     });
     contTypetypeahead($('.contTypetypeahead'));
     $('.contTypetypeahead').bind('typeahead:selected', function(ev, suggestion) {
           busy_editing = true;
-          $('#contType_value').text(suggestion.name);
-          $(this).attr('placeholder', suggestion.name);
+          $(this).attr('value', suggestion.name);
           $('#contType_machine_value').attr('value', suggestion.machine_value);
+    });
+    $('#contType_lookahead').on("click", function() {
+      $(this).attr('value', "");
     });
     movShtypeahead($('.movShtypeahead'));
     $('.movShtypeahead').bind('typeahead:selected', function(ev, suggestion) {
           busy_editing = true;
-          $('#movSh_value').text(suggestion.name);
-          $(this).attr('placeholder', suggestion.name);
+          $(this).attr('value', suggestion.name);
           $('#movSh_machine_value').attr('value', suggestion.machine_value);
+    });
+    $('#movSh_lookahead').on("click", function() {
+      $(this).attr('value', "");
     });
     movDirtypeahead($('.movDirtypeahead'));
     $('.movDirtypeahead').bind('typeahead:selected', function(ev, suggestion) {
           busy_editing = true;
-          $('#movDir_value').text(suggestion.name);
-          $(this).attr('placeholder', suggestion.name);
+          $(this).attr('value', suggestion.name);
           $('#movDir_machine_value').attr('value', suggestion.machine_value);
+    });
+    $('#movDir_lookahead').on("click", function() {
+      $(this).attr('value', "");
     });
     semFieldtypeahead($('.semFieldtypeahead'));
     $('.semFieldtypeahead').bind('typeahead:selected', function(ev, suggestion) {
           if (!selected_semField.includes(suggestion)) {
                 busy_editing = true;
                 selected_semField.push(suggestion);
-                renderSelected();
+                renderSelectedSemField();
           }
           $(this).typeahead('val', '');
     });
-
+    $('#semField_multiselect').on("click", function() {
+      $(this).attr('value', "");
+    });
+    derivHisttypeahead($('.derivHisttypeahead'));
+    $('.derivHisttypeahead').bind('typeahead:selected', function(ev, suggestion) {
+          if (!selected_derivHist.includes(suggestion)) {
+                busy_editing = true;
+                selected_derivHist.push(suggestion);
+                renderSelectedDerivHist();
+          }
+          $(this).typeahead('val', '');
+    });
+    $('#derivHist_multiselect').on("click", function() {
+      $(this).attr('value', "");
+    });
     $('.select_weakdrop').on('change', function() {
+          busy_editing = true;
           var selected_value = $(this).val();
           var selected_text = $(this).find('option:selected').text();
           $('#weakdrop_value').text(selected_text);
     });
 
     $('.select_weakprop').on('change', function() {
+          busy_editing = true;
           var selected_value = $(this).val();
           var selected_text = $(this).find('option:selected').text();
           $('#weakprop_value').text(selected_text);
     });
 
-    $('.select_domhndsh_letter').on('change', function() {
+    $('.select_domhndsh_letter_or_number_field').on('change', function() {
+          busy_editing = true;
           var selected_value = $(this).val();
           var selected_text = $(this).find('option:selected').text();
-          $('#domhndsh_letter_value').text(selected_text);
+          $('#domhndsh_letter_or_number_field_value').text(selected_text);
     });
 
-    $('.select_domhndsh_number').on('change', function() {
+    $('.select_subhndsh_letter_or_number').on('change', function() {
+          busy_editing = true;
           var selected_value = $(this).val();
           var selected_text = $(this).find('option:selected').text();
-          $('#domhndsh_number_value').text(selected_text);
-    });
-    $('.select_subhndsh_letter').on('change', function() {
-          var selected_value = $(this).val();
-          var selected_text = $(this).find('option:selected').text();
-          $('#subhndsh_letter_value').text(selected_text);
-    });
-
-    $('.select_subhndsh_number').on('change', function() {
-          var selected_value = $(this).val();
-          var selected_text = $(this).find('option:selected').text();
-          $('#subhndsh_number_value').text(selected_text);
+          $('#subhndsh_letter_or_number_value').text(selected_text);
     });
 
     $('.select_repeat').on('change', function() {
+          busy_editing = true;
           var selected_value = $(this).val();
           var selected_text = $(this).find('option:selected').text();
           $('#repeat_value').text(selected_text);
@@ -450,6 +548,14 @@ $(document).ready(function() {
                     field_values.push(this_value);
                 });
                 update['semField'] = field_values;
+            } else if (field == 'derivHist') {
+                var field_values = [];
+                var field_lookup = '#'+field+'_hidden_input_values';
+                $(field_lookup).find('input[name="derivHist"]').each(function() {
+                    var this_value = $(this).val();
+                    field_values.push(this_value);
+                });
+                update['derivHist'] = field_values;
             } else if (field == 'weakdrop') {
                 var field_lookup = '#'+field+'_select_value';
                 var field_key = $(field_lookup).attr("name");
@@ -460,22 +566,12 @@ $(document).ready(function() {
                 var field_key = $(field_lookup).attr("name");
                 var field_value = $(field_lookup).val();
                 update[field_key] = field_value;
-            } else if (field == 'domhndsh_letter') {
+            } else if (field == 'domhndsh_letter_or_number') {
                 var field_lookup = '#'+field+'_select_value';
                 var field_key = $(field_lookup).attr("name");
                 var field_value = $(field_lookup).val();
                 update[field_key] = field_value;
-            } else if (field == 'domhndsh_number') {
-                var field_lookup = '#'+field+'_select_value';
-                var field_key = $(field_lookup).attr("name");
-                var field_value = $(field_lookup).val();
-                update[field_key] = field_value;
-            } else if (field == 'subhndsh_letter') {
-                var field_lookup = '#'+field+'_select_value';
-                var field_key = $(field_lookup).attr("name");
-                var field_value = $(field_lookup).val();
-                update[field_key] = field_value;
-            } else if (field == 'subhndsh_number') {
+            } else if (field == 'subhndsh_letter_or_number') {
                 var field_lookup = '#'+field+'_select_value';
                 var field_key = $(field_lookup).attr("name");
                 var field_value = $(field_lookup).val();
@@ -506,5 +602,6 @@ $(document).ready(function() {
             }
          });
      });
-    disable_lookaheads();
+    disable_edit('phonology');
+    disable_edit('semantics');
 });
