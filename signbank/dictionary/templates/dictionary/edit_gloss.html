@@ -134,6 +134,14 @@ input .tt-hint {
     padding-left: 2px;
     padding-right: 2px;
 }
+.phonology-table {
+    border-collapse: separate;
+    border-spacing: 0 3px;
+}
+.semantics-table {
+    border-collapse: separate;
+    border-spacing: 0 5px;
+}
 </style>
 {% endblock %}
 
@@ -173,26 +181,23 @@ var gloss_phonology = {{gloss_phonology|safe}};
          {% if perms.dictionary.change_gloss %}
          <div>
             {% csrf_token %}
-            <button type="button" class="btn btn-danger edit-cancel button-to-appear-in-edit-mode"
+            <button type="button" class="btn btn-danger edit-cancel button-phonology-to-appear-in-edit-mode"
                     style="width:auto;padding:3px 12px;"
                     onclick='location.href="{{PREFIX_URL}}/dictionary/gloss/edit_phonology/{{gloss.id}}"'
                     >{% trans "Cancel" %}</button>
-            <button type="button" class="btn btn-danger quick_save button-to-appear-in-edit-mode"
+            <button type="button" class="btn btn-danger quick_save button-phonology-to-appear-in-edit-mode"
                     style="width:auto;padding:3px 12px;" value="{{gloss.id}}"
-                    >{% trans "Save" %}</button>
+                    >{% trans "Save Phonology" %}</button>
             <button id='enable_edit_phonology'
                      class='btn btn-primary navbar-btn edit-mode'
                      style="width:auto;padding:3px 12px;">{% trans "Edit Phonology" %}</button>
-            <button id='enable_edit_semantics'
-                     class='btn btn-primary navbar-btn edit-mode'
-                     style="width:auto;padding:3px 12px;">{% trans "Edit Semantics" %}</button>
          </div>
          {% endif %}
     </div>
 
     <div id="phonology" style="margin-right:15px;margin-top:10px;z-index:100;" class='view-tabs view-tabs-light'>
 
-        <table>
+        <table class="phonology-table">
             {% csrf_token %}
             {% with show_field_row|get_item:"handedness" as show_field %}
             {% if not show_field %}
@@ -450,15 +455,59 @@ var gloss_phonology = {{gloss_phonology|safe}};
                 {% endwith %}
             </tr>
 
+            {% with show_field_row|get_item:"altern" as show_field %}
+            {% if not show_field %}
+            <tr class="empty_row">
+            {% else %}
+            <tr>
+            {% endif %}
+            {% endwith %}
+                <th style="width:240px;">{% trans "Alternating Movement" %}</th>
+                {% with phonologyform.fields|get_item:'altern' as altern_field %}
+                <td class="editform">
+                    <div class="editselect">
+                    <select class="select_altern form-control form-control-light" name="altern"
+                            id="altern_select_value" data-category="phonology">
+                        {% for value, opn in altern_field.choices %}
+                        {% if opn == altern_field.initial %}
+                        <option value={{value}} selected="selected">{{opn}}</option>
+                        {% else %}
+                        <option value={{value}}>{{opn}}</option>
+                        {% endif %}
+                        {% endfor %}
+                    </select>
+                    </div>
+                </td>
+                {% endwith %}
+            </tr>
 
         </table>
     </div>
 
    <h3>{% trans "Semantics" %}</h3>
 
+    <div class='pull-right' style="margin-right:15px;margin-top:50px;">
+
+         {% if perms.dictionary.change_gloss %}
+         <div>
+            {% csrf_token %}
+            <button type="button" class="btn btn-danger edit-cancel button-semantics-to-appear-in-edit-mode"
+                    style="width:auto;padding:3px 12px;"
+                    onclick='location.href="{{PREFIX_URL}}/dictionary/gloss/edit_phonology/{{gloss.id}}"'
+                    >{% trans "Cancel" %}</button>
+            <button type="button" class="btn btn-danger quick_save button-semantics-to-appear-in-edit-mode"
+                    style="width:auto;padding:3px 12px;" value="{{gloss.id}}"
+                    >{% trans "Save Semantics" %}</button>
+            <button id='enable_edit_semantics'
+                     class='btn btn-primary navbar-btn edit-mode'
+                     style="width:auto;padding:3px 12px;">{% trans "Edit Semantics" %}</button>
+         </div>
+         {% endif %}
+    </div>
+
     <div id="semantics" style="margin-right:15px;margin-top:10px;z-index:100;" class='view-tabs view-tabs-light'>
 
-        <table>
+        <table class="semantics-table ">
             {% csrf_token %}
             {% with show_field_row|get_item:"semField" as show_field %}
             {% if not show_field %}

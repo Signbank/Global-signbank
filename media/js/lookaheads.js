@@ -243,6 +243,7 @@ function renderSelectedSemField() {
     });
     var new_placeholder = selected_semField.map(item => item.name).join(", ");
     placeholder_lookahead.attr("placeholder", new_placeholder);
+    placeholder_lookahead.css("color", "red");
 }
 
 var selected_derivHist = [];
@@ -335,7 +336,7 @@ function enable_edit(category) {
         $('.editsemanticsform').show();
     }
     $('.empty_row').show();
-    $('.button-to-appear-in-edit-mode').show();
+    $('.button-'+category+'-to-appear-in-edit-mode').show();
     $('#enable_edit_'+category).removeClass('btn-primary').addClass('btn-danger');
     enable_lookaheads(category);
 }
@@ -349,7 +350,7 @@ function disable_edit(category) {
         $('.editsemanticsform').hide();
     }
     $('.empty_row').hide();
-    $('.button-to-appear-in-edit-mode').hide();
+    $('.button-'+category+'-to-appear-in-edit-mode').hide();
     busy_editing = false;
     $('#enable_edit_'+category).addClass('btn-primary').removeClass('btn-danger');
     disable_lookaheads(category);
@@ -361,10 +362,12 @@ function toggle_edit_phonology() {
         disable_edit('phonology');
         $('#enable_edit_phonology').removeClass('edit_enabled');
         $('#enable_edit_phonology').show();
+        $('#enable_edit_semantics').show();
     } else {
         enable_edit('phonology');
         $('#enable_edit_phonology').addClass('edit_enabled');
         $('#enable_edit_phonology').hide();
+        $('#enable_edit_semantics').hide();
     }
 }
 
@@ -374,10 +377,12 @@ function toggle_edit_semantics() {
         disable_edit('semantics');
         $('#enable_edit_semantics').removeClass('edit_enabled');
         $('#enable_edit_semantics').show();
+        $('#enable_edit_phonology').show();
     } else {
         enable_edit('semantics');
         $('#enable_edit_semantics').addClass('edit_enabled');
         $('#enable_edit_semantics').hide();
+        $('#enable_edit_phonology').hide();
     }
 }
 
@@ -533,6 +538,12 @@ $(document).ready(function() {
           var selected_text = $(this).find('option:selected').text();
           $('#repeat_value').text(selected_text);
     });
+    $('.select_altern').on('change', function() {
+          busy_editing = true;
+          var selected_value = $(this).val();
+          var selected_text = $(this).find('option:selected').text();
+          $('#altern_value').text(selected_text);
+    });
      $('.quick_save').click(function(e)
 	 {
          e.preventDefault();
@@ -540,43 +551,25 @@ $(document).ready(function() {
 	     var update = { 'csrfmiddlewaretoken': csrf_token };
          for (var i=0; i < gloss_phonology.length; i++) {
             var field = gloss_phonology[i];
-            if (field == 'semField') {
+            if (['semField', 'derivHist'].includes(field)) {
                 var field_values = [];
                 var field_lookup = '#'+field+'_hidden_input_values';
-                $(field_lookup).find('input[name="semField"]').each(function() {
+                $(field_lookup).find('input[name="'+field+'"]').each(function() {
                     var this_value = $(this).val();
                     field_values.push(this_value);
                 });
-                update['semField'] = field_values;
-            } else if (field == 'derivHist') {
-                var field_values = [];
-                var field_lookup = '#'+field+'_hidden_input_values';
-                $(field_lookup).find('input[name="derivHist"]').each(function() {
-                    var this_value = $(this).val();
-                    field_values.push(this_value);
-                });
-                update['derivHist'] = field_values;
-            } else if (field == 'weakdrop') {
+                update[field] = field_values;
+            } else if (['weakdrop', 'weakprop'].includes(field)) {
                 var field_lookup = '#'+field+'_select_value';
                 var field_key = $(field_lookup).attr("name");
                 var field_value = $(field_lookup).val();
                 update[field_key] = field_value;
-            } else if (field == 'weakprop') {
+            } else if (['domhndsh_letter_or_number', 'subhndsh_letter_or_number'].includes(field)) {
                 var field_lookup = '#'+field+'_select_value';
                 var field_key = $(field_lookup).attr("name");
                 var field_value = $(field_lookup).val();
                 update[field_key] = field_value;
-            } else if (field == 'domhndsh_letter_or_number') {
-                var field_lookup = '#'+field+'_select_value';
-                var field_key = $(field_lookup).attr("name");
-                var field_value = $(field_lookup).val();
-                update[field_key] = field_value;
-            } else if (field == 'subhndsh_letter_or_number') {
-                var field_lookup = '#'+field+'_select_value';
-                var field_key = $(field_lookup).attr("name");
-                var field_value = $(field_lookup).val();
-                update[field_key] = field_value;
-            } else if (field == 'repeat') {
+            } else if (['repeat', 'altern'].includes(field)) {
                 var field_lookup = '#'+field+'_select_value';
                 var field_key = $(field_lookup).attr("name");
                 var field_value = $(field_lookup).val();
