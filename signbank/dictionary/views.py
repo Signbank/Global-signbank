@@ -2989,8 +2989,8 @@ def edit_phonology(request, glossid):
             annotation_text = gloss_default_annotationidglosstranslation
         context['annotation_idgloss'][language] = annotation_text
 
-    context['gloss_phonology'] = FIELDS['phonology'] + ['domhndsh_letter_or_number', 'subhndsh_letter_or_number', 'semField', 'derivHist']
-    context['gloss_semantics'] = ['semField', 'derivHist']
+    context['gloss_phonology'] = FIELDS['phonology'] + ['domhndsh_letter_or_number', 'subhndsh_letter_or_number', 'semField', 'derivHist', 'namEnt', 'valence']
+    context['gloss_semantics'] = ['semField', 'derivHist', 'namEnt', 'valence']
     context['show_field_row'] = show_fields_rows(gloss)
     context['selected_semField'] =  [{"name": semfield.name, "machine_value": semfield.machine_value}
                                      for semfield in gloss.semField.all()]

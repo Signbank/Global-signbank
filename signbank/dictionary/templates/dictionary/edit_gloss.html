@@ -482,7 +482,64 @@ var selected_derivHist = {{selected_derivHist|safe}};
                 </td>
                 {% endwith %}
             </tr>
+            {% with show_field_row|get_item:"relOriMov" as show_field %}
+            {% if not show_field %}
+            <tr class="empty_row">
+            {% else %}
+            <tr>
+            {% endif %}
+            {% endwith %}
+                <th style="width:240px;">{% trans "Relative Orientation: Movement" %}</th>
+                {% with phonologyform.fields|get_item:'relOriMov' as relOriMov_field %}
+                <td class="editform">
+                    <div>
+                    <input class='form-control form-control-light relOriMovtypeahead' type="text" size="40"
+                              value="{{relOriMov_field.initial}}" id="relOriMov_lookahead" data-category="phonology">
+                    <input type="hidden" name="relOriMov" value=""
+                           id="relOriMov_machine_value" >
+                    </div>
+                </td>
+                {% endwith %}
+            </tr>
 
+            {% with show_field_row|get_item:"relOriLoc" as show_field %}
+            {% if not show_field %}
+            <tr class="empty_row">
+            {% else %}
+            <tr>
+            {% endif %}
+            {% endwith %}
+                <th style="width:240px;">{% trans "Relative Orientation: Location" %}</th>
+                {% with phonologyform.fields|get_item:'relOriLoc' as relOriLoc_field %}
+                <td class="editform">
+                    <div>
+                    <input class='form-control form-control-light relOriLoctypeahead' type="text" size="40"
+                              value="{{relOriLoc_field.initial}}" id="relOriLoc_lookahead" data-category="phonology">
+                    <input type="hidden" name="relOriLoc" value=""
+                           id="relOriLoc_machine_value" >
+                    </div>
+                </td>
+                {% endwith %}
+            </tr>
+            {% with show_field_row|get_item:"oriCh" as show_field %}
+            {% if not show_field %}
+            <tr class="empty_row">
+            {% else %}
+            <tr>
+            {% endif %}
+            {% endwith %}
+                <th style="width:240px;">{% trans "Orientation Change" %}</th>
+                {% with phonologyform.fields|get_item:'oriCh' as oriCh_field %}
+                <td class="editform">
+                    <div>
+                    <input class='form-control form-control-light oriChtypeahead' type="text" size="40"
+                              value="{{oriCh_field.initial}}" id="oriCh_lookahead" data-category="phonology">
+                    <input type="hidden" name="oriCh" value=""
+                           id="oriCh_machine_value" >
+                    </div>
+                </td>
+                {% endwith %}
+            </tr>
         </table>
     </div>
 
@@ -558,6 +615,44 @@ var selected_derivHist = {{selected_derivHist|safe}};
                 </td>
                 <td id="derivHist_hidden_input_values" class="editform">
 
+                </td>
+                {% endwith %}
+            </tr>
+            {% with show_field_row|get_item:"namEnt" as show_field %}
+            {% if not show_field %}
+            <tr class="empty_row">
+            {% else %}
+            <tr>
+            {% endif %}
+            {% endwith %}
+                <th style="width:240px;">{% trans "Named Entity" %}</th>
+                {% with semanticsform.fields|get_item:'namEnt' as namEnt_field %}
+                <td class="editform">
+                    <div>
+                    <input class='form-control form-control-light namEnttypeahead' type="text" size="40"
+                              value="{{namEnt_field.initial}}" id="namEnt_lookahead" data-category="semantics">
+                    <input type="hidden" name="namEnt" value=""
+                           id="namEnt_machine_value" >
+                    </div>
+                </td>
+                {% endwith %}
+            </tr>
+            {% with show_field_row|get_item:"valence" as show_field %}
+            {% if not show_field %}
+            <tr class="empty_row">
+            {% else %}
+            <tr>
+            {% endif %}
+            {% endwith %}
+                <th style="width:240px;">{% trans "Valence" %}</th>
+                {% with semanticsform.fields|get_item:'valence' as valence_field %}
+                <td class="editform">
+                    <div>
+                    <input class='form-control form-control-light valencetypeahead' type="text" size="40"
+                              value="{{valence_field.initial}}" id="valence_lookahead" data-category="semantics">
+                    <input type="hidden" name="valence" value=""
+                           id="valence_machine_value" >
+                    </div>
                 </td>
                 {% endwith %}
             </tr>

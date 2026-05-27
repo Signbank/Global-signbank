@@ -6,7 +6,8 @@ from signbank.dictionary.models import FieldChoiceForeignKey, Gloss, Handshape
 
 def show_fields_rows(gloss):
     show_field = {}
-    for field in FIELDS['phonology'] + ['domhndsh_letter_or_number', 'subhndsh_letter_or_number', 'semField', 'derivHist']:
+    for field in (FIELDS['phonology']
+                  + ['domhndsh_letter_or_number', 'subhndsh_letter_or_number', 'semField', 'derivHist', 'namEnt', 'valence']):
         if field in ['semField']:
             semantic_fields = gloss.semField.all()
             show_field[field] = [semantic_fields.count() > 0]
@@ -41,6 +42,7 @@ def show_fields_rows(gloss):
             continue
         show_field[field] = [field_value not in [None, 0, '-', '', False]]
     show_field_row = {}
-    for field in FIELDS['phonology'] + ['domhndsh_letter_or_number', 'subhndsh_letter_or_number', 'semField', 'derivHist']:
+    for field in (FIELDS['phonology']
+                  + ['domhndsh_letter_or_number', 'subhndsh_letter_or_number', 'semField', 'derivHist', 'namEnt', 'valence']):
         show_field_row[field] = any(show_field[field])
     return show_field_row

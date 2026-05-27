@@ -1813,6 +1813,9 @@ class PhonologyForm(forms.Form):
                                widget=forms.Select(attrs=ATTRS_FOR_BOOLEAN_FORMS))
     altern = forms.ChoiceField(label=_('Alternating Movement'), choices=[('0', '-')], required=False,
                                widget=forms.Select(attrs=ATTRS_FOR_BOOLEAN_FORMS))
+    relOriMov = forms.CharField(label=_('Relative Orientation: Movement'))
+    relOriLoc = forms.CharField(label=_('Relative Orientation: Location'))
+    oriCh = forms.CharField(label=_('Orientation Change'))
 
     class Meta:
         model = Gloss
@@ -1843,12 +1846,17 @@ class PhonologyForm(forms.Form):
             self.fields[boolean_field].choices = [('0', ''), ('1', _('Yes'))]
         self.fields['repeat'].initial = self.gloss.display_repeat
         self.fields['altern'].initial = self.gloss.display_altern
+        self.fields['relOriMov'].initial = self.gloss.relOriMov.name if self.gloss.relOriMov else ''
+        self.fields['relOriLoc'].initial = self.gloss.relOriLoc.name if self.gloss.relOriLoc else ''
+        self.fields['oriCh'].initial = self.gloss.oriCh.name if self.gloss.oriCh else ''
 
 
 class SemanticsForm(forms.Form):
     gloss = None
     semField = forms.CharField(label=_('Semantics Field'))
     derivHist = forms.CharField(label=_('Derivation History'))
+    namEnt = forms.CharField(label=_('Named Entity'))
+    valence = forms.CharField(label=_('Valence'))
 
     class Meta:
         model = Gloss
@@ -1860,3 +1868,5 @@ class SemanticsForm(forms.Form):
 
         self.fields['semField'].initial = self.gloss.get_semField_display()
         self.fields['derivHist'].initial = self.gloss.get_derivHist_display()
+        self.fields['namEnt'].initial = self.gloss.namEnt.name if self.gloss.namEnt else ''
+        self.fields['valence'].initial = self.gloss.valence.name if self.gloss.valence else ''

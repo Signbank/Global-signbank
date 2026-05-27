@@ -23,7 +23,7 @@ function handednesstypeahead(target) {
               }
           }
       });
-};
+}
 
 var domhndsh_bloodhound = new Bloodhound({
       datumTokenizer: function(d) { return d.tokens; },
@@ -45,7 +45,7 @@ function domhndshtypeahead(target) {
               }
           }
       });
-};
+}
 
 var subhndsh_bloodhound = new Bloodhound({
       datumTokenizer: function(d) { return d.tokens; },
@@ -67,7 +67,7 @@ function subhndshtypeahead(target) {
               }
           }
       });
-};
+}
 
 var handCh_bloodhound = new Bloodhound({
       datumTokenizer: function(d) { return d.tokens; },
@@ -89,7 +89,7 @@ function handChtypeahead(target) {
               }
           }
       });
-};
+}
 
 var relatArtic_bloodhound = new Bloodhound({
       datumTokenizer: function(d) { return d.tokens; },
@@ -111,7 +111,7 @@ function relatArtictypeahead(target) {
               }
           }
       });
-};
+}
 
 var locprim_bloodhound = new Bloodhound({
       datumTokenizer: function(d) { return d.tokens; },
@@ -133,7 +133,7 @@ function locprimtypeahead(target) {
               }
           }
       });
-};
+}
 
 var contType_bloodhound = new Bloodhound({
       datumTokenizer: function(d) { return d.tokens; },
@@ -155,7 +155,8 @@ function contTypetypeahead(target) {
               }
           }
       });
-};
+}
+
 var movSh_bloodhound = new Bloodhound({
       datumTokenizer: function(d) { return d.tokens; },
       queryTokenizer: Bloodhound.tokenizers.whitespace,
@@ -176,7 +177,8 @@ function movShtypeahead(target) {
               }
           }
       });
-};
+}
+
 var movDir_bloodhound = new Bloodhound({
       datumTokenizer: function(d) { return d.tokens; },
       queryTokenizer: Bloodhound.tokenizers.whitespace,
@@ -197,7 +199,114 @@ function movDirtypeahead(target) {
               }
           }
       });
-};
+}
+
+var relOriMov_bloodhound = new Bloodhound({
+      datumTokenizer: function(d) { return d.tokens; },
+      queryTokenizer: Bloodhound.tokenizers.whitespace,
+      remote: url+'/dictionary/ajax/fieldchoice/RelOriMov'+'/%QUERY'
+    });
+
+relOriMov_bloodhound.initialize();
+
+function relOriMovtypeahead(target) {
+
+     $(target).typeahead(null, {
+          name: 'relOriMov',
+          displayKey: 'name',
+          source: relOriMov_bloodhound.ttAdapter(),
+          templates: {
+              suggestion: function(fc) {
+                  return("<p><strong>" + fc.name +  "</strong></p>");
+              }
+          }
+      });
+}
+
+var relOriLoc_bloodhound = new Bloodhound({
+      datumTokenizer: function(d) { return d.tokens; },
+      queryTokenizer: Bloodhound.tokenizers.whitespace,
+      remote: url+'/dictionary/ajax/fieldchoice/RelOriLoc'+'/%QUERY'
+    });
+
+relOriLoc_bloodhound.initialize();
+
+function relOriLoctypeahead(target) {
+
+     $(target).typeahead(null, {
+          name: 'relOriLoc',
+          displayKey: 'name',
+          source: relOriLoc_bloodhound.ttAdapter(),
+          templates: {
+              suggestion: function(fc) {
+                  return("<p><strong>" + fc.name +  "</strong></p>");
+              }
+          }
+      });
+}
+var oriCh_bloodhound = new Bloodhound({
+      datumTokenizer: function(d) { return d.tokens; },
+      queryTokenizer: Bloodhound.tokenizers.whitespace,
+      remote: url+'/dictionary/ajax/fieldchoice/OriChange'+'/%QUERY'
+    });
+
+oriCh_bloodhound.initialize();
+
+function oriChtypeahead(target) {
+
+     $(target).typeahead(null, {
+          name: 'oriCh',
+          displayKey: 'name',
+          source: oriCh_bloodhound.ttAdapter(),
+          templates: {
+              suggestion: function(fc) {
+                  return("<p><strong>" + fc.name +  "</strong></p>");
+              }
+          }
+      });
+}
+var namEnt_bloodhound = new Bloodhound({
+      datumTokenizer: function(d) { return d.tokens; },
+      queryTokenizer: Bloodhound.tokenizers.whitespace,
+      remote: url+'/dictionary/ajax/fieldchoice/NamedEntity'+'/%QUERY'
+    });
+
+namEnt_bloodhound.initialize();
+
+function namEnttypeahead(target) {
+
+     $(target).typeahead(null, {
+          name: 'namEnt',
+          displayKey: 'name',
+          source: namEnt_bloodhound.ttAdapter(),
+          templates: {
+              suggestion: function(fc) {
+                  return("<p><strong>" + fc.name +  "</strong></p>");
+              }
+          }
+      });
+}
+var valence_bloodhound = new Bloodhound({
+      datumTokenizer: function(d) { return d.tokens; },
+      queryTokenizer: Bloodhound.tokenizers.whitespace,
+      remote: url+'/dictionary/ajax/fieldchoice/Valence'+'/%QUERY'
+    });
+
+valence_bloodhound.initialize();
+
+function valencetypeahead(target) {
+
+     $(target).typeahead(null, {
+          name: 'valence',
+          displayKey: 'name',
+          source: valence_bloodhound.ttAdapter(),
+          templates: {
+              suggestion: function(fc) {
+                  return("<p><strong>" + fc.name +  "</strong></p>");
+              }
+          }
+      });
+}
 // last of the field choice bloodhounds
 
 var selected_semField = selected_semField;
@@ -482,6 +591,51 @@ $(document).ready(function() {
           $('#movDir_machine_value').attr('value', suggestion.machine_value);
     });
     $('#movDir_lookahead').on("click", function() {
+      $(this).attr('value', "");
+    });
+    relOriMovtypeahead($('.relOriMovtypeahead'));
+    $('.relOriMovtypeahead').bind('typeahead:selected', function(ev, suggestion) {
+          busy_editing = true;
+          $(this).attr('value', suggestion.name);
+          $('#relOriMov_machine_value').attr('value', suggestion.machine_value);
+    });
+    $('#relOriMov_lookahead').on("click", function() {
+      $(this).attr('value', "");
+    });
+    relOriLoctypeahead($('.relOriLoctypeahead'));
+    $('.relOriLoctypeahead').bind('typeahead:selected', function(ev, suggestion) {
+          busy_editing = true;
+          $(this).attr('value', suggestion.name);
+          $('#relOriLoc_machine_value').attr('value', suggestion.machine_value);
+    });
+    $('#relOriLoc_lookahead').on("click", function() {
+      $(this).attr('value', "");
+    });
+    oriChtypeahead($('.oriChtypeahead'));
+    $('.oriChtypeahead').bind('typeahead:selected', function(ev, suggestion) {
+          busy_editing = true;
+          $(this).attr('value', suggestion.name);
+          $('#oriCh_machine_value').attr('value', suggestion.machine_value);
+    });
+    $('#oriCh_lookahead').on("click", function() {
+      $(this).attr('value', "");
+    });
+    namEnttypeahead($('.namEnttypeahead'));
+    $('.namEnttypeahead').bind('typeahead:selected', function(ev, suggestion) {
+          busy_editing = true;
+          $(this).attr('value', suggestion.name);
+          $('#namEnt_machine_value').attr('value', suggestion.machine_value);
+    });
+    $('#namEnt_lookahead').on("click", function() {
+      $(this).attr('value', "");
+    });
+    valencetypeahead($('.valencetypeahead'));
+    $('.valencetypeahead').bind('typeahead:selected', function(ev, suggestion) {
+          busy_editing = true;
+          $(this).attr('value', suggestion.name);
+          $('#valence_machine_value').attr('value', suggestion.machine_value);
+    });
+    $('#valence_lookahead').on("click", function() {
       $(this).attr('value', "");
     });
     semFieldtypeahead($('.semFieldtypeahead'));
