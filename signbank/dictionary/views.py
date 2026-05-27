@@ -2992,5 +2992,8 @@ def edit_phonology(request, glossid):
     context['gloss_phonology'] = FIELDS['phonology'] + ['domhndsh_letter_or_number', 'subhndsh_letter_or_number', 'semField', 'derivHist']
     context['gloss_semantics'] = ['semField', 'derivHist']
     context['show_field_row'] = show_fields_rows(gloss)
-
+    context['selected_semField'] =  [{"name": semfield.name, "machine_value": semfield.machine_value}
+                                     for semfield in gloss.semField.all()]
+    context['selected_derivHist'] =  [{"name": derivhist.name, "machine_value": derivhist.machine_value}
+                                     for derivhist in gloss.derivHist.all()]
     return render(request, 'dictionary/edit_gloss.html', context)

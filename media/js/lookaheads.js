@@ -200,7 +200,7 @@ function movDirtypeahead(target) {
 };
 // last of the field choice bloodhounds
 
-var selected_semField = [];
+var selected_semField = selected_semField;
 
 var semField_bloodhound = new Bloodhound({
       datumTokenizer: function(d) { return d.tokens; },
@@ -246,7 +246,7 @@ function renderSelectedSemField() {
     placeholder_lookahead.css("color", "red");
 }
 
-var selected_derivHist = [];
+var selected_derivHist = selected_derivHist;
 
 var derivHist_bloodhound = new Bloodhound({
       datumTokenizer: function(d) { return d.tokens; },
@@ -292,6 +292,7 @@ function renderSelectedDerivHist() {
 }
 
 function disable_lookaheads(category) {
+     // this makes use of specific element identifiers for the lookahead fields
      $('.form-control').each(function() {
          var this_id = $(this).attr('id');
          if (!this_id) {return;}
@@ -312,6 +313,7 @@ function disable_lookaheads(category) {
 }
 
 function enable_lookaheads(category) {
+     // this makes use of specific element identifiers for the lookahead fields
      $('.form-control').each(function() {
          var this_id = $(this).attr('id');
          if (!this_id) {return;}
@@ -334,6 +336,8 @@ function enable_lookaheads(category) {
 function enable_edit(category) {
     if (category == 'semantics') {
         $('.editsemanticsform').show();
+        $('#semField_value').trigger('editSemField');
+        $('#derivHist_value').trigger('editDerivHistField');
     }
     $('.empty_row').show();
     $('.button-'+category+'-to-appear-in-edit-mode').show();
@@ -405,7 +409,7 @@ $(document).ready(function() {
           $('#handedness_machine_value').attr('value', suggestion.machine_value);
     });
     $('#handedness_lookahead').on("click", function() {
-//    this erases the placeholder value
+//    this erases the lookahead value shown as placeholder
       $(this).attr('value', "");
     });
     domhndshtypeahead($('.domhndshtypeahead'));
@@ -492,6 +496,9 @@ $(document).ready(function() {
     $('#semField_multiselect').on("click", function() {
       $(this).attr('value', "");
     });
+    $('#semField_value').on("editSemField", function() {
+        renderSelectedSemField();
+    });
     derivHisttypeahead($('.derivHisttypeahead'));
     $('.derivHisttypeahead').bind('typeahead:selected', function(ev, suggestion) {
           if (!selected_derivHist.includes(suggestion)) {
@@ -503,6 +510,9 @@ $(document).ready(function() {
     });
     $('#derivHist_multiselect').on("click", function() {
       $(this).attr('value', "");
+    });
+    $('#derivHist_value').on("editDerivHistField", function() {
+        renderSelectedDerivHist();
     });
     $('.select_weakdrop').on('change', function() {
           busy_editing = true;

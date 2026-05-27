@@ -165,6 +165,8 @@ var edit_mode_phonology_str = '{{edit_mode_phonology_str|escapejs}}';
 var edit_mode_semantics_str = '{{edit_mode_semantics_str|escapejs}}';
 
 var gloss_phonology = {{gloss_phonology|safe}};
+var selected_semField = {{selected_semField|safe}};
+var selected_derivHist = {{selected_derivHist|safe}};
 </script>
 
 <script type="text/javascript" src="{{STATIC_URL}}js/typeahead.bundle.min.js"></script>
@@ -526,7 +528,7 @@ var gloss_phonology = {{gloss_phonology|safe}};
                 <td class="editsemanticsform">
                     <div>
                     <input class='form-control form-control-light semFieldtypeahead' type="text" size="60"
-                              value='{{semField_field.initial}}' id="semField_multiselect" data-category="semantics">
+                           id="semField_multiselect" data-category="semantics">
                     </div>
                 </td>
                 <td id="semField_hidden_input_values" class="editform">
@@ -551,7 +553,7 @@ var gloss_phonology = {{gloss_phonology|safe}};
                 <td class="editsemanticsform">
                     <div>
                     <input class='form-control form-control-light derivHisttypeahead' type="text" size="60"
-                              value='{{derivHist_field.initial}}' id="derivHist_multiselect" data-category="semantics">
+                           id="derivHist_multiselect" data-category="semantics">
                     </div>
                 </td>
                 <td id="derivHist_hidden_input_values" class="editform">
