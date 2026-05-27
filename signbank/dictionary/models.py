@@ -616,6 +616,9 @@ class ExampleSentence(MetaModelMixin, models.Model):
     def get_type(self):
         return self.sentenceType.name if self.sentenceType else ''
 
+    def get_video_object(self):
+        return self.examplevideo_set.filter(version=0).first()
+
     def get_video_path(self):
         try:
             examplevideo = self.examplevideo_set.get(version=0)
@@ -2277,6 +2280,10 @@ class Gloss(MetaModelMixin, models.Model):
     def get_image_url(self):
         image_path = self.get_image_path()
         return escape_uri_path(image_path) if image_path else ''
+
+    def get_video_object(self):
+        from signbank.video.models import GlossVideo
+        return GlossVideo.objects.filter(gloss=self, glossvideonme=None, glossvideoperspective=None, version=0).first()
 
     def get_video_path(self, check_file_on_disk=True):
         from signbank.video.models import GlossVideo, get_gloss_path_to_video_file_on_disk, GlossVideoNME, GlossVideoPerspective
