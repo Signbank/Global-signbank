@@ -443,12 +443,12 @@ function enable_lookaheads(category) {
 }
 
 function enable_edit(category) {
-    if (category == 'semantics') {
+    if (category === 'semantics') {
         $('.editsemanticsform').show();
         $('#semField_value').trigger('editSemField');
         $('#derivHist_value').trigger('editDerivHistField');
     }
-    $('.empty_row').show();
+    $('.empty_row_'+category).show();
     $('.button-'+category+'-to-appear-in-edit-mode').show();
     $('#enable_edit_'+category).removeClass('btn-primary').addClass('btn-danger');
     enable_lookaheads(category);
@@ -459,10 +459,10 @@ function disable_edit(category) {
         // the user was busy editing but did not save the data, just reload the page
         location.reload(true);
     }
-    if (category == 'semantics') {
+    if (category === 'semantics') {
         $('.editsemanticsform').hide();
     }
-    $('.empty_row').hide();
+    $('.empty_row_'+category).hide();
     $('.button-'+category+'-to-appear-in-edit-mode').hide();
     busy_editing = false;
     $('#enable_edit_'+category).addClass('btn-primary').removeClass('btn-danger');

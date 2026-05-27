@@ -212,7 +212,7 @@ var selected_derivHist = {{selected_derivHist|safe}};
                 {% with phonologyform.fields|get_item:'handedness' as handedness_field %}
                 {% with phonologyform.fields|get_item:'weakdrop' as weakdrop_field %}
                 {% with phonologyform.fields|get_item:'weakprop' as weakprop_field %}
-                <td class="editform" style="width:200;">
+                <td class="editform" style="width:200px;">
                     <div style="display:table-cell;width:150px;">
                     <input class='form-control form-control-light handednesstypeahead' type="text" size="40"
                            id="handedness_lookahead" data-category="phonology"
@@ -251,7 +251,7 @@ var selected_derivHist = {{selected_derivHist|safe}};
             </tr>
             {% with show_field_row|get_item:"domhndsh" as show_field %}
             {% if not show_field %}
-            <tr class="empty_row">
+            <tr class="empty_row_phonology">
             {% else %}
             <tr>
             {% endif %}
@@ -284,7 +284,7 @@ var selected_derivHist = {{selected_derivHist|safe}};
             </tr>
             {% with show_field_row|get_item:"subhndsh" as show_field %}
             {% if not show_field %}
-            <tr class="empty_row">
+            <tr class="empty_row_phonology">
             {% else %}
             <tr>
             {% endif %}
@@ -317,7 +317,7 @@ var selected_derivHist = {{selected_derivHist|safe}};
             </tr>
             {% with show_field_row|get_item:"handCh" as show_field %}
             {% if not show_field %}
-            <tr class="empty_row">
+            <tr class="empty_row_phonology">
             {% else %}
             <tr>
             {% endif %}
@@ -336,7 +336,7 @@ var selected_derivHist = {{selected_derivHist|safe}};
             </tr>
             {% with show_field_row|get_item:"relatArtic" as show_field %}
             {% if not show_field %}
-            <tr class="empty_row">
+            <tr class="empty_row_phonology">
             {% else %}
             <tr>
             {% endif %}
@@ -355,7 +355,7 @@ var selected_derivHist = {{selected_derivHist|safe}};
             </tr>
             {% with show_field_row|get_item:"locprim" as show_field %}
             {% if not show_field %}
-            <tr class="empty_row">
+            <tr class="empty_row_phonology">
             {% else %}
             <tr>
             {% endif %}
@@ -374,7 +374,7 @@ var selected_derivHist = {{selected_derivHist|safe}};
             </tr>
             {% with show_field_row|get_item:"contType" as show_field %}
             {% if not show_field %}
-            <tr class="empty_row">
+            <tr class="empty_row_phonology">
             {% else %}
             <tr>
             {% endif %}
@@ -393,7 +393,7 @@ var selected_derivHist = {{selected_derivHist|safe}};
             </tr>
             {% with show_field_row|get_item:"movSh" as show_field %}
             {% if not show_field %}
-            <tr class="empty_row">
+            <tr class="empty_row_phonology">
             {% else %}
             <tr>
             {% endif %}
@@ -412,7 +412,7 @@ var selected_derivHist = {{selected_derivHist|safe}};
             </tr>
             {% with show_field_row|get_item:"movDir" as show_field %}
             {% if not show_field %}
-            <tr class="empty_row">
+            <tr class="empty_row_phonology">
             {% else %}
             <tr>
             {% endif %}
@@ -433,7 +433,7 @@ var selected_derivHist = {{selected_derivHist|safe}};
 
             {% with show_field_row|get_item:"repeat" as show_field %}
             {% if not show_field %}
-            <tr class="empty_row">
+            <tr class="empty_row_phonology">
             {% else %}
             <tr>
             {% endif %}
@@ -459,7 +459,7 @@ var selected_derivHist = {{selected_derivHist|safe}};
 
             {% with show_field_row|get_item:"altern" as show_field %}
             {% if not show_field %}
-            <tr class="empty_row">
+            <tr class="empty_row_phonology">
             {% else %}
             <tr>
             {% endif %}
@@ -484,7 +484,7 @@ var selected_derivHist = {{selected_derivHist|safe}};
             </tr>
             {% with show_field_row|get_item:"relOriMov" as show_field %}
             {% if not show_field %}
-            <tr class="empty_row">
+            <tr class="empty_row_phonology">
             {% else %}
             <tr>
             {% endif %}
@@ -504,7 +504,7 @@ var selected_derivHist = {{selected_derivHist|safe}};
 
             {% with show_field_row|get_item:"relOriLoc" as show_field %}
             {% if not show_field %}
-            <tr class="empty_row">
+            <tr class="empty_row_phonology">
             {% else %}
             <tr>
             {% endif %}
@@ -523,7 +523,7 @@ var selected_derivHist = {{selected_derivHist|safe}};
             </tr>
             {% with show_field_row|get_item:"oriCh" as show_field %}
             {% if not show_field %}
-            <tr class="empty_row">
+            <tr class="empty_row_phonology">
             {% else %}
             <tr>
             {% endif %}
@@ -570,7 +570,7 @@ var selected_derivHist = {{selected_derivHist|safe}};
             {% csrf_token %}
             {% with show_field_row|get_item:"semField" as show_field %}
             {% if not show_field %}
-            <tr class="empty_row">
+            <tr class="empty_row_semantics">
             {% else %}
             <tr>
             {% endif %}
@@ -595,7 +595,7 @@ var selected_derivHist = {{selected_derivHist|safe}};
             </tr>
             {% with show_field_row|get_item:"derivHist" as show_field %}
             {% if not show_field %}
-            <tr class="empty_row">
+            <tr class="empty_row_semantics">
             {% else %}
             <tr>
             {% endif %}
@@ -620,7 +620,7 @@ var selected_derivHist = {{selected_derivHist|safe}};
             </tr>
             {% with show_field_row|get_item:"namEnt" as show_field %}
             {% if not show_field %}
-            <tr class="empty_row">
+            <tr class="empty_row_semantics">
             {% else %}
             <tr>
             {% endif %}
@@ -639,7 +639,7 @@ var selected_derivHist = {{selected_derivHist|safe}};
             </tr>
             {% with show_field_row|get_item:"valence" as show_field %}
             {% if not show_field %}
-            <tr class="empty_row">
+            <tr class="empty_row_semantics">
             {% else %}
             <tr>
             {% endif %}
