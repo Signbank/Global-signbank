@@ -241,6 +241,8 @@ def detect_video_file_extension(file_path):
         video_extension = '.mkv'
     elif 'MPEG-2' in filetype:
         video_extension = '.m2v'
+    elif extension_on_filename(file_path) == '.mp4':
+        video_extension = '.mp4'
     else:
         video_extension = ''
     return video_extension
