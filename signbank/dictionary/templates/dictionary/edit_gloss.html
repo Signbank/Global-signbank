@@ -56,7 +56,7 @@ input .tt-hint {
 
 .editselect > select {
     background-color: inherit !important;
-    width: 100px;
+    width: auto;
 }
 .editselect select:disabled {
     color: inherit !important;
@@ -240,7 +240,7 @@ var selected_derivHist = {{selected_derivHist|safe}};
                         {% endfor %}
                     </select>
                     </div>
-                    <div class="editselect" style="display:table-cell;">
+                    <div class="editselect" style="display:table-cell;padding-left:0px;">
                     <select class="select_weakprop form-control form-control-light" name="weakprop"
                             id="weakprop_select_value" data-category="phonology">
                         {% for value, opn in weakprop_field.choices %}

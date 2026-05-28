@@ -541,7 +541,7 @@ $(document).ready(function() {
     $('.domhndshtypeahead').bind('typeahead:selected', function(ev, suggestion) {
           busy_editing = true;
           $(this).attr('value', suggestion.name);
-          var width_of_new_value = suggestion.name.length * 10 + 20;
+          var width_of_new_value = suggestion.name.length * 10 + 30;
           $(this).css("width", width_of_new_value + "px");
           $('#domhndsh_machine_value').attr('value', suggestion.machine_value);
     });
@@ -552,7 +552,7 @@ $(document).ready(function() {
     $('.subhndshtypeahead').bind('typeahead:selected', function(ev, suggestion) {
           busy_editing = true;
           $(this).attr('value', suggestion.name);
-          var width_of_new_value = suggestion.name.length * 10 + 20;
+          var width_of_new_value = suggestion.name.length * 10 + 30;
           $(this).css("width", width_of_new_value + "px");
           $('#subhndsh_machine_value').attr('value', suggestion.machine_value);
     });
@@ -783,7 +783,7 @@ $(document).ready(function() {
      lookahead_elements.each(function() {
          var this_id = $(this).attr("id");
          var cell_lookup = '#' + this_id.slice(0, -'_lookahead'.length) + '_cell';
-         var width_of_new_value = $(this).attr("value").length * 10 + 20;
+         var width_of_new_value = $(this).attr("value").length * 10 + 30;
          $(cell_lookup).attr('data-width', width_of_new_value);
     });
     var cell_elements = $('[id*="_cell"]');
