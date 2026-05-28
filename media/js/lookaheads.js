@@ -499,6 +499,20 @@ function toggle_edit_semantics() {
     }
 }
 
+function get_width_of_selection(text) {
+    let $span = $('<span>')
+        .text(text)
+        .css({
+            position: 'absolute',
+            visibility: 'hidden',
+            whiteSpace: 'nowrap',
+        })
+        .appendTo('body');
+    let width = $span.width();
+    $span.remove();
+    return width;
+}
+
 $('#enable_edit_phonology').click(function()
 {
     toggle_edit_phonology();
@@ -515,6 +529,8 @@ $(document).ready(function() {
     $('.handednesstypeahead').bind('typeahead:selected', function(ev, suggestion) {
           busy_editing = true;
           $(this).attr('value', suggestion.name);
+          var width_of_new_value = suggestion.name.length * 10 + 30;
+          $(this).css("width", width_of_new_value + "px");
           $('#handedness_machine_value').attr('value', suggestion.machine_value);
     });
     $('#handedness_lookahead').on("click", function() {
@@ -525,6 +541,8 @@ $(document).ready(function() {
     $('.domhndshtypeahead').bind('typeahead:selected', function(ev, suggestion) {
           busy_editing = true;
           $(this).attr('value', suggestion.name);
+          var width_of_new_value = suggestion.name.length * 10 + 20;
+          $(this).css("width", width_of_new_value + "px");
           $('#domhndsh_machine_value').attr('value', suggestion.machine_value);
     });
     $('#domhndsh_lookahead').on("click", function() {
@@ -534,6 +552,8 @@ $(document).ready(function() {
     $('.subhndshtypeahead').bind('typeahead:selected', function(ev, suggestion) {
           busy_editing = true;
           $(this).attr('value', suggestion.name);
+          var width_of_new_value = suggestion.name.length * 10 + 20;
+          $(this).css("width", width_of_new_value + "px");
           $('#subhndsh_machine_value').attr('value', suggestion.machine_value);
     });
     $('#subhndsh_lookahead').on("click", function() {
@@ -759,6 +779,22 @@ $(document).ready(function() {
             }
          });
      });
+     var lookahead_elements = $('[id*="_lookahead"]');
+     lookahead_elements.each(function() {
+         var this_id = $(this).attr("id");
+         var cell_lookup = '#' + this_id.slice(0, -'_lookahead'.length) + '_cell';
+         var width_of_new_value = $(this).attr("value").length * 10 + 20;
+         $(cell_lookup).attr('data-width', width_of_new_value);
+    });
+    var cell_elements = $('[id*="_cell"]');
+    cell_elements.each(function() {
+        var this_width = $(this).attr("data-width") + "px";
+        $(this).css('width', this_width);
+        var tt_children = $(this).find('.tt-input');
+        $(tt_children).each(function() {
+            $(this).css('width', this_width);
+        });
+    });
     disable_edit('phonology');
     disable_edit('semantics');
 });

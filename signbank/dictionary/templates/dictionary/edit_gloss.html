@@ -23,17 +23,19 @@ input[type="text"] {
     border: none;
 }
 input[type="text"]:focus {
-    border: 1px solid red;
+    border: red;
+    width: auto;
 }
 .tt-input {
     background-color: rgba(50,50,50,15%) !important;
     border: none;
+    width: auto;
 }
 .tt-input:active {
     border: 1px solid red;
 }
 input .tt-hint {
-    color: green;
+    color: red;
 }
 .editform input {
     background-color: inherit !important;
@@ -70,10 +72,12 @@ input .tt-hint {
 }
 .editsemanticsform .form-control:enabled::placeholder {
     color: red !important;
+    width: auto;
     opacity: 1;
 }
 .editsemanticsform .form-control:disabled::placeholder {
     color: inherit !important;
+    width: auto;
     opacity: 1;
 }
 .editsemanticsform input {
@@ -142,6 +146,9 @@ input .tt-hint {
 .semantics-table {
     border-collapse: separate;
     border-spacing: 0 5px;
+}
+.twitter-typehead {
+    width: auto;
 }
 </style>
 {% endblock %}
@@ -214,7 +221,7 @@ var selected_derivHist = {{selected_derivHist|safe}};
                 {% with phonologyform.fields|get_item:'weakdrop' as weakdrop_field %}
                 {% with phonologyform.fields|get_item:'weakprop' as weakprop_field %}
                 <td class="editform" style="width:auto;">
-                    <div style="display:table-cell;width:auto;">
+                    <div style="display:table-cell;" id="handedness_cell">
                     <input class='form-control form-control-light handednesstypeahead' type="text"
                            id="handedness_lookahead" data-category="phonology"
                            value="{{handedness_field.initial}}">
@@ -260,9 +267,9 @@ var selected_derivHist = {{selected_derivHist|safe}};
                 <th style="width:240px;">{% trans "Strong Hand" %}</th>
                 {% with phonologyform.fields|get_item:'domhndsh' as domhndsh_field %}
                 {% with phonologyform.fields|get_item:'domhndsh_letter_or_number' as domhndsh_letter_or_number_field %}
-                <td class="editform" style="width:auto;">
-                    <div style="display:table-cell;width:220px;">
-                    <input class='form-control form-control-light domhndshtypeahead' type="text" size="20"
+                <td class="editform">
+                    <div style="display:table-cell;" id="domhndsh_cell">
+                    <input class='form-control form-control-light domhndshtypeahead' type="text" size="40"
                               value="{{domhndsh_field.initial}}" id="domhndsh_lookahead" data-category="phonology">
                     <input type="hidden" name="domhndsh" value=""
                            id="domhndsh_machine_value" >
@@ -294,7 +301,7 @@ var selected_derivHist = {{selected_derivHist|safe}};
                 {% with phonologyform.fields|get_item:'subhndsh' as subhndsh_field %}
                 {% with phonologyform.fields|get_item:'subhndsh_letter_or_number' as subhndsh_letter_or_number_field %}
                 <td class="editform">
-                    <div style="display:table-cell;width:220px;">
+                    <div style="display:table-cell;" id="subhndsh_cell" >
                     <input class='form-control form-control-light subhndshtypeahead' type="text" size="40"
                               value="{{subhndsh_field.initial}}" id="subhndsh_lookahead" data-category="phonology">
                     <input type="hidden" name="subhndsh" value=""
