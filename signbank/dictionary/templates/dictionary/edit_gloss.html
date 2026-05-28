@@ -54,6 +54,7 @@ input .tt-hint {
 
 .editselect > select {
     background-color: inherit !important;
+    width: 100px;
 }
 .editselect select:disabled {
     color: inherit !important;
@@ -212,9 +213,9 @@ var selected_derivHist = {{selected_derivHist|safe}};
                 {% with phonologyform.fields|get_item:'handedness' as handedness_field %}
                 {% with phonologyform.fields|get_item:'weakdrop' as weakdrop_field %}
                 {% with phonologyform.fields|get_item:'weakprop' as weakprop_field %}
-                <td class="editform" style="width:200px;">
-                    <div style="display:table-cell;width:150px;">
-                    <input class='form-control form-control-light handednesstypeahead' type="text" size="40"
+                <td class="editform" style="width:auto;">
+                    <div style="display:table-cell;width:auto;">
+                    <input class='form-control form-control-light handednesstypeahead' type="text"
                            id="handedness_lookahead" data-category="phonology"
                            value="{{handedness_field.initial}}">
                     <input type="hidden" name="handedness" value=""
@@ -260,8 +261,8 @@ var selected_derivHist = {{selected_derivHist|safe}};
                 {% with phonologyform.fields|get_item:'domhndsh' as domhndsh_field %}
                 {% with phonologyform.fields|get_item:'domhndsh_letter_or_number' as domhndsh_letter_or_number_field %}
                 <td class="editform" style="width:auto;">
-                    <div style="display:table-cell; width:200px;">
-                    <input class='form-control form-control-light domhndshtypeahead' type="text" size="40"
+                    <div style="display:table-cell;width:220px;">
+                    <input class='form-control form-control-light domhndshtypeahead' type="text" size="20"
                               value="{{domhndsh_field.initial}}" id="domhndsh_lookahead" data-category="phonology">
                     <input type="hidden" name="domhndsh" value=""
                            id="domhndsh_machine_value" >
@@ -293,7 +294,7 @@ var selected_derivHist = {{selected_derivHist|safe}};
                 {% with phonologyform.fields|get_item:'subhndsh' as subhndsh_field %}
                 {% with phonologyform.fields|get_item:'subhndsh_letter_or_number' as subhndsh_letter_or_number_field %}
                 <td class="editform">
-                    <div style="display:table-cell;width:200px;">
+                    <div style="display:table-cell;width:220px;">
                     <input class='form-control form-control-light subhndshtypeahead' type="text" size="40"
                               value="{{subhndsh_field.initial}}" id="subhndsh_lookahead" data-category="phonology">
                     <input type="hidden" name="subhndsh" value=""
