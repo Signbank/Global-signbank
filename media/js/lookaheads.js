@@ -342,7 +342,7 @@ function renderSelectedSemField() {
     selected_semField.forEach(function(item) {
         var tag = $('<button class="actionButton"></button>').text(item.name);
         var input_value = $('<input type="hidden" name="semField" value="'+item.machine_value+'">');
-        var removeBtn = $('<span class="remove">&nbsp; &nbsp;&times;</span>').click(function() {
+        var removeBtn = $('<span class="remove">&nbsp;&nbsp;&times;</span>').click(function() {
             selected_semField = selected_semField.filter(i => i !== item);
             renderSelectedSemField();
         });
@@ -388,7 +388,7 @@ function renderSelectedDerivHist() {
     selected_derivHist.forEach(function(item) {
         var tag = $('<button class="actionButton"></button>').text(item.name);
         var input_value = $('<input type="hidden" name="derivHist" value="'+item.machine_value+'">');
-        var removeBtn = $('<span class="remove">&nbsp; &nbsp;&times;</span>').click(function() {
+        var removeBtn = $('<span class="remove">&nbsp;&nbsp;&times;</span>').click(function() {
             selected_derivHist = selected_derivHist.filter(i => i !== item);
             renderSelectedDerivHist();
         });
@@ -442,7 +442,7 @@ function enable_lookaheads(category) {
      });
 }
 
-function enable_edit(category) {
+function enable_edit_panel(category) {
     if (category === 'semantics') {
         $('.editsemanticsform').show();
         $('#semField_value').trigger('editSemField');
@@ -454,7 +454,7 @@ function enable_edit(category) {
     enable_lookaheads(category);
 }
 
-function disable_edit(category) {
+function disable_edit_panel(category) {
     if (busy_editing) {
         // the user was busy editing but did not save the data, just reload the page
         location.reload(true);
@@ -472,12 +472,12 @@ function disable_edit(category) {
 function toggle_edit_phonology() {
     if ($('#enable_edit_phonology').hasClass('edit_enabled'))
     {
-        disable_edit('phonology');
+        disable_edit_panel('phonology');
         $('#enable_edit_phonology').removeClass('edit_enabled');
         $('#enable_edit_phonology').show();
         $('#enable_edit_semantics').show();
     } else {
-        enable_edit('phonology');
+        enable_edit_panel('phonology');
         $('#enable_edit_phonology').addClass('edit_enabled');
         $('#enable_edit_phonology').hide();
         $('#enable_edit_semantics').hide();
@@ -487,12 +487,12 @@ function toggle_edit_phonology() {
 function toggle_edit_semantics() {
     if ($('#enable_edit_semantics').hasClass('edit_enabled'))
     {
-        disable_edit('semantics');
+        disable_edit_panel('semantics');
         $('#enable_edit_semantics').removeClass('edit_enabled');
         $('#enable_edit_semantics').show();
         $('#enable_edit_phonology').show();
     } else {
-        enable_edit('semantics');
+        enable_edit_panel('semantics');
         $('#enable_edit_semantics').addClass('edit_enabled');
         $('#enable_edit_semantics').hide();
         $('#enable_edit_phonology').hide();
@@ -795,6 +795,6 @@ $(document).ready(function() {
             $(this).css('width', this_width);
         });
     });
-    disable_edit('phonology');
-    disable_edit('semantics');
+    disable_edit_panel('phonology');
+    disable_edit_panel('semantics');
 });

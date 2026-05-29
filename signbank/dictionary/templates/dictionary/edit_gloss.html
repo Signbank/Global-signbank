@@ -574,7 +574,7 @@ var selected_derivHist = {{selected_derivHist|safe}};
 
     <div id="semantics" style="margin-right:15px;margin-top:10px;z-index:100;" class='view-tabs view-tabs-light'>
 
-        <table class="semantics-table ">
+        <table class="semantics-table">
             {% csrf_token %}
             {% with show_field_row|get_item:"semField" as show_field %}
             {% if not show_field %}
