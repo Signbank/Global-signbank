@@ -16,7 +16,7 @@
                 {% get_obj_perms request.user for gloss.dataset as "dataset_perms" %}
                 {% if "change_dataset" in dataset_perms %}
                  <span class='tagcount'>
-                     <a class='tagdelete editform'
+                     <a class='tagdelete editform_general'
                         id='{{tag.name}}' value={{tag.id}} name='{{tag.name}}'
                         href='{{PREFIX_URL}}/dictionary/update/tag/{{gloss.id}}'
                         title='{% trans "Delete this tag" %}'>x</a>
@@ -30,7 +30,7 @@
     {% get_obj_perms request.user for gloss.dataset as "dataset_perms" %}
     {% if "change_dataset" in dataset_perms %}
       <div id="tagcontainer"></div>
-      <div class='editform'>
+      <div class='editform_general'>
           <form id='tagaddform' 
                 action="{{PREFIX_URL}}/dictionary/update/tag/{{gloss.id}}"
                 method="post" enctype="multipart/form-data">

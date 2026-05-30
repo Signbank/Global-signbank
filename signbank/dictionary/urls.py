@@ -52,6 +52,8 @@ urlpatterns = [
     re_path(r'^update/gloss/', signbank.dictionary.update.add_gloss, name='add_gloss'),
     re_path(r'^update/edit_gloss_save/(?P<glossid>\d+)$',
                 signbank.dictionary.update.edit_gloss_save, name='edit_gloss_save'),
+    re_path(r'^update/update_gloss_lemma/(?P<glossid>\d+)$',
+            signbank.dictionary.update.update_gloss_lemma, name='update_gloss_lemma'),
     re_path(r'^gloss/edit_phonology/(?P<glossid>\d+)', signbank.dictionary.views.edit_phonology, name='edit_phonology'),
     re_path(r'^update/assign_lemma_dataset_to_gloss/(?P<glossid>\d+)$', signbank.dictionary.update.assign_lemma_dataset_to_gloss,
             name='assign_lemma_dataset_to_gloss'),
@@ -169,6 +171,7 @@ urlpatterns = [
     re_path(r'^ajax/semField/(?P<prefix>.*)$', signbank.dictionary.bloodhounds.semField_ajax_complete, name='semField_complete'),
     re_path(r'^ajax/derivHist/(?P<prefix>.*)$', signbank.dictionary.bloodhounds.derivHist_ajax_complete, name='derivHist_complete'),
     re_path(r'^ajax/fieldchoice/(?P<field>.*)/(?P<prefix>.*)$', signbank.dictionary.bloodhounds.fieldchoice_ajax_complete, name='fieldchoice_complete'),
+    re_path(r'^ajax/dialect/(?P<datasetid>\d+)/(?P<prefix>.*)$', signbank.dictionary.bloodhounds.dialect_ajax_complete, name='dialect_complete'),
 
     re_path(r'^ajax/morph/(?P<prefix>.*)$', signbank.dictionary.adminviews.morph_ajax_complete, name='morph_complete'),
     re_path(r'^ajax/user/(?P<prefix>.*)$', permission_required('dictionary.change_gloss')(signbank.dictionary.adminviews.user_ajax_complete), name='user_complete'),

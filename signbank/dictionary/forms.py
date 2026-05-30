@@ -1790,6 +1790,26 @@ class SearchGlossIds(forms.Form):
                                widget=forms.Textarea(attrs={'cols': 60, 'rows': 5, 'placeholder': _('Enter Gloss Ids')}))
 
 
+class GlossForm(forms.Form):
+    gloss = None
+    release_information = forms.CharField(label=_("Release information"))
+    dialect = forms.CharField(label=_('Dialect'))
+    useInstr = forms.CharField(label=_("Annotation instructions"))
+    wordClass = forms.CharField(label=_('Word class'))
+    wordClass2 = forms.CharField(label=_('Word class 2'))
+
+    class Meta:
+        model = Gloss
+        fields = ['release_information']
+
+    def __init__(self, *args, **kwargs):
+        self.gloss = kwargs.pop('gloss')
+        super(GlossForm, self).__init__(*args, **kwargs)
+        self.fields['release_information'].initial = self.gloss.release_information
+        self.fields['dialect'].initial = self.gloss.get_dialect_display()
+        self.fields['wordClass'].initial = self.gloss.wordClass.name if self.gloss.wordClass else ''
+
+
 class PhonologyForm(forms.Form):
     gloss = None
     handedness = forms.CharField(label=_('Handedness'))

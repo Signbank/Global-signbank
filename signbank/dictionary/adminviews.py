@@ -81,7 +81,8 @@ from signbank.dictionary.forms import (AnnotatedSentenceSearchForm, GlossSearchF
                                        FocusGlossSearchForm, HandshapeSearchForm, KeyMappingSearchForm, RecentGlossSearchForm,
                                        AnnotatedGlossForm, TagUpdateForm, AffiliationUpdateForm, DatasetUpdateForm,
                                        ImageUploadForGlossForm, ImageUploadForHandshapeForm, EAFFilesForm,
-                                       LemmaCreateForm, LemmaUpdateForm, set_up_lemma_language_fields, MorphemeCreateForm, OtherMediaForm, RelationForm,
+                                       LemmaCreateForm, LemmaUpdateForm, set_up_lemma_language_fields, MorphemeCreateForm,
+                                       OtherMediaForm, RelationForm, SemanticsForm, PhonologyForm, GlossForm,
                                        GlossMorphologyForm, GlossBlendForm, DefinitionForm, GlossMorphemeForm,
                                        SemanticFieldTranslationForm, ZippedVideosForm, SearchGlossIds,
                                        check_language_fields, check_multilingual_fields, SentenceForm,
@@ -140,6 +141,7 @@ from signbank.relation_tools import ensure_synonym_transitivity
 from signbank.dataset_operations import (get_primary_videos_for_gloss, get_perspective_videos_for_gloss,
                                          get_nme_videos_for_gloss, get_wrong_videos_for_gloss,
                                          get_backup_videos_for_gloss)
+from signbank.dictionary.display_functions import show_fields_rows
 
 
 def order_annotatedsentence_queryset_by_sort_order(get, qs, queryset_language_codes):
@@ -1176,7 +1178,7 @@ class GlossDetailView(DetailView):
             self.public = self.kwargs['public']
         if self.public:
             return ['dictionary/gloss.html']
-        return ['dictionary/gloss_detail.html']
+        return ['dictionary/gloss_detail_lookahead.html']
 
     # Overriding the get method get permissions right
     def get(self, request, *args, **kwargs):
@@ -1422,6 +1424,10 @@ class GlossDetailView(DetailView):
         context['query_parameters_mapping'] = query_parameters_mapping
         context['query_parameters_values_mapping'] = query_parameters_values_mapping
 
+        context['glossform'] = GlossForm(gloss=context['gloss'])
+        context['phonologyform'] = PhonologyForm(gloss=context['gloss'])
+        context['semanticsform'] = SemanticsForm(gloss=context['gloss'])
+
         context['tagform'] = TagUpdateForm()
         context['affiliationform'] = AffiliationUpdateForm()
         context['videoform'] = VideoUploadForObjectForm(languages=dataset_languages)
@@ -1456,14 +1462,24 @@ class GlossDetailView(DetailView):
 
         self.request.session['last_used_dataset'] = self.last_used_dataset
 
-        context['gloss_phonology'] = FIELDS['phonology']
+        # context['gloss_phonology'] = FIELDS['phonology']
+        context['gloss_phonology'] =  ['release_information', 'dialect', 'useInstr', 'wordClass'] + FIELDS['phonology'] + ['domhndsh_letter_or_number', 'subhndsh_letter_or_number',
+                                                            'semField', 'derivHist', 'namEnt', 'valence']
+        context['gloss_semantics'] = ['semField', 'derivHist', 'namEnt', 'valence']
+        context['show_field_row'] = show_fields_rows(gloss)
+        context['selected_semField'] = [{"name": semfield.name, "machine_value": semfield.machine_value}
+                                        for semfield in gloss.semField.all()]
+        context['selected_derivHist'] = [{"name": derivhist.name, "machine_value": derivhist.machine_value}
+                                         for derivhist in gloss.derivHist.all()]
+        context['selected_dialect'] = [{"name": f'{dialect.signlanguage.name}/{dialect.name}', "machine_value": dialect.pk}
+                                         for dialect in gloss.dialect.all()]
         context['phonology_list_kinds'] = get_phonology_list_kinds()
 
         context['publication_fields'] = []
         # field excludeFromEcv is added here in order to show it in Gloss Edit
         for p_field in FIELDS['publication'] + ['excludeFromEcv']:
             context['publication_fields'].append([getattr(gl,p_field), p_field, labels[p_field], 'check'])
-        context['release_information'] = [getattr(gl,'release_information'), 'release_information', labels['release_information']]
+        # context['release_information'] = [getattr(gl,'release_information'), 'release_information', labels['release_information']]
 
         # do not lazy evaluate these; evaluate before putting in context variables
         static_choice_lists, static_choice_list_colors = get_static_choice_lists_per_field()

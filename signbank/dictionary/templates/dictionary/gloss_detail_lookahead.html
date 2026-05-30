@@ -1,0 +1,1533 @@
+{% extends 'baselayout.html' %}
+{% load i18n %}
+{% load stylesheet %}
+{% load annotation_idgloss_translation %}
+{% load field_choice %}
+{% load bootstrap3 %}
+
+{% block bootstrap3_title %}
+{% blocktrans %}Sign for {{gloss}}{% endblocktrans %}
+{% endblock %}
+
+{% load guardian_tags %}
+
+
+{% block extrajs %}
+<script type='text/javascript'>
+    var dark_mode = '{{request.session.dark_mode}}';
+    var dark_mode_django = '{{dark_mode}}';
+    var url = '{{PREFIX_URL}}';
+    var phonology_list_kinds = {{phonology_list_kinds|safe}};
+    var gloss_phonology = {{gloss_phonology|safe}};
+    var gloss_semantics = {{gloss_semantics|safe}};
+    var language_code = '{{LANGUAGE_CODE}}';
+
+    {% trans "Edit" as edit_mode_str %}
+    {% trans "Turn Off Edit Mode" as turn_off_edit_mode_str %}
+    {% trans "Delete This Gloss" as delete_this_gloss_str %}
+    {% trans "Saving..." as saving_str %}
+    {% trans "This idgloss already exists" as idgloss_already_exists_str %}
+
+    var edit_mode_str = '{{edit_mode_str|escapejs}}';
+    var turn_off_edit_mode_str = '{{turn_off_edit_mode_str|escapejs}}';
+    var delete_this_gloss_str = '{{delete_this_gloss_str|escapejs}}';
+    var saving_str = '{{saving_str|escapejs}}';
+    var idgloss_already_exists_str = '{{idgloss_already_exists_str|escapejs}}';
+
+
+    var yes_str = "{% trans 'Yes' %}";
+    var no_str = "{% trans 'No' %}";
+    var original_strong_hand = '{{StrongHand}}';
+    var original_weak_hand = '{{WeakHand}}';
+    var original_lemma_group_url = '{{lemma_group_url}}';
+    var lemma_group = '{{lemma_group}}';
+
+    var edit_post_url = '{% url 'dictionary:update_gloss' gloss.id %}';
+    var definition_role_choices = {{gloss.definition_role_choices_json|safe}};
+    var definition_role_choices_colors = {};
+    for (var key in definition_role_choices) {
+        definition_role_choices_colors[key] = 'ffffff';
+    };
+    var definition_role_choices_reverse_json = {{gloss.definition_role_choices_reverse_json|safe}};
+    var relation_role_choices = {{gloss.relation_role_choices_json|safe}};
+    var relation_delete_choices = { "delete" : "Delete" };
+    var relation_delete_choices_colors = { "delete" : "ffffff" };
+
+    {% if SHOW_DATASET_INTERFACE_OPTIONS %}
+    var dataset_choices = {{dataset_choices|safe}};
+    {% else %}
+    var dataset_choices = {};
+    {% endif %}
+    var gloss_dataset_id = {{ gloss.lemma.dataset.id}};
+    var gloss_default_language_code = '{{gloss.lemma.dataset.default_language.language_code_2char}}';
+
+    var choice_lists = [];
+    var static_choice_lists = {{static_choice_lists|safe}};
+    var original_static_choice_list_colors = {{static_choice_list_colors|safe}};
+
+    var static_choice_list_colors = {};
+    for (var field in original_static_choice_list_colors) {
+       var field_dict = original_static_choice_list_colors[field];
+       static_choice_list_colors[field] = {}
+       for (key in field_dict) {
+            value = field_dict[key];
+            if (value == 'ffffff' && dark_mode_django == 'True') {
+                static_choice_list_colors[field][key] = '000000';
+            } else {
+                static_choice_list_colors[field][key] = value;
+            }
+        }
+    }
+
+    var csrf_token = '{{csrf_token}}';
+    var this_gloss_id = {{gloss.id}};
+
+    var json_default_query_parameters = {{json_default_query_parameters|safe}};
+    var search_type = '{{search_type}}';
+    var active_id = '{{active_id}}';
+    var model_view = 'gloss';
+    var search_results_url = '{% url 'dictionary:ajax_search_results' %}';
+
+    var selected_semField = {{selected_semField|safe}};
+    var selected_derivHist = {{selected_derivHist|safe}};
+    var selected_dialect = {{selected_dialect|safe}};
+</script>
+
+<script type="text/javascript" src="{{STATIC_URL}}js/typeahead.bundle.min.js"></script>
+<script type='text/javascript' src="{{STATIC_URL}}js/lookaheads.js"></script>
+
+<script type='text/javascript'>
+    {% include "dictionary/search_result_bar.html" %}
+    function validateForm(formId,targetObjectId,thisGlossID,mustChooseAlert,mustBeDifferentAlert) {
+        var target_object = document.forms[formId][targetObjectId].value;
+        var this_gloss = document.forms[formId][thisGlossID].value;
+        if (target_object == "") {
+            alert(mustChooseAlert);
+            return false;
+        }
+        if (target_object == this_gloss) {
+            alert(mustBeDifferentAlert);
+            return false;
+        }
+    }
+
+    function reloadVideo() {
+        var video_player = document.getElementById("videoplayer");
+        video_player_src = video_player.src;
+        video_player_src = "";
+        video_player.src = video_player_src;
+        video_player.type = "video/mp4";
+        video_player.load();
+    }
+
+    </script>
+<style>
+.video_button:hover {
+    color: red;
+}
+.video_button.active {
+    color: red;
+}
+.video_button_nme:hover {
+    color: red;
+}
+.video_button_nme.active {
+    color: red;
+}
+</style>
+{% endblock %}
+
+{% block extrahead %}
+    <link rel="stylesheet" type="text/css" href="{{STATIC_URL}}css/tagmanager.css">
+    <link rel="stylesheet" type="text/css" href="{{STATIC_URL}}css/affiliation_tags.css">
+    <link rel="stylesheet" type="text/css" href="{{STATIC_URL}}css/dropstyle.css">
+    <link rel="stylesheet" type="text/css" href="{{STATIC_URL}}css/recordstyle.css">
+    <link rel="stylesheet" type="text/css" href="{{STATIC_URL}}css/modalstyle.css">
+
+    <style>
+        #view_tabs.affix {
+            position:fixed;
+        }
+        #searchquery.affix {
+            position:fixed;
+        }
+    </style>
+<style>
+.preview {
+    background-color: inherit !important;
+    color: inherit !important;
+    height: 40;
+    width: auto;
+    position: relative;
+    padding: 0 0 0 0 !important;
+}
+
+select option {
+    background-color: white;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+}
+
+.bootstrap-select.btn-group .dropdown-menu li a:hover {
+    color: blue !important;
+    background-color: white !important;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+}
+
+.dropdown-item:active{
+    color: blue;
+    background-color: darkviolet;
+}
+
+.bootstrap-select {
+    color: black !important;
+    background-color: white !important;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+}
+
+.button-to-appear-in-edit-mode {
+    font-size: 10px;
+    padding-left: 2px;
+    padding-right: 2px;
+}
+.edit-mode {
+    font-size: 10px;
+    padding-left: 2px;
+    padding-right: 2px;
+}
+.copy-button {
+    font-size: 10px;
+    padding-left: 2px;
+    padding-right: 2px;
+}
+.lemma-button {
+    font-size: 10px;
+    padding-left: 2px;
+    padding-right: 2px;
+    border-radius: 6px;
+}
+button a {
+    all: unset;
+    text-decoration: none;
+    font-size: 10px;
+    padding-left: 10px;
+    padding-right: 10px;
+    border-radius: 6px;
+    height: 28px;
+    outline: none;
+}
+</style>
+<style>
+.form-group {
+    background-color: inherit;
+    color: inherit;
+}
+option:not(:checked) {
+    background-color: white !important;
+    color: #000;
+}
+/* This makes the popup Run Query button for the default parameters ressemble the style of the QP case.
+   The <a> surrounding the text of the default parameters button is to simulate the link of the QP button. */
+.btn-query {
+    background-color: DodgerBlue !important;
+    border: 1px solid DodgerBlue;
+    color: white;
+    border-radius: 6px;
+    height: 28px;
+    outline: none;
+    padding-bottom:20px;
+}
+.btn-query:hover .btn-query:focus {
+    color: white;
+    background-color: DodgerBlue;
+    outline: none;
+}
+/* modal-dialog-centered does not work in bootstrap 3
+   use this instead, adjust value if necessary */
+.left-modal {
+    margin-left: 300px !important;
+}
+.panel-heading:hover {
+    background-color: #D2D2D2;
+}
+input[type="text"] {
+    background-color: rgba(50,50,50,10%);
+    border: none;
+}
+input[type="text"]:focus {
+    border: 1px solid red;
+}
+input[type="button"]:focus {
+    outline: none;
+}
+textarea {
+    border: none;
+    background-color: rgba(50,50,50,10%);
+}
+textarea:focus {
+    border: 1px solid red;
+}
+.radio_stills label:has(+ input[type="radio"]:checked) > img {
+    outline: 2px solid red;
+}
+.zoom {
+  background-color: transparent;
+  transition: transform .2s; /* Animation */
+  margin: 0 auto;
+}
+.zoom:hover {
+  transform: scale(1.5);
+  outline: 2px solid red;
+}
+</style>
+<style>
+input[type="text"] {
+    background-color: rgba(50,50,50,15%);
+    border: none;
+}
+input[type="text"]:focus {
+    border: red;
+    width: auto;
+}
+.tt-input {
+    background-color: rgba(50,50,50,15%) !important;
+    border: none;
+    width: auto;
+}
+.tt-input:active {
+    border: 1px solid red;
+}
+input .tt-hint {
+    color: red;
+}
+.editform-general input {
+    background-color: inherit !important;
+    border: none;
+}
+.editform-general input:enabled {
+    color: red !important;
+    opacity: 1;
+}
+.editform-general input:disabled {
+    color: inherit !important;
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    border: none;
+    opacity: 1;
+}
+.editform-semantics input {
+    background-color: inherit !important;
+    border: none;
+}
+.editform-semantics input:enabled {
+    color: red !important;
+    opacity: 1;
+}
+.editform-semantics input:disabled {
+    color: inherit !important;
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    border: none;
+    opacity: 1;
+}
+.editform-phonology input {
+    background-color: inherit !important;
+    border: none;
+}
+.editform-phonology input:enabled {
+    color: red !important;
+    opacity: 1;
+}
+.editform-phonology input:disabled {
+    color: inherit !important;
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    border: none;
+    opacity: 1;
+}
+.editselect > select {
+    background-color: inherit !important;
+    width: auto;
+}
+.editselect select:disabled {
+    color: inherit !important;
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    border: none;
+    opacity: 1;
+}
+
+.editselect select:enabled {
+    color: red !important;
+}
+.editsemanticsform .form-control:enabled::placeholder {
+    color: red !important;
+    width: auto;
+    opacity: 1;
+}
+.editsemanticsform .form-control:disabled::placeholder {
+    color: inherit !important;
+    width: auto;
+    opacity: 1;
+}
+.editsemanticsform input {
+    color: inherit !important;
+    background-color: inherit !important;
+    border: none;
+}
+.editdialectform .form-control:enabled::placeholder {
+    color: red !important;
+    width: auto;
+    opacity: 1;
+}
+.editdialectform .form-control:disabled::placeholder {
+    color: inherit !important;
+    width: auto;
+    opacity: 1;
+}
+.editdialectform input {
+    color: inherit !important;
+    background-color: inherit !important;
+    border: none;
+}
+.form-control:disabled {
+    cursor: pointer;
+}
+.form-control:enabled input {
+    color: red;
+}
+
+.item {
+        display: inline-block;
+        padding: 8px 12px;
+        margin: 5px;
+        position: relative;
+        color: red;
+}
+.delete-btn {
+        position: absolute;
+        top: 2px;
+        right: 5px;
+        cursor: pointer;
+        color: red;
+        font-weight: bold;
+}
+.btn-danger {
+    background-color: red;
+    border: none;
+}
+.actionButton {
+    padding: 4px 8px;
+    border: 1px solid Grey;
+    border-color: Grey;
+    border-radius: 8px;
+    text-align: center;
+    color: Black;
+    background-color: white;
+    width: auto;
+}
+.actionButton:hover {
+    text-decoration: none;
+    background-color: LightGrey;
+}
+.actionButton:active:focus {
+    text-decoration: none;
+    background-color: none;
+    outline: none;
+}
+.edit-mode {
+    font-size: 10px;
+    padding-left: 2px;
+    padding-right: 2px;
+}
+.button-to-appear-in-edit-mode {
+    font-size: 10px;
+    padding-left: 2px;
+    padding-right: 2px;
+}
+.phonology-table {
+    border-spacing: 0 3px;
+}
+.semantics-table {
+    border-spacing: 0 5px;
+}
+.twitter-typehead {
+    width: auto;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+    <nav class="navbar navbar-light" id="searchquery" style="background-color:inherit; color:inherit;z-index: 50;">
+    <table class="table-responsive">
+    <tr>
+    {% if SHOW_QUERY_PARAMETERS_AS_BUTTON %}
+    <td>
+    <button class="btn btn-primary"><span data-toggle='modal' data-target='#display_query_parameters'
+            style="z-index: 50;height:20px">{% trans "QUERY" %}</span></button>&nbsp;&nbsp;
+    </td>
+    {% endif %}
+    <td>
+    <div id="searchresults" class='navbar navbar-light' style="overflow-y:hidden;border:0;box-sizing:content-box;z-index: 50;">
+        {% if request.session.search_results %}{# See if search_results in sessions is empty #}
+
+        <div id="results-inline" class="btn-group" role="group" aria-label="search results"
+             style="white-space:nowrap;">
+        </div>
+        {% endif %}
+    </div>
+    </td>
+    </tr>
+    </table>
+    </nav>
+
+    {% if SHOW_QUERY_PARAMETERS_AS_BUTTON %}
+     <div class="modal fade" id="display_query_parameters"
+          aria-labelledby="#modalQuery" aria-hidden="true">
+         <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class='modal-header'>
+                    <h3 id='modalQuery'>
+                        {% if not query_parameters.items %}
+                        {% trans "Default Query Parameters" %}
+                        {% else %}
+                        {% trans "Query Parameters" %}
+                        {% endif %}
+                    </h3>
+                    {% if not query_parameters.items %}
+                    <p>{% trans "No active query parameters were used in the search. Here are the non-empty fields of this gloss." %}</p>
+                    {% endif %}
+                </div>
+                <div class='modal-body'>
+                {% if not query_parameters.items %}
+                    {% if not default_query_parameters.items %}
+                    <p>{% trans "No fields are filled in for this gloss." %}</p>
+                    {% else %}
+                    <input type='hidden' name='use_default_query_parameters' value='default_parameters'>
+                        <table class="table table-condensed" style="z-index:0;padding-top: 100px;width:1000px;">
+                            <thead id = 'default_query_table_header'>
+                                    <tr>
+                                    <th style="width: 500px;border-bottom: 1px solid grey; border-left: 1px solid grey;
+                                            border-top: 1px solid grey; border-right: 1px solid grey;">{% trans "Field" %}</th>
+                                    <th style="border-bottom: 1px solid grey; border-left: 1px solid grey;
+                                            border-top: 1px solid grey; border-right: 1px solid grey;">{% trans "Value" %}</th>
+                                    </tr>
+                            </thead>
+                            <tbody>
+                            {% for key, value in default_query_parameters.items %}
+                            <tr><td style="border-bottom: 1px solid grey; border-left: 1px solid grey;
+                                            border-top: 1px solid grey; border-right: 1px solid grey;">{{default_query_parameters_mapping|get_item:key}}</td>
+                                {% if '[]' in key %}
+                            <td style="border-bottom: 1px solid grey; border-left: 1px solid grey;
+                                            border-top: 1px solid grey; border-right: 1px solid grey;">{% for qv in default_query_parameters_values_mapping|get_item:key %}<button
+                                    class="btn btn-primary btn-sm disabled">{{qv}}</button>{% if not forloop.last %} {% endif %}{% endfor %}</td>
+                                {% elif key == 'tags' %}
+                                    <td style="border-bottom: 1px solid grey; border-left: 1px solid grey;
+                                            border-top: 1px solid grey; border-right: 1px solid grey;">{% for qv in default_query_parameters_values_mapping|get_item:key %}
+                                       <div class='tagQP' >
+                                       {% load underscore_to_space %}
+                                            <span class='tagname' style="user-select:none;">{{qv|underscore_to_space}}</span>
+                                       </div>
+                                        {% if not forloop.last %} {% endif %}{% endfor %}</td>
+                                {% else %}
+                                        <td style="border-bottom: 1px solid grey; border-left: 1px solid grey;
+                                        border-top: 1px solid grey; border-right: 1px solid grey;">{{default_query_parameters_values_mapping|get_item:key}}</td>
+                                {% endif %}
+                            </tr>
+                            {% endfor %}
+                            </tbody>
+                        </table>
+                    {% endif %}
+                {% else %}
+                        <input type='hidden' name='use_default_query_parameters' value='query_parameters'>
+                        <table class="table table-condensed" style="z-index:0;padding-top: 100px;width:1000px;">
+                            <thead id = 'query_table_header'>
+                                    <tr><th style="width: 500px;border-bottom: 1px solid grey; border-left: 1px solid grey;
+                                            border-top: 1px solid grey; border-right: 1px solid grey;">{% trans "Field" %}</th>
+                                    <th style="border-bottom: 1px solid grey; border-left: 1px solid grey;
+                                            border-top: 1px solid grey; border-right: 1px solid grey;">{% trans "Value" %}</th></tr>
+                            </thead>
+                            <tbody>
+                            {% for key, value in query_parameters.items %}
+                            <tr><td style="border-bottom: 1px solid grey; border-left: 1px solid grey;
+                                            border-top: 1px solid grey; border-right: 1px solid grey;">{{query_parameters_mapping|get_item:key}}</td>
+                                {% if '[]' in key %}
+                            <td style="border-bottom: 1px solid grey; border-left: 1px solid grey;
+                                            border-top: 1px solid grey; border-right: 1px solid grey;">{% for qv in query_parameters_values_mapping|get_item:key %}<button
+                                    class="btn btn-primary btn-sm disabled">{{qv}}</button>{% if not forloop.last %} {% endif %}{% endfor %}</td>
+                                {% elif key == 'tags' %}
+                                    <td style="border-bottom: 1px solid grey; border-left: 1px solid grey;
+                                            border-top: 1px solid grey; border-right: 1px solid grey;">{% for qv in query_parameters_values_mapping|get_item:key %}
+                                       <div class='tagQP' >
+                                       {% load underscore_to_space %}
+                                            <span class='tagname' style="user-select:none;">{{qv|underscore_to_space}}</span>
+                                       </div>
+                                        {% if not forloop.last %} {% endif %}{% endfor %}</td>
+                                {% else %}
+                                        <td style="border-bottom: 1px solid grey; border-left: 1px solid grey;
+                                        border-top: 1px solid grey; border-right: 1px solid grey;">{{query_parameters_values_mapping|get_item:key}}</td>
+                                {% endif %}
+                            </tr>
+                            {% endfor %}
+                            </tbody>
+                        </table>
+                {% endif %}
+                </div>
+                <div class="modal-footer">
+                    {% if not query_parameters.items %}
+                        {% if not default_query_parameters.items %}
+                            <button type="button" class="btn btn-default btn-default-light" data-dismiss="modal">{% trans "Dismiss" %}</button>
+                        {% else %}
+                            <form id="use_default_query_parameters" action='' method="POST">
+                            {% csrf_token %}
+                            <button type='submit' class="btn btn-primary" name="use_default_query_parameters"
+                                    value="default_parameters"><a>{% trans "Run Query" %}</a></button>
+                            <input type="hidden" id="default_parameters" name="default_parameters" value="{{json_default_query_parameters}}">
+                            <button type="button" class="btn btn-default btn-default-light" data-dismiss="modal">{% trans "Dismiss" %}</button>
+                            </form>
+                        {% endif %}
+                    {% else %}
+                        <button class="btn-query"><a class="btn btn-query" href="{{PREFIX_URL}}/signs/search/?query" type='submit'
+                                    style="text-decoration:none;padding-bottom:10px;color:white;">{% trans "Run Query" %}</a></button>
+                        <button type="button" class="btn btn-default btn-default-light" data-dismiss="modal">{% trans "Dismiss" %}</button>
+                    {% endif %}
+                </div>
+
+            </div>
+         </div>
+     </div>
+{% endif %}
+{% if request.GET.warning %}
+<div class="alert alert-warning">{{request.GET.warning}}</div>
+{% endif %}
+
+{% get_obj_perms request.user for gloss.lemma.dataset as "dataset_perms" %}
+
+<div id="signinfo" class='navbar navbar-collapse' style="background-color:inherit;border:0;">
+
+    <div id="view_tabs" style="margin-right:15px;margin-top:10px;z-index:75;" class='view-tabs view-tabs-light'>
+    <ul class='nav nav-tabs nav-tabs-light'>
+        {% if gloss.lemma.dataset.is_public and gloss.inWeb %}
+        <li class="nav-item">
+            <a class='nav-link' href="{{PREFIX_URL}}/dictionary/gloss/{{gloss.id}}.html">{% trans "Public View" %}</a>
+        </li>
+        {% endif %}
+        <li class="nav-item">
+            <a class='nav-link active' href="{{PREFIX_URL}}/dictionary/gloss/{{gloss.id}}/">{% trans "Details" %}</a>
+        </li>
+        <li class="nav-item">
+            <a class='nav-link' href="{{PREFIX_URL}}/dictionary/gloss_relations/{{gloss.id}}">{% trans "Relations" %}</a>
+        </li>
+        {% if gloss.has_frequency_data %}
+        <li class="nav-item">
+            <a class='nav-link' href="{{PREFIX_URL}}/dictionary/gloss_frequency/{{gloss.id}}/">{% trans "Frequencies" %}</a>
+        </li>
+        {% endif %}
+        <li class="nav-item">
+            <a class='nav-link' href="{{PREFIX_URL}}/dictionary/gloss/{{gloss.id}}/history">{% trans "Revision History" %}</a>
+        </li>
+        <li class="nav-item">
+            <a class='nav-link' href="{{PREFIX_URL}}/dictionary/gloss/{{gloss.id}}/glossvideos">{% trans "Videos" %}</a>
+        </li>
+    </ul>
+    </div>
+</div>
+
+<div id="definitionblock">
+    {% url 'dictionary:protected_media' '' as protected_media_url %}
+    <div id="leftblock">
+    </div>
+
+    <div class='panel-group' id="definition" style="z-index: 0;opacity:.99; position: relative;">
+        <div id="primary-fields">
+            {% csrf_token %}
+            <div class='pull-right' style="margin-right:15px;margin-top:50px;">
+
+                {% csrf_token %}
+                <button type="button" class="btn btn-danger edit-cancel button-general-to-appear-in-edit-mode"
+                        style="width:auto;padding:3px 12px;"
+                        onclick='location.href="{{PREFIX_URL}}/dictionary/gloss/{{gloss.id}}"'
+                        >{% trans "Cancel" %}</button>
+                <button type="button" class="btn btn-danger quick_save button-general-to-appear-in-edit-mode"
+                        style="width:auto;padding:3px 12px;" value="{{gloss.id}}"
+                        >{% trans "Save Primary" %}</button>
+                 <button id='enable_edit_general'
+                         class='btn btn-primary navbar-btn edit-mode'
+                         style="width:auto;padding:3px 12px;">{% trans "Edit" %}</button>
+
+              <button id='copy_gloss_btn' class='btn btn-primary copy-button' data-toggle='modal' data-target='#copy_gloss_modal'>{% trans "Copy" %}</button>
+
+              <div class="modal fade" id="copy_gloss_modal" role="dialog" aria-labelledby="#modalGlossCopy" aria-hidden="true">
+                 <div class="modal-dialog modal-lg">
+                    <div class="modal-content">
+                        <div class='modal-header'>
+                            <h2 id='modalGlossCopy'>{% trans "Copy Gloss" %}</h2>
+                        </div>
+                        <div class='modal-body'>
+                            {% if gloss_is_duplicate %}
+                            <p>{% trans "This gloss is already a duplicate. Please modify the annotation fields before creating a new duplicate." %}</p>
+                            {% else %}
+                            <p>{% trans "This will create a new gloss with identical phonology." %}</p>
+                            {% endif %}
+                         </div>
+                      <form id="copy_gloss" method='get'>
+                          {% csrf_token %}
+                          <table class='table' style='width: 1200px;margin-left:20px;'>
+                             <tr>
+                                 <th>{% trans "Source Dataset" %}</th>
+                                 <th>{{gloss.lemma.dataset.acronym}}</th>
+                             </tr>
+                             <tr>
+                                 <th><label for='dataset'>{% trans "Target Dataset" %}</label></th>
+                                 <td><span>
+                                     {% for s_dataset in selected_datasets %}
+                                     {% get_obj_perms request.user for s_dataset as "dataset_perms" %}
+                                     {% if "change_dataset" in dataset_perms %}
+                                     {% if gloss.lemma.dataset == s_dataset or last_used_dataset == s_dataset.acronym %}
+                                    <input type="radio" name="dataset"
+                                           id="dataset_{{s_dataset.id}}" value="{{s_dataset.id}}" checked>
+                                     {% else %}
+                                     <input type="radio" name="dataset"
+                                            id="dataset_{{s_dataset.id}}" value="{{s_dataset.id}}">
+                                     {% endif %}
+                                    <label for="dataset_{{s_dataset.id}}">{{s_dataset.acronym}}</label>
+                                     {% endif %}
+                                     {% endfor %}
+                                </span></td>
+                             </tr>
+                          </table>
+                          <input type='hidden' name='format' value='Copy'>
+                          <input type='hidden' name='value' value='confirmed'>
+                          <div class="modal-footer">
+                            <button type="button" class="btn btn-default btn-default-light" data-dismiss="modal">{% trans "Cancel" %}</button>
+                            {% if not gloss_is_duplicate %}
+                            <input type="submit" class="btn btn-primary" value='{% trans "Confirm Copy Create" %}'>
+                            {% endif %}
+                          </div>
+                      </form>
+
+                    </div>
+                  </div>
+             </div>
+
+            {% if user.is_superuser and selected_datasets|length > 1 %}
+             <button id='move_gloss_btn' class='btn btn-primary copy-button' data-toggle='modal' data-target='#move_gloss_modal'>{% trans "Move" %}</button>
+
+              <div class="modal fade" id="move_gloss_modal" role="dialog" aria-labelledby="#modalGlossMove" aria-hidden="true">
+                 <div class="modal-dialog modal-lg">
+                    <div class="modal-content">
+                        <div class='modal-header'>
+                            <h2 id='modalGlossMove'>{% trans "Move Gloss" %}</h2>
+                            {% with gloss.lemma.dataset.default_language as target_default_language %}
+                            {% with annotation_idgloss|get_item:target_default_language as annotation %}
+                            <h4>{{annotation}}</h4>
+                            {% endwith %}
+                            {% endwith %}
+                        </div>
+                        <div class='modal-body'>
+                            {% blocktrans %}
+                            <p>This command will change the dataset of the gloss as well as its related glosses
+                                (via relations or morphology).</p>
+                            <p>The target dataset must have the same translation languages.</p>
+                            <p>If a gloss cannot be moved because of a similar gloss in the target dataset,
+                                the user is expected to modify the lemma translations or gloss annotations
+                                to remove ambiguity.</p>
+                            <p>The videos and images of the glosses are also moved to the new dataset.</p>
+                            {% endblocktrans %}
+                            {% if related_objects.keys %}
+                            <p>{% trans "This gloss is related to other glosses:" %}</p>
+                            <table class="table table-condensed table-bordered">
+                                {% for key, glosses in related_objects.items %}
+                                <tr>
+                                    <td style="width:240px">{{key}}</td>
+                                    <td>{{glosses}}</td>
+                                </tr>
+                                {% endfor %}
+                                <tr>
+                                    <td>{% trans "Related Glosses" %}</td>
+                                    <td>{{extended_related_objects}}</td>
+                                </tr>
+                            </table>
+                            {% endif %}
+                         </div>
+                      <form id="move_gloss" method='get'>
+                          {% csrf_token %}
+                          <table class='table' style='width: 1200px;margin-left:20px;'>
+                             <tr>
+                                 <th>{% trans "Source Dataset" %}</th>
+                                 <th>{{gloss.lemma.dataset.acronym}}</th>
+                             </tr>
+                             <tr>
+                                 <th><label for='dataset'>{% trans "Target Dataset" %}</label></th>
+                                 <td><span>
+                                     {% for s_dataset in selected_datasets %}
+                                     {% get_obj_perms request.user for s_dataset as "dataset_perms" %}
+                                     {% if "change_dataset" in dataset_perms %}
+                                     {% if gloss.lemma.dataset == s_dataset or last_used_dataset == s_dataset.acronym %}
+                                    <input type="radio" name="dataset"
+                                           id="dataset_{{s_dataset.id}}" value="{{s_dataset.id}}" checked>
+                                     {% else %}
+                                     <input type="radio" name="dataset"
+                                            id="dataset_{{s_dataset.id}}" value="{{s_dataset.id}}">
+                                     {% endif %}
+                                    <label for="dataset_{{s_dataset.id}}">{{s_dataset.acronym}}</label>
+                                     {% endif %}
+                                     {% endfor %}
+                                </span></td>
+                             </tr>
+                          </table>
+                          <input type='hidden' name='format' value='Move'>
+                          <input type='hidden' name='value' value='confirmed'>
+                          <div class="modal-footer">
+                            <button type="button" class="btn btn-default btn-default-light" data-dismiss="modal">{% trans "Cancel" %}</button>
+                            <input type="submit" class="btn btn-primary" value='{% trans "Confirm Move" %}'>
+                          </div>
+                      </form>
+
+                    </div>
+                  </div>
+              </div>
+            {% endif %}
+
+            </div>
+
+        {% include "dictionary/glosstags.html" %}
+        {% include "dictionary/affiliationtags.html" %}
+
+        <table class='table table-condensed table-condensed-light' style="width:100%;">
+            {% with show_field_row|get_item:"release_information" as show_field %}
+            {% if not show_field %}
+            <tr class="empty_row_general">
+            {% else %}
+            <tr>
+            {% endif %}
+            {% endwith %}
+                <th style="width:auto;">{% trans "Release information" %}</th>
+                {% with glossform.fields|get_item:'release_information' as release_information_field %}
+                <td class="editform-general" style="width:auto;">
+                    <div>
+                    <input class='form-control form-control-light' type="text" name="release_information"
+                           value="{{release_information_field.initial}}"
+                           id="release_information_text" data-category="general">
+                    </div>
+                </td>
+                {% endwith %}
+            </tr>
+
+            {% with show_field_row|get_item:"dialect" as show_field %}
+            {% if not show_field %}
+            <tr class="empty_row_general">
+            {% else %}
+            <tr>
+            {% endif %}
+            {% endwith %}
+                <th style="width:240px;">{% trans "Dialect" %}</th>
+                {% with glossform.fields|get_item:'dialect' as dialect_field %}
+                <td style="width:auto;" id="dialect_value">
+                    {% for dialect in gloss.dialect.all %}
+                    <button class="actionButton">{{dialect.name}}</button>
+                    {% endfor %}
+                </td>
+                <td class="editdialectform">
+                    <div>
+                    <input class='form-control form-control-light dialecttypeahead' type="text" size="60"
+                           id="dialect_multiselect" data-category="general">
+                    </div>
+                </td>
+                <td id="dialect_hidden_input_values" class="editform-general">
+
+                </td>
+                {% endwith %}
+            </tr>
+
+            <tr>
+                <th>{% trans "Lemma ID Gloss" %}</th>
+                <td><span id="lemma">{{gloss.lemma}}
+                        {% if lemma_group %}
+                            <a href='{{lemma_group_url}}' title='{% trans "Show Lemma Group" %}'><span class="glyphicon glyphicon-th-list"></span></a>
+                        {% endif %}
+                    </span>
+                </td>
+            </tr>
+            <tr class="lemma_buttons" id="lemma_buttons_group" style="width:auto;"><th></th>
+                <td>
+                    <div id="lemma_buttons">
+                        <button id='show_edit_lemma_form' name='show_edit_lemma_form' type="button"
+                                style="width:auto;" class='btn btn-primary btn-space lemma-button'
+                                value='{% trans "Edit Lemma" %}'>
+                            <a href="{{PREFIX_URL}}/dictionary/lemma/update/{{gloss.lemma.id}}"
+                               style="text-decoration:none; color:white;">{% trans "Edit Lemma" %}</a>
+                        </button>
+                        <button id='show_set_lemma_form' name='show_set_lemma_form'
+                                class='btn btn-primary btn-space lemma-button'>{% trans "Choose Other" %}</button>
+                        <button id='show_create_lemma_form' name='show_create_lemma_form'
+                                class='btn btn-primary btn-space lemma-button'>{% trans "Create New" %}</button>
+                    </div>
+                </td>
+            </tr>
+            <tr id="lemma_forms_row" style="width:auto;">
+                <th></th>
+                <td id="lemma_forms_cell" class='td td-light'>
+                <span>
+                <form name='set_lemma_form' id='set_lemma_form'
+                    onsubmit='return validateForm("set_lemma_form","value","gloss_lemma_id",
+                                                "Please choose a lemma.",
+                                                "Target lemma must be different from the current lemma of this gloss.")'
+                    method='post' action="{{PREFIX_URL}}/dictionary/update/update_gloss_lemma/{{gloss.id}}">
+                    {% csrf_token %}
+                    <!-- Input that holds the current lemma id; used by validateForm -->
+                    <input type='hidden' name='gloss_lemma_id' value='{{gloss.lemma_id}}'>
+
+                    <!-- Input of the type ahead -->
+                    <input class='form-control form-control-light lemmatypeahead lemmatypeahead-light' size="80"
+                           placeholder='{% trans "Lemma" %}' data-category="general" />
+
+                    <input type='hidden' name='new_lemma_pk' value='' id="new_lemma_pk">
+                    <button class='btn btn-primary quick_set_lemma' type='button'>{% trans "Set Lemma" %}</button>
+                    <button type="button" class="btn btn-default btn-default-light lemma-form-dismiss">{% trans "Cancel" %}</button>
+                </form>
+                <form name="add_lemma_form" id="add_lemma_form" class="container" method="post" action="{% url 'dictionary:create_lemma_gloss' gloss.id %}" >
+                    {% csrf_token %}
+                    <input type="hidden" name="dataset" value="{{gloss.lemma.dataset.id}}"/>
+                    <input type="hidden" name="last_used_dataset" value="{{last_used_dataset}}"/>
+                    {% for dataset_lang in gloss.lemma.dataset.translation_languages.all %}
+                    <div class="row" style="margin-left:20px; padding:10px;">
+                    {{dataset_lang.name}}:
+                    <input id="{{lemma_create_field_prefix}}{{dataset_lang.language_code_2char}}"
+                            name="{{lemma_create_field_prefix}}{{dataset_lang.language_code_2char}}"
+                            required="" maxlength="50" type="text"/>
+                    </div>
+                    {% endfor %}
+                    <!-- Submit -->
+                    <input class='btn btn-primary' value='{% trans "Add Lemma" %}' type='submit'>
+                    <button type="button" class="btn btn-default btn-default-light lemma-form-dismiss">{% trans "Cancel" %}</button>
+                </form>
+                </span>
+                </td>
+            </tr>
+
+            {% for lang, annotation_idgloss_translation in annotation_idgloss.items %}
+            <tr>
+                <th>
+                    {% trans "Annotation ID Gloss" %}
+                    {% if SHOW_DATASET_INTERFACE_OPTIONS %} ({{ lang }}) {% endif %}
+                </th>
+
+                <td class='edit_area' id='annotation_idgloss_{{lang.language_code_2char}}'
+                    style="color:inherit;"
+                    colspan="2">{{annotation_idgloss_translation}}</td>
+            </tr>
+            <tr>
+                <th></th>
+                <td>
+
+                {% for morphdef_id, morphdef_display in simultaneous_morphology_display %}
+                <span class="gloss_detail_morpheme"><a href='{% url "dictionary:admin_morpheme_view" pk=morphdef_id %}'>
+                    {{morphdef_display}}</a>{% if not forloop.last %}, {% endif %}
+                </span>
+                {% endfor %}
+
+                {% for component_id, component_display in sequential_morphology_display %}
+                <span class="gloss_detail_component"><a href='{% url "dictionary:admin_gloss_view" pk=component_id %}'>
+                    {{component_display}}</a>{% if not forloop.last %} + {% endif %}
+                </span>
+                {% endfor %}
+                </td>
+            </tr>
+            {% endfor %}
+        </table>
+        <table class='table table-condensed table-condensed-light' style="width:100%;">
+            <tr>
+                <th>
+                    {% trans "Synsets" %}
+                </th>
+                <td>
+                    {% for synset in synsets %}
+                        <span class="synset">
+                            {% if synset.url %}
+                                <a href='{{ synset.url }}'>{{synset.name}}</a>
+                            {% else %}
+                                {{synset.name}}
+                            {% endif %}
+                            {% if synset.lemmas %}
+                            {{synset.lemmas}} | {{synset.description}}
+                            {% endif %}
+                        </span><br>
+                    {% endfor %}
+                </td>
+            </tr>
+        </table>
+        <table class='table table-condensed table-condensed-light' style="width:800px;">
+
+            {% with show_field_row|get_item:"wordClass" as show_field %}
+            {% if not show_field %}
+            <tr class="empty_row_general">
+            {% else %}
+            <tr>
+            {% endif %}
+            {% endwith %}
+                <th style="width:240px;">{% trans "Word class" %}</th>
+                {% with glossform.fields|get_item:'wordClass' as wordClass_field %}
+                <td class="editform-general" style="width:auto;">
+                    <div>
+                    <input class='form-control form-control-light wordClasstypeahead' type="text" size="40"
+                              value="{{wordClass_field.initial}}" id="wordClass_lookahead" data-category="general">
+                    <input type="hidden" name="wordClass" value=""
+                           id="wordClass_machine_value" >
+                    </div>
+                </td>
+                {% endwith %}
+            </tr>
+
+        </table>
+    </div>
+{% if prominent_media_type and prominent_media_type.machine_value > 1 %}
+   <div class="panel panel-default panel-light">
+        <div class='panel-heading panel-light' data-toggle='collapse'
+             data-target='#prominent_media'>{{gloss.lemma.dataset.get_prominent_media_display}}
+        </div>
+        <div id='prominent_media' class='collapse'>
+            <div class="panel panel-default panel-light">
+            <div class="table-responsive" style="display:inline-block;">
+            <table class="table table-condensed" style="text-align: left;">
+            <tr>
+            {% for media_okay,pk,path,file_type,file_name, description in prominent_media %}
+                {% if media_okay and path %}
+                    {% if file_type|startswith:"video" %}
+                    <td>
+                        <div id="other_media_player_{{pk}}" style="height:259px;width:auto;">
+                            <video id='videoplayer_other_media_{{pk}}' src="{{PREFIX_URL}}{{protected_media_url}}{{path}}"
+                                   playsinline muted style="height:200px;width:auto;"></video>
+                            <div id="buttonbar_other_media_{{pk}}" style="background-color:transparent;">
+                            <button class="btn" id="play_other_media_{{pk}}" onclick="play_other_media(this);" data-pk="{{pk}}"
+                                    style="font-size:16px;background-color:transparent;"><span class="glyphicon glyphicon-play"></span></button>
+                            <button class="btn" id="pause_other_media_{{pk}}" onclick="pause_other_media(this);" data-pk="{{pk}}"
+                                    style="font-size:16px;background-color:transparent;"><span class="glyphicon glyphicon-pause"></span></button>
+                            </div>
+                        </div>
+                        <div>{{description}}</div>
+                    </td>
+                    {% elif file_type|startswith:"image" %}
+                    <td>
+                        <div id="other_media_image_{{pk}}" style="height:259px;width:auto;">
+                            <img id="imageframe_other_media_{{pk}}" src="{{PREFIX_URL}}{{protected_media_url}}{{path}}" style="height:200px;width:auto;">
+                        </div>
+                        <div>{{description}}</div>
+                    </td>
+                    {% else %}
+                    {% endif %}
+                {% endif %}
+            {% endfor %}
+            </tr>
+            </table>
+            </div>
+            </div>
+        </div>
+   </div>
+
+{% endif %}
+
+
+    <!-- Phonology -->
+	<div class="panel panel-default panel-light">
+        <div class='panel-heading panel-light' id='phonology_heading'
+             data-toggle='collapse' data-target='#phonology'>{% trans "Phonology" %}
+                    {% if handedness and domhndsh %}
+                    <div class="pull-right">
+                    <span id="hands-icon"><img id='phono-hands' src='{{STATIC_URL}}images/raised_hand_with_fingers_splayed.png' style="width:18px; height:auto; margin: 0px;"></span>
+                    </div>
+                    {% endif %}
+                <span id='phonology_message'></span>
+        </div>
+        <div id='phonology' class='collapse'>
+            <div class='pull-right' style="margin-right:15px;margin-top:20px;">
+                 {% if perms.dictionary.change_gloss %}
+                 <div>
+                    {% csrf_token %}
+                    <button type="button" class="btn btn-danger edit-cancel button-phonology-to-appear-in-edit-mode"
+                            style="width:auto;padding:3px 12px;"
+                            onclick='location.href="{{PREFIX_URL}}/dictionary/gloss/{{gloss.id}}"'
+                            >{% trans "Cancel" %}</button>
+                    <button type="button" class="btn btn-danger quick_save button-phonology-to-appear-in-edit-mode"
+                            style="width:auto;padding:3px 12px;" value="{{gloss.id}}"
+                            >{% trans "Save Phonology" %}</button>
+                    <button id='enable_edit_phonology'
+                             class='btn btn-primary navbar-btn edit-mode'
+                             style="width:auto;padding:3px 12px;">{% trans "Edit Phonology" %}</button>
+                 </div>
+                 {% endif %}
+            </div>
+
+        <table class='table table-condensed table-condensed-light phonology-table'>
+            {% csrf_token %}
+            {% with show_field_row|get_item:"handedness" as show_field %}
+            {% if not show_field %}
+            <tr class="empty_row_phonology">
+            {% else %}
+            <tr>
+            {% endif %}
+            {% endwith %}
+                <th style="width:240px;">{% trans "Handedness" %}</th>
+                {% with phonologyform.fields|get_item:'handedness' as handedness_field %}
+                {% with phonologyform.fields|get_item:'weakdrop' as weakdrop_field %}
+                {% with phonologyform.fields|get_item:'weakprop' as weakprop_field %}
+                <td class="editform-phonology" style="width:auto;">
+                    <div style="display:table-cell;" id="handedness_cell">
+                    <input class='form-control form-control-light handednesstypeahead' type="text"
+                           id="handedness_lookahead" data-category="phonology"
+                           value="{{handedness_field.initial}}">
+                    <input type="hidden" name="handedness" value=""
+                           id="handedness_machine_value" >
+                    </div>
+                    <div class="editselect" style="display:table-cell;">
+                    <select class="select_weakdrop form-control form-control-light" name="weakdrop"
+                            id="weakdrop_select_value" data-category="phonology">
+                        {% for value, opn in weakdrop_field.choices %}
+                        {% if value == weakdrop_field.initial %}
+                        <option value={{value}} selected="selected">{{opn}}</option>
+                        {% else %}
+                        <option value={{value}}>{{opn}}</option>
+                        {% endif %}
+                        {% endfor %}
+                    </select>
+                    </div>
+                    <div class="editselect" style="display:table-cell;padding-left:0px;">
+                    <select class="select_weakprop form-control form-control-light" name="weakprop"
+                            id="weakprop_select_value" data-category="phonology">
+                        {% for value, opn in weakprop_field.choices %}
+                        {% if value == weakprop_field.initial %}
+                        <option value={{value}} selected="selected">{{opn}}</option>
+                        {% else %}
+                        <option value={{value}}>{{opn}}</option>
+                        {% endif %}
+                        {% endfor %}
+                    </select>
+                    </div>
+                </td>
+                {% endwith %}
+                {% endwith %}
+                {% endwith %}
+            </tr>
+            {% with show_field_row|get_item:"domhndsh" as show_field %}
+            {% if not show_field %}
+            <tr class="empty_row_phonology">
+            {% else %}
+            <tr>
+            {% endif %}
+            {% endwith %}
+                <th style="width:240px;">{% trans "Strong Hand" %}</th>
+                {% with phonologyform.fields|get_item:'domhndsh' as domhndsh_field %}
+                {% with phonologyform.fields|get_item:'domhndsh_letter_or_number' as domhndsh_letter_or_number_field %}
+                <td class="editform-phonology">
+                    <div style="display:table-cell;" id="domhndsh_cell">
+                    <input class='form-control form-control-light domhndshtypeahead' type="text" size="40"
+                              value="{{domhndsh_field.initial}}" id="domhndsh_lookahead" data-category="phonology">
+                    <input type="hidden" name="domhndsh" value=""
+                           id="domhndsh_machine_value" >
+                    </div>
+                    <div class="editselect" style="display:table-cell;">
+                    <select class="select_domhndsh_letter_or_number form-control form-control-light" name="domhndsh_letter_or_number"
+                            id="domhndsh_letter_or_number_select_value" data-category="phonology">
+                        {% for value, opn in domhndsh_letter_or_number_field.choices %}
+                        {% if opn == domhndsh_letter_or_number_field.initial %}
+                        <option value={{value}} selected="selected">{{opn}}</option>
+                        {% else %}
+                        <option value={{value}}>{{opn}}</option>
+                        {% endif %}
+                        {% endfor %}
+                    </select>
+                    </div>
+                </td>
+                {% endwith %}
+                {% endwith %}
+            </tr>
+            {% with show_field_row|get_item:"subhndsh" as show_field %}
+            {% if not show_field %}
+            <tr class="empty_row_phonology">
+            {% else %}
+            <tr>
+            {% endif %}
+            {% endwith %}
+                <th style="width:240px;">{% trans "Weak Hand" %}</th>
+                {% with phonologyform.fields|get_item:'subhndsh' as subhndsh_field %}
+                {% with phonologyform.fields|get_item:'subhndsh_letter_or_number' as subhndsh_letter_or_number_field %}
+                <td class="editform-phonology">
+                    <div style="display:table-cell;" id="subhndsh_cell" >
+                    <input class='form-control form-control-light subhndshtypeahead' type="text" size="40"
+                              value="{{subhndsh_field.initial}}" id="subhndsh_lookahead" data-category="phonology">
+                    <input type="hidden" name="subhndsh" value=""
+                           id="subhndsh_machine_value" >
+                    </div>
+                    <div class="editselect" style="display:table-cell;">
+                    <select class="select_subhndsh_letter_or_number form-control form-control-light" name="subhndsh_letter_or_number"
+                            id="subhndsh_letter_or_number_select_value" data-category="phonology">
+                        {% for value, opn in subhndsh_letter_or_number_field.choices %}
+                        {% if opn == subhndsh_letter_or_number_field.initial %}
+                        <option value={{value}} selected="selected">{{opn}}</option>
+                        {% else %}
+                        <option value={{value}}>{{opn}}</option>
+                        {% endif %}
+                        {% endfor %}
+                    </select>
+                    </div>
+                </td>
+                {% endwith %}
+                {% endwith %}
+            </tr>
+            {% with show_field_row|get_item:"handCh" as show_field %}
+            {% if not show_field %}
+            <tr class="empty_row_phonology">
+            {% else %}
+            <tr>
+            {% endif %}
+            {% endwith %}
+                <th style="width:240px;">{% trans "Handshape Change" %}</th>
+                {% with phonologyform.fields|get_item:'handCh' as handCh_field %}
+                <td class="editform-phonology" style="width:auto;">
+                    <div>
+                    <input class='form-control form-control-light handChtypeahead' type="text" size="40"
+                              value="{{handCh_field.initial}}" id="handCh_lookahead" data-category="phonology">
+                    <input type="hidden" name="handCh" value=""
+                           id="handCh_machine_value" >
+                    </div>
+                </td>
+                {% endwith %}
+            </tr>
+            {% with show_field_row|get_item:"relatArtic" as show_field %}
+            {% if not show_field %}
+            <tr class="empty_row_phonology">
+            {% else %}
+            <tr>
+            {% endif %}
+            {% endwith %}
+                <th style="width:240px;">{% trans "Relation between Articulators" %}</th>
+                {% with phonologyform.fields|get_item:'relatArtic' as relatArtic_field %}
+                <td class="editform-phonology">
+                    <div>
+                    <input class='form-control form-control-light relatArtictypeahead' type="text" size="40"
+                              value="{{relatArtic_field.initial}}" id="relatArtic_lookahead" data-category="phonology">
+                    <input type="hidden" name="relatArtic" value=""
+                           id="relatArtic_machine_value" >
+                    </div>
+                </td>
+                {% endwith %}
+            </tr>
+            {% with show_field_row|get_item:"locprim" as show_field %}
+            {% if not show_field %}
+            <tr class="empty_row_phonology">
+            {% else %}
+            <tr>
+            {% endif %}
+            {% endwith %}
+                <th style="width:240px;">{% trans "Location" %}</th>
+                {% with phonologyform.fields|get_item:'locprim' as locprim_field %}
+                <td class="editform-phonology">
+                    <div>
+                    <input class='form-control form-control-light locprimtypeahead' type="text" size="40"
+                              value="{{locprim_field.initial}}" id="locprim_lookahead" data-category="phonology">
+                    <input type="hidden" name="locprim" value=""
+                           id="locprim_machine_value" >
+                    </div>
+                </td>
+                {% endwith %}
+            </tr>
+            {% with show_field_row|get_item:"contType" as show_field %}
+            {% if not show_field %}
+            <tr class="empty_row_phonology">
+            {% else %}
+            <tr>
+            {% endif %}
+            {% endwith %}
+                <th style="width:240px;">{% trans "Contact Type" %}</th>
+                {% with phonologyform.fields|get_item:'contType' as contType_field %}
+                <td class="editform-phonology">
+                    <div>
+                    <input class='form-control form-control-light contTypetypeahead' type="text" size="40"
+                              value="{{contType_field.initial}}" id="contType_lookahead" data-category="phonology">
+                    <input type="hidden" name="contType" value=""
+                           id="contType_machine_value" >
+                    </div>
+                </td>
+                {% endwith %}
+            </tr>
+            {% with show_field_row|get_item:"movSh" as show_field %}
+            {% if not show_field %}
+            <tr class="empty_row_phonology">
+            {% else %}
+            <tr>
+            {% endif %}
+            {% endwith %}
+                <th style="width:240px;">{% trans "Movement Shape" %}</th>
+                {% with phonologyform.fields|get_item:'movSh' as movSh_field %}
+                <td class="editform-phonology">
+                    <div>
+                    <input class='form-control form-control-light movShtypeahead' type="text" size="40"
+                              value="{{movSh_field.initial}}" id="movSh_lookahead" data-category="phonology">
+                    <input type="hidden" name="movSh" value=""
+                           id="movSh_machine_value" >
+                    </div>
+                </td>
+                {% endwith %}
+            </tr>
+            {% with show_field_row|get_item:"movDir" as show_field %}
+            {% if not show_field %}
+            <tr class="empty_row_phonology">
+            {% else %}
+            <tr>
+            {% endif %}
+            {% endwith %}
+                <th style="width:240px;">{% trans "Movement Direction" %}</th>
+                {% with phonologyform.fields|get_item:'movDir' as movDir_field %}
+                <td class="editform-phonology">
+                    <div>
+                    <input class='form-control form-control-light movDirtypeahead' type="text" size="40"
+                              value="{{movDir_field.initial}}" id="movDir_lookahead" data-category="phonology">
+                    <input type="hidden" name="movDir" value=""
+                           id="movDir_machine_value" >
+                    </div>
+                </td>
+                {% endwith %}
+            </tr>
+
+
+            {% with show_field_row|get_item:"repeat" as show_field %}
+            {% if not show_field %}
+            <tr class="empty_row_phonology">
+            {% else %}
+            <tr>
+            {% endif %}
+            {% endwith %}
+                <th style="width:240px;">{% trans "Repeating Movement" %}</th>
+                {% with phonologyform.fields|get_item:'repeat' as repeat_field %}
+                <td class="editform-phonology">
+                    <div class="editselect">
+                    <select class="select_repeat form-control form-control-light" name="repeat"
+                            id="repeat_select_value" data-category="phonology">
+                        {% for value, opn in repeat_field.choices %}
+                        {% if opn == repeat_field.initial %}
+                        <option value={{value}} selected="selected">{{opn}}</option>
+                        {% else %}
+                        <option value={{value}}>{{opn}}</option>
+                        {% endif %}
+                        {% endfor %}
+                    </select>
+                    </div>
+                </td>
+                {% endwith %}
+            </tr>
+
+            {% with show_field_row|get_item:"altern" as show_field %}
+            {% if not show_field %}
+            <tr class="empty_row_phonology">
+            {% else %}
+            <tr>
+            {% endif %}
+            {% endwith %}
+                <th style="width:240px;">{% trans "Alternating Movement" %}</th>
+                {% with phonologyform.fields|get_item:'altern' as altern_field %}
+                <td class="editform-phonology">
+                    <div class="editselect">
+                    <select class="select_altern form-control form-control-light" name="altern"
+                            id="altern_select_value" data-category="phonology">
+                        {% for value, opn in altern_field.choices %}
+                        {% if opn == altern_field.initial %}
+                        <option value={{value}} selected="selected">{{opn}}</option>
+                        {% else %}
+                        <option value={{value}}>{{opn}}</option>
+                        {% endif %}
+                        {% endfor %}
+                    </select>
+                    </div>
+                </td>
+                {% endwith %}
+            </tr>
+            {% with show_field_row|get_item:"relOriMov" as show_field %}
+            {% if not show_field %}
+            <tr class="empty_row_phonology">
+            {% else %}
+            <tr>
+            {% endif %}
+            {% endwith %}
+                <th style="width:240px;">{% trans "Relative Orientation: Movement" %}</th>
+                {% with phonologyform.fields|get_item:'relOriMov' as relOriMov_field %}
+                <td class="editform-phonology">
+                    <div>
+                    <input class='form-control form-control-light relOriMovtypeahead' type="text" size="40"
+                              value="{{relOriMov_field.initial}}" id="relOriMov_lookahead" data-category="phonology">
+                    <input type="hidden" name="relOriMov" value=""
+                           id="relOriMov_machine_value" >
+                    </div>
+                </td>
+                {% endwith %}
+            </tr>
+
+            {% with show_field_row|get_item:"relOriLoc" as show_field %}
+            {% if not show_field %}
+            <tr class="empty_row_phonology">
+            {% else %}
+            <tr>
+            {% endif %}
+            {% endwith %}
+                <th style="width:240px;">{% trans "Relative Orientation: Location" %}</th>
+                {% with phonologyform.fields|get_item:'relOriLoc' as relOriLoc_field %}
+                <td class="editform-phonology">
+                    <div>
+                    <input class='form-control form-control-light relOriLoctypeahead' type="text" size="40"
+                              value="{{relOriLoc_field.initial}}" id="relOriLoc_lookahead" data-category="phonology">
+                    <input type="hidden" name="relOriLoc" value=""
+                           id="relOriLoc_machine_value" >
+                    </div>
+                </td>
+                {% endwith %}
+            </tr>
+            {% with show_field_row|get_item:"oriCh" as show_field %}
+            {% if not show_field %}
+            <tr class="empty_row_phonology">
+            {% else %}
+            <tr>
+            {% endif %}
+            {% endwith %}
+                <th style="width:240px;">{% trans "Orientation Change" %}</th>
+                {% with phonologyform.fields|get_item:'oriCh' as oriCh_field %}
+                <td class="editform-phonology">
+                    <div>
+                    <input class='form-control form-control-light oriChtypeahead' type="text" size="40"
+                              value="{{oriCh_field.initial}}" id="oriCh_lookahead" data-category="phonology">
+                    <input type="hidden" name="oriCh" value=""
+                           id="oriCh_machine_value" >
+                    </div>
+                </td>
+                {% endwith %}
+            </tr>
+            </table>
+            <br><br><br>
+        </div>
+    </div>
+
+    <!-- Semantics -->
+    <div class="panel panel-default panel-light">
+        <div class='panel-heading panel-light' data-toggle='collapse' data-target='#semantics'>{% trans "Semantics" %}
+        </div>
+        <div id='semantics' class='collapse'>
+            <div class='pull-right' style="margin-right:5px;margin-top:20px;">
+             {% if perms.dictionary.change_gloss %}
+             <div>
+                {% csrf_token %}
+                <button type="button" class="btn btn-danger edit-cancel button-semantics-to-appear-in-edit-mode"
+                        style="width:auto;padding:3px 12px;"
+                        onclick='location.href="{{PREFIX_URL}}/dictionary/gloss/{{gloss.id}}"'
+                        >{% trans "Cancel" %}</button>
+                <button type="button" class="btn btn-danger quick_save button-semantics-to-appear-in-edit-mode"
+                        style="width:auto;padding:3px 12px;" value="{{gloss.id}}"
+                        >{% trans "Save Semantics" %}</button>
+                <button id='enable_edit_semantics'
+                         class='btn btn-primary navbar-btn edit-mode'
+                         style="width:auto;padding:3px 12px;">{% trans "Edit Semantics" %}</button>
+             </div>
+             {% endif %}
+            </div>
+
+            <table class='table table-condensed table-condensed-light semantics-table'>
+            {% csrf_token %}
+            {% with show_field_row|get_item:"semField" as show_field %}
+            {% if not show_field %}
+            <tr class="empty_row_semantics">
+            {% else %}
+            <tr>
+            {% endif %}
+            {% endwith %}
+                <th style="width:240px;">{% trans "Semantic Field" %}</th>
+                {% with semanticsform.fields|get_item:'semField' as semField_field %}
+                <td style="width:auto;" id="semField_value">
+                    {% for semfield in gloss.semField.all %}
+                    <button class="actionButton">{{semfield.name}}</button>
+                    {% endfor %}
+                </td>
+                <td class="editsemanticsform">
+                    <div>
+                    <input class='form-control form-control-light semFieldtypeahead' type="text" size="60"
+                           id="semField_multiselect" data-category="semantics">
+                    </div>
+                </td>
+                <td id="semField_hidden_input_values" class="editform-semantics">
+
+                </td>
+                {% endwith %}
+            </tr>
+            {% with show_field_row|get_item:"derivHist" as show_field %}
+            {% if not show_field %}
+            <tr class="empty_row_semantics">
+            {% else %}
+            <tr>
+            {% endif %}
+            {% endwith %}
+                <th style="width:240px;">{% trans "Derivation history" %}</th>
+                {% with semanticsform.fields|get_item:'derivHist' as derivHist_field %}
+                <td style="width:auto;" id="derivHist_value">
+                    {% for derivHist in gloss.derivHist.all %}
+                    <button class="actionButton">{{derivHist.name}}</button>
+                    {% endfor %}
+                </td>
+                <td class="editsemanticsform">
+                    <div>
+                    <input class='form-control form-control-light derivHisttypeahead' type="text" size="60"
+                           id="derivHist_multiselect" data-category="semantics">
+                    </div>
+                </td>
+                <td id="derivHist_hidden_input_values" class="editform-semantics">
+
+                </td>
+                {% endwith %}
+            </tr>
+            {% with show_field_row|get_item:"namEnt" as show_field %}
+            {% if not show_field %}
+            <tr class="empty_row_semantics">
+            {% else %}
+            <tr>
+            {% endif %}
+            {% endwith %}
+                <th style="width:240px;">{% trans "Named Entity" %}</th>
+                {% with semanticsform.fields|get_item:'namEnt' as namEnt_field %}
+                <td class="editform-semantics">
+                    <div>
+                    <input class='form-control form-control-light namEnttypeahead' type="text" size="40"
+                              value="{{namEnt_field.initial}}" id="namEnt_lookahead" data-category="semantics">
+                    <input type="hidden" name="namEnt" value=""
+                           id="namEnt_machine_value" >
+                    </div>
+                </td>
+                {% endwith %}
+            </tr>
+            {% with show_field_row|get_item:"valence" as show_field %}
+            {% if not show_field %}
+            <tr class="empty_row_semantics">
+            {% else %}
+            <tr>
+            {% endif %}
+            {% endwith %}
+                <th style="width:240px;">{% trans "Valence" %}</th>
+                {% with semanticsform.fields|get_item:'valence' as valence_field %}
+                <td class="editform-semantics">
+                    <div>
+                    <input class='form-control form-control-light valencetypeahead' type="text" size="40"
+                              value="{{valence_field.initial}}" id="valence_lookahead" data-category="semantics">
+                    <input type="hidden" name="valence" value=""
+                           id="valence_machine_value" >
+                    </div>
+                </td>
+                {% endwith %}
+            </tr>
+            </table>
+            <br/><br/><br/><br/>
+        </div>
+    </div>
+
+</div>
+{% endblock %}
+

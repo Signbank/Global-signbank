@@ -307,6 +307,28 @@ function valencetypeahead(target) {
           }
       });
 }
+
+var wordClass_bloodhound = new Bloodhound({
+      datumTokenizer: function(d) { return d.tokens; },
+      queryTokenizer: Bloodhound.tokenizers.whitespace,
+      remote: url+'/dictionary/ajax/fieldchoice/WordClass'+'/%QUERY'
+    });
+
+wordClass_bloodhound.initialize();
+
+function wordClasstypeahead(target) {
+
+     $(target).typeahead(null, {
+          name: 'wordClass',
+          displayKey: 'name',
+          source: wordClass_bloodhound.ttAdapter(),
+          templates: {
+              suggestion: function(fc) {
+                  return("<p><strong>" + fc.name +  "</strong></p>");
+              }
+          }
+      });
+}
 // last of the field choice bloodhounds
 
 var selected_semField = selected_semField;
@@ -400,6 +422,140 @@ function renderSelectedDerivHist() {
     placeholder_lookahead.attr("placeholder", new_placeholder);
 }
 
+var selected_dialect = selected_dialect;
+
+var dialect_bloodhound = new Bloodhound({
+      datumTokenizer: function(d) { return d.tokens; },
+      queryTokenizer: Bloodhound.tokenizers.whitespace,
+      remote: url+'/dictionary/ajax/dialect/'+gloss_dataset_id+'/%QUERY'
+    });
+
+dialect_bloodhound.initialize();
+
+function dialecttypeahead(target) {
+
+     $(target).typeahead(null, {
+          name: 'dialect',
+          displayKey: 'name',
+          source: dialect_bloodhound.ttAdapter(),
+          templates: {
+              suggestion: function(fc) {
+                  return("<p><strong>" + fc.name +  "</strong></p>");
+              }
+          }
+      });
+};
+
+function renderSelectedDialect() {
+    var container = $('#dialect_value');
+    container.empty();
+    var values_input = $('#dialect_hidden_input_values');
+    values_input.empty();
+    var placeholder_lookahead = $('#dialect_multiselect');
+    selected_dialect.forEach(function(item) {
+        var tag = $('<button class="actionButton"></button>').text(item.name);
+        var input_value = $('<input type="hidden" name="dialect" value="'+item.machine_value+'">');
+        var removeBtn = $('<span class="remove">&nbsp;&nbsp;&times;</span>').click(function() {
+            selected_dialect = selected_dialect.filter(i => i !== item);
+            renderSelectedDialect();
+        });
+        tag.append(removeBtn);
+        container.append(tag);
+        values_input.append(input_value);
+    });
+    var new_placeholder = selected_dialect.map(item => item.name).join(", ");
+    placeholder_lookahead.attr("placeholder", new_placeholder);
+    placeholder_lookahead.css("color", "red");
+}
+
+var lemma_bloodhound = new Bloodhound({
+      datumTokenizer: function(d) { return d.tokens; },
+      queryTokenizer: Bloodhound.tokenizers.whitespace,
+      remote: url+'/dictionary/ajax/lemma/'+gloss_dataset_id+'/'+gloss_default_language_code+'/%QUERY'
+    });
+
+lemma_bloodhound.initialize();
+
+function lemmatypeahead(target) {
+
+     $(target).typeahead(null, {
+          name: 'lemmatarget',
+          displayKey: 'lemma',
+          limit: 10,
+          source: lemma_bloodhound.ttAdapter(),
+          templates: {
+              suggestion: function(lemma) {
+                  return("<p><strong>" + lemma.lemma + "</strong></p>");
+              }
+          }
+      });
+};
+
+function hideLemmaForm(lemma_element) {
+    $(lemma_element).parent().hide();
+    $('#lemma_buttons_group').show();
+    $('#lemma_buttons').show();
+    $('#show_set_lemma_form').show();
+    $('#show_create_lemma_form').show();
+    $('.lemma_buttons').css("visibility", "visible")
+}
+
+$("#show_set_lemma_form").on('click', function() {
+    $('#lemma_forms_row').show();
+    $("#set_lemma_form").show();
+    $('#lemma_buttons').hide();
+    $('#add_lemma_form').hide();
+});
+
+$("#show_create_lemma_form").on('click', function() {
+    $('#lemma_forms_row').show();
+    $('#add_lemma_form').show();
+    $('#lemma_buttons').hide();
+    $("#set_lemma_form").hide();
+});
+
+$(".lemma-form-dismiss").on('click', function() {
+    hideLemmaForm($(this));
+});
+
+function ajaxifyTagForm() {
+    // ajax form submission for tag addition and deletion
+    $('.tagdelete').click(function() {
+        var action = $(this).attr('href');
+        var tagid = $(this).attr('id');
+        var tagelement = $(this).parents('.tagli');
+
+        $.post(action,
+              {tag: tagid, 'delete': "True" },
+               function(data) {
+                    if (data == 'deleted') {
+                        // remove the tag from the page
+                       tagelement.remove();
+                    }
+               });
+
+        return false;
+    });
+
+    $('#tagaddform').submit(function(){
+
+        var newtag = $('#tagaddform select').val();
+
+        if (newtag != "") {
+            $.post($(this).attr('action'), $(this).serialize(),
+                    function(data) {
+                       // response is a new tag list
+                       $('#tags').replaceWith(data);
+                       ajaxifyTagForm();
+                   });
+        } else {
+            alert("Please select a tag value.");
+        }
+
+        return false;
+    });
+}
+
 function disable_lookaheads(category) {
      // this makes use of specific element identifiers for the lookahead fields
      $('.form-control').each(function() {
@@ -413,6 +569,9 @@ function disable_lookaheads(category) {
              return;
          }
          if (this_id.endsWith("_value")) {
+             $(this).attr('disabled', true);
+         }
+         if (this_id.endsWith("_text")) {
              $(this).attr('disabled', true);
          }
          if (this_id.endsWith("_multiselect")) {
@@ -436,6 +595,9 @@ function enable_lookaheads(category) {
          if (this_id.endsWith("_value")) {
              $(this).removeAttr('disabled');
          }
+         if (this_id.endsWith("_text")) {
+             $(this).removeAttr('disabled');
+         }
          if (this_id.endsWith("_multiselect")) {
              $(this).removeAttr('disabled');
          }
@@ -447,6 +609,10 @@ function enable_edit_panel(category) {
         $('.editsemanticsform').show();
         $('#semField_value').trigger('editSemField');
         $('#derivHist_value').trigger('editDerivHistField');
+    }
+    if (category === 'general') {
+        $('.editdialectform').show();
+        $('#dialect_value').trigger('editDialectField');
     }
     $('.empty_row_'+category).show();
     $('.button-'+category+'-to-appear-in-edit-mode').show();
@@ -462,11 +628,36 @@ function disable_edit_panel(category) {
     if (category === 'semantics') {
         $('.editsemanticsform').hide();
     }
+    if (category === 'general') {
+        $('.editdialectform').hide();
+        $('#lemma_buttons_group').hide();
+        $('#lemma_forms_row').hide();
+    }
+    $('.editform_'+category).hide();
     $('.empty_row_'+category).hide();
     $('.button-'+category+'-to-appear-in-edit-mode').hide();
     busy_editing = false;
     $('#enable_edit_'+category).addClass('btn-primary').removeClass('btn-danger');
     disable_lookaheads(category);
+}
+
+function toggle_edit_general() {
+    if ($('#enable_edit_general').hasClass('edit_enabled'))
+    {
+        disable_edit_panel('general');
+        $('#enable_edit_general').removeClass('edit_enabled');
+        $('#enable_edit_general').show();
+        $('#edit_lemma_form').hide();
+        $('#show_set_lemma_form').hide();
+        $('#show_create_lemma_form').hide();
+        $('#lemma_buttons_group').hide();
+    } else {
+        enable_edit_panel('general');
+        $('#enable_edit_general').addClass('edit_enabled');
+        $('#enable_edit_general').hide();
+        $('#edit_lemma_form').show();
+        $('#lemma_buttons_group').show();
+    }
 }
 
 function toggle_edit_phonology() {
@@ -475,12 +666,10 @@ function toggle_edit_phonology() {
         disable_edit_panel('phonology');
         $('#enable_edit_phonology').removeClass('edit_enabled');
         $('#enable_edit_phonology').show();
-        $('#enable_edit_semantics').show();
     } else {
         enable_edit_panel('phonology');
         $('#enable_edit_phonology').addClass('edit_enabled');
         $('#enable_edit_phonology').hide();
-        $('#enable_edit_semantics').hide();
     }
 }
 
@@ -490,12 +679,10 @@ function toggle_edit_semantics() {
         disable_edit_panel('semantics');
         $('#enable_edit_semantics').removeClass('edit_enabled');
         $('#enable_edit_semantics').show();
-        $('#enable_edit_phonology').show();
     } else {
         enable_edit_panel('semantics');
         $('#enable_edit_semantics').addClass('edit_enabled');
         $('#enable_edit_semantics').hide();
-        $('#enable_edit_phonology').hide();
     }
 }
 
@@ -512,6 +699,11 @@ function get_width_of_selection(text) {
     $span.remove();
     return width;
 }
+
+$('#enable_edit_general').click(function()
+{
+    toggle_edit_general();
+});
 
 $('#enable_edit_phonology').click(function()
 {
@@ -658,6 +850,15 @@ $(document).ready(function() {
     $('#valence_lookahead').on("click", function() {
       $(this).attr('value', "");
     });
+    wordClasstypeahead($('.wordClasstypeahead'));
+    $('.wordClasstypeahead').bind('typeahead:selected', function(ev, suggestion) {
+          busy_editing = true;
+          $(this).attr('value', suggestion.name);
+          $('#wordClass_machine_value').attr('value', suggestion.machine_value);
+    });
+    $('#wordClass_lookahead').on("click", function() {
+      $(this).attr('value', "");
+    });
     semFieldtypeahead($('.semFieldtypeahead'));
     $('.semFieldtypeahead').bind('typeahead:selected', function(ev, suggestion) {
           if (!selected_semField.includes(suggestion)) {
@@ -687,6 +888,31 @@ $(document).ready(function() {
     });
     $('#derivHist_value').on("editDerivHistField", function() {
         renderSelectedDerivHist();
+    });
+    dialecttypeahead($('.dialecttypeahead'));
+    $('.dialecttypeahead').bind('typeahead:selected', function(ev, suggestion) {
+          if (!selected_dialect.includes(suggestion)) {
+                busy_editing = true;
+                selected_dialect.push(suggestion);
+                renderSelectedDialect();
+          }
+          $(this).typeahead('val', '');
+    });
+    $('#dialect_multiselect').on("click", function() {
+      $(this).attr('value', "");
+    });
+    $('#dialect_value').on("editDialectField", function() {
+        renderSelectedDialect();
+    });
+    lemmatypeahead($('.lemmatypeahead'));
+    $('.lemmatypeahead').bind('typeahead:selected', function(ev, suggestion) {
+          $(this).parent().next().val(suggestion.pk);
+          busy_editing = true;
+//          $(this).attr('value', suggestion.lemma);
+          $('#new_lemma_pk').attr('value', suggestion.pk);
+    });
+    $('.lemmatypeahead').on("click", function() {
+          $(this).parent().next().val("")
     });
     $('.select_weakdrop').on('change', function() {
           busy_editing = true;
@@ -735,7 +961,7 @@ $(document).ready(function() {
 	     var update = { 'csrfmiddlewaretoken': csrf_token };
          for (var i=0; i < gloss_phonology.length; i++) {
             var field = gloss_phonology[i];
-            if (['semField', 'derivHist'].includes(field)) {
+            if (['semField', 'derivHist', 'dialect'].includes(field)) {
                 var field_values = [];
                 var field_lookup = '#'+field+'_hidden_input_values';
                 $(field_lookup).find('input[name="'+field+'"]').each(function() {
@@ -758,6 +984,11 @@ $(document).ready(function() {
                 var field_key = $(field_lookup).attr("name");
                 var field_value = $(field_lookup).val();
                 update[field_key] = field_value;
+            } else if (['release_information'].includes(field)) {
+                var field_lookup = '#'+field+'_text';
+                var field_key = $(field_lookup).attr("name");
+                var field_value = $(field_lookup).val();
+                update[field_key] = field_value;
             } else {
                 var field_lookup = '#'+field+'_machine_value';
                 var field_key = $(field_lookup).attr("name");
@@ -776,6 +1007,35 @@ $(document).ready(function() {
                         location.reload(true);
                     }, 500);
                 }
+            },
+            error: function (xhr, status, error) {
+                console.error("AJAX Error:", status, error);
+//                $("#result").text("Error: " + status + " - " + error);
+            }
+         });
+     });
+     $('.quick_set_lemma').click(function(e)
+	 {
+         e.preventDefault();
+	     var set_lemma_url = $('#set_lemma_form').attr("action");
+	     var new_lemma_pk = $('#new_lemma_pk').attr('value');
+	     var update = { 'csrfmiddlewaretoken': csrf_token };
+	     update['new_lemma_pk'] = new_lemma_pk;
+         $.ajax({
+            url : set_lemma_url,
+            type: 'POST',
+            data: update,
+            datatype: "json",
+            success : function(data) {
+                if (data.success) {
+                    setTimeout(function() {
+                        location.reload(true);
+                    }, 500);
+                }
+            },
+            error: function (xhr, status, error) {
+                console.error("AJAX Error:", status, error);
+//                $("#result").text("Error: " + status + " - " + error);
             }
          });
      });
@@ -797,4 +1057,7 @@ $(document).ready(function() {
     });
     disable_edit_panel('phonology');
     disable_edit_panel('semantics');
+    disable_edit_panel('general');
+    ajaxifyTagForm();
+
 });

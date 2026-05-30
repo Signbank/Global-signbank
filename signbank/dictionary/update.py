@@ -864,6 +864,11 @@ def get_gloss_non_empty_value_dict(request):
             if not values:
                 continue
             value_dict['derivHist'] = values
+        elif field in ['dialect[]']:
+            values = request.POST.getlist(field, [])
+            if not values:
+                continue
+            value_dict['dialect'] = values
         else:
             value = request.POST.get(field, '')
             if not value:
@@ -892,6 +897,12 @@ def edit_gloss_save(request, glossid):
             for derivHist_machine_value in value:
                 derivHist = DerivationHistory.objects.get(machine_value=derivHist_machine_value)
                 gloss.derivHist.add(derivHist)
+            continue
+        if field in ['dialect']:
+            gloss.dialect.clear()
+            for dialect_machine_value in value:
+                dialect = Dialect.objects.get(id=dialect_machine_value)
+                gloss.dialect.add(dialect)
             continue
         if field in ['domhndsh_letter_or_number']:
             letter_or_number = {'0': None, '1': 'letter', '2': 'number'}[value]
@@ -927,12 +938,47 @@ def edit_gloss_save(request, glossid):
                 if boolean_value == original_internal_value:
                     continue
                 setattr(gloss, field, boolean_value)
+            else:
+                print('edit_gloss_save not implemented for Boolean field ', field)
         elif isinstance(internal_field, CharField) or isinstance(internal_field, TextField):
             value = value.strip()
-            if value == original_internal_value:
-                continue
             setattr(gloss, field, value)
+        else:
+            print('edit_gloss_save not implemented for field name ', field, ' with internal type ', internal_field)
     gloss.save()
+    return JsonResponse({'success': True}, status=200)
+
+
+@require_http_methods(["POST"])
+def update_gloss_lemma(request, glossid):
+
+    if not request.user.has_perm('dictionary.change_gloss'):
+        raise PermissionDenied
+
+    gloss = get_object_or_404(Gloss, id=glossid, archived=False)
+    new_lemma_pk = request.POST.get('new_lemma_pk', '')
+
+    lemma_gloss_group = False
+    lemma_group_string = gloss.idgloss
+    other_glosses_in_lemma_group = Gloss.objects.filter(
+        lemma__lemmaidglosstranslation__text__iexact=lemma_group_string).count()
+    if other_glosses_in_lemma_group > 1:
+        lemma_gloss_group = True
+
+    # Set new lemma obtained from lemma lookahead in the Gloss Edit template
+    try:
+        lemma = LemmaIdgloss.objects.get(pk=new_lemma_pk)
+    except ObjectDoesNotExist:
+        error_message = gettext("The specified lemma does not exist.")
+        return JsonResponse({'error': error_message}, status=400)
+
+    if gloss.lemma.dataset != lemma.dataset:
+        error_message = gettext("The dataset of the gloss is not the same as that of the lemma.")
+        return JsonResponse({'error': error_message}, status=400)
+
+    gloss.lemma = lemma
+    gloss.save(update_fields=['lemma'])
+
     return JsonResponse({'success': True}, status=200)
 
 
