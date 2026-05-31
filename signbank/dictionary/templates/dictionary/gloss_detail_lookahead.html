@@ -4,6 +4,9 @@
 {% load annotation_idgloss_translation %}
 {% load field_choice %}
 {% load bootstrap3 %}
+{% load tagging_tags %}
+{% load affiliation_tags %}
+{% load underscore_to_space %}
 
 {% block bootstrap3_title %}
 {% blocktrans %}Sign for {{gloss}}{% endblocktrans %}
@@ -18,8 +21,7 @@
     var dark_mode_django = '{{dark_mode}}';
     var url = '{{PREFIX_URL}}';
     var phonology_list_kinds = {{phonology_list_kinds|safe}};
-    var gloss_phonology = {{gloss_phonology|safe}};
-    var gloss_semantics = {{gloss_semantics|safe}};
+    var gloss_fields = {{gloss_update_fields|safe}};
     var language_code = '{{LANGUAGE_CODE}}';
 
     {% trans "Edit" as edit_mode_str %}
@@ -531,7 +533,6 @@ input .tt-hint {
                                     <td style="border-bottom: 1px solid grey; border-left: 1px solid grey;
                                             border-top: 1px solid grey; border-right: 1px solid grey;">{% for qv in default_query_parameters_values_mapping|get_item:key %}
                                        <div class='tagQP' >
-                                       {% load underscore_to_space %}
                                             <span class='tagname' style="user-select:none;">{{qv|underscore_to_space}}</span>
                                        </div>
                                         {% if not forloop.last %} {% endif %}{% endfor %}</td>
@@ -565,7 +566,6 @@ input .tt-hint {
                                     <td style="border-bottom: 1px solid grey; border-left: 1px solid grey;
                                             border-top: 1px solid grey; border-right: 1px solid grey;">{% for qv in query_parameters_values_mapping|get_item:key %}
                                        <div class='tagQP' >
-                                       {% load underscore_to_space %}
                                             <span class='tagname' style="user-select:none;">{{qv|underscore_to_space}}</span>
                                        </div>
                                         {% if not forloop.last %} {% endif %}{% endfor %}</td>
@@ -639,168 +639,273 @@ input .tt-hint {
     </div>
 </div>
 
+{% if "change_dataset" in dataset_perms %}
+    <div class='pull-right' style="margin-right:15px;margin-top:200px;">
+
+         {% if perms.dictionary.add_gloss %}
+         <button id='copy_gloss_btn' class='btn btn-primary copy-button' data-toggle='modal' data-target='#copy_gloss_modal'>{% trans "Copy" %}</button>
+
+          <div class="modal fade" id="copy_gloss_modal" role="dialog" aria-labelledby="#modalGlossCopy" aria-hidden="true">
+             <div class="modal-dialog modal-lg">
+                <div class="modal-content">
+                    <div class='modal-header'>
+                        <h2 id='modalGlossCopy'>{% trans "Copy Gloss" %}</h2>
+                    </div>
+                    <div class='modal-body'>
+                        {% if gloss_is_duplicate %}
+                        <p>{% trans "This gloss is already a duplicate. Please modify the annotation fields before creating a new duplicate." %}</p>
+                        {% else %}
+                        <p>{% trans "This will create a new gloss with identical phonology." %}</p>
+                        {% endif %}
+                     </div>
+                  <form id="copy_gloss" method='get'>
+                      {% csrf_token %}
+                      <table class='table' style='width: 1200px;margin-left:20px;'>
+                         <tr>
+                             <th>{% trans "Source Dataset" %}</th>
+                             <th>{{gloss.lemma.dataset.acronym}}</th>
+                         </tr>
+                         <tr>
+                             <th><label for='dataset'>{% trans "Target Dataset" %}</label></th>
+                             <td><span>
+                                 {% for s_dataset in selected_datasets %}
+                                 {% get_obj_perms request.user for s_dataset as "s_dataset_perms" %}
+                                 {% if "change_dataset" in s_dataset_perms %}
+                                 {% if gloss.lemma.dataset == s_dataset or last_used_dataset == s_dataset.acronym %}
+                                <input type="radio" name="dataset"
+                                       id="dataset_{{s_dataset.id}}" value="{{s_dataset.id}}" checked>
+                                 {% else %}
+                                 <input type="radio" name="dataset"
+                                        id="dataset_{{s_dataset.id}}" value="{{s_dataset.id}}">
+                                 {% endif %}
+                                <label for="dataset_{{s_dataset.id}}">{{s_dataset.acronym}}</label>
+                                 {% endif %}
+                                 {% endfor %}
+                            </span></td>
+                         </tr>
+                      </table>
+                      <input type='hidden' name='format' value='Copy'>
+                      <input type='hidden' name='value' value='confirmed'>
+                      <div class="modal-footer">
+                        <button type="button" class="btn btn-default btn-default-light" data-dismiss="modal">{% trans "Cancel" %}</button>
+                        {% if not gloss_is_duplicate %}
+                        <input type="submit" class="btn btn-primary" value='{% trans "Confirm Copy Create" %}'>
+                        {% endif %}
+                      </div>
+                  </form>
+
+                </div>
+              </div>
+         </div>
+
+        {% endif %}
+
+        {% if user.is_superuser and selected_datasets|length > 1 %}
+         <button id='move_gloss_btn' class='btn btn-primary copy-button' data-toggle='modal' data-target='#move_gloss_modal'>{% trans "Move" %}</button>
+
+          <div class="modal fade" id="move_gloss_modal" role="dialog" aria-labelledby="#modalGlossMove" aria-hidden="true">
+             <div class="modal-dialog modal-lg">
+                <div class="modal-content">
+                    <div class='modal-header'>
+                        <h2 id='modalGlossMove'>{% trans "Move Gloss" %}</h2>
+                        {% with gloss.lemma.dataset.default_language as target_default_language %}
+			            {% with annotation_idgloss|get_item:target_default_language as annotation %}
+                        <h4>{{annotation}}</h4>
+                        {% endwith %}
+                        {% endwith %}
+                    </div>
+                    <div class='modal-body'>
+                        {% blocktrans %}
+                        <p>This command will change the dataset of the gloss as well as its related glosses
+                            (via relations or morphology).</p>
+                        <p>The target dataset must have the same translation languages.</p>
+                        <p>If a gloss cannot be moved because of a similar gloss in the target dataset,
+                            the user is expected to modify the lemma translations or gloss annotations
+                            to remove ambiguity.</p>
+                        <p>The videos and images of the glosses are also moved to the new dataset.</p>
+                        {% endblocktrans %}
+                        {% if related_objects.keys %}
+                        <p>{% trans "This gloss is related to other glosses:" %}</p>
+                        <table class="table table-condensed table-bordered">
+                            {% for key, glosses in related_objects.items %}
+                            <tr>
+                                <td style="width:240px">{{key}}</td>
+                                <td>{{glosses}}</td>
+                            </tr>
+                            {% endfor %}
+                            <tr>
+                                <td>{% trans "Related Glosses" %}</td>
+                                <td>{{extended_related_objects}}</td>
+                            </tr>
+                        </table>
+                        {% endif %}
+                     </div>
+                  <form id="move_gloss" method='get'>
+                      {% csrf_token %}
+                      <table class='table' style='width: 1200px;margin-left:20px;'>
+                         <tr>
+                             <th>{% trans "Source Dataset" %}</th>
+                             <th>{{gloss.lemma.dataset.acronym}}</th>
+                         </tr>
+                         <tr>
+                             <th><label for='dataset'>{% trans "Target Dataset" %}</label></th>
+                             <td><span>
+                                 {% for s_dataset in selected_datasets %}
+                                 {% get_obj_perms request.user for s_dataset as "s_dataset_perms" %}
+                                 {% if "change_dataset" in s_dataset_perms %}
+                                 {% if gloss.lemma.dataset == s_dataset or last_used_dataset == s_dataset.acronym %}
+                                <input type="radio" name="dataset"
+                                       id="dataset_{{s_dataset.id}}" value="{{s_dataset.id}}" checked>
+                                 {% else %}
+                                 <input type="radio" name="dataset"
+                                        id="dataset_{{s_dataset.id}}" value="{{s_dataset.id}}">
+                                 {% endif %}
+                                <label for="dataset_{{s_dataset.id}}">{{s_dataset.acronym}}</label>
+                                 {% endif %}
+                                 {% endfor %}
+                            </span></td>
+                         </tr>
+                      </table>
+                      <input type='hidden' name='format' value='Move'>
+                      <input type='hidden' name='value' value='confirmed'>
+                      <div class="modal-footer">
+                        <button type="button" class="btn btn-default btn-default-light" data-dismiss="modal">{% trans "Cancel" %}</button>
+                        <input type="submit" class="btn btn-primary" value='{% trans "Confirm Move" %}'>
+                      </div>
+                  </form>
+
+                </div>
+              </div>
+          </div>
+        {% endif %}
+
+    </div>
+    {% endif %}
+
+<div class="clearfix"></div>
+
 <div id="definitionblock">
     {% url 'dictionary:protected_media' '' as protected_media_url %}
     <div id="leftblock">
     </div>
 
     <div class='panel-group' id="definition" style="z-index: 0;opacity:.99; position: relative;">
-        <div id="primary-fields">
-            {% csrf_token %}
-            <div class='pull-right' style="margin-right:15px;margin-top:50px;">
-
+        <div class="panel panel-default panel-light">
+        <div class='panel-heading panel-light' id='general_heading'
+             data-toggle='collapse' data-target='#general'>{% trans "General Description" %}
+        </div>
+        <div id='general' class='collapse in'>
+            <div class='pull-right' style="margin-right:15px;margin-top:20px;">
+                {% if perms.dictionary.change_gloss %}
+                <div>
                 {% csrf_token %}
                 <button type="button" class="btn btn-danger edit-cancel button-general-to-appear-in-edit-mode"
-                        style="width:auto;padding:3px 12px;"
-                        onclick='location.href="{{PREFIX_URL}}/dictionary/gloss/{{gloss.id}}"'
-                        >{% trans "Cancel" %}</button>
+                        style="width:auto;padding:3px 12px;" id="button-edit-cancel-general"
+                        onclick='location.href="{{PREFIX_URL}}/dictionary/gloss/{{gloss.id}}"' >
+                        {% trans "Cancel" %}</button>
                 <button type="button" class="btn btn-danger quick_save button-general-to-appear-in-edit-mode"
-                        style="width:auto;padding:3px 12px;" value="{{gloss.id}}"
-                        >{% trans "Save Primary" %}</button>
-                 <button id='enable_edit_general'
+                        style="width:auto;padding:3px 12px;" value="{{gloss.id}}" id="button-edit-save-general" >
+                        {% trans "Save Primary" %}</button>
+                 <button id='enable_edit_general' type="button"
                          class='btn btn-primary navbar-btn edit-mode'
                          style="width:auto;padding:3px 12px;">{% trans "Edit" %}</button>
-
-              <button id='copy_gloss_btn' class='btn btn-primary copy-button' data-toggle='modal' data-target='#copy_gloss_modal'>{% trans "Copy" %}</button>
-
-              <div class="modal fade" id="copy_gloss_modal" role="dialog" aria-labelledby="#modalGlossCopy" aria-hidden="true">
-                 <div class="modal-dialog modal-lg">
-                    <div class="modal-content">
-                        <div class='modal-header'>
-                            <h2 id='modalGlossCopy'>{% trans "Copy Gloss" %}</h2>
-                        </div>
-                        <div class='modal-body'>
-                            {% if gloss_is_duplicate %}
-                            <p>{% trans "This gloss is already a duplicate. Please modify the annotation fields before creating a new duplicate." %}</p>
-                            {% else %}
-                            <p>{% trans "This will create a new gloss with identical phonology." %}</p>
-                            {% endif %}
-                         </div>
-                      <form id="copy_gloss" method='get'>
-                          {% csrf_token %}
-                          <table class='table' style='width: 1200px;margin-left:20px;'>
-                             <tr>
-                                 <th>{% trans "Source Dataset" %}</th>
-                                 <th>{{gloss.lemma.dataset.acronym}}</th>
-                             </tr>
-                             <tr>
-                                 <th><label for='dataset'>{% trans "Target Dataset" %}</label></th>
-                                 <td><span>
-                                     {% for s_dataset in selected_datasets %}
-                                     {% get_obj_perms request.user for s_dataset as "dataset_perms" %}
-                                     {% if "change_dataset" in dataset_perms %}
-                                     {% if gloss.lemma.dataset == s_dataset or last_used_dataset == s_dataset.acronym %}
-                                    <input type="radio" name="dataset"
-                                           id="dataset_{{s_dataset.id}}" value="{{s_dataset.id}}" checked>
-                                     {% else %}
-                                     <input type="radio" name="dataset"
-                                            id="dataset_{{s_dataset.id}}" value="{{s_dataset.id}}">
-                                     {% endif %}
-                                    <label for="dataset_{{s_dataset.id}}">{{s_dataset.acronym}}</label>
-                                     {% endif %}
-                                     {% endfor %}
-                                </span></td>
-                             </tr>
-                          </table>
-                          <input type='hidden' name='format' value='Copy'>
-                          <input type='hidden' name='value' value='confirmed'>
-                          <div class="modal-footer">
-                            <button type="button" class="btn btn-default btn-default-light" data-dismiss="modal">{% trans "Cancel" %}</button>
-                            {% if not gloss_is_duplicate %}
-                            <input type="submit" class="btn btn-primary" value='{% trans "Confirm Copy Create" %}'>
-                            {% endif %}
-                          </div>
-                      </form>
-
-                    </div>
-                  </div>
-             </div>
-
-            {% if user.is_superuser and selected_datasets|length > 1 %}
-             <button id='move_gloss_btn' class='btn btn-primary copy-button' data-toggle='modal' data-target='#move_gloss_modal'>{% trans "Move" %}</button>
-
-              <div class="modal fade" id="move_gloss_modal" role="dialog" aria-labelledby="#modalGlossMove" aria-hidden="true">
-                 <div class="modal-dialog modal-lg">
-                    <div class="modal-content">
-                        <div class='modal-header'>
-                            <h2 id='modalGlossMove'>{% trans "Move Gloss" %}</h2>
-                            {% with gloss.lemma.dataset.default_language as target_default_language %}
-                            {% with annotation_idgloss|get_item:target_default_language as annotation %}
-                            <h4>{{annotation}}</h4>
-                            {% endwith %}
-                            {% endwith %}
-                        </div>
-                        <div class='modal-body'>
-                            {% blocktrans %}
-                            <p>This command will change the dataset of the gloss as well as its related glosses
-                                (via relations or morphology).</p>
-                            <p>The target dataset must have the same translation languages.</p>
-                            <p>If a gloss cannot be moved because of a similar gloss in the target dataset,
-                                the user is expected to modify the lemma translations or gloss annotations
-                                to remove ambiguity.</p>
-                            <p>The videos and images of the glosses are also moved to the new dataset.</p>
-                            {% endblocktrans %}
-                            {% if related_objects.keys %}
-                            <p>{% trans "This gloss is related to other glosses:" %}</p>
-                            <table class="table table-condensed table-bordered">
-                                {% for key, glosses in related_objects.items %}
-                                <tr>
-                                    <td style="width:240px">{{key}}</td>
-                                    <td>{{glosses}}</td>
-                                </tr>
-                                {% endfor %}
-                                <tr>
-                                    <td>{% trans "Related Glosses" %}</td>
-                                    <td>{{extended_related_objects}}</td>
-                                </tr>
-                            </table>
-                            {% endif %}
-                         </div>
-                      <form id="move_gloss" method='get'>
-                          {% csrf_token %}
-                          <table class='table' style='width: 1200px;margin-left:20px;'>
-                             <tr>
-                                 <th>{% trans "Source Dataset" %}</th>
-                                 <th>{{gloss.lemma.dataset.acronym}}</th>
-                             </tr>
-                             <tr>
-                                 <th><label for='dataset'>{% trans "Target Dataset" %}</label></th>
-                                 <td><span>
-                                     {% for s_dataset in selected_datasets %}
-                                     {% get_obj_perms request.user for s_dataset as "dataset_perms" %}
-                                     {% if "change_dataset" in dataset_perms %}
-                                     {% if gloss.lemma.dataset == s_dataset or last_used_dataset == s_dataset.acronym %}
-                                    <input type="radio" name="dataset"
-                                           id="dataset_{{s_dataset.id}}" value="{{s_dataset.id}}" checked>
-                                     {% else %}
-                                     <input type="radio" name="dataset"
-                                            id="dataset_{{s_dataset.id}}" value="{{s_dataset.id}}">
-                                     {% endif %}
-                                    <label for="dataset_{{s_dataset.id}}">{{s_dataset.acronym}}</label>
-                                     {% endif %}
-                                     {% endfor %}
-                                </span></td>
-                             </tr>
-                          </table>
-                          <input type='hidden' name='format' value='Move'>
-                          <input type='hidden' name='value' value='confirmed'>
-                          <div class="modal-footer">
-                            <button type="button" class="btn btn-default btn-default-light" data-dismiss="modal">{% trans "Cancel" %}</button>
-                            <input type="submit" class="btn btn-primary" value='{% trans "Confirm Move" %}'>
-                          </div>
-                      </form>
-
-                    </div>
-                  </div>
-              </div>
-            {% endif %}
-
+                </div>
+                {% endif %}
             </div>
 
-        {% include "dictionary/glosstags.html" %}
-        {% include "dictionary/affiliationtags.html" %}
-
         <table class='table table-condensed table-condensed-light' style="width:100%;">
+            {% csrf_token %}
+            <tr>
+            <td>
+                <div id='tags' style="z-index: 0;opacity:.99; position: relative; background-color: inherit;">
+                <fieldset>
+                  {% tags_for_object gloss as tag_list %}
+                  {% if tag_list %}
+                      <ul class='taglist'>
+                      {% for tag in tag_list %}
+                        <li class='tagli'>
+                           <div class='tag'>
+                             <span class='tagname'>{{tag.name|underscore_to_space}}</span>
+                            {% get_obj_perms request.user for gloss.dataset as "dataset_perms" %}
+                            {% if "change_dataset" in dataset_perms %}
+                             <span class='tagcount'>
+                                 <a class='tagdelete editform'
+                                    id='{{tag.name}}' value={{tag.id}} name='{{tag.name}}'
+                                    href='{{PREFIX_URL}}/dictionary/update/tag/{{gloss.id}}'
+                                    title='{% trans "Delete this tag" %}'>x</a>
+                             </span>
+                             {% endif %}
+                            </div>
+                        </li>
+                      {% endfor %}
+                      </ul>
+                  {% endif %}
+                {% get_obj_perms request.user for gloss.dataset as "dataset_perms" %}
+                {% if "change_dataset" in dataset_perms %}
+                  <div id="tagcontainer"></div>
+                  <div class='editform'>
+                      <form id='tagaddform'
+                            action="{{PREFIX_URL}}/dictionary/update/tag/{{gloss.id}}"
+                            method="post" enctype="multipart/form-data">
+                       {% csrf_token %}
+                       <table>
+                       <tr><td class="td td-light">{{tagform.tag}}</td><td><input class='btn btn-primary' type='submit' value='{% trans "Add Tag" %}'></td></tr>
+                       </table>
+                      </form>
+                  </div>
+                  {% endif %}
+                  </fieldset>
+                </div>
+            </td>
+            </tr>
+            <tr>
+            <td>
+
+                <div id='affs' style="z-index: 0;opacity:.99; position: relative; background-color: inherit;">
+                <fieldset>
+              {% with gloss|get_affiliations_for_gloss as aff_list %}
+              {% if aff_list %}
+                  <ul class='afflist'>
+                  {% for aff in aff_list %}
+                    <li class='affli' id="gloss_affiliation_{{aff.id}}">
+                       <div class='aff tagAFF' style="background:{{aff.field_color}};border-color:{{aff.field_color}};">
+                         <span class='affname'>{{aff.acronym}}</span>
+                        {% get_obj_perms request.user for gloss.dataset as "dataset_perms" %}
+                        {% if "change_dataset" in dataset_perms %}
+                         <span class='affcount'>
+                             <a class='affdelete editform'
+                                id='{{aff.id}}' value='{{aff.id}}' name='{{aff.acronym}}'
+                                data-href='{{PREFIX_URL}}/dictionary/update/affiliation/{{gloss.id}}'
+                                title='{% trans "delete this affiliation" %}'>x</a>
+                         </span>
+                         {% endif %}
+                        </div>
+                    </li>
+                  {% endfor %}
+                  </ul>
+              {% endif %}
+              {% endwith %}
+            {% get_obj_perms request.user for gloss.dataset as "dataset_perms" %}
+            {% if "change_dataset" in dataset_perms %}
+              <div id="affcontainer"></div>
+              <div class='editform'>
+                  <form id='affaddform'
+                        data-action="{{PREFIX_URL}}/dictionary/update/affiliation/{{gloss.id}}"
+                        method="post" enctype="multipart/form-data">
+                   {% csrf_token %}
+                   <table>
+                   <tr><td class="td td-light">{{affiliationform.affiliation}}</td>
+                       <td><input class='btn btn-primary' type='submit' value='{% trans "Add Affiliation" %}'></td>
+                   </tr>
+                   </table>
+                  </form>
+              </div>
+              {% endif %}
+              </fieldset>
+            </div>
+            </td>
+            </tr>
+
             {% with show_field_row|get_item:"release_information" as show_field %}
             {% if not show_field %}
             <tr class="empty_row_general">
@@ -858,15 +963,15 @@ input .tt-hint {
             <tr class="lemma_buttons" id="lemma_buttons_group" style="width:auto;"><th></th>
                 <td>
                     <div id="lemma_buttons">
-                        <button id='show_edit_lemma_form' name='show_edit_lemma_form' type="button"
+                        <button id='show_edit_lemma_form' type="button"
                                 style="width:auto;" class='btn btn-primary btn-space lemma-button'
                                 value='{% trans "Edit Lemma" %}'>
                             <a href="{{PREFIX_URL}}/dictionary/lemma/update/{{gloss.lemma.id}}"
                                style="text-decoration:none; color:white;">{% trans "Edit Lemma" %}</a>
                         </button>
-                        <button id='show_set_lemma_form' name='show_set_lemma_form'
+                        <button id='show_set_lemma_form'
                                 class='btn btn-primary btn-space lemma-button'>{% trans "Choose Other" %}</button>
-                        <button id='show_create_lemma_form' name='show_create_lemma_form'
+                        <button id='show_create_lemma_form'
                                 class='btn btn-primary btn-space lemma-button'>{% trans "Create New" %}</button>
                     </div>
                 </td>
@@ -875,7 +980,7 @@ input .tt-hint {
                 <th></th>
                 <td id="lemma_forms_cell" class='td td-light'>
                 <span>
-                <form name='set_lemma_form' id='set_lemma_form'
+                <form id='set_lemma_form'
                     onsubmit='return validateForm("set_lemma_form","value","gloss_lemma_id",
                                                 "Please choose a lemma.",
                                                 "Target lemma must be different from the current lemma of this gloss.")'
@@ -892,7 +997,7 @@ input .tt-hint {
                     <button class='btn btn-primary quick_set_lemma' type='button'>{% trans "Set Lemma" %}</button>
                     <button type="button" class="btn btn-default btn-default-light lemma-form-dismiss">{% trans "Cancel" %}</button>
                 </form>
-                <form name="add_lemma_form" id="add_lemma_form" class="container" method="post" action="{% url 'dictionary:create_lemma_gloss' gloss.id %}" >
+                <form id="add_lemma_form" class="container" method="post" action="{% url 'dictionary:create_lemma_gloss' gloss.id %}" >
                     {% csrf_token %}
                     <input type="hidden" name="dataset" value="{{gloss.lemma.dataset.id}}"/>
                     <input type="hidden" name="last_used_dataset" value="{{last_used_dataset}}"/>
@@ -987,6 +1092,7 @@ input .tt-hint {
 
         </table>
     </div>
+</div>
 {% if prominent_media_type and prominent_media_type.machine_value > 1 %}
    <div class="panel panel-default panel-light">
         <div class='panel-heading panel-light' data-toggle='collapse'
@@ -1527,6 +1633,8 @@ input .tt-hint {
             <br/><br/><br/><br/>
         </div>
     </div>
+
+</div>
 
 </div>
 {% endblock %}

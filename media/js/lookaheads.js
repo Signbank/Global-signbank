@@ -491,15 +491,6 @@ function lemmatypeahead(target) {
       });
 };
 
-function hideLemmaForm(lemma_element) {
-    $(lemma_element).parent().hide();
-    $('#lemma_buttons_group').show();
-    $('#lemma_buttons').show();
-    $('#show_set_lemma_form').show();
-    $('#show_create_lemma_form').show();
-    $('.lemma_buttons').css("visibility", "visible")
-}
-
 $("#show_set_lemma_form").on('click', function() {
     $('#lemma_forms_row').show();
     $("#set_lemma_form").show();
@@ -515,7 +506,13 @@ $("#show_create_lemma_form").on('click', function() {
 });
 
 $(".lemma-form-dismiss").on('click', function() {
-    hideLemmaForm($(this));
+    var this_form = $(this).parent().attr('id');
+    if (this_form === 'set_lemma_form') {
+        $('#lemma_forms_row').hide();
+    } else {
+        $('#add_lemma_form').hide();
+    }
+    $('#lemma_buttons').show();
 });
 
 function ajaxifyTagForm() {
@@ -528,7 +525,7 @@ function ajaxifyTagForm() {
         $.post(action,
               {tag: tagid, 'delete': "True" },
                function(data) {
-                    if (data == 'deleted') {
+                    if (data === 'deleted') {
                         // remove the tag from the page
                        tagelement.remove();
                     }
@@ -612,19 +609,18 @@ function enable_edit_panel(category) {
     }
     if (category === 'general') {
         $('.editdialectform').show();
+        $('.editform').show();  // appears in gloss tags and affiliations
         $('#dialect_value').trigger('editDialectField');
+        $('#lemma_buttons_group').show();
     }
     $('.empty_row_'+category).show();
+    $('#enable_edit_'+category).addClass('edit_enabled');
+    $('#enable_edit_'+category).hide();
     $('.button-'+category+'-to-appear-in-edit-mode').show();
-    $('#enable_edit_'+category).removeClass('btn-primary').addClass('btn-danger');
     enable_lookaheads(category);
 }
 
 function disable_edit_panel(category) {
-    if (busy_editing) {
-        // the user was busy editing but did not save the data, just reload the page
-        location.reload(true);
-    }
     if (category === 'semantics') {
         $('.editsemanticsform').hide();
     }
@@ -632,31 +628,22 @@ function disable_edit_panel(category) {
         $('.editdialectform').hide();
         $('#lemma_buttons_group').hide();
         $('#lemma_forms_row').hide();
+        $('.editform').hide();  // appears in gloss tags and affiliations
     }
-    $('.editform_'+category).hide();
     $('.empty_row_'+category).hide();
     $('.button-'+category+'-to-appear-in-edit-mode').hide();
-    busy_editing = false;
-    $('#enable_edit_'+category).addClass('btn-primary').removeClass('btn-danger');
+    $('#enable_edit_'+category).removeClass('edit_enabled');
+    $('#enable_edit_'+category).show();
     disable_lookaheads(category);
+    busy_editing = false;
 }
 
 function toggle_edit_general() {
     if ($('#enable_edit_general').hasClass('edit_enabled'))
     {
         disable_edit_panel('general');
-        $('#enable_edit_general').removeClass('edit_enabled');
-        $('#enable_edit_general').show();
-        $('#edit_lemma_form').hide();
-        $('#show_set_lemma_form').hide();
-        $('#show_create_lemma_form').hide();
-        $('#lemma_buttons_group').hide();
     } else {
         enable_edit_panel('general');
-        $('#enable_edit_general').addClass('edit_enabled');
-        $('#enable_edit_general').hide();
-        $('#edit_lemma_form').show();
-        $('#lemma_buttons_group').show();
     }
 }
 
@@ -664,12 +651,8 @@ function toggle_edit_phonology() {
     if ($('#enable_edit_phonology').hasClass('edit_enabled'))
     {
         disable_edit_panel('phonology');
-        $('#enable_edit_phonology').removeClass('edit_enabled');
-        $('#enable_edit_phonology').show();
     } else {
         enable_edit_panel('phonology');
-        $('#enable_edit_phonology').addClass('edit_enabled');
-        $('#enable_edit_phonology').hide();
     }
 }
 
@@ -677,12 +660,8 @@ function toggle_edit_semantics() {
     if ($('#enable_edit_semantics').hasClass('edit_enabled'))
     {
         disable_edit_panel('semantics');
-        $('#enable_edit_semantics').removeClass('edit_enabled');
-        $('#enable_edit_semantics').show();
     } else {
         enable_edit_panel('semantics');
-        $('#enable_edit_semantics').addClass('edit_enabled');
-        $('#enable_edit_semantics').hide();
     }
 }
 
@@ -700,21 +679,6 @@ function get_width_of_selection(text) {
     return width;
 }
 
-$('#enable_edit_general').click(function()
-{
-    toggle_edit_general();
-});
-
-$('#enable_edit_phonology').click(function()
-{
-    toggle_edit_phonology();
-});
-
-$('#enable_edit_semantics').click(function()
-{
-    toggle_edit_semantics();
-});
-
 $(document).ready(function() {
 
     handednesstypeahead($('.handednesstypeahead'));
@@ -726,7 +690,7 @@ $(document).ready(function() {
           $('#handedness_machine_value').attr('value', suggestion.machine_value);
     });
     $('#handedness_lookahead').on("click", function() {
-//    this erases the lookahead value shown as placeholder
+      // this erases the lookahead value shown as placeholder
       $(this).attr('value', "");
     });
     domhndshtypeahead($('.domhndshtypeahead'));
@@ -908,7 +872,6 @@ $(document).ready(function() {
     $('.lemmatypeahead').bind('typeahead:selected', function(ev, suggestion) {
           $(this).parent().next().val(suggestion.pk);
           busy_editing = true;
-//          $(this).attr('value', suggestion.lemma);
           $('#new_lemma_pk').attr('value', suggestion.pk);
     });
     $('.lemmatypeahead').on("click", function() {
@@ -959,8 +922,8 @@ $(document).ready(function() {
          e.preventDefault();
 	     var glossid = $(this).attr('value');
 	     var update = { 'csrfmiddlewaretoken': csrf_token };
-         for (var i=0; i < gloss_phonology.length; i++) {
-            var field = gloss_phonology[i];
+         for (var i=0; i < gloss_fields.length; i++) {
+            var field = gloss_fields[i];
             if (['semField', 'derivHist', 'dialect'].includes(field)) {
                 var field_values = [];
                 var field_lookup = '#'+field+'_hidden_input_values';
@@ -1009,8 +972,7 @@ $(document).ready(function() {
                 }
             },
             error: function (xhr, status, error) {
-                console.error("AJAX Error:", status, error);
-//                $("#result").text("Error: " + status + " - " + error);
+                alert("There was an error processing this change: " + xhr.responseText );
             }
          });
      });
@@ -1034,8 +996,7 @@ $(document).ready(function() {
                 }
             },
             error: function (xhr, status, error) {
-                console.error("AJAX Error:", status, error);
-//                $("#result").text("Error: " + status + " - " + error);
+                alert("There was an error processing this change: " + xhr.responseText );
             }
          });
      });
@@ -1055,9 +1016,18 @@ $(document).ready(function() {
             $(this).css('width', this_width);
         });
     });
+    busy_editing = false;
+    $('#enable_edit_general').on("click", function() {
+        toggle_edit_general();
+    });
+    $('#enable_edit_phonology').on("click", function() {
+        toggle_edit_phonology();
+    });
+    $('#enable_edit_semantics').on("click", function() {
+        toggle_edit_semantics();
+    });
+    disable_edit_panel('general');
     disable_edit_panel('phonology');
     disable_edit_panel('semantics');
-    disable_edit_panel('general');
     ajaxifyTagForm();
-
 });

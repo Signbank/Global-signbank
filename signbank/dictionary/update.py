@@ -878,10 +878,9 @@ def get_gloss_non_empty_value_dict(request):
 
 
 @require_http_methods(["POST"])
+@permission_required('dictionary.change_gloss')
 def edit_gloss_save(request, glossid):
     """Update the fields of a gloss"""
-    if not request.user.has_perm('dictionary.change_gloss'):
-        raise PermissionDenied
 
     gloss = get_object_or_404(Gloss, id=glossid)
     value_dict = get_gloss_non_empty_value_dict(request)
@@ -950,10 +949,8 @@ def edit_gloss_save(request, glossid):
 
 
 @require_http_methods(["POST"])
+@permission_required('dictionary.change_gloss')
 def update_gloss_lemma(request, glossid):
-
-    if not request.user.has_perm('dictionary.change_gloss'):
-        raise PermissionDenied
 
     gloss = get_object_or_404(Gloss, id=glossid, archived=False)
     new_lemma_pk = request.POST.get('new_lemma_pk', '')

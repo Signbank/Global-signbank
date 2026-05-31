@@ -1462,10 +1462,16 @@ class GlossDetailView(DetailView):
 
         self.request.session['last_used_dataset'] = self.last_used_dataset
 
-        # context['gloss_phonology'] = FIELDS['phonology']
-        context['gloss_phonology'] =  ['release_information', 'dialect', 'useInstr', 'wordClass'] + FIELDS['phonology'] + ['domhndsh_letter_or_number', 'subhndsh_letter_or_number',
-                                                            'semField', 'derivHist', 'namEnt', 'valence']
-        context['gloss_semantics'] = ['semField', 'derivHist', 'namEnt', 'valence']
+        # these Gloss model fields are used by the javascript code to process push data for edits
+        context['gloss_update_fields'] =  (['release_information', 'dialect', 'useInstr', 'wordClass']
+                                           + ['handedness', 'domhndsh', 'subhndsh', 'handCh',
+                                              'relatArtic', 'locprim', 'contType', 'movSh', 'movDir',
+                                              'repeat', 'altern',
+                                              'relOriMov', 'relOriLoc', 'oriCh',
+                                              'locVirtObj', 'phonOth', 'mouthG', 'mouthing', 'phonetVar',
+                                              'weakdrop', 'weakprop']
+                                           + ['domhndsh_letter_or_number', 'subhndsh_letter_or_number',
+                                              'semField', 'derivHist', 'namEnt', 'valence'])
         context['show_field_row'] = show_fields_rows(gloss)
         context['selected_semField'] = [{"name": semfield.name, "machine_value": semfield.machine_value}
                                         for semfield in gloss.semField.all()]
