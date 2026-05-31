@@ -380,12 +380,10 @@ $('#show_middle').click(function()
                 {% if value != '-' %}
                 <tr><th>{{label}}</th>
                     {% if kind == 'text' %}
-                    <td id='{{name}}'
-                        value='{{value}}'>{% value value %}
+                    <td id='{{name}}'>{% value value %}
                     </td>
                     {% else %}
-                    <td id='{{name}}'
-                        value='{{value}}'>{% value value %}
+                    <td id='{{name}}'>{% value value %}
                     </td>
                     {% endif %}
                 </tr>
@@ -502,15 +500,12 @@ $('#show_middle').click(function()
                 {% if value != '-' %}
                 <tr >
                     <th>{{label}}</th>
-                    <td id='{{name}}'
-                        value='{{value}}' style="width:400px;">{% value value %}</td>
+                    <td id='{{name}}' style="width:400px;">{% value value %}</td>
                     {% for value,name,label,kind in handedness_fields %}
                         {% if name == 'weakdrop' %}
-                        <td id='{{name}}'
-                            value="{{value}}">{% if value %}+WD{% elif value == None %}&nbsp;{% else %}-WD{% endif %}</td>
+                        <td id='{{name}}'>{% if value == 'True' %}+WD{% elif value == 'None' %}&nbsp;{% else %}-WD{% endif %}</td>
                         {% else %}
-                        <td id='{{name}}'
-                            value="{{value}}">{% if value %}+WP{% elif value == None %}&nbsp;{% else %}-WP{% endif %}</td>
+                        <td id='{{name}}'>{% if value == 'True' %}+WP{% elif value == 'None' %}&nbsp;{% else %}-WP{% endif %}</td>
                         {% endif %}
                     {% endfor %}
                 </tr>
@@ -519,7 +514,7 @@ $('#show_middle').click(function()
                 {% if value != '-' %}
                 <tr >
                     <th>{{label}}</th>
-                    <td id='{{name}}' value='{{value}}' >
+                    <td id='{{name}}' >
                         <a id="strong_hand_link" style="color: {% if StrongHand %}blue{% else %}red{% endif %}; display: visible;"
                                         {% if StrongHand %}
                                             href="{{PREFIX_URL}}/dictionary/handshape/{{StrongHand}}/"
@@ -528,11 +523,9 @@ $('#show_middle').click(function()
                     {% if SHOW_LETTER_NUMBER_PHONOLOGY %}
                     {% for value,name,label,kind in etymology_fields_dom %}
                         {% if name == 'domhndsh_letter' %}
-                        <td id='{{name}}'
-                            value="{{value}}">{% if value %}letter{% else %}&nbsp;{% endif %}</td>
+                        <td id='{{name}}'>{% if value %}letter{% else %}&nbsp;{% endif %}</td>
                         {% else %}
-                        <td id='{{name}}'
-                            value="{{value}}">{% if value %}number{% else %}&nbsp;{% endif %}</td>
+                        <td id='{{name}}'>{% if value %}number{% else %}&nbsp;{% endif %}</td>
                         {% endif %}
                     {% endfor %}
                     {% endif %}
@@ -542,16 +535,13 @@ $('#show_middle').click(function()
                 {% if value != '-' %}
                 <tr >
                     <th>{{label}}</th>
-                    <td id='{{name}}'
-                        value='{{value}}' >{% value value %}</td>
+                    <td id='{{name}}'>{% value value %}</td>
                     {% if SHOW_LETTER_NUMBER_PHONOLOGY %}
                     {% for value,name,label,kind in etymology_fields_sub %}
                         {% if name == 'subhndsh_letter' %}
-                        <td id='{{name}}'
-                            value="{{value}}">{% if value %}letter{% else %}&nbsp;{% endif %}</td>
+                        <td id='{{name}}'>{% if value %}letter{% else %}&nbsp;{% endif %}</td>
                         {% else %}
-                        <td id='{{name}}'
-                            value="{{value}}">{% if value %}number{% else %}&nbsp;{% endif %}</td>
+                        <td id='{{name}}'>{% if value %}number{% else %}&nbsp;{% endif %}</td>
                         {% endif %}
                     {% endfor %}
                     {% endif %}
@@ -607,7 +597,7 @@ $('#show_middle').click(function()
         <br>
        {% if otherrelations %}
        <table class='table table-condensed'>
-           {% for rel, target_display in otherrelations %}
+           {% for seen, rel, target_display in otherrelations %}
            <tr id='row_{{rel.id}}'>
                 <td class="td td-light" id='relationrole_{{rel.id}}'>{{rel.get_role_display}}</td>
                 <td class="td td-light" id='relationtarget_{{rel.id}}'>
