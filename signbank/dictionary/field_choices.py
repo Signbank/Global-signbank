@@ -3,7 +3,7 @@ from django.db.models import Q
 from signbank.settings.server_specific import FIELDS, HANDEDNESS_ARTICULATION_FIELDS, HANDSHAPE_ETYMOLOGY_FIELDS
 from signbank.dictionary.models import (Gloss, Morpheme, Handshape, FieldChoice, Definition, MorphologyDefinition,
                                         ExampleSentence, OtherMedia, DerivationHistory, SemanticField,
-                                        CATEGORY_MODELS_MAPPING)
+                                        CATEGORY_MODELS_MAPPING, PhonologicalVariation)
 from signbank.dictionary.translate_choice_list import (choicelist_queryset_to_translated_dict,
                                                        choicelist_queryset_to_machine_value_dict,
                                                        choicelist_queryset_to_colors)
@@ -29,6 +29,8 @@ def fields_to_categories():
                 continue
             if field in Gloss.get_field_names():
                 field_field = Gloss.get_field(field)
+            elif field in PhonologicalVariation.get_field_names():
+                field_field = PhonologicalVariation.get_field(field)
             elif field in Handshape.get_field_names():
                 field_field = Handshape.get_field(field)
             elif field in Morpheme.get_field_names():

@@ -2374,6 +2374,7 @@ textarea:focus {
         </div>
 
     </div>
+
     <!-- Phonology -->
 	<div class="panel panel-default panel-light">
         <div class='panel-heading panel-light' id='phonology_heading'
@@ -2527,6 +2528,298 @@ textarea:focus {
 
             </table>
             <br><br><br>
+        </div>
+    </div>
+
+    <!-- Phonological Variations -->
+	<div class="panel panel-default panel-light">
+        <div class='panel-heading panel-light' id='phonological_variations_heading'
+             data-toggle='collapse' data-target='#phonological_variations'>{% trans "Phonological Variations" %}
+        </div>
+        <div id='phonological_variations' class='collapse'>
+                    {% if perms.dictionary.change_gloss %}
+                    <div>
+                        <button type="button" class="btn btn-default edit-variations button-to-appear-in-edit-mode"
+                                style="width:auto;"
+                                onclick='location.href="{{PREFIX_URL}}/dictionary/gloss/phonological_variations/{{gloss.id}}"'
+                                >{% trans "Edit Phonology" %}</button>
+                    </div>
+                    {% endif %}
+            {% if gloss_variations %}
+            <table class='table table-condensed'>
+            <thead>
+                 <tr>
+                 <th></th>
+                 <th class='th th-light' style="color:darkred">#0</th>
+                 {% for gv in gloss_variations %}
+                 <th class='th th-light' style="color:darkred">#{{gv.variation}}</th>
+                 {% endfor %}
+                 </tr>
+            </thead>
+            <tbody>
+                 {% with show_field_row|get_item:"handedness" as show_field %}
+                 {% if not show_field %}
+                 <tr class="empty_row">
+                 {% else %}
+                 <tr>
+                 {% endif %}
+                 {% endwith %}
+                 <th>{% trans "Handedness" %}</th>
+                 <td>{{gloss.display_handedness}} {{gloss.display_weakdrop}} {{gloss.display_weakprop}}</td>
+                 {% for gv in gloss_variations %}
+                 <td class='th th-light'>{{gv.display_handedness}} {{gv.display_weakdrop}} {{gv.display_weakprop}}
+                 </td>
+                 {% endfor %}
+                 </tr>
+                 {% with show_field_row|get_item:"domhndsh" as show_field %}
+                 {% if not show_field %}
+                 <tr class="empty_row">
+                 {% else %}
+                 <tr>
+                 {% endif %}
+                 {% endwith %}
+                 <th>{% trans "Strong Hand" %}</th>
+                  <td class='th th-light'>{{gloss.display_domhndsh}}
+                     {% if gloss.domhndsh_letter %}&nbsp;&nbsp;{% trans "letter" %}{% endif %}
+                     {% if gloss.domhndsh_number %}&nbsp;&nbsp;{% trans "number" %}{% endif %}
+                 </td>
+                 {% for gv in gloss_variations %}
+                 <td class='th th-light'>{{gv.display_domhndsh}}
+                     {% if gv.domhndsh_letter %}&nbsp;&nbsp;{% trans "letter" %}{% endif %}
+                     {% if gv.domhndsh_number %}&nbsp;&nbsp;{% trans "number" %}{% endif %}
+                 </td>
+                 {% endfor %}
+                 </tr>
+                 {% with show_field_row|get_item:"subhndsh" as show_field %}
+                 {% if not show_field %}
+                 <tr class="empty_row">
+                 {% else %}
+                 <tr>
+                 {% endif %}
+                 {% endwith %}
+                 <th>{% trans "Weak Hand" %}</th>
+                 <td class='th th-light'>{{gloss.display_subhndsh}}
+                     {% if gloss.subhndsh_letter %}&nbsp;&nbsp;{% trans "letter" %}{% endif %}
+                     {% if gloss.subhndsh_number %}&nbsp;&nbsp;{% trans "number" %}{% endif %}
+                 </td>
+                 {% for gv in gloss_variations %}
+                 <td class='th th-light'>{{gv.display_subhndsh}}
+                     {% if gv.subhndsh_letter %}&nbsp;&nbsp;{% trans "letter" %}{% endif %}
+                     {% if gv.subhndsh_number %}&nbsp;&nbsp;{% trans "number" %}{% endif %}
+                 </td>
+                 {% endfor %}
+                 </tr>
+                 {% with show_field_row|get_item:"handCh" as show_field %}
+                 {% if not show_field %}
+                 <tr class="empty_row">
+                 {% else %}
+                 <tr>
+                 {% endif %}
+                 {% endwith %}
+                 <th>{% trans "Handshape Change" %}</th>
+                 <td class='th th-light'>{{gloss.display_handCh}}</td>
+                 {% for gv in gloss_variations %}
+                 <td class='th th-light'>{{gv.display_handCh}}</td>
+                 {% endfor %}
+                 </tr>
+                 {% with show_field_row|get_item:"relatArtic" as show_field %}
+                 {% if not show_field %}
+                 <tr class="empty_row">
+                 {% else %}
+                 <tr>
+                 {% endif %}
+                 {% endwith %}
+                 <th>{% trans "Relation between Articulators" %}</th>
+                 <td class='th th-light'>{{gloss.display_relatArtic}}</td>
+                 {% for gv in gloss_variations %}
+                 <td class='th th-light'>{{gv.display_relatArtic}}</td>
+                 {% endfor %}
+                 </tr>
+                 {% with show_field_row|get_item:"locprim" as show_field %}
+                 {% if not show_field %}
+                 <tr class="empty_row">
+                 {% else %}
+                 <tr>
+                 {% endif %}
+                 {% endwith %}
+                 <th>{% trans "Location" %}</th>
+                 <td class='th th-light'>{{gloss.display_locprim}}</td>
+                 {% for gv in gloss_variations %}
+                 <td class='th th-light'>{{gv.display_locprim}}</td>
+                 {% endfor %}
+                 </tr>
+                 {% with show_field_row|get_item:"contType" as show_field %}
+                 {% if not show_field %}
+                 <tr class="empty_row">
+                 {% else %}
+                 <tr>
+                 {% endif %}
+                 {% endwith %}
+                 <th>{% trans "Contact Type" %}</th>
+                 <td class='th th-light'>{{gloss.display_contType}}</td>
+                 {% for gv in gloss_variations %}
+                 <td class='th th-light'>{{gv.display_contType}}</td>
+                 {% endfor %}
+                 </tr>
+                 {% with show_field_row|get_item:"movSh" as show_field %}
+                 {% if not show_field %}
+                 <tr class="empty_row">
+                 {% else %}
+                 <tr>
+                 {% endif %}
+                 {% endwith %}
+                 <th>{% trans "Movement Shape" %}</th>
+                 <td class='th th-light'>{{gloss.display_movSh}}</td>
+                 {% for gv in gloss_variations %}
+                 <td class='th th-light'>{{gv.display_movSh}}</td>
+                 {% endfor %}
+                 </tr>
+                 {% with show_field_row|get_item:"movDir" as show_field %}
+                 {% if not show_field %}
+                 <tr class="empty_row">
+                 {% else %}
+                 <tr>
+                 {% endif %}
+                 {% endwith %}
+                 <th>{% trans "Movement Direction" %}</th>
+                 <td class='th th-light'>{{gloss.display_movDir}}</td>
+                 {% for gv in gloss_variations %}
+                 <td class='th th-light'>{{gv.display_movDir}}</td>
+                 {% endfor %}
+                 </tr>
+                 {% with show_field_row|get_item:"repeat" as show_field %}
+                 {% if not show_field %}
+                 <tr class="empty_row">
+                 {% else %}
+                 <tr>
+                 {% endif %}
+                 {% endwith %}
+                 <th>{% trans "Repeating Movement" %}</th>
+                 <td class='th th-light'>{{gloss.display_repeat}}</td>
+                 {% for gv in gloss_variations %}
+                 <td class='th th-light'>{{gv.display_repeat}}</td>
+                 {% endfor %}
+                 </tr>
+                 {% with show_field_row|get_item:"altern" as show_field %}
+                 {% if not show_field %}
+                 <tr class="empty_row">
+                 {% else %}
+                 <tr>
+                 {% endif %}
+                 {% endwith %}
+                 <th>{% trans "Alternating Movement" %}</th>
+                 <td class='th th-light'>{{gloss.display_altern}}</td>
+                 {% for gv in gloss_variations %}
+                 <td class='th th-light'>{{gv.display_altern}}</td>
+                 {% endfor %}
+                 </tr>
+                 {% with show_field_row|get_item:"relOriMov" as show_field %}
+                 {% if not show_field %}
+                 <tr class="empty_row">
+                 {% else %}
+                 <tr>
+                 {% endif %}
+                 {% endwith %}
+                 <th>{% trans "Relative Orientation: Movement" %}</th>
+                 <td class='th th-light'>{{gloss.display_relOriMov}}</td>
+                 {% for gv in gloss_variations %}
+                 <td class='th th-light'>{{gv.display_relOriMov}}</td>
+                 {% endfor %}
+                 </tr>
+                 {% with show_field_row|get_item:"relOriLoc" as show_field %}
+                 {% if not show_field %}
+                 <tr class="empty_row">
+                 {% else %}
+                 <tr>
+                 {% endif %}
+                 {% endwith %}
+                 <th>{% trans "Relative Orientation: Location" %}</th>
+                 <td class='th th-light'>{{gloss.display_relOriLoc}}</td>
+                 {% for gv in gloss_variations %}
+                 <td class='th th-light'>{{gv.display_relOriLoc}}</td>
+                 {% endfor %}
+                 </tr>
+                 {% with show_field_row|get_item:"oriCh" as show_field %}
+                 {% if not show_field %}
+                 <tr class="empty_row">
+                 {% else %}
+                 <tr>
+                 {% endif %}
+                 {% endwith %}
+                 <th>{% trans "Orientation Change" %}</th>
+                 <td class='th th-light'>{{gloss.display_oriCh}}</td>
+                 {% for gv in gloss_variations %}
+                 <td class='th th-light'>{{gv.display_oriCh}}</td>
+                 {% endfor %}
+                 </tr>
+                 {% with show_field_row|get_item:"locVirtObj" as show_field %}
+                 {% if not show_field %}
+                 <tr class="empty_row">
+                 {% else %}
+                 <tr>
+                 {% endif %}
+                 {% endwith %}
+                 <th>{% trans "Virtual Object" %}</th>
+                 <td class='th th-light'>{% value gloss.locVirtObj %}</td>
+                 {% for gv in gloss_variations %}
+                 <td class='th th-light'>{% value gv.locVirtObj %}</td>
+                 {% endfor %}
+                 </tr>
+                 {% with show_field_row|get_item:"phonOth" as show_field %}
+                 {% if not show_field %}
+                 <tr class="empty_row">
+                 {% else %}
+                 <tr>
+                 {% endif %}
+                 {% endwith %}
+                 <th>{% trans "Phonology Other" %}</th>
+                 <td class='th th-light'>{% value gloss.phonOth %}</td>
+                 {% for gv in gloss_variations %}
+                 <td class='th th-light'>{% value gv.phonOth %}</td>
+                 {% endfor %}
+                 </tr>
+                 {% with show_field_row|get_item:"mouthG" as show_field %}
+                 {% if not show_field %}
+                 <tr class="empty_row">
+                 {% else %}
+                 <tr>
+                 {% endif %}
+                 {% endwith %}
+                 <th>{% trans "Mouth Gesture" %}</th>
+                 <td class='th th-light'>{% value gloss.mouthG %}</td>
+                 {% for gv in gloss_variations %}
+                 <td class='th th-light'>{% value gv.mouthG %}</td>
+                 {% endfor %}
+                 </tr>
+                 {% with show_field_row|get_item:"mouthing" as show_field %}
+                 {% if not show_field %}
+                 <tr class="empty_row">
+                 {% else %}
+                 <tr>
+                 {% endif %}
+                 {% endwith %}
+                 <th>{% trans "Mouthing" %}</th>
+                 <td class='th th-light'>{% value gloss.mouthing %}</td>
+                 {% for gv in gloss_variations %}
+                 <td class='th th-light'>{% value gv.mouthing %}</td>
+                 {% endfor %}
+                 </tr>
+                 {% with show_field_row|get_item:"phonetVar" as show_field %}
+                 {% if not show_field %}
+                 <tr class="empty_row">
+                 {% else %}
+                 <tr>
+                 {% endif %}
+                 {% endwith %}
+                 <th>{% trans "Phonetic Variation" %}</th>
+                 <td class='th th-light'>{% value gloss.phonetVar %}</td>
+                 {% for gv in gloss_variations %}
+                 <td class='th th-light'>{% value gv.phonetVar %}</td>
+                 {% endfor %}
+                 </tr>
+            </tbody>
+            </table>
+            {% endif %}
         </div>
     </div>
 
@@ -3048,7 +3341,7 @@ textarea:focus {
         </div>
 
         <div id="exSentence" class="collapse">
-            <button onclick="location.href='{% url 'dictionary:add_annotated_media' glossid=gloss.id %}'" type="button " class='sense-button btn btn-primary btn-space'>{% trans "Add annotated media" %}</button>
+            <button onclick="location.href='{% url 'dictionary:add_annotated_media' glossid=gloss.id %}'" type="button" class='sense-button btn btn-primary btn-space'>{% trans "Add annotated media" %}</button>
 
             <table class='table table-condensed' style="width:100%;">
                 <tr style="display:flex; flex-wrap:wrap;">

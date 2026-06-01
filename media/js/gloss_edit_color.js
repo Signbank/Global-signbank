@@ -221,6 +221,7 @@ function disable_edit() {
     $('#show_set_lemma_form').hide();
     $('#show_create_lemma_form').hide();
     $('#lemma_buttons_group').hide();
+    $('.edit-variations').hide();
 
     //To prevent RSI
     $('.edit').each(function()
@@ -311,7 +312,7 @@ function toggle_edit(redirect_to_next) {
         $('#show_set_lemma_form').hide();
         $('#show_create_lemma_form').hide();
         $('#lemma_buttons_group').hide();
-
+        $('.edit-variations').hide();
         $('#enable_edit').removeClass('edit_enabled');
         $('#enable_edit').text(edit_mode_str);
 
@@ -332,6 +333,7 @@ function toggle_edit(redirect_to_next) {
         $('#show_set_lemma_form').show();
         $('#show_create_lemma_form').show();
         $('#lemma_buttons_group').show();
+        $('.edit-variations').show();
         $('#enable_edit').addClass('edit_enabled');
         $('#enable_edit').text(turn_off_edit_mode_str);
     }

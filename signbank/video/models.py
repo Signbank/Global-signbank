@@ -8,7 +8,6 @@ import re
 import stat
 import shutil
 
-import ffmpeg
 import subprocess
 
 from django.db import models
@@ -632,17 +631,6 @@ class ExampleVideo(models.Model):
         except (OSError, PermissionError, IOError):
             print('Error generating still image', sys.exc_info())
 
-    def convert_to_mp4(self):
-        # this method is not called (bugs)
-        print('Convert to mp4: ', self.videofile.path)
-        name, _ = os.path.splitext(self.videofile.path)
-        out_name = name + "_copy.mp4"
-        stream = ffmpeg.input(self.videofile.path)
-        stream = ffmpeg.output(stream, out_name, vcodec='h264')
-        ffmpeg.run(stream, quiet=True)
-        os.rename(out_name, self.videofile.path)
-        print("Finished converting {}".format(self.videofile.path))
-
     def delete_files(self):
         """Delete the files associated with this object"""
         try:
@@ -976,32 +964,12 @@ class GlossVideo(models.Model):
         small_name = name + "_small.mp4"
         make_thumbnail_video(self.videofile, small_name)
 
-        # ffmpeg_small = FFMPEG_OPTIONS + ["-vf", "scale=180:-2"]
-        # video_file_full_path = os.path.join(WRITABLE_FOLDER, str(self.videofile))
-        # try:
-        #     resizer = VideoResizer([video_file_full_path], FFMPEG_PROGRAM, 180, 0, 0)
-        #     resizer.run()
-        # except Exception as e:
-        #     print("Error resizing video: ", video_file_full_path)
-        #     print(e)
-
     def make_poster_image(self):
         try:
             generate_still_image(self)
         except (OSError, PermissionError, IOError):
             print('Error generating still image', sys.exc_info())
             pass
-
-    def convert_to_mp4(self):
-        # this method is not called (bugs)
-        print('Convert to mp4: ', self.videofile.path)
-        name, _ = os.path.splitext(self.videofile.path)
-        out_name = name + "_copy.mp4"
-        stream = ffmpeg.input(self.videofile.path)
-        stream = ffmpeg.output(stream, out_name, vcodec='h264')
-        ffmpeg.run(stream, quiet=True)
-        os.rename(out_name, self.videofile.path)
-        print("Finished converting {}".format(self.videofile.path))
 
     def delete_files(self):
         """Delete the files associated with this object"""
