@@ -4162,6 +4162,18 @@ CATEGORY_MODELS_MAPPING = {
 }
 
 
+# setting for the Gloss Edit template
+GLOSS_FIELDS_UPDATES = ['release_information', 'dialect', 'useInstr', 'wordClass',
+                        'handedness', 'domhndsh', 'subhndsh', 'handCh',
+                        'relatArtic', 'locprim', 'contType', 'movSh', 'movDir',
+                        'repeat', 'altern',
+                        'relOriMov', 'relOriLoc', 'oriCh',
+                        'locVirtObj', 'phonOth', 'mouthG', 'mouthing', 'phonetVar',
+                        'weakdrop', 'weakprop',
+                        'domhndsh_letter_or_number', 'subhndsh_letter_or_number',
+                        'semField', 'derivHist', 'namEnt', 'valence', 'iconImg']
+
+
 class AnnotatedGloss(MetaModelMixin, models.Model):
     """An annotated gloss belongs to one annotated sentences"""
     gloss = models.ForeignKey("Gloss", on_delete=models.CASCADE)

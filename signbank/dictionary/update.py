@@ -980,6 +980,46 @@ def update_gloss_lemma(request, glossid):
 
 
 @require_http_methods(["POST"])
+@permission_required('dictionary.change_gloss')
+def update_gloss_annotation(request, glossid):
+
+    gloss = get_object_or_404(Gloss, id=glossid, archived=False)
+    language_code_2char = request.POST.get('language_code_2char', '')
+    value = request.POST.get('value', '')
+    if not isinstance(value, str):
+        error_message = gettext("The translation text must be a string.")
+        return JsonResponse({'error': error_message}, status=400)
+    annotation_text = value.strip()
+
+    try:
+        language = Language.objects.get(language_code_2char=language_code_2char)
+    except (ObjectDoesNotExist, MultipleObjectsReturned):
+        # the language does not exist
+        error_message = gettext("The translation language does not exist.")
+        return JsonResponse({'error': error_message}, status=400)
+
+    if not value:
+        # don't allow user to set Annotation ID Gloss to empty
+        error_message = gettext("The annotation for the translation language cannot be empty.")
+        return JsonResponse({'error': error_message}, status=400)
+
+    try:
+        annotation_idgloss_translation = AnnotationIdglossTranslation.objects.get(gloss=gloss, language=language)
+    except ObjectDoesNotExist:
+        # create an empty annotation for this gloss and language
+        annotation_idgloss_translation = AnnotationIdglossTranslation(gloss=gloss, language=language)
+
+    annotation_idgloss_translation.text = annotation_text
+    try:
+        annotation_idgloss_translation.save()
+    except ValidationError as e:
+        error_message = getattr(e, 'message', repr(e))
+        return JsonResponse({'error': error_message}, status=400)
+
+    return JsonResponse({'success': True}, status=200)
+
+
+@require_http_methods(["POST"])
 def update_gloss(request, glossid):
     """View to update a gloss model from the jeditable jquery form
     We are sent one field and value at a time, return the new value

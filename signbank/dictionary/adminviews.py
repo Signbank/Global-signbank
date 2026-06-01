@@ -61,7 +61,7 @@ from signbank.video.models import (GlossVideo, find_dangling_video_files, delete
                                    weedout_duplicate_backup_videos, flipped_backup_filename)
 from signbank.communication.models import generate_communication
 from signbank.dictionary.models import (Dataset, UserProfile, AffiliatedUser, AffiliatedGloss,
-                                        Language, Dialect, Gloss, Morpheme, GlossSense, Sense,
+                                        Language, Dialect, Gloss, Morpheme, GlossSense, Sense, GLOSS_FIELDS_UPDATES,
                                         Corpus, Speaker, Document, GlossFrequency,
                                         LemmaIdgloss, LemmaIdglossTranslation, AnnotationIdglossTranslation, Translation,
                                         AnnotatedGloss, AnnotatedSentence, AnnotatedSentenceTranslation, Handshape,
@@ -1463,15 +1463,7 @@ class GlossDetailView(DetailView):
         self.request.session['last_used_dataset'] = self.last_used_dataset
 
         # these Gloss model fields are used by the javascript code to process push data for edits
-        context['gloss_update_fields'] =  (['release_information', 'dialect', 'useInstr', 'wordClass']
-                                           + ['handedness', 'domhndsh', 'subhndsh', 'handCh',
-                                              'relatArtic', 'locprim', 'contType', 'movSh', 'movDir',
-                                              'repeat', 'altern',
-                                              'relOriMov', 'relOriLoc', 'oriCh',
-                                              'locVirtObj', 'phonOth', 'mouthG', 'mouthing', 'phonetVar',
-                                              'weakdrop', 'weakprop']
-                                           + ['domhndsh_letter_or_number', 'subhndsh_letter_or_number',
-                                              'semField', 'derivHist', 'namEnt', 'valence'])
+        context['gloss_update_fields'] =  GLOSS_FIELDS_UPDATES
         context['show_field_row'] = show_fields_rows(gloss)
         context['selected_semField'] = [{"name": semfield.name, "machine_value": semfield.machine_value}
                                         for semfield in gloss.semField.all()]
@@ -1485,7 +1477,6 @@ class GlossDetailView(DetailView):
         # field excludeFromEcv is added here in order to show it in Gloss Edit
         for p_field in FIELDS['publication'] + ['excludeFromEcv']:
             context['publication_fields'].append([getattr(gl,p_field), p_field, labels[p_field], 'check'])
-        # context['release_information'] = [getattr(gl,'release_information'), 'release_information', labels['release_information']]
 
         # do not lazy evaluate these; evaluate before putting in context variables
         static_choice_lists, static_choice_list_colors = get_static_choice_lists_per_field()
@@ -1584,7 +1575,9 @@ class GlossDetailView(DetailView):
 
             if other_media.type is not None and gl.lemma.dataset.prominent_media is not None:
                 if other_media.type.machine_value == gl.lemma.dataset.prominent_media.machine_value:
-                    context['prominent_media'].append((media_okay, other_media.pk, path, file_type, other_media_filename, other_media.description))
+                    context['prominent_media'].append((media_okay, other_media.pk, path, file_type,
+                                                       other_media_filename,
+                                                       other_media.description if other_media.description else ''))
 
         context['other_media_field_choices'] = json.dumps(context['other_media_field_choices'])
 

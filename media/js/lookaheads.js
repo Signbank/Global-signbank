@@ -608,6 +608,8 @@ function enable_edit_panel(category) {
         $('#derivHist_value').trigger('editDerivHistField');
     }
     if (category === 'general') {
+        $('.read_only').hide();
+        $('.edit_only').show();
         $('.editdialectform').show();
         $('.editform').show();  // appears in gloss tags and affiliations
         $('#dialect_value').trigger('editDialectField');
@@ -629,6 +631,8 @@ function disable_edit_panel(category) {
         $('#lemma_buttons_group').hide();
         $('#lemma_forms_row').hide();
         $('.editform').hide();  // appears in gloss tags and affiliations
+        $('.read_only').show();
+        $('.edit_only').hide();
     }
     $('.empty_row_'+category).hide();
     $('.button-'+category+'-to-appear-in-edit-mode').hide();
@@ -947,7 +951,7 @@ $(document).ready(function() {
                 var field_key = $(field_lookup).attr("name");
                 var field_value = $(field_lookup).val();
                 update[field_key] = field_value;
-            } else if (['release_information'].includes(field)) {
+            } else if (['release_information', 'useInstr', 'locVirtObj', 'phonOth', 'mouthG', 'mouthing', 'phonetVar', 'iconImg'].includes(field)) {
                 var field_lookup = '#'+field+'_text';
                 var field_key = $(field_lookup).attr("name");
                 var field_value = $(field_lookup).val();
@@ -985,6 +989,34 @@ $(document).ready(function() {
 	     update['new_lemma_pk'] = new_lemma_pk;
          $.ajax({
             url : set_lemma_url,
+            type: 'POST',
+            data: update,
+            datatype: "json",
+            success : function(data) {
+                if (data.success) {
+                    setTimeout(function() {
+                        location.reload(true);
+                    }, 500);
+                }
+            },
+            error: function (xhr, status, error) {
+                alert("There was an error processing this change: " + xhr.responseText );
+            }
+         });
+     });
+     $('.quick_set_annotation').click(function(e)
+	 {
+         e.preventDefault();
+         var update = { 'csrfmiddlewaretoken': csrf_token };
+         var button_id = $(this).attr('id');
+         var glossid = $(this).attr('value');
+         var language_field = '#'+button_id.slice('button_'.length);
+	     var value = $(language_field).val();
+         var language_code_2char = $(this).attr('data-language');
+         update['language_code_2char'] = language_code_2char;
+	     update['value'] = value;
+         $.ajax({
+            url : url + "/dictionary/update/update_gloss_annotation/" + glossid,
             type: 'POST',
             data: update,
             datatype: "json",

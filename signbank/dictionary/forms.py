@@ -1808,6 +1808,7 @@ class GlossForm(forms.Form):
         self.fields['release_information'].initial = self.gloss.release_information
         self.fields['dialect'].initial = self.gloss.get_dialect_display()
         self.fields['wordClass'].initial = self.gloss.wordClass.name if self.gloss.wordClass else ''
+        self.fields['useInstr'].initial = self.gloss.useInstr
 
 
 class PhonologyForm(forms.Form):
@@ -1836,6 +1837,11 @@ class PhonologyForm(forms.Form):
     relOriMov = forms.CharField(label=_('Relative Orientation: Movement'))
     relOriLoc = forms.CharField(label=_('Relative Orientation: Location'))
     oriCh = forms.CharField(label=_('Orientation Change'))
+    locVirtObj = forms.CharField(label=_('Virtual Object'))
+    phonOth = forms.CharField(label=_('Phonology Other'))
+    mouthG = forms.CharField(label=_('Mouth Gesture'))
+    mouthing = forms.CharField(label=_('Mouthing'))
+    phonetVar = forms.CharField(label=_('Phonetic Variation'))
 
     class Meta:
         model = Gloss
@@ -1869,6 +1875,11 @@ class PhonologyForm(forms.Form):
         self.fields['relOriMov'].initial = self.gloss.relOriMov.name if self.gloss.relOriMov else ''
         self.fields['relOriLoc'].initial = self.gloss.relOriLoc.name if self.gloss.relOriLoc else ''
         self.fields['oriCh'].initial = self.gloss.oriCh.name if self.gloss.oriCh else ''
+        self.fields['locVirtObj'].initial = self.gloss.locVirtObj if self.gloss.locVirtObj else ''
+        self.fields['phonOth'].initial = self.gloss.phonOth if self.gloss.phonOth else ''
+        self.fields['mouthG'].initial = self.gloss.mouthG if self.gloss.mouthG else ''
+        self.fields['mouthing'].initial = self.gloss.mouthing if self.gloss.mouthing else ''
+        self.fields['phonetVar'].initial = self.gloss.phonetVar if self.gloss.phonetVar else ''
 
 
 class SemanticsForm(forms.Form):
@@ -1877,6 +1888,7 @@ class SemanticsForm(forms.Form):
     derivHist = forms.CharField(label=_('Derivation History'))
     namEnt = forms.CharField(label=_('Named Entity'))
     valence = forms.CharField(label=_('Valence'))
+    iconImg = forms.CharField(label=_('Iconic Image'))
 
     class Meta:
         model = Gloss
@@ -1890,3 +1902,4 @@ class SemanticsForm(forms.Form):
         self.fields['derivHist'].initial = self.gloss.get_derivHist_display()
         self.fields['namEnt'].initial = self.gloss.namEnt.name if self.gloss.namEnt else ''
         self.fields['valence'].initial = self.gloss.valence.name if self.gloss.valence else ''
+        self.fields['iconImg'].initial = self.gloss.iconImg if self.gloss.iconImg else ''
