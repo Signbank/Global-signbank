@@ -525,16 +525,6 @@ option:not(:checked) {
 .panel-heading:hover {
     background-color: #D2D2D2;
 }
-input[type="text"] {
-    background-color: rgba(50,50,50,10%);
-    border: none;
-}
-input[type="text"]:focus {
-    border: 1px solid red;
-}
-input[type="button"]:focus {
-    outline: none;
-}
 textarea {
     border: none;
     background-color: rgba(50,50,50,10%);
@@ -557,12 +547,14 @@ textarea:focus {
 </style>
 <style>
 input[type="text"] {
-    background-color: rgba(50,50,50,15%);
+    background-color: inherit;
     border: none;
+    outline: none;
 }
 input[type="text"]:focus {
     border: red;
     width: auto;
+    color: red;
 }
 .tt-input {
     background-color: rgba(50,50,50,15%) !important;
@@ -574,6 +566,22 @@ input[type="text"]:focus {
 }
 input .tt-hint {
     color: red;
+}
+.editform-morphology input {
+    background-color: inherit !important;
+    border: none;
+}
+.editform-morphology input:enabled {
+    color: red !important;
+    opacity: 1;
+}
+.editform-morphology input:disabled {
+    color: inherit !important;
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    border: none;
+    opacity: 1;
 }
 .editform-general input {
     background-color: inherit !important;
@@ -675,9 +683,12 @@ input .tt-hint {
 }
 .form-control:disabled {
     cursor: pointer;
+    color: inherit !important;
+    background-color: inherit !important;
 }
 .form-control:enabled input {
     color: red;
+    background-color: inherit !important;
 }
 
 .item {
@@ -1831,6 +1842,312 @@ input .tt-hint {
 {% endif %}
 
 
+   <!-- Morphology -->
+   <div class="panel panel-default panel-light">
+        <div class='panel-heading panel-light' data-toggle='collapse'
+             data-target='#morphology'>{% trans "Morphology" %}
+        </div>
+        <div id='morphology' class='collapse'>
+            <div class='pull-right' style="margin-right:15px;margin-top:20px;">
+                 {% if perms.dictionary.change_gloss %}
+                 <div>
+                    {% csrf_token %}
+                    <button type="button" class="btn btn-danger morphology-edit-dismiss button-morphology-to-appear-in-edit-mode"
+                            style="width:auto;padding:3px 12px;">{% trans "Dismiss" %}</button>
+                    <button id='enable_edit_morphology'
+                             class='btn btn-primary navbar-btn edit-mode'
+                             style="width:auto;padding:3px 12px;">{% trans "Edit Morphology" %}</button>
+                 </div>
+                 {% endif %}
+            </div>
+
+            <table id="morphology_table">
+                {% if sequential_morphology %}
+                <tr>
+                {% else %}
+                <tr class="empty_row_morphology">
+                {% endif %}
+               <td id="sequential_morphology_row">
+               <table class='table table-condensed table-condensed-light'>
+                   <tbody class="tbody tbody-light">
+                   <tr>
+                       <th colspan="3">{% trans "Sequential Morphology" %}</th>
+                   </tr>
+                   {% if gloss.parent_glosses.count > 0 %}
+                  <tr>
+                      <th style="width:2em;" class="morphology_delete_edit_only"></th>
+                      <th style="width:12em;">{% trans "Compound Part" %}</th>
+                      <th>{% trans "Component Sign" %}</th>
+                  </tr>
+
+                   {% for morphdef, translated_role, sign_display in sequential_morphology %}
+
+                   <tr>
+                       {% if "change_dataset" in dataset_perms %}
+                         <td style='width:2em;' class="morphology_delete_edit_only">
+                            <span class='glyphicon glyphicon-trash morphology-definition-delete' data-toggle='modal' data-target='#delete_morphology-definition_modal_{{morphdef.id}}'></span>
+
+                             <div class="modal fade" id="delete_morphology-definition_modal_{{morphdef.id}}" role="dialog" aria-labelledby="#modalTitleComp" aria-hidden="true">
+                                 <div class="modal-dialog modal-sm">
+                                    <div class="modal-content">
+                                        <div class='modal-header'>
+                                            <h2 id='modalTitleComp'>{% trans "Delete This Compound Part" %}</h2>
+                                        </div>
+                                        <div class='modal-body'>
+
+                                            <p>{% trans "Are you sure you want to delete this? This cannot be undone." %}</p>
+                                         </div>
+                                      <form action='{% url "dictionary:update_gloss" gloss.id %}' method='post'>
+                                          {% csrf_token %}
+                                          <input type='hidden' name='id' value='morphology-definition-delete_{{morphdef.id}}'>
+                                          <input type='hidden' name='value' value='confirmed'>
+                                          <div class="modal-footer">
+                                            <button type="button" class="btn btn-default btn-default-light" data-dismiss="modal">{% trans "Cancel" %}</button>
+                                            <input type="submit" class="btn btn-primary" value='{% trans "Confirm Delete" %}'>
+                                          </div>
+                                      </form>
+
+                                    </div>
+                                  </div>
+                             </div>
+
+                        </td>
+                        {% else %}
+                        <td style='width:2em;' class="morphology_delete_edit_only"></td>
+                        {% endif %}
+                        <td class="td td-light" id='morphology-definition-role_{{morphdef.id}}' >{{translated_role}}</td>
+                        <td class="td td-light" id='morphology-definition-morpheme_{{morphdef.id}}'><a href='{% url "dictionary:admin_gloss_view" pk=morphdef.morpheme.pk %}'>{{sign_display}}</a></td>
+                   {% endfor %}
+
+            {% else %}
+            <tr><td><i>({% trans "If this is a compound, use [Edit] to define its components" %})</i></td></tr>
+            {% endif %}
+           </tbody>
+           </table>
+
+            {% if "change_dataset" in dataset_perms %}
+            <form id='add_morphologydefinition_form'
+                  onsubmit='return validateForm("add_morphologydefinition_form","morpheme_id","parent_gloss_id",
+                                                "Please choose a gloss for Add Component Morphology.",
+                                                "Component gloss must be different from this gloss for Add Component Morphology.")'
+                  method='post' action="{% url 'dictionary:add_morphologydefinition' %}">
+               {% csrf_token %}
+               <input type='hidden' name='parent_gloss_id' value='{{gloss.id}}'>
+               <table class='table table-condensed'>
+                   <tr>
+                       <td style="width:2em;" class="morphology_delete_edit_only"></td>
+                       <td class="td td-light" style="width:12em;">{{morphologyform.role}}</td>
+                       <td class="td td-light editform-morphology">
+                           <input class='form-control form-control-light glosstypeahead glosstypeahead-light' size="80"
+                                  placeholder='{% trans "Annotation ID Gloss" %}' id="morpheme_target" maxlength="80">
+                           <input type="hidden" name="morpheme_id" value="{{morphologyform.morpheme_id.value|default:''}}" id="morpheme_target_id" >
+                       </td>
+                       <td><input id="add_component" class='btn btn-primary' value='{% trans "Add Component" %}' type='submit'></td>
+                   </tr>
+               </table>
+            </form>
+            {% endif %}
+            </td>
+            </tr>
+            {% if simultaneous_morphology %}
+            <tr>
+            {% else %}
+            <tr class="empty_row_morphology">
+            {% endif %}
+            <td id="simultaneous_morphology_row">
+            <table class='table table-condensed'>
+                <tr>
+                    <th colspan="4">{% trans "Simultaneous Morphology" %}</th>
+                </tr>
+                {% if SHOW_DATASET_INTERFACE_OPTIONS %}
+                {% if count_morphemes_in_dataset < 1 %}
+                <tr>
+                    <td colspan="4"><i>({% trans "There are no morphemes in the dataset of this gloss." %})</i></td>
+                </tr>
+                {% else %}
+                <tr>
+                    <th style="width:2em;" class="morphology_delete_edit_only"></th>
+                    <th style="width:30em;">{% trans "Morpheme Gloss" %}</th>
+                    <th colspan="2">{% trans "Meaning in This Sign" %}</th>
+                </tr>
+                {% endif %}
+                {% else %}
+                <tr>
+                    <th style="width:2em;" class="morphology_delete_edit_only"></th>
+                    <th style="width:30em;">{% trans "Morpheme Gloss" %}</th>
+                    <th colspan="2">{% trans "Meaning in This Sign" %}</th>
+                </tr>
+                {% endif %}
+
+                {% for morpheme, morph_display, morpheme_type in simultaneous_morphology %}
+                <tr>
+                    <!-- Facility to delete this morpheme -->
+                    {% if "change_dataset" in dataset_perms %}
+                     <td style='width:2em;' class="morphology_delete_edit_only">
+                        <span class='glyphicon glyphicon-trash morpheme-definition-delete' data-toggle='modal' data-target='#delete_morpheme-definition_modal_{{morpheme.pk}}'></span>
+
+                         <div class="modal fade" id="delete_morpheme-definition_modal_{{morpheme.pk}}" role="dialog" aria-labelledby="#modalTitleMrp" aria-hidden="true">
+                             <div class="modal-dialog modal-sm">
+                                <div class="modal-content">
+                                    <div class='modal-header'>
+                                        <h2 id='modalTitleMrp'>{% trans "Delete This Morpheme" %}</h2>
+                                    </div>
+                                    <div class='modal-body'>
+                                        <p>{% trans "Are you sure you want to delete this? This cannot be undone." %}</p>
+                                     </div>
+                                  <form action='{% url "dictionary:update_gloss" gloss.id %}' method='post'>
+                                      {% csrf_token %}
+                                      <input type='hidden' name='id' value='morpheme-definition-delete_{{morpheme.pk}}'>
+                                      <input type='hidden' name='value' value='confirmed'>
+                                      <div class="modal-footer">
+                                        <button type="button" class="btn btn-default btn-default-light" data-dismiss="modal">{% trans "Cancel" %}</button>
+                                        <input type="submit" class="btn btn-primary" value='{% trans "Confirm Delete" %}'>
+                                      </div>
+                                  </form>
+
+                                </div>
+                              </div>
+                         </div>
+
+                    </td>
+                    {% else %}
+                    <td style='width:2em;' class="morphology_delete_edit_only"></td>
+                    {% endif %}
+                    <td id='morpheme-definition_{{morpheme.pk}}'>
+                        <a href='{% url "dictionary:admin_morpheme_view" pk=morpheme.morpheme.pk %}'>{{morph_display}} ({{morpheme_type}})</a></td>
+                    <td id='morpheme-definition-meaning_{{morpheme.pk}}'>{{morpheme.role}}</td>
+               </tr>
+                {% endfor %}
+            </table>
+
+            <!-- Facilitate adding and deleting morphemes that are used in this sign -->
+            {% if "change_dataset" in dataset_perms %}
+            {% if count_morphemes_in_dataset %}
+            <form id='add_morphemedefinition_form'
+                  onsubmit='return validateForm("add_morphemedefinition_form","morph_id","host_gloss_id",
+                                                "Please choose a morpheme for Add Morpheme Morphology.",
+                                                "Morpheme must be different from this gloss for Add Morpheme Morphology.")'
+                  method='post' action="{% url 'dictionary:add_morphemedefinition' glossid=gloss.id %}">
+               {% csrf_token %}
+               <input type='hidden' name='host_gloss_id' value='{{gloss.pk}}'>
+               <table class='table table-condensed'>
+                   <tr>
+                       <td style="width:2em;" class="morphology_delete_edit_only"></td>
+                       <td class="td td-light editform-morphology" style="width:700px;" colspan="3">
+                           <input class='form-control form-control-light morphtypeahead morphtypeahead-light' size="100" type="text"
+                                  placeholder='{% trans "Morpheme Gloss" %}' id="morpheme_gloss" value="" maxlength="100">
+                           <input type="hidden" name='morph_id' id="morpheme_gloss_id"
+                                  value="{{morphemeform.morph_id.value|default:''}}">
+<!--                       </td>-->
+<!--                       <td class="td td-light">-->
+                           <input class='form-control form-control-light' placeholder='{% trans "Meaning in This Sign" %}'
+                                  name='description' value="{{morphemeform.description.value|default:''}}" type="text" >
+                       </td>
+                       <td>
+                           <input class='btn btn-primary' value='{% trans "Add Morpheme" %}' type='submit'>
+                       </td>
+                   </tr>
+               </table>
+               {# spacing div to allow room for typeahead dropdown #}
+               <div style='height: 10em'></div>
+             </form>
+            {% endif %}
+            {% endif %}
+            </td>
+            </tr>
+            {% if blend_morphology %}
+            <tr>
+            {% else %}
+            <tr class="empty_row_morphology">
+            {% endif %}
+            <td id="blend_morphology_row" >
+            <table class='table table-condensed'>
+                <tr>
+                    <th colspan="4">{% trans "Blend Morphology" %}</th>
+                </tr>
+                <tr>
+                    <th style="width:2em;" class="morphology_delete_edit_only"></th>
+                    <th style="width:22em;">{% trans "Blend Gloss" %}</th>
+                    <th colspan="2">{% trans "Role in This Sign" %}</th>
+                </tr>
+                {% for blend, blend_display in blend_morphology %}
+                <tr>
+                    <!-- Facility to delete this blend -->
+                    {% if "change_dataset" in dataset_perms %}
+                     <td style='width:2em;' class="morphology_delete_edit_only">
+                        <span class='glyphicon glyphicon-trash blend-definition-delete' data-toggle='modal'
+                              data-target='#delete_blend-definition_modal_{{blend.pk}}'></span>
+
+                         <div class="modal fade" id="delete_blend-definition_modal_{{blend.pk}}" role="dialog"
+                              aria-labelledby="#modalTitleBlend" aria-hidden="true">
+                             <div class="modal-dialog modal-sm">
+                                <div class="modal-content">
+                                    <div class='modal-header'>
+                                        <h2 id='modalTitleBlend'>{% trans "Delete This Blend" %}</h2>
+                                    </div>
+                                    <div class='modal-body'>
+
+                                        <p>{% trans "Are you sure you want to delete this? This cannot be undone." %}</p>
+                                     </div>
+                                  <form action='{% url "dictionary:update_gloss" gloss.id %}' method='post'>
+                                      {% csrf_token %}
+                                      <input type='hidden' name='id' value='blend-definition-delete_{{blend.pk}}'>
+                                      <input type='hidden' name='value' value='confirmed'>
+                                      <div class="modal-footer">
+                                        <button type="button" class="btn btn-default btn-default-light" data-dismiss="modal">{% trans "Cancel" %}</button>
+                                        <input type="submit" class="btn btn-primary" value='{% trans "Confirm Delete" %}'>
+                                      </div>
+                                  </form>
+
+                                </div>
+                              </div>
+                         </div>
+
+                    </td>
+                    {% else %}
+                    <td style='width:2em;' class="morphology_delete_edit_only"></td>
+                    {% endif %}
+                    <td id='blend-definition_{{blend.pk}}'><a href='{% url "dictionary:admin_gloss_view" pk=blend.glosses.pk %}'>{{blend_display}}</a></td>
+                    <td id='blend-definition-role_{{blend.pk}}'>{{blend.role}}</td>
+               </tr>
+                {% endfor %}
+            </table>
+
+            <!-- Facilitate adding and deleting blends that are used in this sign -->
+            {% if "change_dataset" in dataset_perms %}
+            <form id='add_blenddefinition_form'
+                  onsubmit='return validateForm("add_blenddefinition_form","blend_id","host_gloss_id",
+                                                "Please choose a gloss for Add Blend Morphology.",
+                                                "Blend gloss must be different from this gloss for Add Blend Morphology.")'
+                  method='post' action="{% url 'dictionary:add_blenddefinition' glossid=gloss.id %}">
+               {% csrf_token %}
+               <input type='hidden' name='host_gloss_id' value='{{gloss.pk}}'>
+               <table class='table table-condensed'>
+                   <tr>
+                       <td style="width:2em;" class="morphology_delete_edit_only"></td>
+                       <td class="td td-light editform-morphology" style="width:22em;">
+                           <input class='form-control form-control-light glosstypeahead glosstypeahead-light' size="80"
+                                  placeholder='{% trans "Blend Gloss" %}' id="morpheme_blend" maxlength="80" type="text" >
+                           <input type="hidden" name='blend_id' id="morpheme_blend_id"
+                                  value="{{blendform.blend_id.value|default:''}}" >
+                       </td>
+                       <td class="td td-light">
+                           <input class='form-control form-control-light' placeholder='{% trans "Role in This Sign" %}'
+                                  name='role' required="" value="{{blendform.role.value|default:''}}" type="text" ></td>
+                       <td><input class='btn btn-primary' value='{% trans "Add Blend" %}' type='submit'></td>
+                   </tr>
+               </table>
+               {# spacing div to allow room for typeahead dropdown #}
+               <div style='height: 10em'></div>
+            </form>
+            {% endif %}
+            </td>
+            </tr>
+        </table>
+        </div>
+
+    </div>
+
     <!-- Phonology -->
 	<div class="panel panel-default panel-light">
         <div class='panel-heading panel-light' id='phonology_heading'
@@ -2514,8 +2831,8 @@ input .tt-hint {
                    <tr>
                        <td class="td td-light">{{relationform.role_fk}}</td>
                        <td class="td td-light">
-                           <input class='form-control form-control-light glosstypeahead glosstypeahead-light' size="100"
-                                  placeholder='{% trans "Annotation ID Gloss" %}' id="relation_target" maxlength="200">
+                           <input class='form-control form-control-light glosstypeahead glosstypeahead-light' size="80"
+                                  placeholder='{% trans "Annotation ID Gloss" %}' id="relation_target" maxlength="80">
                            <input type="hidden" name="targetid" value="" id="relation_target_id" >
                        </td>
                        <td><input class='btn btn-primary' value='Add Relation' type='submit'></td>

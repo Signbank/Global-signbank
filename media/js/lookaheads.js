@@ -513,6 +513,28 @@ function glosstypeahead(target) {
       });
 };
 
+var morph_bloodhound = new Bloodhound({
+      datumTokenizer: function(d) { return d.tokens; },
+      queryTokenizer: Bloodhound.tokenizers.whitespace,
+      remote: url+'/dictionary/ajax/morph/%QUERY'
+    });
+
+morph_bloodhound.initialize();
+
+function morphtypeahead(target) {
+
+     $(target).typeahead(null, {
+          name: 'morphtarget',
+          displayKey: 'annotation_idgloss',
+          source: morph_bloodhound.ttAdapter(),
+          templates: {
+              suggestion: function(gloss) {
+                  return("<p><strong>" + gloss.annotation_idgloss + "</strong></p>");
+              }
+          }
+      });
+};
+
 $("#show_set_lemma_form").on('click', function() {
     $('#lemma_forms_row').show();
     $("#set_lemma_form").show();
@@ -535,6 +557,47 @@ $(".lemma-form-dismiss").on('click', function() {
         $('#add_lemma_form').hide();
     }
     $('#lemma_buttons').show();
+});
+
+function disable_edit_morphology() {
+    $('#add_morphologydefinition_form').hide();
+    $('#add_morphemedefinition_form').hide();
+    $('#add_blenddefinition_form').hide();
+    $('.morphology_delete_edit_only').each(function() {
+        $(this).hide();
+    });
+    $('.button-morphology-to-appear-in-edit-mode').hide();
+    $('.empty_row_morphology').each(function() {
+        $(this).hide();
+    });
+}
+
+$(".morphology-edit-dismiss").on('click', function() {
+    $('#add_morphologydefinition_form').hide();
+    $('#add_morphemedefinition_form').hide();
+    $('#add_blenddefinition_form').hide();
+    $('.morphology_delete_edit_only').each(function() {
+        $(this).hide();
+    });
+    $(this).hide();
+    $('#enable_edit_morphology').show();
+    $('.empty_row_morphology').each(function() {
+        $(this).hide();
+    });
+});
+
+$("#enable_edit_morphology").on('click', function() {
+    $('#add_morphologydefinition_form').show();
+    $('#add_morphemedefinition_form').show();
+    $('#add_blenddefinition_form').show();
+    $('.morphology_delete_edit_only').each(function() {
+        $(this).show();
+    });
+    $('.empty_row_morphology').each(function() {
+        $(this).show();
+    });
+    $('.button-morphology-to-appear-in-edit-mode').show();
+    $(this).hide();
 });
 
 function disable_edit_relations() {
@@ -933,14 +996,25 @@ $(document).ready(function() {
     $('.glosstypeahead').bind('typeahead:selected', function(ev, suggestion) {
           $(this).parent().next().val(suggestion.pk);
           var target_gloss_lookahead = $(this).attr("id");
-//          console.log('location_gloss_lookahead: '+location_gloss_lookahead);
           busy_editing = true;
-          var width_of_new_value = suggestion.name.length * 10 + 30;
+          var width_of_new_value = suggestion.annotation_idgloss.length * 8 + 20;
           $(this).css("width", width_of_new_value + "px");
-          $('#'+target_gloss_lookahead+'id').attr('value', suggestion.pk);
+          $('#'+target_gloss_lookahead+'_id').attr('value', suggestion.pk);
     });
     $('.glosstypeahead').on("input", function() {
           $(this).parent().next().val("");
+    });
+    morphtypeahead($('.morphtypeahead'));
+    $('.morphtypeahead').bind('typeahead:selected', function(ev, suggestion) {
+          $(this).parent().next().val(suggestion.pk);
+          var target_morph_lookahead = $(this).attr("id");
+          busy_editing = true;
+          var width_of_new_value = suggestion.annotation_idgloss.length * 8 + 20;
+          $(this).css("width", width_of_new_value + "px");
+          $('#'+target_morph_lookahead+'_id').attr('value', suggestion.pk);
+    });
+    $('.morphtypeahead').on("input", function() {
+          $(this).parent().next().val("")
     });
     $('.select_weakdrop').on('change', function() {
           busy_editing = true;
@@ -1123,5 +1197,6 @@ $(document).ready(function() {
     disable_edit_panel('phonology');
     disable_edit_panel('semantics');
     disable_edit_relations();
+    disable_edit_morphology();
     ajaxifyTagForm();
 });

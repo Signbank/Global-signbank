@@ -1325,9 +1325,8 @@ class GlossDetailView(DetailView):
 
         context['simultaneous_morphology'] = get_simultaneous_morphology(gloss, interface_language)
         context['simultaneous_morphology_display'] = [(sm[0].morpheme.pk, sm[1]) for sm in context['simultaneous_morphology']]
-
-        context['morphdefs'] = get_sequential_morphology(gloss, interface_language)
-        context['sequential_morphology_display'] = [(md[0].morpheme.pk, md[2]) for md in context['morphdefs']]
+        context['sequential_morphology'] = get_sequential_morphology(gloss, interface_language)
+        context['sequential_morphology_display'] = [(md[0].morpheme.pk, md[2]) for md in context['sequential_morphology']]
 
         blend_morphology = []
         for ble_morph in gloss.blend_morphology.filter(parent_gloss__archived__exact=False,
@@ -5769,14 +5768,14 @@ def morph_ajax_complete(request, prefix):
     query = Q(lemma__dataset=dataset, annotationidglosstranslation__text__istartswith=prefix)
     qs = Morpheme.objects.filter(query).distinct()
 
-    for g in qs:
-        annotationidglosstranslations = g.annotationidglosstranslation_set.all()
+    for morph in qs:
+        annotationidglosstranslations = morph.annotationidglosstranslation_set.all()
         if not annotationidglosstranslations:
             continue
         # if there are results, just grab the first one
         default_annotationidglosstranslation = annotationidglosstranslations.first().text
-        result.append({'annotation_idgloss': default_annotationidglosstranslation, 'idgloss': g.idgloss,
-                       'pk': "%s" % g.id})
+        result.append({'annotation_idgloss': f'{morph.pk}: {morph.to_string()}', 'idgloss': morph.idgloss,
+                       'pk': "%s" % morph.id})
 
     return JsonResponse(result, safe=False)
 

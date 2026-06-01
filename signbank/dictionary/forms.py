@@ -611,12 +611,14 @@ class GlossMorphologyForm(forms.Form):
         self.fields['role'].choices = list(FieldChoice.objects.filter(field='MorphologyType').order_by('machine_value')
                                            .values_list('pk', 'name'))
 
-
 class GlossMorphemeForm(forms.Form):
     """Specify simultaneous morphology components belonging to a Gloss"""
 
     host_gloss_id = forms.CharField(label=_('Host Gloss'))
-    description = forms.CharField(label=_('Meaning'), required=False)
+    description = forms.CharField(label=_('Meaning'),
+                                  widget=forms.Textarea(attrs={'cols': 60, 'rows': 1,
+                                                               'placeholder': _("Meaning in This Sign")}),
+                                  required=False)
     morph_id = forms.CharField(label=_('Morpheme'))
 
 
@@ -624,7 +626,9 @@ class GlossBlendForm(forms.Form):
     """Specify simultaneous morphology components belonging to a Gloss"""
 
     host_gloss_id = forms.CharField(label=_('Host Gloss'))
-    role = forms.CharField(label=_('Role'))
+    role = forms.CharField(label=_('Role'), widget=forms.Textarea(attrs={'cols': 80, 'rows': 1,
+                                                                         'placeholder': _("Role in This Sign")}),
+                           required=False)
     blend_id = forms.CharField(label=_('Blend'))
 
 
