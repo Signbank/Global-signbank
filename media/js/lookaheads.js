@@ -491,6 +491,28 @@ function lemmatypeahead(target) {
       });
 };
 
+var gloss_bloodhound = new Bloodhound({
+      datumTokenizer: function(d) { return d.tokens; },
+      queryTokenizer: Bloodhound.tokenizers.whitespace,
+      remote: url+'/dictionary/ajax/gloss/'+gloss_dataset_id+'/%QUERY'
+    });
+
+gloss_bloodhound.initialize();
+
+function glosstypeahead(target) {
+
+     $(target).typeahead(null, {
+          name: 'glosstarget',
+          displayKey: 'annotation_idgloss',
+          source: gloss_bloodhound.ttAdapter(),
+          templates: {
+              suggestion: function(gloss) {
+                  return("<p><strong>" + gloss.annotation_idgloss +  "</strong></p>");
+              }
+          }
+      });
+};
+
 $("#show_set_lemma_form").on('click', function() {
     $('#lemma_forms_row').show();
     $("#set_lemma_form").show();
@@ -513,6 +535,32 @@ $(".lemma-form-dismiss").on('click', function() {
         $('#add_lemma_form').hide();
     }
     $('#lemma_buttons').show();
+});
+
+function disable_edit_relations() {
+    $('#add_relation_form').hide();
+    $('.relation_delete_edit_only').each(function() {
+        $(this).hide();
+    });
+    $('.button-relations-to-appear-in-edit-mode').hide();
+}
+
+$(".relation-edit-dismiss").on('click', function() {
+    $('#add_relation_form').hide();
+    $('.relation_delete_edit_only').each(function() {
+        $(this).hide();
+    });
+    $(this).hide();
+    $('#enable_edit_relations').show();
+});
+
+$("#enable_edit_relations").on('click', function() {
+    $('#add_relation_form').show();
+    $('.relation_delete_edit_only').each(function() {
+        $(this).show();
+    });
+    $('.button-relations-to-appear-in-edit-mode').show();
+    $(this).hide();
 });
 
 function ajaxifyTagForm() {
@@ -879,7 +927,20 @@ $(document).ready(function() {
           $('#new_lemma_pk').attr('value', suggestion.pk);
     });
     $('.lemmatypeahead').on("click", function() {
-          $(this).parent().next().val("")
+          $(this).parent().next().val("");
+    });
+    glosstypeahead($('.glosstypeahead'));
+    $('.glosstypeahead').bind('typeahead:selected', function(ev, suggestion) {
+          $(this).parent().next().val(suggestion.pk);
+          var target_gloss_lookahead = $(this).attr("id");
+//          console.log('location_gloss_lookahead: '+location_gloss_lookahead);
+          busy_editing = true;
+          var width_of_new_value = suggestion.name.length * 10 + 30;
+          $(this).css("width", width_of_new_value + "px");
+          $('#'+target_gloss_lookahead+'id').attr('value', suggestion.pk);
+    });
+    $('.glosstypeahead').on("input", function() {
+          $(this).parent().next().val("");
     });
     $('.select_weakdrop').on('change', function() {
           busy_editing = true;
@@ -1061,5 +1122,6 @@ $(document).ready(function() {
     disable_edit_panel('general');
     disable_edit_panel('phonology');
     disable_edit_panel('semantics');
+    disable_edit_relations();
     ajaxifyTagForm();
 });
