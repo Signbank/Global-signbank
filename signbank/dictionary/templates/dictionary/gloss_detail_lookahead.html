@@ -874,13 +874,13 @@ input .tt-hint {
                             <form id="use_default_query_parameters" action='' method="POST">
                             {% csrf_token %}
                             <button type='submit' class="btn btn-primary" name="use_default_query_parameters"
-                                    value="default_parameters"><a>{% trans "Run Query" %}</a></button>
+                                    value="default_parameters"><span>{% trans "Run Query" %}</span></button>
                             <input type="hidden" id="default_parameters" name="default_parameters" value="{{json_default_query_parameters}}">
                             <button type="button" class="btn btn-default btn-default-light" data-dismiss="modal">{% trans "Dismiss" %}</button>
                             </form>
                         {% endif %}
                     {% else %}
-                        <button class="btn-query"><a class="btn btn-query" href="{{PREFIX_URL}}/signs/search/?query" type='submit'
+                        <button class="btn-query"><a href="{{PREFIX_URL}}/signs/search/?query" type='submit'
                                     style="text-decoration:none;padding-bottom:10px;color:white;">{% trans "Run Query" %}</a></button>
                         <button type="button" class="btn btn-default btn-default-light" data-dismiss="modal">{% trans "Dismiss" %}</button>
                     {% endif %}
@@ -929,7 +929,7 @@ input .tt-hint {
 {% if "change_dataset" in dataset_perms %}
     <div class='pull-right' style="margin-right:15px;margin-top:120px;">
 
-         {% if perms.dictionary.add_gloss %}
+         {% if perms.dictionary.add_gloss and selected_datasets|length > 1 %}
          <button id='copy_gloss_btn' class='btn btn-primary copy-button' data-toggle='modal' data-target='#copy_gloss_modal'>{% trans "Copy" %}</button>
 
           <div class="modal fade" id="copy_gloss_modal" role="dialog" aria-labelledby="#modalGlossCopy" aria-hidden="true">
@@ -1072,9 +1072,359 @@ input .tt-hint {
 <div class="clearfix"></div>
 
 <div id="definitionblock">
+
     {% url 'dictionary:protected_media' '' as protected_media_url %}
     <div id="leftblock">
+    <div id="videocontainer">
+    {% if gloss.has_perspective_videos %}
+    <div id="buttonbar-top" style="background-color:transparent;height:auto;">
+    {% for perspvideo in gloss.get_perspective_videos %}
+        {% if perspvideo.perspective == 'left' %}
+        <button class="btn video_button" id="show_left" style="font-size:18px;background-color:transparent;">
+            <span class="glyphicon glyphicon-facetime-video" style="transform:rotateZ(-30deg);rotateY(0deg);height:auto;"></span>
+        </button>
+        {% endif %}
+    {% endfor %}
+    <button class="btn video_button active" id="show_middle" style="font-size:18px;background-color:transparent;">
+        <span class="glyphicon glyphicon-user"></span>
+    </button>
+    {% for perspvideo in gloss.get_perspective_videos %}
+        {% if perspvideo.perspective == 'right' %}
+        <button class="btn video_button" id="show_right" style="font-size:18px;background-color:transparent;">
+            <span class="glyphicon glyphicon-facetime-video" style="transform:rotateZ(210deg);height:auto;"></span></button>
+        {% endif %}
+    {% endfor %}
     </div>
+    {% endif %}
+    {% if gloss.has_video %}
+
+        <div id="player" style="">
+            <video id='videoplayer_middle' src="{{protected_media_url}}{{gloss.get_video_url}}?v={{ gloss.get_video_object.pk }}"
+                   playsinline autoplay muted></video>
+
+        {% for perspvideo in gloss.get_perspective_videos %}
+            <video id='videoplayer_{{perspvideo.perspective}}' src="{{protected_media_url}}{{perspvideo.get_video_path}}?v={{ perspvideo.pk }}"
+                   playsinline autoplay muted></video>
+        {% endfor %}
+        </div>
+        <div id="buttonbar" style="background-color:transparent;">
+        <button class="btn" id="play_perspective" onclick="play_perspective();"
+                style="font-size:16px;background-color:transparent;"><span class="glyphicon glyphicon-play"></span></button>
+        <button class="btn" id="pause_perspective" onclick="pause_perspective();"
+                style="font-size:16px;background-color:transparent;"><span class="glyphicon glyphicon-pause"></span></button>
+        <button class="btn" id="fullscreen_perspective" onclick="openFullscreen();"
+                style="font-size:16px;background-color:transparent;"><span class="glyphicon glyphicon-fullscreen"></span></button>
+        </div>
+        <br>
+    {% else %}
+    <div id='player'>
+     <img id='novideo' src='{{STATIC_URL}}images/no-video-ngt.png'>
+    </div>
+    {% endif %}
+
+    </div>
+
+    <div>
+        {% if gloss.get_image_path %}
+            <img id="imageframe" src="{{protected_media_url}}{{gloss.get_image_url}}?v={{ gloss.get_video_object.pk }}" style="height:259px;width:auto;">
+        {% endif %}
+    </div>
+
+    {% if "change_dataset" in dataset_perms %}
+    <div class='editform'>
+        <fieldset>
+            <h4>{% trans "Upload New Video" %}</h4>
+            <label for="{{videoform.videofile.id_for_label}}" class="drop-container" id="drop-container-video">
+              <div id="videogallery" class="gallery"></div>
+              <span id = "drop-container-title-video" class="drop-title">Drop video here<br>or...</span>
+              <label id="drop-container-video-status" class="hide">Status here</label>
+              <form action="{{PREFIX_URL}}/video/upload/" method="post" enctype="multipart/form-data">
+                {% csrf_token %}
+                <input type='hidden' name='redirect' value='{{PREFIX_URL}}/dictionary/gloss/{{gloss.pk}}/'>
+                <input type='hidden' name='object_type' value='gloss_video'>
+                <table>
+                  <tr>
+                    <td>{{videoform.videofile}}</td>
+                  </tr>
+                  <tr>
+                    <td id="video-buttons">
+                        <input type='hidden' name='object_id' value='{{gloss.pk}}'>
+                        <input class='btn btn-primary' onclick='removeVideoUploads(true)' value='Remove'>
+                        <input class='btn btn-primary' type='submit' value='Upload' />
+                    </td>
+                  </tr>
+                </table>
+              </form>
+            </label>
+        </fieldset>
+
+        <!-- Trigger/Open the Video Record Modal -->
+        <br> or <input id="recordBtn" class="btn btn-primary" value='Record a video'>
+
+        <!-- The Modal -->
+        <div id="recordModal" class="modal">
+
+            <!-- Modal content -->
+            <div class="modal-content">
+
+                <span class="close">&times;</span>
+
+                <div id="container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>
+                                    <div class="wrap">
+                                        <video src="" id="gum" playsinline autoplay muted></video>
+                                        <div class="overlay">
+                                            <img id="img0" class="over" src='{{STATIC_URL}}images/overlay0.png'>
+                                            <img id="img1" class="over invis" src='{{STATIC_URL}}images/overlay1.png'>
+                                            <img id="img2" class="over invis" src='{{STATIC_URL}}images/overlay2.png'>
+                                            <img id="img3" class="over invis" src='{{STATIC_URL}}images/overlay3.png'>
+                                        </div>
+                                    </div>
+                                </th>
+                                <th>
+                                    <div class="wrap">
+                                        <video id="recorded"></video>
+                                    </div>
+                                </th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                            <td>
+                                <button class="btn" id="start">Start Camera</button>
+                                <button class="btn" id="record" disabled>Record</button>
+                            </td>
+                            <td>
+                                <button class="btn" id="play" disabled>Play</button>
+                                <button class="btn" id="download" disabled>Download</button><br>
+                                <form action="{{PREFIX_URL}}/video/upload/" method="post" enctype="multipart/form-data">
+                                    {% csrf_token %}
+                                    <input type='hidden' name='redirect' value='{{PREFIX_URL}}/dictionary/gloss/{{gloss.pk}}/'>
+                                    <input type='hidden' name='object_type' value='gloss_video'>
+                                    <input type='hidden' name='object_id' value='{{gloss.pk}}'>
+                                    <input type='file' name="videofile" id="{{videoform.videofile.id_for_label}}_recorded">
+                                    <input type='hidden' name='recorded' value='True'>
+                                    <input class="btn btn-primary" type="submit" id="uploadrecorded" value ='Upload' disabled>
+                                </form>
+                            </td>
+                            </tr>
+                        </tbody>
+                        </table>
+                    </label>
+                </div>
+
+                <div>
+                    <span id="errorMsg"></span>
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+    <div class='editform'>
+        <fieldset>
+            <h4>{% trans "Upload New Citation Form Image" %}</h4>
+            <label for='imageform_imagefile' class="drop-container" id="drop-container-image">
+              <div id="imagegallery" class="gallery"></div>
+              <span id = "drop-container-title-image"  class="drop-title">Drop image here<br>or...</span>
+              <label id="drop-container-image-status" class="hide">Status here</label>
+              <form action="{{PREFIX_URL}}/image/upload/" method="post" enctype="multipart/form-data">
+                {% csrf_token %}
+                <input type='hidden' name='redirect' value='{{PREFIX_URL}}/dictionary/gloss/{{gloss.pk}}/'>
+                <table>
+                  <tr>
+                    <td id="imageform_imagefile">{{imageform.imagefile}}</td>
+                  </tr>
+                  <tr>
+                    <td id="image-buttons">
+                        <input type='hidden' name='gloss_id' value='{{gloss.pk}}'>
+                        <input class = 'btn btn-primary' onclick='removeImageUploads(true)' value='Remove'>
+                        <input class='btn btn-primary' type='submit' value='Upload'/>
+                    </td>
+                  </tr>
+                </table>
+              </form>
+            </label>
+        </fieldset>
+    </div>
+    {% endif %}
+
+    {% if gloss.has_video and "change_dataset" in dataset_perms %}
+        <div class="editform">
+            <h4>{% trans "Create Citation Form Image from Current Video" %}</h4>
+            <a href="{% url 'dictionary:create_citation_image'  gloss.id %}" class="btn btn-primary">{% trans "Create" %}</a>
+
+            <button id='quick_create_stills'
+                class="quick_createstills btn btn-primary" style="width:auto;"
+                name='quick_createstills'
+                data-glossid='{{gloss.id}}'
+                type="submit" >{% trans "Choose Still Image" %}
+            </button>
+        </div>
+        <div class="modal fade" id="stills_modal" tabindex="-1" role="dialog" aria-labelledby="#modalTitleStills" aria-hidden="true">
+             <div class="modal-dialog modal-lg left-modal">
+                <div class="modal-content">
+                    <div class='modal-header'>
+                        <h2 id='modalTitleStills'>{% trans "Choose a Still Image" %}</h2>
+                    </div>
+                    <div class='modal-body'>
+
+                        <div style="width:800px;">
+                            <table class='table table-condensed'>
+                                <tbody class="tbody tbody-light">
+                                    <tr>
+                                        <td id="stills_gloss_video">
+
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <input type="submit" class="choose_still btn btn-primary" id="choose_still" data-glossid="{{gloss.id}}"
+                               style="width:auto;" value='{% trans "Choose Image" %}'>
+                        <button type="button" class="btn btn-primary" data-dismiss="modal">{% trans "Dismiss" %}</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    {% endif %}
+
+    {% if "change_dataset" in dataset_perms %}
+    <div class="editform">
+        <fieldset>
+         <h4>{% trans "Delete Media" %}</h4>
+            <table>
+                <tr><td>
+                <form class="formbutton" action="{{PREFIX_URL}}/video/delete/{{gloss.pk}}" method='post'>
+                        {% csrf_token %}<input class='btn btn-danger' id='delete_video' type='submit' value='Delete video'>
+                </form>
+                <form class="formbutton" action="{{PREFIX_URL}}/image/delete/{{gloss.pk}}" method='post'>
+                        {% csrf_token %}<input class='btn btn-danger' id='delete_image' type='submit' value='Delete image'>
+                </form>
+                </td></tr>
+            </table>
+         </fieldset>
+    </div>
+    {% endif %}
+
+<br><br>
+<!-- Perspective videos -->
+   <div class="edit_only panel panel-default panel-light">
+        <div class='panel-heading panel-light' data-toggle='collapse'
+             data-target='#perspectivevideos'>{% trans "Upload Perspective Videos" %}
+        </div>
+        <div id='perspectivevideos' class='collapse in'>
+            <div class="panel panel-default panel-light">
+            {% if gloss.has_perspective_videos %}
+               <table class='table table-responsive' style="text-align: left;width:100%;">
+                <tr style="overflow-y:auto;">
+                    <td style="display:inline-block;">
+                    {% for perspvideo in gloss.get_perspective_videos %}
+                        <div class="table-responsive" style="display:inline-block;">
+                         <table class="table table-condensed" style="text-align: left;">
+                         <tr>
+                           <td class="editform" style="width:10em;">
+                             {% if perspvideo.perspective == 'left' %}
+                             <span class="glyphicon glyphicon-facetime-video" style="transform:rotateZ(-30deg);rotateY(0deg);height:auto;"></span>
+                             {% elif perspvideo.perspective == 'right' %}
+                             <span class="glyphicon glyphicon-facetime-video" style="transform:rotateZ(210deg);height:auto;"></span>
+                            {% endif %}
+                           <span class='glyphicon glyphicon-trash perspvideo-delete' data-toggle='modal' data-target='#delete_perspvideo_modal_{{perspvideo.id}}'></span>
+                             <div class="modal fade" id="delete_perspvideo_modal_{{perspvideo.id}}" role="dialog" aria-labelledby="#modalDeletePersp" aria-hidden="true">
+                                 <div class="modal-dialog modal-sm">
+                                    <div class="modal-content">
+                                        <div class='modal-header'>
+                                            <h2 id='modalDeletePersp'>{% trans "Delete Perspective Video" %}</h2>
+                                        </div>
+                                        <div class='modal-body'>
+                                            <p>{% trans "Are you sure? This cannot be undone." %}</p>
+                                         </div>
+                                        <form class="formbutton" action='{% url "dictionary:update_gloss" gloss.id %}'
+                                              method='post'>
+                                        {% csrf_token %}
+                                          <input type='hidden' name='id' value='perspectivevideo_delete_{{perspvideo.id}}'>
+                                          <input type='hidden' name='value' value='confirmed'>
+                                          <div class="modal-footer">
+                                            <button type="button" class="btn btn-default btn-default-light" data-dismiss="modal">{% trans "Cancel" %}</button>
+                                            <input type="submit" class="btn btn-danger" value='{% trans "Confirm Delete" %}'>
+                                          </div>
+                                        </form>
+                                    </div>
+                                  </div>
+                             </div>
+                           </td>
+                           <td>
+                               <table>
+                                   <tr>
+                                       <td colspan="2">
+                                           <div id="perspectiveplayer">
+                                            <video id='videoperspplayer' src="{{protected_media_url}}{{perspvideo.get_video_path}}?v={{ perspvideo.pk }}"
+                                                   style="height:200px;width:auto;" controls muted></video>
+                                           </div>
+                                        </td>
+                                   </tr>
+                               </table>
+                           </td>
+                         </tr>
+                         </table>
+                      </div>
+                    {% endfor %}
+                    </td>
+                </tr>
+               </table>
+            {% endif %}
+            </div>
+
+            {% if "change_dataset" in dataset_perms %}
+            <div class='editform' style="width:800px;height:300px;">
+                <fieldset>
+                    <h4>{% trans "Upload New Perspective Video" %}</h4>
+                    <form action="{{PREFIX_URL}}/video/upload/" method="post" enctype="multipart/form-data">
+                    {% csrf_token %}
+                        <input type='hidden' name='redirect' value='{{PREFIX_URL}}/dictionary/gloss/{{gloss.pk}}/'>
+                        <input type='hidden' name='object_type' value='gloss_perspectivevideo'>
+                        <input type='hidden' name='object_id' value='{{gloss.pk}}'>
+                        <input type='hidden' name='recorded' value='False'>
+                        <table>
+                          <tr>
+                            <td>{{perspectivevideoform.videofile}}</td>
+                          </tr>
+                         <tr>
+                            <td class="td td-light" style='width:5em'>{{perspectivevideoform.perspective}}</td>
+                          </tr>
+                          <tr>
+                            <td id="perspvideo-buttons">
+                                <input class='btn btn-primary' type='submit' value='Upload' />
+                            </td>
+                          </tr>
+                        </table>
+                    </form>
+                </fieldset>
+            </div>
+            {% endif %}
+        </div>
+   </div>
+
+     {% if "change_dataset" in dataset_perms %}
+    <div class="editform">
+        <fieldset>
+         <h4>{% trans "Delete Sign" %}</h4>
+         <button id='delete_gloss_btn' class='btn btn-danger' style="width:auto;"
+                 data-toggle='modal'
+                 data-target='#delete_gloss_modal'>{% trans "Delete Sign" %}</button>
+        </fieldset>
+    </div>
+    <br/><br/><br/>
+    {% endif %}
+
+</div>
 
     <div class='panel-group' id="definition" style="z-index: 0;opacity:.99; position: relative;">
         <div class="panel panel-default panel-light">
@@ -1095,7 +1445,7 @@ input .tt-hint {
                         {% trans "Save General Description" %}</button>
                  <button id='enable_edit_general' type="button"
                          class='btn btn-primary navbar-btn edit-mode'
-                         style="width:auto;padding:3px 12px;">{% trans "Edit General Description" %}</button>
+                         style="width:auto;padding:3px 12px;">{% trans "Edit Videos and General Description" %}</button>
                 </div>
                 {% endif %}
             </div>
