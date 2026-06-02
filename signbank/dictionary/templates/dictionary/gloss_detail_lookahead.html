@@ -550,10 +550,11 @@ input[type="text"] {
     background-color: inherit;
     border: none;
     outline: none;
+    width: inherit important!;
 }
 input[type="text"]:focus {
     border: red;
-    width: auto;
+    width: inherit important!;
     color: red;
 }
 .tt-input {
@@ -2619,7 +2620,7 @@ input .tt-hint {
         <div class='panel-heading panel-light' data-toggle='collapse' data-target='#semantics'>{% trans "Semantics" %}
         </div>
         <div id='semantics' class='collapse'>
-            <div class='pull-right' style="margin-right:5px;margin-top:20px;">
+            <div class='pull-right' style="margin-right:5px;margin-top:20px;margin-bottom:30px;">
              {% if perms.dictionary.change_gloss %}
              <div>
                 {% csrf_token %}
@@ -2745,6 +2746,24 @@ input .tt-hint {
                 </td>
                 {% endwith %}
             </tr>
+            {% with show_field_row|get_item:"concConcSet" as show_field %}
+            {% if not show_field %}
+            <tr class="empty_row_semantics">
+            {% else %}
+            <tr>
+            {% endif %}
+            {% endwith %}
+                <th style="width:auto;"><a target="_blank" href="https://concepticon.clld.org">{% trans "Concepticon Concept Set" %}</a></th>
+                {% with semanticsform.fields|get_item:'concConcSet' as concConcSet_field %}
+                <td class="editform-semantics" style="width:auto;">
+                    <div>
+                    <input class='form-control form-control-light' type="text" name="concConcSet"
+                           value="{{concConcSet_field.initial}}"
+                           id="concConcSet_text" data-category="semantics">
+                    </div>
+                </td>
+                {% endwith %}
+            </tr>
             </table>
             <br/><br/><br/><br/>
         </div>
@@ -2843,6 +2862,112 @@ input .tt-hint {
             </form>
             {% endif %}
 
+        </div>
+    </div>
+
+    <!-- Publication status -->
+    <div class="panel panel-default panel-light">
+        <div class='panel-heading panel-light' data-toggle='collapse'
+             data-target='#pubStatus'>{% trans "Publication Status" %}
+        </div>
+
+        <div id="pubStatus" class="collapse">
+            <div class='pull-right' style="margin-right:15px;margin-top:20px;">
+                 {% if perms.dictionary.change_gloss %}
+                 <div>
+                    {% csrf_token %}
+                    <button type="button" class="btn btn-danger publication-edit-dismiss button-publication-to-appear-in-edit-mode"
+                            style="width:auto;padding:3px 12px;"
+                            >{% trans "Cancel" %}</button>
+                    <button type="button" class="btn btn-danger quick_save button-publication-to-appear-in-edit-mode"
+                            style="width:auto;padding:3px 12px;" value="{{gloss.id}}"
+                            >{% trans "Save Publication Status" %}</button>
+                    <button id='enable_edit_publication'
+                             class='btn btn-primary navbar-btn edit-mode'
+                             style="width:auto;padding:3px 12px;">{% trans "Edit Publication Status" %}</button>
+                 </div>
+                 {% endif %}
+            </div>
+
+            <table class='table table-condensed'>
+                <tr class="read_only_publication"><th>{% trans "Creation Date" %}</th><td>{{gloss.creationDate}}</td></tr>
+                <tr class="read_only_publication"><th>{% trans "Publication Date" %}</th><td>{{gloss.publicationDate|default_if_none:''}}</td></tr>
+                <tr class="read_only_publication"><th>{% trans "Creator" %}</th>
+                    <td>{% for creator in gloss.creator.all %}
+                            {% if forloop.last %}
+                                {{creator.first_name}} {{creator.last_name}}
+                            {% else %}
+                                {{creator.first_name}} {{creator.last_name}},
+                            {% endif %}
+                        {% endfor %}
+                    </td>
+                </tr>
+
+                {%if SHOW_DATASET_INTERFACE_OPTIONS %}
+                <tr class="read_only_publication"><th>{% trans "Dataset" %}</th><td id='dataset' colspan="2">{{gloss.lemma.dataset}}</td></tr>
+                {% endif %}
+
+                <tr>
+                    <th style="width:240px;">{% trans "In the Web dictionary" %}</th>
+                    {% with publicationform.fields|get_item:'inWeb' as inWeb_field %}
+                    <td class="read_only_publication">{{gloss.display_inWeb}}</td>
+                    <td class="editform-publication edit_only_publication">
+                        <div class="editselect">
+                        <select class="select_inWeb form-control form-control-light" name="inWeb"
+                                id="inWeb_select_value" data-category="publication">
+                            {% for value, opn in inWeb_field.choices %}
+                            {% if value == inWeb_field.initial %}
+                            <option value={{value}} selected="selected">{{opn}}</option>
+                            {% else %}
+                            <option value={{value}}>{{opn}}</option>
+                            {% endif %}
+                            {% endfor %}
+                        </select>
+                        </div>
+                    </td>
+                    {% endwith %}
+                </tr>
+                <tr>
+                    <th style="width:240px;">{% trans "Is this a proposed new sign?" %}</th>
+                    {% with publicationform.fields|get_item:'isNew' as isNew_field %}
+                    <td class="read_only_publication">{{gloss.display_isNew}}</td>
+                    <td class="editform-publication edit_only_publication">
+                        <div class="editselect">
+                        <select class="select_isNew form-control form-control-light" name="isNew"
+                                id="isNew_select_value" data-category="publication">
+                            {% for value, opn in isNew_field.choices %}
+                            {% if value == isNew_field.initial %}
+                            <option value={{value}} selected="selected">{{opn}}</option>
+                            {% else %}
+                            <option value={{value}}>{{opn}}</option>
+                            {% endif %}
+                            {% endfor %}
+                        </select>
+                        </div>
+                    </td>
+                    {% endwith %}
+                </tr>
+                <tr>
+                    <th style="width:240px;">{% trans "Exclude from ECV" %}</th>
+                    {% with publicationform.fields|get_item:'excludeFromEcv' as excludeFromEcv_field %}
+                    <td class="read_only_publication">{{gloss.display_excludeFromEcv}}</td>
+                    <td class="editform-publication edit_only_publication">
+                        <div class="editselect">
+                        <select class="select_excludeFromEcv form-control form-control-light" name="excludeFromEcv"
+                                id="excludeFromEcv_select_value" data-category="publication">
+                            {% for value, opn in excludeFromEcv_field.choices %}
+                            {% if value == excludeFromEcv_field.initial %}
+                            <option value={{value}} selected="selected">{{opn}}</option>
+                            {% else %}
+                            <option value={{value}}>{{opn}}</option>
+                            {% endif %}
+                            {% endfor %}
+                        </select>
+                        </div>
+                    </td>
+                    {% endwith %}
+                </tr>
+            </table>
         </div>
     </div>
 

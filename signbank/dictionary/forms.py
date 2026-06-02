@@ -1893,10 +1893,11 @@ class SemanticsForm(forms.Form):
     namEnt = forms.CharField(label=_('Named Entity'))
     valence = forms.CharField(label=_('Valence'))
     iconImg = forms.CharField(label=_('Iconic Image'))
+    concConcSet = forms.CharField(label=_("Concepticon Concept Set"), max_length=300)
 
     class Meta:
         model = Gloss
-        fields = ['semField', 'derivHist']
+        fields = ['semField', 'derivHist', 'concConcSet']
 
     def __init__(self, *args, **kwargs):
         self.gloss = kwargs.pop('gloss')
@@ -1907,3 +1908,28 @@ class SemanticsForm(forms.Form):
         self.fields['namEnt'].initial = self.gloss.namEnt.name if self.gloss.namEnt else ''
         self.fields['valence'].initial = self.gloss.valence.name if self.gloss.valence else ''
         self.fields['iconImg'].initial = self.gloss.iconImg if self.gloss.iconImg else ''
+        self.fields['concConcSet'].initial = self.gloss.concConcSet if self.gloss.concConcSet else ''
+
+class PublicationForm(forms.Form):
+    gloss = None
+    inWeb = forms.ChoiceField(label=_('In the Web dictionary'), choices=[('0', '-')], required=False,
+                            widget=forms.Select(attrs=ATTRS_FOR_BOOLEAN_FORMS))
+    isNew = forms.ChoiceField(label=_('Is this a proposed new sign?'), choices=[('0', '-')], required=False,
+                            widget=forms.Select(attrs=ATTRS_FOR_BOOLEAN_FORMS))
+    excludeFromEcv = forms.ChoiceField(label=_('Exclude from ECV'), choices=[('0', '-')], required=False,
+                                     widget=forms.Select(attrs=ATTRS_FOR_BOOLEAN_FORMS))
+
+    class Meta:
+        model = Gloss
+        fields = ['inWeb', 'isNew', 'excludeFromEcv']
+
+    def __init__(self, *args, **kwargs):
+        self.gloss = kwargs.pop('gloss')
+        super(PublicationForm, self).__init__(*args, **kwargs)
+
+        for boolean_field in ['inWeb', 'isNew', 'excludeFromEcv']:
+            self.fields[boolean_field].choices = [('0', _('No')), ('1', _('Yes'))]
+
+        self.fields['inWeb'].initial = self.gloss.inWeb_to_choice()
+        self.fields['isNew'].initial = self.gloss.isNew_to_choice()
+        self.fields['excludeFromEcv'].initial = self.gloss.excludeFromEcv

@@ -1141,6 +1141,39 @@ class Gloss(MetaModelMixin, models.Model):
     excludeFromEcv = models.BooleanField(_("Exclude from ECV"), default=False)
     release_information = models.CharField(_("Release information"), max_length=128, blank=True, default='')
 
+    def display_inWeb(self):
+        if self.inWeb is None:
+            return _('No')
+        return _('Yes') if self.inWeb else _('No')
+
+    def inWeb_to_choice(self):
+        # for use in form choices initial selected
+        if self.inWeb is None:
+            return '0'
+        return '1' if self.inWeb else '0'
+
+    def display_isNew(self):
+        if self.isNew is None:
+            return _('No')
+        return _('Yes') if self.isNew else _('No')
+
+    def isNew_to_choice(self):
+        # for use in form choices initial selected
+        if self.isNew is None:
+            return '0'
+        return '1' if self.isNew else '0'
+
+    def display_excludeFromEcv(self):
+        if self.excludeFromEcv is None:
+            return _('No')
+        return _('Yes') if self.excludeFromEcv else _('No')
+
+    def excludeFromEcv_to_choice(self):
+        # for use in form choices initial selected
+        if self.excludeFromEcv is None:
+            return '0'
+        return '1' if self.excludeFromEcv else '0'
+
     inittext = models.CharField(max_length=50, blank=True)
 
     morph = models.CharField(_("Morphemic Analysis"), max_length=50, blank=True)
@@ -4182,7 +4215,8 @@ GLOSS_FIELDS_UPDATES = ['release_information', 'dialect', 'useInstr', 'wordClass
                         'locVirtObj', 'phonOth', 'mouthG', 'mouthing', 'phonetVar',
                         'weakdrop', 'weakprop',
                         'domhndsh_letter_or_number', 'subhndsh_letter_or_number',
-                        'semField', 'derivHist', 'namEnt', 'valence', 'iconImg']
+                        'semField', 'derivHist', 'namEnt', 'valence', 'iconImg', 'concConcSet',
+                        'inWeb', 'isNew', 'excludeFromEcv']
 
 
 class AnnotatedGloss(MetaModelMixin, models.Model):

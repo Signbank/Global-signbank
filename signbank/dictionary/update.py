@@ -932,8 +932,8 @@ def edit_gloss_save(request, glossid):
                 boolean_value = {'0': None, '1': True, '2': False}[value]
                 gloss.__setattr__(field, boolean_value)
                 gloss.save()
-            elif field in ['repeat', 'altern']:
-                boolean_value = {'0': None, '1': True}[value]
+            elif field in ['repeat', 'altern', 'inWeb', 'isNew', 'excludeFromEcv']:
+                boolean_value = {'0': False, '1': True}[value]
                 if boolean_value == original_internal_value:
                     continue
                 setattr(gloss, field, boolean_value)

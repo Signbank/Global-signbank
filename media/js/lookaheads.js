@@ -626,6 +626,18 @@ $("#enable_edit_relations").on('click', function() {
     $(this).hide();
 });
 
+$(".publication-edit-dismiss").on('click', function() {
+    $('.edit_only_publication').each(function() {
+        $(this).hide();
+    });
+    $('.read_only_publication').each(function() {
+        $(this).show();
+    });
+    $('#enable_edit_publication').removeClass('edit_enabled');
+    $('#enable_edit_publication').show();
+    $('.button-publication-to-appear-in-edit-mode').hide();
+});
+
 function ajaxifyTagForm() {
     // ajax form submission for tag addition and deletion
     $('.tagdelete').click(function() {
@@ -726,6 +738,10 @@ function enable_edit_panel(category) {
         $('#dialect_value').trigger('editDialectField');
         $('#lemma_buttons_group').show();
     }
+    if (category === 'publication') {
+        $('.read_only_publication').hide();
+        $('.edit_only_publication').show();
+    }
     $('.empty_row_'+category).show();
     $('#enable_edit_'+category).addClass('edit_enabled');
     $('#enable_edit_'+category).hide();
@@ -744,6 +760,10 @@ function disable_edit_panel(category) {
         $('.editform').hide();  // appears in gloss tags and affiliations
         $('.read_only').show();
         $('.edit_only').hide();
+    }
+    if (category === 'publication') {
+        $('.read_only_publication').show();
+        $('.edit_only_publication').hide();
     }
     $('.empty_row_'+category).hide();
     $('.button-'+category+'-to-appear-in-edit-mode').hide();
@@ -777,6 +797,15 @@ function toggle_edit_semantics() {
         disable_edit_panel('semantics');
     } else {
         enable_edit_panel('semantics');
+    }
+}
+
+function toggle_edit_publication() {
+    if ($('#enable_edit_publication').hasClass('edit_enabled'))
+    {
+        disable_edit_panel('publication');
+    } else {
+        enable_edit_panel('publication');
     }
 }
 
@@ -1056,6 +1085,24 @@ $(document).ready(function() {
           var selected_text = $(this).find('option:selected').text();
           $('#altern_value').text(selected_text);
     });
+    $('.select_inWeb').on('change', function() {
+          busy_editing = true;
+          var selected_value = $(this).val();
+          var selected_text = $(this).find('option:selected').text();
+          $('#inWeb_value').text(selected_text);
+    });
+    $('.select_isNew').on('change', function() {
+          busy_editing = true;
+          var selected_value = $(this).val();
+          var selected_text = $(this).find('option:selected').text();
+          $('#isNew_value').text(selected_text);
+    });
+    $('.select_excludeFromEcv').on('change', function() {
+          busy_editing = true;
+          var selected_value = $(this).val();
+          var selected_text = $(this).find('option:selected').text();
+          $('#excludeFromEcv_value').text(selected_text);
+    });
      $('.quick_save').click(function(e)
 	 {
          e.preventDefault();
@@ -1081,12 +1128,12 @@ $(document).ready(function() {
                 var field_key = $(field_lookup).attr("name");
                 var field_value = $(field_lookup).val();
                 update[field_key] = field_value;
-            } else if (['repeat', 'altern'].includes(field)) {
+            } else if (['repeat', 'altern', 'inWeb', 'isNew', 'excludeFromEcv'].includes(field)) {
                 var field_lookup = '#'+field+'_select_value';
                 var field_key = $(field_lookup).attr("name");
                 var field_value = $(field_lookup).val();
                 update[field_key] = field_value;
-            } else if (['release_information', 'useInstr', 'locVirtObj', 'phonOth', 'mouthG', 'mouthing', 'phonetVar', 'iconImg'].includes(field)) {
+            } else if (['release_information', 'useInstr', 'locVirtObj', 'phonOth', 'mouthG', 'mouthing', 'phonetVar', 'iconImg', 'concConcSet'].includes(field)) {
                 var field_lookup = '#'+field+'_text';
                 var field_key = $(field_lookup).attr("name");
                 var field_value = $(field_lookup).val();
@@ -1193,9 +1240,13 @@ $(document).ready(function() {
     $('#enable_edit_semantics').on("click", function() {
         toggle_edit_semantics();
     });
+    $('#enable_edit_publication').on("click", function() {
+        toggle_edit_publication();
+    });
     disable_edit_panel('general');
     disable_edit_panel('phonology');
     disable_edit_panel('semantics');
+    disable_edit_panel('publication');
     disable_edit_relations();
     disable_edit_morphology();
     ajaxifyTagForm();

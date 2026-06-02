@@ -82,7 +82,7 @@ from signbank.dictionary.forms import (AnnotatedSentenceSearchForm, GlossSearchF
                                        AnnotatedGlossForm, TagUpdateForm, AffiliationUpdateForm, DatasetUpdateForm,
                                        ImageUploadForGlossForm, ImageUploadForHandshapeForm, EAFFilesForm,
                                        LemmaCreateForm, LemmaUpdateForm, set_up_lemma_language_fields, MorphemeCreateForm,
-                                       OtherMediaForm, RelationForm, SemanticsForm, PhonologyForm, GlossForm,
+                                       OtherMediaForm, RelationForm, SemanticsForm, PhonologyForm, GlossForm, PublicationForm,
                                        GlossMorphologyForm, GlossBlendForm, DefinitionForm, GlossMorphemeForm,
                                        SemanticFieldTranslationForm, ZippedVideosForm, SearchGlossIds,
                                        check_language_fields, check_multilingual_fields, SentenceForm,
@@ -1426,6 +1426,7 @@ class GlossDetailView(DetailView):
         context['glossform'] = GlossForm(gloss=context['gloss'])
         context['phonologyform'] = PhonologyForm(gloss=context['gloss'])
         context['semanticsform'] = SemanticsForm(gloss=context['gloss'])
+        context['publicationform'] = PublicationForm(gloss=context['gloss'])
 
         context['tagform'] = TagUpdateForm()
         context['affiliationform'] = AffiliationUpdateForm()
