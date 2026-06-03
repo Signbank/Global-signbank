@@ -3238,6 +3238,26 @@ input .tt-hint {
         </div>
     </div>
 
+    <div class="panel panel-default panel-light">
+            <div class='panel-heading panel-light' data-toggle='collapse'
+                 data-target='#minimalpairs'>{% trans "Minimal Pairs" %}
+            </div>
+            <div id='minimalpairs' class='collapse'>
+
+                <table class='table table-condensed' id="header_mp_rows" style="margin-top:10px;table-layout:fixed;width:100%;">
+
+                {% if minimalpairs %}
+                   <tr>
+                       <th style="width:auto; padding:0px 0px;">{% trans "Annotation ID Gloss" %}</th>
+                       <th style="width:auto; padding:0px 0px;">{% trans "Field Name" %}</th>
+                       <th style="width:auto; padding:0px 0px;">{% trans "Source Sign Value" %}</th>
+                       <th style="width:auto; padding:0px 0px;">{% trans "Contrasting Sign Value" %}</th>
+                    </tr>
+                {% endif %}
+                </table>
+            </div>
+    </div>
+
     <!-- Semantics -->
     <div class="panel panel-default panel-light">
         <div class='panel-heading panel-light' data-toggle='collapse' data-target='#semantics'>{% trans "Semantics" %}
