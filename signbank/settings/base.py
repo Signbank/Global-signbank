@@ -61,7 +61,8 @@ MIDDLEWARE = (
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'signbank.pages.middleware.PageFallbackMiddleware',
     'reversion.middleware.RevisionMiddleware',
-    'django.middleware.common.CommonMiddleware'
+    'django.middleware.common.CommonMiddleware',
+    'signbank.api_middleware.JsonErrorMiddleware',
 )
 
 CORS_ORIGIN_ALLOW_ALL = True

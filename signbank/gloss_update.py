@@ -28,6 +28,7 @@ from signbank.video.views import get_glosses_from_eaf
 from signbank.tools import get_default_annotationidglosstranslation, add_gloss_update_to_revision_history
 from signbank.csv_interface import normalize_field_choice, normalize_boolean
 from signbank.api_token import put_api_user_in_request
+from signbank.api_errors import safe_error_message
 from signbank.abstract_machine import retrieve_language_code_from_header
 
 
@@ -740,10 +741,8 @@ def api_update_gloss(request, datasetid, glossid, language_code='en'):
 
     try:
         gloss_update_do_changes(request.user, gloss, fields_to_update, interface_language_code)
-    except (TransactionManagementError, ValueError, IntegrityError):
-        errors = dict()
-        errors[gettext('Exception')] = gettext("Transaction management error.")
-        results['errors'] = errors
+    except (TransactionManagementError, ValueError, IntegrityError) as exc:
+        results['errors'] = {gettext('Exception'): safe_error_message(exc, request.user)}
         results['updatestatus'] = "Failed"
         return JsonResponse(results, status=400)
 
