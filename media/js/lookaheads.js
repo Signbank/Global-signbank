@@ -638,6 +638,44 @@ $(".publication-edit-dismiss").on('click', function() {
     $('.button-publication-to-appear-in-edit-mode').hide();
 });
 
+function disable_edit_nme() {
+    $('.edit_only_nme').each(function() {
+        $(this).hide();
+    });
+    $('.read_only_nme').each(function() {
+        $(this).show();
+    });
+    $('#enable_edit_nme').removeClass('edit_enabled');
+    $('#enable_edit_nme').show();
+    disable_lookaheads('nme');
+    $('.button-nme-to-appear-in-edit-mode').hide();
+}
+
+$(".nme-edit-dismiss").on('click', function() {
+    $('.edit_only_nme').each(function() {
+        $(this).hide();
+    });
+    $('.read_only_nme').each(function() {
+        $(this).show();
+    });
+    $(this).hide();
+    disable_lookaheads('nme');
+    $('#enable_edit_nme').show();
+});
+
+$("#enable_edit_nme").on('click', function() {
+    $('.edit_only_nme').each(function() {
+        $(this).show();
+    });
+    $('.read_only_nme').each(function() {
+        $(this).hide();
+    });
+    $(this).addClass('edit_enabled');
+    $('.button-nme-to-appear-in-edit-mode').show();
+    enable_lookaheads('nme');
+    $(this).hide();
+});
+
 function ajaxifyTagForm() {
     // ajax form submission for tag addition and deletion
     $('.tagdelete').click(function() {
@@ -697,6 +735,9 @@ function disable_lookaheads(category) {
          if (this_id.endsWith("_multiselect")) {
              $(this).attr('disabled', true);
          }
+         if (this_id.startsWith("nmevideo_")) {
+            $(this).attr('disabled', true);
+         }
      });
 }
 
@@ -720,6 +761,9 @@ function enable_lookaheads(category) {
          }
          if (this_id.endsWith("_multiselect")) {
              $(this).removeAttr('disabled');
+         }
+         if (this_id.startsWith("nmevideo_")) {
+            $(this).removeAttr('disabled');
          }
      });
 }
@@ -1214,6 +1258,38 @@ $(document).ready(function() {
             }
          });
      });
+     $('.quick_update_nmevideo').click(function(e)
+	 {
+         e.preventDefault();
+         var nmevideoid = $(this).attr('data-value');
+	     var update_nmevideo_url = $('#nmevideo_update_'+nmevideoid).attr("action");
+         var update = { 'csrfmiddlewaretoken': csrf_token };
+	     for (var i=0; i < language_2chars.length; i++) {
+             var lang2char = language_2chars[i];
+             var description_field = 'nmevideo_description_'+nmevideoid+'_'+lang2char;
+             var description_value = $('#'+description_field).val();
+             update[description_field] = description_value;
+         }
+         var offset_field = 'nmevideo_offset_'+nmevideoid;
+         var offset_value = $('#'+offset_field).val();
+         update[offset_field] = offset_value;
+         $.ajax({
+            url : update_nmevideo_url,
+            type: 'POST',
+            data: update,
+            datatype: "json",
+            success : function(data) {
+                if (data.success) {
+                    setTimeout(function() {
+                        location.reload(true);
+                    }, 500);
+                }
+            },
+            error: function (xhr, status, error) {
+                alert("There was an error processing this change: " + xhr.responseText );
+            }
+         });
+     });
      var lookahead_elements = $('[id*="_lookahead"]');
      lookahead_elements.each(function() {
          var this_id = $(this).attr("id");
@@ -1243,11 +1319,15 @@ $(document).ready(function() {
     $('#enable_edit_publication').on("click", function() {
         toggle_edit_publication();
     });
+    $('#enable_edit_nme').on("click", function() {
+        toggle_edit_publication();
+    });
     disable_edit_panel('general');
     disable_edit_panel('phonology');
     disable_edit_panel('semantics');
     disable_edit_panel('publication');
     disable_edit_relations();
     disable_edit_morphology();
+    disable_edit_nme();
     ajaxifyTagForm();
 });

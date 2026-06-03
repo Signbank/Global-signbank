@@ -1465,6 +1465,8 @@ class GlossDetailView(DetailView):
         # these Gloss model fields are used by the javascript code to process push data for edits
         context['gloss_update_fields'] =  GLOSS_FIELDS_UPDATES
         context['show_field_row'] = show_fields_rows(gloss)
+        context['language_2chars'] = [language.language_code_2char for language in dataset_languages]
+
         context['selected_semField'] = [{"name": semfield.name, "machine_value": semfield.machine_value}
                                         for semfield in gloss.semField.all()]
         context['selected_derivHist'] = [{"name": derivhist.name, "machine_value": derivhist.machine_value}

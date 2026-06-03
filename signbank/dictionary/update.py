@@ -1020,6 +1020,54 @@ def update_gloss_annotation(request, glossid):
 
 
 @require_http_methods(["POST"])
+@permission_required('dictionary.change_gloss')
+def update_gloss_nmevideo(request, glossid, nmevideoid):
+    """Update the GlossVideoNME"""
+
+    gloss = get_object_or_404(Gloss, id=glossid, archived=False)
+    nmevideo = get_object_or_404(GlossVideoNME, id=nmevideoid)
+
+    value_dict = {}
+    for field in request.POST.keys():
+        if field == 'csrfmiddlewaretoken':
+            continue
+        value_dict[field] = request.POST.get(field, '')
+
+    for field, value in value_dict.items():
+        if field.startswith('nmevideo_description_'):
+            nmevideoid_language_code_2char = field[len('nmevideo_description_'):]
+            strnmevideoid, language_code_2char = nmevideoid_language_code_2char.split('_')
+            if nmevideoid != strnmevideoid:
+                continue
+            language = Language.objects.filter(language_code_2char=language_code_2char).first()
+            value = value.strip()
+            try:
+                description = GlossVideoDescription.objects.get(nmevideo=nmevideo, language=language)
+            except ObjectDoesNotExist:
+                # if no description object exists yet, create it
+                description = GlossVideoDescription.objects.create(nmevideo=nmevideo, language=language)
+            description.text = value
+            description.save()
+        elif field.startswith('nmevideo_offset_'):
+            strnmevideoid = field[len('nmevideo_offset_'):]
+            if nmevideoid != strnmevideoid:
+                continue
+            new_offset = int(value)
+            existing_nmevideos = GlossVideoNME.objects.filter(gloss=gloss).exclude(id=int(nmevideoid))
+            existing_offsets = [nmev.offset for nmev in existing_nmevideos]
+            if new_offset in existing_offsets or new_offset == nmevideo.offset:
+                continue
+            # also change the offset of perspective videos
+            nme_objects_with_same_offset = GlossVideoNME.objects.filter(gloss=gloss, offset=nmevideo.offset)
+            for nmev in nme_objects_with_same_offset:
+                nmev.offset = new_offset
+                # the save will move the file on disk
+                nmev.save(update_fields=['offset'])
+
+    return JsonResponse({'success': True}, status=200)
+
+
+@require_http_methods(["POST"])
 def update_gloss(request, glossid):
     """View to update a gloss model from the jeditable jquery form
     We are sent one field and value at a time, return the new value
