@@ -535,9 +535,9 @@ def gloss_update_do_changes(user, gloss, changes, language_code):
                 changes_done.append((field.name, original_value, new_value))
         gloss.save()
         for field, original_human_value, glossrevision_newvalue in changes_done:
-            revision = GlossRevision(old_value=original_human_value,
-                                     new_value=glossrevision_newvalue,
-                                     field_name=field,
+            revision = GlossRevision(old_value=('' if original_human_value is None else str(original_human_value)),
+                                     new_value=('' if glossrevision_newvalue is None else str(glossrevision_newvalue)),
+                                     field_name=str(field) if not isinstance(field, str) else field,
                                      gloss=gloss,
                                      user=user,
                                      time=DT.datetime.now(tz=get_current_timezone()))
