@@ -1815,6 +1815,31 @@ class GlossProvenanceForm(forms.ModelForm):
                                                   widget=forms.Select(attrs=ATTRS_FOR_FORMS))
 
 
+class ProvenanceForm(forms.ModelForm):
+
+    description = forms.CharField(widget=forms.Textarea(attrs={'cols': 60, 'rows': 5, 'placeholder': _('Enter New Note')}))
+    method = forms.ChoiceField(label=_('Method'),
+                               choices=[(0, '-')],
+                               widget=forms.Select(attrs=ATTRS_FOR_FORMS))
+    class Meta:
+        model = GlossProvenance
+        fields = ('gloss', 'description', 'method')
+
+    def __init__(self, *args, **kwargs):
+        self.provenance = kwargs.pop('provenance')
+        super(ProvenanceForm, self).__init__(*args, **kwargs)
+        self.fields['method'] = forms.ChoiceField(label=_('Method'),
+                                                  choices=choicelist_queryset_to_translated_dict(
+                                                        list(FieldChoice.objects.filter(field='Provenance').order_by(
+                                                            'machine_value')),
+                                                        ordered=False, id_prefix='', shortlist=False
+                                                  ),
+                                                  widget=forms.Select(attrs=ATTRS_FOR_FORMS))
+        self.fields['method'].initial = self.provenance.method.name if self.provenance.method else ''
+        self.fields['description'].initial = self.provenance.description
+
+
+
 class SearchGlossIds(forms.Form):
     glossids = forms.CharField(label=_("Gloss Ids"), required=False, initial='',
                                widget=forms.Textarea(attrs={'cols': 60, 'rows': 5, 'placeholder': _('Enter Gloss Ids')}))

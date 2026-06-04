@@ -103,11 +103,11 @@
     function validateForm(formId,targetObjectId,thisGlossID,mustChooseAlert,mustBeDifferentAlert) {
         var target_object = document.forms[formId][targetObjectId].value;
         var this_gloss = document.forms[formId][thisGlossID].value;
-        if (target_object == "") {
+        if (target_object === "") {
             alert(mustChooseAlert);
             return false;
         }
-        if (target_object == this_gloss) {
+        if (target_object === this_gloss) {
             alert(mustBeDifferentAlert);
             return false;
         }
@@ -657,6 +657,25 @@ input .tt-hint {
     opacity: 1;
 }
 .editform-notes input:disabled, textarea:disabled {
+    resize: none;
+    resize: vertical;
+    overflow: auto;
+    color: inherit !important;
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    border: none;
+    opacity: 1;
+}
+.editform-provenance input, textarea {
+    background-color: inherit !important;
+    border: none;
+}
+.editform-provenance input:enabled,textarea:enabled {
+    color: red !important;
+    opacity: 1;
+}
+.editform-provenance input:disabled, textarea:disabled {
     resize: none;
     resize: vertical;
     overflow: auto;
@@ -3775,6 +3794,15 @@ input .tt-hint {
                 <fieldset>
                 {% csrf_token %}
                  <table class='table table-responsive'>
+                    {% if not notes_groupedby_role %}
+                    <tr>
+                        <th style='width:5em'></th>
+                        <th style='width:10em'>{% trans "Published" %}</th>
+                        <th style='width:10em'>{% trans "Index" %}</th>
+                        <th style='width:20em'>{% trans "Type" %}</th>
+                        <th style="width:auto;">{% trans "Text" %}</th>
+                    </tr>
+                    {% endif %}
                     <tr>
                         <td class="td td-light" style="width:5em"></td>
                         <td class="td td-light" style="width:10em">
@@ -3819,19 +3847,37 @@ input .tt-hint {
         </div>
         <div id='provenance' class='collapse'>
 
+            <div class='pull-right' style="margin-right:15px;margin-top:20px;margin-bottom:20px;">
+                {% if perms.dictionary.change_gloss %}
+                 <div>
+                    {% csrf_token %}
+                    <button type="button" class="btn btn-danger provenance-edit-dismiss"
+                            style="width:auto;padding:3px 12px;" id="provenance_edit_dismiss"
+                            >{% trans "Dismiss" %}</button>
+                    <button id='enable_edit_provenance'
+                             class='btn btn-primary navbar-btn edit-mode'
+                             style="width:auto;padding:3px 12px;">{% trans "Edit Provenance" %}</button>
+                 </div>
+                {% endif %}
+            </div>
+
+            {% if provenance_groupedby_method %}
+            <div class="table-container" style="overflow-x:auto;width:max-content;">
+
             <table class='table'>
               <tr>
-                  <th style='width:1em'></th>
-                  <th style="width:10em">{% trans "Creation Date" %}</th>
-                  <th style="width:10em">{% trans "Creator" %}</th>
+                  <th class="edit_only_provenance" style='width:5em'></th>
+                  <th class="read_only_provenance" style="width:10em">{% trans "Creation Date" %}</th>
+                  <th class="read_only_provenance" style="width:10em">{% trans "Creator" %}</th>
                   <th style='width:20em'>{% trans "Method" %}</th>
                   <th>{% trans "Description" %}</th>
               </tr>
               {% for method_id, prov_list in provenance_groupedby_method.items %}
 
               {% for prov in prov_list %}
+              {% with provenance_forms|get_item:prov.id as prov_form %}
               <tr>
-                <td>
+                <td class="edit_only_provenance" style="width:5em;">
 
                    {% if "change_dataset" in dataset_perms %}
                     <span class='glyphicon glyphicon-trash provenance_delete' data-toggle='modal' data-target='#delete_provenance_modal_{{prov.id}}'></span>
@@ -3861,37 +3907,68 @@ input .tt-hint {
                      </div>
                     {% endif %}
                 </td>
-                <td>{{prov.creationDate|default_if_none:''}}</td>
-                <td>{% for creator in prov.creator.all %}
+                <td class="read_only_provenance">{{prov.creationDate|default_if_none:''}}</td>
+                <td class="read_only_provenance">{% for creator in prov.creator.all %}
                             {% if forloop.last %}
                                 {{creator.first_name}} {{creator.last_name}}
                             {% else %}
                                 {{creator.first_name}} {{creator.last_name}},
                             {% endif %}
                     {% endfor %}</td>
-                <td class="td td-light" id='provenancemethod_{{prov.id}}'
-                    data-field='provenancemethod'>{{method_id.1}}</td>
-                <td class='edit edit_area' id='provenancedescription_{{prov.id}}' style="height:80;">{{prov.description}}</td>
+                {% with prov_form.fields|get_item:'method' as method_field %}
+                <td class="td td-light editform-provenance" id='provenancemethod_{{prov.id}}_select_value'
+                    data-field='provenancemethod'>
+                    <select name="method" id="provenancemethod_{{prov.id}}" class="form-control form-control-light"
+                            data-category="provenance" >
+                        {% for machine_value, opn in method_field.choices %}
+                        {% if opn == method_field.initial %}
+                        <option value={{machine_value}} selected="selected">{{opn}}</option>
+                        {% else %}
+                        <option value={{machine_value}}>{{opn}}</option>
+                        {% endif %}
+                        {% endfor %}
+                    </select>
+                </td>
+                {% endwith %}
+                <td class="editform-provenance" id="provenancedescription_{{prov.id}}_textarea" style="height:80px;">
+                    <div>
+                    <textarea class='form-control form-control-light' name="description" cols="60" rows="5"
+                              id="provenancedescription_{{prov.id}}" data-category="provenance">{{prov.description}}</textarea>
+                    </div>
+                </td>
+                 <td class="edit_only_provenance" style='width:2em;'>
+                     <button id='quick_save_provenance_btn_{{prov.id}}' class="quick_save_provenance btn btn-primary"
+                        name='quick_save_provenance_{{prov.id}}' data-category="provenance" data-provenanceid="{{prov.id}}"
+                        data-glossid='{{gloss.id}}' style="color:red;font-size:16px;background-color:transparent;border:none;width:2em;"
+                        type="button"><span class="glyphicon glyphicon-check"></span></button>
+                 </td>
               </tr>
+              {% endwith %}
               {% endfor %}
             {% endfor %}
             </table>
+            </div>
+            {% endif %}
 
            {% if "change_dataset" in dataset_perms %}
-            <form class="editform" id='add_provenance' action='{% url "dictionary:add_provenance" gloss.id %}' method="POST">
+            <div class="edit_only_provenance">
+            <form id='add_provenance' action='{% url "dictionary:add_provenance" gloss.id %}' method="POST">
                 <fieldset>
                 {% csrf_token %}
                  <table class='table'>
+                    {% if not provenance_groupedby_method %}
                     <tr>
-                        <td class="td td-light" style="width:7em"></td>
-                        <td class="td td-light" style="width:2em"></td>
-                        <td class="td td-light" style="width:7em"></td>
+                      <th style='width:5em'></th>
+                      <th style='width:20em'>{% trans "Method" %}</th>
+                      <th>{% trans "Description" %}</th>
+                    </tr>
+                    {% endif %}
+                    <tr>
+                        <td class="td td-light" style="width:5em"></td>
                         <td class="td td-light" style='width:20em'>{{provenanceform.method}}</td>
                         <td class="td td-light">{{provenanceform.description}}</td>
                     </tr>
                      <tr>
-                        <td></td>
-                        <td></td>
                         <td></td>
                         <td></td>
                         <td></td>
@@ -3901,6 +3978,7 @@ input .tt-hint {
             </fieldset>
 
             </form>
+            </div>
             {% endif %}
 
         </div>

@@ -13,7 +13,9 @@ handedness_bloodhound.initialize();
 
 function handednesstypeahead(target) {
 
-     $(target).typeahead(null, {
+     $(target).typeahead({
+         minLength: 0
+     }, {
           name: 'handedness',
           displayKey: 'name',
           source: handedness_bloodhound.ttAdapter(),
@@ -35,7 +37,9 @@ domhndsh_bloodhound.initialize();
 
 function domhndshtypeahead(target) {
 
-     $(target).typeahead(null, {
+     $(target).typeahead({
+         minLength: 0
+     }, {
           name: 'domhndsh',
           displayKey: 'name',
           source: domhndsh_bloodhound.ttAdapter(),
@@ -57,7 +61,9 @@ subhndsh_bloodhound.initialize();
 
 function subhndshtypeahead(target) {
 
-     $(target).typeahead(null, {
+     $(target).typeahead({
+         minLength: 0
+     }, {
           name: 'subhndsh',
           displayKey: 'name',
           source: subhndsh_bloodhound.ttAdapter(),
@@ -79,7 +85,9 @@ handCh_bloodhound.initialize();
 
 function handChtypeahead(target) {
 
-     $(target).typeahead(null, {
+     $(target).typeahead({
+         minLength: 0
+     }, {
           name: 'handCh',
           displayKey: 'name',
           source: handCh_bloodhound.ttAdapter(),
@@ -101,7 +109,9 @@ relatArtic_bloodhound.initialize();
 
 function relatArtictypeahead(target) {
 
-     $(target).typeahead(null, {
+     $(target).typeahead({
+         minLength: 0
+     }, {
           name: 'relatArtic',
           displayKey: 'name',
           source: relatArtic_bloodhound.ttAdapter(),
@@ -123,7 +133,9 @@ locprim_bloodhound.initialize();
 
 function locprimtypeahead(target) {
 
-     $(target).typeahead(null, {
+     $(target).typeahead({
+         minLength: 0
+     }, {
           name: 'locprim',
           displayKey: 'name',
           source: locprim_bloodhound.ttAdapter(),
@@ -145,7 +157,9 @@ contType_bloodhound.initialize();
 
 function contTypetypeahead(target) {
 
-     $(target).typeahead(null, {
+     $(target).typeahead({
+         minLength: 0
+     }, {
           name: 'contType',
           displayKey: 'name',
           source: contType_bloodhound.ttAdapter(),
@@ -167,7 +181,9 @@ movSh_bloodhound.initialize();
 
 function movShtypeahead(target) {
 
-     $(target).typeahead(null, {
+     $(target).typeahead({
+         minLength: 0
+     }, {
           name: 'movSh',
           displayKey: 'name',
           source: movSh_bloodhound.ttAdapter(),
@@ -189,7 +205,9 @@ movDir_bloodhound.initialize();
 
 function movDirtypeahead(target) {
 
-     $(target).typeahead(null, {
+     $(target).typeahead({
+         minLength: 0
+     }, {
           name: 'movDir',
           displayKey: 'name',
           source: movDir_bloodhound.ttAdapter(),
@@ -211,7 +229,9 @@ relOriMov_bloodhound.initialize();
 
 function relOriMovtypeahead(target) {
 
-     $(target).typeahead(null, {
+     $(target).typeahead({
+         minLength: 0
+     }, {
           name: 'relOriMov',
           displayKey: 'name',
           source: relOriMov_bloodhound.ttAdapter(),
@@ -233,7 +253,9 @@ relOriLoc_bloodhound.initialize();
 
 function relOriLoctypeahead(target) {
 
-     $(target).typeahead(null, {
+     $(target).typeahead({
+         minLength: 0
+     }, {
           name: 'relOriLoc',
           displayKey: 'name',
           source: relOriLoc_bloodhound.ttAdapter(),
@@ -254,7 +276,9 @@ oriCh_bloodhound.initialize();
 
 function oriChtypeahead(target) {
 
-     $(target).typeahead(null, {
+     $(target).typeahead({
+         minLength: 0
+     }, {
           name: 'oriCh',
           displayKey: 'name',
           source: oriCh_bloodhound.ttAdapter(),
@@ -275,7 +299,9 @@ namEnt_bloodhound.initialize();
 
 function namEnttypeahead(target) {
 
-     $(target).typeahead(null, {
+     $(target).typeahead({
+         minLength: 0
+     }, {
           name: 'namEnt',
           displayKey: 'name',
           source: namEnt_bloodhound.ttAdapter(),
@@ -296,7 +322,9 @@ valence_bloodhound.initialize();
 
 function valencetypeahead(target) {
 
-     $(target).typeahead(null, {
+     $(target).typeahead({
+         minLength: 0
+     }, {
           name: 'valence',
           displayKey: 'name',
           source: valence_bloodhound.ttAdapter(),
@@ -318,7 +346,9 @@ wordClass_bloodhound.initialize();
 
 function wordClasstypeahead(target) {
 
-     $(target).typeahead(null, {
+     $(target).typeahead({
+         minLength: 0
+     }, {
           name: 'wordClass',
           displayKey: 'name',
           source: wordClass_bloodhound.ttAdapter(),
@@ -343,7 +373,9 @@ semField_bloodhound.initialize();
 
 function semFieldtypeahead(target) {
 
-     $(target).typeahead(null, {
+     $(target).typeahead({
+         minLength: 0
+     }, {
           name: 'semField',
           displayKey: 'name',
           source: semField_bloodhound.ttAdapter(),
@@ -353,7 +385,7 @@ function semFieldtypeahead(target) {
               }
           }
       });
-};
+}
 
 function renderSelectedSemField() {
     var container = $('#semField_value');
@@ -389,7 +421,9 @@ derivHist_bloodhound.initialize();
 
 function derivHisttypeahead(target) {
 
-     $(target).typeahead(null, {
+     $(target).typeahead({
+         minLength: 0
+     }, {
           name: 'derivHist',
           displayKey: 'name',
           source: derivHist_bloodhound.ttAdapter(),
@@ -399,7 +433,7 @@ function derivHisttypeahead(target) {
               }
           }
       });
-};
+}
 
 function renderSelectedDerivHist() {
     var container = $('#derivHist_value');
@@ -434,7 +468,9 @@ dialect_bloodhound.initialize();
 
 function dialecttypeahead(target) {
 
-     $(target).typeahead(null, {
+     $(target).typeahead({
+         minLength: 0
+     }, {
           name: 'dialect',
           displayKey: 'name',
           source: dialect_bloodhound.ttAdapter(),
@@ -444,7 +480,7 @@ function dialecttypeahead(target) {
               }
           }
       });
-};
+}
 
 function renderSelectedDialect() {
     var container = $('#dialect_value');
@@ -478,7 +514,9 @@ lemma_bloodhound.initialize();
 
 function lemmatypeahead(target) {
 
-     $(target).typeahead(null, {
+     $(target).typeahead({
+         minLength: 0
+     }, {
           name: 'lemmatarget',
           displayKey: 'lemma',
           limit: 10,
@@ -489,7 +527,7 @@ function lemmatypeahead(target) {
               }
           }
       });
-};
+}
 
 var gloss_bloodhound = new Bloodhound({
       datumTokenizer: function(d) { return d.tokens; },
@@ -501,7 +539,9 @@ gloss_bloodhound.initialize();
 
 function glosstypeahead(target) {
 
-     $(target).typeahead(null, {
+     $(target).typeahead({
+         minLength: 0
+     }, {
           name: 'glosstarget',
           displayKey: 'annotation_idgloss',
           source: gloss_bloodhound.ttAdapter(),
@@ -511,7 +551,7 @@ function glosstypeahead(target) {
               }
           }
       });
-};
+}
 
 var morph_bloodhound = new Bloodhound({
       datumTokenizer: function(d) { return d.tokens; },
@@ -523,7 +563,9 @@ morph_bloodhound.initialize();
 
 function morphtypeahead(target) {
 
-     $(target).typeahead(null, {
+     $(target).typeahead({
+         minLength: 0
+     }, {
           name: 'morphtarget',
           displayKey: 'annotation_idgloss',
           source: morph_bloodhound.ttAdapter(),
@@ -533,7 +575,7 @@ function morphtypeahead(target) {
               }
           }
       });
-};
+}
 
 $("#show_set_lemma_form").on('click', function() {
     $('#lemma_forms_row').show();
@@ -633,8 +675,7 @@ $(".publication-edit-dismiss").on('click', function() {
     $('.read_only_publication').each(function() {
         $(this).show();
     });
-    $('#enable_edit_publication').removeClass('edit_enabled');
-    $('#enable_edit_publication').show();
+    $('#enable_edit_publication').removeClass('edit_enabled').show();
     $('.button-publication-to-appear-in-edit-mode').hide();
 });
 
@@ -707,6 +748,42 @@ $("#enable_edit_notes").on('click', function() {
     enable_lookaheads('notes');
 });
 
+function disable_edit_provenance() {
+    $('.edit_only_provenance').each(function() {
+        $(this).hide();
+    });
+    $('.read_only_provenance').each(function() {
+        $(this).show();
+    });
+    disable_lookaheads('provenance');
+    $('#provenance_edit_dismiss').hide();
+    $('#enable_edit_provenance').show();
+}
+
+$(".provenance-edit-dismiss").on('click', function() {
+    $('.edit_only_provenance').each(function() {
+        $(this).hide();
+    });
+    disable_lookaheads('provenance');
+    $('.read_only_provenance').each(function() {
+        $(this).show();
+    });
+    $(this).hide();
+    $('#enable_edit_provenance').show();
+});
+
+$("#enable_edit_provenance").on('click', function() {
+    $('.edit_only_provenance').each(function() {
+        $(this).show();
+    });
+    $('.read_only_provenance').each(function() {
+        $(this).hide();
+    });
+    $('#provenance_edit_dismiss').show();
+    $(this).hide();
+    enable_lookaheads('provenance');
+});
+
 function ajaxifyTagForm() {
     // ajax form submission for tag addition and deletion
     $('.tagdelete').click(function() {
@@ -730,7 +807,7 @@ function ajaxifyTagForm() {
 
         var newtag = $('#tagaddform select').val();
 
-        if (newtag != "") {
+        if (newtag !== "") {
             $.post($(this).attr('action'), $(this).serialize(),
                     function(data) {
                        // response is a new tag list
@@ -752,7 +829,7 @@ function disable_lookaheads(category) {
          if (!this_id) {return;}
          var data_category = $(this).attr('data-category');
          if (!data_category) {return;}
-         if (data_category != category) {return;}
+         if (data_category !== category) {return;}
          if (this_id.endsWith("_lookahead")) {
              $(this).attr('disabled', true);
              return;
@@ -767,6 +844,9 @@ function disable_lookaheads(category) {
              $(this).attr('disabled', true);
          }
          if (this_id.startsWith("definition_")) {
+             $(this).attr('disabled', true);
+         }
+         if (this_id.startsWith("provenance")) {
              $(this).attr('disabled', true);
          }
          if (this_id.endsWith("_multiselect")) {
@@ -785,7 +865,7 @@ function enable_lookaheads(category) {
          if (!this_id) {return;}
          var data_category = $(this).attr('data-category');
          if (!data_category) {return;}
-         if (data_category != category) {return;}
+         if (data_category !== category) {return;}
          if (this_id.endsWith("_lookahead")) {
              $(this).removeAttr('disabled');
              return;
@@ -800,6 +880,9 @@ function enable_lookaheads(category) {
              $(this).removeAttr('disabled');
          }
          if (this_id.startsWith("definition_")) {
+             $(this).removeAttr('disabled');
+         }
+         if (this_id.startsWith("provenance")) {
              $(this).removeAttr('disabled');
          }
          if (this_id.endsWith("_multiselect")) {
@@ -830,8 +913,7 @@ function enable_edit_panel(category) {
         $('.edit_only_publication').show();
     }
     $('.empty_row_'+category).show();
-    $('#enable_edit_'+category).addClass('edit_enabled');
-    $('#enable_edit_'+category).hide();
+    $('#enable_edit_'+category).addClass('edit_enabled').hide();
     $('.button-'+category+'-to-appear-in-edit-mode').show();
     enable_lookaheads(category);
 }
@@ -854,8 +936,7 @@ function disable_edit_panel(category) {
     }
     $('.empty_row_'+category).hide();
     $('.button-'+category+'-to-appear-in-edit-mode').hide();
-    $('#enable_edit_'+category).removeClass('edit_enabled');
-    $('#enable_edit_'+category).show();
+    $('#enable_edit_'+category).removeClass('edit_enabled').show();
     disable_lookaheads(category);
     busy_editing = false;
 }
@@ -1360,6 +1441,31 @@ $(document).ready(function() {
             }
          });
      });
+     $('.quick_save_provenance').click(function(e)
+	 {
+         e.preventDefault();
+         var update = { 'csrfmiddlewaretoken': csrf_token };
+         var glossid = $(this).attr('data-glossid');
+         var provenanceid = $(this).attr('data-provenanceid');
+         update['provenancemethod_'+provenanceid] = $('#provenancemethod_'+provenanceid).val();
+         update['provenancedescription_'+provenanceid] = $('#provenancedescription_'+provenanceid).val();
+         $.ajax({
+            url : url + "/dictionary/update/update_gloss_note/" + glossid + "/" + provenanceid,
+            type: 'POST',
+            data: update,
+            datatype: "json",
+            success : function(data) {
+                if (data.success) {
+                    setTimeout(function() {
+                        location.reload(true);
+                    }, 500);
+                }
+            },
+            error: function (xhr, status, error) {
+                alert("There was an error processing this change: " + xhr.responseText );
+            }
+         });
+     });
      var lookahead_elements = $('[id*="_lookahead"]');
      lookahead_elements.each(function() {
          var this_id = $(this).attr("id");
@@ -1400,5 +1506,6 @@ $(document).ready(function() {
     disable_edit_morphology();
     disable_edit_nme();
     disable_edit_notes();
+    disable_edit_provenance();
     ajaxifyTagForm();
 });

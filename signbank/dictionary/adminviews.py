@@ -84,7 +84,7 @@ from signbank.dictionary.forms import (AnnotatedSentenceSearchForm, GlossSearchF
                                        LemmaCreateForm, LemmaUpdateForm, set_up_lemma_language_fields, MorphemeCreateForm,
                                        OtherMediaForm, RelationForm, SemanticsForm, PhonologyForm, GlossForm, PublicationForm,
                                        GlossMorphologyForm, GlossBlendForm, DefinitionForm, NotesForm, GlossMorphemeForm,
-                                       SemanticFieldTranslationForm, ZippedVideosForm, SearchGlossIds,
+                                       SemanticFieldTranslationForm, ZippedVideosForm, SearchGlossIds, ProvenanceForm,
                                        check_language_fields, check_multilingual_fields, SentenceForm,
                                        check_language_fields_annotatedsentence, GlossProvenanceForm, check_sortOrder_handshapes)
 from signbank.tools import (write_ecv_file_for_dataset, find_duplicate_lemmas,
@@ -1558,6 +1558,12 @@ class GlossDetailView(DetailView):
 
         context['provenance_groupedby_method'] = get_provenance_groupedby_method(gloss)
         context['use_provenance'] = dataset_of_requested_gloss.use_provenance
+
+        provenance_entries = gloss.glossprovenance_set.all().order_by('method')
+        provenance_forms = dict()
+        for provenance in provenance_entries:
+            provenance_forms[provenance.pk] = ProvenanceForm(provenance=provenance)
+        context['provenance_forms'] = provenance_forms
 
         # Gather the OtherMedia
         context['prominent_media_type'] = gl.lemma.dataset.prominent_media  # this can be None
