@@ -114,7 +114,7 @@ def get_nme_video_descriptions(gloss):
 
 
 def get_notes_groupedby_role(gloss):
-    notes = gloss.definition_set.all()
+    notes = gloss.definition_set.all().order_by('count')
     notes_groupedby_role = {}
     for note in notes:
         translated_note_role = note.role.name if note.role else '-'

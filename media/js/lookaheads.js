@@ -645,10 +645,8 @@ function disable_edit_nme() {
     $('.read_only_nme').each(function() {
         $(this).show();
     });
-    $('#enable_edit_nme').removeClass('edit_enabled');
+    $('#nme_edit_dismiss').hide();
     $('#enable_edit_nme').show();
-    disable_lookaheads('nme');
-    $('.button-nme-to-appear-in-edit-mode').hide();
 }
 
 $(".nme-edit-dismiss").on('click', function() {
@@ -659,7 +657,6 @@ $(".nme-edit-dismiss").on('click', function() {
         $(this).show();
     });
     $(this).hide();
-    disable_lookaheads('nme');
     $('#enable_edit_nme').show();
 });
 
@@ -670,10 +667,44 @@ $("#enable_edit_nme").on('click', function() {
     $('.read_only_nme').each(function() {
         $(this).hide();
     });
-    $(this).addClass('edit_enabled');
-    $('.button-nme-to-appear-in-edit-mode').show();
-    enable_lookaheads('nme');
+    $('#nme_edit_dismiss').show();
     $(this).hide();
+});
+
+function disable_edit_notes() {
+    $('.edit_only_notes').each(function() {
+        $(this).hide();
+    });
+    $('.read_only_notes').each(function() {
+        $(this).show();
+    });
+    disable_lookaheads('notes');
+    $('#notes_edit_dismiss').hide();
+    $('#enable_edit_notes').show();
+}
+
+$(".notes-edit-dismiss").on('click', function() {
+    $('.edit_only_notes').each(function() {
+        $(this).hide();
+    });
+    disable_lookaheads('notes');
+    $('.read_only_notes').each(function() {
+        $(this).show();
+    });
+    $(this).hide();
+    $('#enable_edit_notes').show();
+});
+
+$("#enable_edit_notes").on('click', function() {
+    $('.edit_only_notes').each(function() {
+        $(this).show();
+    });
+    $('.read_only_notes').each(function() {
+        $(this).hide();
+    });
+    $('#notes_edit_dismiss').show();
+    $(this).hide();
+    enable_lookaheads('notes');
 });
 
 function ajaxifyTagForm() {
@@ -732,6 +763,12 @@ function disable_lookaheads(category) {
          if (this_id.endsWith("_text")) {
              $(this).attr('disabled', true);
          }
+         if (this_id.endsWith("_textarea")) {
+             $(this).attr('disabled', true);
+         }
+         if (this_id.startsWith("definition_")) {
+             $(this).attr('disabled', true);
+         }
          if (this_id.endsWith("_multiselect")) {
              $(this).attr('disabled', true);
          }
@@ -757,6 +794,12 @@ function enable_lookaheads(category) {
              $(this).removeAttr('disabled');
          }
          if (this_id.endsWith("_text")) {
+             $(this).removeAttr('disabled');
+         }
+         if (this_id.endsWith("_textarea")) {
+             $(this).removeAttr('disabled');
+         }
+         if (this_id.startsWith("definition_")) {
              $(this).removeAttr('disabled');
          }
          if (this_id.endsWith("_multiselect")) {
@@ -1290,6 +1333,33 @@ $(document).ready(function() {
             }
          });
      });
+     $('.quick_save_note').click(function(e)
+	 {
+         e.preventDefault();
+         var update = { 'csrfmiddlewaretoken': csrf_token };
+         var glossid = $(this).attr('data-glossid');
+         var definitionid = $(this).attr('data-definitionid');
+         update['definitionpub_'+definitionid] = $('#definitionpub_'+definitionid+'_select_value').val();
+         update['definitioncount_'+definitionid] = $('#definitioncount_'+definitionid).val();
+         update['definitionrole_'+definitionid] = $('#definitionrole_'+definitionid).val();
+         update['definition_'+definitionid] = $('#definition_'+definitionid).val();
+         $.ajax({
+            url : url + "/dictionary/update/update_gloss_note/" + glossid + "/" + definitionid,
+            type: 'POST',
+            data: update,
+            datatype: "json",
+            success : function(data) {
+                if (data.success) {
+                    setTimeout(function() {
+                        location.reload(true);
+                    }, 500);
+                }
+            },
+            error: function (xhr, status, error) {
+                alert("There was an error processing this change: " + xhr.responseText );
+            }
+         });
+     });
      var lookahead_elements = $('[id*="_lookahead"]');
      lookahead_elements.each(function() {
          var this_id = $(this).attr("id");
@@ -1329,5 +1399,6 @@ $(document).ready(function() {
     disable_edit_relations();
     disable_edit_morphology();
     disable_edit_nme();
+    disable_edit_notes();
     ajaxifyTagForm();
 });

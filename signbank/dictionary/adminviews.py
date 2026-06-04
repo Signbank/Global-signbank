@@ -83,7 +83,7 @@ from signbank.dictionary.forms import (AnnotatedSentenceSearchForm, GlossSearchF
                                        ImageUploadForGlossForm, ImageUploadForHandshapeForm, EAFFilesForm,
                                        LemmaCreateForm, LemmaUpdateForm, set_up_lemma_language_fields, MorphemeCreateForm,
                                        OtherMediaForm, RelationForm, SemanticsForm, PhonologyForm, GlossForm, PublicationForm,
-                                       GlossMorphologyForm, GlossBlendForm, DefinitionForm, GlossMorphemeForm,
+                                       GlossMorphologyForm, GlossBlendForm, DefinitionForm, NotesForm, GlossMorphemeForm,
                                        SemanticFieldTranslationForm, ZippedVideosForm, SearchGlossIds,
                                        check_language_fields, check_multilingual_fields, SentenceForm,
                                        check_language_fields_annotatedsentence, GlossProvenanceForm, check_sortOrder_handshapes)
@@ -1549,6 +1549,13 @@ class GlossDetailView(DetailView):
         context['homonyms_but_not_saved'] = homonyms_but_not_saved
 
         context['notes_groupedby_role'] = get_notes_groupedby_role(gloss)
+
+        notes = gloss.definition_set.all().order_by('count')
+        notes_forms = dict()
+        for note in notes:
+            notes_forms[note.pk] = NotesForm(note=note)
+        context['notes_forms'] = notes_forms
+
         context['provenance_groupedby_method'] = get_provenance_groupedby_method(gloss)
         context['use_provenance'] = dataset_of_requested_gloss.use_provenance
 

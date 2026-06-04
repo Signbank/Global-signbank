@@ -265,6 +265,9 @@ class Definition(MetaModelMixin, models.Model):
     def note_tuple(self):
         return self.get_role_display(), str(self.published), str(self.count), self.note_text()
 
+    def display_published(self):
+        return _('Yes') if self.published else _('No')
+
 
 class SignLanguage(models.Model):
     """A sign language name"""

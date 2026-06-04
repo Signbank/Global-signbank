@@ -4,19 +4,17 @@ import re
 import datetime as DT
 import urllib.parse
 import magic
-import subprocess
 
 from django.http import (HttpResponse, HttpResponseRedirect, HttpResponseForbidden, HttpResponseBadRequest,
-                         JsonResponse, Http404)
+                         JsonResponse)
 from django.shortcuts import render, get_object_or_404, redirect
 from django.urls import reverse
-from django.core.exceptions import ObjectDoesNotExist, MultipleObjectsReturned, ValidationError, PermissionDenied
+from django.core.exceptions import ObjectDoesNotExist, MultipleObjectsReturned, PermissionDenied
 from django.core.files import File
 from django.contrib.auth.decorators import permission_required
 from django.views.decorators.http import require_http_methods
 from django.db.models.fields import BooleanField, IntegerField, CharField, TextField
 from django.db.models import ForeignKey
-from django.forms.models import ModelChoiceField
 from django.forms.utils import ValidationError
 from django.db import DatabaseError, IntegrityError
 from django.utils.timezone import get_current_timezone
@@ -1063,6 +1061,58 @@ def update_gloss_nmevideo(request, glossid, nmevideoid):
                 nmev.offset = new_offset
                 # the save will move the file on disk
                 nmev.save(update_fields=['offset'])
+
+    return JsonResponse({'success': True}, status=200)
+
+
+@require_http_methods(["POST"])
+@permission_required('dictionary.change_gloss')
+def update_gloss_note(request, glossid, definitionid):
+    """Update one of the definition fields"""
+
+    gloss = get_object_or_404(Gloss, id=glossid, archived=False)
+    definition = get_object_or_404(Definition, id=definitionid)
+
+    value_dict = {}
+    for field in request.POST.keys():
+        if field == 'csrfmiddlewaretoken':
+            continue
+        value = request.POST.get(field, '')
+        if not value:
+            continue
+        value_dict[field] = value.strip() if isinstance(value, str) else value
+
+    changes_done = []
+    for field, value in value_dict.items():
+        what, _ = field.split('_')
+        if what == 'definition':
+            original_value = definition.note_text()
+            definition.text = value
+            definition.save()
+            new_history_value = definition.text
+            changes_done.append((field, original_value, new_history_value))
+        elif what == 'definitioncount':
+            original_value = str(definition.count)
+            definition.count = int(value)
+            definition.save()
+            new_history_value = str(definition.count)
+            changes_done.append((field, original_value, new_history_value))
+        elif what == 'definitionpub':
+            original_value = str(definition.published)
+            if request.user.has_perm('dictionary.can_publish'):
+                boolean_value = {'0': False, '1': True}[value]
+                definition.published = boolean_value
+                definition.save()
+            new_history_value = str(definition.published)
+            changes_done.append((field, original_value, new_history_value))
+        elif what == 'definitionrole':
+            original_value = definition.role.name if definition.role else ''
+            definition.role = FieldChoice.objects.get(field='NoteType', machine_value=int(value))
+            definition.save()
+            new_history_value = definition.role.name
+            changes_done.append((field, original_value, new_history_value))
+    for field, original_human_value, new_history_value in changes_done:
+        add_gloss_update_to_revision_history(request.user, gloss, field, original_human_value, new_history_value)
 
     return JsonResponse({'success': True}, status=200)
 

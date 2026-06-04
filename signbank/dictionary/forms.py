@@ -560,6 +560,32 @@ class DefinitionForm(forms.ModelForm):
                                                 widget=forms.Select(attrs=ATTRS_FOR_FORMS))
 
 
+class NotesForm(forms.ModelForm):
+
+    text = forms.CharField(widget=forms.Textarea(attrs={'cols': 60, 'rows': 5, 'placeholder': _('Enter New Note')}))
+    # published = forms.BooleanField(required=False, widget=forms.CheckboxInput())
+    published = forms.ChoiceField(label=_('Repeating Movement'), choices=[('0', '-')],
+                                  widget=forms.Select(attrs=ATTRS_FOR_BOOLEAN_FORMS))
+
+    class Meta:
+        model = Definition
+        fields = ('published', 'count', 'text')
+
+    def __init__(self, *args, **kwargs):
+        self.note = kwargs.pop('note')
+        super().__init__(*args, **kwargs)
+        self.fields['role'] = forms.ChoiceField(label=_('Type'),
+                                                choices=choicelist_queryset_to_translated_dict(
+                                                     list(FieldChoice.objects.filter(field='NoteType').order_by(
+                                                         'machine_value')),
+                                                     ordered=False, id_prefix='', shortlist=False
+                                                ),
+                                                widget=forms.Select(attrs=ATTRS_FOR_FORMS))
+        self.fields['role'].initial = self.note.role.name if self.note.role else ''
+        self.fields['published'].choices = [('0', _('No')), ('1', _('Yes'))]
+        self.fields['published'].initial = self.note.display_published
+
+
 class RelationForm(forms.ModelForm):
 
     sourceid = forms.CharField(label=_('Source Gloss'))
