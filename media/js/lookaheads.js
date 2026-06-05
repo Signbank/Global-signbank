@@ -42,6 +42,7 @@ function domhndshtypeahead(target) {
      }, {
           name: 'domhndsh',
           displayKey: 'name',
+          limit: 20,
           source: domhndsh_bloodhound.ttAdapter(),
           templates: {
               suggestion: function(fc) {
@@ -66,6 +67,7 @@ function subhndshtypeahead(target) {
      }, {
           name: 'subhndsh',
           displayKey: 'name',
+          limit: 20,
           source: subhndsh_bloodhound.ttAdapter(),
           templates: {
               suggestion: function(fc) {
@@ -134,10 +136,12 @@ locprim_bloodhound.initialize();
 function locprimtypeahead(target) {
 
      $(target).typeahead({
-         minLength: 0
+         minLength: 0,
+         hint: false
      }, {
           name: 'locprim',
           displayKey: 'name',
+          limit: 50,
           source: locprim_bloodhound.ttAdapter(),
           templates: {
               suggestion: function(fc) {
@@ -843,7 +847,7 @@ function disable_lookaheads(category) {
          if (this_id.endsWith("_textarea")) {
              $(this).attr('disabled', true);
          }
-         if (this_id.startsWith("definition_")) {
+         if (this_id.startsWith("definition")) {
              $(this).attr('disabled', true);
          }
          if (this_id.startsWith("provenance")) {
@@ -852,7 +856,7 @@ function disable_lookaheads(category) {
          if (this_id.endsWith("_multiselect")) {
              $(this).attr('disabled', true);
          }
-         if (this_id.startsWith("nmevideo_")) {
+         if (this_id.startsWith("nmevideo")) {
             $(this).attr('disabled', true);
          }
      });
@@ -879,7 +883,7 @@ function enable_lookaheads(category) {
          if (this_id.endsWith("_textarea")) {
              $(this).removeAttr('disabled');
          }
-         if (this_id.startsWith("definition_")) {
+         if (this_id.startsWith("definition")) {
              $(this).removeAttr('disabled');
          }
          if (this_id.startsWith("provenance")) {
@@ -888,7 +892,7 @@ function enable_lookaheads(category) {
          if (this_id.endsWith("_multiselect")) {
              $(this).removeAttr('disabled');
          }
-         if (this_id.startsWith("nmevideo_")) {
+         if (this_id.startsWith("nmevideo")) {
             $(this).removeAttr('disabled');
          }
      });
@@ -1450,7 +1454,7 @@ $(document).ready(function() {
          update['provenancemethod_'+provenanceid] = $('#provenancemethod_'+provenanceid).val();
          update['provenancedescription_'+provenanceid] = $('#provenancedescription_'+provenanceid).val();
          $.ajax({
-            url : url + "/dictionary/update/update_gloss_note/" + glossid + "/" + provenanceid,
+            url : url + "/dictionary/update/update_gloss_provenance/" + glossid + "/" + provenanceid,
             type: 'POST',
             data: update,
             datatype: "json",

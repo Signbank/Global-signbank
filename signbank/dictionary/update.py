@@ -1007,12 +1007,15 @@ def update_gloss_annotation(request, glossid):
         # create an empty annotation for this gloss and language
         annotation_idgloss_translation = AnnotationIdglossTranslation(gloss=gloss, language=language)
 
+    original_text = annotation_idgloss_translation.text
     annotation_idgloss_translation.text = annotation_text
     try:
         annotation_idgloss_translation.save()
     except ValidationError as e:
         error_message = getattr(e, 'message', repr(e))
         return JsonResponse({'error': error_message}, status=400)
+
+    add_gloss_update_to_revision_history(request.user, gloss, 'annotation_'+language_code_2char, original_text, annotation_text)
 
     return JsonResponse({'success': True}, status=200)
 
@@ -1089,28 +1092,61 @@ def update_gloss_note(request, glossid, definitionid):
             original_value = definition.note_text()
             definition.text = value
             definition.save()
-            new_history_value = definition.text
-            changes_done.append((field, original_value, new_history_value))
+            changes_done.append((field, original_value, definition.note_text()))
         elif what == 'definitioncount':
             original_value = str(definition.count)
             definition.count = int(value)
             definition.save()
-            new_history_value = str(definition.count)
-            changes_done.append((field, original_value, new_history_value))
+            changes_done.append((field, original_value, str(definition.count)))
         elif what == 'definitionpub':
             original_value = str(definition.published)
-            if request.user.has_perm('dictionary.can_publish'):
-                boolean_value = {'0': False, '1': True}[value]
-                definition.published = boolean_value
-                definition.save()
-            new_history_value = str(definition.published)
-            changes_done.append((field, original_value, new_history_value))
+            if not request.user.has_perm('dictionary.can_publish'):
+                continue
+            boolean_value = {'0': False, '1': True}[value]
+            definition.published = boolean_value
+            definition.save()
+            changes_done.append((field, original_value, str(definition.published)))
         elif what == 'definitionrole':
             original_value = definition.role.name if definition.role else ''
             definition.role = FieldChoice.objects.get(field='NoteType', machine_value=int(value))
             definition.save()
-            new_history_value = definition.role.name
-            changes_done.append((field, original_value, new_history_value))
+            changes_done.append((field, original_value, definition.role.name))
+    for field, original_human_value, new_history_value in changes_done:
+        add_gloss_update_to_revision_history(request.user, gloss, field, original_human_value, new_history_value)
+
+    return JsonResponse({'success': True}, status=200)
+
+
+@require_http_methods(["POST"])
+@permission_required('dictionary.change_gloss')
+def update_gloss_provenance(request, glossid, provenanceid):
+    """Update one of the provenance fields"""
+    gloss = get_object_or_404(Gloss, id=glossid, archived=False)
+    provenance = get_object_or_404(GlossProvenance, id=provenanceid)
+
+    value_dict = {}
+    for field in request.POST.keys():
+        if field == 'csrfmiddlewaretoken':
+            continue
+        value = request.POST.get(field, '')
+        if not value:
+            continue
+        value_dict[field] = value.strip() if isinstance(value, str) else value
+
+    changes_done = []
+    for field, value in value_dict.items():
+        (what, provid) = field.split('_')
+        if what == 'provenancedescription':
+            original_value = provenance.provenance_text()
+            provenance.description = value
+            provenance.save()
+            changes_done.append((field, original_value, provenance.description))
+        elif what == 'provenancemethod':
+            original_value = provenance.get_method_display()
+            provenance.method = FieldChoice.objects.get(field='Provenance', machine_value=int(value))
+            provenance.save()
+            changes_done.append((field, original_value, provenance.method.name))
+
     for field, original_human_value, new_history_value in changes_done:
         add_gloss_update_to_revision_history(request.user, gloss, field, original_human_value, new_history_value)
 

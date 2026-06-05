@@ -36,7 +36,6 @@ def fields_to_categories():
             elif field in ExampleSentence.get_field_names():
                 field_field = ExampleSentence.get_field(field)
             else:
-                print('field_to_categories: field not found in Gloss, Handshape, Morpheme: ', field)
                 continue
             if field in ['domhndsh', 'subhndsh', 'final_domhndsh', 'final_subhndsh']:
                 if 'Handshape' not in choice_categories:

@@ -60,6 +60,8 @@ urlpatterns = [
         signbank.dictionary.update.update_gloss_nmevideo, name='update_gloss_nmevideo'),
     re_path(r'^update/update_gloss_note/(?P<glossid>\d+)/(?P<definitionid>\d+?)$',
         signbank.dictionary.update.update_gloss_note, name='update_gloss_note'),
+    re_path(r'^update/update_gloss_provenance/(?P<glossid>\d+)/(?P<provenanceid>\d+?)$',
+        signbank.dictionary.update.update_gloss_provenance, name='update_gloss_provenance'),
     re_path(r'^gloss/edit_phonology/(?P<glossid>\d+)', signbank.dictionary.views.edit_phonology, name='edit_phonology'),
     re_path(r'^update/assign_lemma_dataset_to_gloss/(?P<glossid>\d+)$', signbank.dictionary.update.assign_lemma_dataset_to_gloss,
             name='assign_lemma_dataset_to_gloss'),

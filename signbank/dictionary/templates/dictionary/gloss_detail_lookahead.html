@@ -43,17 +43,6 @@
     var original_lemma_group_url = '{{lemma_group_url}}';
     var lemma_group = '{{lemma_group}}';
 
-    var edit_post_url = '{% url 'dictionary:update_gloss' gloss.id %}';
-    var definition_role_choices = {{gloss.definition_role_choices_json|safe}};
-    var definition_role_choices_colors = {};
-    for (var key in definition_role_choices) {
-        definition_role_choices_colors[key] = 'ffffff';
-    };
-    var definition_role_choices_reverse_json = {{gloss.definition_role_choices_reverse_json|safe}};
-    var relation_role_choices = {{gloss.relation_role_choices_json|safe}};
-    var relation_delete_choices = { "delete" : "Delete" };
-    var relation_delete_choices_colors = { "delete" : "ffffff" };
-
     {% if SHOW_DATASET_INTERFACE_OPTIONS %}
     var dataset_choices = {{dataset_choices|safe}};
     {% else %}
@@ -678,7 +667,6 @@ input .tt-hint {
 .editform-provenance input:disabled, textarea:disabled {
     resize: none;
     resize: vertical;
-    overflow: auto;
     color: inherit !important;
     appearance: none;
     -webkit-appearance: none;
@@ -2472,7 +2460,7 @@ input .tt-hint {
                                     <th style="width:200px;">{% trans "Index" %}</th>
                                     <td class="td td-light" style='width:5em'>
                                         <input class='form-control form-control-light' name='offset' id='offset'
-                                               type='number' min=0 value=0 style="width:10em;">
+                                               type='number' min=0 value=0 style="width:5em;">
                                     </td>
                                 </tr>
                                 {% for dataset_lang in gloss.lemma.dataset.translation_languages.all %}
@@ -3749,14 +3737,15 @@ input .tt-hint {
                     </div>
                 </td>
                 {% endwith %}
-                <td class="edit_only_notes edit edit_int" id='definitioncount_{{def.id}}_number'>
-                    <input class='form-control form-control-light' name='offset' id='definitioncount_{{def.id}}'
-                           type='number' min=0 style="width:10em;" value={{def.count}} >
+                <td class="edit_only_notes" id='definitioncount_{{def.id}}_number'>
+                    <input class='form-control form-control-light' name='count' id='definitioncount_{{def.id}}'
+                           type='number' min=0 style="width:5em;" value={{def.count}} >
                 </td>
                 {% with note_form.fields|get_item:'role' as role_field %}
                 <td class="td td-light" id='definitionrole_{{def.id}}_select_value'
                     data-field='definitionrole'>
-                    <select name="role" id="definitionrole_{{def.id}}" class="form-control form-control-light"
+                    <div class="editselect">
+                    <select name="role" id="definitionrole_{{def.id}}" class="select_note_role form-control form-control-light"
                             data-category="notes" >
                         {% for machine_value, opn in role_field.choices %}
                         {% if opn == role_field.initial %}
@@ -3766,6 +3755,7 @@ input .tt-hint {
                         {% endif %}
                         {% endfor %}
                     </select>
+                    </div>
                 </td>
                 {% endwith %}
                 <td class="editform-notes" id="definition_{{def.id}}_textarea">
@@ -3861,16 +3851,19 @@ input .tt-hint {
                 {% endif %}
             </div>
 
-            {% if provenance_groupedby_method %}
-            <div class="table-container" style="overflow-x:auto;width:max-content;">
+            <div class="clearfix"></div>
 
-            <table class='table'>
+            {% if provenance_groupedby_method %}
+            <div class="table-container">
+
+            <table class='table table-condensed'>
               <tr>
                   <th class="edit_only_provenance" style='width:5em'></th>
                   <th class="read_only_provenance" style="width:10em">{% trans "Creation Date" %}</th>
                   <th class="read_only_provenance" style="width:10em">{% trans "Creator" %}</th>
                   <th style='width:20em'>{% trans "Method" %}</th>
-                  <th>{% trans "Description" %}</th>
+                  <th style="width:400px;">{% trans "Description" %}</th>
+                  <th></th>
               </tr>
               {% for method_id, prov_list in provenance_groupedby_method.items %}
 
@@ -3918,6 +3911,7 @@ input .tt-hint {
                 {% with prov_form.fields|get_item:'method' as method_field %}
                 <td class="td td-light editform-provenance" id='provenancemethod_{{prov.id}}_select_value'
                     data-field='provenancemethod'>
+                    <div class="editselect">
                     <select name="method" id="provenancemethod_{{prov.id}}" class="form-control form-control-light"
                             data-category="provenance" >
                         {% for machine_value, opn in method_field.choices %}
@@ -3928,17 +3922,18 @@ input .tt-hint {
                         {% endif %}
                         {% endfor %}
                     </select>
+                    </div>
                 </td>
                 {% endwith %}
                 <td class="editform-provenance" id="provenancedescription_{{prov.id}}_textarea" style="height:80px;">
                     <div>
-                    <textarea class='form-control form-control-light' name="description" cols="60" rows="5"
+                    <textarea class='form-control form-control-light' name="description" cols="60" rows="2"
                               id="provenancedescription_{{prov.id}}" data-category="provenance">{{prov.description}}</textarea>
                     </div>
                 </td>
                  <td class="edit_only_provenance" style='width:2em;'>
                      <button id='quick_save_provenance_btn_{{prov.id}}' class="quick_save_provenance btn btn-primary"
-                        name='quick_save_provenance_{{prov.id}}' data-category="provenance" data-provenanceid="{{prov.id}}"
+                        data-category="provenance" data-provenanceid="{{prov.id}}"
                         data-glossid='{{gloss.id}}' style="color:red;font-size:16px;background-color:transparent;border:none;width:2em;"
                         type="button"><span class="glyphicon glyphicon-check"></span></button>
                  </td>
