@@ -124,7 +124,15 @@ def update_gloss_columns_to_value_dict_keys(dataset, language_code):
 
 
 def get_gloss_update_human_readable_value_dict(request):
-    post_data = json.loads(request.body.decode('utf-8'))
+    # Handle empty or invalid JSON bodies gracefully so the view's validation
+    # can respond with a meaningful error instead of a 500.
+    raw = request.body.decode('utf-8') if request.body else ''
+    try:
+        post_data = json.loads(raw) if raw else {}
+    except json.JSONDecodeError:
+        post_data = {}
+    if not isinstance(post_data, dict):
+        post_data = {}
 
     value_dict = dict()
     for field in post_data.keys():
