@@ -2768,7 +2768,7 @@ textarea:focus {
                </table>
 
                {% if "change_dataset" in dataset_perms %}
-               <form id='add_relationtoforeignsign_form' method='post' action='{% url "dictionary:add_relationtoforeignsign" %}'>
+               <form id='add_relationtoforeignsign_form' method='post' action='{% url "dictionary:add_relationtoforeignsign" gloss.id %}'>
                    {% csrf_token %}
                    <input type='hidden' name='sourceid' value='{{gloss.pk}}'>
                    <table class='table table-condensed'>

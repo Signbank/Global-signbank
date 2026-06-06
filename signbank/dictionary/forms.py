@@ -563,8 +563,7 @@ class DefinitionForm(forms.ModelForm):
 class NotesForm(forms.ModelForm):
 
     text = forms.CharField(widget=forms.Textarea(attrs={'cols': 60, 'rows': 5, 'placeholder': _('Enter New Note')}))
-    # published = forms.BooleanField(required=False, widget=forms.CheckboxInput())
-    published = forms.ChoiceField(label=_('Repeating Movement'), choices=[('0', '-')],
+    published = forms.ChoiceField(label=_('Published'), choices=[('0', '-')],
                                   widget=forms.Select(attrs=ATTRS_FOR_BOOLEAN_FORMS))
 
     class Meta:
@@ -622,6 +621,29 @@ class RelationToForeignSignForm(forms.ModelForm):
         model = RelationToForeignSign
         fields = ['loan', 'other_lang', 'other_lang_gloss']
         widgets = {}
+
+
+class GlossForeignRelationForm(forms.ModelForm):
+
+    sourceid = forms.CharField(label=_('Source Gloss'))
+    loan = forms.ChoiceField(label=_('Loan'), choices=[('0', '-')],
+                             widget=forms.Select(attrs=ATTRS_FOR_BOOLEAN_FORMS))
+    other_lang = forms.CharField(label=_('Related Language'))
+    other_lang_gloss = forms.CharField(label=_('Gloss in Related Language'), required=False)
+
+    class Meta:
+        model = RelationToForeignSign
+        fields = ['loan', 'other_lang', 'other_lang_gloss']
+        widgets = {}
+
+    def __init__(self, *args, **kwargs):
+        self.foreignrelation = kwargs.pop('foreignrelation')
+        super(GlossForeignRelationForm, self).__init__(*args, **kwargs)
+        self.fields['sourceid'] = self.foreignrelation.gloss.id
+        self.fields['loan'].choices = [('0', _('No')), ('1', _('Yes'))]
+        self.fields['loan'].initial = self.foreignrelation.display_loan
+        self.fields['other_lang'].initial = self.foreignrelation.other_lang
+        self.fields['other_lang_gloss'].initial = self.foreignrelation.other_lang_gloss
 
 
 class GlossMorphologyForm(forms.Form):

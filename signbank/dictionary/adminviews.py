@@ -85,7 +85,7 @@ from signbank.dictionary.forms import (AnnotatedSentenceSearchForm, GlossSearchF
                                        OtherMediaForm, RelationForm, SemanticsForm, PhonologyForm, GlossForm, PublicationForm,
                                        GlossMorphologyForm, GlossBlendForm, DefinitionForm, NotesForm, GlossMorphemeForm,
                                        SemanticFieldTranslationForm, ZippedVideosForm, SearchGlossIds, ProvenanceForm,
-                                       check_language_fields, check_multilingual_fields, SentenceForm,
+                                       check_language_fields, check_multilingual_fields, SentenceForm, GlossForeignRelationForm,
                                        check_language_fields_annotatedsentence, GlossProvenanceForm, check_sortOrder_handshapes)
 from signbank.tools import (write_ecv_file_for_dataset, find_duplicate_lemmas,
                             construct_scrollbar, get_dataset_languages, get_datasets_with_public_glosses,
@@ -1294,6 +1294,8 @@ class GlossDetailView(DetailView):
 
         context['otherrelations'] = get_other_relations(gloss)
 
+        context['foreignrelations'] = gloss.relationtoforeignsign_set.all()
+
         context['annotated_sentences'] = get_annotated_sentences(gloss)
 
         context['nme_video_descriptions'] = get_nme_video_descriptions(gloss)
@@ -1547,6 +1549,11 @@ class GlossDetailView(DetailView):
                 homonyms_but_not_saved.append((homonym, homo_display))
 
         context['homonyms_but_not_saved'] = homonyms_but_not_saved
+
+        foreignrelations_forms = dict()
+        for foreignrelation in context['foreignrelations']:
+            foreignrelations_forms[foreignrelation.pk] = GlossForeignRelationForm(foreignrelation=foreignrelation)
+        context['foreignrelations_forms'] = foreignrelations_forms
 
         context['notes_groupedby_role'] = get_notes_groupedby_role(gloss)
 

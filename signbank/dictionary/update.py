@@ -1119,6 +1119,52 @@ def update_gloss_note(request, glossid, definitionid):
 
 @require_http_methods(["POST"])
 @permission_required('dictionary.change_gloss')
+def update_gloss_foreignrelation(request, glossid, foreignrelationid):
+    """Update one of the relations for this gloss"""
+    gloss = get_object_or_404(Gloss, id=glossid, archived=False)
+    foreignrelation = get_object_or_404(RelationToForeignSign, id=foreignrelationid)
+
+    value_dict = {}
+    for field in request.POST.keys():
+        if field == 'csrfmiddlewaretoken':
+            continue
+        value = request.POST.get(field, '')
+        if not value:
+            continue
+        value_dict[field] = value.strip() if isinstance(value, str) else value
+
+    changes_done = []
+    for field, value in value_dict.items():
+        what, _ = field.split('_')
+        what = what.replace('-', '_')
+
+        if what == 'loan':
+            original_value = str(foreignrelation.loan)
+            if not request.user.has_perm('dictionary.can_publish'):
+                continue
+            boolean_value = {'0': False, '1': True}[value]
+            foreignrelation.loan = boolean_value
+            foreignrelation.save()
+            changes_done.append((field, original_value, str(foreignrelation.loan)))
+        elif what == 'other_lang':
+            original_value = foreignrelation.other_lang_text()
+            foreignrelation.other_lang = value
+            foreignrelation.save()
+            changes_done.append((field, original_value, foreignrelation.other_lang_text()))
+        elif what == 'other_lang_gloss':
+            original_value = foreignrelation.other_lang_gloss_text()
+            foreignrelation.other_lang_gloss = value
+            foreignrelation.save()
+            changes_done.append((field, original_value, foreignrelation.other_lang_gloss_text()))
+
+    for field, original_human_value, new_history_value in changes_done:
+        add_gloss_update_to_revision_history(request.user, gloss, field, original_human_value, new_history_value)
+
+    return JsonResponse({'success': True}, status=200)
+
+
+@require_http_methods(["POST"])
+@permission_required('dictionary.change_gloss')
 def update_gloss_provenance(request, glossid, provenanceid):
     """Update one of the provenance fields"""
     gloss = get_object_or_404(Gloss, id=glossid, archived=False)
@@ -1151,6 +1197,38 @@ def update_gloss_provenance(request, glossid, provenanceid):
         add_gloss_update_to_revision_history(request.user, gloss, field, original_human_value, new_history_value)
 
     return JsonResponse({'success': True}, status=200)
+
+# DOCUMENTATION TO DO LIST
+# specific update_gloss functions are needed for new template because the old ones pass back data for editable:
+# 'perspectivevideo_delete_{{perspvideo.id}}'
+# 'nmevideo_delete_{{videonme.id}}'
+# 'morphology-definition-delete_{{morphdef.id}}'
+# 'morpheme-definition-delete_{{morpheme.pk}}'
+# 'blend-definition-delete_{{blend.pk}}'
+# 'relationdelete_{{rel.id}}'
+# 'definitiondelete_{{def.id}}'
+# 'provenancedelete_{{prov.id}}'
+
+# to other update methods:
+# "dictionary:create_sense" gloss.id
+# 'dictionary:update_sense' sense.id
+# "dictionary:create_examplesentence" sense.id
+# "dictionary:update_examplesentence" examplesentence.id
+# 'dictionary:add_morphologydefinition'
+# 'dictionary:add_morphemedefinition' glossid=gloss.id
+# 'dictionary:add_blenddefinition' glossid=gloss.id
+# "dictionary:add_relation"
+# "dictionary:add_definition" gloss.id
+# "dictionary:add_provenance" gloss.id
+# 'dictionary:create_citation_image'  gloss.id
+# 'dictionary:create_lemma_gloss' gloss.id
+# "dictionary:sort_sense" gloss.id forloop.counter "up"
+# "dictionary:sort_sense" gloss.id forloop.counter "down"
+# 'dictionary:delete_sense' gloss.id
+# "dictionary:sort_examplesentence" sense.id gloss.id forloop.counter "up"
+# "dictionary:sort_examplesentence" sense.id gloss.id forloop.counter "down"
+# "dictionary:add_sentence_video" glossid=gloss.id examplesentenceid=examplesentence.id
+# 'dictionary:delete_examplesentence' sense.id
 
 
 @require_http_methods(["POST"])
@@ -2130,7 +2208,6 @@ def add_relation(request):
 
 @require_http_methods(["POST"])
 @permission_required('dictionary.change_gloss')
-@require_http_methods(["POST"])
 def variants_of_gloss(request):
 
     form = VariantsForm(request.POST)
@@ -2165,7 +2242,7 @@ def variants_of_gloss(request):
 
 
 @require_http_methods(["POST"])
-def add_relationtoforeignsign(request):
+def add_relationtoforeignsign(request, glossid):
     """Add a new relationtoforeignsign instance"""
 
     form = RelationToForeignSignForm(request.POST)

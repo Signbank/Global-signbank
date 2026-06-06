@@ -672,6 +672,36 @@ $("#enable_edit_relations").on('click', function() {
     $(this).hide();
 });
 
+function disable_edit_foreignrelations() {
+    $('#add_relationtoforeignsign_form').hide();
+    $('.edit_only_foreignrelations').each(function() {
+        $(this).hide();
+    });
+    $('.button-foreignrelations-to-appear-in-edit-mode').hide();
+    disable_lookaheads('foreignrelations');
+    $('#enable_edit_foreignrelations').show();
+}
+
+$(".foreignrelations-edit-dismiss").on('click', function() {
+    $('#add_relationtoforeignsign_form').hide();
+    $('.edit_only_foreignrelations').each(function() {
+        $(this).hide();
+    });
+    disable_lookaheads('foreignrelations');
+    $(this).hide();
+    $('#enable_edit_foreignrelations').show();
+});
+
+$("#enable_edit_foreignrelations").on('click', function() {
+    $('#add_relationtoforeignsign_form').show();
+    $('.edit_only_foreignrelations').each(function() {
+        $(this).show();
+    });
+    $('.button-foreignrelations-to-appear-in-edit-mode').show();
+    $(this).hide();
+    enable_lookaheads('foreignrelations');
+});
+
 $(".publication-edit-dismiss").on('click', function() {
     $('.edit_only_publication').each(function() {
         $(this).hide();
@@ -1418,6 +1448,32 @@ $(document).ready(function() {
             }
          });
      });
+      $('.quick_save_foreignrelation').click(function(e)
+	 {
+         e.preventDefault();
+         var update = { 'csrfmiddlewaretoken': csrf_token };
+         var glossid = $(this).attr('data-glossid');
+         var foreignrelationid = $(this).attr('data-foreignrelationid');
+         update['loan_'+foreignrelationid] = $('#foreignrelation_loan_'+foreignrelationid+'_select_value').val();
+         update['other-lang_'+foreignrelationid] = $('#foreignrelation_other_lang_'+foreignrelationid).val();
+         update['other-lang-gloss_'+foreignrelationid] = $('#foreignrelation_other_lang_gloss_'+foreignrelationid).val();
+         $.ajax({
+            url : url + "/dictionary/update/update_gloss_foreignrelation/" + glossid + "/" + foreignrelationid,
+            type: 'POST',
+            data: update,
+            datatype: "json",
+            success : function(data) {
+                if (data.success) {
+                    setTimeout(function() {
+                        location.reload(true);
+                    }, 500);
+                }
+            },
+            error: function (xhr, status, error) {
+                alert("There was an error processing this change: " + xhr.responseText );
+            }
+         });
+     });
      $('.quick_save_note').click(function(e)
 	 {
          e.preventDefault();
@@ -1507,6 +1563,7 @@ $(document).ready(function() {
     disable_edit_panel('semantics');
     disable_edit_panel('publication');
     disable_edit_relations();
+    disable_edit_foreignrelations();
     disable_edit_morphology();
     disable_edit_nme();
     disable_edit_notes();

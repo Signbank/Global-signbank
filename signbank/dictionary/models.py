@@ -339,6 +339,25 @@ class RelationToForeignSign(models.Model):
         list_filter = ['other_lang']
         search_fields = ['gloss__idgloss']
 
+    def display_loan(self):
+        return _('Yes') if self.loan else _('No')
+
+    def other_lang_text(self):
+        stripped_text = str(self.other_lang).strip()
+        if '\n' in stripped_text:
+            # this function is used for displaying notes in the CSV update
+            # this makes mysterious differences in old and new values visible
+            stripped_text = stripped_text.replace('\n', '<br>')
+        return stripped_text
+
+    def other_lang_gloss_text(self):
+        stripped_text = str(self.other_lang_gloss).strip()
+        if '\n' in stripped_text:
+            # this function is used for displaying notes in the CSV update
+            # this makes mysterious differences in old and new values visible
+            stripped_text = stripped_text.replace('\n', '<br>')
+        return stripped_text
+
 
 class Handshape(MetaModelMixin, models.Model):
     machine_value = models.IntegerField(_("Machine value"), primary_key=True)

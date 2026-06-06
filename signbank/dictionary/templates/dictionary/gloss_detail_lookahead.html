@@ -637,6 +637,25 @@ input .tt-hint {
     border: none;
     opacity: 1;
 }
+.editform-foreignrelations input, textarea {
+    background-color: inherit !important;
+    border: none;
+}
+.editform-foreignrelations input:enabled,textarea:enabled {
+    color: red !important;
+    opacity: 1;
+}
+.editform-foreignrelations input:disabled, textarea:disabled {
+    resize: none;
+    resize: vertical;
+    overflow: auto;
+    color: inherit !important;
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    border: none;
+    opacity: 1;
+}
 .editform-notes input, textarea {
     background-color: inherit !important;
     border: none;
@@ -3529,6 +3548,153 @@ input .tt-hint {
             </form>
             {% endif %}
 
+        </div>
+    </div>
+
+<!-- Relations to foreign signs -->
+    <div class="panel panel-default panel-light">
+        <div class='panel-heading panel-light' data-toggle='collapse'
+             data-target='#foreignrelations'>{% trans "Relations to Foreign Signs" %}
+                    {% if gloss.relationtoforeignsign_set.all %}
+                    <div class="pull-right">
+                    <span id="forrelations-icon"><img id='forrelations-arrows'
+                                                      src='{{STATIC_URL}}images/left_right_triangleheaded_arrow.png'
+                                                      style="width:15px; height:15px; margin: 0px;"></span>
+                    </div>
+                    {% endif %}
+        </div>
+        <div id='foreignrelations' class='collapse'>
+                <div class='pull-right' style="margin-right:15px;margin-top:20px;margin-bottom:20px;">
+                     {% if perms.dictionary.change_gloss %}
+                     <div>
+                        {% csrf_token %}
+                        <button type="button" class="btn btn-danger foreignrelations-edit-dismiss button-foreignrelations-to-appear-in-edit-mode"
+                                style="width:auto;padding:3px 12px;">{% trans "Dismiss" %}</button>
+                        <button id='enable_edit_foreignrelations'
+                                 class='btn btn-primary navbar-btn edit-mode'
+                                 style="width:auto;padding:3px 12px;">{% trans "Edit Foreign Relations" %}</button>
+                     </div>
+                     {% endif %}
+                </div>
+
+                <div class="clearfix"></div>
+
+               {% if foreignrelations %}
+               <div class="table-container" style="overflow-x:auto;width:max-content;">
+               <table class='table table-responsive'>
+	                <tr>
+                        <th class="edit_only_foreignrelations" style='width:5em'></th>
+                        <th style='width:10em'>{% trans "Loan" %}</th>
+		                <th style='width:15em'>{% trans "Related Language" %}</th>
+		                <th style='width:20em'>{% trans "Gloss in Related Language" %}</th>
+                        <th class="edit_only_foreignrelations" style='width:2em'></th>
+		            </tr>
+                   {% for rel in foreignrelations %}
+                   {% with foreignrelations_forms|get_item:rel.id as foreignrelation_form %}
+                   <tr id='foreign_{{rel.id}}'>
+                     <td class="edit_only_foreignrelations" style='width:5em important!'>
+                        {% if "change_dataset" in dataset_perms %}
+                        <span class='glyphicon glyphicon-trash relationtoforeignsign_delete' data-toggle='modal' data-target='#delete_foreignrelation_modal_{{rel.id}}'></span>
+
+                         <div class="modal fade" id="delete_foreignrelation_modal_{{rel.id}}" role="dialog" aria-labelledby="#modalTitleForeign" aria-hidden="true">
+                             <div class="modal-dialog modal-sm">
+                                <div class="modal-content">
+                                    <div class='modal-header'>
+                                        <h2 id='modalTitleForeign'>{% trans "Delete This Relation" %}</h2>
+                                    </div>
+                                    <div class='modal-body'>
+
+                                        <p>{% trans "Are you sure you want to delete this? This cannot be undone." %}</p>
+                                     </div>
+                                  <form action='{% url "dictionary:update_gloss" gloss.id %}' method='post'>
+                                      {% csrf_token %}
+                                      <input type='hidden' name='id' value='relationforeign-delete_{{rel.id}}'>
+                                      <input type='hidden' name='value' value='confirmed'>
+                                      <div class="modal-footer">
+                                        <button type="button" class="btn btn-default btn-default-light" data-dismiss="modal">{% trans "Cancel" %}</button>
+                                        <input type="submit" class="btn btn-primary" value='{% trans "Confirm Delete" %}'>
+                                      </div>
+                                  </form>
+
+                                </div>
+                              </div>
+                         </div>
+                         {% endif %}
+                    </td>
+                    {% with foreignrelation_form.fields|get_item:'loan' as loan_field %}
+                    <td class="editform-foreignrelations" id='foreignrelation_loan_{{rel.id}}'>
+                        <div class="editselect">
+                        <select class="select_foreignrelations form-control form-control-light" name="loan"
+                                id="foreignrelation_loan_{{rel.id}}_select_value" data-category="foreignrelations">
+                            {% for value, opn in loan_field.choices %}
+                            {% if opn == loan_field.initial %}
+                            <option value={{value}} selected="selected">{{opn}}</option>
+                            {% else %}
+                            <option value={{value}}>{{opn}}</option>
+                            {% endif %}
+                            {% endfor %}
+                        </select>
+                        </div>
+                    </td>
+                    {% endwith %}
+                    {% with foreignrelation_form.fields|get_item:'other_lang' as other_lang_field %}
+                    <td class="editform-foreignrelations" style="width:auto;">
+                        <div>
+                        <input class='form-control form-control-light' type="text" name="other_lang"
+                               value="{{other_lang_field.initial}}"
+                               id="foreignrelation_other_lang_{{rel.id}}_text" data-category="foreignrelations">
+                        </div>
+                    </td>
+                    {% endwith %}
+                    {% with foreignrelation_form.fields|get_item:'other_lang_gloss' as other_lang_gloss_field %}
+                    <td class="editform-foreignrelations" style="width:auto;">
+                        <div>
+                        <input class='form-control form-control-light' type="text" name="other_lang_gloss"
+                               value="{{other_lang_gloss_field.initial}}"
+                               id="foreignrelation_other_lang_gloss_{{rel.id}}_text" data-category="foreignrelations">
+                        </div>
+                    </td>
+                    {% endwith %}
+                    <td class="edit_only_foreignrelations" style='width:2em;'>
+                         <button id='quick_save_foreignrelation_btn_{{rel.id}}' class="quick_save_foreignrelation btn btn-primary"
+                            name='quick_save_foreignrelation_{{rel.id}}' data-category="foreignrelations" data-foreignrelationid="{{rel.id}}"
+                            data-glossid='{{gloss.id}}' style="color:red;font-size:16px;background-color:transparent;border:none;width:2em;"
+                            type="button"><span class="glyphicon glyphicon-check"></span></button>
+                    </td>
+                   </tr>
+                   {% endwith %}
+                   {% endfor %}
+               </table>
+               </div>
+               {% endif %}
+
+               {% if "change_dataset" in dataset_perms %}
+               <div class="edit_only_foreignrelations">
+               <form id='add_relationtoforeignsign_form' method='post' action='{% url "dictionary:add_relationtoforeignsign" gloss.id %}'>
+                   {% csrf_token %}
+                   <input type='hidden' name='sourceid' value='{{gloss.pk}}'>
+                   <table class='table table-condensed'>
+                   {% if not foreignrelations %}
+	                <tr>
+                        <th style='width:5em'></th>
+                        <th style='width:10em'>{% trans "Loan" %}</th>
+		                <th style='width:15em'>{% trans "Related Language" %}</th>
+		                <th style='width:20em'>{% trans "Gloss in Related Language" %}</th>
+                        <th style='width:2em'></th>
+		            </tr>
+                   {% endif %}
+                       <tr>
+                           <th style='width:5em'></th>
+                           <td class="td td-light"><input class='checkbox' name='loan' type='checkbox'></td>
+                           <td class="td td-light"><input class='form-control form-control-light' placeholder='{% trans "Related Language" %}' name='other_lang' type='text'></td>
+                           <td class="td td-light"><input class='form-control form-control-light' placeholder='{% trans "Gloss in Related Language" %}' name='other_lang_gloss' type='text'></td>
+                           <th style='width:2em'></th>
+                           <td><input class='btn btn-primary' value='{% trans "Add Relation to Foreign Sign" %}' type='submit'></td>
+                       </tr>
+                   </table>
+               </form>
+               </div>
+               {% endif %}
         </div>
     </div>
 
