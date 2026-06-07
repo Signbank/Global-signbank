@@ -818,6 +818,31 @@ $("#enable_edit_provenance").on('click', function() {
     enable_lookaheads('provenance');
 });
 
+function disable_edit_annotated_sentences() {
+    $('.edit_only_annotated_sentences').each(function() {
+        $(this).hide();
+    });
+    $("#annotated_sentences_edit_dismiss").hide();
+}
+
+$("#annotated_sentences_edit_dismiss").on('click', function() {
+    $('.edit_only_annotated_sentences').each(function() {
+        $(this).hide();
+    });
+    $('#enable_edit_annotated_sentences').show();
+    $(this).hide();
+});
+
+$("#enable_edit_annotated_sentences").on('click', function() {
+    $('.edit_only_annotated_sentences').each(function() {
+        $(this).show();
+    });
+    $(".annotated_sentences_edit_dismiss").each(function() {
+        $(this).show();
+    });
+    $(this).hide();
+});
+
 function ajaxifyTagForm() {
     // ajax form submission for tag addition and deletion
     $('.tagdelete').click(function() {
@@ -1568,5 +1593,6 @@ $(document).ready(function() {
     disable_edit_nme();
     disable_edit_notes();
     disable_edit_provenance();
+    disable_edit_annotated_sentences();
     ajaxifyTagForm();
 });
