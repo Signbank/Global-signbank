@@ -1180,10 +1180,7 @@ class GlossDetailView(DetailView):
             self.public = self.kwargs['public']
         if self.public:
             return ['dictionary/gloss.html']
-        show_lookaheads = get_lookaheads_setting_for_user(self.request.user)
-        if show_lookaheads:
-            return ['dictionary/gloss_detail_lookahead.html']
-        return ['dictionary/gloss_detail.html']
+        return ['dictionary/gloss_detail_lookahead.html']
 
     # Overriding the get method get permissions right
     def get(self, request, *args, **kwargs):

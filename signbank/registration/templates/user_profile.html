@@ -19,17 +19,6 @@ function display_token(data) {
     var tokenCell = $("#api_token");
     tokenCell.html(new_token);
 }
-
-function display_use_lookaheads(data) {
-    console.log(data);
-    if ($.isEmptyObject(data)) {
-        return;
-    }
-    var use_lookaheads = data.use_lookaheads;
-    var tokenCell = $("#use_lookaheads");
-    tokenCell.attr('value', use_lookaheads === 'True');
-}
-
 $(document).ready(function() {
     function csrfSafeMethod(method) {
         // these HTTP methods do not require CSRF protection
@@ -53,24 +42,6 @@ $(document).ready(function() {
             data: { 'csrfmiddlewaretoken': csrf_token },
             datatype: "json",
             success : display_token
-         });
-    });
-    $('.use_lookaheads').click(function(e)
-    {
-         e.preventDefault();
-         var update = { 'csrfmiddlewaretoken': csrf_token };
-         var use_lookaheads = $('#enable_lookaheads').find('input[name="use_lookaheads"]').is(':checked');
-         if(use_lookaheads) {
-             update['enable_lookaheads'] = 1;
-         } else {
-             update['enable_lookaheads'] = 0;
-         }
-         $.ajax({
-            url : url + "/accounts/use_lookaheads/" ,
-            type: 'POST',
-            data: update,
-            datatype: "json",
-            success : display_use_lookaheads
          });
     });
 });
@@ -201,31 +172,6 @@ $(document).ready(function() {
 
     </table>
     {% endif %}
-
-    <table>
-    <thead class="thead thead-light">
-    <tr>
-        <th class='th th-light'>{% trans "Gloss Edit Lookaheads" %}</th>
-    </tr>
-    </thead>
-        <tr>
-            <td>
-            <form id='enable_lookaheads' >
-            {% csrf_token %}
-            <input type="hidden" name="username" value="{{user.username}}">
-            {% if user_profile.use_lookaheads %}
-                <input type="checkbox" name="use_lookaheads" checked >
-            {% else %}
-                <input type="checkbox" name="use_lookaheads" >
-            {% endif %}
-            <button class='use_lookaheads btn btn-primary'
-                    type='submit'>
-                {% trans "Use Lookaheads (Beta)" %}
-            </button>
-            </form>
-            </td>
-        </tr>
-    </table>
     {% if user_has_queries %}
     <br><br>
     <table class="table table-condensed table-condensed-light">

@@ -3608,7 +3608,6 @@ class UserProfile(models.Model):
     number_of_logins = models.IntegerField(null=True, default=0)
     comments = models.CharField(max_length=500, null=True, blank=True)
     selected_datasets = models.ManyToManyField(Dataset)
-    use_lookaheads = models.BooleanField(_("Use Lookaheads"), default=False)
 
     def save(self, *args, **kwargs):
         if not self.pk:
