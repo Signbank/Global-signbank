@@ -686,7 +686,7 @@ class OtherMediaForm(forms.ModelForm):
     file = forms.FileField(widget=forms.FileInput(attrs={'accept': 'video/*, image/*, application/pdf'}),
                            required=True)
     alternative_gloss = forms.TextInput()
-    description = forms.CharField(widget=forms.Textarea(attrs={'cols': 80, 'rows': 5,
+    description = forms.CharField(widget=forms.Textarea(attrs={'cols': 60, 'rows': 5,
                                                                'placeholder': _("Description/Explanation")}),
                                   required=False)
 
@@ -711,6 +711,31 @@ class OtherMediaForm(forms.ModelForm):
             raise forms.ValidationError(_("Please choose a video or image file to upload."))
         else:
             return data
+
+
+class OtherMediaUpdateForm(forms.ModelForm):
+
+    alternative_gloss = forms.TextInput()
+    description = forms.CharField(widget=forms.Textarea(attrs={'cols': 60, 'rows': 5,
+                                                               'placeholder': _("Description/Explanation")}),
+                                  required=False)
+    class Meta:
+        model = OtherMedia
+        fields = ['alternative_gloss', 'description']
+
+    def __init__(self, *args, **kwargs):
+        self.othermedia = kwargs.pop('othermedia')
+        super(OtherMediaUpdateForm, self).__init__(*args, **kwargs)
+        self.fields['type'] = forms.ChoiceField(label=_('Type'),
+                                                choices= choicelist_queryset_to_translated_dict(
+                                                    list(FieldChoice.objects.filter(field='OtherMediaType').order_by(
+                                                        'machine_value')),
+                                                    ordered=False, id_prefix='', shortlist=False
+                                                ),
+                                                widget=forms.Select(attrs=ATTRS_FOR_FORMS))
+        self.fields['type'].initial = self.othermedia.type.name if self.othermedia.type else ''
+        self.fields['alternative_gloss'].initial = self.othermedia.alternative_gloss
+        self.fields['description'].initial = self.othermedia.description
 
 
 class ZippedVideosForm(forms.Form):

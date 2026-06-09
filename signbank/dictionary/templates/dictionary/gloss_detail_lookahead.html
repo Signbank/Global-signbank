@@ -693,6 +693,25 @@ input .tt-hint {
     border: none;
     opacity: 1;
 }
+.editform-othermedia input, textarea {
+    background-color: inherit !important;
+    border: none;
+}
+.editform-othermedia input:enabled,textarea:enabled {
+    color: red !important;
+    opacity: 1;
+}
+.editform-othermedia input:disabled, textarea:disabled {
+    resize: none;
+    resize: vertical;
+    overflow: auto;
+    color: inherit !important;
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    border: none;
+    opacity: 1;
+}
 .editselect > select {
     background-color: inherit !important;
     width: auto;
@@ -4286,6 +4305,179 @@ input .tt-hint {
                         class='sense-button btn btn-primary btn-space'>{% trans "Add annotated media" %}</button>
             </div>
             {% endif %}
+        </div>
+    </div>
+
+     <!-- Other media -->
+    <div class="panel panel-default panel-light">
+        <div class='panel-heading panel-light' data-toggle='collapse'
+             data-target='#othermedia'>{% trans "Other Media" %}
+                    {% if other_media %}
+                    <div class="pull-right">
+                    <span><img src='{{STATIC_URL}}images/camera.png'
+                               style="width:15px; height:15px; margin: 0px;"></span>
+                    </div>
+                    {% endif %}
+        </div>
+        <div id='othermedia' class='collapse'>
+            <div class='pull-right' style="margin-right:15px;margin-top:20px;margin-bottom:20px;">
+                {% if perms.dictionary.change_gloss %}
+                 <div>
+                    {% csrf_token %}
+                    <button type="button" class="btn btn-danger othermedia-edit-dismiss"
+                            style="width:auto;padding:3px 12px;" id="othermedia_edit_dismiss"
+                            >{% trans "Dismiss" %}</button>
+                    <button id='enable_edit_othermedia'
+                             class='btn btn-primary navbar-btn edit-mode'
+                             style="width:auto;padding:3px 12px;">{% trans "Edit Other Media" %}</button>
+                 </div>
+                {% endif %}
+            </div>
+
+           {% if other_media %}
+           <div class="table-container">
+
+           <table class='table table-condensed'>
+              <tr>
+                  <th class="edit_only_othermedia" style='width:2em'></th>
+                  <th class="read_only_othermedia" style='width:6em'>{% trans "Image/Video" %}</th>
+                  <th class="read_only_othermedia" style='width:6em'>{% trans "File Type" %}</th>
+                  <th style='width:20em'>{% trans "Type" %}</th>
+                  <th style='width:12em'>{% trans "Alternative Gloss" %}</th>
+                  <th style='width:20em'>{% trans "Description" %}</th>
+              </tr>
+
+               {% for media_okay,pk,path,file_type,type,alternative_gloss,description,file_name in other_media %}
+               {% with other_media_forms|get_item:pk as othermedia_form %}
+               <tr>
+                     <td class="edit_only_othermedia">
+                        {% if "change_dataset" in dataset_perms %}
+                        <span class='glyphicon glyphicon-trash other-video-delete' data-toggle='modal' data-target='#delete_other_media_{{pk}}'></span>
+
+                         <div class="modal fade" id="delete_other_media_{{pk}}" role="dialog" aria-labelledby="#modalTitleMedia" aria-hidden="true">
+                             <div class="modal-dialog modal-sm">
+                                <div class="modal-content">
+                                    <div class='modal-header'>
+                                        <h2 id='modalTitleMedia'>{% trans "Delete This Media" %}</h2>
+                                    </div>
+                                    <div class='modal-body'>
+
+                                        <p>{% trans "Are you sure you want to delete this? This cannot be undone." %}</p>
+                                     </div>
+                                  <form action='{% url "dictionary:update_gloss" gloss.id %}' method='post'>
+                                      {% csrf_token %}
+                                      <input type='hidden' name='id' value='other-media-delete_{{pk}}'>
+                                      <input type='hidden' name='value' value='confirmed'>
+                                      <div class="modal-footer">
+                                        <button type="button" class="btn btn-default btn-default-light" data-dismiss="modal">{% trans "Cancel" %}</button>
+                                        <input type="submit" class="btn btn-primary" value='{% trans "Confirm Delete" %}'>
+                                      </div>
+                                  </form>
+
+                                </div>
+                              </div>
+                         </div>
+                         {% endif %}
+                    </td>
+                    <td class="read_only_othermedia td td-light">
+                        {% if media_okay %}
+                            <a onclick="return false;" style="color:rgb(150,150,150);"
+                                download="{{file_name}}" href="{{PREFIX_URL}}{{protected_media_url}}/{{path}}">Download</a>
+                        {% else %}
+                            <a aria-disabled="true" tabindex="-1" style="color:rgb(150,150,150);pointer-events:none;"
+				               download="{{file_name}}" href="{{PREFIX_URL}}{{protected_media_url}}/{{path}}">Download</a>
+                        {% endif %}
+                    </td>
+                    <td class="read_only_othermedia td td-light" id='othermedia-file-type_{{pk}}'>{{file_type}}</td>
+                    {% with othermedia_form.fields|get_item:'type' as type_field %}
+                    <td class="td td-light" id='othermedia-type_{{pk}}_select_value'
+                        data-field='othermedia_type'>
+                        <div class="editselect">
+                        <select name="type" id="othermedia-type_{{pk}}" class="select_othermedia_type form-control form-control-light"
+                                data-category="othermedia" >
+                            {% for machine_value, opn in type_field.choices %}
+                            {% if opn == type_field.initial %}
+                            <option value={{machine_value}} selected="selected">{{opn}}</option>
+                            {% else %}
+                            <option value={{machine_value}}>{{opn}}</option>
+                            {% endif %}
+                            {% endfor %}
+                        </select>
+                        </div>
+                    </td>
+                    {% endwith %}
+                    {% with othermedia_form.fields|get_item:'alternative_gloss' as alternative_gloss_field %}
+                    <td class="editform-othermedia" style="width:auto;">
+                        <div>
+                        <input class='form-control form-control-light' type="text" name="alternative_gloss"
+                               value="{{alternative_gloss_field.initial}}"
+                               id="othermedia-alternative-gloss_{{pk}}_text" data-category="othermedia">
+                        </div>
+                    </td>
+                    {% endwith %}
+                    {% with othermedia_form.fields|get_item:'description' as description_field %}
+                     <td class="editform-othermedia" id="othermedia-description_{{pk}}_textarea" style="height:80px;">
+                         <div>
+                         <textarea class='form-control form-control-light' name="description" cols="60" rows="2"
+                                   id="othermedia-description_{{pk}}" data-category="othermedia">{{description_field.initial}}</textarea>
+                         </div>
+                     </td>
+                     {% endwith %}
+                     <td class="edit_only_othermedia" style='width:2em;'>
+                         <button id='quick_save_othermedia_btn_{{pk}}' class="quick_save_othermedia btn btn-primary"
+                            data-category="othermedia" data-othermediaid="{{pk}}"
+                            data-glossid='{{gloss.id}}' style="color:red;font-size:16px;background-color:transparent;border:none;width:2em;"
+                            type="button"><span class="glyphicon glyphicon-check"></span></button>
+                     </td>
+                    </tr>
+               {% endwith %}
+               {% endfor %}
+
+           </table>
+           </div>
+           {% endif %}
+
+           {% if "change_dataset" in dataset_perms %}
+            <div class="edit_only_othermedia">
+            <form id='add_other_media' action='{% url "dictionary:add_othermedia" %}' method="POST" enctype="multipart/form-data">
+
+               <input type='hidden' name='gloss' value='{{gloss.pk}}'>
+
+                <fieldset>
+                {% csrf_token %}
+                 <table class='table table-condensed' style="width:800px;">
+                    <tr>
+                        <th style="width:240px;">{% trans "File" %}</th>
+                        <td class="td td-light">
+                             <input type='file' name="file" class='form-control form-control-light'
+                                    id="{{othermediaform.file.id_for_label}}" required="">
+                        </td>
+                    </tr>
+                    <tr>
+                        <th style="width:240px;">{% trans "Type" %}</th>
+                        <td class="td td-light">{{othermediaform.type}}</td>
+                    </tr>
+                    <tr>
+                        <th style="width:240px;">{% trans "Alternative Gloss" %}</th>
+                        <td class="td td-light">
+                             <input class='form-control form-control-light' style='width:12em'
+                                    placeholder='{% trans "Alternative Gloss" %}' name='alternative_gloss' type='text'>
+                        </td>
+                    </tr>
+                    <tr>
+                        <th style="width:240px;">{% trans "Description" %}</th>
+                        <td class="td td-light" style='width:20em'>{{othermediaform.description}}</td>
+                    </tr>
+                    <tr>
+                        <th style="width:240px;"></th>
+                        <td><input class='btn btn-primary' type='submit' value='{% trans "Save" %}'></td>
+                    </tr>
+                 </table>
+            </fieldset>
+            </form>
+            </div>
+            {% endif %}
+
         </div>
     </div>
 

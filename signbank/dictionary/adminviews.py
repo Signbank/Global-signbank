@@ -85,7 +85,8 @@ from signbank.dictionary.forms import (AnnotatedSentenceSearchForm, GlossSearchF
                                        OtherMediaForm, RelationForm, SemanticsForm, PhonologyForm, GlossForm, PublicationForm,
                                        GlossMorphologyForm, GlossBlendForm, DefinitionForm, NotesForm, GlossMorphemeForm,
                                        SemanticFieldTranslationForm, ZippedVideosForm, SearchGlossIds, ProvenanceForm,
-                                       check_language_fields, check_multilingual_fields, SentenceForm, GlossForeignRelationForm,
+                                       check_language_fields, check_multilingual_fields, SentenceForm,
+                                       GlossForeignRelationForm, OtherMediaUpdateForm,
                                        check_language_fields_annotatedsentence, GlossProvenanceForm, check_sortOrder_handshapes)
 from signbank.tools import (write_ecv_file_for_dataset, find_duplicate_lemmas,
                             construct_scrollbar, get_dataset_languages, get_datasets_with_public_glosses,
@@ -1602,6 +1603,11 @@ class GlossDetailView(DetailView):
                                                        other_media.description if other_media.description else ''))
 
         context['other_media_field_choices'] = json.dumps(context['other_media_field_choices'])
+
+        other_media_forms = dict()
+        for other_media in gl.othermedia_set.all():
+            other_media_forms[other_media.pk] = OtherMediaUpdateForm(othermedia=other_media)
+        context['other_media_forms'] = other_media_forms
 
         context['separate_english_idgloss_field'] = SEPARATE_ENGLISH_IDGLOSS_FIELD
 

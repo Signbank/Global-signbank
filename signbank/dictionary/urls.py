@@ -64,6 +64,8 @@ urlpatterns = [
             signbank.dictionary.update.update_gloss_foreignrelation, name='update_gloss_foreignrelation'),
     re_path(r'^update/update_gloss_provenance/(?P<glossid>\d+)/(?P<provenanceid>\d+?)$',
         signbank.dictionary.update.update_gloss_provenance, name='update_gloss_provenance'),
+    re_path(r'^update/update_gloss_othermedia/(?P<glossid>\d+)/(?P<othermediaid>\d+?)$',
+        signbank.dictionary.update.update_gloss_othermedia, name='update_gloss_othermedia'),
     re_path(r'^gloss/edit_phonology/(?P<glossid>\d+)', signbank.dictionary.views.edit_phonology, name='edit_phonology'),
     re_path(r'^update/assign_lemma_dataset_to_gloss/(?P<glossid>\d+)$', signbank.dictionary.update.assign_lemma_dataset_to_gloss,
             name='assign_lemma_dataset_to_gloss'),

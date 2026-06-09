@@ -3278,6 +3278,17 @@ class OtherMedia(MetaModelMixin, models.Model):
     path = models.CharField(max_length=100)
     description = models.TextField(null=True, blank=True, verbose_name=_("Description/Explanation"))
 
+    def get_type_display(self):
+        return self.type.name if self.type else '-'
+
+    def description_text(self):
+        stripped_text = str(self.description).strip() if self.description else ''
+        if '\n' in stripped_text:
+            # this function is used for displaying notes in the CSV update
+            # this makes mysterious differences in old and new values visible
+            stripped_text = stripped_text.replace('\n', '<br>')
+        return stripped_text
+
     def get_othermedia_path(self, gloss_id, check_existence=False):
         # read only method
         """Returns a tuple (media_okay, path, filename) """

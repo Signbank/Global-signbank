@@ -1088,17 +1088,17 @@ def update_gloss_note(request, glossid, definitionid):
     changes_done = []
     for field, value in value_dict.items():
         what, _ = field.split('_')
-        if what == 'definition':
+        if what == 'note-definition':
             original_value = definition.note_text()
             definition.text = value
             definition.save()
             changes_done.append((field, original_value, definition.note_text()))
-        elif what == 'definitioncount':
+        elif what == 'note-definitioncount':
             original_value = str(definition.count)
             definition.count = int(value)
             definition.save()
             changes_done.append((field, original_value, str(definition.count)))
-        elif what == 'definitionpub':
+        elif what == 'note-definitionpub':
             original_value = str(definition.published)
             if not request.user.has_perm('dictionary.can_publish'):
                 continue
@@ -1106,7 +1106,7 @@ def update_gloss_note(request, glossid, definitionid):
             definition.published = boolean_value
             definition.save()
             changes_done.append((field, original_value, str(definition.published)))
-        elif what == 'definitionrole':
+        elif what == 'note-definitionrole':
             original_value = definition.role.name if definition.role else ''
             definition.role = FieldChoice.objects.get(field='NoteType', machine_value=int(value))
             definition.save()
@@ -1138,7 +1138,7 @@ def update_gloss_foreignrelation(request, glossid, foreignrelationid):
         what, _ = field.split('_')
         what = what.replace('-', '_')
 
-        if what == 'loan':
+        if what == 'foreignrelation_loan':
             original_value = str(foreignrelation.loan)
             if not request.user.has_perm('dictionary.can_publish'):
                 continue
@@ -1146,12 +1146,12 @@ def update_gloss_foreignrelation(request, glossid, foreignrelationid):
             foreignrelation.loan = boolean_value
             foreignrelation.save()
             changes_done.append((field, original_value, str(foreignrelation.loan)))
-        elif what == 'other_lang':
+        elif what == 'foreignrelation_other_lang':
             original_value = foreignrelation.other_lang_text()
             foreignrelation.other_lang = value
             foreignrelation.save()
             changes_done.append((field, original_value, foreignrelation.other_lang_text()))
-        elif what == 'other_lang_gloss':
+        elif what == 'foreignrelation_other_lang_gloss':
             original_value = foreignrelation.other_lang_gloss_text()
             foreignrelation.other_lang_gloss = value
             foreignrelation.save()
@@ -1197,6 +1197,49 @@ def update_gloss_provenance(request, glossid, provenanceid):
         add_gloss_update_to_revision_history(request.user, gloss, field, original_human_value, new_history_value)
 
     return JsonResponse({'success': True}, status=200)
+
+
+@require_http_methods(["POST"])
+@permission_required('dictionary.change_gloss')
+def update_gloss_othermedia(request, glossid, othermediaid):
+    """Update one of the other media fields"""
+    gloss = get_object_or_404(Gloss, id=glossid, archived=False)
+    othermedia = get_object_or_404(OtherMedia, id=othermediaid)
+
+    value_dict = {}
+    for field in request.POST.keys():
+        if field == 'csrfmiddlewaretoken':
+            continue
+        value = request.POST.get(field, '')
+        if not value:
+            continue
+        value_dict[field] = value.strip() if isinstance(value, str) else value
+
+    changes_done = []
+    for field, value in value_dict.items():
+        (what, om_id) = field.split('_')
+        what = what.replace('-', '_')
+        if what == 'other_media_description':
+            original_value = othermedia.description_text()
+            othermedia.description = value
+            othermedia.save()
+            changes_done.append((field, original_value, othermedia.description))
+        elif what == 'other_media_alternative_gloss':
+            original_value = othermedia.alternative_gloss
+            othermedia.alternative_gloss = value
+            othermedia.save()
+            changes_done.append((field, original_value, othermedia.alternative_gloss))
+        elif what == 'other_media_type':
+            original_value = othermedia.get_type_display()
+            othermedia.type = FieldChoice.objects.get(field='OtherMediaType', machine_value=int(value))
+            othermedia.save()
+            changes_done.append((field, original_value, othermedia.type.name))
+
+    for field, original_human_value, new_history_value in changes_done:
+        add_gloss_update_to_revision_history(request.user, gloss, field, original_human_value, new_history_value)
+
+    return JsonResponse({'success': True}, status=200)
+
 
 # DOCUMENTATION TO DO LIST
 # specific update_gloss functions are needed for new template because the old ones pass back data for editable:
@@ -4402,7 +4445,6 @@ def update_provenance(request, gloss, field, value):
         gloss_or_morpheme = gloss
         reverse_url = 'dictionary:admin_gloss_view'
 
-    newvalue = ''
     (what, provid) = field.split('_')
 
     prov = get_object_or_404(GlossProvenance, id=provid)

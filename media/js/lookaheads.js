@@ -843,6 +843,42 @@ $("#enable_edit_annotated_sentences").on('click', function() {
     $(this).hide();
 });
 
+function disable_edit_othermedia() {
+    $('.edit_only_othermedia').each(function() {
+        $(this).hide();
+    });
+    $('.read_only_othermedia').each(function() {
+        $(this).show();
+    });
+    disable_lookaheads('othermedia');
+    $('#othermedia_edit_dismiss').hide();
+    $('#enable_edit_othermedia').show();
+}
+
+$(".othermedia-edit-dismiss").on('click', function() {
+    $('.edit_only_othermedia').each(function() {
+        $(this).hide();
+    });
+    disable_lookaheads('othermedia');
+    $('.read_only_othermedia').each(function() {
+        $(this).show();
+    });
+    $(this).hide();
+    $('#enable_edit_othermedia').show();
+});
+
+$("#enable_edit_othermedia").on('click', function() {
+    $('.edit_only_othermedia').each(function() {
+        $(this).show();
+    });
+    $('.read_only_othermedia').each(function() {
+        $(this).hide();
+    });
+    $('#othermedia_edit_dismiss').show();
+    $(this).hide();
+    enable_lookaheads('othermedia');
+});
+
 function ajaxifyTagForm() {
     // ajax form submission for tag addition and deletion
     $('.tagdelete').click(function() {
@@ -908,6 +944,9 @@ function disable_lookaheads(category) {
          if (this_id.startsWith("provenance")) {
              $(this).attr('disabled', true);
          }
+         if (this_id.startsWith("othermedia")) {
+             $(this).attr('disabled', true);
+         }
          if (this_id.endsWith("_multiselect")) {
              $(this).attr('disabled', true);
          }
@@ -942,6 +981,9 @@ function enable_lookaheads(category) {
              $(this).removeAttr('disabled');
          }
          if (this_id.startsWith("provenance")) {
+             $(this).removeAttr('disabled');
+         }
+         if (this_id.startsWith("othermedia")) {
              $(this).removeAttr('disabled');
          }
          if (this_id.endsWith("_multiselect")) {
@@ -1473,15 +1515,15 @@ $(document).ready(function() {
             }
          });
      });
-      $('.quick_save_foreignrelation').click(function(e)
+     $('.quick_save_foreignrelation').click(function(e)
 	 {
          e.preventDefault();
          var update = { 'csrfmiddlewaretoken': csrf_token };
          var glossid = $(this).attr('data-glossid');
          var foreignrelationid = $(this).attr('data-foreignrelationid');
-         update['loan_'+foreignrelationid] = $('#foreignrelation_loan_'+foreignrelationid+'_select_value').val();
-         update['other-lang_'+foreignrelationid] = $('#foreignrelation_other_lang_'+foreignrelationid).val();
-         update['other-lang-gloss_'+foreignrelationid] = $('#foreignrelation_other_lang_gloss_'+foreignrelationid).val();
+         update['foreignrelation-loan_'+foreignrelationid] = $('#foreignrelation_loan_'+foreignrelationid+'_select_value').val();
+         update['foreignrelation-other-lang_'+foreignrelationid] = $('#foreignrelation_other_lang_'+foreignrelationid+'_text').val();
+         update['foreignrelation-other-lang-gloss_'+foreignrelationid] = $('#foreignrelation_other_lang_gloss_'+foreignrelationid+'_text').val();
          $.ajax({
             url : url + "/dictionary/update/update_gloss_foreignrelation/" + glossid + "/" + foreignrelationid,
             type: 'POST',
@@ -1505,10 +1547,10 @@ $(document).ready(function() {
          var update = { 'csrfmiddlewaretoken': csrf_token };
          var glossid = $(this).attr('data-glossid');
          var definitionid = $(this).attr('data-definitionid');
-         update['definitionpub_'+definitionid] = $('#definitionpub_'+definitionid+'_select_value').val();
-         update['definitioncount_'+definitionid] = $('#definitioncount_'+definitionid).val();
-         update['definitionrole_'+definitionid] = $('#definitionrole_'+definitionid).val();
-         update['definition_'+definitionid] = $('#definition_'+definitionid).val();
+         update['note-definitionpub_'+definitionid] = $('#definitionpub_'+definitionid+'_select_value').val();
+         update['note-definitioncount_'+definitionid] = $('#definitioncount_'+definitionid).val();
+         update['note-definitionrole_'+definitionid] = $('#definitionrole_'+definitionid).val();
+         update['note-definition_'+definitionid] = $('#definition_'+definitionid).val();
          $.ajax({
             url : url + "/dictionary/update/update_gloss_note/" + glossid + "/" + definitionid,
             type: 'POST',
@@ -1536,6 +1578,33 @@ $(document).ready(function() {
          update['provenancedescription_'+provenanceid] = $('#provenancedescription_'+provenanceid).val();
          $.ajax({
             url : url + "/dictionary/update/update_gloss_provenance/" + glossid + "/" + provenanceid,
+            type: 'POST',
+            data: update,
+            datatype: "json",
+            success : function(data) {
+                if (data.success) {
+                    setTimeout(function() {
+                        location.reload(true);
+                    }, 500);
+                }
+            },
+            error: function (xhr, status, error) {
+                alert("There was an error processing this change: " + xhr.responseText );
+            }
+         });
+     });
+     $('.quick_save_othermedia').click(function(e)
+	 {
+         e.preventDefault();
+         var update = { 'csrfmiddlewaretoken': csrf_token };
+         var glossid = $(this).attr('data-glossid');
+         var othermediaid = $(this).attr('data-othermediaid');
+         // the other media id is split from the field name identifier in the Python method
+         update['other-media-type_'+othermediaid] = $('#othermedia-type_'+othermediaid).val();
+         update['other-media-alternative-gloss_'+othermediaid] = $('#othermedia-alternative-gloss_'+othermediaid+'_text').val();
+         update['other-media-description_'+othermediaid] = $('#othermedia-description_'+othermediaid).val();
+         $.ajax({
+            url : url + "/dictionary/update/update_gloss_othermedia/" + glossid + "/" + othermediaid,
             type: 'POST',
             data: update,
             datatype: "json",
@@ -1594,5 +1663,6 @@ $(document).ready(function() {
     disable_edit_notes();
     disable_edit_provenance();
     disable_edit_annotated_sentences();
+    disable_edit_othermedia();
     ajaxifyTagForm();
 });
