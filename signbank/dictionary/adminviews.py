@@ -1181,7 +1181,6 @@ class GlossDetailView(DetailView):
         if self.public:
             return ['dictionary/gloss.html']
         show_lookaheads = get_lookaheads_setting_for_user(self.request.user)
-        print('get template gloss detail show lookaheads: ', show_lookaheads)
         if show_lookaheads:
             return ['dictionary/gloss_detail_lookahead.html']
         return ['dictionary/gloss_detail.html']
