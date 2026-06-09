@@ -92,7 +92,8 @@ from signbank.tools import (write_ecv_file_for_dataset, find_duplicate_lemmas,
                             construct_scrollbar, get_dataset_languages, get_datasets_with_public_glosses,
                             searchform_panels, map_search_results_to_gloss_list,
                             get_interface_language_and_default_language_codes, get_default_annotationidglosstranslation,
-                            get_page_parameters_for_listview, filter_page_values, add_gloss_update_to_revision_history)
+                            get_page_parameters_for_listview, filter_page_values, add_gloss_update_to_revision_history,
+                            get_lookaheads_setting_for_user)
 from signbank.csv_interface import (csv_gloss_to_row, csv_header_row_glosslist, csv_header_row_morphemelist,
                                     csv_morpheme_to_row, csv_header_row_handshapelist, csv_handshape_to_row,
                                     csv_header_row_lemmalist, csv_lemma_to_row,
@@ -1179,7 +1180,11 @@ class GlossDetailView(DetailView):
             self.public = self.kwargs['public']
         if self.public:
             return ['dictionary/gloss.html']
-        return ['dictionary/gloss_detail_lookahead.html']
+        show_lookaheads = get_lookaheads_setting_for_user(self.request.user)
+        print('get template gloss detail show lookaheads: ', show_lookaheads)
+        if show_lookaheads:
+            return ['dictionary/gloss_detail_lookahead.html']
+        return ['dictionary/gloss_detail.html']
 
     # Overriding the get method get permissions right
     def get(self, request, *args, **kwargs):

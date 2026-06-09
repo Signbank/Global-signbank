@@ -340,6 +340,7 @@ def user_profile(request):
                                                  'user_affiliation': user_affiliation,
                                                  'user_has_api_tokens': user_has_api_tokens,
                                                  'user_api_tokens': user_api_tokens,
+                                                 'user_profile': user_profile,
                                                  'SHOW_DATASET_INTERFACE_OPTIONS': settings.SHOW_DATASET_INTERFACE_OPTIONS,
                                                  'expiry': expiry,
                                                  'delta': delta})
@@ -356,3 +357,15 @@ def auth_token(request):
                                                      api_token=hashed_token)
     signbank_Token.save()
     return JsonResponse({'new_token': new_token})
+
+
+def use_lookaheads(request):
+    use_lookaheads = request.POST.get('enable_lookaheads', 0)
+    user_object = User.objects.get(username=request.user)
+    user_profile = UserProfile.objects.get(user=user_object)
+    user_profile.refresh_from_db()
+    user_profile.use_lookaheads = use_lookaheads == 1
+    user_profile.save()
+
+    return JsonResponse({'use_lookaheads': use_lookaheads})
+
