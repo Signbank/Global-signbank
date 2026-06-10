@@ -1098,143 +1098,271 @@ $(document).ready(function() {
     $('.handednesstypeahead').bind('typeahead:selected', function(ev, suggestion) {
           busy_editing = true;
           $(this).attr('value', suggestion.name);
+          $(this).attr('placeholder', suggestion.name);
           var width_of_new_value = suggestion.name.length * 10 + 30;
           $(this).css("width", width_of_new_value + "px");
           $('#handedness_machine_value').attr('value', suggestion.machine_value);
+          $(this).attr('data-preselect', suggestion.machine_value);
     });
-    $('#handedness_lookahead').on("click", function() {
-      // this erases the lookahead value shown as placeholder
-      $(this).attr('value', "");
+    $('#handedness_lookahead').on("focus", function() {
+      var preselect_machine_value = $(this).attr('data-preselect');
+      if (!preselect_machine_value) {return;}
+      var preselect_name = $(this).attr('placeholder');
+      if (!preselect_name) {return;}
+      $(this).attr("val", preselect_name);
+      $(this).trigger('typeahead:selected', [{'name': preselect_name, 'machine_value': preselect_machine_value}]);
     });
     domhndshtypeahead($('.domhndshtypeahead'));
     $('.domhndshtypeahead').bind('typeahead:selected', function(ev, suggestion) {
           busy_editing = true;
           $(this).attr('value', suggestion.name);
+          $(this).attr('placeholder', suggestion.name);
           var width_of_new_value = suggestion.name.length * 10 + 30;
           $(this).css("width", width_of_new_value + "px");
           $('#domhndsh_machine_value').attr('value', suggestion.machine_value);
+          $(this).attr('data-preselect', suggestion.machine_value);
     });
-    $('#domhndsh_lookahead').on("click", function() {
-      $(this).attr('value', "");
+    $('#domhndsh_lookahead').on("focus", function() {
+      var preselect_machine_value = $(this).attr('data-preselect');
+      if (!preselect_machine_value) {return;}
+      var preselect_name = $(this).attr('placeholder');
+      if (!preselect_name) {return;}
+      $(this).attr("val", preselect_name);
+      $(this).trigger('typeahead:selected', [{'name': preselect_name, 'machine_value': preselect_machine_value}]);
     });
     subhndshtypeahead($('.subhndshtypeahead'));
     $('.subhndshtypeahead').bind('typeahead:selected', function(ev, suggestion) {
           busy_editing = true;
           $(this).attr('value', suggestion.name);
+          $(this).attr('placeholder', suggestion.name);
           var width_of_new_value = suggestion.name.length * 10 + 30;
           $(this).css("width", width_of_new_value + "px");
           $('#subhndsh_machine_value').attr('value', suggestion.machine_value);
+          $(this).attr('data-preselect', suggestion.machine_value);
     });
-    $('#subhndsh_lookahead').on("click", function() {
-      $(this).attr('value', "");
+    $('#subhndsh_lookahead').on("focus", function() {
+      var preselect_machine_value = $(this).attr('data-preselect');
+      if (!preselect_machine_value) {return;}
+      var preselect_name = $(this).attr('placeholder');
+      if (!preselect_name) {return;}
+      $(this).attr("val", preselect_name);
+      $(this).trigger('typeahead:selected', [{'name': preselect_name, 'machine_value': preselect_machine_value}]);
     });
     handChtypeahead($('.handChtypeahead'));
     $('.handChtypeahead').bind('typeahead:selected', function(ev, suggestion) {
           busy_editing = true;
           $(this).attr('value', suggestion.name);
+          $(this).attr('placeholder', suggestion.name);
+          var width_of_new_value = suggestion.name.length * 10 + 30;
+          $(this).css("width", width_of_new_value + "px");
           $('#handCh_machine_value').attr('value', suggestion.machine_value);
+          $(this).attr('data-preselect', suggestion.machine_value);
     });
-    $('#handCh_lookahead').on("click", function() {
-      $(this).attr('value', "");
+    $('#handCh_lookahead').on("focus", function() {
+      var preselect_machine_value = $(this).attr('data-preselect');
+      if (!preselect_machine_value) {return;}
+      var preselect_name = $(this).attr('placeholder');
+      if (!preselect_name) {return;}
+      $(this).attr("val", preselect_name);
+      $(this).trigger('typeahead:selected', [{'name': preselect_name, 'machine_value': preselect_machine_value}]);
     });
     relatArtictypeahead($('.relatArtictypeahead'));
     $('.relatArtictypeahead').bind('typeahead:selected', function(ev, suggestion) {
           busy_editing = true;
           $(this).attr('value', suggestion.name);
+          $(this).attr('placeholder', suggestion.name);
+          var width_of_new_value = suggestion.name.length * 10 + 30;
+          $(this).css("width", width_of_new_value + "px");
           $('#relatArtic_machine_value').attr('value', suggestion.machine_value);
+          $(this).attr('data-preselect', suggestion.machine_value);
     });
-    $('#relatArtic_lookahead').on("click", function() {
-      $(this).attr('value', "");
+    $('#relatArtic_lookahead').on("focus", function() {
+      var preselect_machine_value = $(this).attr('data-preselect');
+      if (!preselect_machine_value) {return;}
+      var preselect_name = $(this).attr('placeholder');
+      if (!preselect_name) {return;}
+      $(this).attr("val", preselect_name);
+      $(this).trigger('typeahead:selected', [{'name': preselect_name, 'machine_value': preselect_machine_value}]);
     });
     locprimtypeahead($('.locprimtypeahead'));
     $('.locprimtypeahead').bind('typeahead:selected', function(ev, suggestion) {
           busy_editing = true;
           $(this).attr('value', suggestion.name);
+          $(this).attr('placeholder', suggestion.name);
+          var width_of_new_value = suggestion.name.length * 10 + 30;
+          $(this).css("width", width_of_new_value + "px");
           $('#locprim_machine_value').attr('value', suggestion.machine_value);
+          $(this).attr('data-preselect', suggestion.machine_value);
     });
-    $('#locprim_lookahead').on("click", function() {
-      $(this).attr('value', "");
+    $('#locprim_lookahead').on("focus", function() {
+      var preselect_machine_value = $(this).attr('data-preselect');
+      if (!preselect_machine_value) {return;}
+      var preselect_name = $(this).attr('placeholder');
+      if (!preselect_name) {return;}
+      $(this).attr("val", preselect_name);
+      $(this).trigger('typeahead:selected', [{'name': preselect_name, 'machine_value': preselect_machine_value}]);
     });
     contTypetypeahead($('.contTypetypeahead'));
     $('.contTypetypeahead').bind('typeahead:selected', function(ev, suggestion) {
           busy_editing = true;
           $(this).attr('value', suggestion.name);
+          $(this).attr('placeholder', suggestion.name);
+          var width_of_new_value = suggestion.name.length * 10 + 30;
+          $(this).css("width", width_of_new_value + "px");
           $('#contType_machine_value').attr('value', suggestion.machine_value);
+          $(this).attr('data-preselect', suggestion.machine_value);
     });
-    $('#contType_lookahead').on("click", function() {
-      $(this).attr('value', "");
+    $('#contType_lookahead').on("focus", function() {
+      var preselect_machine_value = $(this).attr('data-preselect');
+      if (!preselect_machine_value) {return;}
+      var preselect_name = $(this).attr('placeholder');
+      if (!preselect_name) {return;}
+      $(this).attr("val", preselect_name);
+      $(this).trigger('typeahead:selected', [{'name': preselect_name, 'machine_value': preselect_machine_value}]);
     });
     movShtypeahead($('.movShtypeahead'));
     $('.movShtypeahead').bind('typeahead:selected', function(ev, suggestion) {
           busy_editing = true;
           $(this).attr('value', suggestion.name);
+          $(this).attr('placeholder', suggestion.name);
+          var width_of_new_value = suggestion.name.length * 10 + 30;
+          $(this).css("width", width_of_new_value + "px");
           $('#movSh_machine_value').attr('value', suggestion.machine_value);
+          $(this).attr('data-preselect', suggestion.machine_value);
     });
-    $('#movSh_lookahead').on("click", function() {
-      $(this).attr('value', "");
+    $('#movSh_lookahead').on("focus", function() {
+      var preselect_machine_value = $(this).attr('data-preselect');
+      if (!preselect_machine_value) {return;}
+      var preselect_name = $(this).attr('placeholder');
+      if (!preselect_name) {return;}
+      $(this).attr("val", preselect_name);
+      $(this).trigger('typeahead:selected', [{'name': preselect_name, 'machine_value': preselect_machine_value}]);
     });
     movDirtypeahead($('.movDirtypeahead'));
     $('.movDirtypeahead').bind('typeahead:selected', function(ev, suggestion) {
           busy_editing = true;
           $(this).attr('value', suggestion.name);
+          $(this).attr('placeholder', suggestion.name);
+          var width_of_new_value = suggestion.name.length * 10 + 30;
+          $(this).css("width", width_of_new_value + "px");
           $('#movDir_machine_value').attr('value', suggestion.machine_value);
+          $(this).attr('data-preselect', suggestion.machine_value);
     });
-    $('#movDir_lookahead').on("click", function() {
-      $(this).attr('value', "");
+    $('#movDir_lookahead').on("focus", function() {
+      var preselect_machine_value = $(this).attr('data-preselect');
+      if (!preselect_machine_value) {return;}
+      var preselect_name = $(this).attr('placeholder');
+      if (!preselect_name) {return;}
+      $(this).attr("val", preselect_name);
+      $(this).trigger('typeahead:selected', [{'name': preselect_name, 'machine_value': preselect_machine_value}]);
     });
     relOriMovtypeahead($('.relOriMovtypeahead'));
     $('.relOriMovtypeahead').bind('typeahead:selected', function(ev, suggestion) {
           busy_editing = true;
           $(this).attr('value', suggestion.name);
+          $(this).attr('placeholder', suggestion.name);
+          var width_of_new_value = suggestion.name.length * 10 + 30;
+          $(this).css("width", width_of_new_value + "px");
           $('#relOriMov_machine_value').attr('value', suggestion.machine_value);
+          $(this).attr('data-preselect', suggestion.machine_value);
     });
-    $('#relOriMov_lookahead').on("click", function() {
-      $(this).attr('value', "");
+    $('#relOriMov_lookahead').on("focus", function() {
+      var preselect_machine_value = $(this).attr('data-preselect');
+      if (!preselect_machine_value) {return;}
+      var preselect_name = $(this).attr('placeholder');
+      if (!preselect_name) {return;}
+      $(this).attr("val", preselect_name);
+      $(this).trigger('typeahead:selected', [{'name': preselect_name, 'machine_value': preselect_machine_value}]);
     });
     relOriLoctypeahead($('.relOriLoctypeahead'));
     $('.relOriLoctypeahead').bind('typeahead:selected', function(ev, suggestion) {
           busy_editing = true;
           $(this).attr('value', suggestion.name);
+          $(this).attr('placeholder', suggestion.name);
+          var width_of_new_value = suggestion.name.length * 10 + 30;
+          $(this).css("width", width_of_new_value + "px");
           $('#relOriLoc_machine_value').attr('value', suggestion.machine_value);
+          $(this).attr('data-preselect', suggestion.machine_value);
     });
-    $('#relOriLoc_lookahead').on("click", function() {
-      $(this).attr('value', "");
+    $('#relOriLoc_lookahead').on("focus", function() {
+      var preselect_machine_value = $(this).attr('data-preselect');
+      if (!preselect_machine_value) {return;}
+      var preselect_name = $(this).attr('placeholder');
+      if (!preselect_name) {return;}
+      $(this).attr("val", preselect_name);
+      $(this).trigger('typeahead:selected', [{'name': preselect_name, 'machine_value': preselect_machine_value}]);
     });
     oriChtypeahead($('.oriChtypeahead'));
     $('.oriChtypeahead').bind('typeahead:selected', function(ev, suggestion) {
           busy_editing = true;
           $(this).attr('value', suggestion.name);
+          $(this).attr('placeholder', suggestion.name);
+          var width_of_new_value = suggestion.name.length * 10 + 30;
+          $(this).css("width", width_of_new_value + "px");
           $('#oriCh_machine_value').attr('value', suggestion.machine_value);
+          $(this).attr('data-preselect', suggestion.machine_value);
     });
-    $('#oriCh_lookahead').on("click", function() {
-      $(this).attr('value', "");
+    $('#oriCh_lookahead').on("focus", function() {
+      var preselect_machine_value = $(this).attr('data-preselect');
+      if (!preselect_machine_value) {return;}
+      var preselect_name = $(this).attr('placeholder');
+      if (!preselect_name) {return;}
+      $(this).attr("val", preselect_name);
+      $(this).trigger('typeahead:selected', [{'name': preselect_name, 'machine_value': preselect_machine_value}]);
     });
     namEnttypeahead($('.namEnttypeahead'));
     $('.namEnttypeahead').bind('typeahead:selected', function(ev, suggestion) {
           busy_editing = true;
           $(this).attr('value', suggestion.name);
+          $(this).attr('placeholder', suggestion.name);
+          var width_of_new_value = suggestion.name.length * 10 + 30;
+          $(this).css("width", width_of_new_value + "px");
           $('#namEnt_machine_value').attr('value', suggestion.machine_value);
+          $(this).attr('data-preselect', suggestion.machine_value);
     });
-    $('#namEnt_lookahead').on("click", function() {
-      $(this).attr('value', "");
+    $('#namEnt_lookahead').on("focus", function() {
+      var preselect_machine_value = $(this).attr('data-preselect');
+      if (!preselect_machine_value) {return;}
+      var preselect_name = $(this).attr('placeholder');
+      if (!preselect_name) {return;}
+      $(this).attr("val", preselect_name);
+      $(this).trigger('typeahead:selected', [{'name': preselect_name, 'machine_value': preselect_machine_value}]);
     });
     valencetypeahead($('.valencetypeahead'));
     $('.valencetypeahead').bind('typeahead:selected', function(ev, suggestion) {
           busy_editing = true;
           $(this).attr('value', suggestion.name);
+          $(this).attr('placeholder', suggestion.name);
+          var width_of_new_value = suggestion.name.length * 10 + 30;
+          $(this).css("width", width_of_new_value + "px");
           $('#valence_machine_value').attr('value', suggestion.machine_value);
+          $(this).attr('data-preselect', suggestion.machine_value);
     });
-    $('#valence_lookahead').on("click", function() {
-      $(this).attr('value', "");
+    $('#valence_lookahead').on("focus", function() {
+      var preselect_machine_value = $(this).attr('data-preselect');
+      if (!preselect_machine_value) {return;}
+      var preselect_name = $(this).attr('placeholder');
+      if (!preselect_name) {return;}
+      $(this).attr("val", preselect_name);
+      $(this).trigger('typeahead:selected', [{'name': preselect_name, 'machine_value': preselect_machine_value}]);
     });
     wordClasstypeahead($('.wordClasstypeahead'));
     $('.wordClasstypeahead').bind('typeahead:selected', function(ev, suggestion) {
           busy_editing = true;
           $(this).attr('value', suggestion.name);
+          $(this).attr('placeholder', suggestion.name);
+          var width_of_new_value = suggestion.name.length * 10 + 30;
+          $(this).css("width", width_of_new_value + "px");
           $('#wordClass_machine_value').attr('value', suggestion.machine_value);
+          $(this).attr('data-preselect', suggestion.machine_value);
     });
-    $('#wordClass_lookahead').on("click", function() {
-      $(this).attr('value', "");
+    $('#wordClass_lookahead').on("focus", function() {
+      var preselect_machine_value = $(this).attr('data-preselect');
+      if (!preselect_machine_value) {return;}
+      var preselect_name = $(this).attr('placeholder');
+      if (!preselect_name) {return;}
+      $(this).attr("val", preselect_name);
+      $(this).trigger('typeahead:selected', [{'name': preselect_name, 'machine_value': preselect_machine_value}]);
     });
     semFieldtypeahead($('.semFieldtypeahead'));
     $('.semFieldtypeahead').bind('typeahead:selected', function(ev, suggestion) {
@@ -1624,11 +1752,13 @@ $(document).ready(function() {
      lookahead_elements.each(function() {
          var this_id = $(this).attr("id");
          var cell_lookup = '#' + this_id.slice(0, -'_lookahead'.length) + '_cell';
-         var width_of_new_value = $(this).attr("value").length * 10 + 30;
+         var placeholder_text = $(this).attr("placeholder");
+         var width_of_new_value = $(this).attr("placeholder").length * 10 + 30;
          $(cell_lookup).attr('data-width', width_of_new_value);
     });
     var cell_elements = $('[id*="_cell"]');
     cell_elements.each(function() {
+        var data_width = $(this).attr("data-width");
         var this_width = $(this).attr("data-width") + "px";
         $(this).css('width', this_width);
         var tt_children = $(this).find('.tt-input');

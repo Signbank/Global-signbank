@@ -415,15 +415,6 @@
 }
 </style>
 <style>
-.preview {
-    background-color: inherit !important;
-    color: inherit !important;
-    height: 40;
-    width: auto;
-    position: relative;
-    padding: 0 0 0 0 !important;
-}
-
 select option {
     background-color: white;
     -webkit-appearance: none;
@@ -539,11 +530,11 @@ input[type="text"] {
     background-color: inherit;
     border: none;
     outline: none;
-    width: inherit important!;
+    width: inherit !important;
 }
 input[type="text"]:focus {
     border: red;
-    width: inherit important!;
+    width: inherit !important;
     color: red;
 }
 .tt-input {
@@ -553,9 +544,13 @@ input[type="text"]:focus {
 }
 .tt-input:active {
     border: 1px solid red;
+    z-index: 999;
 }
 input .tt-hint {
     color: red;
+}
+.tt-dropdown-menu:active {
+    z-index: 999 !important;
 }
 .editform-morphology input {
     background-color: inherit !important;
@@ -589,6 +584,10 @@ input .tt-hint {
     border: none;
     opacity: 1;
 }
+.editform-general input::placeholder {
+    color: inherit !important;
+    opacity: 1;
+}
 .editform-semantics input {
     background-color: inherit !important;
     border: none;
@@ -605,6 +604,10 @@ input .tt-hint {
     border: none;
     opacity: 1;
 }
+.editform-semantics input::placeholder {
+    color: inherit !important;
+    opacity: 1;
+}
 .editform-phonology input {
     background-color: inherit !important;
     border: none;
@@ -619,6 +622,10 @@ input .tt-hint {
     -webkit-appearance: none;
     -moz-appearance: none;
     border: none;
+    opacity: 1;
+}
+.editform-phonology input::placeholder {
+    color: inherit !important;
     opacity: 1;
 }
 .editform-nme input {
@@ -764,7 +771,7 @@ input .tt-hint {
 }
 .form-control:disabled {
     cursor: pointer;
-    color: inherit !important;
+    color: --beam !important;
     background-color: inherit !important;
 }
 .form-control:enabled input {
@@ -1399,7 +1406,7 @@ input .tt-hint {
 
 <br><br>
 <!-- Perspective videos -->
-   <div class="edit_only panel panel-default panel-light">
+   <div class="edit_only panel panel-default panel-light" style="z-index:0;">
         <div class='panel-heading panel-light' data-toggle='collapse'
              data-target='#perspectivevideos'>{% trans "Upload Perspective Videos" %}
         </div>
@@ -1509,7 +1516,7 @@ input .tt-hint {
 
 </div>
 
-    <div class='panel-group' id="definition" style="z-index: 0;opacity:.99; position: relative;">
+    <div class='panel-group' id="definition" style="z-index: 0;opacity:.99; position: static;">
         <div class="panel panel-default panel-light">
         <div class='panel-heading panel-light' id='general_heading'
              data-toggle='collapse' data-target='#general'>{% trans "General Description" %}
@@ -1662,7 +1669,7 @@ input .tt-hint {
                 <td class="editdialectform">
                     <div>
                     <input class='form-control form-control-light dialecttypeahead' type="text" size="60"
-                           id="dialect_multiselect" data-category="general">
+                           id="dialect_multiselect" data-category="general" autocomplete="off">
                     </div>
                 </td>
                 <td id="dialect_hidden_input_values" class="editform-general">
@@ -1711,7 +1718,7 @@ input .tt-hint {
 
                     <!-- Input of the type ahead -->
                     <input class='form-control form-control-light lemmatypeahead lemmatypeahead-light' size="80"
-                           placeholder='{% trans "Lemma" %}' data-category="general" />
+                           placeholder='{% trans "Lemma" %}' data-category="general" autocomplete="off" >
 
                     <input type='hidden' name='new_lemma_pk' value='' id="new_lemma_pk">
                     <button class='btn btn-primary quick_set_lemma' type='button'>{% trans "Set Lemma" %}</button>
@@ -2218,7 +2225,8 @@ input .tt-hint {
                 <td class="editform-general" style="width:auto;">
                     <div>
                     <input class='form-control form-control-light wordClasstypeahead' type="text" size="40"
-                              value="{{wordClass_field.initial}}" id="wordClass_lookahead" data-category="general">
+                           placeholder="{{wordClass_field.initial}}" id="wordClass_lookahead" value="{{wordClass_field.initial}}"
+                           data-category="general" autocomplete="off" >
                     <input type="hidden" name="wordClass" value=""
                            id="wordClass_machine_value" >
                     </div>
@@ -2627,7 +2635,7 @@ input .tt-hint {
                        <td class="td td-light" style="width:12em;">{{morphologyform.role}}</td>
                        <td class="td td-light editform-morphology">
                            <input class='form-control form-control-light glosstypeahead glosstypeahead-light' size="80"
-                                  placeholder='{% trans "Annotation ID Gloss" %}' id="morpheme_target" maxlength="80">
+                                  placeholder='{% trans "Annotation ID Gloss" %}' id="morpheme_target" maxlength="80" autocomplete="off" >
                            <input type="hidden" name="morpheme_id" value="{{morphologyform.morpheme_id.value|default:''}}" id="morpheme_target_id" >
                        </td>
                        <td><input id="add_component" class='btn btn-primary' value='{% trans "Add Component" %}' type='submit'></td>
@@ -2723,7 +2731,7 @@ input .tt-hint {
                        <td style="width:2em;" class="morphology_delete_edit_only"></td>
                        <td class="td td-light editform-morphology" style="width:700px;" colspan="3">
                            <input class='form-control form-control-light morphtypeahead morphtypeahead-light' size="100" type="text"
-                                  placeholder='{% trans "Morpheme Gloss" %}' id="morpheme_gloss" value="" maxlength="100">
+                                  placeholder='{% trans "Morpheme Gloss" %}' id="morpheme_gloss" value="" maxlength="100" autocomplete="off" >
                            <input type="hidden" name='morph_id' id="morpheme_gloss_id"
                                   value="{{morphemeform.morph_id.value|default:''}}">
 <!--                       </td>-->
@@ -2815,7 +2823,7 @@ input .tt-hint {
                        <td style="width:2em;" class="morphology_delete_edit_only"></td>
                        <td class="td td-light editform-morphology" style="width:22em;">
                            <input class='form-control form-control-light glosstypeahead glosstypeahead-light' size="80"
-                                  placeholder='{% trans "Blend Gloss" %}' id="morpheme_blend" maxlength="80" type="text" >
+                                  placeholder='{% trans "Blend Gloss" %}' id="morpheme_blend" maxlength="80" type="text" autocomplete="off" >
                            <input type="hidden" name='blend_id' id="morpheme_blend_id"
                                   value="{{blendform.blend_id.value|default:''}}" >
                        </td>
@@ -2883,8 +2891,8 @@ input .tt-hint {
                 <td class="editform-phonology" style="width:auto;">
                     <div style="display:table-cell;" id="handedness_cell">
                     <input class='form-control form-control-light handednesstypeahead' type="text"
-                           id="handedness_lookahead" data-category="phonology"
-                           value="{{handedness_field.initial}}">
+                           id="handedness_lookahead" data-category="phonology" value="{{handedness_field.initial}}"
+                           placeholder="{{handedness_field.initial}}" autocomplete="off" >
                     <input type="hidden" name="handedness" value=""
                            id="handedness_machine_value" >
                     </div>
@@ -2930,7 +2938,8 @@ input .tt-hint {
                 <td class="editform-phonology">
                     <div style="display:table-cell;" id="domhndsh_cell">
                     <input class='form-control form-control-light domhndshtypeahead' type="text" size="40"
-                              value="{{domhndsh_field.initial}}" id="domhndsh_lookahead" data-category="phonology">
+                           placeholder="{{domhndsh_field.initial}}" id="domhndsh_lookahead" value="{{domhndsh_field.initial}}"
+                           data-category="phonology" autocomplete="off" >
                     <input type="hidden" name="domhndsh" value=""
                            id="domhndsh_machine_value" >
                     </div>
@@ -2962,8 +2971,9 @@ input .tt-hint {
                 {% with phonologyform.fields|get_item:'subhndsh_letter_or_number' as subhndsh_letter_or_number_field %}
                 <td class="editform-phonology">
                     <div style="display:table-cell;" id="subhndsh_cell" >
-                    <input class='form-control form-control-light subhndshtypeahead' type="text" size="40"
-                              value="{{subhndsh_field.initial}}" id="subhndsh_lookahead" data-category="phonology">
+                    <input class='form-control form-control-light subhndshtypeahead' type="text" size="40" placeholder="{{subhndsh_field.initial}}"
+                           id="subhndsh_lookahead" value="{{subhndsh_field.initial}}"
+                           data-category="phonology" autocomplete="off" >
                     <input type="hidden" name="subhndsh" value=""
                            id="subhndsh_machine_value" >
                     </div>
@@ -2995,7 +3005,8 @@ input .tt-hint {
                 <td class="editform-phonology" style="width:auto;">
                     <div>
                     <input class='form-control form-control-light handChtypeahead' type="text" size="40"
-                              value="{{handCh_field.initial}}" id="handCh_lookahead" data-category="phonology">
+                           placeholder="{{handCh_field.initial}}" id="handCh_lookahead" value="{{handCh_field.initial}}"
+                           data-category="phonology" autocomplete="off">
                     <input type="hidden" name="handCh" value=""
                            id="handCh_machine_value" >
                     </div>
@@ -3014,7 +3025,8 @@ input .tt-hint {
                 <td class="editform-phonology">
                     <div>
                     <input class='form-control form-control-light relatArtictypeahead' type="text" size="40"
-                              value="{{relatArtic_field.initial}}" id="relatArtic_lookahead" data-category="phonology">
+                           placeholder="{{relatArtic_field.initial}}" id="relatArtic_lookahead" value="{{relatArtic_field.initial}}"
+                           data-category="phonology" autocomplete="off" >
                     <input type="hidden" name="relatArtic" value=""
                            id="relatArtic_machine_value" >
                     </div>
@@ -3033,7 +3045,8 @@ input .tt-hint {
                 <td class="editform-phonology">
                     <div>
                     <input class='form-control form-control-light locprimtypeahead' type="text" size="40"
-                              value="{{locprim_field.initial}}" id="locprim_lookahead" data-category="phonology">
+                           placeholder="{{locprim_field.initial}}" id="locprim_lookahead" value="{{locprim_field.initial}}"
+                           data-category="phonology" autocomplete="off" >
                     <input type="hidden" name="locprim" value=""
                            id="locprim_machine_value" >
                     </div>
@@ -3052,7 +3065,8 @@ input .tt-hint {
                 <td class="editform-phonology">
                     <div>
                     <input class='form-control form-control-light contTypetypeahead' type="text" size="40"
-                              value="{{contType_field.initial}}" id="contType_lookahead" data-category="phonology">
+                           placeholder="{{contType_field.initial}}" id="contType_lookahead" value="{{contType_field.initial}}"
+                           data-category="phonology" autocomplete="off" >
                     <input type="hidden" name="contType" value=""
                            id="contType_machine_value" >
                     </div>
@@ -3071,7 +3085,8 @@ input .tt-hint {
                 <td class="editform-phonology">
                     <div>
                     <input class='form-control form-control-light movShtypeahead' type="text" size="40"
-                              value="{{movSh_field.initial}}" id="movSh_lookahead" data-category="phonology">
+                           placeholder="{{movSh_field.initial}}" id="movSh_lookahead" value="{{movSh_field.initial}}"
+                           data-category="phonology" autocomplete="off" >
                     <input type="hidden" name="movSh" value=""
                            id="movSh_machine_value" >
                     </div>
@@ -3090,7 +3105,8 @@ input .tt-hint {
                 <td class="editform-phonology">
                     <div>
                     <input class='form-control form-control-light movDirtypeahead' type="text" size="40"
-                              value="{{movDir_field.initial}}" id="movDir_lookahead" data-category="phonology">
+                           placeholder="{{movDir_field.initial}}" id="movDir_lookahead" value="{{movDir_field.initial}}"
+                           data-category="phonology" autocomplete="off" >
                     <input type="hidden" name="movDir" value=""
                            id="movDir_machine_value" >
                     </div>
@@ -3162,7 +3178,8 @@ input .tt-hint {
                 <td class="editform-phonology">
                     <div>
                     <input class='form-control form-control-light relOriMovtypeahead' type="text" size="40"
-                              value="{{relOriMov_field.initial}}" id="relOriMov_lookahead" data-category="phonology">
+                           placeholder="{{relOriMov_field.initial}}" id="relOriMov_lookahead" value="{{relOriMov_field.initial}}"
+                           data-category="phonology" autocomplete="off" >
                     <input type="hidden" name="relOriMov" value=""
                            id="relOriMov_machine_value" >
                     </div>
@@ -3182,7 +3199,8 @@ input .tt-hint {
                 <td class="editform-phonology">
                     <div>
                     <input class='form-control form-control-light relOriLoctypeahead' type="text" size="40"
-                              value="{{relOriLoc_field.initial}}" id="relOriLoc_lookahead" data-category="phonology">
+                           placeholder="{{relOriLoc_field.initial}}" id="relOriLoc_lookahead" value="{{relOriLoc_field.initial}}"
+                           data-category="phonology" autocomplete="off" >
                     <input type="hidden" name="relOriLoc" value=""
                            id="relOriLoc_machine_value" >
                     </div>
@@ -3201,7 +3219,8 @@ input .tt-hint {
                 <td class="editform-phonology">
                     <div>
                     <input class='form-control form-control-light oriChtypeahead' type="text" size="40"
-                              value="{{oriCh_field.initial}}" id="oriCh_lookahead" data-category="phonology">
+                           placeholder="{{oriCh_field.initial}}" id="oriCh_lookahead" value="{{oriCh_field.initial}}"
+                           data-category="phonology" autocomplete="off" >
                     <input type="hidden" name="oriCh" value=""
                            id="oriCh_machine_value" >
                     </div>
@@ -3220,7 +3239,7 @@ input .tt-hint {
                 <td class="editform-phonology" style="width:auto;">
                     <div>
                     <input class='form-control form-control-light' type="text" name="locVirtObj"
-                           value="{{locVirtObj_field.initial}}"
+                           value="{{locVirtObj_field.initial}}" size="50"
                            id="locVirtObj_field_text" data-category="phonology">
                     </div>
                 </td>
@@ -3256,7 +3275,7 @@ input .tt-hint {
                 <td class="editform-phonology" style="width:auto;">
                     <div>
                     <input class='form-control form-control-light' type="text" name="mouthG"
-                           value="{{mouthG_field.initial}}"
+                           value="{{mouthG_field.initial}}" size="50"
                            id="mouthG_field_text" data-category="phonology">
                     </div>
                 </td>
@@ -3274,7 +3293,7 @@ input .tt-hint {
                 <td class="editform-phonology" style="width:auto;">
                     <div>
                     <input class='form-control form-control-light' type="text" name="mouthing"
-                           value="{{mouthing_field.initial}}"
+                           value="{{mouthing_field.initial}}" size="50"
                            id="mouthing_field_text" data-category="phonology">
                     </div>
                 </td>
@@ -3292,7 +3311,7 @@ input .tt-hint {
                 <td class="editform-phonology" style="width:auto;">
                     <div>
                     <input class='form-control form-control-light' type="text" name="phonetVar"
-                           value="{{phonetVar_field.initial}}"
+                           value="{{phonetVar_field.initial}}" size="50"
                            id="phonetVar_field_text" data-category="phonology">
                     </div>
                 </td>
@@ -3303,12 +3322,12 @@ input .tt-hint {
         </div>
     </div>
 
-    <div class="panel panel-default panel-light">
-            <div class='panel-heading panel-light' data-toggle='collapse'
+    <div class="panel panel-default panel-light" style="z-index:0;position:relative;">
+            <div class='panel-heading panel-light' data-toggle='collapse' style="z-index:10;position:relative;"
                  data-target='#minimalpairs'>{% trans "Minimal Pairs" %}
             </div>
             <div id='minimalpairs' class='collapse'>
-
+                <div>
                 <table class='table table-condensed' id="header_mp_rows" style="margin-top:10px;table-layout:fixed;width:100%;">
 
                 {% if minimalpairs %}
@@ -3320,14 +3339,15 @@ input .tt-hint {
                     </tr>
                 {% endif %}
                 </table>
+                </div>
             </div>
     </div>
 
     <!-- Semantics -->
-    <div class="panel panel-default panel-light">
+    <div class="panel panel-default panel-light" style="z-index:0;position:relative;">
         <div class='panel-heading panel-light' data-toggle='collapse' data-target='#semantics'>{% trans "Semantics" %}
         </div>
-        <div id='semantics' class='collapse'>
+        <div id='semantics' class='collapse' style="z-index:20;position:relative;">
             <div class='pull-right' style="margin-right:5px;margin-top:20px;margin-bottom:30px;">
              {% if perms.dictionary.change_gloss %}
              <div>
@@ -3365,7 +3385,7 @@ input .tt-hint {
                 <td class="editsemanticsform">
                     <div>
                     <input class='form-control form-control-light semFieldtypeahead' type="text" size="60"
-                           id="semField_multiselect" data-category="semantics">
+                           id="semField_multiselect" data-category="semantics" autocomplete="off" >
                     </div>
                 </td>
                 <td id="semField_hidden_input_values" class="editform-semantics">
@@ -3390,7 +3410,7 @@ input .tt-hint {
                 <td class="editsemanticsform">
                     <div>
                     <input class='form-control form-control-light derivHisttypeahead' type="text" size="60"
-                           id="derivHist_multiselect" data-category="semantics">
+                           id="derivHist_multiselect" data-category="semantics" autocomplete="off" >
                     </div>
                 </td>
                 <td id="derivHist_hidden_input_values" class="editform-semantics">
@@ -3410,7 +3430,8 @@ input .tt-hint {
                 <td class="editform-semantics">
                     <div>
                     <input class='form-control form-control-light namEnttypeahead' type="text" size="40"
-                              value="{{namEnt_field.initial}}" id="namEnt_lookahead" data-category="semantics">
+                           placeholder="{{namEnt_field.initial}}" id="namEnt_lookahead" value="{{namEnt_field.initial}}"
+                           data-category="semantics" autocomplete="off" >
                     <input type="hidden" name="namEnt" value=""
                            id="namEnt_machine_value" >
                     </div>
@@ -3429,7 +3450,8 @@ input .tt-hint {
                 <td class="editform-semantics">
                     <div>
                     <input class='form-control form-control-light valencetypeahead' type="text" size="40"
-                              value="{{valence_field.initial}}" id="valence_lookahead" data-category="semantics">
+                           placeholder="{{valence_field.initial}}" id="valence_lookahead" value="{{valence_field.initial}}"
+                           data-category="semantics" autocomplete="off" >
                     <input type="hidden" name="valence" value=""
                            id="valence_machine_value" >
                     </div>
@@ -3448,7 +3470,7 @@ input .tt-hint {
                 <td class="editform-semantics" style="width:auto;">
                     <div>
                     <input class='form-control form-control-light' type="text" name="iconImg"
-                           value="{{iconImg_field.initial}}"
+                           value="{{iconImg_field.initial}}" size="50"
                            id="iconImg_text" data-category="semantics">
                     </div>
                 </td>
@@ -3478,7 +3500,7 @@ input .tt-hint {
     </div>
 
     <!-- Relations to other signs -->
-    <div class="panel panel-default panel-light">
+    <div class="panel panel-default panel-light" style="z-index:0;position:relative;">
         <div class='panel-heading panel-light' data-toggle='collapse'
              data-target='#relations'>{% trans "Relations to Other Signs" %}
                     {% if gloss.get_relations_count > 0 %}
@@ -3488,7 +3510,7 @@ input .tt-hint {
                     </div>
                     {% endif %}
         </div>
-        <div id='relations' class='collapse'>
+        <div id='relations' class='collapse' style="z-index:5;position:relative;">
             <div class='pull-right' style="margin-right:15px;margin-top:20px;">
                  {% if perms.dictionary.change_gloss %}
                  <div>
@@ -3559,7 +3581,7 @@ input .tt-hint {
                        <td class="td td-light">{{relationform.role_fk}}</td>
                        <td class="td td-light">
                            <input class='form-control form-control-light glosstypeahead glosstypeahead-light' size="80"
-                                  placeholder='{% trans "Annotation ID Gloss" %}' id="relation_target" maxlength="80">
+                                  placeholder='{% trans "Annotation ID Gloss" %}' id="relation_target" maxlength="80" autocomplete="off" >
                            <input type="hidden" name="targetid" value="" id="relation_target_id" >
                        </td>
                        <td><input class='btn btn-primary' value='Add Relation' type='submit'></td>
@@ -3614,7 +3636,7 @@ input .tt-hint {
                    {% for rel in foreignrelations %}
                    {% with foreignrelations_forms|get_item:rel.id as foreignrelation_form %}
                    <tr id='foreign_{{rel.id}}'>
-                     <td class="edit_only_foreignrelations" style='width:5em important!'>
+                     <td class="edit_only_foreignrelations" style='width:5em !important'>
                         {% if "change_dataset" in dataset_perms %}
                         <span class='glyphicon glyphicon-trash relationtoforeignsign_delete' data-toggle='modal' data-target='#delete_foreignrelation_modal_{{rel.id}}'></span>
 

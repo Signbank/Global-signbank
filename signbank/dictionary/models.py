@@ -973,7 +973,7 @@ class Gloss(MetaModelMixin, models.Model):
         return '1' if self.weakprop else '2'
 
     def display_domhndsh(self):
-        return self.domhndsh.name if self.domhndsh else self.domhndsh
+        return self.domhndsh.name if self.domhndsh else ''
 
     def display_domhndsh_letter_or_number(self):
         if self.domhndsh_letter is None and self.domhndsh_number is None:
@@ -996,7 +996,7 @@ class Gloss(MetaModelMixin, models.Model):
         return _('number') if self.domhndsh_number else ''
 
     def display_subhndsh(self):
-        return self.subhndsh.name if self.subhndsh else self.subhndsh
+        return self.subhndsh.name if self.subhndsh else ''
 
     def display_subhndsh_letter_or_number(self):
         if self.subhndsh_letter is None and self.subhndsh_number is None:
@@ -1019,7 +1019,7 @@ class Gloss(MetaModelMixin, models.Model):
         return _('number') if self.subhndsh_number else ''
 
     def display_locprim(self):
-        return self.locprim.name if self.locprim else self.locprim
+        return self.locprim.name if self.locprim else ''
 
     def field_labels(self):
         """Return the dictionary of field labels for use in a template"""

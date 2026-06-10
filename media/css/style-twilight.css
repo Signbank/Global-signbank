@@ -442,7 +442,7 @@ table {
   border: 2px solid var(--typeahead-color);
   background-color: var(--typeahead-background);
   opacity: 0.99;
-  z-index: 9999 important!;
+  z-index: 9999 !important;
   -webkit-border-radius: 8px;
      -moz-border-radius: 8px;
           border-radius: 8px;
@@ -1456,7 +1456,7 @@ span ::placeholder {
 }
 .btn-group-dark {
     color: inherit !important;
-    --search-results-color: white important!;
+    --search-results-color: white !important;
     --search-results-luminosity: 0.35%
     --search-results-luminosity-hover: 0.7%;
     background-color: inherit !important;
