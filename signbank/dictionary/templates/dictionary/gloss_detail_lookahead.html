@@ -84,7 +84,7 @@
     var language_2chars = {{language_2chars|safe}};
 </script>
 
-<script type="text/javascript" src="{{STATIC_URL}}js/typeahead-pretty.js"></script>
+<script type="text/javascript" src="{{STATIC_URL}}js/typeahead.bundle.min.js"></script>
 <script type='text/javascript' src="{{STATIC_URL}}js/lookaheads.js"></script>
 
 <script type='text/javascript'>
@@ -531,21 +531,21 @@ input[type="text"]:focus {
     width: inherit !important;
     color: red;
 }
-/*.tt-input {*/
-/*    background-color: rgba(50,50,50,15%) !important;*/
-/*    border: none;*/
-/*    width: auto;*/
-/*}*/
-/*.tt-input:active {*/
-/*    border: 1px solid red;*/
-/*    z-index: 999;*/
-/*}*/
-/*input .tt-hint {*/
-/*    color: red;*/
-/*}*/
-/*.tt-dropdown-menu:active {*/
-/*    z-index: 999 !important;*/
-/*}*/
+.tt-input {
+    background-color: rgba(50,50,50,15%) !important;
+    border: none;
+    width: auto;
+}
+.tt-input:active {
+    border: 1px solid red;
+    z-index: 999;
+}
+input .tt-hint {
+    color: red;
+}
+.tt-dropdown-menu:active {
+    z-index: 999 !important;
+}
 .editform-morphology input {
     background-color: inherit !important;
     border: none;
@@ -584,7 +584,7 @@ input[type="text"]:focus {
 }
 .editform-semantics input {
     background-color: inherit !important;
-    border: 1px solid grey;
+    border: 1px solid red;
 }
 .editform-semantics input:enabled {
     color: red !important;
@@ -742,7 +742,7 @@ input[type="text"]:focus {
 .editsemanticsform input {
     color: inherit !important;
     background-color: inherit !important;
-    border: 1px solid grey;
+    border: 1px solid red;
 }
 .editdialectform .form-control:enabled::placeholder {
     color: red !important;
@@ -757,7 +757,7 @@ input[type="text"]:focus {
 .editdialectform input {
     color: inherit !important;
     background-color: inherit !important;
-    border: 1px solid grey;
+    border: 1px solid red;
 }
 .form-control {
     margin-left: 0;
@@ -956,7 +956,7 @@ input[type="text"]:focus {
 
 {% get_obj_perms request.user for gloss.lemma.dataset as "dataset_perms" %}
 
-<div id="signinfo" class='navbar navbar-collapse' style="background-color:inherit;border:0;z-index:0;">
+<div id="signinfo" class='navbar navbar-collapse' style="background-color:inherit;border:0;">
 
     <div id="view_tabs" style="margin-right:15px;margin-top:10px;z-index:75;" class='view-tabs view-tabs-light'>
     <ul class='nav nav-tabs nav-tabs-light'>
@@ -1131,7 +1131,7 @@ input[type="text"]:focus {
 
 <div class="clearfix"></div>
 
-<div id="definitionblock" style="z-index:0; position: relative;">
+<div id="definitionblock">
 
     {% url 'dictionary:protected_media' '' as protected_media_url %}
     <div id="leftblock">
@@ -1486,7 +1486,7 @@ input[type="text"]:focus {
 
 </div>
 
-    <div class='panel-group' id="definition" style="z-index: 0;opacity:.99; position: relative;">
+    <div class='panel-group' id="definition" style="z-index: 0;opacity:.99; position: static;">
         <div class="panel panel-default panel-light">
         <div class='panel-heading panel-light' id='general_heading'
              data-toggle='collapse' data-target='#general'>{% trans "General Description" %}
@@ -2257,11 +2257,11 @@ input[type="text"]:focus {
 
 
    <!-- Non-manual videos -->
-   <div class="panel panel-default panel-light" style="z-index:0; position:relative;">
+   <div class="panel panel-default panel-light">
         <div class='panel-heading panel-light' data-toggle='collapse'
              data-target='#nmevideos'>{% trans "Videos with Non-manual Elements" %}
         </div>
-        <div id='nmevideos' class='collapse panel panel-default panel-light' style="z-index:1; position:relative;">
+        <div id='nmevideos' class='collapse panel panel-default panel-light'>
 
             <div class='pull-right' style="margin-right:15px;margin-top:20px;margin-bottom:20px;">
                 {% if perms.dictionary.change_gloss %}
@@ -3357,7 +3357,7 @@ input[type="text"]:focus {
                     {% endfor %}
                 </td>
                 <td class="editsemanticsform">
-                    <div class="editform-semantics">
+                    <div>
                     <input class='form-control form-control-light semFieldtypeahead' type="text" size="60"
                            id="semField_multiselect" data-category="semantics" autocomplete="off" >
                     </div>
@@ -3387,7 +3387,7 @@ input[type="text"]:focus {
                            id="derivHist_multiselect" data-category="semantics" autocomplete="off" >
                     </div>
                 </td>
-                <td id="derivHist_hidden_input_values" class="editform-semantics">
+                <td id="derivHist_hidden_input_values">
 
                 </td>
                 {% endwith %}

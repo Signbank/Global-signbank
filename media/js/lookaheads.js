@@ -1011,6 +1011,8 @@ function enable_lookaheads(category) {
 
 function enable_edit_panel(category) {
     if (category === 'semantics') {
+        $('.read_only_semantics').hide();
+        $('.edit_only_semantics').show();
         $('.editsemanticsform').show();
         $('#semField_value').trigger('editSemField');
         $('#derivHist_value').trigger('editDerivHistField');
@@ -1036,6 +1038,8 @@ function enable_edit_panel(category) {
 function disable_edit_panel(category) {
     if (category === 'semantics') {
         $('.editsemanticsform').hide();
+        $('.read_only_semantics').show();
+        $('.edit_only_semantics').hide();
     }
     if (category === 'general') {
         $('.editdialectform').hide();
@@ -1116,7 +1120,7 @@ $(document).ready(function() {
           $('#handedness_machine_value').attr('value', suggestion.machine_value);
           $(this).attr('data-preselect', suggestion.machine_value);
     });
-    $('#handedness_lookahead').on("click", function() {
+    $('#handedness_lookahead').on("focus", function() {
       var preselect_machine_value = $(this).attr('data-preselect');
       if (!preselect_machine_value) {
         $(this).val('').trigger('input').typeahead('open');
@@ -1137,7 +1141,7 @@ $(document).ready(function() {
           $('#domhndsh_machine_value').attr('value', suggestion.machine_value);
           $(this).attr('data-preselect', suggestion.machine_value);
     });
-    $('#domhndsh_lookahead').on("click", function() {
+    $('#domhndsh_lookahead').on("focus", function() {
       var preselect_machine_value = $(this).attr('data-preselect');
       if (!preselect_machine_value) {
         $(this).val('').trigger('input').typeahead('open');
@@ -1158,7 +1162,7 @@ $(document).ready(function() {
           $('#subhndsh_machine_value').attr('value', suggestion.machine_value);
           $(this).attr('data-preselect', suggestion.machine_value);
     });
-    $('#subhndsh_lookahead').on("click", function() {
+    $('#subhndsh_lookahead').on("focus", function() {
       var preselect_machine_value = $(this).attr('data-preselect');
       if (!preselect_machine_value) {
         $(this).val('').trigger('input').typeahead('open');
@@ -1179,7 +1183,7 @@ $(document).ready(function() {
           $('#handCh_machine_value').attr('value', suggestion.machine_value);
           $(this).attr('data-preselect', suggestion.machine_value);
     });
-    $('#handCh_lookahead').on("click", function() {
+    $('#handCh_lookahead').on("focus", function() {
       var preselect_machine_value = $(this).attr('data-preselect');
       if (!preselect_machine_value) {
         $(this).val('').trigger('input').typeahead('open');
@@ -1200,7 +1204,7 @@ $(document).ready(function() {
           $('#relatArtic_machine_value').attr('value', suggestion.machine_value);
           $(this).attr('data-preselect', suggestion.machine_value);
     });
-    $('#relatArtic_lookahead').on("click", function() {
+    $('#relatArtic_lookahead').on("focus", function() {
       var preselect_machine_value = $(this).attr('data-preselect');
       if (!preselect_machine_value) {
         $(this).val('').trigger('input').typeahead('open');
@@ -1221,7 +1225,7 @@ $(document).ready(function() {
           $('#locprim_machine_value').attr('value', suggestion.machine_value);
           $(this).attr('data-preselect', suggestion.machine_value);
     });
-    $('#locprim_lookahead').on("click", function() {
+    $('#locprim_lookahead').on("focus", function() {
       var preselect_machine_value = $(this).attr('data-preselect');
       if (!preselect_machine_value) {
         $(this).val('').trigger('input').typeahead('open');
@@ -1242,7 +1246,7 @@ $(document).ready(function() {
           $('#contType_machine_value').attr('value', suggestion.machine_value);
           $(this).attr('data-preselect', suggestion.machine_value);
     });
-    $('#contType_lookahead').on("click", function() {
+    $('#contType_lookahead').on("focus", function() {
       var preselect_machine_value = $(this).attr('data-preselect');
       if (!preselect_machine_value) {
         $(this).val('').trigger('input').typeahead('open');
@@ -1263,7 +1267,7 @@ $(document).ready(function() {
           $('#movSh_machine_value').attr('value', suggestion.machine_value);
           $(this).attr('data-preselect', suggestion.machine_value);
     });
-    $('#movSh_lookahead').on("click", function() {
+    $('#movSh_lookahead').on("focus", function() {
       var preselect_machine_value = $(this).attr('data-preselect');
       if (!preselect_machine_value) {
         $(this).val('').trigger('input').typeahead('open');
@@ -1284,7 +1288,7 @@ $(document).ready(function() {
           $('#movDir_machine_value').attr('value', suggestion.machine_value);
           $(this).attr('data-preselect', suggestion.machine_value);
     });
-    $('#movDir_lookahead').on("click", function() {
+    $('#movDir_lookahead').on("focus", function() {
       var preselect_machine_value = $(this).attr('data-preselect');
       if (!preselect_machine_value) {
         $(this).val('').trigger('input').typeahead('open');
@@ -1305,7 +1309,7 @@ $(document).ready(function() {
           $('#relOriMov_machine_value').attr('value', suggestion.machine_value);
           $(this).attr('data-preselect', suggestion.machine_value);
     });
-    $('#relOriMov_lookahead').on("click", function() {
+    $('#relOriMov_lookahead').on("focus", function() {
       var preselect_machine_value = $(this).attr('data-preselect');
       if (!preselect_machine_value) {
         $(this).val('').trigger('input').typeahead('open');
@@ -1326,7 +1330,7 @@ $(document).ready(function() {
           $('#relOriLoc_machine_value').attr('value', suggestion.machine_value);
           $(this).attr('data-preselect', suggestion.machine_value);
     });
-    $('#relOriLoc_lookahead').on("click", function() {
+    $('#relOriLoc_lookahead').on("focus", function() {
       var preselect_machine_value = $(this).attr('data-preselect');
       if (!preselect_machine_value) {
         $(this).val('').trigger('input').typeahead('open');
@@ -1347,7 +1351,7 @@ $(document).ready(function() {
           $('#oriCh_machine_value').attr('value', suggestion.machine_value);
           $(this).attr('data-preselect', suggestion.machine_value);
     });
-    $('#oriCh_lookahead').on("click", function() {
+    $('#oriCh_lookahead').on("focus", function() {
       var preselect_machine_value = $(this).attr('data-preselect');
       if (!preselect_machine_value) {
         $(this).val('').trigger('input').typeahead('open');
@@ -1368,7 +1372,7 @@ $(document).ready(function() {
           $('#namEnt_machine_value').attr('value', suggestion.machine_value);
           $(this).attr('data-preselect', suggestion.machine_value);
     });
-    $('#namEnt_lookahead').on("click", function() {
+    $('#namEnt_lookahead').on("focus", function() {
       var preselect_machine_value = $(this).attr('data-preselect');
       if (!preselect_machine_value) {
         $(this).val('').trigger('input').typeahead('open');
@@ -1389,7 +1393,7 @@ $(document).ready(function() {
           $('#valence_machine_value').attr('value', suggestion.machine_value);
           $(this).attr('data-preselect', suggestion.machine_value);
     });
-    $('#valence_lookahead').on("click", function() {
+    $('#valence_lookahead').on("focus", function() {
       var preselect_machine_value = $(this).attr('data-preselect');
       if (!preselect_machine_value) {
         $(this).val('').trigger('input').typeahead('open');
@@ -1410,7 +1414,7 @@ $(document).ready(function() {
           $('#wordClass_machine_value').attr('value', suggestion.machine_value);
           $(this).attr('data-preselect', suggestion.machine_value);
     });
-    $('#wordClass_lookahead').on("click", function() {
+    $('#wordClass_lookahead').on("focus", function() {
       var preselect_machine_value = $(this).attr('data-preselect');
       if (!preselect_machine_value) {
         $(this).val('').trigger('input').typeahead('open');
@@ -1809,17 +1813,17 @@ $(document).ready(function() {
      lookahead_elements.each(function() {
          var this_id = $(this).attr("id");
          var cell_lookup = '#' + this_id.slice(0, -'_lookahead'.length) + '_cell';
-         var placeholder_text = $(this).attr("placeholder");
-         if (!placeholder_text) {return;}
-         var width_of_new_value = placeholder_text.length * 10 + 30;
+         var width_of_new_value = $(this).attr("placeholder").length * 10 + 30;
          $(cell_lookup).attr('data-width', width_of_new_value);
     });
     var cell_elements = $('[id*="_cell"]');
     cell_elements.each(function() {
-        var data_width = $(this).attr("data-width");
-        if (!data_width) {return;}
-        var this_width = data_width + "px";
+        var this_width = $(this).attr("data-width") + "px";
         $(this).css('width', this_width);
+        var tt_children = $(this).find('.tt-input');
+        $(tt_children).each(function() {
+            $(this).css('width', this_width);
+        });
     });
     busy_editing = false;
     $('#enable_edit_general').on("click", function() {
