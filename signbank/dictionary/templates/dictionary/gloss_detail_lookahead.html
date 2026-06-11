@@ -3322,8 +3322,8 @@ input .tt-hint {
         </div>
     </div>
 
-    <div class="panel panel-default panel-light" style="z-index:0;position:relative;">
-            <div class='panel-heading panel-light' data-toggle='collapse' style="z-index:10;position:relative;"
+    <div class="panel panel-default panel-light">
+            <div class='panel-heading panel-light' data-toggle='collapse'
                  data-target='#minimalpairs'>{% trans "Minimal Pairs" %}
             </div>
             <div id='minimalpairs' class='collapse'>
@@ -3344,10 +3344,10 @@ input .tt-hint {
     </div>
 
     <!-- Semantics -->
-    <div class="panel panel-default panel-light" style="z-index:0;position:relative;">
+    <div class="panel panel-default panel-light">
         <div class='panel-heading panel-light' data-toggle='collapse' data-target='#semantics'>{% trans "Semantics" %}
         </div>
-        <div id='semantics' class='collapse' style="z-index:20;position:relative;">
+        <div id='semantics' class='collapse'>
             <div class='pull-right' style="margin-right:5px;margin-top:20px;margin-bottom:30px;">
              {% if perms.dictionary.change_gloss %}
              <div>
@@ -3500,7 +3500,7 @@ input .tt-hint {
     </div>
 
     <!-- Relations to other signs -->
-    <div class="panel panel-default panel-light" style="z-index:0;position:relative;">
+    <div class="panel panel-default panel-light">
         <div class='panel-heading panel-light' data-toggle='collapse'
              data-target='#relations'>{% trans "Relations to Other Signs" %}
                     {% if gloss.get_relations_count > 0 %}
@@ -3510,7 +3510,7 @@ input .tt-hint {
                     </div>
                     {% endif %}
         </div>
-        <div id='relations' class='collapse' style="z-index:5;position:relative;">
+        <div id='relations' class='collapse'>
             <div class='pull-right' style="margin-right:15px;margin-top:20px;">
                  {% if perms.dictionary.change_gloss %}
                  <div>

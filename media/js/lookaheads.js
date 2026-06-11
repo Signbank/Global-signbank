@@ -44,6 +44,7 @@ function domhndshtypeahead(target) {
           displayKey: 'name',
           limit: 20,
           source: domhndsh_bloodhound.ttAdapter(),
+          autoSelect: false,
           templates: {
               suggestion: function(fc) {
                   return("<p><strong>" + fc.name +  "</strong></p>");
@@ -69,6 +70,7 @@ function subhndshtypeahead(target) {
           displayKey: 'name',
           limit: 20,
           source: subhndsh_bloodhound.ttAdapter(),
+          autoSelect: false,
           templates: {
               suggestion: function(fc) {
                   return("<p><strong>" + fc.name +  "</strong></p>");
@@ -93,6 +95,7 @@ function handChtypeahead(target) {
           name: 'handCh',
           displayKey: 'name',
           source: handCh_bloodhound.ttAdapter(),
+          autoSelect: false,
           templates: {
               suggestion: function(fc) {
                   return("<p><strong>" + fc.name +  "</strong></p>");
@@ -117,6 +120,7 @@ function relatArtictypeahead(target) {
           name: 'relatArtic',
           displayKey: 'name',
           source: relatArtic_bloodhound.ttAdapter(),
+          autoSelect: false,
           templates: {
               suggestion: function(fc) {
                   return("<p><strong>" + fc.name +  "</strong></p>");
@@ -143,6 +147,7 @@ function locprimtypeahead(target) {
           displayKey: 'name',
           limit: 50,
           source: locprim_bloodhound.ttAdapter(),
+          autoSelect: false,
           templates: {
               suggestion: function(fc) {
                   return("<p><strong>" + fc.name +  "</strong></p>");
@@ -167,6 +172,7 @@ function contTypetypeahead(target) {
           name: 'contType',
           displayKey: 'name',
           source: contType_bloodhound.ttAdapter(),
+          autoSelect: false,
           templates: {
               suggestion: function(fc) {
                   return("<p><strong>" + fc.name +  "</strong></p>");
@@ -191,6 +197,7 @@ function movShtypeahead(target) {
           name: 'movSh',
           displayKey: 'name',
           source: movSh_bloodhound.ttAdapter(),
+          autoSelect: false,
           templates: {
               suggestion: function(fc) {
                   return("<p><strong>" + fc.name +  "</strong></p>");
@@ -215,6 +222,7 @@ function movDirtypeahead(target) {
           name: 'movDir',
           displayKey: 'name',
           source: movDir_bloodhound.ttAdapter(),
+          autoSelect: false,
           templates: {
               suggestion: function(fc) {
                   return("<p><strong>" + fc.name +  "</strong></p>");
@@ -239,6 +247,7 @@ function relOriMovtypeahead(target) {
           name: 'relOriMov',
           displayKey: 'name',
           source: relOriMov_bloodhound.ttAdapter(),
+          autoSelect: false,
           templates: {
               suggestion: function(fc) {
                   return("<p><strong>" + fc.name +  "</strong></p>");
@@ -263,6 +272,7 @@ function relOriLoctypeahead(target) {
           name: 'relOriLoc',
           displayKey: 'name',
           source: relOriLoc_bloodhound.ttAdapter(),
+          autoSelect: false,
           templates: {
               suggestion: function(fc) {
                   return("<p><strong>" + fc.name +  "</strong></p>");
@@ -286,6 +296,7 @@ function oriChtypeahead(target) {
           name: 'oriCh',
           displayKey: 'name',
           source: oriCh_bloodhound.ttAdapter(),
+          autoSelect: false,
           templates: {
               suggestion: function(fc) {
                   return("<p><strong>" + fc.name +  "</strong></p>");
@@ -309,6 +320,7 @@ function namEnttypeahead(target) {
           name: 'namEnt',
           displayKey: 'name',
           source: namEnt_bloodhound.ttAdapter(),
+          autoSelect: false,
           templates: {
               suggestion: function(fc) {
                   return("<p><strong>" + fc.name +  "</strong></p>");
@@ -332,6 +344,7 @@ function valencetypeahead(target) {
           name: 'valence',
           displayKey: 'name',
           source: valence_bloodhound.ttAdapter(),
+          autoSelect: false,
           templates: {
               suggestion: function(fc) {
                   return("<p><strong>" + fc.name +  "</strong></p>");
@@ -356,6 +369,7 @@ function wordClasstypeahead(target) {
           name: 'wordClass',
           displayKey: 'name',
           source: wordClass_bloodhound.ttAdapter(),
+          autoSelect: false,
           templates: {
               suggestion: function(fc) {
                   return("<p><strong>" + fc.name +  "</strong></p>");
@@ -1106,9 +1120,12 @@ $(document).ready(function() {
     });
     $('#handedness_lookahead').on("focus", function() {
       var preselect_machine_value = $(this).attr('data-preselect');
-      if (!preselect_machine_value) {return;}
+      if (!preselect_machine_value) {
+        $(this).val('').trigger('input').typeahead('open');
+        return;
+      }
       var preselect_name = $(this).attr('placeholder');
-      if (!preselect_name) {return;}
+      if (!preselect_name || preselect_name === '-') {return;}
       $(this).attr("val", preselect_name);
       $(this).trigger('typeahead:selected', [{'name': preselect_name, 'machine_value': preselect_machine_value}]);
     });
@@ -1124,7 +1141,10 @@ $(document).ready(function() {
     });
     $('#domhndsh_lookahead').on("focus", function() {
       var preselect_machine_value = $(this).attr('data-preselect');
-      if (!preselect_machine_value) {return;}
+      if (!preselect_machine_value) {
+        $(this).val('').trigger('input').typeahead('open');
+        return;
+      }
       var preselect_name = $(this).attr('placeholder');
       if (!preselect_name) {return;}
       $(this).attr("val", preselect_name);
@@ -1142,9 +1162,12 @@ $(document).ready(function() {
     });
     $('#subhndsh_lookahead').on("focus", function() {
       var preselect_machine_value = $(this).attr('data-preselect');
-      if (!preselect_machine_value) {return;}
+      if (!preselect_machine_value) {
+        $(this).val('').trigger('input').typeahead('open');
+        return;
+      }
       var preselect_name = $(this).attr('placeholder');
-      if (!preselect_name) {return;}
+      if (!preselect_name || preselect_name === '-') {return;}
       $(this).attr("val", preselect_name);
       $(this).trigger('typeahead:selected', [{'name': preselect_name, 'machine_value': preselect_machine_value}]);
     });
@@ -1160,7 +1183,10 @@ $(document).ready(function() {
     });
     $('#handCh_lookahead').on("focus", function() {
       var preselect_machine_value = $(this).attr('data-preselect');
-      if (!preselect_machine_value) {return;}
+      if (!preselect_machine_value) {
+        $(this).val('').trigger('input').typeahead('open');
+        return;
+      }
       var preselect_name = $(this).attr('placeholder');
       if (!preselect_name) {return;}
       $(this).attr("val", preselect_name);
@@ -1178,9 +1204,12 @@ $(document).ready(function() {
     });
     $('#relatArtic_lookahead').on("focus", function() {
       var preselect_machine_value = $(this).attr('data-preselect');
-      if (!preselect_machine_value) {return;}
+      if (!preselect_machine_value) {
+        $(this).val('').trigger('input').typeahead('open');
+        return;
+      }
       var preselect_name = $(this).attr('placeholder');
-      if (!preselect_name) {return;}
+      if (!preselect_name || preselect_name === '-') {return;}
       $(this).attr("val", preselect_name);
       $(this).trigger('typeahead:selected', [{'name': preselect_name, 'machine_value': preselect_machine_value}]);
     });
@@ -1196,7 +1225,10 @@ $(document).ready(function() {
     });
     $('#locprim_lookahead').on("focus", function() {
       var preselect_machine_value = $(this).attr('data-preselect');
-      if (!preselect_machine_value) {return;}
+      if (!preselect_machine_value) {
+        $(this).val('').trigger('input').typeahead('open');
+        return;
+      }
       var preselect_name = $(this).attr('placeholder');
       if (!preselect_name) {return;}
       $(this).attr("val", preselect_name);
@@ -1214,7 +1246,10 @@ $(document).ready(function() {
     });
     $('#contType_lookahead').on("focus", function() {
       var preselect_machine_value = $(this).attr('data-preselect');
-      if (!preselect_machine_value) {return;}
+      if (!preselect_machine_value) {
+        $(this).val('').trigger('input').typeahead('open');
+        return;
+      }
       var preselect_name = $(this).attr('placeholder');
       if (!preselect_name) {return;}
       $(this).attr("val", preselect_name);
@@ -1232,7 +1267,10 @@ $(document).ready(function() {
     });
     $('#movSh_lookahead').on("focus", function() {
       var preselect_machine_value = $(this).attr('data-preselect');
-      if (!preselect_machine_value) {return;}
+      if (!preselect_machine_value) {
+        $(this).val('').trigger('input').typeahead('open');
+        return;
+      }
       var preselect_name = $(this).attr('placeholder');
       if (!preselect_name) {return;}
       $(this).attr("val", preselect_name);
@@ -1250,7 +1288,10 @@ $(document).ready(function() {
     });
     $('#movDir_lookahead').on("focus", function() {
       var preselect_machine_value = $(this).attr('data-preselect');
-      if (!preselect_machine_value) {return;}
+      if (!preselect_machine_value) {
+        $(this).val('').trigger('input').typeahead('open');
+        return;
+      }
       var preselect_name = $(this).attr('placeholder');
       if (!preselect_name) {return;}
       $(this).attr("val", preselect_name);
@@ -1268,7 +1309,10 @@ $(document).ready(function() {
     });
     $('#relOriMov_lookahead').on("focus", function() {
       var preselect_machine_value = $(this).attr('data-preselect');
-      if (!preselect_machine_value) {return;}
+      if (!preselect_machine_value) {
+        $(this).val('').trigger('input').typeahead('open');
+        return;
+      }
       var preselect_name = $(this).attr('placeholder');
       if (!preselect_name) {return;}
       $(this).attr("val", preselect_name);
@@ -1286,7 +1330,10 @@ $(document).ready(function() {
     });
     $('#relOriLoc_lookahead').on("focus", function() {
       var preselect_machine_value = $(this).attr('data-preselect');
-      if (!preselect_machine_value) {return;}
+      if (!preselect_machine_value) {
+        $(this).val('').trigger('input').typeahead('open');
+        return;
+      }
       var preselect_name = $(this).attr('placeholder');
       if (!preselect_name) {return;}
       $(this).attr("val", preselect_name);
@@ -1304,7 +1351,10 @@ $(document).ready(function() {
     });
     $('#oriCh_lookahead').on("focus", function() {
       var preselect_machine_value = $(this).attr('data-preselect');
-      if (!preselect_machine_value) {return;}
+      if (!preselect_machine_value) {
+        $(this).val('').trigger('input').typeahead('open');
+        return;
+      }
       var preselect_name = $(this).attr('placeholder');
       if (!preselect_name) {return;}
       $(this).attr("val", preselect_name);
@@ -1322,7 +1372,10 @@ $(document).ready(function() {
     });
     $('#namEnt_lookahead').on("focus", function() {
       var preselect_machine_value = $(this).attr('data-preselect');
-      if (!preselect_machine_value) {return;}
+      if (!preselect_machine_value) {
+        $(this).val('').trigger('input').typeahead('open');
+        return;
+      }
       var preselect_name = $(this).attr('placeholder');
       if (!preselect_name) {return;}
       $(this).attr("val", preselect_name);
@@ -1340,7 +1393,10 @@ $(document).ready(function() {
     });
     $('#valence_lookahead').on("focus", function() {
       var preselect_machine_value = $(this).attr('data-preselect');
-      if (!preselect_machine_value) {return;}
+      if (!preselect_machine_value) {
+        $(this).val('').trigger('input').typeahead('open');
+        return;
+      }
       var preselect_name = $(this).attr('placeholder');
       if (!preselect_name) {return;}
       $(this).attr("val", preselect_name);
@@ -1358,7 +1414,10 @@ $(document).ready(function() {
     });
     $('#wordClass_lookahead').on("focus", function() {
       var preselect_machine_value = $(this).attr('data-preselect');
-      if (!preselect_machine_value) {return;}
+      if (!preselect_machine_value) {
+        $(this).val('').trigger('input').typeahead('open');
+        return;
+      }
       var preselect_name = $(this).attr('placeholder');
       if (!preselect_name) {return;}
       $(this).attr("val", preselect_name);

@@ -1953,35 +1953,35 @@ class PhonologyForm(forms.Form):
         self.gloss = kwargs.pop('gloss')
         super(PhonologyForm, self).__init__(*args, **kwargs)
 
-        self.fields['handedness'].initial = self.gloss.handedness.name if self.gloss.handedness else '-'
+        self.fields['handedness'].initial = self.gloss.handedness.name if self.gloss.handedness else ''
         self.fields['weakdrop'].choices = [('0', _('')), ('1', _('+WD')), ('2', _('-WD'))]
         self.fields['weakdrop'].initial = self.gloss.weakdrop_to_choice()
         self.fields['weakprop'].choices = [('0', _('')), ('1', _('+WP')), ('2', _('-WP'))]
         self.fields['weakprop'].initial = self.gloss.weakprop_to_choice()
-        self.fields['domhndsh'].initial = self.gloss.domhndsh.name if self.gloss.domhndsh else '-'
-        self.fields['subhndsh'].initial = self.gloss.subhndsh.name if self.gloss.subhndsh else '-'
+        self.fields['domhndsh'].initial = self.gloss.domhndsh.name if self.gloss.domhndsh else ''
+        self.fields['subhndsh'].initial = self.gloss.subhndsh.name if self.gloss.subhndsh else ''
         self.fields['domhndsh_letter_or_number'].choices = [('0', ''), ('1', _('letter')), ('2', _('number'))]
         self.fields['domhndsh_letter_or_number'].initial = self.gloss.display_domhndsh_letter_or_number
         self.fields['subhndsh_letter_or_number'].choices = [('0', ''), ('1', _('letter')), ('2', _('number'))]
         self.fields['subhndsh_letter_or_number'].initial = self.gloss.display_subhndsh_letter_or_number
-        self.fields['handCh'].initial = self.gloss.handCh.name if self.gloss.handCh else '-'
-        self.fields['relatArtic'].initial = self.gloss.relatArtic.name if self.gloss.relatArtic else '-'
-        self.fields['locprim'].initial = self.gloss.locprim.name if self.gloss.locprim else '-'
-        self.fields['contType'].initial = self.gloss.contType.name if self.gloss.contType else '-'
-        self.fields['movSh'].initial = self.gloss.movSh.name if self.gloss.movSh else '-'
-        self.fields['movDir'].initial = self.gloss.movDir.name if self.gloss.movDir else '-'
+        self.fields['handCh'].initial = self.gloss.handCh.name if self.gloss.handCh else ''
+        self.fields['relatArtic'].initial = self.gloss.relatArtic.name if self.gloss.relatArtic else ''
+        self.fields['locprim'].initial = self.gloss.locprim.name if self.gloss.locprim else ''
+        self.fields['contType'].initial = self.gloss.contType.name if self.gloss.contType else ''
+        self.fields['movSh'].initial = self.gloss.movSh.name if self.gloss.movSh else ''
+        self.fields['movDir'].initial = self.gloss.movDir.name if self.gloss.movDir else ''
         for boolean_field in ['repeat', 'altern']:
             self.fields[boolean_field].choices = [('0', ''), ('1', _('Yes'))]
         self.fields['repeat'].initial = self.gloss.display_repeat
         self.fields['altern'].initial = self.gloss.display_altern
-        self.fields['relOriMov'].initial = self.gloss.relOriMov.name if self.gloss.relOriMov else '-'
-        self.fields['relOriLoc'].initial = self.gloss.relOriLoc.name if self.gloss.relOriLoc else '-'
-        self.fields['oriCh'].initial = self.gloss.oriCh.name if self.gloss.oriCh else '-'
-        self.fields['locVirtObj'].initial = self.gloss.locVirtObj if self.gloss.locVirtObj else '-'
-        self.fields['phonOth'].initial = self.gloss.phonOth if self.gloss.phonOth else '-'
-        self.fields['mouthG'].initial = self.gloss.mouthG if self.gloss.mouthG else '-'
-        self.fields['mouthing'].initial = self.gloss.mouthing if self.gloss.mouthing else '-'
-        self.fields['phonetVar'].initial = self.gloss.phonetVar if self.gloss.phonetVar else '-'
+        self.fields['relOriMov'].initial = self.gloss.relOriMov.name if self.gloss.relOriMov else ''
+        self.fields['relOriLoc'].initial = self.gloss.relOriLoc.name if self.gloss.relOriLoc else ''
+        self.fields['oriCh'].initial = self.gloss.oriCh.name if self.gloss.oriCh else ''
+        self.fields['locVirtObj'].initial = self.gloss.locVirtObj if self.gloss.locVirtObj else ''
+        self.fields['phonOth'].initial = self.gloss.phonOth if self.gloss.phonOth else ''
+        self.fields['mouthG'].initial = self.gloss.mouthG if self.gloss.mouthG else ''
+        self.fields['mouthing'].initial = self.gloss.mouthing if self.gloss.mouthing else ''
+        self.fields['phonetVar'].initial = self.gloss.phonetVar if self.gloss.phonetVar else ''
 
 
 class SemanticsForm(forms.Form):
@@ -2003,8 +2003,8 @@ class SemanticsForm(forms.Form):
 
         self.fields['semField'].initial = self.gloss.get_semField_display()
         self.fields['derivHist'].initial = self.gloss.get_derivHist_display()
-        self.fields['namEnt'].initial = self.gloss.namEnt.name if self.gloss.namEnt else '-'
-        self.fields['valence'].initial = self.gloss.valence.name if self.gloss.valence else '-'
+        self.fields['namEnt'].initial = self.gloss.namEnt.name if self.gloss.namEnt else ''
+        self.fields['valence'].initial = self.gloss.valence.name if self.gloss.valence else ''
         self.fields['iconImg'].initial = self.gloss.iconImg if self.gloss.iconImg else ''
         self.fields['concConcSet'].initial = self.gloss.concConcSet if self.gloss.concConcSet else ''
 
