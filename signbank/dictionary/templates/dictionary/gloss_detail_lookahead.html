@@ -84,7 +84,7 @@
     var language_2chars = {{language_2chars|safe}};
 </script>
 
-<script type="text/javascript" src="{{STATIC_URL}}js/typeahead.bundle.min.js"></script>
+<script type="text/javascript" src="{{STATIC_URL}}js/typeahead-pretty.js"></script>
 <script type='text/javascript' src="{{STATIC_URL}}js/lookaheads.js"></script>
 
 <script type='text/javascript'>
@@ -439,12 +439,6 @@ select option {
     -webkit-appearance: none;
     -moz-appearance: none;
 }
-
-.button-to-appear-in-edit-mode {
-    font-size: 10px;
-    padding-left: 2px;
-    padding-right: 2px;
-}
 .edit-mode {
     font-size: 10px;
     padding-left: 2px;
@@ -537,21 +531,21 @@ input[type="text"]:focus {
     width: inherit !important;
     color: red;
 }
-.tt-input {
-    background-color: rgba(50,50,50,15%) !important;
-    border: none;
-    width: auto;
-}
-.tt-input:active {
-    border: 1px solid red;
-    z-index: 999;
-}
-input .tt-hint {
-    color: red;
-}
-.tt-dropdown-menu:active {
-    z-index: 999 !important;
-}
+/*.tt-input {*/
+/*    background-color: rgba(50,50,50,15%) !important;*/
+/*    border: none;*/
+/*    width: auto;*/
+/*}*/
+/*.tt-input:active {*/
+/*    border: 1px solid red;*/
+/*    z-index: 999;*/
+/*}*/
+/*input .tt-hint {*/
+/*    color: red;*/
+/*}*/
+/*.tt-dropdown-menu:active {*/
+/*    z-index: 999 !important;*/
+/*}*/
 .editform-morphology input {
     background-color: inherit !important;
     border: none;
@@ -590,7 +584,7 @@ input .tt-hint {
 }
 .editform-semantics input {
     background-color: inherit !important;
-    border: none;
+    border: 1px solid grey;
 }
 .editform-semantics input:enabled {
     color: red !important;
@@ -748,7 +742,7 @@ input .tt-hint {
 .editsemanticsform input {
     color: inherit !important;
     background-color: inherit !important;
-    border: none;
+    border: 1px solid grey;
 }
 .editdialectform .form-control:enabled::placeholder {
     color: red !important;
@@ -763,7 +757,7 @@ input .tt-hint {
 .editdialectform input {
     color: inherit !important;
     background-color: inherit !important;
-    border: none;
+    border: 1px solid grey;
 }
 .form-control {
     margin-left: 0;
@@ -771,7 +765,7 @@ input .tt-hint {
 }
 .form-control:disabled {
     cursor: pointer;
-    color: --beam !important;
+    color: var(--beam) !important;
     background-color: inherit !important;
 }
 .form-control:enabled input {
@@ -779,21 +773,6 @@ input .tt-hint {
     background-color: inherit !important;
 }
 
-.item {
-        display: inline-block;
-        padding: 8px 12px;
-        margin: 5px;
-        position: relative;
-        color: red;
-}
-.delete-btn {
-        position: absolute;
-        top: 2px;
-        right: 5px;
-        cursor: pointer;
-        color: red;
-        font-weight: bold;
-}
 .btn-danger {
     background-color: red;
     border: none;
@@ -801,7 +780,6 @@ input .tt-hint {
 .actionButton {
     padding: 4px 8px;
     border: 1px solid Grey;
-    border-color: Grey;
     border-radius: 8px;
     text-align: center;
     color: Black;
@@ -814,15 +792,10 @@ input .tt-hint {
 }
 .actionButton:active:focus {
     text-decoration: none;
-    background-color: none;
+    background-color: transparent;
     outline: none;
 }
 .edit-mode {
-    font-size: 10px;
-    padding-left: 2px;
-    padding-right: 2px;
-}
-.button-to-appear-in-edit-mode {
     font-size: 10px;
     padding-left: 2px;
     padding-right: 2px;
@@ -832,9 +805,6 @@ input .tt-hint {
 }
 .semantics-table {
     border-spacing: 0 5px;
-}
-.twitter-typehead {
-    width: auto;
 }
 .highlight {
     background-color: rgb(255, 149, 63);
@@ -986,7 +956,7 @@ input .tt-hint {
 
 {% get_obj_perms request.user for gloss.lemma.dataset as "dataset_perms" %}
 
-<div id="signinfo" class='navbar navbar-collapse' style="background-color:inherit;border:0;">
+<div id="signinfo" class='navbar navbar-collapse' style="background-color:inherit;border:0;z-index:0;">
 
     <div id="view_tabs" style="margin-right:15px;margin-top:10px;z-index:75;" class='view-tabs view-tabs-light'>
     <ul class='nav nav-tabs nav-tabs-light'>
@@ -1161,7 +1131,7 @@ input .tt-hint {
 
 <div class="clearfix"></div>
 
-<div id="definitionblock">
+<div id="definitionblock" style="z-index:0; position: relative;">
 
     {% url 'dictionary:protected_media' '' as protected_media_url %}
     <div id="leftblock">
@@ -1516,7 +1486,7 @@ input .tt-hint {
 
 </div>
 
-    <div class='panel-group' id="definition" style="z-index: 0;opacity:.99; position: static;">
+    <div class='panel-group' id="definition" style="z-index: 0;opacity:.99; position: relative;">
         <div class="panel panel-default panel-light">
         <div class='panel-heading panel-light' id='general_heading'
              data-toggle='collapse' data-target='#general'>{% trans "General Description" %}
@@ -2223,18 +2193,20 @@ input .tt-hint {
                 <th style="width:240px;">{% trans "Word class" %}</th>
                 {% with glossform.fields|get_item:'wordClass' as wordClass_field %}
                 <td class="editform-general" style="width:auto;">
-                    <div>
+                    <div id="wordClass_cell">
                     <input class='form-control form-control-light wordClasstypeahead' type="text" size="40"
                            placeholder="{{wordClass_field.initial}}" id="wordClass_lookahead" value="{{wordClass_field.initial}}"
                            data-category="general" autocomplete="off" >
                     <input type="hidden" name="wordClass" value=""
                            id="wordClass_machine_value" >
                     </div>
+                    <div class="edit_only">
+                        <br><br><br><br><br><br><br><br><br><br><br><br><br>
+                    </div>
                 </td>
                 {% endwith %}
             </tr>
         </table>
-        <br/><br/><br/><br/>
     </div>
 </div>
 {% if prominent_media_type and prominent_media_type.machine_value > 1 %}
@@ -2285,11 +2257,11 @@ input .tt-hint {
 
 
    <!-- Non-manual videos -->
-   <div class="panel panel-default panel-light">
+   <div class="panel panel-default panel-light" style="z-index:0; position:relative;">
         <div class='panel-heading panel-light' data-toggle='collapse'
              data-target='#nmevideos'>{% trans "Videos with Non-manual Elements" %}
         </div>
-        <div id='nmevideos' class='collapse panel panel-default panel-light'>
+        <div id='nmevideos' class='collapse panel panel-default panel-light' style="z-index:1; position:relative;">
 
             <div class='pull-right' style="margin-right:15px;margin-top:20px;margin-bottom:20px;">
                 {% if perms.dictionary.change_gloss %}
@@ -3314,11 +3286,13 @@ input .tt-hint {
                            value="{{phonetVar_field.initial}}" size="50"
                            id="phonetVar_field_text" data-category="phonology">
                     </div>
+                    <div class="edit_only_phonology">
+                        <br><br><br><br><br><br><br>
+                    </div>
                 </td>
                 {% endwith %}
             </tr>
             </table>
-            <br/><br/><br/><br/>
         </div>
     </div>
 
@@ -3383,12 +3357,12 @@ input .tt-hint {
                     {% endfor %}
                 </td>
                 <td class="editsemanticsform">
-                    <div>
+                    <div class="editform-semantics">
                     <input class='form-control form-control-light semFieldtypeahead' type="text" size="60"
                            id="semField_multiselect" data-category="semantics" autocomplete="off" >
                     </div>
                 </td>
-                <td id="semField_hidden_input_values" class="editform-semantics">
+                <td id="semField_hidden_input_values">
 
                 </td>
                 {% endwith %}
@@ -3491,11 +3465,13 @@ input .tt-hint {
                            value="{{concConcSet_field.initial}}"
                            id="concConcSet_text" data-category="semantics">
                     </div>
+                    <div class="edit_only_semantics">
+                        <br><br><br><br><br><br><br><br><br><br><br><br><br><br>
+                    </div>
                 </td>
                 {% endwith %}
             </tr>
             </table>
-            <br/><br/><br/><br/>
         </div>
     </div>
 

@@ -330,7 +330,7 @@ table {
 #fingerspellright {
    width: 470px; /* 847 - 320 - 20 - fiddle factor */
    float: left;
-   padding-left: 20px;or
+   padding-left: 20px;
 }
 
 #fstable td {
@@ -428,7 +428,7 @@ table {
 
 
 
-// typeahead dropdown styling
+/*typeahead dropdown styling*/
 
 .typeahead,
 .tt-query,
@@ -473,7 +473,7 @@ table {
 }
 
 .tt-dropdown-menu {
-  width: 600px;
+  width: auto;
   max-height: 300px;
   overflow-y: scroll;
   margin-top: 0px;
@@ -615,7 +615,7 @@ tr.rotated th {
     font-weight: 800;
 }
 
-//Tabs taken from a new version of bootstrap
+/*Tabs taken from a new version of bootstrap*/
 .nav-tabs
 {
     border-bottom: 1px solid #dee2e6;
