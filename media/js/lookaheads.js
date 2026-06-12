@@ -1020,6 +1020,7 @@ function enable_edit_panel(category) {
     if (category === 'general') {
         $('.read_only').hide();
         $('.edit_only').show();
+        $('.edit_only_general').show();
         $('.editdialectform').show();
         $('.editform').show();  // appears in gloss tags and affiliations
         $('#dialect_value').trigger('editDialectField');
@@ -1048,6 +1049,7 @@ function disable_edit_panel(category) {
         $('.editform').hide();  // appears in gloss tags and affiliations
         $('.read_only').show();
         $('.edit_only').hide();
+        $('.edit_only_general').hide();
     }
     if (category === 'publication') {
         $('.read_only_publication').show();
@@ -1404,27 +1406,29 @@ $(document).ready(function() {
       $(this).attr("val", preselect_name);
       $(this).trigger('typeahead:selected', [{'name': preselect_name, 'machine_value': preselect_machine_value}]);
     });
-    wordClasstypeahead($('.wordClasstypeahead'));
-    $('.wordClasstypeahead').bind('typeahead:selected', function(ev, suggestion) {
-          busy_editing = true;
-          $(this).attr('value', suggestion.name);
-          $(this).attr('placeholder', suggestion.name);
-          var width_of_new_value = suggestion.name.length * 10 + 30;
-          $(this).css("width", width_of_new_value + "px");
-          $('#wordClass_machine_value').attr('value', suggestion.machine_value);
-          $(this).attr('data-preselect', suggestion.machine_value);
-    });
-    $('#wordClass_lookahead').on("focus", function() {
-      var preselect_machine_value = $(this).attr('data-preselect');
-      if (!preselect_machine_value) {
-        $(this).val('').trigger('input').typeahead('open');
-        return;
-      }
-      var preselect_name = $(this).attr('placeholder');
-      if (!preselect_name) {return;}
-      $(this).attr("val", preselect_name);
-      $(this).trigger('typeahead:selected', [{'name': preselect_name, 'machine_value': preselect_machine_value}]);
-    });
+    if (use_lookaheads == 'lookaheads') {
+        wordClasstypeahead($('.wordClasstypeahead'));
+        $('.wordClasstypeahead').bind('typeahead:selected', function(ev, suggestion) {
+              busy_editing = true;
+              $(this).attr('value', suggestion.name);
+              $(this).attr('placeholder', suggestion.name);
+              var width_of_new_value = suggestion.name.length * 10 + 30;
+              $(this).css("width", width_of_new_value + "px");
+              $('#wordClass_machine_value').attr('value', suggestion.machine_value);
+              $(this).attr('data-preselect', suggestion.machine_value);
+        });
+        $('#wordClass_lookahead').on("focus", function() {
+          var preselect_machine_value = $(this).attr('data-preselect');
+          if (!preselect_machine_value) {
+            $(this).val('').trigger('input').typeahead('open');
+            return;
+          }
+          var preselect_name = $(this).attr('placeholder');
+          if (!preselect_name) {return;}
+          $(this).attr("val", preselect_name);
+          $(this).trigger('typeahead:selected', [{'name': preselect_name, 'machine_value': preselect_machine_value}]);
+        });
+    }
     semFieldtypeahead($('.semFieldtypeahead'));
     $('.semFieldtypeahead').bind('typeahead:selected', function(ev, suggestion) {
           if (!selected_semField.includes(suggestion)) {
@@ -1597,7 +1601,11 @@ $(document).ready(function() {
                 var field_value = $(field_lookup).val();
                 update[field_key] = field_value;
             } else {
-                var field_lookup = '#'+field+'_machine_value';
+                if (use_lookaheads == 'lookaheads') {
+                    var field_lookup = '#'+field+'_machine_value';
+                } else {
+                    var field_lookup = '#'+field+'_value';
+                }
                 var field_key = $(field_lookup).attr("name");
                 var field_value = $(field_lookup).val();
                 update[field_key] = field_value;
@@ -1813,13 +1821,16 @@ $(document).ready(function() {
      lookahead_elements.each(function() {
          var this_id = $(this).attr("id");
          var cell_lookup = '#' + this_id.slice(0, -'_lookahead'.length) + '_cell';
-         var width_of_new_value = $(this).attr("placeholder").length * 10 + 30;
+         var placeholder_text = $(this).attr("placeholder")
+         if (!placeholder_text) {return;}
+         var width_of_new_value = placeholder_text.length * 10 + 30;
          $(cell_lookup).attr('data-width', width_of_new_value);
     });
     var cell_elements = $('[id*="_cell"]');
     cell_elements.each(function() {
-        var this_width = $(this).attr("data-width") + "px";
-        $(this).css('width', this_width);
+        var this_width = $(this).attr("data-width");
+        if (!this_width) {return;};
+        $(this).css('width', this_width+"px");
         var tt_children = $(this).find('.tt-input');
         $(tt_children).each(function() {
             $(this).css('width', this_width);
@@ -1841,6 +1852,18 @@ $(document).ready(function() {
     $('#enable_edit_nme').on("click", function() {
         toggle_edit_publication();
     });
+    $('#data_type_lists').on('click', function() {
+        $('#data_type_lookaheads').removeClass('active');
+        $(this).addClass('active');
+        var this_datatype = $(this).attr('data-type');
+        $('#use_lookaheads').attr('value', this_datatype);
+    });
+    $('#data_type_lookaheads').on('click', function() {
+        $('#data_type_lists').removeClass('active');
+        $(this).addClass('active');
+        var this_datatype = $(this).attr('data-type');
+        $('#use_lookaheads').attr('value', this_datatype);
+    });
     disable_edit_panel('general');
     disable_edit_panel('phonology');
     disable_edit_panel('semantics');
@@ -1854,4 +1877,6 @@ $(document).ready(function() {
     disable_edit_annotated_sentences();
     disable_edit_othermedia();
     ajaxifyTagForm();
+    $('#use_lookaheads').attr('value', use_lookaheads);
+    $('#data_type_'+use_lookaheads).addClass('active');
 });

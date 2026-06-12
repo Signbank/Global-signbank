@@ -1172,6 +1172,7 @@ class GlossDetailView(DetailView):
     query_parameters = dict()
     dark_mode = False
     public = False
+    use_lookaheads = 'lists'
 
     def get_template_names(self):
         if not self.request.user.is_authenticated:
@@ -1427,7 +1428,11 @@ class GlossDetailView(DetailView):
         context['query_parameters_mapping'] = query_parameters_mapping
         context['query_parameters_values_mapping'] = query_parameters_values_mapping
 
-        context['glossform'] = GlossForm(gloss=context['gloss'])
+        if 'use_lookaheads' in self.request.session.keys() and self.request.session['use_lookaheads'] in ['lists', 'lookaheads']:
+            self.use_lookaheads = self.request.session['use_lookaheads']
+
+        context['use_lookaheads'] = self.use_lookaheads
+        context['glossform'] = GlossForm(gloss=context['gloss'], use_lookaheads=context['use_lookaheads'])
         context['phonologyform'] = PhonologyForm(gloss=context['gloss'])
         context['semanticsform'] = SemanticsForm(gloss=context['gloss'])
         context['publicationform'] = PublicationForm(gloss=context['gloss'])
@@ -1465,6 +1470,7 @@ class GlossDetailView(DetailView):
         self.last_used_dataset = dataset_of_requested_gloss.acronym
 
         self.request.session['last_used_dataset'] = self.last_used_dataset
+        self.request.session['use_lookaheads'] = self.use_lookaheads
 
         # these Gloss model fields are used by the javascript code to process push data for edits
         context['gloss_update_fields'] =  GLOSS_FIELDS_UPDATES
@@ -1665,6 +1671,13 @@ class GlossDetailView(DetailView):
         return context
 
     def post(self, request, *args, **kwargs):
+        if 'use_lookaheads' in request.POST:
+            self.use_lookaheads = self.request.POST.get('use_lookaheads')
+            glossid = self.request.POST.get('glossid')
+            request.session['use_lookaheads'] = self.use_lookaheads
+            request.session.modified = True
+            return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': glossid}))
+
         if request.method != "POST" or not request.POST or request.POST.get('use_default_query_parameters') != 'default_parameters':
             return redirect(PREFIX_URL + '/dictionary/gloss/' + str(kwargs['pk']))
         # set up gloss details default parameters here

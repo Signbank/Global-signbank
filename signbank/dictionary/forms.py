@@ -1897,7 +1897,6 @@ class GlossForm(forms.Form):
     release_information = forms.CharField(label=_("Release information"))
     dialect = forms.CharField(label=_('Dialect'))
     useInstr = forms.CharField(label=_("Annotation instructions"))
-    wordClass = forms.CharField(label=_('Word class'))
     wordClass2 = forms.CharField(label=_('Word class 2'))
 
     class Meta:
@@ -1906,11 +1905,23 @@ class GlossForm(forms.Form):
 
     def __init__(self, *args, **kwargs):
         self.gloss = kwargs.pop('gloss')
+        self.use_lookaheads = kwargs.pop('use_lookaheads')
         super(GlossForm, self).__init__(*args, **kwargs)
         self.fields['release_information'].initial = self.gloss.release_information
         self.fields['dialect'].initial = self.gloss.get_dialect_display()
-        self.fields['wordClass'].initial = self.gloss.wordClass.name if self.gloss.wordClass else '-'
         self.fields['useInstr'].initial = self.gloss.useInstr
+        if self.use_lookaheads == 'lookaheads':
+            self.fields['wordClass'] = forms.CharField(label=_('Word class'))
+            self.fields['wordClass'].initial = self.gloss.wordClass.name if self.gloss.wordClass else '-'
+        else:
+            self.fields['wordClass'] = forms.ChoiceField(label=_('Word class'),
+                                                         choices=choicelist_queryset_to_translated_dict(
+                                                                 list(FieldChoice.objects.filter(field='WordClass').order_by(
+                                                                     'machine_value')),
+                                                         ordered=False, id_prefix='', shortlist=False
+                                                         ),
+                                                         widget=forms.Select(attrs=ATTRS_FOR_FORMS))
+            self.fields['wordClass'].initial = self.gloss.wordClass.name if self.gloss.wordClass else ''
 
 
 class PhonologyForm(forms.Form):

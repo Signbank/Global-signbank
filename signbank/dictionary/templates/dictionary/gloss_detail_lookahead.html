@@ -35,7 +35,6 @@
     var saving_str = '{{saving_str|escapejs}}';
     var idgloss_already_exists_str = '{{idgloss_already_exists_str|escapejs}}';
 
-
     var yes_str = "{% trans 'Yes' %}";
     var no_str = "{% trans 'No' %}";
     var original_strong_hand = '{{StrongHand}}';
@@ -82,6 +81,7 @@
     var selected_derivHist = {{selected_derivHist|safe}};
     var selected_dialect = {{selected_dialect|safe}};
     var language_2chars = {{language_2chars|safe}};
+    var use_lookaheads = '{{use_lookaheads|safe}}';
 </script>
 
 <script type="text/javascript" src="{{STATIC_URL}}js/typeahead.bundle.min.js"></script>
@@ -124,6 +124,21 @@
 }
 .video_button_nme.active {
     color: red;
+}
+.toggle-container {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 10px;
+}
+.toggle-button {
+    padding: 8px 12px;
+    border: 1px solid #ccc;
+    cursor: pointer;
+    background-color: #f0f0f0;
+}
+.toggle-button.active {
+    background-color: #4CAF50;
+    color: white;
 }
 </style>
 <!--    <script type="text/javascript" src="{{STATIC_URL}}js/drag_drop_files.js"></script>-->
@@ -988,6 +1003,23 @@ input .tt-hint {
 
 {% if "change_dataset" in dataset_perms %}
     <div class='pull-right' style="margin-right:15px;margin-top:120px;">
+
+        <div>
+            <form id="use_lookaheads_form" method="POST">
+            {% csrf_token %}
+            <div class="toggle-container">
+                <div id="data_type_lists" class="toggle-button" data-type="lists">Lists</div>
+                <div id="data_type_lookaheads" class="toggle-button" data-type="lookaheads">Lookaheads</div>
+                {% if use_lookaheads == 'lists' %}
+                <input type='hidden' id='use_lookaheads' name='use_lookaheads' value='lists'>
+                {% else %}
+                <input type="hidden" id="use_lookaheads" name='use_lookaheads' value='lookaheads'>
+                {% endif %}
+                <input type="hidden" name="glossid" value="{{gloss.id}}">
+                <input id="use_lookaheads_btn" type="submit" class="btn btn-primary">
+            </div>
+            </form>
+        </div>
 
          {% if perms.dictionary.add_gloss and selected_datasets|length > 1 %}
          <button id='copy_gloss_btn' class='btn btn-primary copy-button' data-toggle='modal' data-target='#copy_gloss_modal'>{% trans "Copy" %}</button>
@@ -2193,6 +2225,7 @@ input .tt-hint {
                 <th style="width:240px;">{% trans "Word class" %}</th>
                 {% with glossform.fields|get_item:'wordClass' as wordClass_field %}
                 <td class="editform-general" style="width:auto;">
+                    {% if use_lookaheads == 'lookaheads' %}
                     <div id="wordClass_cell">
                     <input class='form-control form-control-light wordClasstypeahead' type="text" size="40"
                            placeholder="{{wordClass_field.initial}}" id="wordClass_lookahead" value="{{wordClass_field.initial}}"
@@ -2200,9 +2233,23 @@ input .tt-hint {
                     <input type="hidden" name="wordClass" value=""
                            id="wordClass_machine_value" >
                     </div>
-                    <div class="edit_only">
+                    <div class="edit_only_general">
                         <br><br><br><br><br><br><br><br><br><br><br><br><br>
                     </div>
+                    {% else %}
+                    <div class="editselect">
+                    <select class="select_wordClass form-control form-control-light" name="wordClass"
+                                id="wordClass_value" data-category="general">
+                        {% for machine_value, opn in wordClass_field.choices %}
+                        {% if opn == wordClass_field.initial %}
+                        <option value={{machine_value}} selected="selected">{{opn}}</option>
+                        {% else %}
+                        <option value={{machine_value}}>{{opn}}</option>
+                        {% endif %}
+                        {% endfor %}
+                    </select>
+                    </div>
+                    {% endif %}
                 </td>
                 {% endwith %}
             </tr>
