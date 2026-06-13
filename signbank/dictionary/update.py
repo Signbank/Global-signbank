@@ -852,20 +852,14 @@ def get_gloss_non_empty_value_dict(request):
     for field in request.POST.keys():
         if field == 'csrfmiddlewaretoken':
             continue
-        if field in ['semField[]']:
+        if field in ['semField', 'semField[]']:
             values = request.POST.getlist(field, [])
-            if not values:
-                continue
             value_dict['semField'] = values
-        elif field in ['derivHist[]']:
+        elif field in ['derivHist', 'derivHist[]']:
             values = request.POST.getlist(field, [])
-            if not values:
-                continue
             value_dict['derivHist'] = values
-        elif field in ['dialect[]']:
-            values = request.POST.getlist(field, [])
-            if not values:
-                continue
+        elif field in ['dialect', 'dialect[]']:
+            values = request.POST.getlist(field)
             value_dict['dialect'] = values
         else:
             value = request.POST.get(field, '')
@@ -883,20 +877,26 @@ def edit_gloss_save(request, glossid):
     gloss = get_object_or_404(Gloss, id=glossid)
     value_dict = get_gloss_non_empty_value_dict(request)
     for field, value in value_dict.items():
-        if field in ['semField']:
+        if field in ['semField', 'semField[]']:
             gloss.semField.clear()
+            if value == ['None']:
+                continue
             for semField_machine_value in value:
                 semField = SemanticField.objects.get(machine_value=semField_machine_value)
                 gloss.semField.add(semField)
             continue
-        if field in ['derivHist']:
+        if field in ['derivHist', 'derivHist[]']:
             gloss.derivHist.clear()
+            if value == ['None']:
+                continue
             for derivHist_machine_value in value:
                 derivHist = DerivationHistory.objects.get(machine_value=derivHist_machine_value)
                 gloss.derivHist.add(derivHist)
             continue
-        if field in ['dialect']:
+        if field in ['dialect', 'dialect[]']:
             gloss.dialect.clear()
+            if value == ['None']:
+                continue
             for dialect_machine_value in value:
                 dialect = Dialect.objects.get(id=dialect_machine_value)
                 gloss.dialect.add(dialect)

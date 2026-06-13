@@ -1483,6 +1483,7 @@ class GlossDetailView(DetailView):
                                          for derivhist in gloss.derivHist.all()]
         context['selected_dialect'] = [{"name": f'{dialect.signlanguage.name}/{dialect.name}', "machine_value": dialect.pk}
                                          for dialect in gloss.dialect.all()]
+
         context['phonology_list_kinds'] = get_phonology_list_kinds()
 
         context['publication_fields'] = []
@@ -5783,7 +5784,7 @@ def gloss_ajax_complete(request, datasetid, prefix):
 def handshape_ajax_complete(request, prefix):
     """Return a list of handshapes matching the search term
     as a JSON structure suitable for typeahead."""
-    qs = Handshape.objects.filter(name__istartswith=prefix)
+    qs = Handshape.objects.filter(name__istartswith=prefix).order_by('name')
 
     result = []
     for g in qs:

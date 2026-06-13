@@ -1895,7 +1895,6 @@ class SearchGlossIds(forms.Form):
 class GlossForm(forms.Form):
     gloss = None
     release_information = forms.CharField(label=_("Release information"))
-    dialect = forms.CharField(label=_('Dialect'))
     useInstr = forms.CharField(label=_("Annotation instructions"))
     wordClass2 = forms.CharField(label=_('Word class 2'))
 
@@ -1908,6 +1907,7 @@ class GlossForm(forms.Form):
         self.use_lookaheads = kwargs.pop('use_lookaheads')
         super(GlossForm, self).__init__(*args, **kwargs)
         self.fields['release_information'].initial = self.gloss.release_information
+        self.fields['dialect'] = forms.CharField(label=_('Dialect'))
         self.fields['dialect'].initial = self.gloss.get_dialect_display()
         self.fields['useInstr'].initial = self.gloss.useInstr
         if self.use_lookaheads == 'lookaheads':
@@ -1997,7 +1997,6 @@ class PhonologyForm(forms.Form):
 
 class SemanticsForm(forms.Form):
     gloss = None
-    semField = forms.CharField(label=_('Semantics Field'))
     derivHist = forms.CharField(label=_('Derivation History'))
     namEnt = forms.CharField(label=_('Named Entity'))
     valence = forms.CharField(label=_('Valence'))
@@ -2006,18 +2005,20 @@ class SemanticsForm(forms.Form):
 
     class Meta:
         model = Gloss
-        fields = ['semField', 'derivHist', 'concConcSet']
+        fields = ['derivHist', 'concConcSet']
 
     def __init__(self, *args, **kwargs):
         self.gloss = kwargs.pop('gloss')
         super(SemanticsForm, self).__init__(*args, **kwargs)
 
-        self.fields['semField'].initial = self.gloss.get_semField_display()
+        self.fields['semField'] = forms.CharField(label=_('Semantics Field'))
+        self.fields['semField'].initial = self.gloss.get_semField_display() if self.gloss.semField else '-'
         self.fields['derivHist'].initial = self.gloss.get_derivHist_display()
         self.fields['namEnt'].initial = self.gloss.namEnt.name if self.gloss.namEnt else '-'
         self.fields['valence'].initial = self.gloss.valence.name if self.gloss.valence else '-'
-        self.fields['iconImg'].initial = self.gloss.iconImg if self.gloss.iconImg else '-'
-        self.fields['concConcSet'].initial = self.gloss.concConcSet if self.gloss.concConcSet else '-'
+        self.fields['iconImg'].initial = self.gloss.iconImg if self.gloss.iconImg else ''
+        self.fields['concConcSet'].initial = self.gloss.concConcSet if self.gloss.concConcSet else ''
+
 
 class PublicationForm(forms.Form):
     gloss = None

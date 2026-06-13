@@ -3,407 +3,68 @@ var busy_editing = false;
 
 // bloodhounds for field choices
 
-var handedness_bloodhound = new Bloodhound({
-      datumTokenizer: function(d) { return d.tokens; },
-      queryTokenizer: Bloodhound.tokenizers.whitespace,
-      remote: url+'/dictionary/ajax/fieldchoice/Handedness'+'/%QUERY'
+// Define all typeahead configurations in one place
+const typeaheadConfigs = [
+    { name: 'handedness', endpoint: 'fieldchoice/Handedness' },
+    { name: 'domhndsh', endpoint: 'handshape' },
+    { name: 'subhndsh', endpoint: 'handshape' },
+    { name: 'handCh', endpoint: 'fieldchoice/HandshapeChange' },
+    { name: 'relatArtic', endpoint: 'fieldchoice/RelatArtic' },
+    { name: 'locprim', endpoint: 'fieldchoice/Location' },
+    { name: 'contType', endpoint: 'fieldchoice/ContactType' },
+    { name: 'movSh', endpoint: 'fieldchoice/MovementShape' },
+    { name: 'movDir', endpoint: 'fieldchoice/MovementDir' },
+    { name: 'relOriMov', endpoint: 'fieldchoice/RelOriMov' },
+    { name: 'relOriLoc', endpoint: 'fieldchoice/RelOriLoc' },
+    { name: 'oriCh', endpoint: 'fieldchoice/OriChange' },
+    { name: 'namEnt', endpoint: 'fieldchoice/NamedEntity' },
+    { name: 'valence', endpoint: 'fieldchoice/Valence' },
+    { name: 'wordClass', endpoint: 'fieldchoice/WordClass' },
+    { name: 'semField', endpoint: 'semField' },
+    { name: 'derivHist', endpoint: 'derivHist' },
+    { name: 'dialect', endpoint: 'dialect' }
+];
+
+// Factory function to create bloodhounds
+function createTypeahead(config) {
+    const bloodhound = new Bloodhound({
+        datumTokenizer: function(d) { return d.tokens; },
+        queryTokenizer: Bloodhound.tokenizers.whitespace,
+        remote: `${url}/dictionary/ajax/${config.endpoint}/%QUERY`
     });
 
-handedness_bloodhound.initialize();
+    bloodhound.initialize();
 
-function handednesstypeahead(target) {
-
-     $(target).typeahead({
-         minLength: 0
-     }, {
-          name: 'handedness',
-          displayKey: 'name',
-          source: handedness_bloodhound.ttAdapter(),
-          templates: {
-              suggestion: function(fc) {
-                  return("<p><strong>" + fc.name +  "</strong></p>");
-              }
-          }
-      });
+    return function(target) {
+        $(target).typeahead({
+            minLength: 0,
+            hint: false
+            }, {
+            name: config.name,
+            limit: 50,
+            displayKey: 'name',
+            source: bloodhound.ttAdapter(),
+            autoSelect: false,
+            templates: {
+                suggestion: function(fc) {
+                    return `<p><strong>${fc.name}</strong></p>`;
+                }
+            }
+        });
+    };
 }
 
-var domhndsh_bloodhound = new Bloodhound({
-      datumTokenizer: function(d) { return d.tokens; },
-      queryTokenizer: Bloodhound.tokenizers.whitespace,
-      remote: url+'/dictionary/ajax/handshape'+'/%QUERY'
-    });
+// Initialize all typeaheads
+typeaheadConfigs.forEach(config => {
+    window[config.name + 'typeahead'] = createTypeahead(config);
+});
 
-domhndsh_bloodhound.initialize();
 
-function domhndshtypeahead(target) {
-
-     $(target).typeahead({
-         minLength: 0
-     }, {
-          name: 'domhndsh',
-          displayKey: 'name',
-          limit: 20,
-          source: domhndsh_bloodhound.ttAdapter(),
-          autoSelect: false,
-          templates: {
-              suggestion: function(fc) {
-                  return("<p><strong>" + fc.name +  "</strong></p>");
-              }
-          }
-      });
-}
-
-var subhndsh_bloodhound = new Bloodhound({
-      datumTokenizer: function(d) { return d.tokens; },
-      queryTokenizer: Bloodhound.tokenizers.whitespace,
-      remote: url+'/dictionary/ajax/handshape'+'/%QUERY'
-    });
-
-subhndsh_bloodhound.initialize();
-
-function subhndshtypeahead(target) {
-
-     $(target).typeahead({
-         minLength: 0
-     }, {
-          name: 'subhndsh',
-          displayKey: 'name',
-          limit: 20,
-          source: subhndsh_bloodhound.ttAdapter(),
-          autoSelect: false,
-          templates: {
-              suggestion: function(fc) {
-                  return("<p><strong>" + fc.name +  "</strong></p>");
-              }
-          }
-      });
-}
-
-var handCh_bloodhound = new Bloodhound({
-      datumTokenizer: function(d) { return d.tokens; },
-      queryTokenizer: Bloodhound.tokenizers.whitespace,
-      remote: url+'/dictionary/ajax/fieldchoice/HandshapeChange'+'/%QUERY'
-    });
-
-handCh_bloodhound.initialize();
-
-function handChtypeahead(target) {
-
-     $(target).typeahead({
-         minLength: 0
-     }, {
-          name: 'handCh',
-          displayKey: 'name',
-          source: handCh_bloodhound.ttAdapter(),
-          autoSelect: false,
-          templates: {
-              suggestion: function(fc) {
-                  return("<p><strong>" + fc.name +  "</strong></p>");
-              }
-          }
-      });
-}
-
-var relatArtic_bloodhound = new Bloodhound({
-      datumTokenizer: function(d) { return d.tokens; },
-      queryTokenizer: Bloodhound.tokenizers.whitespace,
-      remote: url+'/dictionary/ajax/fieldchoice/RelatArtic'+'/%QUERY'
-    });
-
-relatArtic_bloodhound.initialize();
-
-function relatArtictypeahead(target) {
-
-     $(target).typeahead({
-         minLength: 0
-     }, {
-          name: 'relatArtic',
-          displayKey: 'name',
-          source: relatArtic_bloodhound.ttAdapter(),
-          autoSelect: false,
-          templates: {
-              suggestion: function(fc) {
-                  return("<p><strong>" + fc.name +  "</strong></p>");
-              }
-          }
-      });
-}
-
-var locprim_bloodhound = new Bloodhound({
-      datumTokenizer: function(d) { return d.tokens; },
-      queryTokenizer: Bloodhound.tokenizers.whitespace,
-      remote: url+'/dictionary/ajax/fieldchoice/Location'+'/%QUERY'
-    });
-
-locprim_bloodhound.initialize();
-
-function locprimtypeahead(target) {
-
-     $(target).typeahead({
-         minLength: 0,
-         hint: false
-     }, {
-          name: 'locprim',
-          displayKey: 'name',
-          limit: 50,
-          source: locprim_bloodhound.ttAdapter(),
-          autoSelect: false,
-          templates: {
-              suggestion: function(fc) {
-                  return("<p><strong>" + fc.name +  "</strong></p>");
-              }
-          }
-      });
-}
-
-var contType_bloodhound = new Bloodhound({
-      datumTokenizer: function(d) { return d.tokens; },
-      queryTokenizer: Bloodhound.tokenizers.whitespace,
-      remote: url+'/dictionary/ajax/fieldchoice/ContactType'+'/%QUERY'
-    });
-
-contType_bloodhound.initialize();
-
-function contTypetypeahead(target) {
-
-     $(target).typeahead({
-         minLength: 0
-     }, {
-          name: 'contType',
-          displayKey: 'name',
-          source: contType_bloodhound.ttAdapter(),
-          autoSelect: false,
-          templates: {
-              suggestion: function(fc) {
-                  return("<p><strong>" + fc.name +  "</strong></p>");
-              }
-          }
-      });
-}
-
-var movSh_bloodhound = new Bloodhound({
-      datumTokenizer: function(d) { return d.tokens; },
-      queryTokenizer: Bloodhound.tokenizers.whitespace,
-      remote: url+'/dictionary/ajax/fieldchoice/MovementShape'+'/%QUERY'
-    });
-
-movSh_bloodhound.initialize();
-
-function movShtypeahead(target) {
-
-     $(target).typeahead({
-         minLength: 0
-     }, {
-          name: 'movSh',
-          displayKey: 'name',
-          source: movSh_bloodhound.ttAdapter(),
-          autoSelect: false,
-          templates: {
-              suggestion: function(fc) {
-                  return("<p><strong>" + fc.name +  "</strong></p>");
-              }
-          }
-      });
-}
-
-var movDir_bloodhound = new Bloodhound({
-      datumTokenizer: function(d) { return d.tokens; },
-      queryTokenizer: Bloodhound.tokenizers.whitespace,
-      remote: url+'/dictionary/ajax/fieldchoice/MovementDir'+'/%QUERY'
-    });
-
-movDir_bloodhound.initialize();
-
-function movDirtypeahead(target) {
-
-     $(target).typeahead({
-         minLength: 0
-     }, {
-          name: 'movDir',
-          displayKey: 'name',
-          source: movDir_bloodhound.ttAdapter(),
-          autoSelect: false,
-          templates: {
-              suggestion: function(fc) {
-                  return("<p><strong>" + fc.name +  "</strong></p>");
-              }
-          }
-      });
-}
-
-var relOriMov_bloodhound = new Bloodhound({
-      datumTokenizer: function(d) { return d.tokens; },
-      queryTokenizer: Bloodhound.tokenizers.whitespace,
-      remote: url+'/dictionary/ajax/fieldchoice/RelOriMov'+'/%QUERY'
-    });
-
-relOriMov_bloodhound.initialize();
-
-function relOriMovtypeahead(target) {
-
-     $(target).typeahead({
-         minLength: 0
-     }, {
-          name: 'relOriMov',
-          displayKey: 'name',
-          source: relOriMov_bloodhound.ttAdapter(),
-          autoSelect: false,
-          templates: {
-              suggestion: function(fc) {
-                  return("<p><strong>" + fc.name +  "</strong></p>");
-              }
-          }
-      });
-}
-
-var relOriLoc_bloodhound = new Bloodhound({
-      datumTokenizer: function(d) { return d.tokens; },
-      queryTokenizer: Bloodhound.tokenizers.whitespace,
-      remote: url+'/dictionary/ajax/fieldchoice/RelOriLoc'+'/%QUERY'
-    });
-
-relOriLoc_bloodhound.initialize();
-
-function relOriLoctypeahead(target) {
-
-     $(target).typeahead({
-         minLength: 0
-     }, {
-          name: 'relOriLoc',
-          displayKey: 'name',
-          source: relOriLoc_bloodhound.ttAdapter(),
-          autoSelect: false,
-          templates: {
-              suggestion: function(fc) {
-                  return("<p><strong>" + fc.name +  "</strong></p>");
-              }
-          }
-      });
-}
-var oriCh_bloodhound = new Bloodhound({
-      datumTokenizer: function(d) { return d.tokens; },
-      queryTokenizer: Bloodhound.tokenizers.whitespace,
-      remote: url+'/dictionary/ajax/fieldchoice/OriChange'+'/%QUERY'
-    });
-
-oriCh_bloodhound.initialize();
-
-function oriChtypeahead(target) {
-
-     $(target).typeahead({
-         minLength: 0
-     }, {
-          name: 'oriCh',
-          displayKey: 'name',
-          source: oriCh_bloodhound.ttAdapter(),
-          autoSelect: false,
-          templates: {
-              suggestion: function(fc) {
-                  return("<p><strong>" + fc.name +  "</strong></p>");
-              }
-          }
-      });
-}
-var namEnt_bloodhound = new Bloodhound({
-      datumTokenizer: function(d) { return d.tokens; },
-      queryTokenizer: Bloodhound.tokenizers.whitespace,
-      remote: url+'/dictionary/ajax/fieldchoice/NamedEntity'+'/%QUERY'
-    });
-
-namEnt_bloodhound.initialize();
-
-function namEnttypeahead(target) {
-
-     $(target).typeahead({
-         minLength: 0
-     }, {
-          name: 'namEnt',
-          displayKey: 'name',
-          source: namEnt_bloodhound.ttAdapter(),
-          autoSelect: false,
-          templates: {
-              suggestion: function(fc) {
-                  return("<p><strong>" + fc.name +  "</strong></p>");
-              }
-          }
-      });
-}
-var valence_bloodhound = new Bloodhound({
-      datumTokenizer: function(d) { return d.tokens; },
-      queryTokenizer: Bloodhound.tokenizers.whitespace,
-      remote: url+'/dictionary/ajax/fieldchoice/Valence'+'/%QUERY'
-    });
-
-valence_bloodhound.initialize();
-
-function valencetypeahead(target) {
-
-     $(target).typeahead({
-         minLength: 0
-     }, {
-          name: 'valence',
-          displayKey: 'name',
-          source: valence_bloodhound.ttAdapter(),
-          autoSelect: false,
-          templates: {
-              suggestion: function(fc) {
-                  return("<p><strong>" + fc.name +  "</strong></p>");
-              }
-          }
-      });
-}
-
-var wordClass_bloodhound = new Bloodhound({
-      datumTokenizer: function(d) { return d.tokens; },
-      queryTokenizer: Bloodhound.tokenizers.whitespace,
-      remote: url+'/dictionary/ajax/fieldchoice/WordClass'+'/%QUERY'
-    });
-
-wordClass_bloodhound.initialize();
-
-function wordClasstypeahead(target) {
-
-     $(target).typeahead({
-         minLength: 0
-     }, {
-          name: 'wordClass',
-          displayKey: 'name',
-          source: wordClass_bloodhound.ttAdapter(),
-          autoSelect: false,
-          templates: {
-              suggestion: function(fc) {
-                  return("<p><strong>" + fc.name +  "</strong></p>");
-              }
-          }
-      });
-}
 // last of the field choice bloodhounds
 
+// multiselect fields
+
 var selected_semField = selected_semField;
-
-var semField_bloodhound = new Bloodhound({
-      datumTokenizer: function(d) { return d.tokens; },
-      queryTokenizer: Bloodhound.tokenizers.whitespace,
-      remote: url+'/dictionary/ajax/semField'+'/%QUERY'
-    });
-
-semField_bloodhound.initialize();
-
-function semFieldtypeahead(target) {
-
-     $(target).typeahead({
-         minLength: 0
-     }, {
-          name: 'semField',
-          displayKey: 'name',
-          source: semField_bloodhound.ttAdapter(),
-          templates: {
-              suggestion: function(fc) {
-                  return("<p><strong>" + fc.name +  "</strong></p>");
-              }
-          }
-      });
-}
 
 function renderSelectedSemField() {
     var container = $('#semField_value');
@@ -429,30 +90,6 @@ function renderSelectedSemField() {
 
 var selected_derivHist = selected_derivHist;
 
-var derivHist_bloodhound = new Bloodhound({
-      datumTokenizer: function(d) { return d.tokens; },
-      queryTokenizer: Bloodhound.tokenizers.whitespace,
-      remote: url+'/dictionary/ajax/derivHist'+'/%QUERY'
-    });
-
-derivHist_bloodhound.initialize();
-
-function derivHisttypeahead(target) {
-
-     $(target).typeahead({
-         minLength: 0
-     }, {
-          name: 'derivHist',
-          displayKey: 'name',
-          source: derivHist_bloodhound.ttAdapter(),
-          templates: {
-              suggestion: function(fc) {
-                  return("<p><strong>" + fc.name +  "</strong></p>");
-              }
-          }
-      });
-}
-
 function renderSelectedDerivHist() {
     var container = $('#derivHist_value');
     container.empty();
@@ -476,30 +113,6 @@ function renderSelectedDerivHist() {
 
 var selected_dialect = selected_dialect;
 
-var dialect_bloodhound = new Bloodhound({
-      datumTokenizer: function(d) { return d.tokens; },
-      queryTokenizer: Bloodhound.tokenizers.whitespace,
-      remote: url+'/dictionary/ajax/dialect/'+gloss_dataset_id+'/%QUERY'
-    });
-
-dialect_bloodhound.initialize();
-
-function dialecttypeahead(target) {
-
-     $(target).typeahead({
-         minLength: 0
-     }, {
-          name: 'dialect',
-          displayKey: 'name',
-          source: dialect_bloodhound.ttAdapter(),
-          templates: {
-              suggestion: function(fc) {
-                  return("<p><strong>" + fc.name +  "</strong></p>");
-              }
-          }
-      });
-}
-
 function renderSelectedDialect() {
     var container = $('#dialect_value');
     container.empty();
@@ -521,6 +134,8 @@ function renderSelectedDialect() {
     placeholder_lookahead.attr("placeholder", new_placeholder);
     placeholder_lookahead.css("color", "red");
 }
+
+// language fields typeaheads
 
 var lemma_bloodhound = new Bloodhound({
       datumTokenizer: function(d) { return d.tokens; },
@@ -1438,8 +1053,8 @@ $(document).ready(function() {
           }
           $(this).typeahead('val', '');
     });
-    $('#semField_multiselect').on("click", function() {
-      $(this).attr('value', "");
+    $('#semField_multiselect').on("focus", function() {
+      $(this).attr('value', '');
     });
     $('#semField_value').on("editSemField", function() {
         renderSelectedSemField();
@@ -1453,8 +1068,8 @@ $(document).ready(function() {
           }
           $(this).typeahead('val', '');
     });
-    $('#derivHist_multiselect').on("click", function() {
-      $(this).attr('value', "");
+    $('#derivHist_multiselect').on("focus", function() {
+      $(this).attr('value', '-');
     });
     $('#derivHist_value').on("editDerivHistField", function() {
         renderSelectedDerivHist();
@@ -1468,7 +1083,7 @@ $(document).ready(function() {
           }
           $(this).typeahead('val', '');
     });
-    $('#dialect_multiselect').on("click", function() {
+    $('#dialect_multiselect').on("focus", function() {
       $(this).attr('value', "");
     });
     $('#dialect_value').on("editDialectField", function() {
@@ -1573,13 +1188,18 @@ $(document).ready(function() {
          for (var i=0; i < gloss_fields.length; i++) {
             var field = gloss_fields[i];
             if (['semField', 'derivHist', 'dialect'].includes(field)) {
+                var field_key = field;
                 var field_values = [];
                 var field_lookup = '#'+field+'_hidden_input_values';
                 $(field_lookup).find('input[name="'+field+'"]').each(function() {
                     var this_value = $(this).val();
                     field_values.push(this_value);
                 });
-                update[field] = field_values;
+                if (!field_values.length) {
+                    update[field_key] = 'None'
+                } else {
+                    update[field_key] = field_values;
+                }
             } else if (['weakdrop', 'weakprop'].includes(field)) {
                 var field_lookup = '#'+field+'_select_value';
                 var field_key = $(field_lookup).attr("name");
@@ -1877,6 +1497,20 @@ $(document).ready(function() {
     disable_edit_annotated_sentences();
     disable_edit_othermedia();
     ajaxifyTagForm();
+    // setup requried for Ajax POST
+    function csrfSafeMethod(method) {
+        // these HTTP methods do not require CSRF protection
+        return (/^(GET|HEAD|OPTIONS|TRACE)$/.test(method));
+    }
+
+    $.ajaxSetup({
+        crossDomain: false, // obviates need for sameOrigin test
+        beforeSend: function(xhr, settings) {
+            if (!csrfSafeMethod(settings.type)) {
+                xhr.setRequestHeader("X-CSRFToken", csrf_token);
+            }
+        }
+    });
     $('#use_lookaheads').attr('value', use_lookaheads);
     $('#data_type_'+use_lookaheads).addClass('active');
 });

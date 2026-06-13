@@ -5,20 +5,9 @@ from signbank.dictionary.models import (FieldChoice, Gloss, Handshape,
                                         Dialect, SemanticField, DerivationHistory)
 
 
-def handedness_ajax_complete(request, prefix):
-    """Return a list of handedness choices matching the search term"""
-    qs = FieldChoice.objects.filter(field='Handedness', name__istartswith=prefix)
-
-    result = []
-    for f in qs:
-        result.append({'name': f.name, 'machine_value': f.machine_value})
-
-    return JsonResponse(result, safe=False)
-
-
 def semField_ajax_complete(request, prefix):
     """Return a list of semantic field choices matching the search term"""
-    qs = SemanticField.objects.filter(name__istartswith=prefix)
+    qs = SemanticField.objects.filter(name__istartswith=prefix).order_by('name')
 
     result = []
     for f in qs:
@@ -29,7 +18,7 @@ def semField_ajax_complete(request, prefix):
 
 def fieldchoice_ajax_complete(request, field, prefix):
     """Return a list of field choices matching the search term"""
-    qs = FieldChoice.objects.filter(field__iexact=field, name__istartswith=prefix).order_by('machine_value')
+    qs = FieldChoice.objects.filter(field__iexact=field, name__istartswith=prefix).order_by('name')
 
     result = []
     for f in qs:
@@ -40,7 +29,7 @@ def fieldchoice_ajax_complete(request, field, prefix):
 
 def derivHist_ajax_complete(request, prefix):
     """Return a list of derivation history choices matching the search term"""
-    qs = DerivationHistory.objects.filter(name__istartswith=prefix)
+    qs = DerivationHistory.objects.filter(name__istartswith=prefix).order_by('name')
 
     result = []
     for f in qs:
@@ -50,7 +39,7 @@ def derivHist_ajax_complete(request, prefix):
 
 def dialect_ajax_complete(request, datasetid, prefix):
     """Return a list of derivation history choices matching the search term"""
-    qs = Dialect.objects.filter(signlanguage__dataset__id=datasetid)
+    qs = Dialect.objects.filter(signlanguage__dataset__id=datasetid).order_by('name')
     qs = qs.filter(name__istartswith=prefix)
 
     result = []
