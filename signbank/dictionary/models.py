@@ -265,6 +265,9 @@ class Definition(MetaModelMixin, models.Model):
     def note_tuple(self):
         return self.get_role_display(), str(self.published), str(self.count), self.note_text()
 
+    def display_published(self):
+        return _('Yes') if self.published else _('No')
+
 
 class SignLanguage(models.Model):
     """A sign language name"""
@@ -335,6 +338,25 @@ class RelationToForeignSign(models.Model):
         list_display = ['gloss', 'loan', 'other_lang', 'other_lang_gloss']
         list_filter = ['other_lang']
         search_fields = ['gloss__idgloss']
+
+    def display_loan(self):
+        return _('Yes') if self.loan else _('No')
+
+    def other_lang_text(self):
+        stripped_text = str(self.other_lang).strip()
+        if '\n' in stripped_text:
+            # this function is used for displaying notes in the CSV update
+            # this makes mysterious differences in old and new values visible
+            stripped_text = stripped_text.replace('\n', '<br>')
+        return stripped_text
+
+    def other_lang_gloss_text(self):
+        stripped_text = str(self.other_lang_gloss).strip()
+        if '\n' in stripped_text:
+            # this function is used for displaying notes in the CSV update
+            # this makes mysterious differences in old and new values visible
+            stripped_text = stripped_text.replace('\n', '<br>')
+        return stripped_text
 
 
 class Handshape(MetaModelMixin, models.Model):
@@ -928,14 +950,76 @@ class Gloss(MetaModelMixin, models.Model):
     def display_handedness(self):
         return self.handedness.name if self.handedness else self.handedness
 
+    def display_weakdrop(self):
+        if self.weakdrop is None:
+            return ''
+        return "+WD" if self.weakdrop else "-WD"
+
+    def weakdrop_to_choice(self):
+        # for use in form choices initial selected
+        if self.weakdrop is None:
+            return '0'
+        return '1' if self.weakdrop else '2'
+
+    def display_weakprop(self):
+        if self.weakprop is None:
+            return ''
+        return "+WP" if self.weakprop else "-WP"
+
+    def weakprop_to_choice(self):
+        # for use in form choices initial selected
+        if self.weakprop is None:
+            return '0'
+        return '1' if self.weakprop else '2'
+
     def display_domhndsh(self):
-        return self.domhndsh.name if self.domhndsh else self.domhndsh
+        return self.domhndsh.name if self.domhndsh else ''
+
+    def display_domhndsh_letter_or_number(self):
+        if self.domhndsh_letter is None and self.domhndsh_number is None:
+            return ''
+        if self.domhndsh_letter:
+            return _('letter')
+        if self.domhndsh_number:
+            return _('number')
+        # else both are False
+        return ''
+
+    def display_domhndsh_letter(self):
+        if self.domhndsh_letter is None:
+            return ''
+        return _('letter') if self.domhndsh_letter else ''
+
+    def display_domhndsh_number(self):
+        if self.domhndsh_number is None:
+            return ''
+        return _('number') if self.domhndsh_number else ''
 
     def display_subhndsh(self):
-        return self.subhndsh.name if self.subhndsh else self.subhndsh
+        return self.subhndsh.name if self.subhndsh else ''
+
+    def display_subhndsh_letter_or_number(self):
+        if self.subhndsh_letter is None and self.subhndsh_number is None:
+            return ''
+        if self.subhndsh_letter:
+            return _('letter')
+        if self.subhndsh_number:
+            return _('number')
+        # else both are False
+        return ''
+
+    def display_subhndsh_letter(self):
+        if self.subhndsh_letter is None:
+            return ''
+        return _('letter') if self.subhndsh_letter else ''
+
+    def display_subhndsh_number(self):
+        if self.subhndsh_number is None:
+            return ''
+        return _('number') if self.subhndsh_number else ''
 
     def display_locprim(self):
-        return self.locprim.name if self.locprim else self.locprim
+        return self.locprim.name if self.locprim else ''
 
     def field_labels(self):
         """Return the dictionary of field labels for use in a template"""
@@ -1079,6 +1163,39 @@ class Gloss(MetaModelMixin, models.Model):
     excludeFromEcv = models.BooleanField(_("Exclude from ECV"), default=False)
     release_information = models.CharField(_("Release information"), max_length=128, blank=True, default='')
 
+    def display_inWeb(self):
+        if self.inWeb is None:
+            return _('No')
+        return _('Yes') if self.inWeb else _('No')
+
+    def inWeb_to_choice(self):
+        # for use in form choices initial selected
+        if self.inWeb is None:
+            return '0'
+        return '1' if self.inWeb else '0'
+
+    def display_isNew(self):
+        if self.isNew is None:
+            return _('No')
+        return _('Yes') if self.isNew else _('No')
+
+    def isNew_to_choice(self):
+        # for use in form choices initial selected
+        if self.isNew is None:
+            return '0'
+        return '1' if self.isNew else '0'
+
+    def display_excludeFromEcv(self):
+        if self.excludeFromEcv is None:
+            return _('No')
+        return _('Yes') if self.excludeFromEcv else _('No')
+
+    def excludeFromEcv_to_choice(self):
+        # for use in form choices initial selected
+        if self.excludeFromEcv is None:
+            return '0'
+        return '1' if self.excludeFromEcv else '0'
+
     inittext = models.CharField(max_length=50, blank=True)
 
     morph = models.CharField(_("Morphemic Analysis"), max_length=50, blank=True)
@@ -1165,6 +1282,16 @@ class Gloss(MetaModelMixin, models.Model):
 
     repeat = models.BooleanField(_("Repeated Movement"), null=True, default=False)
     altern = models.BooleanField(_("Alternating Movement"), null=True, default=False)
+
+    def display_repeat(self):
+        if self.repeat is None:
+            return ''
+        return _('Yes') if self.repeat else ''
+
+    def display_altern(self):
+        if self.altern is None:
+            return ''
+        return _('Yes') if self.altern else ''
 
     movSh = FieldChoiceForeignKey(FieldChoice, on_delete=models.SET_NULL, null=True,
                                           limit_choices_to={'field': FieldChoice.MOVEMENTSHAPE},
@@ -2950,6 +3077,17 @@ class Morpheme(Gloss):
 
         return self.idgloss
 
+    def to_string(self):
+        morpheme_type = f' ({self.mrpType.name})' if self.mrpType else ''
+        translations = []
+        count_dataset_languages = self.lemma.dataset.translation_languages.all().count() if self.lemma and self.lemma.dataset else 0
+        for translation in self.annotationidglosstranslation_set.all():
+            if settings.SHOW_DATASET_INTERFACE_OPTIONS and count_dataset_languages > 1:
+                translations.append("{}: {}".format(translation.language, translation.text))
+            else:
+                translations.append("{}".format(translation.text))
+        return ", ".join(translations) + f'{morpheme_type}'
+
     def get_mrpType_display(self):
         # to avoid extra code in the template, return '-' if the type has not been set
         return self.mrpType.name if self.mrpType else '-'
@@ -3139,6 +3277,17 @@ class OtherMedia(MetaModelMixin, models.Model):
     alternative_gloss = models.CharField(max_length=50)
     path = models.CharField(max_length=100)
     description = models.TextField(null=True, blank=True, verbose_name=_("Description/Explanation"))
+
+    def get_type_display(self):
+        return self.type.name if self.type else '-'
+
+    def description_text(self):
+        stripped_text = str(self.description).strip() if self.description else ''
+        if '\n' in stripped_text:
+            # this function is used for displaying notes in the CSV update
+            # this makes mysterious differences in old and new values visible
+            stripped_text = stripped_text.replace('\n', '<br>')
+        return stripped_text
 
     def get_othermedia_path(self, gloss_id, check_existence=False):
         # read only method
@@ -4088,6 +4237,19 @@ CATEGORY_MODELS_MAPPING = {
     'derivHist': DerivationHistory,
     'Handshape': Handshape
 }
+
+
+# setting for the Gloss Edit template
+GLOSS_FIELDS_UPDATES = ['release_information', 'dialect', 'useInstr', 'wordClass',
+                        'handedness', 'domhndsh', 'subhndsh', 'handCh',
+                        'relatArtic', 'locprim', 'contType', 'movSh', 'movDir',
+                        'repeat', 'altern',
+                        'relOriMov', 'relOriLoc', 'oriCh',
+                        'locVirtObj', 'phonOth', 'mouthG', 'mouthing', 'phonetVar',
+                        'weakdrop', 'weakprop',
+                        'domhndsh_letter_or_number', 'subhndsh_letter_or_number',
+                        'semField', 'derivHist', 'namEnt', 'valence', 'iconImg', 'concConcSet',
+                        'inWeb', 'isNew', 'excludeFromEcv']
 
 
 class AnnotatedGloss(MetaModelMixin, models.Model):

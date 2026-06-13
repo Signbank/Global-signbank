@@ -4,6 +4,9 @@
 {% load annotation_idgloss_translation %}
 {% load field_choice %}
 {% load bootstrap3 %}
+{% load tagging_tags %}
+{% load affiliation_tags %}
+{% load underscore_to_space %}
 
 {% block bootstrap3_title %}
 {% blocktrans %}Sign for {{gloss}}{% endblocktrans %}
@@ -17,22 +20,20 @@
     var dark_mode = '{{request.session.dark_mode}}';
     var dark_mode_django = '{{dark_mode}}';
     var url = '{{PREFIX_URL}}';
-    var phonology_list_kinds = {{phonology_list_kinds|safe}};
-    var gloss_phonology = {{gloss_phonology|safe}};
+    var gloss_fields = {{gloss_update_fields|safe}};
     var language_code = '{{LANGUAGE_CODE}}';
 
     {% trans "Edit" as edit_mode_str %}
     {% trans "Turn Off Edit Mode" as turn_off_edit_mode_str %}
     {% trans "Delete This Gloss" as delete_this_gloss_str %}
-    {% trans "Saving..." as saving_str %} 
-    {% trans "This idgloss already exists" as idgloss_already_exists_str %} 
+    {% trans "Saving..." as saving_str %}
+    {% trans "This idgloss already exists" as idgloss_already_exists_str %}
 
     var edit_mode_str = '{{edit_mode_str|escapejs}}';
     var turn_off_edit_mode_str = '{{turn_off_edit_mode_str|escapejs}}';
     var delete_this_gloss_str = '{{delete_this_gloss_str|escapejs}}';
     var saving_str = '{{saving_str|escapejs}}';
     var idgloss_already_exists_str = '{{idgloss_already_exists_str|escapejs}}';
-
 
     var yes_str = "{% trans 'Yes' %}";
     var no_str = "{% trans 'No' %}";
@@ -41,28 +42,6 @@
     var original_lemma_group_url = '{{lemma_group_url}}';
     var lemma_group = '{{lemma_group}}';
 
-    var edit_post_url = '{% url 'dictionary:update_gloss' gloss.id %}';
-    var definition_role_choices = {{gloss.definition_role_choices_json|safe}};
-    var definition_role_choices_colors = {};
-    for (var key in definition_role_choices) {
-        definition_role_choices_colors[key] = 'ffffff';
-    };
-    var definition_role_choices_reverse_json = {{gloss.definition_role_choices_reverse_json|safe}};
-    var relation_role_choices = {{gloss.relation_role_choices_json|safe}};
-    var relation_delete_choices = { "delete" : "Delete" };
-    var relation_delete_choices_colors = { "delete" : "ffffff" };
-    var handedness_weak_choices = {{gloss.handedness_weak_choices|safe}};
-    var handedness_weak_choices_colors = {};
-    for (var key in handedness_weak_choices) {
-        if (dark_mode_django == 'True') {
-            handedness_weak_choices_colors[key] = '000000';
-        } else {
-            handedness_weak_choices_colors[key] = 'ffffff';
-        }
-    };
-    var dialects = {{gloss.dialect_choices|safe}};
-    var semanticfield_choices = {{gloss.semanticfield_choices|safe}};
-    var derivationhistory_choices = {{gloss.derivationhistory_choices|safe}};
     {% if SHOW_DATASET_INTERFACE_OPTIONS %}
     var dataset_choices = {{dataset_choices|safe}};
     {% else %}
@@ -70,7 +49,6 @@
     {% endif %}
     var gloss_dataset_id = {{ gloss.lemma.dataset.id}};
     var gloss_default_language_code = '{{gloss.lemma.dataset.default_language.language_code_2char}}';
-    var wordclass_choices = {{gloss.wordclass_choices|safe}};
 
     var choice_lists = [];
     var static_choice_lists = {{static_choice_lists|safe}};
@@ -98,22 +76,27 @@
     var active_id = '{{active_id}}';
     var model_view = 'gloss';
     var search_results_url = '{% url 'dictionary:ajax_search_results' %}';
+
+    var selected_semField = {{selected_semField|safe}};
+    var selected_derivHist = {{selected_derivHist|safe}};
+    var selected_dialect = {{selected_dialect|safe}};
+    var language_2chars = {{language_2chars|safe}};
+    var use_lookaheads = '{{use_lookaheads|safe}}';
 </script>
 
-<script type="text/javascript" src="{{STATIC_URL}}js/jquery.jeditable.mini_colors.js"></script>
-<script type="text/javascript" src="{{STATIC_URL}}js/jquery.jeditable.checkbox.js"></script>
 <script type="text/javascript" src="{{STATIC_URL}}js/typeahead.bundle.min.js"></script>
+<script type='text/javascript' src="{{STATIC_URL}}js/lookaheads.js"></script>
 
 <script type='text/javascript'>
     {% include "dictionary/search_result_bar.html" %}
     function validateForm(formId,targetObjectId,thisGlossID,mustChooseAlert,mustBeDifferentAlert) {
         var target_object = document.forms[formId][targetObjectId].value;
         var this_gloss = document.forms[formId][thisGlossID].value;
-        if (target_object == "") {
+        if (target_object === "") {
             alert(mustChooseAlert);
             return false;
         }
-        if (target_object == this_gloss) {
+        if (target_object === this_gloss) {
             alert(mustBeDifferentAlert);
             return false;
         }
@@ -128,65 +111,7 @@
         video_player.load();
     }
 
-
-    //Fill choice_lists without frequencies now
-    $.ajax("{{PREFIX_URL}}/dictionary/ajax/choice_lists/?dataset={{gloss.lemma.dataset}}").done( function (data)
-    {
-        choice_lists = $.extend(data,{{other_media_field_choices | safe}});
-    });
-
-    //Fill choice_lists with frequencies later
-    $(document).ready(function() {
-        $.ajax("{{PREFIX_URL}}/dictionary/ajax/choice_lists/?include_frequencies=true&dataset={{gloss.lemma.dataset}}").done( function (data)
-        {
-            choice_lists = $.extend(data,{{other_media_field_choices | safe}});
-
-            // Reload the data in the lists
-            $('.edit_list').unbind('click');
-            configure_edit();
-        });
-    });
-
     </script>
-
-<script type='text/javascript'>
-
-//Keyboard shortcuts
-document.onkeydown = checkKey;
-
-function checkKey(e)
-{
-    // No shortcut if your typing
-    var inputs = ['input', 'select', 'button', 'textarea'];
-    if (document.activeElement && inputs.indexOf(document.activeElement.tagName.toLowerCase()) !== -1) {return;}
-
-    e = e || window.event;
-
-    switch(e.key)
-    {
-      case 'p':
-        element_id = 'phonology';
-        break;
-      case 'm':
-        element_id = 'morphology'
-        break;
-      case 's':
-        element_id = 'semantics'
-        break;
-      default:
-        element_id = null
-    }
-
-    if (element_id != null)
-    {
-        toggle_edit();
-        $('#'+element_id).collapse('show');
-        $('#'+element_id)[0].scrollIntoView();
-    }
-
-};
-
-</script>
 <style>
 .video_button:hover {
     color: red;
@@ -200,11 +125,24 @@ function checkKey(e)
 .video_button_nme.active {
     color: red;
 }
+.toggle-container {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 10px;
+}
+.toggle-button {
+    padding: 8px 12px;
+    border: 1px solid #ccc;
+    cursor: pointer;
+    background-color: #f0f0f0;
+}
+.toggle-button.active {
+    background-color: #4CAF50;
+    color: white;
+}
 </style>
-    <script type='text/javascript' src="{{STATIC_URL}}js/gloss_edit_color.js"></script>
-    <script type="text/javascript" src="{{STATIC_URL}}js/drag_drop_files.js"></script>
-    <script type="text/javascript" src="{{STATIC_URL}}js/recordscript.js"></script>
-
+<!--    <script type="text/javascript" src="{{STATIC_URL}}js/drag_drop_files.js"></script>-->
+<!--    <script type="text/javascript" src="{{STATIC_URL}}js/recordscript.js"></script>-->
     <script type='text/javascript'>
         $('.quick_createstills').click(function(e)
         {
@@ -336,13 +274,13 @@ function checkKey(e)
 
         function openFullscreen() {
             // Get the videos with IDs videoplayer_[direction]
-            const videoIds = ['videoplayer_left', 'videoplayer_middle', 'videoplayer_right']; 
+            const videoIds = ['videoplayer_left', 'videoplayer_middle', 'videoplayer_right'];
             let activeVideo = null;
 
             // Loop through the video IDs and check which one is active
             videoIds.forEach(id => {
                 const video = document.getElementById(id);
-                if (video && window.getComputedStyle(video).display !== 'none') { 
+                if (video && window.getComputedStyle(video).display !== 'none') {
                     activeVideo = video;
                 }
             });
@@ -361,7 +299,7 @@ function checkKey(e)
                 } else if (activeVideo.msRequestFullscreen) { // IE/Edge
                     activeVideo.msRequestFullscreen();
                 }
-            } 
+            }
             // on exit fullscreen mode, reset each video
             document.addEventListener('fullscreenchange', resetVideos);
             document.addEventListener('webkitfullscreenchange', resetVideos); // For Safari
@@ -370,16 +308,16 @@ function checkKey(e)
         }
 
         function resetVideos() {
-            if (!document.fullscreenElement && !document.webkitFullscreenElement && 
+            if (!document.fullscreenElement && !document.webkitFullscreenElement &&
                 !document.mozFullScreenElement && !document.msFullscreenElement) {
-                
+
                 // Get the videos with IDs videoplayer_[direction]
                 const videoIds = ['videoplayer_middle', 'videoplayer_left', 'videoplayer_right'];
                 videoIds.forEach(id => {
                     const video = document.getElementById(id);
                     if (video) {
-                        video.controls = false; 
-                        video.currentTime = 0; 
+                        video.controls = false;
+                        video.currentTime = 0;
                     }
                 });
 
@@ -477,30 +415,21 @@ function checkKey(e)
 {% endblock %}
 
 {% block extrahead %}
-    <link rel="stylesheet" type="text/css" href="{{STATIC_URL}}css/tagmanager.css">
-    <link rel="stylesheet" type="text/css" href="{{STATIC_URL}}css/affiliation_tags.css">
-    <link rel="stylesheet" type="text/css" href="{{STATIC_URL}}css/dropstyle.css">
-    <link rel="stylesheet" type="text/css" href="{{STATIC_URL}}css/recordstyle.css">
-    <link rel="stylesheet" type="text/css" href="{{STATIC_URL}}css/modalstyle.css">
+<link rel="stylesheet" type="text/css" href="{{STATIC_URL}}css/tagmanager.css">
+<link rel="stylesheet" type="text/css" href="{{STATIC_URL}}css/affiliation_tags.css">
+<link rel="stylesheet" type="text/css" href="{{STATIC_URL}}css/dropstyle.css">
+<link rel="stylesheet" type="text/css" href="{{STATIC_URL}}css/recordstyle.css">
+<link rel="stylesheet" type="text/css" href="{{STATIC_URL}}css/modalstyle.css">
 
-    <style>
-        #view_tabs.affix {
-            position:fixed;
-        }
-        #searchquery.affix {
-            position:fixed;
-        }
-    </style>
 <style>
-.preview {
-    background-color: inherit !important;
-    color: inherit !important;
-    height: 40;
-    width: auto;
-    position: relative;
-    padding: 0 0 0 0 !important;
+#view_tabs.affix {
+    position:fixed;
 }
-
+#searchquery.affix {
+    position:fixed;
+}
+</style>
+<style>
 select option {
     background-color: white;
     -webkit-appearance: none;
@@ -524,12 +453,6 @@ select option {
     background-color: white !important;
     -webkit-appearance: none;
     -moz-appearance: none;
-}
-
-.button-to-appear-in-edit-mode {
-    font-size: 10px;
-    padding-left: 2px;
-    padding-right: 2px;
 }
 .edit-mode {
     font-size: 10px;
@@ -591,16 +514,6 @@ option:not(:checked) {
 .panel-heading:hover {
     background-color: #D2D2D2;
 }
-input[type="text"] {
-    background-color: rgba(50,50,50,10%);
-    border: none;
-}
-input[type="text"]:focus {
-    border: 1px solid red;
-}
-input[type="button"]:focus {
-    outline: none;
-}
 textarea {
     border: none;
     background-color: rgba(50,50,50,10%);
@@ -619,6 +532,297 @@ textarea:focus {
 .zoom:hover {
   transform: scale(1.5);
   outline: 2px solid red;
+}
+</style>
+<style>
+input[type="text"] {
+    background-color: inherit;
+    border: none;
+    outline: none;
+    width: inherit !important;
+}
+input[type="text"]:focus {
+    border: red;
+    width: inherit !important;
+    color: red;
+}
+.tt-input {
+    background-color: rgba(50,50,50,15%) !important;
+    border: none;
+    width: auto;
+}
+.tt-input:active {
+    border: 1px solid red;
+    z-index: 999;
+}
+input .tt-hint {
+    color: red;
+}
+.tt-dropdown-menu:active {
+    z-index: 999 !important;
+}
+.editform-morphology input {
+    background-color: inherit !important;
+    border: none;
+}
+.editform-morphology input:enabled {
+    color: red !important;
+    opacity: 1;
+}
+.editform-morphology input:disabled {
+    color: inherit !important;
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    border: none;
+    opacity: 1;
+}
+.editform-general input {
+    background-color: inherit !important;
+    border: none;
+}
+.editform-general input:enabled {
+    color: red !important;
+    opacity: 1;
+}
+.editform-general input:disabled {
+    color: inherit !important;
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    border: none;
+    opacity: 1;
+}
+.editform-general input::placeholder {
+    color: inherit !important;
+    opacity: 1;
+}
+.editform-semantics input {
+    background-color: inherit !important;
+    border: 1px solid red;
+}
+.editform-semantics input:enabled {
+    color: red !important;
+    opacity: 1;
+}
+.editform-semantics input:disabled {
+    color: inherit !important;
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    border: none;
+    opacity: 1;
+}
+.editform-semantics input::placeholder {
+    color: inherit !important;
+    opacity: 1;
+}
+.editform-phonology input {
+    background-color: inherit !important;
+    border: none;
+}
+.editform-phonology input:enabled {
+    color: red !important;
+    opacity: 1;
+}
+.editform-phonology input:disabled {
+    color: inherit !important;
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    border: none;
+    opacity: 1;
+}
+.editform-phonology input::placeholder {
+    color: inherit !important;
+    opacity: 1;
+}
+.editform-nme input {
+    background-color: inherit !important;
+    border: none;
+}
+.editform-nme input:enabled {
+    color: red !important;
+    opacity: 1;
+}
+.editform-nme input:disabled {
+    color: inherit !important;
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    border: none;
+    opacity: 1;
+}
+.editform-foreignrelations input, textarea {
+    background-color: inherit !important;
+    border: none;
+}
+.editform-foreignrelations input:enabled,textarea:enabled {
+    color: red !important;
+    opacity: 1;
+}
+.editform-foreignrelations input:disabled, textarea:disabled {
+    resize: none;
+    resize: vertical;
+    overflow: auto;
+    color: inherit !important;
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    border: none;
+    opacity: 1;
+}
+.editform-notes input, textarea {
+    background-color: inherit !important;
+    border: none;
+}
+.editform-notes input:enabled,textarea:enabled {
+    color: red !important;
+    opacity: 1;
+}
+.editform-notes input:disabled, textarea:disabled {
+    resize: none;
+    resize: vertical;
+    overflow: auto;
+    color: inherit !important;
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    border: none;
+    opacity: 1;
+}
+.editform-provenance input, textarea {
+    background-color: inherit !important;
+    border: none;
+}
+.editform-provenance input:enabled,textarea:enabled {
+    color: red !important;
+    opacity: 1;
+}
+.editform-provenance input:disabled, textarea:disabled {
+    resize: none;
+    resize: vertical;
+    color: inherit !important;
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    border: none;
+    opacity: 1;
+}
+.editform-othermedia input, textarea {
+    background-color: inherit !important;
+    border: none;
+}
+.editform-othermedia input:enabled,textarea:enabled {
+    color: red !important;
+    opacity: 1;
+}
+.editform-othermedia input:disabled, textarea:disabled {
+    resize: none;
+    resize: vertical;
+    overflow: auto;
+    color: inherit !important;
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    border: none;
+    opacity: 1;
+}
+.editselect > select {
+    background-color: inherit !important;
+    width: auto;
+}
+.editselect select:disabled {
+    color: inherit !important;
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    border: none;
+    opacity: 1;
+}
+
+.editselect select:enabled {
+    color: red !important;
+}
+.editsemanticsform .form-control:enabled::placeholder {
+    color: red !important;
+    width: auto;
+    opacity: 1;
+}
+.editsemanticsform .form-control:disabled::placeholder {
+    color: inherit !important;
+    width: auto;
+    opacity: 1;
+}
+.editsemanticsform input {
+    color: inherit !important;
+    background-color: inherit !important;
+    border: 1px solid red;
+}
+.editdialectform .form-control:enabled::placeholder {
+    color: red !important;
+    width: auto;
+    opacity: 1;
+}
+.editdialectform .form-control:disabled::placeholder {
+    color: inherit !important;
+    width: auto;
+    opacity: 1;
+}
+.editdialectform input {
+    color: inherit !important;
+    background-color: inherit !important;
+    border: 1px solid red;
+}
+.form-control {
+    margin-left: 0;
+    padding-left: 0;
+}
+.form-control:disabled {
+    cursor: pointer;
+    color: var(--beam) !important;
+    background-color: inherit !important;
+}
+.form-control:enabled input {
+    color: red;
+    background-color: inherit !important;
+}
+
+.btn-danger {
+    background-color: red;
+    border: none;
+}
+.actionButton {
+    padding: 4px 8px;
+    border: 1px solid Grey;
+    border-radius: 8px;
+    text-align: center;
+    color: Black;
+    background-color: white;
+    width: auto;
+}
+.actionButton:hover {
+    text-decoration: none;
+    background-color: LightGrey;
+}
+.actionButton:active:focus {
+    text-decoration: none;
+    background-color: transparent;
+    outline: none;
+}
+.edit-mode {
+    font-size: 10px;
+    padding-left: 2px;
+    padding-right: 2px;
+}
+.phonology-table {
+    border-spacing: 0 3px;
+}
+.semantics-table {
+    border-spacing: 0 5px;
+}
+.highlight {
+    background-color: rgb(255, 149, 63);
 }
 </style>
 {% endblock %}
@@ -691,7 +895,6 @@ textarea:focus {
                                     <td style="border-bottom: 1px solid grey; border-left: 1px solid grey;
                                             border-top: 1px solid grey; border-right: 1px solid grey;">{% for qv in default_query_parameters_values_mapping|get_item:key %}
                                        <div class='tagQP' >
-                                       {% load underscore_to_space %}
                                             <span class='tagname' style="user-select:none;">{{qv|underscore_to_space}}</span>
                                        </div>
                                         {% if not forloop.last %} {% endif %}{% endfor %}</td>
@@ -725,7 +928,6 @@ textarea:focus {
                                     <td style="border-bottom: 1px solid grey; border-left: 1px solid grey;
                                             border-top: 1px solid grey; border-right: 1px solid grey;">{% for qv in query_parameters_values_mapping|get_item:key %}
                                        <div class='tagQP' >
-                                       {% load underscore_to_space %}
                                             <span class='tagname' style="user-select:none;">{{qv|underscore_to_space}}</span>
                                        </div>
                                         {% if not forloop.last %} {% endif %}{% endfor %}</td>
@@ -747,13 +949,13 @@ textarea:focus {
                             <form id="use_default_query_parameters" action='' method="POST">
                             {% csrf_token %}
                             <button type='submit' class="btn btn-primary" name="use_default_query_parameters"
-                                    value="default_parameters"><a>{% trans "Run Query" %}</a></button>
+                                    value="default_parameters"><span>{% trans "Run Query" %}</span></button>
                             <input type="hidden" id="default_parameters" name="default_parameters" value="{{json_default_query_parameters}}">
                             <button type="button" class="btn btn-default btn-default-light" data-dismiss="modal">{% trans "Dismiss" %}</button>
                             </form>
                         {% endif %}
                     {% else %}
-                        <button class="btn-query"><a class="btn btn-query" href="{{PREFIX_URL}}/signs/search/?query" type='submit'
+                        <button class="btn-query"><a href="{{PREFIX_URL}}/signs/search/?query" type='submit'
                                     style="text-decoration:none;padding-bottom:10px;color:white;">{% trans "Run Query" %}</a></button>
                         <button type="button" class="btn btn-default btn-default-light" data-dismiss="modal">{% trans "Dismiss" %}</button>
                     {% endif %}
@@ -771,7 +973,7 @@ textarea:focus {
 
 <div id="signinfo" class='navbar navbar-collapse' style="background-color:inherit;border:0;">
 
-    <div id="view_tabs" style="margin-right:15px;margin-top:10px;z-index:100;" class='view-tabs view-tabs-light'>
+    <div id="view_tabs" style="margin-right:15px;margin-top:10px;z-index:75;" class='view-tabs view-tabs-light'>
     <ul class='nav nav-tabs nav-tabs-light'>
         {% if gloss.lemma.dataset.is_public and gloss.inWeb %}
         <li class="nav-item">
@@ -797,17 +999,29 @@ textarea:focus {
         </li>
     </ul>
     </div>
-    
-    {% if "change_dataset" in dataset_perms %}
-    <div class='pull-right' style="margin-right:15px;margin-top:50px;">
+</div>
 
-         <span id='edit_message' style="padding-right: 1.8em;"></span>
+{% if "change_dataset" in dataset_perms %}
+    <div class='pull-right' style="margin-right:15px;margin-top:120px;">
 
-         <button id='enable_edit'
-                 class='btn btn-primary navbar-btn edit-mode'
-                 style="width:auto;padding:3px 12px;">{% trans "Edit" %}</button>
+        <div>
+            <form id="use_lookaheads_form" method="POST">
+            {% csrf_token %}
+            <div class="toggle-container">
+                <div id="data_type_lists" class="toggle-button" data-type="lists">Lists</div>
+                <div id="data_type_lookaheads" class="toggle-button" data-type="lookaheads">Lookaheads</div>
+                {% if use_lookaheads == 'lists' %}
+                <input type='hidden' id='use_lookaheads' name='use_lookaheads' value='lists'>
+                {% else %}
+                <input type="hidden" id="use_lookaheads" name='use_lookaheads' value='lookaheads'>
+                {% endif %}
+                <input type="hidden" name="glossid" value="{{gloss.id}}">
+                <input id="use_lookaheads_btn" type="submit" class="btn btn-primary">
+            </div>
+            </form>
+        </div>
 
-         {% if perms.dictionary.add_gloss %}
+         {% if perms.dictionary.add_gloss and selected_datasets|length > 1 %}
          <button id='copy_gloss_btn' class='btn btn-primary copy-button' data-toggle='modal' data-target='#copy_gloss_modal'>{% trans "Copy" %}</button>
 
           <div class="modal fade" id="copy_gloss_modal" role="dialog" aria-labelledby="#modalGlossCopy" aria-hidden="true">
@@ -834,8 +1048,8 @@ textarea:focus {
                              <th><label for='dataset'>{% trans "Target Dataset" %}</label></th>
                              <td><span>
                                  {% for s_dataset in selected_datasets %}
-                                 {% get_obj_perms request.user for s_dataset as "dataset_perms" %}
-                                 {% if "change_dataset" in dataset_perms %}
+                                 {% get_obj_perms request.user for s_dataset as "s_dataset_perms" %}
+                                 {% if "change_dataset" in s_dataset_perms %}
                                  {% if gloss.lemma.dataset == s_dataset or last_used_dataset == s_dataset.acronym %}
                                 <input type="radio" name="dataset"
                                        id="dataset_{{s_dataset.id}}" value="{{s_dataset.id}}" checked>
@@ -916,8 +1130,8 @@ textarea:focus {
                              <th><label for='dataset'>{% trans "Target Dataset" %}</label></th>
                              <td><span>
                                  {% for s_dataset in selected_datasets %}
-                                 {% get_obj_perms request.user for s_dataset as "dataset_perms" %}
-                                 {% if "change_dataset" in dataset_perms %}
+                                 {% get_obj_perms request.user for s_dataset as "s_dataset_perms" %}
+                                 {% if "change_dataset" in s_dataset_perms %}
                                  {% if gloss.lemma.dataset == s_dataset or last_used_dataset == s_dataset.acronym %}
                                 <input type="radio" name="dataset"
                                        id="dataset_{{s_dataset.id}}" value="{{s_dataset.id}}" checked>
@@ -947,53 +1161,10 @@ textarea:focus {
     </div>
     {% endif %}
 
-</div>
-
-        {% if "change_dataset" in dataset_perms %}
-        <div class="modal fade" id="delete_gloss_modal" tabindex="-1" role="dialog" aria-labelledby="#modalTitleDelete" aria-hidden="true">
-             <div class="modal-dialog modal-lg left-modal">
-                <div class="modal-content">
-                    <div class='modal-header'>
-                        <h2 id='modalTitleDelete'>{% trans "Delete This Sign" %}</h2>
-                        <br>
-                        {% with gloss.lemma.dataset.default_language as target_default_language %}
-			            {% with annotation_idgloss|get_item:target_default_language as annotation %}
-                        <h4>{% trans "Sign" %}: {{annotation}}</h4>
-                        {% endwith %}
-                        {% endwith %}
-                    </div>
-                    <div class='modal-body'>
-                        {% if related_objects.keys %}
-                        <p>{% trans "This sign is related to other signs:" %}</p>
-                        <br>
-                        <table class="table table-condensed table-bordered">
-                            {% for key, glosses in related_objects.items %}
-                            <tr>
-                                <td style="width:240px">{{key}}</td>
-                                <td>{{glosses}}</td>
-                            </tr>
-                            {% endfor %}
-                        </table>
-                        <br><br>
-                        {% endif %}
-                        <p>{% trans "This action will delete this sign and all associated records. It cannot be undone." %}</p>
-                     </div>
-                  <form action="{% url 'dictionary:update_gloss' gloss.id %}" method='post'>
-                      {% csrf_token %}
-                      <input type='hidden' name='id' value='deletegloss'>
-                      <input type='hidden' name='value' value='confirmed'>
-                      <div class="modal-footer">
-                        <button type="button" class="btn btn-primary" data-dismiss="modal">{% trans "Cancel" %}</button>
-                        <input type="submit" class="btn btn-danger" value='{% trans "Confirm Delete" %}'>
-                      </div>
-                  </form>
-
-                </div>
-            </div>
-        </div>
-        {% endif %}
+<div class="clearfix"></div>
 
 <div id="definitionblock">
+
     {% url 'dictionary:protected_media' '' as protected_media_url %}
     <div id="leftblock">
     <div id="videocontainer">
@@ -1042,7 +1213,7 @@ textarea:focus {
      <img id='novideo' src='{{STATIC_URL}}images/no-video-ngt.png'>
     </div>
     {% endif %}
-    
+
     </div>
 
     <div>
@@ -1070,7 +1241,7 @@ textarea:focus {
                   <tr>
                     <td id="video-buttons">
                         <input type='hidden' name='object_id' value='{{gloss.pk}}'>
-                        <input class='btn btn-primary' onclick='removeVideoUploads(true)' value='Remove'>   
+                        <input class='btn btn-primary' onclick='removeVideoUploads(true)' value='Remove'>
                         <input class='btn btn-primary' type='submit' value='Upload' />
                     </td>
                   </tr>
@@ -1136,13 +1307,13 @@ textarea:focus {
                         </table>
                     </label>
                 </div>
-        
+
                 <div>
                     <span id="errorMsg"></span>
                 </div>
 
             </div>
-            
+
         </div>
 
     </div>
@@ -1164,7 +1335,7 @@ textarea:focus {
                   <tr>
                     <td id="image-buttons">
                         <input type='hidden' name='gloss_id' value='{{gloss.pk}}'>
-                        <input class = 'btn btn-primary' onclick='removeImageUploads(true)' value='Remove'>   
+                        <input class = 'btn btn-primary' onclick='removeImageUploads(true)' value='Remove'>
                         <input class='btn btn-primary' type='submit' value='Upload'/>
                     </td>
                   </tr>
@@ -1237,9 +1408,9 @@ textarea:focus {
 
 <br><br>
 <!-- Perspective videos -->
-   <div class="empty_row panel panel-default panel-light">
+   <div class="edit_only panel panel-default panel-light" style="z-index:0;">
         <div class='panel-heading panel-light' data-toggle='collapse'
-             data-target='#perspectivevideos'><h4>{% trans "Upload Perspective Videos" %}</h4>
+             data-target='#perspectivevideos'>{% trans "Upload Perspective Videos" %}
         </div>
         <div id='perspectivevideos' class='collapse in'>
             <div class="panel panel-default panel-light">
@@ -1342,23 +1513,173 @@ textarea:focus {
                  data-target='#delete_gloss_modal'>{% trans "Delete Sign" %}</button>
         </fieldset>
     </div>
+    <br/><br/><br/>
     {% endif %}
 
 </div>
-    <div class='panel-group' id="definition" style="z-index: 0;opacity:.99; position: relative;">
 
-        {% include "dictionary/glosstags.html" %}
-        {% include "dictionary/affiliationtags.html" %}
+    <div class='panel-group' id="definition" style="z-index: 0;opacity:.99; position: static;">
+        <div class="panel panel-default panel-light">
+        <div class='panel-heading panel-light' id='general_heading'
+             data-toggle='collapse' data-target='#general'>{% trans "General Description" %}
+        </div>
+        <div id='general' class='collapse'>
+            <div class='pull-right' style="margin-right:15px;margin-top:20px;">
+                {% if perms.dictionary.change_gloss %}
+                <div>
+                {% csrf_token %}
+                <button type="button" class="btn btn-danger edit-cancel button-general-to-appear-in-edit-mode"
+                        style="width:auto;padding:3px 12px;" id="button-edit-cancel-general"
+                        onclick='location.href="{{PREFIX_URL}}/dictionary/gloss/{{gloss.id}}"' >
+                        {% trans "Cancel" %}</button>
+                <button type="button" class="btn btn-danger quick_save button-general-to-appear-in-edit-mode"
+                        style="width:auto;padding:3px 12px;" value="{{gloss.id}}" id="button-edit-save-general" >
+                        {% trans "Save General Description" %}</button>
+                 <button id='enable_edit_general' type="button"
+                         class='btn btn-primary navbar-btn edit-mode'
+                         style="width:auto;padding:3px 12px;">{% trans "Edit Videos and General Description" %}</button>
+                </div>
+                {% endif %}
+            </div>
 
         <table class='table table-condensed table-condensed-light' style="width:100%;">
+            {% csrf_token %}
             <tr>
-                <th>{% trans "Release information" %}:</th>
-                <td><div class="edit edit_area" id='{{ release_information.1 }}' value='{{ release_information.2 }}'>{% value release_information.0 %}</div></td>
+            <td>
+                <div id='tags' style="z-index: 0;opacity:.99; position: relative; background-color: inherit;">
+                <fieldset>
+                  {% tags_for_object gloss as tag_list %}
+                  {% if tag_list %}
+                      <ul class='taglist'>
+                      {% for tag in tag_list %}
+                        <li class='tagli'>
+                           <div class='tag'>
+                             <span class='tagname'>{{tag.name|underscore_to_space}}</span>
+                            {% get_obj_perms request.user for gloss.dataset as "dataset_perms" %}
+                            {% if "change_dataset" in dataset_perms %}
+                             <span class='tagcount'>
+                                 <a class='tagdelete editform'
+                                    id='{{tag.name}}' value={{tag.id}} name='{{tag.name}}'
+                                    href='{{PREFIX_URL}}/dictionary/update/tag/{{gloss.id}}'
+                                    title='{% trans "Delete this tag" %}'>x</a>
+                             </span>
+                             {% endif %}
+                            </div>
+                        </li>
+                      {% endfor %}
+                      </ul>
+                  {% endif %}
+                {% get_obj_perms request.user for gloss.dataset as "dataset_perms" %}
+                {% if "change_dataset" in dataset_perms %}
+                  <div id="tagcontainer"></div>
+                  <div class='editform'>
+                      <form id='tagaddform'
+                            action="{{PREFIX_URL}}/dictionary/update/tag/{{gloss.id}}"
+                            method="post" enctype="multipart/form-data">
+                       {% csrf_token %}
+                       <table>
+                       <tr><td class="td td-light">{{tagform.tag}}</td><td><input class='btn btn-primary' type='submit' value='{% trans "Add Tag" %}'></td></tr>
+                       </table>
+                      </form>
+                  </div>
+                  {% endif %}
+                  </fieldset>
+                </div>
+            </td>
             </tr>
-            <tr {% if gloss_dialects|length == 0 %} class="empty_row" {% endif %}>
-                <th>{% trans "Dialect" %}</th>
-                <td class='edit edit_dialect' id='dialect'>{% for dia in gloss_dialects %}{{dia}}{% if not forloop.last %}, {% endif %}{% endfor %}</td>
+            <tr>
+            <td>
+
+                <div id='affs' style="z-index: 0;opacity:.99; position: relative; background-color: inherit;">
+                <fieldset>
+              {% with gloss|get_affiliations_for_gloss as aff_list %}
+              {% if aff_list %}
+                  <ul class='afflist'>
+                  {% for aff in aff_list %}
+                    <li class='affli' id="gloss_affiliation_{{aff.id}}">
+                       <div class='aff tagAFF' style="background:{{aff.field_color}};border-color:{{aff.field_color}};">
+                         <span class='affname'>{{aff.acronym}}</span>
+                        {% get_obj_perms request.user for gloss.dataset as "dataset_perms" %}
+                        {% if "change_dataset" in dataset_perms %}
+                         <span class='affcount'>
+                             <a class='affdelete editform'
+                                id='{{aff.id}}' value='{{aff.id}}' name='{{aff.acronym}}'
+                                data-href='{{PREFIX_URL}}/dictionary/update/affiliation/{{gloss.id}}'
+                                title='{% trans "delete this affiliation" %}'>x</a>
+                         </span>
+                         {% endif %}
+                        </div>
+                    </li>
+                  {% endfor %}
+                  </ul>
+              {% endif %}
+              {% endwith %}
+            {% get_obj_perms request.user for gloss.dataset as "dataset_perms" %}
+            {% if "change_dataset" in dataset_perms %}
+              <div id="affcontainer"></div>
+              <div class='editform'>
+                  <form id='affaddform'
+                        data-action="{{PREFIX_URL}}/dictionary/update/affiliation/{{gloss.id}}"
+                        method="post" enctype="multipart/form-data">
+                   {% csrf_token %}
+                   <table>
+                   <tr><td class="td td-light">{{affiliationform.affiliation}}</td>
+                       <td><input class='btn btn-primary' type='submit' value='{% trans "Add Affiliation" %}'></td>
+                   </tr>
+                   </table>
+                  </form>
+              </div>
+              {% endif %}
+              </fieldset>
+            </div>
+            </td>
             </tr>
+
+            {% with show_field_row|get_item:"release_information" as show_field %}
+            {% if not show_field %}
+            <tr class="empty_row_general">
+            {% else %}
+            <tr>
+            {% endif %}
+            {% endwith %}
+                <th style="width:auto;">{% trans "Release information" %}</th>
+                {% with glossform.fields|get_item:'release_information' as release_information_field %}
+                <td class="editform-general" style="width:auto;">
+                    <div>
+                    <input class='form-control form-control-light' type="text" name="release_information"
+                           value="{{release_information_field.initial}}"
+                           id="release_information_text" data-category="general">
+                    </div>
+                </td>
+                {% endwith %}
+            </tr>
+
+            {% with show_field_row|get_item:"dialect" as show_field %}
+            {% if not show_field %}
+            <tr class="empty_row_general">
+            {% else %}
+            <tr>
+            {% endif %}
+            {% endwith %}
+                <th style="width:240px;">{% trans "Dialect" %}</th>
+                {% with glossform.fields|get_item:'dialect' as dialect_field %}
+                <td style="width:auto;" id="dialect_value">
+                    {% for dialect in gloss.dialect.all %}
+                    <button class="actionButton">{{dialect.signlanguage.name}}/{{dialect.name}}</button>
+                    {% endfor %}
+                </td>
+                <td class="editdialectform">
+                    <div>
+                    <input class='form-control form-control-light dialecttypeahead' type="text" size="60"
+                           id="dialect_multiselect" data-category="general" autocomplete="off">
+                    </div>
+                </td>
+                <td id="dialect_hidden_input_values" class="editform-general">
+
+                </td>
+                {% endwith %}
+            </tr>
+
             <tr>
                 <th>{% trans "Lemma ID Gloss" %}</th>
                 <td><span id="lemma">{{gloss.lemma}}
@@ -1368,57 +1689,54 @@ textarea:focus {
                     </span>
                 </td>
             </tr>
-            <tr class="empty_row lemma_buttons" id="lemma-buttons-group" ><th></th>
+            <tr class="lemma_buttons" id="lemma_buttons_group" style="width:auto;"><th></th>
                 <td>
                     <div id="lemma_buttons">
-                        <button id='show_edit_lemma_form' name='show_edit_lemma_form' type="button"
+                        <button id='show_edit_lemma_form' type="button"
                                 style="width:auto;" class='btn btn-primary btn-space lemma-button'
                                 value='{% trans "Edit Lemma" %}'>
                             <a href="{{PREFIX_URL}}/dictionary/lemma/update/{{gloss.lemma.id}}"
                                style="text-decoration:none; color:white;">{% trans "Edit Lemma" %}</a>
                         </button>
-                        <button id='show_set_lemma_form' name='show_set_lemma_form'
+                        <button id='show_set_lemma_form'
                                 class='btn btn-primary btn-space lemma-button'>{% trans "Choose Other" %}</button>
-                        <button id='show_create_lemma_form' name='show_create_lemma_form'
+                        <button id='show_create_lemma_form'
                                 class='btn btn-primary btn-space lemma-button'>{% trans "Create New" %}</button>
                     </div>
                 </td>
             </tr>
-            <tr id="lemma_forms_row">
+            <tr id="lemma_forms_row" style="width:auto;">
                 <th></th>
                 <td id="lemma_forms_cell" class='td td-light'>
                 <span>
-                <form name='set_lemma_form' id='set_lemma_form'
+                <form id='set_lemma_form'
                     onsubmit='return validateForm("set_lemma_form","value","gloss_lemma_id",
                                                 "Please choose a lemma.",
                                                 "Target lemma must be different from the current lemma of this gloss.")'
-                    method='post' action='{% url "dictionary:update_gloss" gloss.id %}'>
+                    method='post' action="{{PREFIX_URL}}/dictionary/update/update_gloss_lemma/{{gloss.id}}">
                     {% csrf_token %}
                     <!-- Input that holds the current lemma id; used by validateForm -->
                     <input type='hidden' name='gloss_lemma_id' value='{{gloss.lemma_id}}'>
 
                     <!-- Input of the type ahead -->
-                    <input class='form-control form-control-light lemmatypeahead lemmatypeahead-light'
-                           placeholder='{% trans "Lemma" %}' />
+                    <input class='form-control form-control-light lemmatypeahead lemmatypeahead-light' size="80"
+                           placeholder='{% trans "Lemma" %}' data-category="general" autocomplete="off" >
 
-                    <!-- Input for gloss_update (2) / Input that holds the lemma id the user chose from the type ahead -->
-                    <input type='hidden' name='value' value='confirmed'>
-                    <!-- Input for gloss_update (1) -->
-                    <input type='hidden' name='id' value='lemmaidgloss'>
-                    <!-- Submit -->
-                    <input class='btn btn-primary' value='{% trans "Set Lemma" %}' type='submit'>
+                    <input type='hidden' name='new_lemma_pk' value='' id="new_lemma_pk">
+                    <button class='btn btn-primary quick_set_lemma' type='button'>{% trans "Set Lemma" %}</button>
                     <button type="button" class="btn btn-default btn-default-light lemma-form-dismiss">{% trans "Cancel" %}</button>
                 </form>
-                <form name="add_lemma_form" id="add_lemma_form" method="post" action="{% url 'dictionary:create_lemma_gloss' gloss.id %}" >
+                <form id="add_lemma_form" class="container" method="post" action="{% url 'dictionary:create_lemma_gloss' gloss.id %}" >
                     {% csrf_token %}
                     <input type="hidden" name="dataset" value="{{gloss.lemma.dataset.id}}"/>
                     <input type="hidden" name="last_used_dataset" value="{{last_used_dataset}}"/>
                     {% for dataset_lang in gloss.lemma.dataset.translation_languages.all %}
+                    <div class="row" style="margin-left:20px; padding:10px;">
                     {{dataset_lang.name}}:
                     <input id="{{lemma_create_field_prefix}}{{dataset_lang.language_code_2char}}"
                             name="{{lemma_create_field_prefix}}{{dataset_lang.language_code_2char}}"
-                            required="" maxlength="30" type="text"/>
-
+                            required="" maxlength="50" type="text"/>
+                    </div>
                     {% endfor %}
                     <!-- Submit -->
                     <input class='btn btn-primary' value='{% trans "Add Lemma" %}' type='submit'>
@@ -1432,14 +1750,25 @@ textarea:focus {
             <tr>
                 <th>
                     {% trans "Annotation ID Gloss" %}
-                    {% if SHOW_DATASET_INTERFACE_OPTIONS %} ({{ lang }}) {% endif %}
+                    {% if SHOW_DATASET_INTERFACE_OPTIONS %} ({{ lang.name }}) {% endif %}
                 </th>
 
-                <td class='edit edit_area' id='annotation_idgloss_{{lang.language_code_2char}}'
-                    style="color:inherit;"
-                    colspan="2">{{annotation_idgloss_translation}}</td>
+                <td class='editform-general' style="width:auto;color:inherit;">
+                    <div>
+                    <input class='form-control form-control-light' id='annotation_idgloss_{{lang.language_code_2char}}_text'
+                           name="annotation_idgloss_{{lang.language_code_2char}}" type="text" maxlength="30"
+                           value="{{annotation_idgloss_translation}}" data-category="general" />
+                    </div>
+                </td>
+                <td class="edit_only">
+                    <div>
+                    <button id='button_annotation_idgloss_{{lang.language_code_2char}}_text' type="button" style="color:red;font-size:16px;background-color:transparent;border:none;"
+                            title='{% trans "Save" %} {{lang.name}}' value="{{gloss.id}}" data-language="{{lang.language_code_2char}}"
+                            class='btn btn-primary btn-space lemma-button quick_set_annotation' data-category="general"><span class="glyphicon glyphicon-check"></span></button>
+                    </div>
+                </td>
             </tr>
-            <tr>
+            <tr class="read_only">
                 <th></th>
                 <td>
 
@@ -1457,7 +1786,9 @@ textarea:focus {
                 </td>
             </tr>
             {% endfor %}
+        </table>
 
+        <table class='table table-condensed table-condensed-light' style="width:100%;">
             <tr>
                 <th>{% trans "Senses" %}</th>
                 <td>
@@ -1465,12 +1796,12 @@ textarea:focus {
                         {% for sense in senses %}
                             <tr>
                                 {% if "change_dataset" in dataset_perms %}
-                                <td style="width:20px">
-                                        {% if not forloop.first %}  
+                                <td class="edit_only" style="width:20px">
+                                        {% if not forloop.first %}
                                         <span class='sense-icon'><a href='{% url "dictionary:sort_sense" gloss.id forloop.counter "up" %}' style="color:red;">&#x25B2;</a></span>
                                         <br>
                                         {% endif %}
-                                        {% if not forloop.last %}  
+                                        {% if not forloop.last %}
                                         <span class='sense-icon'><a href='{% url "dictionary:sort_sense" gloss.id forloop.counter "down" %}' style="color:red;">&#x25BC;</a></span>
                                         {% endif %}
                                 </td>
@@ -1478,7 +1809,7 @@ textarea:focus {
                                 <td style="width:20px">
                                     {{forloop.counter}}.
                                 </td>
-                                <td>
+                                <td style="width:400px;">
                                     {% if sense.get_sense_translations_dict_without %}
                                         {% for key, value in sense.get_sense_translations_dict_without.items %}
                                             {{key}}: {{value}}
@@ -1486,7 +1817,7 @@ textarea:focus {
                                         {% endfor %}
                                     {% endif %}<br><br>
                                 </td>
-                                <td style="width:50px">
+                                <td class="edit_only" style="width:50px">
                                     {% if "change_dataset" in dataset_perms %}
                                         <span class='glyphicon glyphicon-trash sense_delete sense-icon pull-right' style="color:red"  data-toggle='modal' data-target='#delete_sense_modal_{{sense.id}}'></span>
                                         <div class="modal fade modal-sense" id="delete_sense_modal_{{sense.id}}" role="dialog" aria-labelledby="#modalTitleDeleteSense" aria-hidden="true">
@@ -1497,7 +1828,7 @@ textarea:focus {
                                                     </div><br>
                                                     <div class='modal-body'>
                                                         <p>{% trans "Are you sure you want to delete this? This cannot be undone." %}</p>
-                                                    </div>     
+                                                    </div>
                                                     <form name="delete_sense_form" method="post" action="{% url 'dictionary:delete_sense' gloss.id %}" >
                                                         {% csrf_token %}
                                                         <input type='hidden' name='dataset' value='{{gloss.lemma.dataset.id}}'>
@@ -1549,7 +1880,7 @@ textarea:focus {
                                                                 {% endwith %}
                                                             </tr>
                                                         </table>
-                                                        
+
                                                         <div class="modal-footer">
                                                             <input class='btn btn-primary' value='{% trans "Update sense" %}' type='submit'>
                                                             <button type="button" class="btn btn-default btn-default-light" data-dismiss="modal">{% trans "Cancel" %}</button>
@@ -1587,7 +1918,7 @@ textarea:focus {
                                                                         {% if key|slugify == dataset_lang|slugify %}
                                                                             <td>{{value}}</td>
                                                                         {% endif %}
-                                                                    {% endfor %}  
+                                                                    {% endfor %}
                                                                 {% endfor %}
 
                                                                 {% for key, value in similar_sense.items %}
@@ -1612,7 +1943,7 @@ textarea:focus {
                                                             {% endfor %}
 
                                                         </table>
-                                                        
+
                                                         <div class="modal-footer">
                                                             <button type="button" class="btn btn-default btn-default-light" data-dismiss="modal">{% trans "Close" %}</button>
                                                         </div>
@@ -1623,17 +1954,17 @@ textarea:focus {
                                     {% endif %}
                                     {% endwith %}
                                 </td>
-                                <td style="width:50%">
+                                <td style="width:400px;">
                                     <table class='table table-condensed' style="table-layout: fixed">
                                         {% for examplesentence in sense.ordered_examplesentences %}
                                             <tr>
                                                 {% if "change_dataset" in dataset_perms %}
-                                                <td style="width:20px">
-                                                    {% if not forloop.first %}  
+                                                <td class="edit_only" style="width:20px">
+                                                    {% if not forloop.first %}
                                                     <span class='sense-icon'><a href='{% url "dictionary:sort_examplesentence" sense.id gloss.id forloop.counter "up" %}' style="color:red;">&#x25B2;</a></span>
                                                     <br>
                                                     {% endif %}
-                                                    {% if not forloop.last %}  
+                                                    {% if not forloop.last %}
                                                     <span class='sense-icon'><a href='{% url "dictionary:sort_examplesentence" sense.id gloss.id forloop.counter "down" %}' style="color:red;">&#x25BC;</a></span>
                                                     {% endif %}
                                                 </td>
@@ -1642,7 +1973,7 @@ textarea:focus {
                                                     {% if examplesentence.sentenceType %}
                                                     <i>{{examplesentence.sentenceType.name}}</i>
                                                     {% else %}
-                                                    - 
+                                                    -
                                                     {% endif %}
                                                     {% if examplesentence.negative %}
                                                     <i>(neg)</i>
@@ -1651,7 +1982,7 @@ textarea:focus {
                                                         {{key}}: {{value}} {% if not forloop.last %}<br>{% endif %}
                                                     {% endfor %}<br><br>
                                                 </td>
-                                                <td style="width:90px">
+                                                <td class="edit_only" style="width:90px">
                                                     {% if examplesentence.has_video %}
                                                         <span class="pull-right"><img data-target="#exampleVidModal_{{examplesentence.id}}" data-toggle="modal" src='{{STATIC_URL}}images/playvideo.png' style="width:25px; height:25px; margin: 0px; cursor: pointer;"></span>
                                                     {% endif %}
@@ -1676,7 +2007,7 @@ textarea:focus {
                                                                     </div><br>
                                                                     <div class='modal-body'>
                                                                         <p>{% trans "Are you sure you want to delete this? This cannot be undone." %}</p>
-                                                                    </div>     
+                                                                    </div>
                                                                     <form name="delete_examplesentence_form" method="post" action="{% url 'dictionary:delete_examplesentence' sense.id %}" >
                                                                         {% csrf_token %}
                                                                         <input type='hidden' name='examplesentenceid' value='{{examplesentence.id}}'>
@@ -1752,13 +2083,13 @@ textarea:focus {
                                                     {% for sentence in examplesentence.get_examplestc_translations %}
                                                         {{sentence}}<br>
                                                     {% endfor %}
-                                                </div> 
+                                                </div>
                                             </div>
-                                        {% endfor %}  
+                                        {% endfor %}
                                         {% if "change_dataset" in dataset_perms %}
-                                            <tr class="sense-icon">
+                                            <tr class="sense-icon edit_only">
                                                 <td>
-                                                    <button data-toggle='modal' data-target='#add_examplestc_modal_{{sense.id}}', class='sense-button btn btn-primary btn-space'>{% trans "Add an example sentence" %}</button>
+                                                    <button data-toggle='modal' data-target='#add_examplestc_modal_{{sense.id}}' class='sense-button btn btn-primary btn-space'>{% trans "Add an example sentence" %}</button>
                                                     <div class="modal fade modal-sense" id="add_examplestc_modal_{{sense.id}}" role="dialog" aria-labelledby="#modalTitleAddExamplestc" aria-hidden="true">
                                                         <div class="modal-dialog modal-lg left-modal">
                                                             <div class="modal-content modal-content-sense">
@@ -1770,7 +2101,7 @@ textarea:focus {
                                                                     <input type="hidden" name="dataset" value="{{gloss.lemma.dataset.id}}"/>
                                                                     <input type="hidden" name="glossid" value="{{gloss.id}}"/>
                                                                     <input type='hidden' name='value' value='confirmed'>
-                                                                    Type: 
+                                                                    Type:
                                                                     <select name="sentenceType">
                                                                         {% for stype in sentencetypes %}
                                                                         <option value="{{stype.0}}" >{{stype.1}}</option>
@@ -1794,15 +2125,15 @@ textarea:focus {
                                                 </td>
                                             </tr>
                                         {% endif %}
-                                        
+
                                     </table>
                                 </td>
                             </tr>
                         {% endfor %}
                         {% if "change_dataset" in dataset_perms %}
-                            <tr class="sense-icon">
+                            <tr class="sense-icon edit_only">
                                 <td>
-                                    <button data-toggle='modal' data-target='#add_sense_modal_{{gloss.id}}', class='sense-button btn btn-primary btn-space sense-button sense_add'>{% trans "Add a sense" %}</button>
+                                    <button data-toggle='modal' data-target='#add_sense_modal_{{gloss.id}}' class='sense-button btn btn-primary btn-space sense-button sense_add'>{% trans "Add a sense" %}</button>
                                     <div class="modal fade modal-sense" id="add_sense_modal_{{gloss.id}}" role="dialog" aria-labelledby="#modalTitleGloss" aria-hidden="true">
                                         <div class="modal-dialog modal-lg left-modal">
                                             <div class="modal-content modal-content-sense" style="width:calc({{gloss.lemma.dataset.translation_languages.count}}*300px);">
@@ -1826,7 +2157,7 @@ textarea:focus {
                                                             {% endfor %}
                                                         </tr>
                                                     </table>
-            
+
                                                     <div class="modal-footer">
                                                         <button type="button" class="btn btn-default btn-default-light" data-dismiss="modal">{% trans "Cancel" %}</button>
                                                         <input type="submit" class="btn btn-primary" value='{% trans "Confirm add" %}'>
@@ -1841,9 +2172,10 @@ textarea:focus {
                     </table>
                 </td>
             </tr>
+
         </table>
         <table class='table table-condensed table-condensed-light' style="width:100%;">
-            <tr>
+            <tr class="read_only">
                 <th>
                     {% trans "Synsets" %}
                 </th>
@@ -1851,7 +2183,7 @@ textarea:focus {
                     {% for synset in synsets %}
                         <span class="synset">
                             {% if synset.url %}
-                                <a href='{{ synset.url }}'>{{synset.name}}</a> 
+                                <a href='{{ synset.url }}'>{{synset.name}}</a>
                             {% else %}
                                 {{synset.name}}
                             {% endif %}
@@ -1864,20 +2196,66 @@ textarea:focus {
             </tr>
         </table>
         <table class='table table-condensed table-condensed-light' style="width:800px;">
-            {% for value,name,label,kind in main_fields %}
-                <tr style="width:800px;"><th>{{label}}</th>
-                    {% if name == 'useInstr' %}
-                    <td class="edit edit_area" id='useInstr' value="{{value}}">{% value value %}
-                    </td>
-                    {% elif name == 'wordClass' %}
-                    <td class="edit edit_list" id='wordClass' value="{{value}}">{% value value %}
-                    </td>
+            {% with show_field_row|get_item:"useInstr" as show_field %}
+            {% if not show_field %}
+            <tr class="empty_row_general">
+            {% else %}
+            <tr>
+            {% endif %}
+            {% endwith %}
+                <th style="width:auto;">{% trans "Annotation instructions" %}</th>
+                {% with glossform.fields|get_item:'useInstr' as useInstr_field %}
+                <td class="editform-general" style="width:auto;">
+                    <div>
+                    <input class='form-control form-control-light' type="text" name="useInstr"
+                           value="{{useInstr_field.initial}}"
+                           id="useInstr_text" data-category="general">
+                    </div>
+                </td>
+                {% endwith %}
+            </tr>
+
+            {% with show_field_row|get_item:"wordClass" as show_field %}
+            {% if not show_field %}
+            <tr class="empty_row_general">
+            {% else %}
+            <tr>
+            {% endif %}
+            {% endwith %}
+                <th style="width:240px;">{% trans "Word class" %}</th>
+                {% with glossform.fields|get_item:'wordClass' as wordClass_field %}
+                <td class="editform-general" style="width:auto;">
+                    {% if use_lookaheads == 'lookaheads' %}
+                    <div id="wordClass_cell">
+                    <input class='form-control form-control-light wordClasstypeahead' type="text" size="40"
+                           placeholder="{{wordClass_field.initial}}" id="wordClass_lookahead" value="{{wordClass_field.initial}}"
+                           data-category="general" autocomplete="off" >
+                    <input type="hidden" name="wordClass" value=""
+                           id="wordClass_machine_value" >
+                    </div>
+                    <div class="edit_only_general">
+                        <br><br><br><br><br><br><br><br><br><br><br><br><br>
+                    </div>
+                    {% else %}
+                    <div class="editselect">
+                    <select class="select_wordClass form-control form-control-light" name="wordClass"
+                                id="wordClass_value" data-category="general">
+                        {% for machine_value, opn in wordClass_field.choices %}
+                        {% if opn == wordClass_field.initial %}
+                        <option value={{machine_value}} selected="selected">{{opn}}</option>
+                        {% else %}
+                        <option value={{machine_value}}>{{opn}}</option>
+                        {% endif %}
+                        {% endfor %}
+                    </select>
+                    </div>
                     {% endif %}
-                </tr>
-            {% endfor %}
-
+                </td>
+                {% endwith %}
+            </tr>
         </table>
-
+    </div>
+</div>
 {% if prominent_media_type and prominent_media_type.machine_value > 1 %}
    <div class="panel panel-default panel-light">
         <div class='panel-heading panel-light' data-toggle='collapse'
@@ -1924,33 +2302,49 @@ textarea:focus {
 
 {% endif %}
 
+
    <!-- Non-manual videos -->
    <div class="panel panel-default panel-light">
         <div class='panel-heading panel-light' data-toggle='collapse'
              data-target='#nmevideos'>{% trans "Videos with Non-manual Elements" %}
         </div>
-        <div id='nmevideos' class='collapse'>
-            <div class="panel panel-default panel-light">
+        <div id='nmevideos' class='collapse panel panel-default panel-light'>
+
+            <div class='pull-right' style="margin-right:15px;margin-top:20px;margin-bottom:20px;">
+                {% if perms.dictionary.change_gloss %}
+                 <div>
+                    {% csrf_token %}
+                    <button type="button" class="btn btn-danger nme-edit-dismiss"
+                            style="width:auto;padding:3px 12px;" id="nme_edit_dismiss"
+                            >{% trans "Dismiss" %}</button>
+                    <button id='enable_edit_nme'
+                             class='btn btn-primary navbar-btn edit-mode'
+                             style="width:auto;padding:3px 12px;">{% trans "Edit NME Videos" %}</button>
+                 </div>
+                {% endif %}
+            </div>
+
+            <div>
             {% if gloss.has_nme_videos %}
-               <table class='table table-responsive' style="text-align: left;width:100%;">
-                <tr style="overflow-y:auto;">
+               <table class='table table-responsive' style="text-align: left;width:80%;">
+                <tr style="overflow-x:auto;">
                     <td style="display:inline-block;">
                         <div>
                     {% for videonme in gloss.get_nme_videos %}
                         <div class="table-responsive" style="display:inline-block;">
                          <table class="table table-condensed" style="text-align: left;">
                          <tr>
-                           <td class="editform" style="width:5em;">
+                           <td class="read_only_nme" style="width:2em;"></td>
+                           <td class="edit_only_nme" style="width:2em;">
                            <span class='glyphicon glyphicon-trash nmevideo-delete' data-toggle='modal' data-target='#delete_nmevideo_modal_{{videonme.id}}'></span>
                              <div class="modal fade" id="delete_nmevideo_modal_{{videonme.id}}" role="dialog" aria-labelledby="#modalDeleteNME" aria-hidden="true">
                                  <div class="modal-dialog modal-sm">
                                     <div class="modal-content">
-                                        <div class='modal-header'>
-                                            <h2 id='modalDeleteNME'>{% trans "Delete NME Video" %}</h2>
+                                        <div class='modal-header' id='modalDeleteNME'>
+                                            {% trans "Delete NME Video" %}
                                         </div>
                                         <div class='modal-body'>
                                             <p>{% trans "Are you sure? This cannot be undone." %}</p>
-                                         </div>
                                         <form class="formbutton" action='{% url "dictionary:update_gloss" gloss.id %}'
                                               method='post'>
                                         {% csrf_token %}
@@ -1962,13 +2356,15 @@ textarea:focus {
                                           </div>
                                         </form>
                                     </div>
+                                    </div>
                                   </div>
                              </div>
                            </td>
                            <td>
-                               <table>
+                               <div>
+                                   <table>
                                    <tr>
-                                       <td colspan="2">
+                                       <td>
                                            <div>
                                             {% if videonme.has_perspective_videos %}
                                             <div id="buttonbar_nme_{{videonme.offset}}-top" style="background-color:transparent;height:auto;">
@@ -2024,32 +2420,70 @@ textarea:focus {
                                                 <button class="btn" id="pause_nme_{{videonme.offset}}_perspective"
                                                         onclick="pause_perspective_nme(this);" data-offset="{{videonme.offset}}"
                                                         style="font-size:16px;background-color:transparent;"><span class="glyphicon glyphicon-pause"></span></button>
-                                        <!--        <button class="btn" id="fullscreen_nme_{{videonme.offset}}_perspective"-->
-                                        <!--                onclick="openFullscreen_nme(this);" data-offset="{{videonme.offset}}"-->
-                                        <!--                style="font-size:16px;background-color:transparent;"><span class="glyphicon glyphicon-fullscreen"></span></button>-->
                                                 </div>
                                            </div>
                                         </td>
                                    </tr>
+                                   <tr class="read_only_nme">
+                                   <td>
+                                   <table class="table table-condensed" style="border-spacing: 3px 12px;margin-top:10px;">
                                    {% with nme_video_descriptions|get_item:videonme as nme_descriptions %}
                                    {% for lang, description in nme_descriptions.items %}
-                                    <tr style="text-align: left;">
-                                        <td>
-                                            {% if SHOW_DATASET_INTERFACE_OPTIONS %}{{lang.name}}:{% endif %}
-                                        </td>
-                                        <td class='edit edit_area'
-                                            id='nmevideo_description_{{videonme.id}}_{{lang.language_code_2char}}'
-                                            style="height:80;">{{description}}</td>
+                                   <tr>
+                                        <td style="width:100;">{{lang.name}}:</td>
+                                        <td style="width:400px;">{{description}}</td>
                                     </tr>
                                    {% endfor %}
                                    {% endwith %}
-                                   <tr class="editform">
-                                       <td>{% trans "Index" %}</td>
-                                       <td class='edit edit_int' id='nmevideo_offset_{{videonme.id}}'>{{videonme.offset}}</td>
+                                   </table>
+                                   </td>
                                    </tr>
-                                   <tr>
-                                </tr>
-                               </table>
+                                   <tr class="edit_only_nme">
+                                       <td>
+                                       <div>
+                                       <form action="{{PREFIX_URL}}/dictionary/update/update_gloss_nmevideo/{{gloss.id}}/{{videonme.id}}"
+                                             method='POST' id="nmevideo_update_{{videonme.id}}">
+                                        {% csrf_token %}
+                                        <table class="table table-condensed" style="border-spacing: 3px 12px;margin-top:10px;">
+                                        {% with nme_video_descriptions|get_item:videonme as nme_descriptions %}
+                                        {% for lang, description in nme_descriptions.items %}
+                                        <tr>
+                                            <td>
+                                                <label>{{lang.name}}</label>
+                                            </td>
+                                            <td>
+                                                <input id='nmevideo_description_{{videonme.id}}_{{lang.language_code_2char}}'
+                                                       name='nmevideo_description_{{videonme.id}}_{{lang.language_code_2char}}'
+                                                       value="{{description}}"
+                                                       type="text" size="50"  >
+                                            </td>
+                                        </tr>
+                                        {% endfor %}
+                                        {% endwith %}
+                                        <tr>
+                                            <td>
+                                                   <label>{% trans "Index" %}</label>
+                                            </td>
+                                            <td>
+                                                   <input type="number" id='nmevideo_offset_{{videonme.id}}' name='nmevideo_offset_{{videonme.id}}'
+                                                          value={{videonme.offset}}
+                                                          size=3 min=0 style="width:5em;" >
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td>
+                                                <button class='btn btn-primary quick_update_nmevideo' data-value="{{videonme.id}}"
+                                                        id="nme_video_update_save_{{videonme.id}}" type='button'>{% trans "Save" %}</button>
+                                            </td>
+                                        </tr>
+                                        </table>
+                                        </form>
+                                       </div>
+                                       </td>
+                                   </tr>
+                                   </table>
+
+                               </div>
                            </td>
                          </tr>
                          </table>
@@ -2061,11 +2495,16 @@ textarea:focus {
                </table>
             {% endif %}
             </div>
-
-            {% if "change_dataset" in dataset_perms %}
-            <div class='editform' style="width:800px;height:800px;">
+        <div class="clearfix"></div>
+        {% if "change_dataset" in dataset_perms %}
+        <div id="panel_upload_nmevideos" class="panel panel-default panel-light edit_only_nme"
+             style="margin-top:20px;margin-bottom:20px;margin-left:50px;width:800px;" data-parent="#nmevideos">
+        <div class='panel-heading panel-light' data-toggle='collapse'
+             data-target='#upload_nmevideos'>{% trans "Upload New NME Video" %}
+        </div>
+        <div id='upload_nmevideos' class='collapse'>
+            <div style="width:auto;height:auto;margin-top:20px;padding-left:50px;">
                 <fieldset>
-                    <h4>{% trans "Upload New NME Video" %}</h4>
                     <form action="{{PREFIX_URL}}/video/upload/" method="post" enctype="multipart/form-data">
                     {% csrf_token %}
                         <input type='hidden' name='redirect' value='{{PREFIX_URL}}/dictionary/gloss/{{gloss.pk}}/'>
@@ -2083,13 +2522,13 @@ textarea:focus {
                           </tr>
                         </table>
                         <br><br>
-                        <div>{% trans "Add descriptions for the video:" %}</div>
+                        <span>{% trans "Add descriptions for the video:" %}</span>
                             <table class="table table-condensed">
                                 <tr>
                                     <th style="width:200px;">{% trans "Index" %}</th>
                                     <td class="td td-light" style='width:5em'>
                                         <input class='form-control form-control-light' name='offset' id='offset'
-                                               type='number' min=0 value=0 style="width:10em;">
+                                               type='number' min=0 value=0 style="width:5em;">
                                     </td>
                                 </tr>
                                 {% for dataset_lang in gloss.lemma.dataset.translation_languages.all %}
@@ -2109,11 +2548,12 @@ textarea:focus {
                                 </td>
                                 </tr>
                             </table>
-                      <br><br>
                     </form>
                 </fieldset>
             </div>
-            {% endif %}
+        </div>
+        </div>
+        {% endif %}
         </div>
    </div>
 
@@ -2123,6 +2563,26 @@ textarea:focus {
              data-target='#morphology'>{% trans "Morphology" %}
         </div>
         <div id='morphology' class='collapse'>
+            <div class='pull-right' style="margin-right:15px;margin-top:20px;">
+                 {% if perms.dictionary.change_gloss %}
+                 <div>
+                    {% csrf_token %}
+                    <button type="button" class="btn btn-danger morphology-edit-dismiss button-morphology-to-appear-in-edit-mode"
+                            style="width:auto;padding:3px 12px;">{% trans "Dismiss" %}</button>
+                    <button id='enable_edit_morphology'
+                             class='btn btn-primary navbar-btn edit-mode'
+                             style="width:auto;padding:3px 12px;">{% trans "Edit Morphology" %}</button>
+                 </div>
+                 {% endif %}
+            </div>
+
+            <table id="morphology_table">
+                {% if sequential_morphology %}
+                <tr>
+                {% else %}
+                <tr class="empty_row_morphology">
+                {% endif %}
+               <td id="sequential_morphology_row">
                <table class='table table-condensed table-condensed-light'>
                    <tbody class="tbody tbody-light">
                    <tr>
@@ -2130,16 +2590,16 @@ textarea:focus {
                    </tr>
                    {% if gloss.parent_glosses.count > 0 %}
                   <tr>
-                      <th style="width:2em;"></th>
+                      <th style="width:2em;" class="morphology_delete_edit_only"></th>
                       <th style="width:12em;">{% trans "Compound Part" %}</th>
                       <th>{% trans "Component Sign" %}</th>
                   </tr>
 
-                   {% for morphdef, translated_role, sign_display in morphdefs %}
+                   {% for morphdef, translated_role, sign_display in sequential_morphology %}
 
                    <tr>
                        {% if "change_dataset" in dataset_perms %}
-                         <td style='width:2em;'>
+                         <td style='width:2em;' class="morphology_delete_edit_only">
                             <span class='glyphicon glyphicon-trash morphology-definition-delete' data-toggle='modal' data-target='#delete_morphology-definition_modal_{{morphdef.id}}'></span>
 
                              <div class="modal fade" id="delete_morphology-definition_modal_{{morphdef.id}}" role="dialog" aria-labelledby="#modalTitleComp" aria-hidden="true">
@@ -2168,7 +2628,7 @@ textarea:focus {
 
                         </td>
                         {% else %}
-                        <td></td>
+                        <td style='width:2em;' class="morphology_delete_edit_only"></td>
                         {% endif %}
                         <td class="td td-light" id='morphology-definition-role_{{morphdef.id}}' >{{translated_role}}</td>
                         <td class="td td-light" id='morphology-definition-morpheme_{{morphdef.id}}'><a href='{% url "dictionary:admin_gloss_view" pk=morphdef.morpheme.pk %}'>{{sign_display}}</a></td>
@@ -2181,27 +2641,35 @@ textarea:focus {
            </table>
 
             {% if "change_dataset" in dataset_perms %}
-            <form name="add_morphologydefinition_form" id='add_morphologydefinition_form'
+            <form id='add_morphologydefinition_form'
                   onsubmit='return validateForm("add_morphologydefinition_form","morpheme_id","parent_gloss_id",
                                                 "Please choose a gloss for Add Component Morphology.",
                                                 "Component gloss must be different from this gloss for Add Component Morphology.")'
                   method='post' action="{% url 'dictionary:add_morphologydefinition' %}">
                {% csrf_token %}
-               <input type='hidden' name='parent_gloss_id' value='{{gloss.pk}}'>
+               <input type='hidden' name='parent_gloss_id' value='{{gloss.id}}'>
                <table class='table table-condensed'>
                    <tr>
-                       <td style="width:2em;"></td>
+                       <td style="width:2em;" class="morphology_delete_edit_only"></td>
                        <td class="td td-light" style="width:12em;">{{morphologyform.role}}</td>
-                       <td class="td td-light">
-                           <input class='form-control form-control-light glosstypeahead glosstypeahead-light' placeholder='{% trans "Annotation ID Gloss" %}' />
-                           <input type="hidden" name="morpheme_id" value=""/>
+                       <td class="td td-light editform-morphology">
+                           <input class='form-control form-control-light glosstypeahead glosstypeahead-light' size="80"
+                                  placeholder='{% trans "Annotation ID Gloss" %}' id="morpheme_target" maxlength="80" autocomplete="off" >
+                           <input type="hidden" name="morpheme_id" value="{{morphologyform.morpheme_id.value|default:''}}" id="morpheme_target_id" >
                        </td>
                        <td><input id="add_component" class='btn btn-primary' value='{% trans "Add Component" %}' type='submit'></td>
                    </tr>
                </table>
             </form>
             {% endif %}
-
+            </td>
+            </tr>
+            {% if simultaneous_morphology %}
+            <tr>
+            {% else %}
+            <tr class="empty_row_morphology">
+            {% endif %}
+            <td id="simultaneous_morphology_row">
             <table class='table table-condensed'>
                 <tr>
                     <th colspan="4">{% trans "Simultaneous Morphology" %}</th>
@@ -2213,15 +2681,15 @@ textarea:focus {
                 </tr>
                 {% else %}
                 <tr>
-                    <th style="width:2em;"></th>
-                    <th style="width:22em;">{% trans "Morpheme Gloss" %}</th>
+                    <th style="width:2em;" class="morphology_delete_edit_only"></th>
+                    <th style="width:30em;">{% trans "Morpheme Gloss" %}</th>
                     <th colspan="2">{% trans "Meaning in This Sign" %}</th>
                 </tr>
                 {% endif %}
                 {% else %}
                 <tr>
-                    <th style="width:2em;"></th>
-                    <th style="width:22em;">{% trans "Morpheme Gloss" %}</th>
+                    <th style="width:2em;" class="morphology_delete_edit_only"></th>
+                    <th style="width:30em;">{% trans "Morpheme Gloss" %}</th>
                     <th colspan="2">{% trans "Meaning in This Sign" %}</th>
                 </tr>
                 {% endif %}
@@ -2230,7 +2698,7 @@ textarea:focus {
                 <tr>
                     <!-- Facility to delete this morpheme -->
                     {% if "change_dataset" in dataset_perms %}
-                     <td>
+                     <td style='width:2em;' class="morphology_delete_edit_only">
                         <span class='glyphicon glyphicon-trash morpheme-definition-delete' data-toggle='modal' data-target='#delete_morpheme-definition_modal_{{morpheme.pk}}'></span>
 
                          <div class="modal fade" id="delete_morpheme-definition_modal_{{morpheme.pk}}" role="dialog" aria-labelledby="#modalTitleMrp" aria-hidden="true">
@@ -2258,11 +2726,11 @@ textarea:focus {
 
                     </td>
                     {% else %}
-                    <td></td>
+                    <td style='width:2em;' class="morphology_delete_edit_only"></td>
                     {% endif %}
                     <td id='morpheme-definition_{{morpheme.pk}}'>
                         <a href='{% url "dictionary:admin_morpheme_view" pk=morpheme.morpheme.pk %}'>{{morph_display}} ({{morpheme_type}})</a></td>
-                    <td class='edit edit_area' id='morpheme-definition-meaning_{{morpheme.pk}}'>{{morpheme.role}}</td>
+                    <td id='morpheme-definition-meaning_{{morpheme.pk}}'>{{morpheme.role}}</td>
                </tr>
                 {% endfor %}
             </table>
@@ -2270,7 +2738,7 @@ textarea:focus {
             <!-- Facilitate adding and deleting morphemes that are used in this sign -->
             {% if "change_dataset" in dataset_perms %}
             {% if count_morphemes_in_dataset %}
-            <form name='add_morphemedefinition_form' id='add_morphemedefinition_form'
+            <form id='add_morphemedefinition_form'
                   onsubmit='return validateForm("add_morphemedefinition_form","morph_id","host_gloss_id",
                                                 "Please choose a morpheme for Add Morpheme Morphology.",
                                                 "Morpheme must be different from this gloss for Add Morpheme Morphology.")'
@@ -2279,13 +2747,20 @@ textarea:focus {
                <input type='hidden' name='host_gloss_id' value='{{gloss.pk}}'>
                <table class='table table-condensed'>
                    <tr>
-                       <td style="width:2em;"></td>
-                       <td class="td td-light" style="width:22em;">
-                           <input class='form-control form-control-light morphtypeahead morphtypeahead-light' placeholder='{% trans "Morpheme Gloss" %}' value="{{morphemeform.morph_id.value|default:''}}"/>
-                           <input type="hidden" name='morph_id' value=""/>
+                       <td style="width:2em;" class="morphology_delete_edit_only"></td>
+                       <td class="td td-light editform-morphology" style="width:700px;" colspan="3">
+                           <input class='form-control form-control-light morphtypeahead morphtypeahead-light' size="100" type="text"
+                                  placeholder='{% trans "Morpheme Gloss" %}' id="morpheme_gloss" value="" maxlength="100" autocomplete="off" >
+                           <input type="hidden" name='morph_id' id="morpheme_gloss_id"
+                                  value="{{morphemeform.morph_id.value|default:''}}">
+<!--                       </td>-->
+<!--                       <td class="td td-light">-->
+                           <input class='form-control form-control-light' placeholder='{% trans "Meaning in This Sign" %}'
+                                  name='description' value="{{morphemeform.description.value|default:''}}" type="text" >
                        </td>
-                       <td class="td td-light"><input class='form-control form-control-light' placeholder='{% trans "Meaning in This Sign" %}' name='description' value="{{morphemeform.description.value|default:''}}"/></td>
-                       <td><input class='btn btn-primary' value='{% trans "Add Morpheme" %}' type='submit'></td>
+                       <td>
+                           <input class='btn btn-primary' value='{% trans "Add Morpheme" %}' type='submit'>
+                       </td>
                    </tr>
                </table>
                {# spacing div to allow room for typeahead dropdown #}
@@ -2293,13 +2768,20 @@ textarea:focus {
              </form>
             {% endif %}
             {% endif %}
-
+            </td>
+            </tr>
+            {% if blend_morphology %}
+            <tr>
+            {% else %}
+            <tr class="empty_row_morphology">
+            {% endif %}
+            <td id="blend_morphology_row" >
             <table class='table table-condensed'>
                 <tr>
                     <th colspan="4">{% trans "Blend Morphology" %}</th>
                 </tr>
                 <tr>
-                    <th style="width:2em;"></th>
+                    <th style="width:2em;" class="morphology_delete_edit_only"></th>
                     <th style="width:22em;">{% trans "Blend Gloss" %}</th>
                     <th colspan="2">{% trans "Role in This Sign" %}</th>
                 </tr>
@@ -2307,7 +2789,7 @@ textarea:focus {
                 <tr>
                     <!-- Facility to delete this blend -->
                     {% if "change_dataset" in dataset_perms %}
-                     <td>
+                     <td style='width:2em;' class="morphology_delete_edit_only">
                         <span class='glyphicon glyphicon-trash blend-definition-delete' data-toggle='modal'
                               data-target='#delete_blend-definition_modal_{{blend.pk}}'></span>
 
@@ -2338,17 +2820,17 @@ textarea:focus {
 
                     </td>
                     {% else %}
-                    <td></td>
+                    <td style='width:2em;' class="morphology_delete_edit_only"></td>
                     {% endif %}
                     <td id='blend-definition_{{blend.pk}}'><a href='{% url "dictionary:admin_gloss_view" pk=blend.glosses.pk %}'>{{blend_display}}</a></td>
-                    <td class='edit edit_area' id='blend-definition-role_{{blend.pk}}'>{{blend.role}}</td>
+                    <td id='blend-definition-role_{{blend.pk}}'>{{blend.role}}</td>
                </tr>
                 {% endfor %}
             </table>
 
             <!-- Facilitate adding and deleting blends that are used in this sign -->
             {% if "change_dataset" in dataset_perms %}
-            <form name='add_blenddefinition_form' id='add_blenddefinition_form'
+            <form id='add_blenddefinition_form'
                   onsubmit='return validateForm("add_blenddefinition_form","blend_id","host_gloss_id",
                                                 "Please choose a gloss for Add Blend Morphology.",
                                                 "Blend gloss must be different from this gloss for Add Blend Morphology.")'
@@ -2357,12 +2839,16 @@ textarea:focus {
                <input type='hidden' name='host_gloss_id' value='{{gloss.pk}}'>
                <table class='table table-condensed'>
                    <tr>
-                       <td style="width:2em;"></td>
-                       <td class="td td-light" style="width:22em;">
-                           <input class='form-control form-control-light glosstypeahead glosstypeahead-light' placeholder='{% trans "Blend Gloss" %}' value="{{blendform.blend_id.value|default:''}}"/>
-                           <input type="hidden" name='blend_id' value=""/>
+                       <td style="width:2em;" class="morphology_delete_edit_only"></td>
+                       <td class="td td-light editform-morphology" style="width:22em;">
+                           <input class='form-control form-control-light glosstypeahead glosstypeahead-light' size="80"
+                                  placeholder='{% trans "Blend Gloss" %}' id="morpheme_blend" maxlength="80" type="text" autocomplete="off" >
+                           <input type="hidden" name='blend_id' id="morpheme_blend_id"
+                                  value="{{blendform.blend_id.value|default:''}}" >
                        </td>
-                       <td class="td td-light"><input class='form-control form-control-light' placeholder='{% trans "Role in This Sign" %}' name='role' value="{{blendform.role.value|default:''}}" required=""/></td>
+                       <td class="td td-light">
+                           <input class='form-control form-control-light' placeholder='{% trans "Role in This Sign" %}'
+                                  name='role' required="" value="{{blendform.role.value|default:''}}" type="text" ></td>
                        <td><input class='btn btn-primary' value='{% trans "Add Blend" %}' type='submit'></td>
                    </tr>
                </table>
@@ -2370,10 +2856,14 @@ textarea:focus {
                <div style='height: 10em'></div>
             </form>
             {% endif %}
-
+            </td>
+            </tr>
+        </table>
+        <br/><br/><br/>
         </div>
 
     </div>
+
     <!-- Phonology -->
 	<div class="panel panel-default panel-light">
         <div class='panel-heading panel-light' id='phonology_heading'
@@ -2386,236 +2876,648 @@ textarea:focus {
                 <span id='phonology_message'></span>
         </div>
         <div id='phonology' class='collapse'>
-            <table class='table table-condensed'>
-		    {% for value,name,label,kind in phonology_fields %}
-                {% if name == 'handedness' %}
-                    <tr class="empty_row">
-                        <th/><th style="width:500px;"></th><th>WD</th><th>WP</th>
-                    </tr>
-                    {% if value == '-' or value == ' ' or value == '' or value == None %}
-                    <tr class="empty_row">
-                        <th>{{label}}</th>
-                        <td class="edit edit_list" id='{{name}}'
-                            value='{{value}}' >{% value value %}</td>
-                        {% for value,name,label,kind in handedness_fields %}
-                            {% if name == 'weakdrop' %}
-                            <td class="edit edit_WD" id='{{name}}'
-                                value="{{value}}">{% if value == 'True' %}+WD{% elif value == 'None' %}&nbsp;{% else %}-WD{% endif %}</td>
-                            {% else %}
-                            <td class="edit edit_WP" id='{{name}}'
-                                value="{{value}}">{% if value == 'True' %}+WP{% elif value == 'None' %}&nbsp;{% else %}-WP{% endif %}</td>
-                            {% endif %}
-		                {% endfor %}
-                    </tr>
-                    {% else %}
-                    <tr >
-                        <th>{{label}}</th>
-                        <td class="edit edit_list" id='{{name}}'
-                            value='{{value}}' >{% value value %}</td>
-                        {% for value,name,label,kind in handedness_fields %}
-                            {% if name == 'weakdrop' %}
-                            <td class="edit edit_WD" id='{{name}}'
-                                value="{{value}}">{% if value == 'True' %}+WD{% elif value == 'None' %}&nbsp;{% else %}-WD{% endif %}</td>
-                            {% else %}
-                            <td class="edit edit_WP" id='{{name}}'
-                                value="{{value}}">{% if value == 'True' %}+WP{% elif value == 'None' %}&nbsp;{% else %}-WP{% endif %}</td>
-                            {% endif %}
-                        {% endfor %}
-                    </tr>
-                    {% endif %}
-                {% elif name == 'domhndsh' and SHOW_LETTER_NUMBER_PHONOLOGY %}
-                    <tr class="empty_row">
-                        <th/><th/><th>letter</th><th>number</th>
-                    </tr>
-                    {% if value == '-' or value == ' ' or value == '' or value == None %}
-                    <tr class="empty_row">
-                        <th>{{label}}</th>
-                        <td class="edit edit_list" id='{{name}}'
-                            value='{{value}}' >{% value value %}</td>
-                        {% for value,name,label,kind in etymology_fields_dom %}
-                            {% if name == 'domhndsh_letter' %}
-                            <td class="edit edit_letter" id='{{name}}'
-                                value="{{value}}">{% if value %}letter{% else %}&nbsp;{% endif %}</td>
-                            {% else %}
-                            <td class="edit edit_number" id='{{name}}'
-                                value="{{value}}">{% if value %}number{% else %}&nbsp;{% endif %}</td>
-                            {% endif %}
-		                {% endfor %}
-                    </tr>
-                    {% else %}
-                    <tr >
-                        <th>{{label}}</th>
-                        <td class="edit edit_list" id='{{name}}' value='{{value}}' >
-                            <a id="strong_hand_link" style="color: {% if StrongHand %}blue{% else %}red{% endif %}; display: visible;"
-                                            {% if StrongHand %}
-                                                href="{{PREFIX_URL}}/dictionary/handshape/{{StrongHand}}/"
-                                            {% endif %}>{{value}}</a>
-                        </td>
-                        {% for value,name,label,kind in etymology_fields_dom %}
-                            {% if name == 'domhndsh_letter' %}
-                            <td class="edit edit_letter" id='{{name}}'
-                                value="{{value}}">{% if value %}letter{% else %}&nbsp;{% endif %}</td>
-                            {% else %}
-                            <td class="edit edit_number" id='{{name}}'
-                                value="{{value}}">{% if value %}number{% else %}&nbsp;{% endif %}</td>
-                            {% endif %}
-                        {% endfor %}
-                    </tr>
-                    {% endif %}
-                {% elif name == 'subhndsh' and SHOW_LETTER_NUMBER_PHONOLOGY %}
-                    <tr class="empty_row">
-                        <th/><th/><th>letter</th><th>number</th>
-                    </tr>
-                    {% if value == '-' or value == ' ' or value == '' or value == None %}
-                    <tr class="empty_row">
-                        <th>{{label}}</th>
-                        <td class="edit edit_list" id='{{name}}'
-                            value='{{value}}' >{% value value %}</td>
-                        {% for value,name,label,kind in etymology_fields_sub %}
-                            {% if name == 'subhndsh_letter' %}
-                            <td class="edit edit_letter" id='{{name}}'
-                                value="{{value}}">{% if value %}letter{% else %}&nbsp;{% endif %}</td>
-                            {% else %}
-                            <td class="edit edit_number" id='{{name}}'
-                                value="{{value}}">{% if value %}number{% else %}&nbsp;{% endif %}</td>
-                            {% endif %}
-		                {% endfor %}
-                    </tr>
-                    {% else %}
-                    <tr >
-                        <th>{{label}}</th>
-                        <td class="edit edit_list" id='{{name}}' value='{{value}}' >
-                            <a id="weak_hand_link" style="color: inherit; display: visible;"
-                                {% if WeakHand %}
-                                    href="{{PREFIX_URL}}/dictionary/handshape/{{WeakHand}}/"
-                                {% endif %}>{{value}}</a>
-                        </td>
-                        {% for value,name,label,kind in etymology_fields_sub %}
-                            {% if name == 'subhndsh_letter' %}
-                            <td class="edit edit_letter" id='{{name}}'
-                                value="{{value}}">{% if value %}letter{% else %}&nbsp;{% endif %}</td>
-                            {% else %}
-                            <td class="edit edit_number" id='{{name}}'
-                                value="{{value}}">{% if value %}number{% else %}&nbsp;{% endif %}</td>
-                            {% endif %}
-                        {% endfor %}
-                    </tr>
-                    {% endif %}
-                {% elif kind == 'text' %}
-                <tr {% if value == '-' or value == ' ' or value == '' or value == None or value == False or value == '------' %} class="empty_row"{% endif %}>
-                    <th>{{label}}</th>
-                    <td class="edit edit_area" id='{{name}}' value='{{value}}' colspan="2">{% value value %}</td>
-                </tr>
-                {% else %}
-                {% if value == '-' or value == ' ' or value == '' or value == None or value == False or value == '------' %}
-                <tr class="empty_row">
-                {% else %}
-                <tr>
-                {% endif %}
-                    <th>{{label}}</th>
-                    {% if kind == "check" %}
-                    <td class="edit edit_check"
-                        id='{{name}}' value='{{value}}' >{% if value %}{% trans "Yes" %}{% else %}{% trans "No" %}{% endif %}</td>
-                    {% else %}
-                    <td class="edit edit_{{kind}}" data-value=""
-                        id='{{name}}' value='{{value}}' >{% value value %}</td>
-                    {% endif %}
-                    <td></td>
-                </tr>
-                {% endif %}
-		    {% endfor %}
+            <div class='pull-right' style="margin-right:15px;margin-top:20px;">
+                 {% if perms.dictionary.change_gloss %}
+                 <div>
+                    {% csrf_token %}
+                    <button type="button" class="btn btn-danger edit-cancel button-phonology-to-appear-in-edit-mode"
+                            style="width:auto;padding:3px 12px;"
+                            onclick='location.href="{{PREFIX_URL}}/dictionary/gloss/{{gloss.id}}"'
+                            >{% trans "Cancel" %}</button>
+                    <button type="button" class="btn btn-danger quick_save button-phonology-to-appear-in-edit-mode"
+                            style="width:auto;padding:3px 12px;" value="{{gloss.id}}"
+                            >{% trans "Save Phonology" %}</button>
+                    <button id='enable_edit_phonology'
+                             class='btn btn-primary navbar-btn edit-mode'
+                             style="width:auto;padding:3px 12px;">{% trans "Edit Phonology" %}</button>
+                 </div>
+                 {% endif %}
+            </div>
 
+        <table class='table table-condensed table-condensed-light phonology-table'>
+            {% csrf_token %}
+            {% with show_field_row|get_item:"handedness" as show_field %}
+            {% if not show_field %}
+            <tr class="empty_row_phonology">
+            {% else %}
+            <tr>
+            {% endif %}
+            {% endwith %}
+                <th style="width:240px;">{% trans "Handedness" %}</th>
+                {% with phonologyform.fields|get_item:'handedness' as handedness_field %}
+                {% with phonologyform.fields|get_item:'weakdrop' as weakdrop_field %}
+                {% with phonologyform.fields|get_item:'weakprop' as weakprop_field %}
+                <td class="editform-phonology" style="width:auto;">
+                    <div style="display:table-cell;" id="handedness_cell">
+                    <input class='form-control form-control-light handednesstypeahead' type="text"
+                           id="handedness_lookahead" data-category="phonology" value="{{handedness_field.initial}}"
+                           placeholder="{{handedness_field.initial}}" autocomplete="off" >
+                    <input type="hidden" name="handedness" value=""
+                           id="handedness_machine_value" >
+                    </div>
+                    <div class="editselect" style="display:table-cell;">
+                    <select class="select_weakdrop form-control form-control-light" name="weakdrop"
+                            id="weakdrop_select_value" data-category="phonology">
+                        {% for value, opn in weakdrop_field.choices %}
+                        {% if value == weakdrop_field.initial %}
+                        <option value={{value}} selected="selected">{{opn}}</option>
+                        {% else %}
+                        <option value={{value}}>{{opn}}</option>
+                        {% endif %}
+                        {% endfor %}
+                    </select>
+                    </div>
+                    <div class="editselect" style="display:table-cell;padding-left:0px;">
+                    <select class="select_weakprop form-control form-control-light" name="weakprop"
+                            id="weakprop_select_value" data-category="phonology">
+                        {% for value, opn in weakprop_field.choices %}
+                        {% if value == weakprop_field.initial %}
+                        <option value={{value}} selected="selected">{{opn}}</option>
+                        {% else %}
+                        <option value={{value}}>{{opn}}</option>
+                        {% endif %}
+                        {% endfor %}
+                    </select>
+                    </div>
+                </td>
+                {% endwith %}
+                {% endwith %}
+                {% endwith %}
+            </tr>
+            {% with show_field_row|get_item:"domhndsh" as show_field %}
+            {% if not show_field %}
+            <tr class="empty_row_phonology">
+            {% else %}
+            <tr>
+            {% endif %}
+            {% endwith %}
+                <th style="width:240px;">{% trans "Strong Hand" %}</th>
+                {% with phonologyform.fields|get_item:'domhndsh' as domhndsh_field %}
+                {% with phonologyform.fields|get_item:'domhndsh_letter_or_number' as domhndsh_letter_or_number_field %}
+                <td class="editform-phonology">
+                    <div style="display:table-cell;" id="domhndsh_cell">
+                    <input class='form-control form-control-light domhndshtypeahead' type="text" size="40"
+                           placeholder="{{domhndsh_field.initial}}" id="domhndsh_lookahead" value="{{domhndsh_field.initial}}"
+                           data-category="phonology" autocomplete="off" >
+                    <input type="hidden" name="domhndsh" value=""
+                           id="domhndsh_machine_value" >
+                    </div>
+                    <div class="editselect" style="display:table-cell;">
+                    <select class="select_domhndsh_letter_or_number form-control form-control-light" name="domhndsh_letter_or_number"
+                            id="domhndsh_letter_or_number_select_value" data-category="phonology">
+                        {% for value, opn in domhndsh_letter_or_number_field.choices %}
+                        {% if opn == domhndsh_letter_or_number_field.initial %}
+                        <option value={{value}} selected="selected">{{opn}}</option>
+                        {% else %}
+                        <option value={{value}}>{{opn}}</option>
+                        {% endif %}
+                        {% endfor %}
+                    </select>
+                    </div>
+                </td>
+                {% endwith %}
+                {% endwith %}
+            </tr>
+            {% with show_field_row|get_item:"subhndsh" as show_field %}
+            {% if not show_field %}
+            <tr class="empty_row_phonology">
+            {% else %}
+            <tr>
+            {% endif %}
+            {% endwith %}
+                <th style="width:240px;">{% trans "Weak Hand" %}</th>
+                {% with phonologyform.fields|get_item:'subhndsh' as subhndsh_field %}
+                {% with phonologyform.fields|get_item:'subhndsh_letter_or_number' as subhndsh_letter_or_number_field %}
+                <td class="editform-phonology">
+                    <div style="display:table-cell;" id="subhndsh_cell" >
+                    <input class='form-control form-control-light subhndshtypeahead' type="text" size="40" placeholder="{{subhndsh_field.initial}}"
+                           id="subhndsh_lookahead" value="{{subhndsh_field.initial}}"
+                           data-category="phonology" autocomplete="off" >
+                    <input type="hidden" name="subhndsh" value=""
+                           id="subhndsh_machine_value" >
+                    </div>
+                    <div class="editselect" style="display:table-cell;">
+                    <select class="select_subhndsh_letter_or_number form-control form-control-light" name="subhndsh_letter_or_number"
+                            id="subhndsh_letter_or_number_select_value" data-category="phonology">
+                        {% for value, opn in subhndsh_letter_or_number_field.choices %}
+                        {% if opn == subhndsh_letter_or_number_field.initial %}
+                        <option value={{value}} selected="selected">{{opn}}</option>
+                        {% else %}
+                        <option value={{value}}>{{opn}}</option>
+                        {% endif %}
+                        {% endfor %}
+                    </select>
+                    </div>
+                </td>
+                {% endwith %}
+                {% endwith %}
+            </tr>
+            {% with show_field_row|get_item:"handCh" as show_field %}
+            {% if not show_field %}
+            <tr class="empty_row_phonology">
+            {% else %}
+            <tr>
+            {% endif %}
+            {% endwith %}
+                <th style="width:240px;">{% trans "Handshape Change" %}</th>
+                {% with phonologyform.fields|get_item:'handCh' as handCh_field %}
+                <td class="editform-phonology" style="width:auto;">
+                    <div>
+                    <input class='form-control form-control-light handChtypeahead' type="text" size="40"
+                           placeholder="{{handCh_field.initial}}" id="handCh_lookahead" value="{{handCh_field.initial}}"
+                           data-category="phonology" autocomplete="off">
+                    <input type="hidden" name="handCh" value=""
+                           id="handCh_machine_value" >
+                    </div>
+                </td>
+                {% endwith %}
+            </tr>
+            {% with show_field_row|get_item:"relatArtic" as show_field %}
+            {% if not show_field %}
+            <tr class="empty_row_phonology">
+            {% else %}
+            <tr>
+            {% endif %}
+            {% endwith %}
+                <th style="width:240px;">{% trans "Relation between Articulators" %}</th>
+                {% with phonologyform.fields|get_item:'relatArtic' as relatArtic_field %}
+                <td class="editform-phonology">
+                    <div>
+                    <input class='form-control form-control-light relatArtictypeahead' type="text" size="40"
+                           placeholder="{{relatArtic_field.initial}}" id="relatArtic_lookahead" value="{{relatArtic_field.initial}}"
+                           data-category="phonology" autocomplete="off" >
+                    <input type="hidden" name="relatArtic" value=""
+                           id="relatArtic_machine_value" >
+                    </div>
+                </td>
+                {% endwith %}
+            </tr>
+            {% with show_field_row|get_item:"locprim" as show_field %}
+            {% if not show_field %}
+            <tr class="empty_row_phonology">
+            {% else %}
+            <tr>
+            {% endif %}
+            {% endwith %}
+                <th style="width:240px;">{% trans "Location" %}</th>
+                {% with phonologyform.fields|get_item:'locprim' as locprim_field %}
+                <td class="editform-phonology">
+                    <div>
+                    <input class='form-control form-control-light locprimtypeahead' type="text" size="40"
+                           placeholder="{{locprim_field.initial}}" id="locprim_lookahead" value="{{locprim_field.initial}}"
+                           data-category="phonology" autocomplete="off" >
+                    <input type="hidden" name="locprim" value=""
+                           id="locprim_machine_value" >
+                    </div>
+                </td>
+                {% endwith %}
+            </tr>
+            {% with show_field_row|get_item:"contType" as show_field %}
+            {% if not show_field %}
+            <tr class="empty_row_phonology">
+            {% else %}
+            <tr>
+            {% endif %}
+            {% endwith %}
+                <th style="width:240px;">{% trans "Contact Type" %}</th>
+                {% with phonologyform.fields|get_item:'contType' as contType_field %}
+                <td class="editform-phonology">
+                    <div>
+                    <input class='form-control form-control-light contTypetypeahead' type="text" size="40"
+                           placeholder="{{contType_field.initial}}" id="contType_lookahead" value="{{contType_field.initial}}"
+                           data-category="phonology" autocomplete="off" >
+                    <input type="hidden" name="contType" value=""
+                           id="contType_machine_value" >
+                    </div>
+                </td>
+                {% endwith %}
+            </tr>
+            {% with show_field_row|get_item:"movSh" as show_field %}
+            {% if not show_field %}
+            <tr class="empty_row_phonology">
+            {% else %}
+            <tr>
+            {% endif %}
+            {% endwith %}
+                <th style="width:240px;">{% trans "Movement Shape" %}</th>
+                {% with phonologyform.fields|get_item:'movSh' as movSh_field %}
+                <td class="editform-phonology">
+                    <div>
+                    <input class='form-control form-control-light movShtypeahead' type="text" size="40"
+                           placeholder="{{movSh_field.initial}}" id="movSh_lookahead" value="{{movSh_field.initial}}"
+                           data-category="phonology" autocomplete="off" >
+                    <input type="hidden" name="movSh" value=""
+                           id="movSh_machine_value" >
+                    </div>
+                </td>
+                {% endwith %}
+            </tr>
+            {% with show_field_row|get_item:"movDir" as show_field %}
+            {% if not show_field %}
+            <tr class="empty_row_phonology">
+            {% else %}
+            <tr>
+            {% endif %}
+            {% endwith %}
+                <th style="width:240px;">{% trans "Movement Direction" %}</th>
+                {% with phonologyform.fields|get_item:'movDir' as movDir_field %}
+                <td class="editform-phonology">
+                    <div>
+                    <input class='form-control form-control-light movDirtypeahead' type="text" size="40"
+                           placeholder="{{movDir_field.initial}}" id="movDir_lookahead" value="{{movDir_field.initial}}"
+                           data-category="phonology" autocomplete="off" >
+                    <input type="hidden" name="movDir" value=""
+                           id="movDir_machine_value" >
+                    </div>
+                </td>
+                {% endwith %}
+            </tr>
+
+
+            {% with show_field_row|get_item:"repeat" as show_field %}
+            {% if not show_field %}
+            <tr class="empty_row_phonology">
+            {% else %}
+            <tr>
+            {% endif %}
+            {% endwith %}
+                <th style="width:240px;">{% trans "Repeating Movement" %}</th>
+                {% with phonologyform.fields|get_item:'repeat' as repeat_field %}
+                <td class="editform-phonology">
+                    <div class="editselect">
+                    <select class="select_repeat form-control form-control-light" name="repeat"
+                            id="repeat_select_value" data-category="phonology">
+                        {% for value, opn in repeat_field.choices %}
+                        {% if opn == repeat_field.initial %}
+                        <option value={{value}} selected="selected">{{opn}}</option>
+                        {% else %}
+                        <option value={{value}}>{{opn}}</option>
+                        {% endif %}
+                        {% endfor %}
+                    </select>
+                    </div>
+                </td>
+                {% endwith %}
+            </tr>
+
+            {% with show_field_row|get_item:"altern" as show_field %}
+            {% if not show_field %}
+            <tr class="empty_row_phonology">
+            {% else %}
+            <tr>
+            {% endif %}
+            {% endwith %}
+                <th style="width:240px;">{% trans "Alternating Movement" %}</th>
+                {% with phonologyform.fields|get_item:'altern' as altern_field %}
+                <td class="editform-phonology">
+                    <div class="editselect">
+                    <select class="select_altern form-control form-control-light" name="altern"
+                            id="altern_select_value" data-category="phonology">
+                        {% for value, opn in altern_field.choices %}
+                        {% if opn == altern_field.initial %}
+                        <option value={{value}} selected="selected">{{opn}}</option>
+                        {% else %}
+                        <option value={{value}}>{{opn}}</option>
+                        {% endif %}
+                        {% endfor %}
+                    </select>
+                    </div>
+                </td>
+                {% endwith %}
+            </tr>
+            {% with show_field_row|get_item:"relOriMov" as show_field %}
+            {% if not show_field %}
+            <tr class="empty_row_phonology">
+            {% else %}
+            <tr>
+            {% endif %}
+            {% endwith %}
+                <th style="width:240px;">{% trans "Relative Orientation: Movement" %}</th>
+                {% with phonologyform.fields|get_item:'relOriMov' as relOriMov_field %}
+                <td class="editform-phonology">
+                    <div>
+                    <input class='form-control form-control-light relOriMovtypeahead' type="text" size="40"
+                           placeholder="{{relOriMov_field.initial}}" id="relOriMov_lookahead" value="{{relOriMov_field.initial}}"
+                           data-category="phonology" autocomplete="off" >
+                    <input type="hidden" name="relOriMov" value=""
+                           id="relOriMov_machine_value" >
+                    </div>
+                </td>
+                {% endwith %}
+            </tr>
+
+            {% with show_field_row|get_item:"relOriLoc" as show_field %}
+            {% if not show_field %}
+            <tr class="empty_row_phonology">
+            {% else %}
+            <tr>
+            {% endif %}
+            {% endwith %}
+                <th style="width:240px;">{% trans "Relative Orientation: Location" %}</th>
+                {% with phonologyform.fields|get_item:'relOriLoc' as relOriLoc_field %}
+                <td class="editform-phonology">
+                    <div>
+                    <input class='form-control form-control-light relOriLoctypeahead' type="text" size="40"
+                           placeholder="{{relOriLoc_field.initial}}" id="relOriLoc_lookahead" value="{{relOriLoc_field.initial}}"
+                           data-category="phonology" autocomplete="off" >
+                    <input type="hidden" name="relOriLoc" value=""
+                           id="relOriLoc_machine_value" >
+                    </div>
+                </td>
+                {% endwith %}
+            </tr>
+            {% with show_field_row|get_item:"oriCh" as show_field %}
+            {% if not show_field %}
+            <tr class="empty_row_phonology">
+            {% else %}
+            <tr>
+            {% endif %}
+            {% endwith %}
+                <th style="width:240px;">{% trans "Orientation Change" %}</th>
+                {% with phonologyform.fields|get_item:'oriCh' as oriCh_field %}
+                <td class="editform-phonology">
+                    <div>
+                    <input class='form-control form-control-light oriChtypeahead' type="text" size="40"
+                           placeholder="{{oriCh_field.initial}}" id="oriCh_lookahead" value="{{oriCh_field.initial}}"
+                           data-category="phonology" autocomplete="off" >
+                    <input type="hidden" name="oriCh" value=""
+                           id="oriCh_machine_value" >
+                    </div>
+                </td>
+                {% endwith %}
+            </tr>
+            {% with show_field_row|get_item:"locVirtObj" as show_field %}
+            {% if not show_field %}
+            <tr class="empty_row_phonology">
+            {% else %}
+            <tr>
+            {% endif %}
+            {% endwith %}
+                <th style="width:auto;">{% trans "Virtual Object" %}</th>
+                {% with phonologyform.fields|get_item:'locVirtObj' as locVirtObj_field %}
+                <td class="editform-phonology" style="width:auto;">
+                    <div>
+                    <input class='form-control form-control-light' type="text" name="locVirtObj"
+                           value="{{locVirtObj_field.initial}}" size="50"
+                           id="locVirtObj_text" data-category="phonology">
+                    </div>
+                </td>
+                {% endwith %}
+            </tr>
+            {% with show_field_row|get_item:"phonOth" as show_field %}
+            {% if not show_field %}
+            <tr class="empty_row_phonology">
+            {% else %}
+            <tr>
+            {% endif %}
+            {% endwith %}
+                <th style="width:auto;">{% trans "Phonology Other" %}</th>
+                {% with phonologyform.fields|get_item:'phonOth' as phonOth_field %}
+                <td class="editform-phonology" style="width:auto;">
+                    <div>
+                    <input class='form-control form-control-light' type="text" name="phonOth"
+                           value="{{phonOth_field.initial}}"
+                           id="phonOth_text" data-category="phonology">
+                    </div>
+                </td>
+                {% endwith %}
+            </tr>
+            {% with show_field_row|get_item:"mouthG" as show_field %}
+            {% if not show_field %}
+            <tr class="empty_row_phonology">
+            {% else %}
+            <tr>
+            {% endif %}
+            {% endwith %}
+                <th style="width:auto;">{% trans "Mouth Gesture" %}</th>
+                {% with phonologyform.fields|get_item:'mouthG' as mouthG_field %}
+                <td class="editform-phonology" style="width:auto;">
+                    <div>
+                    <input class='form-control form-control-light' type="text" name="mouthG"
+                           value="{{mouthG_field.initial}}" size="50"
+                           id="mouthG_text" data-category="phonology">
+                    </div>
+                </td>
+                {% endwith %}
+            </tr>
+            {% with show_field_row|get_item:"mouthing" as show_field %}
+            {% if not show_field %}
+            <tr class="empty_row_phonology">
+            {% else %}
+            <tr>
+            {% endif %}
+            {% endwith %}
+                <th style="width:auto;">{% trans "Mouthing" %}</th>
+                {% with phonologyform.fields|get_item:'mouthing' as mouthing_field %}
+                <td class="editform-phonology" style="width:auto;">
+                    <div>
+                    <input class='form-control form-control-light' type="text" name="mouthing"
+                           value="{{mouthing_field.initial}}" size="50"
+                           id="mouthing_text" data-category="phonology">
+                    </div>
+                </td>
+                {% endwith %}
+            </tr>
+            {% with show_field_row|get_item:"phonetVar" as show_field %}
+            {% if not show_field %}
+            <tr class="empty_row_phonology">
+            {% else %}
+            <tr>
+            {% endif %}
+            {% endwith %}
+                <th style="width:auto;">{% trans "Phonetic Variation" %}</th>
+                {% with phonologyform.fields|get_item:'phonetVar' as phonetVar_field %}
+                <td class="editform-phonology" style="width:auto;">
+                    <div>
+                    <input class='form-control form-control-light' type="text" name="phonetVar"
+                           value="{{phonetVar_field.initial}}" size="50"
+                           id="phonetVar_text" data-category="phonology">
+                    </div>
+                    <div class="edit_only_phonology">
+                        <br><br><br><br><br><br><br>
+                    </div>
+                </td>
+                {% endwith %}
+            </tr>
             </table>
-            <br><br><br>
         </div>
     </div>
 
- {% if homonyms_but_not_saved and perms.dictionary.change_gloss %}
-  <div class="panel panel-default panel-light">
-        <div class='panel-heading panel-light' data-toggle='collapse'
-             data-target='#identicalphonology'>{% trans "Identical Phonology" %}
-        </div>
-        <div id='identicalphonology' class='collapse'>
-            <table class='table table-condensed' style="padding-left: 20px;">
-               <tr>
-                   <th style="width:auto; padding-left: 25px;">{% trans "Annotation ID Gloss" %}</th>
-               </tr>
-                {% for gl, homo_display in homonyms_but_not_saved %}
-                <tr><td><a style="padding-left: 20px;" href='{% url "dictionary:admin_gloss_view" pk=gl.id %}'>{{homo_display}}</a></td></tr>
-                {% endfor %}
-            </table>
-        </div>
-  </div>
- {% endif %}
-<div class="panel panel-default panel-light">
-        <div class='panel-heading panel-light' data-toggle='collapse'
-             data-target='#minimalpairs'>{% trans "Minimal Pairs" %}
-        </div>
-        <div id='minimalpairs' class='collapse'>
-            <table class='table table-condensed' id="header_mp_rows">
+    <div class="panel panel-default panel-light">
+            <div class='panel-heading panel-light' data-toggle='collapse'
+                 data-target='#minimalpairs'>{% trans "Minimal Pairs" %}
+            </div>
+            <div id='minimalpairs' class='collapse'>
+                <div>
+                <table class='table table-condensed' id="header_mp_rows" style="margin-top:10px;table-layout:fixed;width:100%;">
 
-            {% if minimalpairs %}
-               <tr>
-                   <th style="width:auto; padding:0px 0px;">{% trans "Annotation ID Gloss" %}</th>
-                   <th style="width:auto; padding:0px 0px;">{% trans "Field Name" %}</th>
-                   <th style="width:auto; padding:0px 0px;">{% trans "Source Sign Value" %}</th>
-                   <th style="width:auto; padding:0px 0px;">{% trans "Contrasting Sign Value" %}</th>
-                </tr>
-            {% endif %}
-            </table>
-        </div>
-</div>
+                {% if minimalpairs %}
+                   <tr>
+                       <th style="width:auto; padding:0px 0px;">{% trans "Annotation ID Gloss" %}</th>
+                       <th style="width:auto; padding:0px 0px;">{% trans "Field Name" %}</th>
+                       <th style="width:auto; padding:0px 0px;">{% trans "Source Sign Value" %}</th>
+                       <th style="width:auto; padding:0px 0px;">{% trans "Contrasting Sign Value" %}</th>
+                    </tr>
+                {% endif %}
+                </table>
+                </div>
+            </div>
+    </div>
 
     <!-- Semantics -->
     <div class="panel panel-default panel-light">
         <div class='panel-heading panel-light' data-toggle='collapse' data-target='#semantics'>{% trans "Semantics" %}
-                    {% if SemanticFieldDefined %}
-                    <div class="pull-right">
-                    <span id="semantics-icon"><img id='ball' src='{{STATIC_URL}}images/black_circle.png'
-                                                   style="width:15px; height:15px; margin: 0px;"></span>
-                    </div>
-                    {% endif %}
         </div>
         <div id='semantics' class='collapse'>
-            <table class='table table-condensed'>
-                <tr {%if not gloss_semanticfields %} class="empty_row"{% endif %}>
-                    <th>{% trans "Semantic Field" %}</th>
-                    <td class='edit edit_semanticfield' style="width:500px;"
-                        id='semanticfield'>{% for sf in gloss_semanticfields %}{{sf}}{% if not forloop.last %}, {% endif %}{% endfor %}</td>
-                    <td/>
-                </tr>
-                {% if USE_DERIVATIONHISTORY %}
-                <tr {% if not gloss_derivationhistory %} class="empty_row" {% endif %} />
-                    <th>{% trans "Derivation History" %}</th>
-                    <td class='edit edit_derivationhistory' style="width:500px;"
-                        id='derivationhistory'>{% for sf in gloss_derivationhistory %}{{sf}}{% if not forloop.last %}, {% endif %}{% endfor %} </td>
-                    <td/>
-                </tr>
-                {% endif %}
-		    {% for value,name,label,kind in semantics_fields %}
-	            <tr {% if value == '-' or value == ' ' or value == '' or value == None or value == False %} class="empty_row"{% endif %} />
-                    <th>
-                    {% if name == 'concConcSet' %}
-                        <a target="_blank" href="https://concepticon.clld.org">{{label}}</a>
-                    {% else %}
-                        {{label}}
-                    {% endif %}
-                    </th>
-                    {% if kind == 'text' %}
-                    <td class="edit edit_area" id='{{name}}' style="width:500px;" value='{{value}}'
-                             colspan="2">{% value value %}</td>
-                    <td/>
-                    {% else %}
-                    <td class="edit edit_{{kind}}" id='{{name}}' style="width:500px;"
-                        value='{{value}}'>{% value value %}</td>
-                    <td/>
-                    {% endif %}
+            <div class='pull-right' style="margin-right:5px;margin-top:20px;margin-bottom:30px;">
+             {% if perms.dictionary.change_gloss %}
+             <div>
+                {% csrf_token %}
+                <button type="button" class="btn btn-danger edit-cancel button-semantics-to-appear-in-edit-mode"
+                        style="width:auto;padding:3px 12px;"
+                        onclick='location.href="{{PREFIX_URL}}/dictionary/gloss/{{gloss.id}}"'
+                        >{% trans "Cancel" %}</button>
+                <button type="button" class="btn btn-danger quick_save button-semantics-to-appear-in-edit-mode"
+                        style="width:auto;padding:3px 12px;" value="{{gloss.id}}"
+                        >{% trans "Save Semantics" %}</button>
+                <button id='enable_edit_semantics'
+                         class='btn btn-primary navbar-btn edit-mode'
+                         style="width:auto;padding:3px 12px;">{% trans "Edit Semantics" %}</button>
+             </div>
+             {% endif %}
+            </div>
 
-                </tr>
-            {% endfor %}
-            
+            <table class='table table-condensed table-condensed-light semantics-table'>
+            {% csrf_token %}
+            {% with show_field_row|get_item:"semField" as show_field %}
+            {% if not show_field %}
+            <tr class="empty_row_semantics">
+            {% else %}
+            <tr>
+            {% endif %}
+            {% endwith %}
+                <th style="width:240px;">{% trans "Semantic Field" %}</th>
+                {% with semanticsform.fields|get_item:'semField' as semField_field %}
+                <td style="width:auto;" id="semField_value">
+                    {% for semfield in gloss.semField.all %}
+                    <button class="actionButton">{{semfield.name}}</button>
+                    {% endfor %}
+                </td>
+                <td class="editsemanticsform">
+                    <div>
+                    <input class='form-control form-control-light semFieldtypeahead' type="text" size="60"
+                           id="semField_multiselect" data-category="semantics" autocomplete="off" >
+                    </div>
+                </td>
+                <td id="semField_hidden_input_values">
+                </td>
+                {% endwith %}
+            </tr>
+            {% with show_field_row|get_item:"derivHist" as show_field %}
+            {% if not show_field %}
+            <tr class="empty_row_semantics">
+            {% else %}
+            <tr>
+            {% endif %}
+            {% endwith %}
+                <th style="width:240px;">{% trans "Derivation history" %}</th>
+                {% with semanticsform.fields|get_item:'derivHist' as derivHist_field %}
+                <td style="width:auto;" id="derivHist_value">
+                    {% for derivHist in gloss.derivHist.all %}
+                    <button class="actionButton">{{derivHist.name}}</button>
+                    {% endfor %}
+                </td>
+                <td class="editsemanticsform">
+                    <div>
+                    <input class='form-control form-control-light derivHisttypeahead' type="text" size="60"
+                           id="derivHist_multiselect" data-category="semantics" autocomplete="off" >
+                    </div>
+                </td>
+                <td id="derivHist_hidden_input_values">
+
+                </td>
+                {% endwith %}
+            </tr>
+            {% with show_field_row|get_item:"namEnt" as show_field %}
+            {% if not show_field %}
+            <tr class="empty_row_semantics">
+            {% else %}
+            <tr>
+            {% endif %}
+            {% endwith %}
+                <th style="width:240px;">{% trans "Named Entity" %}</th>
+                {% with semanticsform.fields|get_item:'namEnt' as namEnt_field %}
+                <td class="editform-semantics">
+                    <div>
+                    <input class='form-control form-control-light namEnttypeahead' type="text" size="40"
+                           placeholder="{{namEnt_field.initial}}" id="namEnt_lookahead" value="{{namEnt_field.initial}}"
+                           data-category="semantics" autocomplete="off" >
+                    <input type="hidden" name="namEnt" value=""
+                           id="namEnt_machine_value" >
+                    </div>
+                </td>
+                {% endwith %}
+            </tr>
+            {% with show_field_row|get_item:"valence" as show_field %}
+            {% if not show_field %}
+            <tr class="empty_row_semantics">
+            {% else %}
+            <tr>
+            {% endif %}
+            {% endwith %}
+                <th style="width:240px;">{% trans "Valence" %}</th>
+                {% with semanticsform.fields|get_item:'valence' as valence_field %}
+                <td class="editform-semantics">
+                    <div>
+                    <input class='form-control form-control-light valencetypeahead' type="text" size="40"
+                           placeholder="{{valence_field.initial}}" id="valence_lookahead" value="{{valence_field.initial}}"
+                           data-category="semantics" autocomplete="off" >
+                    <input type="hidden" name="valence" value=""
+                           id="valence_machine_value" >
+                    </div>
+                </td>
+                {% endwith %}
+            </tr>
+            {% with show_field_row|get_item:"iconImg" as show_field %}
+            {% if not show_field %}
+            <tr class="empty_row_semantics">
+            {% else %}
+            <tr>
+            {% endif %}
+            {% endwith %}
+                <th style="width:auto;">{% trans "Iconic Image" %}</th>
+                {% with semanticsform.fields|get_item:'iconImg' as iconImg_field %}
+                <td class="editform-semantics" style="width:auto;">
+                    <div>
+                    <input class='form-control form-control-light' type="text" name="iconImg"
+                           value="{{iconImg_field.initial}}" size="50"
+                           id="iconImg_text" data-category="semantics">
+                    </div>
+                </td>
+                {% endwith %}
+            </tr>
+            {% with show_field_row|get_item:"concConcSet" as show_field %}
+            {% if not show_field %}
+            <tr class="empty_row_semantics">
+            {% else %}
+            <tr>
+            {% endif %}
+            {% endwith %}
+                <th style="width:auto;"><a target="_blank" href="https://concepticon.clld.org">{% trans "Concepticon Concept Set" %}</a></th>
+                {% with semanticsform.fields|get_item:'concConcSet' as concConcSet_field %}
+                <td class="editform-semantics" style="width:auto;">
+                    <div>
+                    <input class='form-control form-control-light' type="text" name="concConcSet"
+                           value="{{concConcSet_field.initial}}"
+                           id="concConcSet_text" data-category="semantics">
+                    </div>
+                    <div class="edit_only_semantics">
+                        <br><br><br><br><br><br><br><br><br><br><br><br><br><br>
+                    </div>
+                </td>
+                {% endwith %}
+            </tr>
             </table>
-            <br><br><br>
         </div>
     </div>
 
@@ -2631,13 +3533,24 @@ textarea:focus {
                     {% endif %}
         </div>
         <div id='relations' class='collapse'>
-
+            <div class='pull-right' style="margin-right:15px;margin-top:20px;">
+                 {% if perms.dictionary.change_gloss %}
+                 <div>
+                    {% csrf_token %}
+                    <button type="button" class="btn btn-danger relation-edit-dismiss button-relations-to-appear-in-edit-mode"
+                            style="width:auto;padding:3px 12px;">{% trans "Dismiss" %}</button>
+                    <button id='enable_edit_relations'
+                             class='btn btn-primary navbar-btn edit-mode'
+                             style="width:auto;padding:3px 12px;">{% trans "Edit Relations" %}</button>
+                 </div>
+                 {% endif %}
+            </div>
            <table class='table table-condensed' style="z-index:1000;">
                {% for seen, rel, target_display in otherrelations %}
                <tr id='row_{{rel.id}}'>
                {% if "change_dataset" in dataset_perms %}
 
-                     <td style='width:2em;'>
+                     <td style='width:2em;' class="relation_delete_edit_only">
                         <span class='glyphicon glyphicon-trash relation_delete' data-toggle='modal' data-target='#delete_relation_modal_{{rel.id}}'></span>
 
                          <div class="modal fade" id="delete_relation_modal_{{rel.id}}" role="dialog" aria-labelledby="#modalTitleRel" aria-hidden="true">
@@ -2665,7 +3578,7 @@ textarea:focus {
 
                     </td>
                {% else %}
-                    <td></td>
+                    <td class="relation_delete_edit_only"></td>
                {% endif %}
                     <td class="td td-light" id='relationrole_{{rel.id}}'>{{rel.get_role_display}}</td>
                     <td class="td td-light" id='relationtarget_{{rel.id}}'>
@@ -2678,7 +3591,7 @@ textarea:focus {
            </table>
 
            {% if "change_dataset" in dataset_perms %}
-           <form name='add_relation_form' id='add_relation_form'
+           <form id='add_relation_form'
                  onsubmit='return validateForm("add_relation_form","targetid","sourceid",
                                                 "Please choose a target gloss for Add Relation to Other Sign.",
                                                 "Target gloss must be different from this gloss for Add Relation to Other Sign.")'
@@ -2689,9 +3602,9 @@ textarea:focus {
                    <tr>
                        <td class="td td-light">{{relationform.role_fk}}</td>
                        <td class="td td-light">
-                           <input class='form-control form-control-light glosstypeahead glosstypeahead-light'
-                                  placeholder='{% trans "Annotation ID Gloss" %}'/>
-                           <input type="hidden" name="targetid" value=""/>
+                           <input class='form-control form-control-light glosstypeahead glosstypeahead-light' size="80"
+                                  placeholder='{% trans "Annotation ID Gloss" %}' id="relation_target" maxlength="80" autocomplete="off" >
+                           <input type="hidden" name="targetid" value="" id="relation_target_id" >
                        </td>
                        <td><input class='btn btn-primary' value='Add Relation' type='submit'></td>
                    </tr>
@@ -2704,10 +3617,10 @@ textarea:focus {
         </div>
     </div>
 
-    <!-- Relations to foreign signs -->
+<!-- Relations to foreign signs -->
     <div class="panel panel-default panel-light">
         <div class='panel-heading panel-light' data-toggle='collapse'
-             data-target='#relationsforeign'>{% trans "Relations to Foreign Signs" %}
+             data-target='#foreignrelations'>{% trans "Relations to Foreign Signs" %}
                     {% if gloss.relationtoforeignsign_set.all %}
                     <div class="pull-right">
                     <span id="forrelations-icon"><img id='forrelations-arrows'
@@ -2716,19 +3629,37 @@ textarea:focus {
                     </div>
                     {% endif %}
         </div>
-        <div id='relationsforeign' class='collapse'>
-               <table class='table table-condensed'>
-	                <tr>
-                        <th style='width:1em'></th>
-                        <th style='width:3em'>{% trans "Loan" %}</th>
-		                <th style='width:10em'>{% trans "Related Language" %}</th>
-		                <th style='width:15em'>{% trans "Gloss in Related Language" %}</th>
-		            </tr>
-                   {% for rel in gloss.relationtoforeignsign_set.all %}
-                    <tr id='foreign_{{rel.id}}'>
-                    {% if "change_dataset" in dataset_perms %}
+        <div id='foreignrelations' class='collapse'>
+                <div class='pull-right' style="margin-right:15px;margin-top:20px;margin-bottom:20px;">
+                     {% if perms.dictionary.change_gloss %}
+                     <div>
+                        {% csrf_token %}
+                        <button type="button" class="btn btn-danger foreignrelations-edit-dismiss button-foreignrelations-to-appear-in-edit-mode"
+                                style="width:auto;padding:3px 12px;">{% trans "Dismiss" %}</button>
+                        <button id='enable_edit_foreignrelations'
+                                 class='btn btn-primary navbar-btn edit-mode'
+                                 style="width:auto;padding:3px 12px;">{% trans "Edit Foreign Relations" %}</button>
+                     </div>
+                     {% endif %}
+                </div>
 
-                     <td style='width:1em;'>
+                <div class="clearfix"></div>
+
+               {% if foreignrelations %}
+               <div class="table-container" style="overflow-x:auto;width:max-content;">
+               <table class='table table-responsive'>
+	                <tr>
+                        <th class="edit_only_foreignrelations" style='width:5em'></th>
+                        <th style='width:10em'>{% trans "Loan" %}</th>
+		                <th style='width:15em'>{% trans "Related Language" %}</th>
+		                <th style='width:20em'>{% trans "Gloss in Related Language" %}</th>
+                        <th class="edit_only_foreignrelations" style='width:2em'></th>
+		            </tr>
+                   {% for rel in foreignrelations %}
+                   {% with foreignrelations_forms|get_item:rel.id as foreignrelation_form %}
+                   <tr id='foreign_{{rel.id}}'>
+                     <td class="edit_only_foreignrelations" style='width:5em !important'>
+                        {% if "change_dataset" in dataset_perms %}
                         <span class='glyphicon glyphicon-trash relationtoforeignsign_delete' data-toggle='modal' data-target='#delete_foreignrelation_modal_{{rel.id}}'></span>
 
                          <div class="modal fade" id="delete_foreignrelation_modal_{{rel.id}}" role="dialog" aria-labelledby="#modalTitleForeign" aria-hidden="true">
@@ -2754,35 +3685,81 @@ textarea:focus {
                                 </div>
                               </div>
                          </div>
-
+                         {% endif %}
                     </td>
-                   {% else %}
-                        <td style='width:1em'></td>
-                   {% endif %}
-                        <td class='edit edit_check' id='relationforeign-loan_{{rel.id}}' style='width:3em'
-                            value='{{rel.loan}}'>{% if rel.loan %}{% trans "Yes" %}{% else %}{% trans "No" %}{% endif %}</td>
-                        <td class='edit edit_area' id='relationforeign-other-lang_{{rel.id}}'>{{rel.other_lang}}</td>
-                        <td class='edit edit_area' id='relationforeign-other-lang-gloss_{{rel.id}}'>{{rel.other_lang_gloss}}</td>
-                    </tr>
+                    {% with foreignrelation_form.fields|get_item:'loan' as loan_field %}
+                    <td class="editform-foreignrelations" id='foreignrelation_loan_{{rel.id}}'>
+                        <div class="editselect">
+                        <select class="select_foreignrelations form-control form-control-light" name="loan"
+                                id="foreignrelation_loan_{{rel.id}}_select_value" data-category="foreignrelations">
+                            {% for value, opn in loan_field.choices %}
+                            {% if opn == loan_field.initial %}
+                            <option value={{value}} selected="selected">{{opn}}</option>
+                            {% else %}
+                            <option value={{value}}>{{opn}}</option>
+                            {% endif %}
+                            {% endfor %}
+                        </select>
+                        </div>
+                    </td>
+                    {% endwith %}
+                    {% with foreignrelation_form.fields|get_item:'other_lang' as other_lang_field %}
+                    <td class="editform-foreignrelations" style="width:auto;">
+                        <div>
+                        <input class='form-control form-control-light' type="text" name="other_lang"
+                               value="{{other_lang_field.initial}}"
+                               id="foreignrelation_other_lang_{{rel.id}}_text" data-category="foreignrelations">
+                        </div>
+                    </td>
+                    {% endwith %}
+                    {% with foreignrelation_form.fields|get_item:'other_lang_gloss' as other_lang_gloss_field %}
+                    <td class="editform-foreignrelations" style="width:auto;">
+                        <div>
+                        <input class='form-control form-control-light' type="text" name="other_lang_gloss"
+                               value="{{other_lang_gloss_field.initial}}"
+                               id="foreignrelation_other_lang_gloss_{{rel.id}}_text" data-category="foreignrelations">
+                        </div>
+                    </td>
+                    {% endwith %}
+                    <td class="edit_only_foreignrelations" style='width:2em;'>
+                         <button id='quick_save_foreignrelation_btn_{{rel.id}}' class="quick_save_foreignrelation btn btn-primary"
+                            name='quick_save_foreignrelation_{{rel.id}}' data-category="foreignrelations" data-foreignrelationid="{{rel.id}}"
+                            data-glossid='{{gloss.id}}' style="color:red;font-size:16px;background-color:transparent;border:none;width:2em;"
+                            type="button"><span class="glyphicon glyphicon-check"></span></button>
+                    </td>
+                   </tr>
+                   {% endwith %}
                    {% endfor %}
                </table>
+               </div>
+               {% endif %}
 
                {% if "change_dataset" in dataset_perms %}
+               <div class="edit_only_foreignrelations">
                <form id='add_relationtoforeignsign_form' method='post' action='{% url "dictionary:add_relationtoforeignsign" gloss.id %}'>
                    {% csrf_token %}
                    <input type='hidden' name='sourceid' value='{{gloss.pk}}'>
                    <table class='table table-condensed'>
+                   {% if not foreignrelations %}
+	                <tr>
+                        <th style='width:5em'></th>
+                        <th style='width:10em'>{% trans "Loan" %}</th>
+		                <th style='width:15em'>{% trans "Related Language" %}</th>
+		                <th style='width:20em'>{% trans "Gloss in Related Language" %}</th>
+                        <th style='width:2em'></th>
+		            </tr>
+                   {% endif %}
                        <tr>
-                           <td style='width:5em'>&nbsp;&nbsp;&nbsp;</td>
+                           <th style='width:5em'></th>
                            <td class="td td-light"><input class='checkbox' name='loan' type='checkbox'></td>
                            <td class="td td-light"><input class='form-control form-control-light' placeholder='{% trans "Related Language" %}' name='other_lang' type='text'></td>
                            <td class="td td-light"><input class='form-control form-control-light' placeholder='{% trans "Gloss in Related Language" %}' name='other_lang_gloss' type='text'></td>
+                           <th style='width:2em'></th>
                            <td><input class='btn btn-primary' value='{% trans "Add Relation to Foreign Sign" %}' type='submit'></td>
                        </tr>
                    </table>
-                   {# spacing div to allow room for typeahead dropdown #}
-                   <div style='height: 10em'></div>
                </form>
+               </div>
                {% endif %}
         </div>
     </div>
@@ -2794,10 +3771,27 @@ textarea:focus {
         </div>
 
         <div id="pubStatus" class="collapse">
+            <div class='pull-right' style="margin-right:15px;margin-top:20px;">
+                 {% if perms.dictionary.change_gloss %}
+                 <div>
+                    {% csrf_token %}
+                    <button type="button" class="btn btn-danger publication-edit-dismiss button-publication-to-appear-in-edit-mode"
+                            style="width:auto;padding:3px 12px;"
+                            >{% trans "Cancel" %}</button>
+                    <button type="button" class="btn btn-danger quick_save button-publication-to-appear-in-edit-mode"
+                            style="width:auto;padding:3px 12px;" value="{{gloss.id}}"
+                            >{% trans "Save Publication Status" %}</button>
+                    <button id='enable_edit_publication'
+                             class='btn btn-primary navbar-btn edit-mode'
+                             style="width:auto;padding:3px 12px;">{% trans "Edit Publication Status" %}</button>
+                 </div>
+                 {% endif %}
+            </div>
+
             <table class='table table-condensed'>
-                <tr><th>{% trans "Creation Date" %}</th><td>{{gloss.creationDate}}</td></tr>
-                <tr><th>{% trans "Publication Date" %}</th><td>{{gloss.publicationDate|default_if_none:''}}</td></tr>
-                <tr><th>{% trans "Creator" %}</th>
+                <tr class="read_only_publication"><th>{% trans "Creation Date" %}</th><td>{{gloss.creationDate}}</td></tr>
+                <tr class="read_only_publication"><th>{% trans "Publication Date" %}</th><td>{{gloss.publicationDate|default_if_none:''}}</td></tr>
+                <tr class="read_only_publication"><th>{% trans "Creator" %}</th>
                     <td>{% for creator in gloss.creator.all %}
                             {% if forloop.last %}
                                 {{creator.first_name}} {{creator.last_name}}
@@ -2809,26 +3803,73 @@ textarea:focus {
                 </tr>
 
                 {%if SHOW_DATASET_INTERFACE_OPTIONS %}
-                <tr><th>{% trans "Dataset" %}</th><td id='dataset' colspan="2">{{gloss.lemma.dataset}}</td></tr>
+                <tr class="read_only_publication"><th>{% trans "Dataset" %}</th><td id='dataset' colspan="2">{{gloss.lemma.dataset}}</td></tr>
                 {% endif %}
 
-                {% for value,name,label,kind in publication_fields %}
-	            <tr>
-                      <th>{{label}}</th>
-                      {% if kind == 'text' %}
-                      <td class="edit edit_area" id='{{name}}'
-                          value='{{value}}'>{% value value %}</td>
-                      {% else %}
-                      <td class="edit edit_{{kind}}" id='{{name}}'
-                          value='{{value}}'>{% if value %}{% trans "Yes" %}{% else %}{% trans "No" %}{% endif %}</td>
-                      {% endif %}
+                <tr>
+                    <th style="width:240px;">{% trans "In the Web dictionary" %}</th>
+                    {% with publicationform.fields|get_item:'inWeb' as inWeb_field %}
+                    <td class="read_only_publication">{{gloss.display_inWeb}}</td>
+                    <td class="editform-publication edit_only_publication">
+                        <div class="editselect">
+                        <select class="select_inWeb form-control form-control-light" name="inWeb"
+                                id="inWeb_select_value" data-category="publication">
+                            {% for value, opn in inWeb_field.choices %}
+                            {% if value == inWeb_field.initial %}
+                            <option value={{value}} selected="selected">{{opn}}</option>
+                            {% else %}
+                            <option value={{value}}>{{opn}}</option>
+                            {% endif %}
+                            {% endfor %}
+                        </select>
+                        </div>
+                    </td>
+                    {% endwith %}
                 </tr>
-                {% endfor %}
+                <tr>
+                    <th style="width:240px;">{% trans "Is this a proposed new sign?" %}</th>
+                    {% with publicationform.fields|get_item:'isNew' as isNew_field %}
+                    <td class="read_only_publication">{{gloss.display_isNew}}</td>
+                    <td class="editform-publication edit_only_publication">
+                        <div class="editselect">
+                        <select class="select_isNew form-control form-control-light" name="isNew"
+                                id="isNew_select_value" data-category="publication">
+                            {% for value, opn in isNew_field.choices %}
+                            {% if value == isNew_field.initial %}
+                            <option value={{value}} selected="selected">{{opn}}</option>
+                            {% else %}
+                            <option value={{value}}>{{opn}}</option>
+                            {% endif %}
+                            {% endfor %}
+                        </select>
+                        </div>
+                    </td>
+                    {% endwith %}
+                </tr>
+                <tr>
+                    <th style="width:240px;">{% trans "Exclude from ECV" %}</th>
+                    {% with publicationform.fields|get_item:'excludeFromEcv' as excludeFromEcv_field %}
+                    <td class="read_only_publication">{{gloss.display_excludeFromEcv}}</td>
+                    <td class="editform-publication edit_only_publication">
+                        <div class="editselect">
+                        <select class="select_excludeFromEcv form-control form-control-light" name="excludeFromEcv"
+                                id="excludeFromEcv_select_value" data-category="publication">
+                            {% for value, opn in excludeFromEcv_field.choices %}
+                            {% if value == excludeFromEcv_field.initial %}
+                            <option value={{value}} selected="selected">{{opn}}</option>
+                            {% else %}
+                            <option value={{value}}>{{opn}}</option>
+                            {% endif %}
+                            {% endfor %}
+                        </select>
+                        </div>
+                    </td>
+                    {% endwith %}
+                </tr>
             </table>
         </div>
     </div>
-    
-   
+
     <!-- Notes -->
     <div class="panel panel-default panel-light">
         <div class='panel-heading panel-light' data-toggle='collapse' data-target='#definitions'>{% trans "Notes" %}
@@ -2840,22 +3881,39 @@ textarea:focus {
                     {% endif %}
         </div>
         <div id='definitions' class='collapse'>
-            
-            <table class='table'>
+
+            <div class='pull-right' style="margin-right:15px;margin-top:20px;margin-bottom:20px;">
+                {% if perms.dictionary.change_gloss %}
+                 <div>
+                    {% csrf_token %}
+                    <button type="button" class="btn btn-danger notes-edit-dismiss"
+                            style="width:auto;padding:3px 12px;" id="notes_edit_dismiss"
+                            >{% trans "Dismiss" %}</button>
+                    <button id='enable_edit_notes'
+                             class='btn btn-primary navbar-btn edit-mode'
+                             style="width:auto;padding:3px 12px;">{% trans "Edit Notes" %}</button>
+                 </div>
+                {% endif %}
+            </div>
+
+            {% if notes_groupedby_role %}
+            <div class="table-container" style="overflow-x:auto;width:max-content;">
+            <table class='table table-responsive'>
               <tr>
-                  <th style='width:1em'></th>
-                  <th style="width:10em">{% trans "Creation Date" %}</th>
-                  <th style="width:10em">{% trans "Creator" %}</th>
-                  <th style='width:22em'>{% trans "Published" %}</th>
-                  <th style='width:22em'>{% trans "Index" %}</th>
+                  <th class="edit_only_notes" style='width:5em'></th>
+                  <th class="read_only_notes" style="width:10em">{% trans "Creation Date" %}</th>
+                  <th class="read_only_notes" style="width:10em">{% trans "Creator" %}</th>
+                  <th style='width:10em'>{% trans "Published" %}</th>
+                  <th class="edit_only_notes" style='width:10em'>{% trans "Index" %}</th>
                   <th style='width:20em'>{% trans "Type" %}</th>
-                  <th>{% trans "Text" %}</th>
+                  <th style="width:auto;">{% trans "Text" %}</th>
+                  <th></th>
               </tr>
                 {% for role_id, note_list in notes_groupedby_role.items %}
-
-              {% for def in note_list %}
+                {% for def in note_list %}
+                {% with notes_forms|get_item:def.id as note_form %}
               <tr>
-                <td>
+                <td class="edit_only_notes" style="width:5em;">
 
                    {% if "change_dataset" in dataset_perms %}
                     {% if not def.published and perms.dictionary.can_delete_unpublished or def.published and perms.dictionary.can_delete_published %}
@@ -2887,42 +3945,100 @@ textarea:focus {
                     {% endif %}
                     {% endif %}
                 </td>
-                <td>{{def.creationDate|default_if_none:''}}</td>
-                <td>{% for creator in def.creator.all %}
+                <td class="read_only_notes">{{def.creationDate|default_if_none:''}}</td>
+                <td class="read_only_notes">{% for creator in def.creator.all %}
                             {% if forloop.last %}
                                 {{creator.first_name}} {{creator.last_name}}
                             {% else %}
                                 {{creator.first_name}} {{creator.last_name}},
                             {% endif %}
                     {% endfor %}</td>
-                <td class='edit edit_check' id='definitionpub_{{def.id}}'
-                    value='{{def.published}}'>{% if def.published %}{% trans "Yes" %}{% else %}{% trans "No" %}{% endif %}</td>
-                <td class='edit edit_int' id='definitioncount_{{def.id}}'>{{def.count}}</td>
-                <td class="td td-light" id='definitionrole_{{def.id}}'
-                    data-field='definitionrole'>{{role_id.1}}</td>
-                <td class='edit edit_area' id='definition_{{def.id}}' style="height:80;">{{def.text}}</td>
+                {% with note_form.fields|get_item:'published' as published_field %}
+                <td class="editform-notes" id='definitionpub_{{def.id}}'>
+                    <div class="editselect">
+                    <select class="select_published form-control form-control-light" name="repeat"
+                            id="definitionpub_{{def.id}}_select_value" data-category="notes">
+                        {% for value, opn in published_field.choices %}
+                        {% if opn == published_field.initial %}
+                        <option value={{value}} selected="selected">{{opn}}</option>
+                        {% else %}
+                        <option value={{value}}>{{opn}}</option>
+                        {% endif %}
+                        {% endfor %}
+                    </select>
+                    </div>
+                </td>
+                {% endwith %}
+                <td class="edit_only_notes" id='definitioncount_{{def.id}}_number'>
+                    <input class='form-control form-control-light' name='count' id='definitioncount_{{def.id}}'
+                           type='number' min=0 style="width:5em;" value={{def.count}} >
+                </td>
+                {% with note_form.fields|get_item:'role' as role_field %}
+                <td class="td td-light" id='definitionrole_{{def.id}}_select_value'
+                    data-field='definitionrole'>
+                    <div class="editselect">
+                    <select name="role" id="definitionrole_{{def.id}}" class="select_note_role form-control form-control-light"
+                            data-category="notes" >
+                        {% for machine_value, opn in role_field.choices %}
+                        {% if opn == role_field.initial %}
+                        <option value={{machine_value}} selected="selected">{{opn}}</option>
+                        {% else %}
+                        <option value={{machine_value}}>{{opn}}</option>
+                        {% endif %}
+                        {% endfor %}
+                    </select>
+                    </div>
+                </td>
+                {% endwith %}
+                <td class="editform-notes" id="definition_{{def.id}}_textarea">
+                    <div>
+                    <textarea class='form-control form-control-light' name="text" cols="60" rows="1"
+                              id="definition_{{def.id}}" data-category="notes">{{def.text}}</textarea>
+                    </div>
+                </td>
+                 <td class="edit_only_notes" style='width:2em;'>
+                     <button id='quick_save_note_btn_{{def.id}}' class="quick_save_note btn btn-primary"
+                        name='quick_save_note_{{def.id}}' data-category="notes" data-definitionid="{{def.id}}"
+                        data-glossid='{{gloss.id}}' style="color:red;font-size:16px;background-color:transparent;border:none;width:2em;"
+                        type="button"><span class="glyphicon glyphicon-check"></span></button>
+                 </td>
               </tr>
+              {% endwith %}
               {% endfor %}
             {% endfor %}
             </table>
+            </div>
+            {% endif %}
 
            {% if "change_dataset" in dataset_perms %}
+            <div class="edit_only_notes">
             <form id='add_definition' action='{% url "dictionary:add_definition" gloss.id %}' method="POST">
                 <fieldset>
                 {% csrf_token %}
-                 <table class='table'>
+                 <table class='table table-responsive'>
+                    {% if not notes_groupedby_role %}
                     <tr>
-                        <td class="td td-light" style="width:7em"></td>
-                        <td class="td td-light" style="width:7em"></td>
-                        <td class="td td-light" style="width:2em"></td>
-                        <td class="td td-light" style="width:7em"><input class='checkbox' name='published' id='id_published' type='checkbox'></td>
-                        <td class="td td-light" style='width:5em'><input class='form-control form-control-light' name='count' id='id_count' type='number' value=3></td>
+                        <th style='width:5em'></th>
+                        <th style='width:10em'>{% trans "Published" %}</th>
+                        <th style='width:10em'>{% trans "Index" %}</th>
+                        <th style='width:20em'>{% trans "Type" %}</th>
+                        <th style="width:auto;">{% trans "Text" %}</th>
+                    </tr>
+                    {% endif %}
+                    <tr>
+                        <td class="td td-light" style="width:5em"></td>
+                        <td class="td td-light" style="width:10em">
+                            <input class='checkbox' name='published' id='id_published' type='checkbox'>
+                        </td>
+                        <td class="td td-light" style='text-align:left;'>
+                            <input class='form-control form-control-light'
+                                   name='count' id='id_count' type='number' min=0
+                                   style="width:5em;" value=1 >
+                        </td>
                         <td class="td td-light" style='width:20em'>{{definitionform.note}}</td>
                         <td class="td td-light">{{definitionform.text}}</td>
                     </tr>
                      <tr>
-                        <td></td>
-                        <td></td>
                         <td></td>
                         <td></td>
                         <td></td>
@@ -2933,10 +4049,11 @@ textarea:focus {
             </fieldset>
 
             </form>
+            </div>
             {% endif %}
 
         </div>
-    
+
     </div>
 
     <!-- Provenance -->
@@ -2952,19 +4069,40 @@ textarea:focus {
         </div>
         <div id='provenance' class='collapse'>
 
-            <table class='table'>
+            <div class='pull-right' style="margin-right:15px;margin-top:20px;margin-bottom:20px;">
+                {% if perms.dictionary.change_gloss %}
+                 <div>
+                    {% csrf_token %}
+                    <button type="button" class="btn btn-danger provenance-edit-dismiss"
+                            style="width:auto;padding:3px 12px;" id="provenance_edit_dismiss"
+                            >{% trans "Dismiss" %}</button>
+                    <button id='enable_edit_provenance'
+                             class='btn btn-primary navbar-btn edit-mode'
+                             style="width:auto;padding:3px 12px;">{% trans "Edit Provenance" %}</button>
+                 </div>
+                {% endif %}
+            </div>
+
+            <div class="clearfix"></div>
+
+            {% if provenance_groupedby_method %}
+            <div class="table-container">
+
+            <table class='table table-condensed'>
               <tr>
-                  <th style='width:1em'></th>
-                  <th style="width:10em">{% trans "Creation Date" %}</th>
-                  <th style="width:10em">{% trans "Creator" %}</th>
+                  <th class="edit_only_provenance" style='width:5em'></th>
+                  <th class="read_only_provenance" style="width:10em">{% trans "Creation Date" %}</th>
+                  <th class="read_only_provenance" style="width:10em">{% trans "Creator" %}</th>
                   <th style='width:20em'>{% trans "Method" %}</th>
-                  <th>{% trans "Description" %}</th>
+                  <th style="width:400px;">{% trans "Description" %}</th>
+                  <th></th>
               </tr>
               {% for method_id, prov_list in provenance_groupedby_method.items %}
 
               {% for prov in prov_list %}
+              {% with provenance_forms|get_item:prov.id as prov_form %}
               <tr>
-                <td>
+                <td class="edit_only_provenance" style="width:5em;">
 
                    {% if "change_dataset" in dataset_perms %}
                     <span class='glyphicon glyphicon-trash provenance_delete' data-toggle='modal' data-target='#delete_provenance_modal_{{prov.id}}'></span>
@@ -2994,37 +4132,70 @@ textarea:focus {
                      </div>
                     {% endif %}
                 </td>
-                <td>{{prov.creationDate|default_if_none:''}}</td>
-                <td>{% for creator in prov.creator.all %}
+                <td class="read_only_provenance">{{prov.creationDate|default_if_none:''}}</td>
+                <td class="read_only_provenance">{% for creator in prov.creator.all %}
                             {% if forloop.last %}
                                 {{creator.first_name}} {{creator.last_name}}
                             {% else %}
                                 {{creator.first_name}} {{creator.last_name}},
                             {% endif %}
                     {% endfor %}</td>
-                <td class="td td-light" id='provenancemethod_{{prov.id}}'
-                    data-field='provenancemethod'>{{method_id.1}}</td>
-                <td class='edit edit_area' id='provenancedescription_{{prov.id}}' style="height:80;">{{prov.description}}</td>
+                {% with prov_form.fields|get_item:'method' as method_field %}
+                <td class="td td-light editform-provenance" id='provenancemethod_{{prov.id}}_select_value'
+                    data-field='provenancemethod'>
+                    <div class="editselect">
+                    <select name="method" id="provenancemethod_{{prov.id}}" class="form-control form-control-light"
+                            data-category="provenance" >
+                        {% for machine_value, opn in method_field.choices %}
+                        {% if opn == method_field.initial %}
+                        <option value={{machine_value}} selected="selected">{{opn}}</option>
+                        {% else %}
+                        <option value={{machine_value}}>{{opn}}</option>
+                        {% endif %}
+                        {% endfor %}
+                    </select>
+                    </div>
+                </td>
+                {% endwith %}
+                <td class="editform-provenance" id="provenancedescription_{{prov.id}}_textarea" style="height:80px;">
+                    <div>
+                    <textarea class='form-control form-control-light' name="description" cols="60" rows="2"
+                              id="provenancedescription_{{prov.id}}" data-category="provenance">{{prov.description}}</textarea>
+                    </div>
+                </td>
+                 <td class="edit_only_provenance" style='width:2em;'>
+                     <button id='quick_save_provenance_btn_{{prov.id}}' class="quick_save_provenance btn btn-primary"
+                        data-category="provenance" data-provenanceid="{{prov.id}}"
+                        data-glossid='{{gloss.id}}' style="color:red;font-size:16px;background-color:transparent;border:none;width:2em;"
+                        type="button"><span class="glyphicon glyphicon-check"></span></button>
+                 </td>
               </tr>
+              {% endwith %}
               {% endfor %}
             {% endfor %}
             </table>
+            </div>
+            {% endif %}
 
            {% if "change_dataset" in dataset_perms %}
-            <form class="editform" id='add_provenance' action='{% url "dictionary:add_provenance" gloss.id %}' method="POST">
+            <div class="edit_only_provenance">
+            <form id='add_provenance' action='{% url "dictionary:add_provenance" gloss.id %}' method="POST">
                 <fieldset>
                 {% csrf_token %}
                  <table class='table'>
+                    {% if not provenance_groupedby_method %}
                     <tr>
-                        <td class="td td-light" style="width:7em"></td>
-                        <td class="td td-light" style="width:2em"></td>
-                        <td class="td td-light" style="width:7em"></td>
+                      <th style='width:5em'></th>
+                      <th style='width:20em'>{% trans "Method" %}</th>
+                      <th>{% trans "Description" %}</th>
+                    </tr>
+                    {% endif %}
+                    <tr>
+                        <td class="td td-light" style="width:5em"></td>
                         <td class="td td-light" style='width:20em'>{{provenanceform.method}}</td>
                         <td class="td td-light">{{provenanceform.description}}</td>
                     </tr>
                      <tr>
-                        <td></td>
-                        <td></td>
                         <td></td>
                         <td></td>
                         <td></td>
@@ -3034,6 +4205,7 @@ textarea:focus {
             </fieldset>
 
             </form>
+            </div>
             {% endif %}
 
         </div>
@@ -3048,14 +4220,33 @@ textarea:focus {
         </div>
 
         <div id="exSentence" class="collapse">
-            <button onclick="location.href='{% url 'dictionary:add_annotated_media' glossid=gloss.id %}'" type="button" class='sense-button btn btn-primary btn-space'>{% trans "Add annotated media" %}</button>
+
+                <div class='pull-right' style="margin-right:15px;margin-top:20px;margin-bottom:20px;">
+                {% if perms.dictionary.change_gloss %}
+                 <div>
+                    {% csrf_token %}
+                    <button type="button" class="btn btn-danger annotated_sentences_edit_dismiss"
+                            style="width:auto;padding:3px 12px;"
+                            id="annotated_sentences_edit_dismiss">{% trans "Dismiss" %}</button>
+                    <button id='enable_edit_annotated_sentences'
+                             class='btn btn-primary navbar-btn edit-mode'
+                             style="width:auto;padding:3px 12px;">{% trans "Edit Annotated Senetences" %}</button>
+                 </div>
+                {% endif %}
+            </div>
+
+            <div class="clearfix"></div>
+
+            {% if annotated_sentences %}
+            <div class="table-container">
 
             <table class='table table-condensed' style="width:100%;">
                 <tr style="display:flex; flex-wrap:wrap;">
                     {% for annotated_sentence in annotated_sentences %}
                         {% if annotated_sentence.get_video_path %}
                             <td style="flex: 0 0 30%;">
-                                <span class='sense-icon glyphicon glyphicon-trash sense_delete pull-right' style="color:red"  data-toggle='modal' data-target='#delete_annotated_sentence_modal_{{annotated_sentence.id}}'></span>
+                                <span class='edit_only_annotated_sentences sense-icon glyphicon glyphicon-trash sense_delete pull-right' style="color:red;"
+                                      data-toggle='modal' data-target='#delete_annotated_sentence_modal_{{annotated_sentence.id}}'></span>
                                 <div class="modal fade" id="delete_annotated_sentence_modal_{{annotated_sentence.id}}" role="dialog" aria-labelledby="#modalTitleDeleteAnnotatedSentence" aria-hidden="true">
                                     <div class="modal-dialog modal-sm left-modal">
                                         <div class="modal-content">
@@ -3064,7 +4255,7 @@ textarea:focus {
                                             </div><br>
                                             <div class='modal-body'>
                                                 <p>{% trans "Are you sure you want to delete this? This cannot be undone." %}</p>
-                                            </div>     
+                                            </div>
                                             <form method="post" action="{% url 'dictionary:delete_annotated_sentence' gloss.id %}" >
                                                 {% csrf_token %}
                                                 <input type='hidden' name='dataset' value='{{gloss.lemma.dataset.id}}'>
@@ -3077,14 +4268,16 @@ textarea:focus {
                                         </div>
                                     </div>
                                 </div>
-                                <a href="{% url 'dictionary:edit_annotated_sentence' glossid=gloss.id annotatedsentenceid=annotated_sentence.id %}"><span class="sense-icon glyphicon glyphicon-edit pull-right" style="color:red" ></span></a>
 
-                                <style>.highlight {background-color: rgb(255, 149, 63);}</style>
+                                <div class="edit_only_annotated_sentences">
+                                    <a href="{% url 'dictionary:edit_annotated_sentence' glossid=gloss.id annotatedsentenceid=annotated_sentence.id %}">
+                                        <span class="sense-icon glyphicon glyphicon-edit pull-right" style="color:red;" ></span></a>
+                                </div>
 
                                 <video id="myVideo_{{forloop.counter}}" controls>
                                     <source src="{{protected_media_url}}/{{annotated_sentence.annotatedvideo.videofile}}?v={{ annotated_sentence.annotatedvideo.pk }}" type="video/mp4">
-                                </video>                               
-                            
+                                </video>
+
                                 <br><br><i>{% trans "Glosses" %}</i><br>
                                 <div id="glossContainer_{{ forloop.counter }}">
                                     {% for annotated_gloss in annotated_sentence.annotated_glosses.all %}
@@ -3146,6 +4339,16 @@ textarea:focus {
                         {% endif %}
                     {% endfor %}
             </table>
+            </div>
+            {% endif %}
+
+            {% if perms.dictionary.change_gloss %}
+            <div class="edit_only_annotated_sentences">
+                <button onclick="location.href='{% url 'dictionary:add_annotated_media' glossid=gloss.id %}'"
+                        id="add_annotated_media_btn" type="button"
+                        class='sense-button btn btn-primary btn-space'>{% trans "Add annotated media" %}</button>
+            </div>
+            {% endif %}
         </div>
     </div>
 
@@ -3161,21 +4364,38 @@ textarea:focus {
                     {% endif %}
         </div>
         <div id='othermedia' class='collapse'>
+            <div class='pull-right' style="margin-right:15px;margin-top:20px;margin-bottom:20px;">
+                {% if perms.dictionary.change_gloss %}
+                 <div>
+                    {% csrf_token %}
+                    <button type="button" class="btn btn-danger othermedia-edit-dismiss"
+                            style="width:auto;padding:3px 12px;" id="othermedia_edit_dismiss"
+                            >{% trans "Dismiss" %}</button>
+                    <button id='enable_edit_othermedia'
+                             class='btn btn-primary navbar-btn edit-mode'
+                             style="width:auto;padding:3px 12px;">{% trans "Edit Other Media" %}</button>
+                 </div>
+                {% endif %}
+            </div>
+
+           {% if other_media %}
+           <div class="table-container">
 
            <table class='table table-condensed'>
               <tr>
-                  <th style='width:2em'></th>
-                  <th style='width:6em'>{% trans "Image/Video" %}</th>
-                  <th style='width:6em'>{% trans "File Type" %}</th>
+                  <th class="edit_only_othermedia" style='width:2em'></th>
+                  <th class="read_only_othermedia" style='width:6em'>{% trans "Image/Video" %}</th>
+                  <th class="read_only_othermedia" style='width:6em'>{% trans "File Type" %}</th>
                   <th style='width:20em'>{% trans "Type" %}</th>
                   <th style='width:12em'>{% trans "Alternative Gloss" %}</th>
                   <th style='width:20em'>{% trans "Description" %}</th>
               </tr>
 
                {% for media_okay,pk,path,file_type,type,alternative_gloss,description,file_name in other_media %}
+               {% with other_media_forms|get_item:pk as othermedia_form %}
                <tr>
-                   {% if "change_dataset" in dataset_perms %}
-                     <td>
+                     <td class="edit_only_othermedia">
+                        {% if "change_dataset" in dataset_perms %}
                         <span class='glyphicon glyphicon-trash other-video-delete' data-toggle='modal' data-target='#delete_other_media_{{pk}}'></span>
 
                          <div class="modal fade" id="delete_other_media_{{pk}}" role="dialog" aria-labelledby="#modalTitleMedia" aria-hidden="true">
@@ -3201,65 +4421,112 @@ textarea:focus {
                                 </div>
                               </div>
                          </div>
-
+                         {% endif %}
                     </td>
-                    {% else %}
-                    <td></td>
-                    {% endif %}
-                    <td class="td td-light"><a {% if not media_okay %}
-				            disabled onclick="return false;" style="color:rgb(150,150,150);"
-			                {% endif %}
-				            download="{{file_name}}" href="{{PREFIX_URL}}{{protected_media_url}}/{{path}}">Download</a>
+                    <td class="read_only_othermedia td td-light">
+                        {% if media_okay %}
+                            <a onclick="return false;" style="color:rgb(150,150,150);"
+                                download="{{file_name}}" href="{{PREFIX_URL}}{{protected_media_url}}/{{path}}">Download</a>
+                        {% else %}
+                            <a aria-disabled="true" tabindex="-1" style="color:rgb(150,150,150);pointer-events:none;"
+				               download="{{file_name}}" href="{{PREFIX_URL}}{{protected_media_url}}/{{path}}">Download</a>
+                        {% endif %}
                     </td>
-                    <td class="td td-light" id='other-media-file-type_{{pk}}'>{{file_type}}</td>
-                    <td class="td td-light" id='other-media-type_{{pk}}'>{{type}}</td>
-                    <td class='edit edit_area' id='other-media-alternative-gloss_{{pk}}'>{{alternative_gloss}}</td>
-                    <td class='edit edit_area' id='other-media-description_{{pk}}'>{{description}}</td>
-                </tr>
+                    <td class="read_only_othermedia td td-light" id='othermedia-file-type_{{pk}}'>{{file_type}}</td>
+                    {% with othermedia_form.fields|get_item:'type' as type_field %}
+                    <td class="td td-light" id='othermedia-type_{{pk}}_select_value'
+                        data-field='othermedia_type'>
+                        <div class="editselect">
+                        <select name="type" id="othermedia-type_{{pk}}" class="select_othermedia_type form-control form-control-light"
+                                data-category="othermedia" >
+                            {% for machine_value, opn in type_field.choices %}
+                            {% if opn == type_field.initial %}
+                            <option value={{machine_value}} selected="selected">{{opn}}</option>
+                            {% else %}
+                            <option value={{machine_value}}>{{opn}}</option>
+                            {% endif %}
+                            {% endfor %}
+                        </select>
+                        </div>
+                    </td>
+                    {% endwith %}
+                    {% with othermedia_form.fields|get_item:'alternative_gloss' as alternative_gloss_field %}
+                    <td class="editform-othermedia" style="width:auto;">
+                        <div>
+                        <input class='form-control form-control-light' type="text" name="alternative_gloss"
+                               value="{{alternative_gloss_field.initial}}"
+                               id="othermedia-alternative-gloss_{{pk}}_text" data-category="othermedia">
+                        </div>
+                    </td>
+                    {% endwith %}
+                    {% with othermedia_form.fields|get_item:'description' as description_field %}
+                     <td class="editform-othermedia" id="othermedia-description_{{pk}}_textarea" style="height:80px;">
+                         <div>
+                         <textarea class='form-control form-control-light' name="description" cols="60" rows="2"
+                                   id="othermedia-description_{{pk}}" data-category="othermedia">{{description_field.initial}}</textarea>
+                         </div>
+                     </td>
+                     {% endwith %}
+                     <td class="edit_only_othermedia" style='width:2em;'>
+                         <button id='quick_save_othermedia_btn_{{pk}}' class="quick_save_othermedia btn btn-primary"
+                            data-category="othermedia" data-othermediaid="{{pk}}"
+                            data-glossid='{{gloss.id}}' style="color:red;font-size:16px;background-color:transparent;border:none;width:2em;"
+                            type="button"><span class="glyphicon glyphicon-check"></span></button>
+                     </td>
+                    </tr>
+               {% endwith %}
                {% endfor %}
 
            </table>
+           </div>
+           {% endif %}
 
            {% if "change_dataset" in dataset_perms %}
+            <div class="edit_only_othermedia">
             <form id='add_other_media' action='{% url "dictionary:add_othermedia" %}' method="POST" enctype="multipart/form-data">
 
                <input type='hidden' name='gloss' value='{{gloss.pk}}'>
 
                 <fieldset>
                 {% csrf_token %}
-                 <table class='table'>
+                 <table class='table table-condensed' style="width:800px;">
                     <tr>
-                        <td class="td td-light">{{othermediaform.file}}</td>
-                        <td class="td td-light">{{othermediaform.type}}</td>
-                        <td class="td td-light"><input class='form-control form-control-light' placeholder='{% trans "Alternative Gloss" %}' name='alternative_gloss' type='text'></td>
-                        <td class="td td-light">{{othermediaform.description}}</td>
+                        <th style="width:240px;">{% trans "File" %}</th>
+                        <td class="td td-light">
+                             <input type='file' name="file" class='form-control form-control-light'
+                                    id="{{othermediaform.file.id_for_label}}" required="">
+                        </td>
                     </tr>
-                     <tr>
-                        <td></td>
-                        <td></td>
+                    <tr>
+                        <th style="width:240px;">{% trans "Type" %}</th>
+                        <td class="td td-light">{{othermediaform.type}}</td>
+                    </tr>
+                    <tr>
+                        <th style="width:240px;">{% trans "Alternative Gloss" %}</th>
+                        <td class="td td-light">
+                             <input class='form-control form-control-light' style='width:12em'
+                                    placeholder='{% trans "Alternative Gloss" %}' name='alternative_gloss' type='text'>
+                        </td>
+                    </tr>
+                    <tr>
+                        <th style="width:240px;">{% trans "Description" %}</th>
+                        <td class="td td-light" style='width:20em'>{{othermediaform.description}}</td>
+                    </tr>
+                    <tr>
+                        <th style="width:240px;"></th>
                         <td><input class='btn btn-primary' type='submit' value='{% trans "Save" %}'></td>
                     </tr>
                  </table>
             </fieldset>
-
             </form>
+            </div>
             {% endif %}
 
         </div>
     </div>
 
-    </div>
 </div>
 
-<footer class="footer">
-<div class="container">
-    <div class='pull-right'>
-        <div id="feedback">
-            <ul>
-                <li><a href="{{PREFIX_URL}}/feedback/gloss/{{gloss.id}}/">{% trans "Provide Feedback About This Sign" %}</a></li>
-            </ul>
-        </div>
-    </div>
 </div>
-</footer>
 {% endblock %}
+

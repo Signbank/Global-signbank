@@ -19,7 +19,6 @@ function display_token(data) {
     var tokenCell = $("#api_token");
     tokenCell.html(new_token);
 }
-
 $(document).ready(function() {
     function csrfSafeMethod(method) {
         // these HTTP methods do not require CSRF protection
@@ -111,16 +110,21 @@ $(document).ready(function() {
     </tbody>
     {% if delta.days < 60 %}
     <tr>
+    <td>
     <form name='extend_account_expiry' id='extend_account_expiry' action="{{PREFIX_URL}}/update/expiry/" method='POST'>
+        <table>
+            <tr>
             <td>
             {% csrf_token %}
             <input type="hidden" name="username" id="username" value="{{user.username}}" />
             </td>
-            <td/><td/>
             <td>
             <input class='btn btn-primary' id='extend_expiry' name='extend_expiry' type='submit' value='{% trans "Extend Expiry" %}'>
             </td>
+            </tr>
+        </table>
     </form>
+    </td>
     </tr>
     </table>
     {% endif %}

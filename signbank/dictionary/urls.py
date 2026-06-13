@@ -24,6 +24,7 @@ import signbank.frequency
 import signbank.dataset_operations
 import signbank.dictionary.gloss_revision
 import signbank.dictionary.tagviews
+import signbank.dictionary.bloodhounds
 
 
 app_name = 'dictionary'
@@ -44,11 +45,28 @@ urlpatterns = [
     re_path(r'^update/definition/(?P<glossid>\d+)$', signbank.dictionary.update.add_definition, name='add_definition'),
     re_path(r'^update/provenance/(?P<glossid>\d+)$', signbank.dictionary.update.add_provenance, name='add_provenance'),
     re_path(r'^update/relation/$', signbank.dictionary.update.add_relation, name='add_relation'),
-    re_path(r'^update/relationtoforeignsign/$', signbank.dictionary.update.add_relationtoforeignsign, name='add_relationtoforeignsign'),
+    re_path(r'^update/relationtoforeignsign/(?P<glossid>\d+)$', signbank.dictionary.update.add_relationtoforeignsign, name='add_relationtoforeignsign'),
     re_path(r'^update/morphologydefinition/$', signbank.dictionary.update.add_morphology_definition, name='add_morphologydefinition'),
     re_path(r'^update/morphemedefinition/(?P<glossid>\d+)$', signbank.dictionary.update.add_morpheme_definition, name='add_morphemedefinition'),
     re_path(r'^update/othermedia/', signbank.dictionary.update.add_othermedia, name='add_othermedia'),
     re_path(r'^update/gloss/', signbank.dictionary.update.add_gloss, name='add_gloss'),
+    re_path(r'^update/edit_gloss_save/(?P<glossid>\d+)$',
+                signbank.dictionary.update.edit_gloss_save, name='edit_gloss_save'),
+    re_path(r'^update/update_gloss_lemma/(?P<glossid>\d+)$',
+            signbank.dictionary.update.update_gloss_lemma, name='update_gloss_lemma'),
+    re_path(r'^update/update_gloss_annotation/(?P<glossid>\d+)$',
+            signbank.dictionary.update.update_gloss_annotation, name='update_gloss_annotation'),
+    re_path(r'^update/update_gloss_nmevideo/(?P<glossid>\d+)/(?P<nmevideoid>\d+?)$',
+        signbank.dictionary.update.update_gloss_nmevideo, name='update_gloss_nmevideo'),
+    re_path(r'^update/update_gloss_note/(?P<glossid>\d+)/(?P<definitionid>\d+?)$',
+        signbank.dictionary.update.update_gloss_note, name='update_gloss_note'),
+    re_path(r'^update/update_gloss_foreignrelation/(?P<glossid>\d+)/(?P<foreignrelationid>\d+?)$',
+            signbank.dictionary.update.update_gloss_foreignrelation, name='update_gloss_foreignrelation'),
+    re_path(r'^update/update_gloss_provenance/(?P<glossid>\d+)/(?P<provenanceid>\d+?)$',
+        signbank.dictionary.update.update_gloss_provenance, name='update_gloss_provenance'),
+    re_path(r'^update/update_gloss_othermedia/(?P<glossid>\d+)/(?P<othermediaid>\d+?)$',
+        signbank.dictionary.update.update_gloss_othermedia, name='update_gloss_othermedia'),
+    re_path(r'^gloss/edit_phonology/(?P<glossid>\d+)', signbank.dictionary.views.edit_phonology, name='edit_phonology'),
     re_path(r'^update/assign_lemma_dataset_to_gloss/(?P<glossid>\d+)$', signbank.dictionary.update.assign_lemma_dataset_to_gloss,
             name='assign_lemma_dataset_to_gloss'),
     re_path(r'^update/sense/(?P<senseid>\d+)$', signbank.dictionary.update.update_sense, name='update_sense'),
@@ -158,7 +176,14 @@ urlpatterns = [
     re_path(r'^ajax/tags/$', signbank.dictionary.tagviews.taglist_json),
     re_path(r'^ajax/gloss/(?P<datasetid>\d+)/(?P<prefix>.*)$', signbank.dictionary.adminviews.gloss_ajax_complete, name='gloss_complete'),
     re_path(r'^ajax/similarglosses/(?P<gloss_id>.*)$', signbank.dictionary.batch_edit.similarglosses, name='similarglosses'),
+
     re_path(r'^ajax/handshape/(?P<prefix>.*)$', signbank.dictionary.adminviews.handshape_ajax_complete, name='handshape_complete'),
+
+    re_path(r'^ajax/semField/(?P<prefix>.*)$', signbank.dictionary.bloodhounds.semField_ajax_complete, name='semField_complete'),
+    re_path(r'^ajax/derivHist/(?P<prefix>.*)$', signbank.dictionary.bloodhounds.derivHist_ajax_complete, name='derivHist_complete'),
+    re_path(r'^ajax/fieldchoice/(?P<field>.*)/(?P<prefix>.*)$', signbank.dictionary.bloodhounds.fieldchoice_ajax_complete, name='fieldchoice_complete'),
+    re_path(r'^ajax/dialect/(?P<datasetid>\d+)/(?P<prefix>.*)$', signbank.dictionary.bloodhounds.dialect_ajax_complete, name='dialect_complete'),
+
     re_path(r'^ajax/morph/(?P<prefix>.*)$', signbank.dictionary.adminviews.morph_ajax_complete, name='morph_complete'),
     re_path(r'^ajax/user/(?P<prefix>.*)$', permission_required('dictionary.change_gloss')(signbank.dictionary.adminviews.user_ajax_complete), name='user_complete'),
     re_path(r'^ajax/searchresults/$',signbank.dictionary.adminviews.gloss_ajax_search_results, name='ajax_search_results'),

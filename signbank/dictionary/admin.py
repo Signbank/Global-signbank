@@ -1063,7 +1063,7 @@ class FieldChoiceAdmin(VersionAdmin, TranslationAdmin):
     delete_selected.short_description = "Delete selected field choices"
 
     def save_model(self, request, obj, form, change):
-        qs = FieldChoice.objects.filter(field=obj.field, machine_value__gt=1)
+        qs = FieldChoice.objects.filter(field=obj.field)
         highest_machine_value = max([field_choice.machine_value for field_choice in qs])
         if not obj.machine_value:
             # Check out the query-set and make sure that it exists

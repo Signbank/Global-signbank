@@ -1743,6 +1743,13 @@ def get_selected_datasets_for_user(user):
         return selected_datasets
 
 
+def get_lookaheads_setting_for_user(user):
+    if user.is_authenticated:
+        user_profile = UserProfile.objects.get(user=user)
+        return user_profile.use_lookaheads
+    return False
+
+
 def get_dataset_languages(datasets):
     """
     Return Language queryset containing languages for given datasets
