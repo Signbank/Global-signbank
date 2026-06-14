@@ -22,7 +22,7 @@ const typeaheadConfigs = [
     { name: 'wordClass', endpoint: 'fieldchoice/WordClass' },
     { name: 'semField', endpoint: 'semField' },
     { name: 'derivHist', endpoint: 'derivHist' },
-    { name: 'dialect', endpoint: 'dialect' }
+    { name: 'dialect', endpoint: 'dialect/'+gloss_dataset_id }
 ];
 
 // Factory function to create bloodhounds
@@ -64,10 +64,12 @@ typeaheadConfigs.forEach(config => {
 
 // multiselect fields
 
-var selected_semField = selected_semField;
+var initial_semField = initial_semFields;
+
+var selected_semField = selected_semFields;
 
 function renderSelectedSemField() {
-    var container = $('#semField_value');
+    var container = $('#multiselect_value_semField');
     container.empty();
     var values_input = $('#semField_hidden_input_values');
     values_input.empty();
@@ -76,6 +78,7 @@ function renderSelectedSemField() {
         var tag = $('<button class="actionButton"></button>').text(item.name);
         var input_value = $('<input type="hidden" name="semField" value="'+item.machine_value+'">');
         var removeBtn = $('<span class="remove">&nbsp;&nbsp;&times;</span>').click(function() {
+            busy_editing = true;
             selected_semField = selected_semField.filter(i => i !== item);
             renderSelectedSemField();
         });
@@ -88,10 +91,12 @@ function renderSelectedSemField() {
     placeholder_lookahead.css("color", "red");
 }
 
-var selected_derivHist = selected_derivHist;
+var initial_derivHist = initial_derivHists;
+
+var selected_derivHist = selected_derivHists;
 
 function renderSelectedDerivHist() {
-    var container = $('#derivHist_value');
+    var container = $('#multiselect_value_derivHist');
     container.empty();
     var values_input = $('#derivHist_hidden_input_values');
     values_input.empty();
@@ -100,6 +105,7 @@ function renderSelectedDerivHist() {
         var tag = $('<button class="actionButton"></button>').text(item.name);
         var input_value = $('<input type="hidden" name="derivHist" value="'+item.machine_value+'">');
         var removeBtn = $('<span class="remove">&nbsp;&nbsp;&times;</span>').click(function() {
+            busy_editing = true;
             selected_derivHist = selected_derivHist.filter(i => i !== item);
             renderSelectedDerivHist();
         });
@@ -111,10 +117,12 @@ function renderSelectedDerivHist() {
     placeholder_lookahead.attr("placeholder", new_placeholder);
 }
 
-var selected_dialect = selected_dialect;
+var initial_dialect = initial_dialects;
+
+var selected_dialect = selected_dialects;
 
 function renderSelectedDialect() {
-    var container = $('#dialect_value');
+    var container = $('#multiselect_value_dialect');
     container.empty();
     var values_input = $('#dialect_hidden_input_values');
     values_input.empty();
@@ -123,6 +131,7 @@ function renderSelectedDialect() {
         var tag = $('<button class="actionButton"></button>').text(item.name);
         var input_value = $('<input type="hidden" name="dialect" value="'+item.machine_value+'">');
         var removeBtn = $('<span class="remove">&nbsp;&nbsp;&times;</span>').click(function() {
+            busy_editing = true;
             selected_dialect = selected_dialect.filter(i => i !== item);
             renderSelectedDialect();
         });
@@ -133,6 +142,30 @@ function renderSelectedDialect() {
     var new_placeholder = selected_dialect.map(item => item.name).join(", ");
     placeholder_lookahead.attr("placeholder", new_placeholder);
     placeholder_lookahead.css("color", "red");
+}
+
+function initialise_multiselect(field) {
+    busy_editing = false;
+    var this_multiselect = $("#multiselect_value_"+field);
+    var initial_selection = window["initial_"+field];
+    this_multiselect.empty();
+    var values_input = $('#'+field+'_hidden_input_values');
+    values_input.empty();
+    initial_selection.forEach(function(item) {
+        var tag = $('<button class="actionButton"></button>').text(item.name);
+        this_multiselect.append(tag);
+    });
+    var placeholder_lookahead = $('#'+field+'_multiselect');
+    var new_placeholder = initial_selection.map(item => item.name).join(", ");
+    placeholder_lookahead.attr("placeholder", new_placeholder);
+}
+
+function initialise_multiselects() {
+    busy_editing = false;
+    $('[id*="multiselect_value_"]').each(function() {
+        var field = $(this).attr('data-name');
+        initialise_multiselect(field);
+    });
 }
 
 // language fields typeaheads
@@ -629,8 +662,8 @@ function enable_edit_panel(category) {
         $('.read_only_semantics').hide();
         $('.edit_only_semantics').show();
         $('.editsemanticsform').show();
-        $('#semField_value').trigger('editSemField');
-        $('#derivHist_value').trigger('editDerivHistField');
+        $('#multiselect_value_semField').trigger('editSemField');
+        $('#multiselect_value_derivHist').trigger('editDerivHistField');
     }
     if (category === 'general') {
         $('.read_only').hide();
@@ -638,7 +671,7 @@ function enable_edit_panel(category) {
         $('.edit_only_general').show();
         $('.editdialectform').show();
         $('.editform').show();  // appears in gloss tags and affiliations
-        $('#dialect_value').trigger('editDialectField');
+        $('#multiselect_value_dialect').trigger('editDialectField');
         $('#lemma_buttons_group').show();
     }
     if (category === 'publication') {
@@ -727,17 +760,36 @@ function get_width_of_selection(text) {
     return width;
 }
 
-$(document).ready(function() {
+const lookaheadConfig = [
+    { name: 'handedness', element: '#handedness_lookahead', lookup: '.handednesstypeahead' },
+    { name: 'domhndsh', element: '#domhndsh_lookahead', lookup: '.domhndshtypeahead' },
+    { name: 'subhndsh', element: '#subhndsh_lookahead', lookup: '.subhndshtypeahead' },
+    { name: 'handCh', element: '#handCh_lookahead', lookup: '.handChtypeahead' },
+    { name: 'relatArtic', element: '#relatArtic_lookahead', lookup: '.relatArtictypeahead' },
+    { name: 'locprim', element: '#locprim_lookahead', lookup: '.locprimtypeahead' },
+    { name: 'contType', element: '#contType_lookahead', lookup: '.contTypetypeahead' },
+    { name: 'movSh', element: '#movSh_lookahead', lookup: '.movShtypeahead' },
+    { name: 'movDir', element: '#movDir_lookahead', lookup: '.movDirtypeahead' },
+    { name: 'relOriMov', element: '#relOriMov_lookahead', lookup: '.relOriMovtypeahead' },
+    { name: 'relOriLoc', element: '#relOriLoc_lookahead', lookup: '.relOriLoctypeahead' },
+    { name: 'oriCh', element: '#oriCh_lookahead', lookup: '.oriChtypeahead' },
+    { name: 'namEnt', element: '#namEnt_lookahead', lookup: '.namEnttypeahead' },
+    { name: 'valence', element: '#valence_lookahead', lookup: '.valencetypeahead' },
+    { name: 'wordClass', element: '#wordClass_lookahead', lookup: '.wordClasstypeahead' }
+];
 
-    handednesstypeahead($('.handednesstypeahead'));
-    $('.handednesstypeahead').bind('typeahead:selected', function(ev, suggestion) {
+function readyLookahead(config) {
+    let typeahead = window[config.name+'typeahead'];
+    typeahead($(config.lookup));
+
+    $(config.lookup).bind('typeahead:selected', function(ev, suggestion) {
           busy_editing = true;
           $(this).attr('value', suggestion.name);
           $(this).attr('placeholder', suggestion.name);
-          $('#handedness_machine_value').attr('value', suggestion.machine_value);
+          $('#'+config.name+'_machine_value').attr('value', suggestion.machine_value);
           $(this).attr('data-preselect', suggestion.machine_value);
     });
-    $('#handedness_lookahead').on("focus", function() {
+    $(config.element).on("focus", function() {
       var preselect_machine_value = $(this).attr('data-preselect');
       if (!preselect_machine_value) {
         $(this).val('').trigger('input').typeahead('open');
@@ -748,302 +800,108 @@ $(document).ready(function() {
       $(this).attr("val", preselect_name);
       $(this).trigger('typeahead:selected', [{'name': preselect_name, 'machine_value': preselect_machine_value}]);
     });
-    domhndshtypeahead($('.domhndshtypeahead'));
-    $('.domhndshtypeahead').bind('typeahead:selected', function(ev, suggestion) {
-          busy_editing = true;
-          $(this).attr('value', suggestion.name);
-          $(this).attr('placeholder', suggestion.name);
-          var width_of_new_value = suggestion.name.length * 10 + 30;
-          $(this).css("width", width_of_new_value + "px");
-          $('#domhndsh_machine_value').attr('value', suggestion.machine_value);
-          $(this).attr('data-preselect', suggestion.machine_value);
+}
+
+$('[class*="multiselect_"]').each(function() {
+    $(this).on('change', function() {
+        busy_editing = true;
     });
-    $('#domhndsh_lookahead').on("focus", function() {
-      var preselect_machine_value = $(this).attr('data-preselect');
-      if (!preselect_machine_value) {
-        $(this).val('').trigger('input').typeahead('open');
+});
+
+$('[class*="select_"]').each(function() {
+    $(this).on('change', function() {
+        busy_editing = true;
+    });
+});
+
+$('[class*="text_"]').each(function() {
+    $(this).on('change', function() {
+        busy_editing = true;
+    });
+});
+
+$('[class*="text_"]').each(function() {
+    $(this).on('reset', function() {
+        var initial_value = $(this).attr('data-initial');
+        $(this).val(initial_value);
+    });
+});
+
+$('.edit-cancel').on('click', function() {
+    var panel_category = $(this).attr('data-category');
+    if (!panel_category) { return; };
+    if (!busy_editing) {
+        if (panel_category == 'semantics') {
+            initialise_multiselect('semField');
+            initialise_multiselect('derivHist');
+        }
+        if (panel_category == 'general') {
+            initialise_multiselect('dialect');
+        }
+        if (['general', 'phonology', 'semantics', 'publication'].includes(panel_category)) {
+            disable_edit_panel(panel_category);
+        }
         return;
-      }
-      var preselect_name = $(this).attr('placeholder');
-      if (!preselect_name) {return;}
-      $(this).attr("val", preselect_name);
-      $(this).trigger('typeahead:selected', [{'name': preselect_name, 'machine_value': preselect_machine_value}]);
+    };
+    $('[class*="select_"]').each(function() {
+        var this_category = $(this).attr('data-category');
+        if (this_category != panel_category) { return; }
+        var initial_data = $(this).attr('data-initial');
+        $(this).val(initial_data).trigger('change');
     });
-    subhndshtypeahead($('.subhndshtypeahead'));
-    $('.subhndshtypeahead').bind('typeahead:selected', function(ev, suggestion) {
-          busy_editing = true;
-          $(this).attr('value', suggestion.name);
-          $(this).attr('placeholder', suggestion.name);
-          var width_of_new_value = suggestion.name.length * 10 + 30;
-          $(this).css("width", width_of_new_value + "px");
-          $('#subhndsh_machine_value').attr('value', suggestion.machine_value);
-          $(this).attr('data-preselect', suggestion.machine_value);
+    $('[class*="text_"]').each(function() {
+        var this_category = $(this).attr('data-category');
+        if (this_category != panel_category) { return; }
+        var this_id = $(this).attr('id');
+        var initial_value = $(this).attr('data-initial');
+        var this_value = $(this).val();
+        if (this_value != initial_value) {
+            $(this).trigger('reset');
+        }
     });
-    $('#subhndsh_lookahead').on("focus", function() {
-      var preselect_machine_value = $(this).attr('data-preselect');
-      if (!preselect_machine_value) {
-        $(this).val('').trigger('input').typeahead('open');
-        return;
-      }
-      var preselect_name = $(this).attr('placeholder');
-      if (!preselect_name || preselect_name === '-') {return;}
-      $(this).attr("val", preselect_name);
-      $(this).trigger('typeahead:selected', [{'name': preselect_name, 'machine_value': preselect_machine_value}]);
+    $('[class*="multiselect_"]').each(function() {
+        var this_category = $(this).attr('data-category');
+        if (this_category != panel_category) { return; }
+        var this_name = $(this).attr("name");
+        if (!this_name) { return; }
+        if (this_name === 'dialect') {
+            selected_dialect.length = 0;
+            selected_dialect = JSON.parse(JSON.stringify(initial_dialect));
+            initialise_multiselect('dialect');
+        } else if (this_name === 'semField') {
+            selected_semField.length = 0;
+            selected_semField = JSON.parse(JSON.stringify(initial_semField));
+            initialise_multiselect('semField');
+        } else if (this_name === 'derivHist') {
+            selected_derivHist.length = 0;
+            selected_derivHist = JSON.parse(JSON.stringify(initial_derivHist));
+            initialise_multiselect('derivHist');
+        }
     });
-    handChtypeahead($('.handChtypeahead'));
-    $('.handChtypeahead').bind('typeahead:selected', function(ev, suggestion) {
-          busy_editing = true;
-          $(this).attr('value', suggestion.name);
-          $(this).attr('placeholder', suggestion.name);
-          var width_of_new_value = suggestion.name.length * 10 + 30;
-          $(this).css("width", width_of_new_value + "px");
-          $('#handCh_machine_value').attr('value', suggestion.machine_value);
-          $(this).attr('data-preselect', suggestion.machine_value);
-    });
-    $('#handCh_lookahead').on("focus", function() {
-      var preselect_machine_value = $(this).attr('data-preselect');
-      if (!preselect_machine_value) {
-        $(this).val('').trigger('input').typeahead('open');
-        return;
-      }
-      var preselect_name = $(this).attr('placeholder');
-      if (!preselect_name) {return;}
-      $(this).attr("val", preselect_name);
-      $(this).trigger('typeahead:selected', [{'name': preselect_name, 'machine_value': preselect_machine_value}]);
-    });
-    relatArtictypeahead($('.relatArtictypeahead'));
-    $('.relatArtictypeahead').bind('typeahead:selected', function(ev, suggestion) {
-          busy_editing = true;
-          $(this).attr('value', suggestion.name);
-          $(this).attr('placeholder', suggestion.name);
-          var width_of_new_value = suggestion.name.length * 10 + 30;
-          $(this).css("width", width_of_new_value + "px");
-          $('#relatArtic_machine_value').attr('value', suggestion.machine_value);
-          $(this).attr('data-preselect', suggestion.machine_value);
-    });
-    $('#relatArtic_lookahead').on("focus", function() {
-      var preselect_machine_value = $(this).attr('data-preselect');
-      if (!preselect_machine_value) {
-        $(this).val('').trigger('input').typeahead('open');
-        return;
-      }
-      var preselect_name = $(this).attr('placeholder');
-      if (!preselect_name || preselect_name === '-') {return;}
-      $(this).attr("val", preselect_name);
-      $(this).trigger('typeahead:selected', [{'name': preselect_name, 'machine_value': preselect_machine_value}]);
-    });
-    locprimtypeahead($('.locprimtypeahead'));
-    $('.locprimtypeahead').bind('typeahead:selected', function(ev, suggestion) {
-          busy_editing = true;
-          $(this).attr('value', suggestion.name);
-          $(this).attr('placeholder', suggestion.name);
-          var width_of_new_value = suggestion.name.length * 10 + 30;
-          $(this).css("width", width_of_new_value + "px");
-          $('#locprim_machine_value').attr('value', suggestion.machine_value);
-          $(this).attr('data-preselect', suggestion.machine_value);
-    });
-    $('#locprim_lookahead').on("focus", function() {
-      var preselect_machine_value = $(this).attr('data-preselect');
-      if (!preselect_machine_value) {
-        $(this).val('').trigger('input').typeahead('open');
-        return;
-      }
-      var preselect_name = $(this).attr('placeholder');
-      if (!preselect_name) {return;}
-      $(this).attr("val", preselect_name);
-      $(this).trigger('typeahead:selected', [{'name': preselect_name, 'machine_value': preselect_machine_value}]);
-    });
-    contTypetypeahead($('.contTypetypeahead'));
-    $('.contTypetypeahead').bind('typeahead:selected', function(ev, suggestion) {
-          busy_editing = true;
-          $(this).attr('value', suggestion.name);
-          $(this).attr('placeholder', suggestion.name);
-          var width_of_new_value = suggestion.name.length * 10 + 30;
-          $(this).css("width", width_of_new_value + "px");
-          $('#contType_machine_value').attr('value', suggestion.machine_value);
-          $(this).attr('data-preselect', suggestion.machine_value);
-    });
-    $('#contType_lookahead').on("focus", function() {
-      var preselect_machine_value = $(this).attr('data-preselect');
-      if (!preselect_machine_value) {
-        $(this).val('').trigger('input').typeahead('open');
-        return;
-      }
-      var preselect_name = $(this).attr('placeholder');
-      if (!preselect_name) {return;}
-      $(this).attr("val", preselect_name);
-      $(this).trigger('typeahead:selected', [{'name': preselect_name, 'machine_value': preselect_machine_value}]);
-    });
-    movShtypeahead($('.movShtypeahead'));
-    $('.movShtypeahead').bind('typeahead:selected', function(ev, suggestion) {
-          busy_editing = true;
-          $(this).attr('value', suggestion.name);
-          $(this).attr('placeholder', suggestion.name);
-          var width_of_new_value = suggestion.name.length * 10 + 30;
-          $(this).css("width", width_of_new_value + "px");
-          $('#movSh_machine_value').attr('value', suggestion.machine_value);
-          $(this).attr('data-preselect', suggestion.machine_value);
-    });
-    $('#movSh_lookahead').on("focus", function() {
-      var preselect_machine_value = $(this).attr('data-preselect');
-      if (!preselect_machine_value) {
-        $(this).val('').trigger('input').typeahead('open');
-        return;
-      }
-      var preselect_name = $(this).attr('placeholder');
-      if (!preselect_name) {return;}
-      $(this).attr("val", preselect_name);
-      $(this).trigger('typeahead:selected', [{'name': preselect_name, 'machine_value': preselect_machine_value}]);
-    });
-    movDirtypeahead($('.movDirtypeahead'));
-    $('.movDirtypeahead').bind('typeahead:selected', function(ev, suggestion) {
-          busy_editing = true;
-          $(this).attr('value', suggestion.name);
-          $(this).attr('placeholder', suggestion.name);
-          var width_of_new_value = suggestion.name.length * 10 + 30;
-          $(this).css("width", width_of_new_value + "px");
-          $('#movDir_machine_value').attr('value', suggestion.machine_value);
-          $(this).attr('data-preselect', suggestion.machine_value);
-    });
-    $('#movDir_lookahead').on("focus", function() {
-      var preselect_machine_value = $(this).attr('data-preselect');
-      if (!preselect_machine_value) {
-        $(this).val('').trigger('input').typeahead('open');
-        return;
-      }
-      var preselect_name = $(this).attr('placeholder');
-      if (!preselect_name) {return;}
-      $(this).attr("val", preselect_name);
-      $(this).trigger('typeahead:selected', [{'name': preselect_name, 'machine_value': preselect_machine_value}]);
-    });
-    relOriMovtypeahead($('.relOriMovtypeahead'));
-    $('.relOriMovtypeahead').bind('typeahead:selected', function(ev, suggestion) {
-          busy_editing = true;
-          $(this).attr('value', suggestion.name);
-          $(this).attr('placeholder', suggestion.name);
-          var width_of_new_value = suggestion.name.length * 10 + 30;
-          $(this).css("width", width_of_new_value + "px");
-          $('#relOriMov_machine_value').attr('value', suggestion.machine_value);
-          $(this).attr('data-preselect', suggestion.machine_value);
-    });
-    $('#relOriMov_lookahead').on("focus", function() {
-      var preselect_machine_value = $(this).attr('data-preselect');
-      if (!preselect_machine_value) {
-        $(this).val('').trigger('input').typeahead('open');
-        return;
-      }
-      var preselect_name = $(this).attr('placeholder');
-      if (!preselect_name) {return;}
-      $(this).attr("val", preselect_name);
-      $(this).trigger('typeahead:selected', [{'name': preselect_name, 'machine_value': preselect_machine_value}]);
-    });
-    relOriLoctypeahead($('.relOriLoctypeahead'));
-    $('.relOriLoctypeahead').bind('typeahead:selected', function(ev, suggestion) {
-          busy_editing = true;
-          $(this).attr('value', suggestion.name);
-          $(this).attr('placeholder', suggestion.name);
-          var width_of_new_value = suggestion.name.length * 10 + 30;
-          $(this).css("width", width_of_new_value + "px");
-          $('#relOriLoc_machine_value').attr('value', suggestion.machine_value);
-          $(this).attr('data-preselect', suggestion.machine_value);
-    });
-    $('#relOriLoc_lookahead').on("focus", function() {
-      var preselect_machine_value = $(this).attr('data-preselect');
-      if (!preselect_machine_value) {
-        $(this).val('').trigger('input').typeahead('open');
-        return;
-      }
-      var preselect_name = $(this).attr('placeholder');
-      if (!preselect_name) {return;}
-      $(this).attr("val", preselect_name);
-      $(this).trigger('typeahead:selected', [{'name': preselect_name, 'machine_value': preselect_machine_value}]);
-    });
-    oriChtypeahead($('.oriChtypeahead'));
-    $('.oriChtypeahead').bind('typeahead:selected', function(ev, suggestion) {
-          busy_editing = true;
-          $(this).attr('value', suggestion.name);
-          $(this).attr('placeholder', suggestion.name);
-          var width_of_new_value = suggestion.name.length * 10 + 30;
-          $(this).css("width", width_of_new_value + "px");
-          $('#oriCh_machine_value').attr('value', suggestion.machine_value);
-          $(this).attr('data-preselect', suggestion.machine_value);
-    });
-    $('#oriCh_lookahead').on("focus", function() {
-      var preselect_machine_value = $(this).attr('data-preselect');
-      if (!preselect_machine_value) {
-        $(this).val('').trigger('input').typeahead('open');
-        return;
-      }
-      var preselect_name = $(this).attr('placeholder');
-      if (!preselect_name) {return;}
-      $(this).attr("val", preselect_name);
-      $(this).trigger('typeahead:selected', [{'name': preselect_name, 'machine_value': preselect_machine_value}]);
-    });
-    namEnttypeahead($('.namEnttypeahead'));
-    $('.namEnttypeahead').bind('typeahead:selected', function(ev, suggestion) {
-          busy_editing = true;
-          $(this).attr('value', suggestion.name);
-          $(this).attr('placeholder', suggestion.name);
-          var width_of_new_value = suggestion.name.length * 10 + 30;
-          $(this).css("width", width_of_new_value + "px");
-          $('#namEnt_machine_value').attr('value', suggestion.machine_value);
-          $(this).attr('data-preselect', suggestion.machine_value);
-    });
-    $('#namEnt_lookahead').on("focus", function() {
-      var preselect_machine_value = $(this).attr('data-preselect');
-      if (!preselect_machine_value) {
-        $(this).val('').trigger('input').typeahead('open');
-        return;
-      }
-      var preselect_name = $(this).attr('placeholder');
-      if (!preselect_name) {return;}
-      $(this).attr("val", preselect_name);
-      $(this).trigger('typeahead:selected', [{'name': preselect_name, 'machine_value': preselect_machine_value}]);
-    });
-    valencetypeahead($('.valencetypeahead'));
-    $('.valencetypeahead').bind('typeahead:selected', function(ev, suggestion) {
-          busy_editing = true;
-          $(this).attr('value', suggestion.name);
-          $(this).attr('placeholder', suggestion.name);
-          var width_of_new_value = suggestion.name.length * 10 + 30;
-          $(this).css("width", width_of_new_value + "px");
-          $('#valence_machine_value').attr('value', suggestion.machine_value);
-          $(this).attr('data-preselect', suggestion.machine_value);
-    });
-    $('#valence_lookahead').on("focus", function() {
-      var preselect_machine_value = $(this).attr('data-preselect');
-      if (!preselect_machine_value) {
-        $(this).val('').trigger('input').typeahead('open');
-        return;
-      }
-      var preselect_name = $(this).attr('placeholder');
-      if (!preselect_name) {return;}
-      $(this).attr("val", preselect_name);
-      $(this).trigger('typeahead:selected', [{'name': preselect_name, 'machine_value': preselect_machine_value}]);
-    });
-    if (use_lookaheads == 'lookaheads') {
-        wordClasstypeahead($('.wordClasstypeahead'));
-        $('.wordClasstypeahead').bind('typeahead:selected', function(ev, suggestion) {
-              busy_editing = true;
-              $(this).attr('value', suggestion.name);
-              $(this).attr('placeholder', suggestion.name);
-              var width_of_new_value = suggestion.name.length * 10 + 30;
-              $(this).css("width", width_of_new_value + "px");
-              $('#wordClass_machine_value').attr('value', suggestion.machine_value);
-              $(this).attr('data-preselect', suggestion.machine_value);
-        });
-        $('#wordClass_lookahead').on("focus", function() {
-          var preselect_machine_value = $(this).attr('data-preselect');
-          if (!preselect_machine_value) {
-            $(this).val('').trigger('input').typeahead('open');
-            return;
-          }
-          var preselect_name = $(this).attr('placeholder');
-          if (!preselect_name) {return;}
-          $(this).attr("val", preselect_name);
-          $(this).trigger('typeahead:selected', [{'name': preselect_name, 'machine_value': preselect_machine_value}]);
+    if (use_lookaheads) {
+        $('[id*="_lookahead"]').each(function() {
+            var this_category = $(this).attr('data-category');
+            if (this_category != panel_category) { return; }
+            var initial_data = $(this).attr('data-initial');
+            $(this).attr('value', initial_data);
+            $(this).attr('placeholder', initial_data);
+            $(this).trigger('change');
         });
     }
+    busy_editing = false;
+    if (['general', 'phonology', 'semantics', 'publication'].includes(panel_category)) {
+        disable_edit_panel(panel_category);
+    }
+});
+
+$(document).ready(function() {
+
+    if (use_lookaheads) {
+        lookaheadConfig.forEach(config => {
+            window[config.name + 'typeahead'] = readyLookahead(config);
+        });
+    }
+
     semFieldtypeahead($('.semFieldtypeahead'));
     $('.semFieldtypeahead').bind('typeahead:selected', function(ev, suggestion) {
           if (!selected_semField.includes(suggestion)) {
@@ -1056,7 +914,7 @@ $(document).ready(function() {
     $('#semField_multiselect').on("focus", function() {
       $(this).attr('value', '');
     });
-    $('#semField_value').on("editSemField", function() {
+    $('#multiselect_value_semField').on("editSemField", function() {
         renderSelectedSemField();
     });
     derivHisttypeahead($('.derivHisttypeahead'));
@@ -1071,7 +929,7 @@ $(document).ready(function() {
     $('#derivHist_multiselect').on("focus", function() {
       $(this).attr('value', '-');
     });
-    $('#derivHist_value').on("editDerivHistField", function() {
+    $('#multiselect_value_derivHist').on("editDerivHistField", function() {
         renderSelectedDerivHist();
     });
     dialecttypeahead($('.dialecttypeahead'));
@@ -1086,7 +944,7 @@ $(document).ready(function() {
     $('#dialect_multiselect').on("focus", function() {
       $(this).attr('value', "");
     });
-    $('#dialect_value').on("editDialectField", function() {
+    $('#multiselect_value_dialect').on("editDialectField", function() {
         renderSelectedDialect();
     });
     lemmatypeahead($('.lemmatypeahead'));
@@ -1122,64 +980,7 @@ $(document).ready(function() {
     $('.morphtypeahead').on("input", function() {
           $(this).parent().next().val("")
     });
-    $('.select_weakdrop').on('change', function() {
-          busy_editing = true;
-          var selected_value = $(this).val();
-          var selected_text = $(this).find('option:selected').text();
-          $('#weakdrop_value').text(selected_text);
-    });
 
-    $('.select_weakprop').on('change', function() {
-          busy_editing = true;
-          var selected_value = $(this).val();
-          var selected_text = $(this).find('option:selected').text();
-          $('#weakprop_value').text(selected_text);
-    });
-
-    $('.select_domhndsh_letter_or_number_field').on('change', function() {
-          busy_editing = true;
-          var selected_value = $(this).val();
-          var selected_text = $(this).find('option:selected').text();
-          $('#domhndsh_letter_or_number_field_value').text(selected_text);
-    });
-
-    $('.select_subhndsh_letter_or_number').on('change', function() {
-          busy_editing = true;
-          var selected_value = $(this).val();
-          var selected_text = $(this).find('option:selected').text();
-          $('#subhndsh_letter_or_number_value').text(selected_text);
-    });
-
-    $('.select_repeat').on('change', function() {
-          busy_editing = true;
-          var selected_value = $(this).val();
-          var selected_text = $(this).find('option:selected').text();
-          $('#repeat_value').text(selected_text);
-    });
-    $('.select_altern').on('change', function() {
-          busy_editing = true;
-          var selected_value = $(this).val();
-          var selected_text = $(this).find('option:selected').text();
-          $('#altern_value').text(selected_text);
-    });
-    $('.select_inWeb').on('change', function() {
-          busy_editing = true;
-          var selected_value = $(this).val();
-          var selected_text = $(this).find('option:selected').text();
-          $('#inWeb_value').text(selected_text);
-    });
-    $('.select_isNew').on('change', function() {
-          busy_editing = true;
-          var selected_value = $(this).val();
-          var selected_text = $(this).find('option:selected').text();
-          $('#isNew_value').text(selected_text);
-    });
-    $('.select_excludeFromEcv').on('change', function() {
-          busy_editing = true;
-          var selected_value = $(this).val();
-          var selected_text = $(this).find('option:selected').text();
-          $('#excludeFromEcv_value').text(selected_text);
-    });
      $('.quick_save').click(function(e)
 	 {
          e.preventDefault();
@@ -1497,14 +1298,14 @@ $(document).ready(function() {
     disable_edit_annotated_sentences();
     disable_edit_othermedia();
     ajaxifyTagForm();
-    // setup requried for Ajax POST
+    // setup required for Ajax POST
     function csrfSafeMethod(method) {
         // these HTTP methods do not require CSRF protection
         return (/^(GET|HEAD|OPTIONS|TRACE)$/.test(method));
     }
 
     $.ajaxSetup({
-        crossDomain: false, // obviates need for sameOrigin test
+        crossDomain: false,
         beforeSend: function(xhr, settings) {
             if (!csrfSafeMethod(settings.type)) {
                 xhr.setRequestHeader("X-CSRFToken", csrf_token);
@@ -1513,4 +1314,6 @@ $(document).ready(function() {
     });
     $('#use_lookaheads').attr('value', use_lookaheads);
     $('#data_type_'+use_lookaheads).addClass('active');
+    initialise_multiselects();
+    busy_editing = false;
 });

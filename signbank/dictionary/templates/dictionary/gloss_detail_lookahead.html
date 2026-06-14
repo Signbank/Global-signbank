@@ -47,7 +47,7 @@
     {% else %}
     var dataset_choices = {};
     {% endif %}
-    var gloss_dataset_id = {{ gloss.lemma.dataset.id}};
+    var gloss_dataset_id = '{{gloss.lemma.dataset.id}}';
     var gloss_default_language_code = '{{gloss.lemma.dataset.default_language.language_code_2char}}';
 
     var choice_lists = [];
@@ -77,9 +77,12 @@
     var model_view = 'gloss';
     var search_results_url = '{% url 'dictionary:ajax_search_results' %}';
 
-    var selected_semField = {{selected_semField|safe}};
-    var selected_derivHist = {{selected_derivHist|safe}};
-    var selected_dialect = {{selected_dialect|safe}};
+    var initial_semFields = {{selected_semFields|safe}};
+    var selected_semFields = {{selected_semFields|safe}};
+    var initial_derivHists = {{selected_derivHists|safe}};
+    var selected_derivHists = {{selected_derivHists|safe}};
+    var initial_dialects = {{selected_dialects|safe}};
+    var selected_dialects = {{selected_dialects|safe}};
     var language_2chars = {{language_2chars|safe}};
     var use_lookaheads = '{{use_lookaheads|safe}}';
 </script>
@@ -1529,8 +1532,7 @@ input .tt-hint {
                 <div>
                 {% csrf_token %}
                 <button type="button" class="btn btn-danger edit-cancel button-general-to-appear-in-edit-mode"
-                        style="width:auto;padding:3px 12px;" id="button-edit-cancel-general"
-                        onclick='location.href="{{PREFIX_URL}}/dictionary/gloss/{{gloss.id}}"' >
+                        style="width:auto;padding:3px 12px;" id="button-edit-cancel-general" data-category="general" >
                         {% trans "Cancel" %}</button>
                 <button type="button" class="btn btn-danger quick_save button-general-to-appear-in-edit-mode"
                         style="width:auto;padding:3px 12px;" value="{{gloss.id}}" id="button-edit-save-general" >
@@ -1646,9 +1648,9 @@ input .tt-hint {
                 {% with glossform.fields|get_item:'release_information' as release_information_field %}
                 <td class="editform-general" style="width:auto;">
                     <div>
-                    <input class='form-control form-control-light' type="text" name="release_information"
+                    <input class='text_release_information form-control form-control-light' type="text" name="release_information"
                            value="{{release_information_field.initial}}"
-                           id="release_information_text" data-category="general">
+                           id="release_information_text" data-category="general" data-initial="{{release_information_field.initial}}" >
                     </div>
                 </td>
                 {% endwith %}
@@ -1663,15 +1665,13 @@ input .tt-hint {
             {% endwith %}
                 <th style="width:240px;">{% trans "Dialect" %}</th>
                 {% with glossform.fields|get_item:'dialect' as dialect_field %}
-                <td style="width:auto;" id="dialect_value">
-                    {% for dialect in gloss.dialect.all %}
-                    <button class="actionButton">{{dialect.signlanguage.name}}/{{dialect.name}}</button>
-                    {% endfor %}
+                <td style="width:auto;" id="multiselect_value_dialect" data-name="dialect">
+
                 </td>
                 <td class="editdialectform">
                     <div>
-                    <input class='form-control form-control-light dialecttypeahead' type="text" size="60"
-                           id="dialect_multiselect" data-category="general" autocomplete="off">
+                    <input class='multiselect_dialect form-control form-control-light dialecttypeahead' type="text" size="60"
+                           id="dialect_multiselect" data-category="general" autocomplete="off" name="dialect" >
                     </div>
                 </td>
                 <td id="dialect_hidden_input_values" class="editform-general">
@@ -2207,9 +2207,9 @@ input .tt-hint {
                 {% with glossform.fields|get_item:'useInstr' as useInstr_field %}
                 <td class="editform-general" style="width:auto;">
                     <div>
-                    <input class='form-control form-control-light' type="text" name="useInstr"
+                    <input class='text_useInstr form-control form-control-light' type="text" name="useInstr"
                            value="{{useInstr_field.initial}}"
-                           id="useInstr_text" data-category="general">
+                           id="useInstr_text" data-category="general" data-initial="{{useInstr_field.initial}}">
                     </div>
                 </td>
                 {% endwith %}
@@ -2229,7 +2229,7 @@ input .tt-hint {
                     <div id="wordClass_cell">
                     <input class='form-control form-control-light wordClasstypeahead' type="text" size="40"
                            placeholder="{{wordClass_field.initial}}" id="wordClass_lookahead" value="{{wordClass_field.initial}}"
-                           data-category="general" autocomplete="off" >
+                           data-category="general" autocomplete="off" data-initial="{{wordClass_field.initial}}" >
                     <input type="hidden" name="wordClass" value=""
                            id="wordClass_machine_value" >
                     </div>
@@ -2239,7 +2239,7 @@ input .tt-hint {
                     {% else %}
                     <div class="editselect">
                     <select class="select_wordClass form-control form-control-light" name="wordClass"
-                                id="wordClass_value" data-category="general">
+                                id="wordClass_value" data-category="general" data-initial="{{wordClass_field.initial}}">
                         {% for machine_value, opn in wordClass_field.choices %}
                         {% if opn == wordClass_field.initial %}
                         <option value={{machine_value}} selected="selected">{{opn}}</option>
@@ -2881,9 +2881,8 @@ input .tt-hint {
                  <div>
                     {% csrf_token %}
                     <button type="button" class="btn btn-danger edit-cancel button-phonology-to-appear-in-edit-mode"
-                            style="width:auto;padding:3px 12px;"
-                            onclick='location.href="{{PREFIX_URL}}/dictionary/gloss/{{gloss.id}}"'
-                            >{% trans "Cancel" %}</button>
+                            style="width:auto;padding:3px 12px;" data-category="phonology" >
+                            {% trans "Cancel" %}</button>
                     <button type="button" class="btn btn-danger quick_save button-phonology-to-appear-in-edit-mode"
                             style="width:auto;padding:3px 12px;" value="{{gloss.id}}"
                             >{% trans "Save Phonology" %}</button>
@@ -2911,13 +2910,13 @@ input .tt-hint {
                     <div style="display:table-cell;" id="handedness_cell">
                     <input class='form-control form-control-light handednesstypeahead' type="text"
                            id="handedness_lookahead" data-category="phonology" value="{{handedness_field.initial}}"
-                           placeholder="{{handedness_field.initial}}" autocomplete="off" >
+                           placeholder="{{handedness_field.initial}}" autocomplete="off" data-initial="{{handedness_field.initial}}" >
                     <input type="hidden" name="handedness" value=""
                            id="handedness_machine_value" >
                     </div>
                     <div class="editselect" style="display:table-cell;">
                     <select class="select_weakdrop form-control form-control-light" name="weakdrop"
-                            id="weakdrop_select_value" data-category="phonology">
+                            id="weakdrop_select_value" data-category="phonology" data-initial="{{weakdrop_field.initial}}">
                         {% for value, opn in weakdrop_field.choices %}
                         {% if value == weakdrop_field.initial %}
                         <option value={{value}} selected="selected">{{opn}}</option>
@@ -2929,7 +2928,7 @@ input .tt-hint {
                     </div>
                     <div class="editselect" style="display:table-cell;padding-left:0px;">
                     <select class="select_weakprop form-control form-control-light" name="weakprop"
-                            id="weakprop_select_value" data-category="phonology">
+                            id="weakprop_select_value" data-category="phonology" data-initial="{{weakprop_field.initial}}">
                         {% for value, opn in weakprop_field.choices %}
                         {% if value == weakprop_field.initial %}
                         <option value={{value}} selected="selected">{{opn}}</option>
@@ -2958,15 +2957,16 @@ input .tt-hint {
                     <div style="display:table-cell;" id="domhndsh_cell">
                     <input class='form-control form-control-light domhndshtypeahead' type="text" size="40"
                            placeholder="{{domhndsh_field.initial}}" id="domhndsh_lookahead" value="{{domhndsh_field.initial}}"
-                           data-category="phonology" autocomplete="off" >
+                           data-category="phonology" autocomplete="off" data-initial="{{domhndsh_field.initial}}" >
                     <input type="hidden" name="domhndsh" value=""
                            id="domhndsh_machine_value" >
                     </div>
                     <div class="editselect" style="display:table-cell;">
                     <select class="select_domhndsh_letter_or_number form-control form-control-light" name="domhndsh_letter_or_number"
-                            id="domhndsh_letter_or_number_select_value" data-category="phonology">
+                            id="domhndsh_letter_or_number_select_value" data-category="phonology"
+                            data-initial="{{domhndsh_letter_or_number_field.initial}}">
                         {% for value, opn in domhndsh_letter_or_number_field.choices %}
-                        {% if opn == domhndsh_letter_or_number_field.initial %}
+                        {% if value == domhndsh_letter_or_number_field.initial %}
                         <option value={{value}} selected="selected">{{opn}}</option>
                         {% else %}
                         <option value={{value}}>{{opn}}</option>
@@ -2991,16 +2991,17 @@ input .tt-hint {
                 <td class="editform-phonology">
                     <div style="display:table-cell;" id="subhndsh_cell" >
                     <input class='form-control form-control-light subhndshtypeahead' type="text" size="40" placeholder="{{subhndsh_field.initial}}"
-                           id="subhndsh_lookahead" value="{{subhndsh_field.initial}}"
+                           id="subhndsh_lookahead" value="{{subhndsh_field.initial}}" data-initial="{{subhndsh_field.initial}}"
                            data-category="phonology" autocomplete="off" >
                     <input type="hidden" name="subhndsh" value=""
                            id="subhndsh_machine_value" >
                     </div>
                     <div class="editselect" style="display:table-cell;">
                     <select class="select_subhndsh_letter_or_number form-control form-control-light" name="subhndsh_letter_or_number"
-                            id="subhndsh_letter_or_number_select_value" data-category="phonology">
+                            id="subhndsh_letter_or_number_select_value" data-category="phonology"
+                            data-initial="{{subhndsh_letter_or_number_field.initial}}">
                         {% for value, opn in subhndsh_letter_or_number_field.choices %}
-                        {% if opn == subhndsh_letter_or_number_field.initial %}
+                        {% if value == subhndsh_letter_or_number_field.initial %}
                         <option value={{value}} selected="selected">{{opn}}</option>
                         {% else %}
                         <option value={{value}}>{{opn}}</option>
@@ -3025,7 +3026,7 @@ input .tt-hint {
                     <div>
                     <input class='form-control form-control-light handChtypeahead' type="text" size="40"
                            placeholder="{{handCh_field.initial}}" id="handCh_lookahead" value="{{handCh_field.initial}}"
-                           data-category="phonology" autocomplete="off">
+                           data-category="phonology" autocomplete="off" data-initial="{{handCh_field.initial}}" >
                     <input type="hidden" name="handCh" value=""
                            id="handCh_machine_value" >
                     </div>
@@ -3045,7 +3046,7 @@ input .tt-hint {
                     <div>
                     <input class='form-control form-control-light relatArtictypeahead' type="text" size="40"
                            placeholder="{{relatArtic_field.initial}}" id="relatArtic_lookahead" value="{{relatArtic_field.initial}}"
-                           data-category="phonology" autocomplete="off" >
+                           data-category="phonology" autocomplete="off" data-initial="{{relatArtic_field.initial}}" >
                     <input type="hidden" name="relatArtic" value=""
                            id="relatArtic_machine_value" >
                     </div>
@@ -3065,7 +3066,7 @@ input .tt-hint {
                     <div>
                     <input class='form-control form-control-light locprimtypeahead' type="text" size="40"
                            placeholder="{{locprim_field.initial}}" id="locprim_lookahead" value="{{locprim_field.initial}}"
-                           data-category="phonology" autocomplete="off" >
+                           data-category="phonology" autocomplete="off" data-initial="{{locprim_field.initial}}" >
                     <input type="hidden" name="locprim" value=""
                            id="locprim_machine_value" >
                     </div>
@@ -3085,7 +3086,7 @@ input .tt-hint {
                     <div>
                     <input class='form-control form-control-light contTypetypeahead' type="text" size="40"
                            placeholder="{{contType_field.initial}}" id="contType_lookahead" value="{{contType_field.initial}}"
-                           data-category="phonology" autocomplete="off" >
+                           data-category="phonology" autocomplete="off" data-initial="{{contType_field.initial}}" >
                     <input type="hidden" name="contType" value=""
                            id="contType_machine_value" >
                     </div>
@@ -3105,7 +3106,7 @@ input .tt-hint {
                     <div>
                     <input class='form-control form-control-light movShtypeahead' type="text" size="40"
                            placeholder="{{movSh_field.initial}}" id="movSh_lookahead" value="{{movSh_field.initial}}"
-                           data-category="phonology" autocomplete="off" >
+                           data-category="phonology" autocomplete="off" data-initial="{{movSh_field.initial}}" >
                     <input type="hidden" name="movSh" value=""
                            id="movSh_machine_value" >
                     </div>
@@ -3125,7 +3126,7 @@ input .tt-hint {
                     <div>
                     <input class='form-control form-control-light movDirtypeahead' type="text" size="40"
                            placeholder="{{movDir_field.initial}}" id="movDir_lookahead" value="{{movDir_field.initial}}"
-                           data-category="phonology" autocomplete="off" >
+                           data-category="phonology" autocomplete="off" data-initial="{{movDir_field.initial}}" >
                     <input type="hidden" name="movDir" value=""
                            id="movDir_machine_value" >
                     </div>
@@ -3146,9 +3147,9 @@ input .tt-hint {
                 <td class="editform-phonology">
                     <div class="editselect">
                     <select class="select_repeat form-control form-control-light" name="repeat"
-                            id="repeat_select_value" data-category="phonology">
+                            id="repeat_select_value" data-category="phonology" data-initial="{{repeat_field.initial}}">
                         {% for value, opn in repeat_field.choices %}
-                        {% if opn == repeat_field.initial %}
+                        {% if value == repeat_field.initial %}
                         <option value={{value}} selected="selected">{{opn}}</option>
                         {% else %}
                         <option value={{value}}>{{opn}}</option>
@@ -3172,9 +3173,9 @@ input .tt-hint {
                 <td class="editform-phonology">
                     <div class="editselect">
                     <select class="select_altern form-control form-control-light" name="altern"
-                            id="altern_select_value" data-category="phonology">
+                            id="altern_select_value" data-category="phonology" data-initial="{{altern_field.initial}}">
                         {% for value, opn in altern_field.choices %}
-                        {% if opn == altern_field.initial %}
+                        {% if value == altern_field.initial %}
                         <option value={{value}} selected="selected">{{opn}}</option>
                         {% else %}
                         <option value={{value}}>{{opn}}</option>
@@ -3198,7 +3199,7 @@ input .tt-hint {
                     <div>
                     <input class='form-control form-control-light relOriMovtypeahead' type="text" size="40"
                            placeholder="{{relOriMov_field.initial}}" id="relOriMov_lookahead" value="{{relOriMov_field.initial}}"
-                           data-category="phonology" autocomplete="off" >
+                           data-category="phonology" autocomplete="off" data-initial="{{relOriMov_field.initial}}" >
                     <input type="hidden" name="relOriMov" value=""
                            id="relOriMov_machine_value" >
                     </div>
@@ -3219,7 +3220,7 @@ input .tt-hint {
                     <div>
                     <input class='form-control form-control-light relOriLoctypeahead' type="text" size="40"
                            placeholder="{{relOriLoc_field.initial}}" id="relOriLoc_lookahead" value="{{relOriLoc_field.initial}}"
-                           data-category="phonology" autocomplete="off" >
+                           data-category="phonology" autocomplete="off" data-initial="{{relOriLoc_field.initial}}" >
                     <input type="hidden" name="relOriLoc" value=""
                            id="relOriLoc_machine_value" >
                     </div>
@@ -3239,7 +3240,7 @@ input .tt-hint {
                     <div>
                     <input class='form-control form-control-light oriChtypeahead' type="text" size="40"
                            placeholder="{{oriCh_field.initial}}" id="oriCh_lookahead" value="{{oriCh_field.initial}}"
-                           data-category="phonology" autocomplete="off" >
+                           data-category="phonology" autocomplete="off" data-initial="{{oriCh_field.initial}}" >
                     <input type="hidden" name="oriCh" value=""
                            id="oriCh_machine_value" >
                     </div>
@@ -3257,9 +3258,9 @@ input .tt-hint {
                 {% with phonologyform.fields|get_item:'locVirtObj' as locVirtObj_field %}
                 <td class="editform-phonology" style="width:auto;">
                     <div>
-                    <input class='form-control form-control-light' type="text" name="locVirtObj"
+                    <input class='text_locVirtObj form-control form-control-light' type="text" name="locVirtObj"
                            value="{{locVirtObj_field.initial}}" size="50"
-                           id="locVirtObj_text" data-category="phonology">
+                           id="locVirtObj_text" data-category="phonology" data-initial="{{locVirtObj_field.initial}}" >
                     </div>
                 </td>
                 {% endwith %}
@@ -3275,9 +3276,9 @@ input .tt-hint {
                 {% with phonologyform.fields|get_item:'phonOth' as phonOth_field %}
                 <td class="editform-phonology" style="width:auto;">
                     <div>
-                    <input class='form-control form-control-light' type="text" name="phonOth"
+                    <input class='text_phonOth form-control form-control-light' type="text" name="phonOth"
                            value="{{phonOth_field.initial}}"
-                           id="phonOth_text" data-category="phonology">
+                           id="phonOth_text" data-category="phonology" data-initial="{{phonOth_field.initial}}">
                     </div>
                 </td>
                 {% endwith %}
@@ -3293,9 +3294,9 @@ input .tt-hint {
                 {% with phonologyform.fields|get_item:'mouthG' as mouthG_field %}
                 <td class="editform-phonology" style="width:auto;">
                     <div>
-                    <input class='form-control form-control-light' type="text" name="mouthG"
+                    <input class='text_mouthG form-control form-control-light' type="text" name="mouthG"
                            value="{{mouthG_field.initial}}" size="50"
-                           id="mouthG_text" data-category="phonology">
+                           id="mouthG_text" data-category="phonology" data-initial="{{mouthG_field.initial}}">
                     </div>
                 </td>
                 {% endwith %}
@@ -3311,9 +3312,9 @@ input .tt-hint {
                 {% with phonologyform.fields|get_item:'mouthing' as mouthing_field %}
                 <td class="editform-phonology" style="width:auto;">
                     <div>
-                    <input class='form-control form-control-light' type="text" name="mouthing"
+                    <input class='text_mouthing form-control form-control-light' type="text" name="mouthing"
                            value="{{mouthing_field.initial}}" size="50"
-                           id="mouthing_text" data-category="phonology">
+                           id="mouthing_text" data-category="phonology" data-initial="{{mouthing_field.initial}}">
                     </div>
                 </td>
                 {% endwith %}
@@ -3329,9 +3330,9 @@ input .tt-hint {
                 {% with phonologyform.fields|get_item:'phonetVar' as phonetVar_field %}
                 <td class="editform-phonology" style="width:auto;">
                     <div>
-                    <input class='form-control form-control-light' type="text" name="phonetVar"
+                    <input class='text_phonetVar form-control form-control-light' type="text" name="phonetVar"
                            value="{{phonetVar_field.initial}}" size="50"
-                           id="phonetVar_text" data-category="phonology">
+                           id="phonetVar_text" data-category="phonology" data-initial="{{phonetVar_field.initial}}">
                     </div>
                     <div class="edit_only_phonology">
                         <br><br><br><br><br><br><br>
@@ -3374,9 +3375,8 @@ input .tt-hint {
              <div>
                 {% csrf_token %}
                 <button type="button" class="btn btn-danger edit-cancel button-semantics-to-appear-in-edit-mode"
-                        style="width:auto;padding:3px 12px;"
-                        onclick='location.href="{{PREFIX_URL}}/dictionary/gloss/{{gloss.id}}"'
-                        >{% trans "Cancel" %}</button>
+                        style="width:auto;padding:3px 12px;" data-category="semantics" >
+                        {% trans "Cancel" %}</button>
                 <button type="button" class="btn btn-danger quick_save button-semantics-to-appear-in-edit-mode"
                         style="width:auto;padding:3px 12px;" value="{{gloss.id}}"
                         >{% trans "Save Semantics" %}</button>
@@ -3398,15 +3398,13 @@ input .tt-hint {
             {% endwith %}
                 <th style="width:240px;">{% trans "Semantic Field" %}</th>
                 {% with semanticsform.fields|get_item:'semField' as semField_field %}
-                <td style="width:auto;" id="semField_value">
-                    {% for semfield in gloss.semField.all %}
-                    <button class="actionButton">{{semfield.name}}</button>
-                    {% endfor %}
+                <td style="width:auto;" id="multiselect_value_semField" data-name="semField">
+
                 </td>
                 <td class="editsemanticsform">
                     <div>
-                    <input class='form-control form-control-light semFieldtypeahead' type="text" size="60"
-                           id="semField_multiselect" data-category="semantics" autocomplete="off" >
+                    <input class='multiselect_semField form-control form-control-light semFieldtypeahead' type="text" size="60"
+                           id="semField_multiselect" data-category="semantics" autocomplete="off" name="semField" >
                     </div>
                 </td>
                 <td id="semField_hidden_input_values">
@@ -3422,15 +3420,13 @@ input .tt-hint {
             {% endwith %}
                 <th style="width:240px;">{% trans "Derivation history" %}</th>
                 {% with semanticsform.fields|get_item:'derivHist' as derivHist_field %}
-                <td style="width:auto;" id="derivHist_value">
-                    {% for derivHist in gloss.derivHist.all %}
-                    <button class="actionButton">{{derivHist.name}}</button>
-                    {% endfor %}
+                <td style="width:auto;" id="multiselect_value_derivHist" data-name="derivHist">
+
                 </td>
                 <td class="editsemanticsform">
                     <div>
-                    <input class='form-control form-control-light derivHisttypeahead' type="text" size="60"
-                           id="derivHist_multiselect" data-category="semantics" autocomplete="off" >
+                    <input class='multiselect_derivHist form-control form-control-light derivHisttypeahead' type="text" size="60"
+                           id="derivHist_multiselect" data-category="semantics" autocomplete="off" name="derivHist" >
                     </div>
                 </td>
                 <td id="derivHist_hidden_input_values">
@@ -3451,7 +3447,7 @@ input .tt-hint {
                     <div>
                     <input class='form-control form-control-light namEnttypeahead' type="text" size="40"
                            placeholder="{{namEnt_field.initial}}" id="namEnt_lookahead" value="{{namEnt_field.initial}}"
-                           data-category="semantics" autocomplete="off" >
+                           data-category="semantics" autocomplete="off" data-initial="{{namEnt_field.initial}}" >
                     <input type="hidden" name="namEnt" value=""
                            id="namEnt_machine_value" >
                     </div>
@@ -3471,7 +3467,7 @@ input .tt-hint {
                     <div>
                     <input class='form-control form-control-light valencetypeahead' type="text" size="40"
                            placeholder="{{valence_field.initial}}" id="valence_lookahead" value="{{valence_field.initial}}"
-                           data-category="semantics" autocomplete="off" >
+                           data-category="semantics" autocomplete="off" data-initial="{{valence_field.initial}}" >
                     <input type="hidden" name="valence" value=""
                            id="valence_machine_value" >
                     </div>
@@ -3489,9 +3485,9 @@ input .tt-hint {
                 {% with semanticsform.fields|get_item:'iconImg' as iconImg_field %}
                 <td class="editform-semantics" style="width:auto;">
                     <div>
-                    <input class='form-control form-control-light' type="text" name="iconImg"
+                    <input class='text_iconImg form-control form-control-light' type="text" name="iconImg"
                            value="{{iconImg_field.initial}}" size="50"
-                           id="iconImg_text" data-category="semantics">
+                           id="iconImg_text" data-category="semantics" data-initial="{{iconImg_field.initial}}">
                     </div>
                 </td>
                 {% endwith %}
@@ -3507,9 +3503,9 @@ input .tt-hint {
                 {% with semanticsform.fields|get_item:'concConcSet' as concConcSet_field %}
                 <td class="editform-semantics" style="width:auto;">
                     <div>
-                    <input class='form-control form-control-light' type="text" name="concConcSet"
+                    <input class='text_concConcSet form-control form-control-light' type="text" name="concConcSet"
                            value="{{concConcSet_field.initial}}"
-                           id="concConcSet_text" data-category="semantics">
+                           id="concConcSet_text" data-category="semantics" data-initial="{{concConcSet_field.initial}}">
                     </div>
                     <div class="edit_only_semantics">
                         <br><br><br><br><br><br><br><br><br><br><br><br><br><br>
@@ -3813,7 +3809,7 @@ input .tt-hint {
                     <td class="editform-publication edit_only_publication">
                         <div class="editselect">
                         <select class="select_inWeb form-control form-control-light" name="inWeb"
-                                id="inWeb_select_value" data-category="publication">
+                                id="inWeb_select_value" data-category="publication" data-initial="{{inWeb_field.initial}}">
                             {% for value, opn in inWeb_field.choices %}
                             {% if value == inWeb_field.initial %}
                             <option value={{value}} selected="selected">{{opn}}</option>
@@ -3833,7 +3829,7 @@ input .tt-hint {
                     <td class="editform-publication edit_only_publication">
                         <div class="editselect">
                         <select class="select_isNew form-control form-control-light" name="isNew"
-                                id="isNew_select_value" data-category="publication">
+                                id="isNew_select_value" data-category="publication" data-initial="{{isNew_field.initial}}">
                             {% for value, opn in isNew_field.choices %}
                             {% if value == isNew_field.initial %}
                             <option value={{value}} selected="selected">{{opn}}</option>
@@ -3853,7 +3849,7 @@ input .tt-hint {
                     <td class="editform-publication edit_only_publication">
                         <div class="editselect">
                         <select class="select_excludeFromEcv form-control form-control-light" name="excludeFromEcv"
-                                id="excludeFromEcv_select_value" data-category="publication">
+                                id="excludeFromEcv_select_value" data-category="publication" data-initial="{{excludeFromEcv_field.initial}}">
                             {% for value, opn in excludeFromEcv_field.choices %}
                             {% if value == excludeFromEcv_field.initial %}
                             <option value={{value}} selected="selected">{{opn}}</option>
@@ -3956,7 +3952,7 @@ input .tt-hint {
                 {% with note_form.fields|get_item:'published' as published_field %}
                 <td class="editform-notes" id='definitionpub_{{def.id}}'>
                     <div class="editselect">
-                    <select class="select_published form-control form-control-light" name="repeat"
+                    <select class="select_published form-control form-control-light" name="published"
                             id="definitionpub_{{def.id}}_select_value" data-category="notes">
                         {% for value, opn in published_field.choices %}
                         {% if opn == published_field.initial %}

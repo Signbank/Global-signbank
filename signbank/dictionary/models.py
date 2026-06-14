@@ -985,6 +985,17 @@ class Gloss(MetaModelMixin, models.Model):
         # else both are False
         return ''
 
+    def domhndsh_letter_or_number_to_choice(self):
+        # for use in form choices initial selected
+        if self.domhndsh_letter is None and self.domhndsh_number is None:
+            return '0'
+        if self.domhndsh_letter:
+            return '1'
+        if self.domhndsh_number:
+            return '2'
+        # else both are False
+        return '0'
+
     def display_domhndsh_letter(self):
         if self.domhndsh_letter is None:
             return ''
@@ -1007,6 +1018,17 @@ class Gloss(MetaModelMixin, models.Model):
             return _('number')
         # else both are False
         return ''
+
+    def subhndsh_letter_or_number_to_choice(self):
+        # for use in form choices initial selected
+        if self.subhndsh_letter is None and self.subhndsh_number is None:
+            return '0'
+        if self.subhndsh_letter:
+            return '1'
+        if self.subhndsh_number:
+            return '2'
+        # else both are False
+        return '0'
 
     def display_subhndsh_letter(self):
         if self.subhndsh_letter is None:
@@ -1288,10 +1310,20 @@ class Gloss(MetaModelMixin, models.Model):
             return ''
         return _('Yes') if self.repeat else ''
 
+    def repeat_to_choice(self):
+        if self.repeat is None:
+            return '0'
+        return '1' if self.repeat else '0'
+
     def display_altern(self):
         if self.altern is None:
             return ''
         return _('Yes') if self.altern else ''
+
+    def altern_to_choice(self):
+        if self.altern is None:
+            return '0'
+        return '1' if self.altern else '0'
 
     movSh = FieldChoiceForeignKey(FieldChoice, on_delete=models.SET_NULL, null=True,
                                           limit_choices_to={'field': FieldChoice.MOVEMENTSHAPE},

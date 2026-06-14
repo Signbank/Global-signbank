@@ -1972,9 +1972,9 @@ class PhonologyForm(forms.Form):
         self.fields['domhndsh'].initial = self.gloss.domhndsh.name if self.gloss.domhndsh else '-'
         self.fields['subhndsh'].initial = self.gloss.subhndsh.name if self.gloss.subhndsh else '-'
         self.fields['domhndsh_letter_or_number'].choices = [('0', ''), ('1', _('letter')), ('2', _('number'))]
-        self.fields['domhndsh_letter_or_number'].initial = self.gloss.display_domhndsh_letter_or_number
+        self.fields['domhndsh_letter_or_number'].initial = self.gloss.domhndsh_letter_or_number_to_choice()
         self.fields['subhndsh_letter_or_number'].choices = [('0', ''), ('1', _('letter')), ('2', _('number'))]
-        self.fields['subhndsh_letter_or_number'].initial = self.gloss.display_subhndsh_letter_or_number
+        self.fields['subhndsh_letter_or_number'].initial = self.gloss.subhndsh_letter_or_number_to_choice()
         self.fields['handCh'].initial = self.gloss.handCh.name if self.gloss.handCh else '-'
         self.fields['relatArtic'].initial = self.gloss.relatArtic.name if self.gloss.relatArtic else '-'
         self.fields['locprim'].initial = self.gloss.locprim.name if self.gloss.locprim else '-'
@@ -1983,8 +1983,8 @@ class PhonologyForm(forms.Form):
         self.fields['movDir'].initial = self.gloss.movDir.name if self.gloss.movDir else '-'
         for boolean_field in ['repeat', 'altern']:
             self.fields[boolean_field].choices = [('0', ''), ('1', _('Yes'))]
-        self.fields['repeat'].initial = self.gloss.display_repeat
-        self.fields['altern'].initial = self.gloss.display_altern
+        self.fields['repeat'].initial = self.gloss.repeat_to_choice()
+        self.fields['altern'].initial = self.gloss.altern_to_choice()
         self.fields['relOriMov'].initial = self.gloss.relOriMov.name if self.gloss.relOriMov else '-'
         self.fields['relOriLoc'].initial = self.gloss.relOriLoc.name if self.gloss.relOriLoc else '-'
         self.fields['oriCh'].initial = self.gloss.oriCh.name if self.gloss.oriCh else '-'

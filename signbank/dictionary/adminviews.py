@@ -1477,13 +1477,13 @@ class GlossDetailView(DetailView):
         context['show_field_row'] = show_fields_rows(gloss)
         context['language_2chars'] = [language.language_code_2char for language in dataset_languages]
 
-        context['selected_semField'] = [{"name": semfield.name, "machine_value": semfield.machine_value}
-                                        for semfield in gloss.semField.all()]
-        context['selected_derivHist'] = [{"name": derivhist.name, "machine_value": derivhist.machine_value}
-                                         for derivhist in gloss.derivHist.all()]
-        context['selected_dialect'] = [{"name": f'{dialect.signlanguage.name}/{dialect.name}', "machine_value": dialect.pk}
-                                         for dialect in gloss.dialect.all()]
-
+        context['selected_semFields'] = [{"name": semfield.name, "machine_value": semfield.machine_value}
+                                         for semfield in gloss.semField.all()]
+        context['selected_derivHists'] = [{"name": derivhist.name, "machine_value": derivhist.machine_value}
+                                          for derivhist in gloss.derivHist.all()]
+        context['selected_dialects'] = [{"name": f'{dialect.signlanguage.name}/{dialect.name}', "machine_value": dialect.pk}
+                                        for dialect in gloss.dialect.all()]
+        print(context['selected_semFields'])
         context['phonology_list_kinds'] = get_phonology_list_kinds()
 
         context['publication_fields'] = []
