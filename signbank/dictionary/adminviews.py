@@ -1432,9 +1432,10 @@ class GlossDetailView(DetailView):
             self.use_lookaheads = self.request.session['use_lookaheads']
 
         context['use_lookaheads'] = self.use_lookaheads
+        print('use lookaheads ', self.use_lookaheads)
         context['glossform'] = GlossForm(gloss=context['gloss'], use_lookaheads=context['use_lookaheads'])
-        context['phonologyform'] = PhonologyForm(gloss=context['gloss'])
-        context['semanticsform'] = SemanticsForm(gloss=context['gloss'])
+        context['phonologyform'] = PhonologyForm(gloss=context['gloss'], use_lookaheads=context['use_lookaheads'])
+        context['semanticsform'] = SemanticsForm(gloss=context['gloss'], use_lookaheads=context['use_lookaheads'])
         context['publicationform'] = PublicationForm(gloss=context['gloss'])
 
         context['tagform'] = TagUpdateForm()

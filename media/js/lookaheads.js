@@ -145,7 +145,6 @@ function renderSelectedDialect() {
 }
 
 function initialise_multiselect(field) {
-    busy_editing = false;
     var this_multiselect = $("#multiselect_value_"+field);
     var initial_selection = window["initial_"+field];
     this_multiselect.empty();
@@ -783,8 +782,10 @@ function readyLookahead(config) {
     typeahead($(config.lookup));
 
     $(config.lookup).bind('typeahead:selected', function(ev, suggestion) {
+          var this_id = $(this).attr("id");
           busy_editing = true;
           $(this).attr('value', suggestion.name);
+          $(this).attr("val", suggestion.name);
           $(this).attr('placeholder', suggestion.name);
           $('#'+config.name+'_machine_value').attr('value', suggestion.machine_value);
           $(this).attr('data-preselect', suggestion.machine_value);
@@ -808,7 +809,7 @@ $('[class*="multiselect_"]').each(function() {
     });
 });
 
-$('[class*="select_"]').each(function() {
+$('[class^="select_"]').each(function() {
     $(this).on('change', function() {
         busy_editing = true;
     });
@@ -827,76 +828,9 @@ $('[class*="text_"]').each(function() {
     });
 });
 
-$('.edit-cancel').on('click', function() {
-    var panel_category = $(this).attr('data-category');
-    if (!panel_category) { return; };
-    if (!busy_editing) {
-        if (panel_category == 'semantics') {
-            initialise_multiselect('semField');
-            initialise_multiselect('derivHist');
-        }
-        if (panel_category == 'general') {
-            initialise_multiselect('dialect');
-        }
-        if (['general', 'phonology', 'semantics', 'publication'].includes(panel_category)) {
-            disable_edit_panel(panel_category);
-        }
-        return;
-    };
-    $('[class*="select_"]').each(function() {
-        var this_category = $(this).attr('data-category');
-        if (this_category != panel_category) { return; }
-        var initial_data = $(this).attr('data-initial');
-        $(this).val(initial_data).trigger('change');
-    });
-    $('[class*="text_"]').each(function() {
-        var this_category = $(this).attr('data-category');
-        if (this_category != panel_category) { return; }
-        var this_id = $(this).attr('id');
-        var initial_value = $(this).attr('data-initial');
-        var this_value = $(this).val();
-        if (this_value != initial_value) {
-            $(this).trigger('reset');
-        }
-    });
-    $('[class*="multiselect_"]').each(function() {
-        var this_category = $(this).attr('data-category');
-        if (this_category != panel_category) { return; }
-        var this_name = $(this).attr("name");
-        if (!this_name) { return; }
-        if (this_name === 'dialect') {
-            selected_dialect.length = 0;
-            selected_dialect = JSON.parse(JSON.stringify(initial_dialect));
-            initialise_multiselect('dialect');
-        } else if (this_name === 'semField') {
-            selected_semField.length = 0;
-            selected_semField = JSON.parse(JSON.stringify(initial_semField));
-            initialise_multiselect('semField');
-        } else if (this_name === 'derivHist') {
-            selected_derivHist.length = 0;
-            selected_derivHist = JSON.parse(JSON.stringify(initial_derivHist));
-            initialise_multiselect('derivHist');
-        }
-    });
-    if (use_lookaheads) {
-        $('[id*="_lookahead"]').each(function() {
-            var this_category = $(this).attr('data-category');
-            if (this_category != panel_category) { return; }
-            var initial_data = $(this).attr('data-initial');
-            $(this).attr('value', initial_data);
-            $(this).attr('placeholder', initial_data);
-            $(this).trigger('change');
-        });
-    }
-    busy_editing = false;
-    if (['general', 'phonology', 'semantics', 'publication'].includes(panel_category)) {
-        disable_edit_panel(panel_category);
-    }
-});
-
 $(document).ready(function() {
 
-    if (use_lookaheads) {
+    if (use_lookaheads === 'lookaheads') {
         lookaheadConfig.forEach(config => {
             window[config.name + 'typeahead'] = readyLookahead(config);
         });
@@ -981,6 +915,83 @@ $(document).ready(function() {
           $(this).parent().next().val("")
     });
 
+    $('.edit-cancel').on('click', function() {
+        var panel_category = $(this).attr('data-category');
+        if (!panel_category) { return; };
+        if (!busy_editing) {
+            if (panel_category == 'semantics') {
+                initialise_multiselect('semField');
+                initialise_multiselect('derivHist');
+            }
+            if (panel_category == 'general') {
+                initialise_multiselect('dialect');
+            }
+            if (['general', 'phonology', 'semantics', 'publication'].includes(panel_category)) {
+                disable_edit_panel(panel_category);
+            }
+            return;
+        };
+        $('[class^="select_"]').each(function() {
+            var this_category = $(this).attr('data-category');
+            if (this_category != panel_category) { return; }
+            var initial_data = $(this).attr('data-initial');
+            $(this).attr('value', initial_data);
+            $(this).val(initial_data).trigger('change');
+            busy_editing = false;
+        });
+        $('[class*="text_"]').each(function() {
+            var this_category = $(this).attr('data-category');
+            if (this_category != panel_category) { return; }
+            var this_id = $(this).attr('id');
+            var initial_value = $(this).attr('data-initial');
+            var this_value = $(this).val();
+            if (this_value != initial_value) {
+                $(this).trigger('reset');
+            }
+        });
+        $('[class*="multiselect_"]').each(function() {
+            var this_category = $(this).attr('data-category');
+            if (this_category != panel_category) { return; }
+            var this_name = $(this).attr("name");
+            if (!this_name) { return; }
+            if (this_name === 'dialect') {
+                selected_dialect.length = 0;
+                selected_dialect = JSON.parse(JSON.stringify(initial_dialect));
+                initialise_multiselect('dialect');
+            } else if (this_name === 'semField') {
+                selected_semField.length = 0;
+                selected_semField = JSON.parse(JSON.stringify(initial_semField));
+                initialise_multiselect('semField');
+            } else if (this_name === 'derivHist') {
+                selected_derivHist.length = 0;
+                selected_derivHist = JSON.parse(JSON.stringify(initial_derivHist));
+                initialise_multiselect('derivHist');
+            }
+        });
+        if (use_lookaheads === 'lookaheads') {
+            $('[id*="_lookahead"]').each(function() {
+                var this_field = $(this).attr('data-field');
+                var this_category = $(this).attr('data-category');
+                if (this_category != panel_category) { return; }
+                var initial_data = $(this).attr('data-initial');
+                var machine_value = $(this).attr('data-machine_value');
+                if (!machine_value) {
+                    machine_value = '0';
+                }
+                $(this).attr('placeholder', initial_data);
+                $(this).attr('data-preselect', machine_value);
+                $('#'+this_field+'_machine_value').attr('value', machine_value);
+                $('#'+this_field+'_hidden_input_values').empty();
+                $(this).val(initial_data).trigger('input').typeahead('close');
+                busy_editing = false;
+            });
+        }
+        busy_editing = false;
+        if (['general', 'phonology', 'semantics', 'publication'].includes(panel_category)) {
+            disable_edit_panel(panel_category);
+        }
+    });
+
      $('.quick_save').click(function(e)
 	 {
          e.preventDefault();
@@ -1022,7 +1033,7 @@ $(document).ready(function() {
                 var field_value = $(field_lookup).val();
                 update[field_key] = field_value;
             } else {
-                if (use_lookaheads == 'lookaheads') {
+                if (use_lookaheads === 'lookaheads') {
                     var field_lookup = '#'+field+'_machine_value';
                 } else {
                     var field_lookup = '#'+field+'_value';
