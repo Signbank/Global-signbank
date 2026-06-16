@@ -75,33 +75,35 @@ var initial_derivHist = initial_derivHists;
 
 var selected_derivHist = selected_derivHists;
 
-function selectionIncludes(selected_fields, new_selection) {
+function selectionIncludes(selection, new_selection) {
+    let selected_fields = window[selection];
     for (i=0; i<selected_fields.length;i++) {
-        if (selected_fields[i].name === new_selection.name) { return true; }
+        if (selected_fields[i].machine_value === new_selection.machine_value) { return true; }
     }
     return false;
 }
 
 // dynamically sets up the editable buttons in the left column during edit mode
 function renderMultiSelected(field, selected_field) {
+    let selected_fields = window[selected_field];
     var container = $('#multiselect_value_'+field);
     container.empty();
     var values_input = $('#'+field+'_hidden_input_values');
     values_input.empty();
     var placeholder_lookahead = $('#'+field+'_multiselect');
-    selected_field.forEach(function(item) {
+    selected_fields.forEach(function(item) {
         var tag = $('<button class="actionButton"></button>').text(item.name);
         var input_value = $('<input type="hidden" name="'+field+'" value="'+item.machine_value+'">');
         var removeBtn = $('<span class="remove">&nbsp;&nbsp;&times;</span>').click(function() {
             busy_editing = true;
-            selected_field = selected_field.filter(i => i !== item);
+            selected_fields = selected_fields.filter(i => i !== item);
             renderMultiSelected(field, selected_field);
         });
         tag.append(removeBtn);
         container.append(tag);
         values_input.append(input_value);
     });
-    var new_placeholder = selected_field.map(item => item.name).join(", ");
+    var new_placeholder = selected_fields.map(item => item.name).join(", ");
     placeholder_lookahead.attr("placeholder", new_placeholder);
     placeholder_lookahead.css("color", "red");
 }
@@ -656,10 +658,10 @@ function readyMultiselect(config) {
     typeahead($(config.lookup));
 
     $(config.lookup).bind('typeahead:selected', function(ev, suggestion) {
-          if (!selectionIncludes(selected_fields, suggestion)) {
+          if (!selectionIncludes(config.selected_fields, suggestion)) {
                 busy_editing = true;
                 selected_fields.push(suggestion);
-                renderMultiSelected(config.name, selected_fields);
+                renderMultiSelected(config.name, config.selected_fields);
           }
           $(this).typeahead('val', '');
     });
@@ -703,9 +705,8 @@ $(document).ready(function() {
     });
 
     multiselectConfig.forEach(config => {
-        let selected_fields = window[config.selected_fields];
         $(config.target).on(config.signal, function() {
-            renderMultiSelected(config.name, selected_fields);
+            renderMultiSelected(config.name, config.selected_fields);
         });
     });
 

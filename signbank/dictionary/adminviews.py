@@ -1181,7 +1181,7 @@ class GlossDetailView(DetailView):
             self.public = self.kwargs['public']
         if self.public:
             return ['dictionary/gloss.html']
-        return ['dictionary/gloss_detail_lookahead.html']
+        return ['dictionary/gloss_detail.html']
 
     # Overriding the get method get permissions right
     def get(self, request, *args, **kwargs):
