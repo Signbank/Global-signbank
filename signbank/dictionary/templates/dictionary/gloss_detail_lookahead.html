@@ -2318,8 +2318,7 @@ input .tt-hint {
                  <div>
                     {% csrf_token %}
                     <button type="button" class="btn btn-danger nme-edit-dismiss"
-                            style="width:auto;padding:3px 12px;" id="nme_edit_dismiss"
-                            >{% trans "Dismiss" %}</button>
+                            style="width:auto;padding:3px 12px;" id="nme_edit_dismiss" >{% trans "Dismiss" %}</button>
                     <button id='enable_edit_nme'
                              class='btn btn-primary navbar-btn edit-mode'
                              style="width:auto;padding:3px 12px;">{% trans "Edit NME Videos" %}</button>
@@ -2458,7 +2457,7 @@ input .tt-hint {
                                                 <input id='nmevideo_description_{{videonme.id}}_{{lang.language_code_2char}}'
                                                        name='nmevideo_description_{{videonme.id}}_{{lang.language_code_2char}}'
                                                        value="{{description}}"
-                                                       type="text" size="50"  >
+                                                       type="text" size="50" >
                                             </td>
                                         </tr>
                                         {% endfor %}
@@ -2570,7 +2569,7 @@ input .tt-hint {
                  {% if perms.dictionary.change_gloss %}
                  <div>
                     {% csrf_token %}
-                    <button type="button" class="btn btn-danger morphology-edit-dismiss button-morphology-to-appear-in-edit-mode"
+                    <button type="button" class="btn btn-danger morphology-edit-dismiss"
                             style="width:auto;padding:3px 12px;">{% trans "Dismiss" %}</button>
                     <button id='enable_edit_morphology'
                              class='btn btn-primary navbar-btn edit-mode'
@@ -2887,11 +2886,11 @@ input .tt-hint {
                             style="width:auto;padding:3px 12px;" data-category="phonology" >
                             {% trans "Cancel" %}</button>
                     <button type="button" class="btn btn-danger quick_save button-phonology-to-appear-in-edit-mode"
-                            style="width:auto;padding:3px 12px;" value="{{gloss.id}}"
-                            >{% trans "Save Phonology" %}</button>
+                            style="width:auto;padding:3px 12px;"
+                            value="{{gloss.id}}" >{% trans "Save Phonology" %}</button>
                     <button id='enable_edit_phonology'
                              class='btn btn-primary navbar-btn edit-mode'
-                             style="width:auto;padding:3px 12px;">{% trans "Edit Phonology" %}</button>
+                             style="width:auto;padding:3px 12px;" >{% trans "Edit Phonology" %}</button>
                  </div>
                  {% endif %}
             </div>
@@ -3574,8 +3573,8 @@ input .tt-hint {
                         style="width:auto;padding:3px 12px;" data-category="semantics" >
                         {% trans "Cancel" %}</button>
                 <button type="button" class="btn btn-danger quick_save button-semantics-to-appear-in-edit-mode"
-                        style="width:auto;padding:3px 12px;" value="{{gloss.id}}"
-                        >{% trans "Save Semantics" %}</button>
+                        style="width:auto;padding:3px 12px;"
+                        value="{{gloss.id}}" >{% trans "Save Semantics" %}</button>
                 <button id='enable_edit_semantics'
                          class='btn btn-primary navbar-btn edit-mode'
                          style="width:auto;padding:3px 12px;">{% trans "Edit Semantics" %}</button>
@@ -3762,7 +3761,7 @@ input .tt-hint {
                  {% if perms.dictionary.change_gloss %}
                  <div>
                     {% csrf_token %}
-                    <button type="button" class="btn btn-danger relation-edit-dismiss button-relations-to-appear-in-edit-mode"
+                    <button type="button" class="btn btn-danger relations-edit-dismiss"
                             style="width:auto;padding:3px 12px;">{% trans "Dismiss" %}</button>
                     <button id='enable_edit_relations'
                              class='btn btn-primary navbar-btn edit-mode'
@@ -3775,7 +3774,7 @@ input .tt-hint {
                <tr id='row_{{rel.id}}'>
                {% if "change_dataset" in dataset_perms %}
 
-                     <td style='width:2em;' class="relation_delete_edit_only">
+                     <td style='width:2em;' class="relations_delete_edit_only">
                         <span class='glyphicon glyphicon-trash relation_delete' data-toggle='modal' data-target='#delete_relation_modal_{{rel.id}}'></span>
 
                          <div class="modal fade" id="delete_relation_modal_{{rel.id}}" role="dialog" aria-labelledby="#modalTitleRel" aria-hidden="true">
@@ -3803,7 +3802,7 @@ input .tt-hint {
 
                     </td>
                {% else %}
-                    <td class="relation_delete_edit_only"></td>
+                    <td class="relations_delete_edit_only"></td>
                {% endif %}
                     <td class="td td-light" id='relationrole_{{rel.id}}'>{{rel.get_role_display}}</td>
                     <td class="td td-light" id='relationtarget_{{rel.id}}'>
@@ -3816,8 +3815,8 @@ input .tt-hint {
            </table>
 
            {% if "change_dataset" in dataset_perms %}
-           <form id='add_relation_form'
-                 onsubmit='return validateForm("add_relation_form","targetid","sourceid",
+           <form id='add_relations_form'
+                 onsubmit='return validateForm("add_relations_form","targetid","sourceid",
                                                 "Please choose a target gloss for Add Relation to Other Sign.",
                                                 "Target gloss must be different from this gloss for Add Relation to Other Sign.")'
                  method='post' action='{% url "dictionary:add_relation" %}'>
@@ -3859,7 +3858,7 @@ input .tt-hint {
                      {% if perms.dictionary.change_gloss %}
                      <div>
                         {% csrf_token %}
-                        <button type="button" class="btn btn-danger foreignrelations-edit-dismiss button-foreignrelations-to-appear-in-edit-mode"
+                        <button type="button" class="btn btn-danger foreignrelations-edit-dismiss"
                                 style="width:auto;padding:3px 12px;">{% trans "Dismiss" %}</button>
                         <button id='enable_edit_foreignrelations'
                                  class='btn btn-primary navbar-btn edit-mode'
@@ -3961,7 +3960,7 @@ input .tt-hint {
 
                {% if "change_dataset" in dataset_perms %}
                <div class="edit_only_foreignrelations">
-               <form id='add_relationtoforeignsign_form' method='post' action='{% url "dictionary:add_relationtoforeignsign" gloss.id %}'>
+               <form id='add_foreignrelations_form' method='post' action='{% url "dictionary:add_relationtoforeignsign" gloss.id %}'>
                    {% csrf_token %}
                    <input type='hidden' name='sourceid' value='{{gloss.pk}}'>
                    <table class='table table-condensed'>
@@ -4000,15 +3999,14 @@ input .tt-hint {
                  {% if perms.dictionary.change_gloss %}
                  <div>
                     {% csrf_token %}
-                    <button type="button" class="btn btn-danger publication-edit-dismiss button-publication-to-appear-in-edit-mode"
-                            style="width:auto;padding:3px 12px;"
-                            >{% trans "Cancel" %}</button>
+                    <button type="button" class="btn btn-danger edit-cancel button-publication-to-appear-in-edit-mode"
+                            style="width:auto;padding:3px 12px;" >{% trans "Cancel" %}</button>
                     <button type="button" class="btn btn-danger quick_save button-publication-to-appear-in-edit-mode"
-                            style="width:auto;padding:3px 12px;" value="{{gloss.id}}"
-                            >{% trans "Save Publication Status" %}</button>
+                            style="width:auto;padding:3px 12px;"
+                            value="{{gloss.id}}" >{% trans "Save Publication Status" %}</button>
                     <button id='enable_edit_publication'
                              class='btn btn-primary navbar-btn edit-mode'
-                             style="width:auto;padding:3px 12px;">{% trans "Edit Publication Status" %}</button>
+                             style="width:auto;padding:3px 12px;" >{% trans "Edit Publication Status" %}</button>
                  </div>
                  {% endif %}
             </div>
@@ -4112,8 +4110,7 @@ input .tt-hint {
                  <div>
                     {% csrf_token %}
                     <button type="button" class="btn btn-danger notes-edit-dismiss"
-                            style="width:auto;padding:3px 12px;" id="notes_edit_dismiss"
-                            >{% trans "Dismiss" %}</button>
+                            style="width:auto;padding:3px 12px;" id="notes_edit_dismiss" >{% trans "Dismiss" %}</button>
                     <button id='enable_edit_notes'
                              class='btn btn-primary navbar-btn edit-mode'
                              style="width:auto;padding:3px 12px;">{% trans "Edit Notes" %}</button>
@@ -4299,8 +4296,7 @@ input .tt-hint {
                  <div>
                     {% csrf_token %}
                     <button type="button" class="btn btn-danger provenance-edit-dismiss"
-                            style="width:auto;padding:3px 12px;" id="provenance_edit_dismiss"
-                            >{% trans "Dismiss" %}</button>
+                            style="width:auto;padding:3px 12px;" id="provenance_edit_dismiss" >{% trans "Dismiss" %}</button>
                     <button id='enable_edit_provenance'
                              class='btn btn-primary navbar-btn edit-mode'
                              style="width:auto;padding:3px 12px;">{% trans "Edit Provenance" %}</button>
@@ -4594,8 +4590,7 @@ input .tt-hint {
                  <div>
                     {% csrf_token %}
                     <button type="button" class="btn btn-danger othermedia-edit-dismiss"
-                            style="width:auto;padding:3px 12px;" id="othermedia_edit_dismiss"
-                            >{% trans "Dismiss" %}</button>
+                            style="width:auto;padding:3px 12px;" id="othermedia_edit_dismiss" >{% trans "Dismiss" %}</button>
                     <button id='enable_edit_othermedia'
                              class='btn btn-primary navbar-btn edit-mode'
                              style="width:auto;padding:3px 12px;">{% trans "Edit Other Media" %}</button>

@@ -304,7 +304,7 @@ def add_gloss(request):
         return show_warning(request, feedback_message, selected_datasets)
 
     # new gloss created successfully, go to GlossDetailView
-    return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': gloss.pk}) + '?edit')
+    return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': gloss.pk}))
 
 
 @require_http_methods(["POST"])
@@ -352,7 +352,7 @@ def update_examplesentence(request, examplesentenceid):
         if len(vals) == 0 or vals == examplesentence.get_examplestc_translations_dict_without():
             messages.add_message(request, messages.INFO, gettext_lazy('This example sentence was not changed.'))
             return HttpResponseRedirect(
-                reverse('dictionary:admin_gloss_view', kwargs={'pk': request.POST['glossid']}) + '?edit')
+                reverse('dictionary:admin_gloss_view', kwargs={'pk': request.POST['glossid']}))
 
         # Update the examplesentence with examplesentencetranslations
         for dataset_language in dataset_languages:
@@ -383,7 +383,7 @@ def update_examplesentence(request, examplesentenceid):
             revision.save()
 
     return HttpResponseRedirect(
-        reverse('dictionary:admin_gloss_view', kwargs={'pk': request.POST['glossid']}) + '?edit')
+        reverse('dictionary:admin_gloss_view', kwargs={'pk': request.POST['glossid']}))
 
 
 @require_http_methods(["POST"])
@@ -415,7 +415,7 @@ def create_examplesentence(request, senseid):
     if len(vals) == 0:
         messages.add_message(request, messages.ERROR, gettext_lazy('No input sentence given.'))
         return HttpResponseRedirect(
-            reverse('dictionary:admin_gloss_view', kwargs={'pk': request.POST['glossid']}) + '?edit')
+            reverse('dictionary:admin_gloss_view', kwargs={'pk': request.POST['glossid']}))
 
     with atomic():
         stype = FieldChoice.objects.filter(field='SentenceType').get(machine_value=request.POST['sentenceType'])
@@ -439,7 +439,7 @@ def create_examplesentence(request, senseid):
             revision.save()
 
     return HttpResponseRedirect(
-        reverse('dictionary:admin_gloss_view', kwargs={'pk': request.POST['glossid']}) + '?edit')
+        reverse('dictionary:admin_gloss_view', kwargs={'pk': request.POST['glossid']}))
 
 
 @require_http_methods(["POST"])
@@ -470,7 +470,7 @@ def delete_examplesentence(request, senseid):
         revision.save()
 
     return HttpResponseRedirect(
-        reverse('dictionary:admin_gloss_view', kwargs={'pk': request.POST['glossid']}) + '?edit')
+        reverse('dictionary:admin_gloss_view', kwargs={'pk': request.POST['glossid']}))
 
 
 def sort_sense(request, glossid, order, direction):
@@ -480,7 +480,7 @@ def sort_sense(request, glossid, order, direction):
     if gloss_senses_matching_order != 1:
         print('sort_sense: multiple or no match for order: ', glossid, str(order))
         messages.add_message(request, messages.ERROR, gettext_lazy('Could not sort this sense.'))
-        return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': gloss.id}) + '?edit')
+        return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': gloss.id}))
 
     glosssense = GlossSense.objects.get(gloss=gloss, order=order)
     swaporder = 0
@@ -489,7 +489,7 @@ def sort_sense(request, glossid, order, direction):
     elif direction == "down":
         swaporder = order + 1
     else:
-        return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': gloss.id}) + '?edit')
+        return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': gloss.id}))
 
     try:
         glosssensetoswap = GlossSense.objects.get(gloss=gloss, order=swaporder)
@@ -503,7 +503,7 @@ def sort_sense(request, glossid, order, direction):
         print('sort_sense ', direction.upper(), ': multiple or no match for order: ', glossid, str(swaporder))
         messages.add_message(request, messages.ERROR, gettext_lazy('Could not sort this sense.'))
 
-    return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': gloss.id}) + '?edit')
+    return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': gloss.id}))
 
 
 def sort_examplesentence(request, senseid, glossid, order, direction):
@@ -521,7 +521,7 @@ def sort_examplesentence(request, senseid, glossid, order, direction):
     elif direction == "down":
         swaporder = order + 1
     else:
-        return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': gloss.id}) + '?edit')
+        return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': gloss.id}))
 
     try:
         senseexamplesentencetoswap = SenseExamplesentence.objects.get(sense=sense, order=swaporder)
@@ -533,7 +533,7 @@ def sort_examplesentence(request, senseid, glossid, order, direction):
         print('sort_examplesentence ', direction.upper(), ': multiple or no match for order: ', senseid, str(swaporder))
         messages.add_message(request, messages.ERROR, gettext_lazy('Could not sort this examplesentence.'))
 
-    return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': gloss.id}) + '?edit')
+    return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': gloss.id}))
 
 
 def add_sentence_video(request, glossid, examplesentenceid):
@@ -564,7 +564,7 @@ def update_sense(request, senseid):
 
     if not request.user.has_perm('dictionary.change_sense'):
         messages.add_message(request, messages.ERROR, gettext_lazy('Sense Update Not Allowed'))
-        return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': glossid}) + '?edit')
+        return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': glossid}))
 
     # Make a dict of new values
     gloss = Gloss.objects.all().get(id=glossid)
@@ -581,7 +581,7 @@ def update_sense(request, senseid):
     # Check if input given is empty
     if vals == {}:
         messages.add_message(request, messages.ERROR, gettext_lazy('No keywords given for edited sense.'))
-        return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': gloss.id}) + '?edit')
+        return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': gloss.id}))
 
     # Check if this sense changed at all
     sense = Sense.objects.get(id=senseid)
@@ -593,16 +593,16 @@ def update_sense(request, senseid):
 
     if sensetranslation_dict == vals:
         messages.add_message(request, messages.ERROR, gettext_lazy('Sense did not change.'))
-        return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': gloss.id}) + '?edit')
+        return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': gloss.id}))
 
     gloss_senses = GlossSense.objects.filter(gloss_id=gloss.id, sense=sense)
 
     if not gloss_senses.count():
         messages.add_message(request, messages.ERROR, gettext_lazy('GlossSense not found for gloss.'))
-        return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': gloss.id}) + '?edit')
+        return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': gloss.id}))
     if gloss_senses.count() > 1:
         messages.add_message(request, messages.ERROR, gettext_lazy('GlossSense duplicate found for gloss.'))
-        return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': gloss.id}) + '?edit')
+        return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': gloss.id}))
 
     # Check if sense already exists in this gloss
     for existing_sense in gloss.senses.all():
@@ -610,7 +610,7 @@ def update_sense(request, senseid):
             continue
         if vals == existing_sense.get_sense_translations_dict_without_list():
             messages.add_message(request, messages.ERROR, gettext_lazy('This sense was already in this gloss.'))
-            return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': gloss.id}) + '?edit')
+            return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': gloss.id}))
 
     # Update sensetranslations
     this_sense_order = gloss_senses.first().order
@@ -709,7 +709,7 @@ def update_sense(request, senseid):
     revision.save()
 
     messages.add_message(request, messages.INFO, gettext_lazy('Given sense was updated.'))
-    return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': gloss.id}) + '?edit')
+    return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': gloss.id}))
 
 
 @require_http_methods(["POST"])
@@ -718,7 +718,7 @@ def create_sense(request, glossid):
 
     if not request.user.has_perm('dictionary.add_sense'):
         messages.add_message(request, messages.ERROR, gettext_lazy('Sense Creation Not Allowed'))
-        return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': glossid}) + '?edit')
+        return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': glossid}))
 
     # Make a dict of new values
     gloss = Gloss.objects.get(id=glossid, archived=False)
@@ -738,13 +738,13 @@ def create_sense(request, glossid):
     # Check if input given is empty
     if vals == {}:
         messages.add_message(request, messages.ERROR, gettext_lazy('No keywords given for new sense.'))
-        return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': glossid}) + '?edit')
+        return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': glossid}))
 
     # Check if sense already exists in this gloss
     for existing_sense in gloss.senses.all():
         if vals == existing_sense.get_sense_translations_dict_without_list():
             messages.add_message(request, messages.ERROR, gettext_lazy('This sense was already in this gloss.'))
-            return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': glossid}) + '?edit')
+            return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': glossid}))
 
     # Make a new sense object
     sense = Sense.objects.create()
@@ -787,7 +787,7 @@ def create_sense(request, glossid):
                              time=DT.datetime.now(tz=get_current_timezone()))
     revision.save()
 
-    return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': glossid}) + '?edit')
+    return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': glossid}))
 
 
 @require_http_methods(["POST"])
@@ -796,7 +796,7 @@ def delete_sense(request, glossid):
 
     if not request.user.has_perm('dictionary.delete_sense'):
         messages.add_message(request, messages.ERROR, gettext_lazy('Sense Deletion Not Allowed'))
-        return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': glossid}) + '?edit')
+        return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': glossid}))
 
     sense = Sense.objects.get(id=request.POST['senseid'])
     gloss = Gloss.objects.get(id=glossid, archived=False)
@@ -843,7 +843,7 @@ def delete_sense(request, glossid):
                              time=DT.datetime.now(tz=get_current_timezone()))
     revision.save()
 
-    return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': glossid}) + '?edit')
+    return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': glossid}))
 
 
 def get_gloss_non_empty_value_dict(request):
@@ -1976,7 +1976,7 @@ def update_relation(user, gloss, field, value):
     if what == 'relationdelete' and rel.role_fk == synonym:
         # special case for symmetric transitive relation
         remove_transitive_synonym(user, rel)
-        return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': gloss.id}) + '?editrel')
+        return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': gloss.id}))
 
     if what == 'relationdelete':
         rel_source = rel.source
@@ -1999,7 +1999,7 @@ def update_relation(user, gloss, field, value):
                                                      '')
                 revrel.delete()
 
-        return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': gloss.id}) + '?editrel')
+        return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': gloss.id}))
     elif what == 'relationrole':
         rel.role_fk = value
         rel.save()
@@ -2039,7 +2039,7 @@ def update_relationtoforeignsign(gloss, field, value):
 
     if what == 'relationforeign_delete':
         rel.delete()
-        return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': gloss.id}) + '?editrelforeign')
+        return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': gloss.id}))
     elif what == 'relationforeign_loan':
         rel.loan = value in ['Yes', 'yes', 'ja', 'Ja', '是', 'true', 'True', True, 1]
         rel.save()
@@ -2107,7 +2107,7 @@ def update_definition(request, gloss, field, value):
         original_value = defn.note_text()
         defn.delete()
         add_gloss_update_to_revision_history(request.user, gloss_or_morpheme, 'definitiondelete', original_value, '')
-        return HttpResponseRedirect(reverse(reverse_url, kwargs={'pk': gloss_or_morpheme.id}) + '?editdef')
+        return HttpResponseRedirect(reverse(reverse_url, kwargs={'pk': gloss_or_morpheme.id}))
 
     if what == 'definition':
         # update the definition
@@ -2169,7 +2169,7 @@ def update_other_media(gloss, field, value):
             os.remove(file_location)
         other_media.delete()
         return HttpResponseRedirect(reverse(reverse_url,
-                                            kwargs={'pk': gloss_or_morpheme.pk}) + '?editothermedia')
+                                            kwargs={'pk': gloss_or_morpheme.pk}))
 
     elif action_or_fieldname == 'other-media-type':
         # value is the (str) machine value of the Other Media Type from the choice list in the template
@@ -2222,7 +2222,7 @@ def add_relation(request):
         messages.add_message(request, messages.INFO,
                              gettext_lazy("This relation already exists."))
         return HttpResponseRedirect(
-            reverse('dictionary:admin_gloss_view', kwargs={'pk': source.id}) + '?editrel')
+            reverse('dictionary:admin_gloss_view', kwargs={'pk': source.id}))
 
     reverse_role = new_relation.get_reverse_role()
     # Also add the reverse relation
@@ -2232,7 +2232,7 @@ def add_relation(request):
         messages.add_message(request, messages.INFO,
                              gettext_lazy("This relation already exists."))
         return HttpResponseRedirect(
-            reverse('dictionary:admin_gloss_view', kwargs={'pk': source.id}) + '?editrel')
+            reverse('dictionary:admin_gloss_view', kwargs={'pk': source.id}))
 
     if created:
         relation_display = f'{role.name}:{get_default_annotationidglosstranslation(target)}'
@@ -2246,7 +2246,7 @@ def add_relation(request):
     created_transitive_relations = ensure_synonym_transitivity(source)
     add_new_relations_to_revision_history(request.user, created_transitive_relations)
 
-    return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': source.id}) + '?editrel')
+    return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': source.id}))
 
 
 @require_http_methods(["POST"])
@@ -2307,7 +2307,7 @@ def add_relationtoforeignsign(request, glossid):
     rel = RelationToForeignSign(gloss=gloss, loan=loan, other_lang=other_lang, other_lang_gloss=other_lang_gloss)
     rel.save()
 
-    return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': gloss.id}) + '?editrelforeign')
+    return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': gloss.id}))
 
 
 @require_http_methods(["POST"])
@@ -2342,7 +2342,7 @@ def add_definition(request, glossid):
 
     add_gloss_update_to_revision_history(request.user, gloss_or_morpheme, 'definition_create', '', revision_value)
 
-    return HttpResponseRedirect(reverse(reverse_url, kwargs={'pk': gloss_or_morpheme.id}) + '?editdef')
+    return HttpResponseRedirect(reverse(reverse_url, kwargs={'pk': gloss_or_morpheme.id}))
 
 
 @require_http_methods(["POST"])
@@ -2377,7 +2377,7 @@ def add_morphology_definition(request):
     thisgloss.lastUpdated = DT.datetime.now(tz=get_current_timezone())
     thisgloss.save()
 
-    return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': thisgloss.id}) + '?editmorphdef')
+    return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': thisgloss.id}))
 
 
 # Add a 'morpheme' (according to the Morpheme model)
@@ -2400,11 +2400,11 @@ def add_morpheme_definition(request, glossid):
                 messages.add_message(request, messages.INFO,
                                      gettext_lazy('Edit Simultaneuous Morphology: The dataset of this gloss has no morphemes.'))
                 return HttpResponseRedirect(
-                    reverse('dictionary:admin_gloss_view', kwargs={'pk': thisgloss.id}) + '?editmorphdef')
+                    reverse('dictionary:admin_gloss_view', kwargs={'pk': thisgloss.id}))
 
         messages.add_message(request, messages.INFO, gettext_lazy('Edit Simultaneuous Morphology: No morpheme selected.'))
         return HttpResponseRedirect(
-            reverse('dictionary:admin_gloss_view', kwargs={'pk': thisgloss.id}) + '?editmorphdef')
+            reverse('dictionary:admin_gloss_view', kwargs={'pk': thisgloss.id}))
 
     if not form.is_valid():
         # fallback to the requesting page
@@ -2420,7 +2420,7 @@ def add_morpheme_definition(request, glossid):
         feedback_message = gettext('Simultaneuous morphology: no morpheme found with identifier {morphid}.'.format(morphid=morph_id))
         messages.add_message(request, messages.ERROR, feedback_message)
 
-        return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': thisgloss.id}) + '?editmorphdef')
+        return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': thisgloss.id}))
 
     original_simultaneous = thisgloss.get_morpheme_display()
 
@@ -2437,7 +2437,7 @@ def add_morpheme_definition(request, glossid):
     thisgloss.lastUpdated = DT.datetime.now(tz=get_current_timezone())
     thisgloss.save()
 
-    return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': thisgloss.id}) + '?editmorphdef')
+    return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': thisgloss.id}))
 
 
 # Add a 'blend' (according to the Blend model)
@@ -2455,7 +2455,7 @@ def add_blend_definition(request, glossid):
         # The user has obviously not selected a morpheme
         # Desired action (Issue #199): nothing happens
         return HttpResponseRedirect(
-            reverse('dictionary:admin_gloss_view', kwargs={'pk': thisgloss.id}) + '?editmorphdef')
+            reverse('dictionary:admin_gloss_view', kwargs={'pk': thisgloss.id}))
 
     if not form.is_valid():
         # fallback to the requesting page
@@ -2477,7 +2477,7 @@ def add_blend_definition(request, glossid):
     thisgloss.lastUpdated = DT.datetime.now(tz=get_current_timezone())
     thisgloss.save()
 
-    return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': thisgloss.id}) + '?editmorphdef')
+    return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': thisgloss.id}))
 
 
 @require_http_methods(["POST"])
@@ -2838,7 +2838,7 @@ def add_othermedia(request):
     is_video = filetype.startswith('video')
 
     if not is_video or not video_format_extension:
-        return HttpResponseRedirect(reverse(reverse_url, kwargs={'pk': request.POST['gloss']}) + '?editothermedia')
+        return HttpResponseRedirect(reverse(reverse_url, kwargs={'pk': request.POST['gloss']}))
 
     is_not_mp4_type = filetype != 'video/mp4'
     is_not_mp4_extension = extension != '.mp4'
@@ -2852,7 +2852,7 @@ def add_othermedia(request):
         newothermedia.path = f"{request.POST['gloss']}/{name}.mp4"
         newothermedia.save()
 
-    return HttpResponseRedirect(reverse(reverse_url, kwargs={'pk': request.POST['gloss']})+'?editothermedia')
+    return HttpResponseRedirect(reverse(reverse_url, kwargs={'pk': request.POST['gloss']}))
 
 
 def update_morphology_definition(gloss, field, value):
@@ -2876,7 +2876,7 @@ def update_morphology_definition(gloss, field, value):
     if what == 'morphology_definition_delete':
         print("DELETE morphology definition: ", morph_def)
         morph_def.delete()
-        return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': gloss.id}) + '?editmorphdef')
+        return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': gloss.id}))
     elif what == 'morphology_definition_role':
         morph_def.role = value
         morph_def.save()
@@ -2994,7 +2994,7 @@ def add_morpheme(request):
             request.session['search_type'] = ''
         request.session['last_used_dataset'] = dataset.acronym
 
-        return HttpResponseRedirect(reverse('dictionary:admin_morpheme_view', kwargs={'pk': morpheme.id}) + '?edit')
+        return HttpResponseRedirect(reverse('dictionary:admin_morpheme_view', kwargs={'pk': morpheme.id}))
     else:
         return render(request, 'dictionary/add_morpheme.html', {'add_morpheme_form': form,
                                                                 'dataset_languages': dataset_languages,
@@ -3217,7 +3217,7 @@ def update_morpheme_definition(gloss, field, value):
     if what == 'morpheme_definition_delete':
         definition = SimultaneousMorphologyDefinition.objects.get(id=morph_def_id)
         definition.delete()
-        return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': gloss.id}) + '?editmorphdef')
+        return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': gloss.id}))
     elif what == 'morpheme_definition_meaning':
         definition = SimultaneousMorphologyDefinition.objects.get(id=morph_def_id)
         original_value = getattr(definition, 'role')
@@ -3245,7 +3245,7 @@ def update_blend_definition(gloss, field, value):
         definition = BlendMorphology.objects.get(id=blend_id)
         definition.delete()
 
-        return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': gloss.id}) + '?editmorphdef')
+        return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': gloss.id}))
     elif what == 'blend_definition_role':
         definition = BlendMorphology.objects.get(id=blend_id)
         original_value = getattr(definition, 'role')
@@ -4431,7 +4431,7 @@ def add_provenance(request, glossid):
     gloss_or_morpheme.lastUpdated = DT.datetime.now(tz=get_current_timezone())
     gloss_or_morpheme.save()
 
-    return HttpResponseRedirect(reverse(reverse_url, kwargs={'pk': gloss_or_morpheme.id}) + '?editprovenance')
+    return HttpResponseRedirect(reverse(reverse_url, kwargs={'pk': gloss_or_morpheme.id}))
 
 
 @require_http_methods(["POST"])
@@ -4459,7 +4459,7 @@ def update_provenance(request, gloss, field, value):
         original_value = prov.provenance_text()
         prov.delete()
         add_gloss_update_to_revision_history(request.user, gloss_or_morpheme, 'provenancedelete', original_value, '')
-        return HttpResponseRedirect(reverse(reverse_url, kwargs={'pk': gloss_or_morpheme.id})+'?editprovenance')
+        return HttpResponseRedirect(reverse(reverse_url, kwargs={'pk': gloss_or_morpheme.id}))
 
     if what == 'provenancedescription':
         # update the description
@@ -4475,7 +4475,7 @@ def update_provenance(request, gloss, field, value):
         newvalue = prov.method.name
         new_history_value = newvalue
     else:
-        return HttpResponseRedirect(reverse(reverse_url, kwargs={'pk': gloss_or_morpheme.id}) + '?editprovenance')
+        return HttpResponseRedirect(reverse(reverse_url, kwargs={'pk': gloss_or_morpheme.id}))
 
     add_gloss_update_to_revision_history(request.user, gloss_or_morpheme, what, original_value, new_history_value)
 

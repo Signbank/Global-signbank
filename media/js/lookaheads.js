@@ -59,91 +59,54 @@ typeaheadConfigs.forEach(config => {
     window[config.name + 'typeahead'] = createTypeahead(config);
 });
 
-
 // last of the field choice bloodhounds
 
 // multiselect fields
+
+var initial_dialect = initial_dialects; // constant for resetting
+
+var selected_dialect = selected_dialects;  // variable
 
 var initial_semField = initial_semFields;
 
 var selected_semField = selected_semFields;
 
-function renderSelectedSemField() {
-    var container = $('#multiselect_value_semField');
-    container.empty();
-    var values_input = $('#semField_hidden_input_values');
-    values_input.empty();
-    var placeholder_lookahead = $('#semField_multiselect');
-    selected_semField.forEach(function(item) {
-        var tag = $('<button class="actionButton"></button>').text(item.name);
-        var input_value = $('<input type="hidden" name="semField" value="'+item.machine_value+'">');
-        var removeBtn = $('<span class="remove">&nbsp;&nbsp;&times;</span>').click(function() {
-            busy_editing = true;
-            selected_semField = selected_semField.filter(i => i !== item);
-            renderSelectedSemField();
-        });
-        tag.append(removeBtn);
-        container.append(tag);
-        values_input.append(input_value);
-    });
-    var new_placeholder = selected_semField.map(item => item.name).join(", ");
-    placeholder_lookahead.attr("placeholder", new_placeholder);
-    placeholder_lookahead.css("color", "red");
-}
-
 var initial_derivHist = initial_derivHists;
 
 var selected_derivHist = selected_derivHists;
 
-function renderSelectedDerivHist() {
-    var container = $('#multiselect_value_derivHist');
-    container.empty();
-    var values_input = $('#derivHist_hidden_input_values');
-    values_input.empty();
-    var placeholder_lookahead = $('#derivHist_multiselect');
-    selected_derivHist.forEach(function(item) {
-        var tag = $('<button class="actionButton"></button>').text(item.name);
-        var input_value = $('<input type="hidden" name="derivHist" value="'+item.machine_value+'">');
-        var removeBtn = $('<span class="remove">&nbsp;&nbsp;&times;</span>').click(function() {
-            busy_editing = true;
-            selected_derivHist = selected_derivHist.filter(i => i !== item);
-            renderSelectedDerivHist();
-        });
-        tag.append(removeBtn);
-        container.append(tag);
-        values_input.append(input_value);
-    });
-    var new_placeholder = selected_derivHist.map(item => item.name).join(", ");
-    placeholder_lookahead.attr("placeholder", new_placeholder);
+function selectionIncludes(selected_fields, new_selection) {
+    for (i=0; i<selected_fields.length;i++) {
+        if (selected_fields[i].name === new_selection.name) { return true; }
+    }
+    return false;
 }
 
-var initial_dialect = initial_dialects;
-
-var selected_dialect = selected_dialects;
-
-function renderSelectedDialect() {
-    var container = $('#multiselect_value_dialect');
+// dynamically sets up the editable buttons in the left column during edit mode
+function renderMultiSelected(field, selected_field) {
+    var container = $('#multiselect_value_'+field);
     container.empty();
-    var values_input = $('#dialect_hidden_input_values');
+    var values_input = $('#'+field+'_hidden_input_values');
     values_input.empty();
-    var placeholder_lookahead = $('#dialect_multiselect');
-    selected_dialect.forEach(function(item) {
+    var placeholder_lookahead = $('#'+field+'_multiselect');
+    selected_field.forEach(function(item) {
         var tag = $('<button class="actionButton"></button>').text(item.name);
-        var input_value = $('<input type="hidden" name="dialect" value="'+item.machine_value+'">');
+        var input_value = $('<input type="hidden" name="'+field+'" value="'+item.machine_value+'">');
         var removeBtn = $('<span class="remove">&nbsp;&nbsp;&times;</span>').click(function() {
             busy_editing = true;
-            selected_dialect = selected_dialect.filter(i => i !== item);
-            renderSelectedDialect();
+            selected_field = selected_field.filter(i => i !== item);
+            renderMultiSelected(field, selected_field);
         });
         tag.append(removeBtn);
         container.append(tag);
         values_input.append(input_value);
     });
-    var new_placeholder = selected_dialect.map(item => item.name).join(", ");
+    var new_placeholder = selected_field.map(item => item.name).join(", ");
     placeholder_lookahead.attr("placeholder", new_placeholder);
     placeholder_lookahead.css("color", "red");
 }
 
+// dynamically sets up the non-editable buttons in the left column for when not in edit mode
 function initialise_multiselect(field) {
     var this_multiselect = $("#multiselect_value_"+field);
     var initial_selection = window["initial_"+field];
@@ -161,7 +124,7 @@ function initialise_multiselect(field) {
 
 function initialise_multiselects() {
     busy_editing = false;
-    $('[id*="multiselect_value_"]').each(function() {
+    $('[id^="multiselect_value_"]').each(function() {
         var field = $(this).attr('data-name');
         initialise_multiselect(field);
     });
@@ -266,278 +229,197 @@ $(".lemma-form-dismiss").on('click', function() {
     $('#lemma_buttons').show();
 });
 
+const morphology_kinds = ['morphologydefinition', 'morphemedefinition', 'blenddefinition'];
+
+function disable_edit_rows_panel(category) {
+    if (category === 'morphology') {
+        $.each(morphology_kinds, function (_, kind) {
+            $('#add_'+kind+'_form').hide();
+        });
+    } else {
+        $('#add_'+category+'_form').hide();
+    }
+    $('.'+category+'_delete_edit_only').hide();
+    $('.empty_row_'+category).hide();
+}
+
+function enable_edit_rows_panel(category) {
+    if (category === 'morphology') {
+        $.each(morphology_kinds, function (_, kind) {
+            $('#add_'+kind+'_form').show();
+        });
+    } else {
+        $('#add_'+category+'_form').show();
+    }
+    $('.'+category+'_delete_edit_only').show();
+    $('.empty_row_'+category).show();
+}
+
 function disable_edit_morphology() {
-    $('#add_morphologydefinition_form').hide();
-    $('#add_morphemedefinition_form').hide();
-    $('#add_blenddefinition_form').hide();
-    $('.morphology_delete_edit_only').each(function() {
-        $(this).hide();
-    });
-    $('.button-morphology-to-appear-in-edit-mode').hide();
-    $('.empty_row_morphology').each(function() {
-        $(this).hide();
-    });
+    disable_edit_rows_panel('morphology');
+    $('.morphology-edit-dismiss').hide();
+    $('#enable_edit_morphology').show();
 }
 
 $(".morphology-edit-dismiss").on('click', function() {
-    $('#add_morphologydefinition_form').hide();
-    $('#add_morphemedefinition_form').hide();
-    $('#add_blenddefinition_form').hide();
-    $('.morphology_delete_edit_only').each(function() {
-        $(this).hide();
-    });
+    disable_edit_rows_panel('morphology');
     $(this).hide();
     $('#enable_edit_morphology').show();
-    $('.empty_row_morphology').each(function() {
-        $(this).hide();
-    });
 });
 
 $("#enable_edit_morphology").on('click', function() {
-    $('#add_morphologydefinition_form').show();
-    $('#add_morphemedefinition_form').show();
-    $('#add_blenddefinition_form').show();
-    $('.morphology_delete_edit_only').each(function() {
-        $(this).show();
-    });
-    $('.empty_row_morphology').each(function() {
-        $(this).show();
-    });
-    $('.button-morphology-to-appear-in-edit-mode').show();
+    enable_edit_rows_panel('morphology');
+    $('.morphology-edit-dismiss').show();
     $(this).hide();
 });
 
 function disable_edit_relations() {
-    $('#add_relation_form').hide();
-    $('.relation_delete_edit_only').each(function() {
-        $(this).hide();
-    });
-    $('.button-relations-to-appear-in-edit-mode').hide();
+    disable_edit_rows_panel('relations');
+    $('.relations-edit-dismiss').hide();
+    $('#enable_edit_relations').show();
 }
 
-$(".relation-edit-dismiss").on('click', function() {
-    $('#add_relation_form').hide();
-    $('.relation_delete_edit_only').each(function() {
-        $(this).hide();
-    });
+$(".relations-edit-dismiss").on('click', function() {
+    disable_edit_rows_panel('relations');
     $(this).hide();
     $('#enable_edit_relations').show();
 });
 
 $("#enable_edit_relations").on('click', function() {
-    $('#add_relation_form').show();
-    $('.relation_delete_edit_only').each(function() {
-        $(this).show();
-    });
-    $('.button-relations-to-appear-in-edit-mode').show();
+    enable_edit_rows_panel('relations');
+    $('.relations-edit-dismiss').show();
     $(this).hide();
 });
 
 function disable_edit_foreignrelations() {
-    $('#add_relationtoforeignsign_form').hide();
-    $('.edit_only_foreignrelations').each(function() {
-        $(this).hide();
-    });
-    $('.button-foreignrelations-to-appear-in-edit-mode').hide();
-    disable_lookaheads('foreignrelations');
+    disable_edit_rows_panel('foreignrelations');
+    $('.foreignrelations-edit-dismiss').hide();
+    disable_editing('foreignrelations');
     $('#enable_edit_foreignrelations').show();
 }
 
 $(".foreignrelations-edit-dismiss").on('click', function() {
-    $('#add_relationtoforeignsign_form').hide();
-    $('.edit_only_foreignrelations').each(function() {
-        $(this).hide();
-    });
-    disable_lookaheads('foreignrelations');
+    disable_edit_rows_panel('foreignrelations');
+    disable_editing('foreignrelations');
     $(this).hide();
     $('#enable_edit_foreignrelations').show();
 });
 
 $("#enable_edit_foreignrelations").on('click', function() {
-    $('#add_relationtoforeignsign_form').show();
-    $('.edit_only_foreignrelations').each(function() {
-        $(this).show();
-    });
-    $('.button-foreignrelations-to-appear-in-edit-mode').show();
+    enable_edit_rows_panel('foreignrelations');
+    $('.foreignrelations-edit-dismiss').show();
     $(this).hide();
-    enable_lookaheads('foreignrelations');
-});
-
-$(".publication-edit-dismiss").on('click', function() {
-    $('.edit_only_publication').each(function() {
-        $(this).hide();
-    });
-    $('.read_only_publication').each(function() {
-        $(this).show();
-    });
-    $('#enable_edit_publication').removeClass('edit_enabled').show();
-    $('.button-publication-to-appear-in-edit-mode').hide();
+    enable_editing('foreignrelations');
 });
 
 function disable_edit_nme() {
-    $('.edit_only_nme').each(function() {
-        $(this).hide();
-    });
-    $('.read_only_nme').each(function() {
-        $(this).show();
-    });
+    $('.edit_only_nme').hide();
+    $('.read_only_nme').show();
     $('#nme_edit_dismiss').hide();
     $('#enable_edit_nme').show();
 }
 
 $(".nme-edit-dismiss").on('click', function() {
-    $('.edit_only_nme').each(function() {
-        $(this).hide();
-    });
-    $('.read_only_nme').each(function() {
-        $(this).show();
-    });
+    $('.edit_only_nme').hide();
+    $('.read_only_nme').show();
     $(this).hide();
     $('#enable_edit_nme').show();
 });
 
 $("#enable_edit_nme").on('click', function() {
-    $('.edit_only_nme').each(function() {
-        $(this).show();
-    });
-    $('.read_only_nme').each(function() {
-        $(this).hide();
-    });
+    $('.edit_only_nme').show();
+    $('.read_only_nme').hide();
     $('#nme_edit_dismiss').show();
     $(this).hide();
 });
 
 function disable_edit_notes() {
-    $('.edit_only_notes').each(function() {
-        $(this).hide();
-    });
-    $('.read_only_notes').each(function() {
-        $(this).show();
-    });
-    disable_lookaheads('notes');
+    $('.edit_only_notes').hide();
+    $('.read_only_notes').show();
+    disable_editing('notes');
     $('#notes_edit_dismiss').hide();
     $('#enable_edit_notes').show();
 }
 
 $(".notes-edit-dismiss").on('click', function() {
-    $('.edit_only_notes').each(function() {
-        $(this).hide();
-    });
-    disable_lookaheads('notes');
-    $('.read_only_notes').each(function() {
-        $(this).show();
-    });
+    $('.edit_only_notes').hide();
+    disable_editing('notes');
+    $('.read_only_notes').show();
     $(this).hide();
     $('#enable_edit_notes').show();
 });
 
 $("#enable_edit_notes").on('click', function() {
-    $('.edit_only_notes').each(function() {
-        $(this).show();
-    });
-    $('.read_only_notes').each(function() {
-        $(this).hide();
-    });
+    $('.edit_only_notes').show();
+    $('.read_only_notes').hide();
     $('#notes_edit_dismiss').show();
     $(this).hide();
-    enable_lookaheads('notes');
+    enable_editing('notes');
 });
 
 function disable_edit_provenance() {
-    $('.edit_only_provenance').each(function() {
-        $(this).hide();
-    });
-    $('.read_only_provenance').each(function() {
-        $(this).show();
-    });
-    disable_lookaheads('provenance');
+    $('.edit_only_provenance').hide();
+    $('.read_only_provenance').show();
+    disable_editing('provenance');
     $('#provenance_edit_dismiss').hide();
     $('#enable_edit_provenance').show();
 }
 
 $(".provenance-edit-dismiss").on('click', function() {
-    $('.edit_only_provenance').each(function() {
-        $(this).hide();
-    });
-    disable_lookaheads('provenance');
-    $('.read_only_provenance').each(function() {
-        $(this).show();
-    });
+    $('.edit_only_provenance').hide();
+    disable_editing('provenance');
+    $('.read_only_provenance').show();
     $(this).hide();
     $('#enable_edit_provenance').show();
 });
 
 $("#enable_edit_provenance").on('click', function() {
-    $('.edit_only_provenance').each(function() {
-        $(this).show();
-    });
-    $('.read_only_provenance').each(function() {
-        $(this).hide();
-    });
+    $('.edit_only_provenance').show();
+    $('.read_only_provenance').hide();
     $('#provenance_edit_dismiss').show();
     $(this).hide();
-    enable_lookaheads('provenance');
+    enable_editing('provenance');
 });
 
 function disable_edit_annotated_sentences() {
-    $('.edit_only_annotated_sentences').each(function() {
-        $(this).hide();
-    });
+    $('.edit_only_annotated_sentences').hide();
     $("#annotated_sentences_edit_dismiss").hide();
 }
 
 $("#annotated_sentences_edit_dismiss").on('click', function() {
-    $('.edit_only_annotated_sentences').each(function() {
-        $(this).hide();
-    });
+    $('.edit_only_annotated_sentences').hide();
     $('#enable_edit_annotated_sentences').show();
     $(this).hide();
 });
 
 $("#enable_edit_annotated_sentences").on('click', function() {
-    $('.edit_only_annotated_sentences').each(function() {
-        $(this).show();
-    });
-    $(".annotated_sentences_edit_dismiss").each(function() {
-        $(this).show();
-    });
+    $('.edit_only_annotated_sentences').show();
+    $(".annotated_sentences_edit_dismiss").show();
     $(this).hide();
 });
 
 function disable_edit_othermedia() {
-    $('.edit_only_othermedia').each(function() {
-        $(this).hide();
-    });
-    $('.read_only_othermedia').each(function() {
-        $(this).show();
-    });
-    disable_lookaheads('othermedia');
+    $('.edit_only_othermedia').hide();
+    $('.read_only_othermedia').show();
+    disable_editing('othermedia');
     $('#othermedia_edit_dismiss').hide();
     $('#enable_edit_othermedia').show();
 }
 
 $(".othermedia-edit-dismiss").on('click', function() {
-    $('.edit_only_othermedia').each(function() {
-        $(this).hide();
-    });
-    disable_lookaheads('othermedia');
-    $('.read_only_othermedia').each(function() {
-        $(this).show();
-    });
+    $('.edit_only_othermedia').hide();
+    disable_editing('othermedia');
+    $('.read_only_othermedia').show();
     $(this).hide();
     $('#enable_edit_othermedia').show();
 });
 
 $("#enable_edit_othermedia").on('click', function() {
-    $('.edit_only_othermedia').each(function() {
-        $(this).show();
-    });
-    $('.read_only_othermedia').each(function() {
-        $(this).hide();
-    });
+    $('.edit_only_othermedia').show();
+    $('.read_only_othermedia').hide();
     $('#othermedia_edit_dismiss').show();
     $(this).hide();
-    enable_lookaheads('othermedia');
+    enable_editing('othermedia');
 });
 
 function ajaxifyTagForm() {
@@ -555,10 +437,8 @@ function ajaxifyTagForm() {
                        tagelement.remove();
                     }
                });
-
         return false;
     });
-
     $('#tagaddform').submit(function(){
 
         var newtag = $('#tagaddform select').val();
@@ -573,13 +453,13 @@ function ajaxifyTagForm() {
         } else {
             alert("Please select a tag value.");
         }
-
         return false;
     });
 }
 
-function disable_lookaheads(category) {
-     // this makes use of specific element identifiers for the lookahead fields
+// the enable and disable rely on nesting and combinations of classes and ids, making use the panel category
+function disable_editing(category) {
+     // this makes use of specific element identifiers for the lookahead fields, etc
      $('.form-control').each(function() {
          var this_id = $(this).attr('id');
          if (!this_id) {return;}
@@ -617,8 +497,8 @@ function disable_lookaheads(category) {
      });
 }
 
-function enable_lookaheads(category) {
-     // this makes use of specific element identifiers for the lookahead fields
+function enable_editing(category) {
+     // this makes use of specific element identifiers for the lookahead fields, etc
      $('.form-control').each(function() {
          var this_id = $(this).attr('id');
          if (!this_id) {return;}
@@ -656,7 +536,7 @@ function enable_lookaheads(category) {
      });
 }
 
-function enable_edit_panel(category) {
+function show_edit_panel(category) {
     if (category === 'semantics') {
         $('.read_only_semantics').hide();
         $('.edit_only_semantics').show();
@@ -680,10 +560,10 @@ function enable_edit_panel(category) {
     $('.empty_row_'+category).show();
     $('#enable_edit_'+category).addClass('edit_enabled').hide();
     $('.button-'+category+'-to-appear-in-edit-mode').show();
-    enable_lookaheads(category);
+    enable_editing(category);
 }
 
-function disable_edit_panel(category) {
+function hide_edit_panel(category) {
     if (category === 'semantics') {
         $('.editsemanticsform').hide();
         $('.read_only_semantics').show();
@@ -705,58 +585,17 @@ function disable_edit_panel(category) {
     $('.empty_row_'+category).hide();
     $('.button-'+category+'-to-appear-in-edit-mode').hide();
     $('#enable_edit_'+category).removeClass('edit_enabled').show();
-    disable_lookaheads(category);
+    disable_editing(category);
     busy_editing = false;
 }
 
-function toggle_edit_general() {
-    if ($('#enable_edit_general').hasClass('edit_enabled'))
+function toggle_edit_panel(category) {
+    if ($('#enable_edit_'+category).hasClass('edit_enabled'))
     {
-        disable_edit_panel('general');
+        hide_edit_panel(category);
     } else {
-        enable_edit_panel('general');
+        show_edit_panel(category);
     }
-}
-
-function toggle_edit_phonology() {
-    if ($('#enable_edit_phonology').hasClass('edit_enabled'))
-    {
-        disable_edit_panel('phonology');
-    } else {
-        enable_edit_panel('phonology');
-    }
-}
-
-function toggle_edit_semantics() {
-    if ($('#enable_edit_semantics').hasClass('edit_enabled'))
-    {
-        disable_edit_panel('semantics');
-    } else {
-        enable_edit_panel('semantics');
-    }
-}
-
-function toggle_edit_publication() {
-    if ($('#enable_edit_publication').hasClass('edit_enabled'))
-    {
-        disable_edit_panel('publication');
-    } else {
-        enable_edit_panel('publication');
-    }
-}
-
-function get_width_of_selection(text) {
-    let $span = $('<span>')
-        .text(text)
-        .css({
-            position: 'absolute',
-            visibility: 'hidden',
-            whiteSpace: 'nowrap',
-        })
-        .appendTo('body');
-    let width = $span.width();
-    $span.remove();
-    return width;
 }
 
 const lookaheadConfig = [
@@ -782,7 +621,6 @@ function readyLookahead(config) {
     typeahead($(config.lookup));
 
     $(config.lookup).bind('typeahead:selected', function(ev, suggestion) {
-          var this_id = $(this).attr("id");
           busy_editing = true;
           $(this).attr('value', suggestion.name);
           $(this).attr("val", suggestion.name);
@@ -803,7 +641,34 @@ function readyLookahead(config) {
     });
 }
 
-$('[class*="multiselect_"]').each(function() {
+const multiselectConfig = [
+    { name: 'dialect', element: '#dialect_multiselect', lookup: '.dialecttypeahead', target: '#multiselect_value_dialect',
+      selected_fields: 'selected_dialect', signal: 'editDialectField' },
+    { name: 'semField', element: '#semField_multiselect', lookup: '.semFieldtypeahead', target: '#multiselect_value_semField',
+      selected_fields: 'selected_semField', signal: 'editSemField' },
+    { name: 'derivHist', element: '#derivHist_multiselect', lookup: '.derivHisttypeahead', target: '#multiselect_value_derivHist',
+      selected_fields: 'selected_derivHist', signal: 'editDerivHistField' }
+]
+
+function readyMultiselect(config) {
+    let selected_fields = window[config.selected_fields];
+    let typeahead = window[config.name+'typeahead'];
+    typeahead($(config.lookup));
+
+    $(config.lookup).bind('typeahead:selected', function(ev, suggestion) {
+          if (!selectionIncludes(selected_fields, suggestion)) {
+                busy_editing = true;
+                selected_fields.push(suggestion);
+                renderMultiSelected(config.name, selected_fields);
+          }
+          $(this).typeahead('val', '');
+    });
+    $(config.element).on("focus", function() {
+      $(this).attr('value', '');
+    });
+}
+
+$('[class^="multiselect_"]').each(function() {
     $(this).on('change', function() {
         busy_editing = true;
     });
@@ -815,13 +680,10 @@ $('[class^="select_"]').each(function() {
     });
 });
 
-$('[class*="text_"]').each(function() {
+$('[class^="text_"]').each(function() {
     $(this).on('change', function() {
         busy_editing = true;
     });
-});
-
-$('[class*="text_"]').each(function() {
     $(this).on('reset', function() {
         var initial_value = $(this).attr('data-initial');
         $(this).val(initial_value);
@@ -836,51 +698,17 @@ $(document).ready(function() {
         });
     }
 
-    semFieldtypeahead($('.semFieldtypeahead'));
-    $('.semFieldtypeahead').bind('typeahead:selected', function(ev, suggestion) {
-          if (!selected_semField.includes(suggestion)) {
-                busy_editing = true;
-                selected_semField.push(suggestion);
-                renderSelectedSemField();
-          }
-          $(this).typeahead('val', '');
+    multiselectConfig.forEach(config => {
+        window[config.name + 'typeahead'] = readyMultiselect(config);
     });
-    $('#semField_multiselect').on("focus", function() {
-      $(this).attr('value', '');
+
+    multiselectConfig.forEach(config => {
+        let selected_fields = window[config.selected_fields];
+        $(config.target).on(config.signal, function() {
+            renderMultiSelected(config.name, selected_fields);
+        });
     });
-    $('#multiselect_value_semField').on("editSemField", function() {
-        renderSelectedSemField();
-    });
-    derivHisttypeahead($('.derivHisttypeahead'));
-    $('.derivHisttypeahead').bind('typeahead:selected', function(ev, suggestion) {
-          if (!selected_derivHist.includes(suggestion)) {
-                busy_editing = true;
-                selected_derivHist.push(suggestion);
-                renderSelectedDerivHist();
-          }
-          $(this).typeahead('val', '');
-    });
-    $('#derivHist_multiselect').on("focus", function() {
-      $(this).attr('value', '-');
-    });
-    $('#multiselect_value_derivHist').on("editDerivHistField", function() {
-        renderSelectedDerivHist();
-    });
-    dialecttypeahead($('.dialecttypeahead'));
-    $('.dialecttypeahead').bind('typeahead:selected', function(ev, suggestion) {
-          if (!selected_dialect.includes(suggestion)) {
-                busy_editing = true;
-                selected_dialect.push(suggestion);
-                renderSelectedDialect();
-          }
-          $(this).typeahead('val', '');
-    });
-    $('#dialect_multiselect').on("focus", function() {
-      $(this).attr('value', "");
-    });
-    $('#multiselect_value_dialect').on("editDialectField", function() {
-        renderSelectedDialect();
-    });
+
     lemmatypeahead($('.lemmatypeahead'));
     $('.lemmatypeahead').bind('typeahead:selected', function(ev, suggestion) {
           $(this).parent().next().val(suggestion.pk);
@@ -919,15 +747,15 @@ $(document).ready(function() {
         var panel_category = $(this).attr('data-category');
         if (!panel_category) { return; };
         if (!busy_editing) {
-            if (panel_category == 'semantics') {
+            if (panel_category === 'semantics') {
                 initialise_multiselect('semField');
                 initialise_multiselect('derivHist');
             }
-            if (panel_category == 'general') {
+            if (panel_category === 'general') {
                 initialise_multiselect('dialect');
             }
             if (['general', 'phonology', 'semantics', 'publication'].includes(panel_category)) {
-                disable_edit_panel(panel_category);
+                hide_edit_panel(panel_category);
             }
             return;
         };
@@ -988,7 +816,7 @@ $(document).ready(function() {
         }
         busy_editing = false;
         if (['general', 'phonology', 'semantics', 'publication'].includes(panel_category)) {
-            disable_edit_panel(panel_category);
+            hide_edit_panel(panel_category);
         }
     });
 
@@ -1270,19 +1098,16 @@ $(document).ready(function() {
     });
     busy_editing = false;
     $('#enable_edit_general').on("click", function() {
-        toggle_edit_general();
+        toggle_edit_panel('general');
     });
     $('#enable_edit_phonology').on("click", function() {
-        toggle_edit_phonology();
+        toggle_edit_panel('phonology');
     });
     $('#enable_edit_semantics').on("click", function() {
-        toggle_edit_semantics();
+        toggle_edit_panel('semantics');
     });
     $('#enable_edit_publication').on("click", function() {
-        toggle_edit_publication();
-    });
-    $('#enable_edit_nme').on("click", function() {
-        toggle_edit_publication();
+        toggle_edit_panel('publication');
     });
     $('#data_type_lists').on('click', function() {
         $('#data_type_lookaheads').removeClass('active');
@@ -1296,10 +1121,10 @@ $(document).ready(function() {
         var this_datatype = $(this).attr('data-type');
         $('#use_lookaheads').attr('value', this_datatype);
     });
-    disable_edit_panel('general');
-    disable_edit_panel('phonology');
-    disable_edit_panel('semantics');
-    disable_edit_panel('publication');
+    hide_edit_panel('general');
+    hide_edit_panel('phonology');
+    hide_edit_panel('semantics');
+    hide_edit_panel('publication');
     disable_edit_relations();
     disable_edit_foreignrelations();
     disable_edit_morphology();
