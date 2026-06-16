@@ -85,17 +85,19 @@ function selectionIncludes(selection, new_selection) {
 
 // dynamically sets up the editable buttons in the left column during edit mode
 function renderMultiSelected(field, selected_field) {
-    let selected_fields = window[selected_field];
     var container = $('#multiselect_value_'+field);
     container.empty();
     var values_input = $('#'+field+'_hidden_input_values');
     values_input.empty();
     var placeholder_lookahead = $('#'+field+'_multiselect');
+    console.log('selected field: '+selected_field);
+    var selected_fields = window[selected_field];
     selected_fields.forEach(function(item) {
         var tag = $('<button class="actionButton"></button>').text(item.name);
         var input_value = $('<input type="hidden" name="'+field+'" value="'+item.machine_value+'">');
         var removeBtn = $('<span class="remove">&nbsp;&nbsp;&times;</span>').click(function() {
             busy_editing = true;
+            console.log('remove button for '+field+': '+JSON.stringify(item));
             selected_fields = selected_fields.filter(i => i !== item);
             renderMultiSelected(field, selected_field);
         });
@@ -788,6 +790,8 @@ $(document).ready(function() {
             } else if (this_name === 'semField') {
                 selected_semField.length = 0;
                 selected_semField = JSON.parse(JSON.stringify(initial_semField));
+                console.log('initial semField: '+JSON.stringify(initial_semField));
+                console.log('selected semField: '+JSON.stringify(selected_semField));
                 initialise_multiselect('semField');
             } else if (this_name === 'derivHist') {
                 selected_derivHist.length = 0;
