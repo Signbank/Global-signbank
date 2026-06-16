@@ -745,7 +745,7 @@ $(document).ready(function() {
 
     $('.edit-cancel').on('click', function() {
         var panel_category = $(this).attr('data-category');
-        if (!panel_category) { return; };
+        if (!panel_category) { return; }
         if (!busy_editing) {
             if (panel_category === 'semantics') {
                 initialise_multiselect('semField');
@@ -758,28 +758,26 @@ $(document).ready(function() {
                 hide_edit_panel(panel_category);
             }
             return;
-        };
+        }
         $('[class^="select_"]').each(function() {
             var this_category = $(this).attr('data-category');
-            if (this_category != panel_category) { return; }
+            if (this_category !== panel_category) { return; }
             var initial_data = $(this).attr('data-initial');
-            $(this).attr('value', initial_data);
             $(this).val(initial_data).trigger('change');
             busy_editing = false;
         });
         $('[class*="text_"]').each(function() {
             var this_category = $(this).attr('data-category');
-            if (this_category != panel_category) { return; }
-            var this_id = $(this).attr('id');
+            if (this_category !== panel_category) { return; }
             var initial_value = $(this).attr('data-initial');
             var this_value = $(this).val();
-            if (this_value != initial_value) {
+            if (this_value !== initial_value) {
                 $(this).trigger('reset');
             }
         });
         $('[class*="multiselect_"]').each(function() {
             var this_category = $(this).attr('data-category');
-            if (this_category != panel_category) { return; }
+            if (this_category !== panel_category) { return; }
             var this_name = $(this).attr("name");
             if (!this_name) { return; }
             if (this_name === 'dialect') {
@@ -800,7 +798,7 @@ $(document).ready(function() {
             $('[id*="_lookahead"]').each(function() {
                 var this_field = $(this).attr('data-field');
                 var this_category = $(this).attr('data-category');
-                if (this_category != panel_category) { return; }
+                if (this_category !== panel_category) { return; }
                 var initial_data = $(this).attr('data-initial');
                 var machine_value = $(this).attr('data-machine_value');
                 if (!machine_value) {

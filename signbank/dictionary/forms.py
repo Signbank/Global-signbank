@@ -2200,4 +2200,4 @@ class PublicationForm(forms.Form):
 
         self.fields['inWeb'].initial = self.gloss.inWeb_to_choice()
         self.fields['isNew'].initial = self.gloss.isNew_to_choice()
-        self.fields['excludeFromEcv'].initial = self.gloss.excludeFromEcv
+        self.fields['excludeFromEcv'].initial = self.gloss.excludeFromEcv_to_choice()
