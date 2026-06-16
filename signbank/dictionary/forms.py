@@ -1906,10 +1906,10 @@ class GlossForm(forms.Form):
         self.gloss = kwargs.pop('gloss')
         self.use_lookaheads = kwargs.pop('use_lookaheads')
         super(GlossForm, self).__init__(*args, **kwargs)
-        self.fields['release_information'].initial = self.gloss.release_information if self.gloss.release_information not in ['', '-'] else ''
+        self.fields['release_information'].initial = self.gloss.release_information if self.gloss.release_information not in ['', '-', None] else ''
         self.fields['dialect'] = forms.CharField(label=_('Dialect'))
         self.fields['dialect'].initial = self.gloss.get_dialect_display()
-        self.fields['useInstr'].initial = self.gloss.useInstr if self.gloss.useInstr not in ['', '-'] else ''
+        self.fields['useInstr'].initial = self.gloss.useInstr if self.gloss.useInstr not in ['', '-', None] else ''
         if self.use_lookaheads == 'lookaheads':
             self.fields['wordClass'] = forms.CharField(label=_('Word class'))
             self.fields['wordClass'].initial = self.gloss.wordClass.name if self.gloss.wordClass else '-'
@@ -2125,11 +2125,11 @@ class PhonologyForm(forms.Form):
                                                      widget=forms.Select(attrs=ATTRS_FOR_FORMS),
                                                      required=False)
             self.fields['oriCh'].initial = self.gloss.oriCh.machine_value if self.gloss.oriCh else 0
-        self.fields['locVirtObj'].initial = self.gloss.locVirtObj if self.gloss.locVirtObj not in ['', '-'] else '-'
-        self.fields['phonOth'].initial = self.gloss.phonOth if self.gloss.phonOth not in ['', '-'] else '-'
-        self.fields['mouthG'].initial = self.gloss.mouthG if self.gloss.mouthG not in ['', '-'] else '-'
-        self.fields['mouthing'].initial = self.gloss.mouthing if self.gloss.mouthing not in ['', '-'] else '-'
-        self.fields['phonetVar'].initial = self.gloss.phonetVar if self.gloss.phonetVar not in ['', '-'] else '-'
+        self.fields['locVirtObj'].initial = self.gloss.locVirtObj if self.gloss.locVirtObj not in ['', '-', None] else ''
+        self.fields['phonOth'].initial = self.gloss.phonOth if self.gloss.phonOth not in ['', '-', None] else ''
+        self.fields['mouthG'].initial = self.gloss.mouthG if self.gloss.mouthG not in ['', '-', None] else ''
+        self.fields['mouthing'].initial = self.gloss.mouthing if self.gloss.mouthing not in ['', '-', None] else ''
+        self.fields['phonetVar'].initial = self.gloss.phonetVar if self.gloss.phonetVar not in ['', '-', None] else ''
 
 
 class SemanticsForm(forms.Form):
@@ -2160,7 +2160,7 @@ class SemanticsForm(forms.Form):
         else:
             self.fields['namEnt'] = forms.ChoiceField(label=_('Named Entity'),
                                                          choices=choicelist_queryset_to_translated_dict(
-                                                             list(FieldChoice.objects.filter(field='WordClass').order_by(
+                                                             list(FieldChoice.objects.filter(field='NamedEntity').order_by(
                                                                  'machine_value')),
                                                              ordered=False, id_prefix='', shortlist=False
                                                          ),
@@ -2174,8 +2174,8 @@ class SemanticsForm(forms.Form):
                                                          ),
                                                          widget=forms.Select(attrs=ATTRS_FOR_FORMS))
             self.fields['valence'].initial = self.gloss.valence.machine_value if self.gloss.valence else 0
-        self.fields['iconImg'].initial = self.gloss.iconImg if self.gloss.iconImg not in ['', '-'] else ''
-        self.fields['concConcSet'].initial = self.gloss.concConcSet if self.gloss.concConcSet not in ['', '-'] else ''
+        self.fields['iconImg'].initial = self.gloss.iconImg if self.gloss.iconImg not in ['', '-', None] else ''
+        self.fields['concConcSet'].initial = self.gloss.concConcSet if self.gloss.concConcSet not in ['', '-', None] else ''
 
 
 class PublicationForm(forms.Form):
