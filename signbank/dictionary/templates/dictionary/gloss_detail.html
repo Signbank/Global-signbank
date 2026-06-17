@@ -4040,7 +4040,6 @@ input .tt-hint {
                 <tr>
                     <th style="width:240px;">{% trans "In the Web dictionary" %}</th>
                     {% with publicationform.fields|get_item:'inWeb' as inWeb_field %}
-<!--                    <td class="read_only_publication">{{gloss.display_inWeb}}</td>-->
                     <td class="editform-publication">
                         <div class="editselect">
                         <select class="select_inWeb form-control form-control-light" name="inWeb"
@@ -4060,8 +4059,7 @@ input .tt-hint {
                 <tr>
                     <th style="width:240px;">{% trans "Is this a proposed new sign?" %}</th>
                     {% with publicationform.fields|get_item:'isNew' as isNew_field %}
-                    <td class="read_only_publication">{{gloss.display_isNew}}</td>
-                    <td class="editform-publication edit_only_publication">
+                    <td class="editform-publication">
                         <div class="editselect">
                         <select class="select_isNew form-control form-control-light" name="isNew"
                                 id="isNew_select_value" data-category="publication" data-initial="{{isNew_field.initial}}">
@@ -4080,8 +4078,7 @@ input .tt-hint {
                 <tr>
                     <th style="width:240px;">{% trans "Exclude from ECV" %}</th>
                     {% with publicationform.fields|get_item:'excludeFromEcv' as excludeFromEcv_field %}
-                    <td class="read_only_publication">{{gloss.display_excludeFromEcv}}</td>
-                    <td class="editform-publication edit_only_publication">
+                    <td class="editform-publication">
                         <div class="editselect">
                         <select class="select_excludeFromEcv form-control form-control-light" name="excludeFromEcv"
                                 id="excludeFromEcv_select_value" data-category="publication" data-initial="{{excludeFromEcv_field.initial}}">
