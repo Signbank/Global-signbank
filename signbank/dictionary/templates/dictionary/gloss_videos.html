@@ -115,7 +115,7 @@ $('.quick_preview').click(function(e)
             {% if gloss.has_video %}
 
                 <div id="player">
-                <video id='videoplayer' src="{{protected_media_url}}{{gloss.get_video_url}}?v={% now 'YmdHis' %}" controls autoplay muted></video>
+                <video id='videoplayer' src="{{protected_media_url}}{{gloss.get_video_url}}?v={{ gloss.get_video_object.pk }}" controls autoplay muted></video>
                 </div>
                 <div id="replay"></div>
 
@@ -129,7 +129,7 @@ $('.quick_preview').click(function(e)
         <h3>{% trans "Citation Form Image" %}</h3>
         <div>
             {% if gloss.get_image_path %}
-                <img id="imageframe" src="{{protected_media_url}}{{gloss.get_image_url}}?v={% now 'YmdHis' %}" style="height:259px;width:auto;">
+                <img id="imageframe" src="{{protected_media_url}}{{gloss.get_image_url}}?v={{ gloss.get_video_object.pk }}" style="height:259px;width:auto;">
             {% else %}
                 <p>{% trans "There is no citation form image for this gloss." %}</p>
             {% endif %}
