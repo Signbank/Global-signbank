@@ -134,8 +134,9 @@
     margin-bottom: 10px;
 }
 .toggle-button {
+    font-size: 10px;
     border-radius: 6px;
-    padding: 8px 8px;
+    padding: 6px 6px;
     border: 1px solid #ccc;
     cursor: pointer;
     background-color: #f0f0f0;
@@ -143,6 +144,12 @@
 .toggle-button.active {
     background-color: #4CAF50;
     color: white;
+}
+.toggle-set-button {
+    font-size: 10px;
+    padding-left: 6px;
+    padding-right: 6px;
+    border-radius: 6px;
 }
 </style>
     <script type="text/javascript" src="{{STATIC_URL}}js/drag_drop_files.js"></script>
@@ -1020,7 +1027,7 @@ input .tt-hint {
                 <input type="hidden" id="use_lookaheads" name='use_lookaheads' value='lookaheads'>
                 {% endif %}
                 <input type="hidden" name="glossid" value="{{gloss.id}}">
-                <input id="use_lookaheads_btn" type="submit" class="btn btn-primary">
+                <input id="use_lookaheads_btn" type="submit" class="btn btn-primary toggle-set-button" value='{% trans "Set" %}' />
             </div>
             </form>
         </div>
@@ -1548,7 +1555,7 @@ input .tt-hint {
         <table class='table table-condensed table-condensed-light' style="width:100%;">
             {% csrf_token %}
             <tr>
-            <td>
+            <td colspan="2">
                 <div id='tags' style="z-index: 0;opacity:.99; position: relative; background-color: inherit;">
                 <fieldset>
                   {% tags_for_object gloss as tag_list %}
@@ -1591,7 +1598,7 @@ input .tt-hint {
             </td>
             </tr>
             <tr>
-            <td>
+            <td colspan="2">
 
                 <div id='affs' style="z-index: 0;opacity:.99; position: relative; background-color: inherit;">
                 <fieldset>
@@ -1645,12 +1652,12 @@ input .tt-hint {
             <tr>
             {% endif %}
             {% endwith %}
-                <th style="width:auto;">{% trans "Release information" %}</th>
+                <th style="width:auto;">{% trans "Source" %}</th>
                 {% with glossform.fields|get_item:'release_information' as release_information_field %}
                 <td class="editform-general" style="width:auto;">
                     <div>
                     <input class='text_release_information form-control form-control-light' type="text" name="release_information"
-                           value="{{release_information_field.initial}}"
+                           value="{{release_information_field.initial}}" size="50"
                            id="release_information_text" data-category="general" data-initial="{{release_information_field.initial}}" >
                     </div>
                 </td>
@@ -1683,15 +1690,16 @@ input .tt-hint {
 
             <tr>
                 <th>{% trans "Lemma ID Gloss" %}</th>
-                <td><span id="lemma">{{gloss.lemma}}
+                <td colspan="2"><span id="lemma">{{gloss.lemma}}
                         {% if lemma_group %}
                             <a href='{{lemma_group_url}}' title='{% trans "Show Lemma Group" %}'><span class="glyphicon glyphicon-th-list"></span></a>
                         {% endif %}
                     </span>
                 </td>
             </tr>
-            <tr class="lemma_buttons" id="lemma_buttons_group" style="width:auto;"><th></th>
-                <td>
+            <tr class="lemma_buttons" id="lemma_buttons_group" style="width:auto;">
+                <th></th>
+                <td colspan="2">
                     <div id="lemma_buttons">
                         <button id='show_edit_lemma_form' type="button"
                                 style="width:auto;" class='btn btn-primary btn-space lemma-button'
@@ -1708,7 +1716,7 @@ input .tt-hint {
             </tr>
             <tr id="lemma_forms_row" style="width:auto;">
                 <th></th>
-                <td id="lemma_forms_cell" class='td td-light'>
+                <td id="lemma_forms_cell" class='td td-light' colspan="2">
                 <span>
                 <form id='set_lemma_form'
                     onsubmit='return validateForm("set_lemma_form","value","gloss_lemma_id",
@@ -1724,7 +1732,7 @@ input .tt-hint {
                            placeholder='{% trans "Lemma" %}' data-category="general" autocomplete="off" >
 
                     <input type='hidden' name='new_lemma_pk' value='' id="new_lemma_pk">
-                    <button class='btn btn-primary quick_set_lemma' type='button'>{% trans "Set Lemma" %}</button>
+                    <button class='btn btn-primary quick_set_lemma' type='button' style="width:auto;">{% trans "Set Lemma" %}</button>
                     <button type="button" class="btn btn-default btn-default-light lemma-form-dismiss">{% trans "Cancel" %}</button>
                 </form>
                 <form id="add_lemma_form" class="container" method="post" action="{% url 'dictionary:create_lemma_gloss' gloss.id %}" >
@@ -1736,7 +1744,7 @@ input .tt-hint {
                     {{dataset_lang.name}}:
                     <input id="{{lemma_create_field_prefix}}{{dataset_lang.language_code_2char}}"
                             name="{{lemma_create_field_prefix}}{{dataset_lang.language_code_2char}}"
-                            required="" maxlength="50" type="text"/>
+                            required="" maxlength="50" type="text" size="50"/>
                     </div>
                     {% endfor %}
                     <!-- Submit -->
@@ -1757,8 +1765,8 @@ input .tt-hint {
                 <td class='editform-general' style="width:auto;color:inherit;">
                     <div>
                     <input class='form-control form-control-light' id='annotation_idgloss_{{lang.language_code_2char}}_text'
-                           name="annotation_idgloss_{{lang.language_code_2char}}" type="text" maxlength="30"
-                           value="{{annotation_idgloss_translation}}" data-category="general" />
+                           name="annotation_idgloss_{{lang.language_code_2char}}" type="text" maxlength="80" size="50"
+                           value="{{annotation_idgloss_translation}}" data-category="general" >
                     </div>
                 </td>
                 <td class="edit_only">
@@ -2196,7 +2204,7 @@ input .tt-hint {
                 </td>
             </tr>
         </table>
-        <table class='table table-condensed table-condensed-light' style="width:800px;">
+        <table class='table table-condensed table-condensed-light' style="width:auto;">
             {% with show_field_row|get_item:"useInstr" as show_field %}
             {% if not show_field %}
             <tr class="empty_row_general">
@@ -2209,7 +2217,7 @@ input .tt-hint {
                 <td class="editform-general" style="width:auto;">
                     <div>
                     <input class='text_useInstr form-control form-control-light' type="text" name="useInstr"
-                           value="{{useInstr_field.initial}}"
+                           value="{{useInstr_field.initial}}" size="50"
                            id="useInstr_text" data-category="general" data-initial="{{useInstr_field.initial}}">
                     </div>
                 </td>
@@ -2223,12 +2231,12 @@ input .tt-hint {
             <tr>
             {% endif %}
             {% endwith %}
-                <th style="width:240px;">{% trans "Word class" %}</th>
+                <th style="width:auto;">{% trans "Word class" %}</th>
                 {% with glossform.fields|get_item:'wordClass' as wordClass_field %}
                 <td class="editform-general" style="width:auto;">
                     {% if use_lookaheads == 'lookaheads' %}
                     <div id="wordClass_cell">
-                    <input class='form-control form-control-light wordClasstypeahead' type="text" size="40"
+                    <input class='form-control form-control-light wordClasstypeahead' type="text" size="50"
                            placeholder="{{wordClass_field.initial}}" id="wordClass_lookahead" value="{{wordClass_field.initial}}"
                            data-machine_value='{{wordClass_field.machine_value}}' data-field="wordClass"
                            data-category="general" autocomplete="off" data-initial="{{wordClass_field.initial}}" >
@@ -2241,7 +2249,7 @@ input .tt-hint {
                     </div>
                     {% else %}
                     <div class="editselect">
-                    <select class="select_wordClass form-control form-control-light" name="wordClass"
+                    <select class="select_wordClass form-control form-control-light" name="wordClass" size="50"
                                 id="wordClass_value" data-category="general" data-initial="{{wordClass_field.initial}}">
                         {% for machine_value, opn in wordClass_field.choices %}
                         {% if machine_value == wordClass_field.initial|to_str %}
@@ -3471,7 +3479,7 @@ input .tt-hint {
                 <td class="editform-phonology" style="width:auto;">
                     <div>
                     <input class='text_phonOth form-control form-control-light' type="text" name="phonOth"
-                           value="{{phonOth_field.initial}}"
+                           value="{{phonOth_field.initial}}" size="50"
                            id="phonOth_text" data-category="phonology" data-initial="{{phonOth_field.initial}}">
                     </div>
                 </td>
@@ -3731,7 +3739,7 @@ input .tt-hint {
                 <td class="editform-semantics" style="width:auto;">
                     <div>
                     <input class='text_concConcSet form-control form-control-light' type="text" name="concConcSet"
-                           value="{{concConcSet_field.initial}}"
+                           value="{{concConcSet_field.initial}}" size="50"
                            id="concConcSet_text" data-category="semantics" data-initial="{{concConcSet_field.initial}}">
                     </div>
                     <!-- the following div fixes a vertical spacing problem where the lookahead appears behind the next panel-->

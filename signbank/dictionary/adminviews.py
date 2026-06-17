@@ -1432,7 +1432,7 @@ class GlossDetailView(DetailView):
             self.use_lookaheads = self.request.session['use_lookaheads']
 
         context['use_lookaheads'] = self.use_lookaheads
-        print('use lookaheads ', self.use_lookaheads)
+
         context['glossform'] = GlossForm(gloss=context['gloss'], use_lookaheads=context['use_lookaheads'])
         context['phonologyform'] = PhonologyForm(gloss=context['gloss'], use_lookaheads=context['use_lookaheads'])
         context['semanticsform'] = SemanticsForm(gloss=context['gloss'], use_lookaheads=context['use_lookaheads'])
@@ -1484,40 +1484,11 @@ class GlossDetailView(DetailView):
                                           for derivhist in gloss.derivHist.all()]
         context['selected_dialects'] = [{"name": f'{dialect.signlanguage.name}/{dialect.name}', "machine_value": dialect.pk}
                                         for dialect in gloss.dialect.all()]
-        print(context['selected_semFields'])
-        context['phonology_list_kinds'] = get_phonology_list_kinds()
-
-        context['publication_fields'] = []
-        # field excludeFromEcv is added here in order to show it in Gloss Edit
-        for p_field in FIELDS['publication'] + ['excludeFromEcv']:
-            context['publication_fields'].append([getattr(gl,p_field), p_field, labels[p_field], 'check'])
 
         # do not lazy evaluate these; evaluate before putting in context variables
         static_choice_lists, static_choice_list_colors = get_static_choice_lists_per_field()
         context['static_choice_lists'] = static_choice_lists
         context['static_choice_list_colors'] = static_choice_list_colors
-
-        # Translate the machine values to human values in the correct language, and save the choice lists along the way
-        for topic in ['main', 'phonology', 'semantics']:
-            context[topic+'_fields'] = []
-            for field in FIELDS[topic]:
-                # these do not appear in the phonology querying list
-                if field in HANDSHAPE_ETYMOLOGY_FIELDS + HANDEDNESS_ARTICULATION_FIELDS:
-                    continue
-
-                if field in ['semField', 'derivHist']:
-                    # these are many to many fields and not in the gloss table of the database
-                    # they are not fields of Gloss
-                    continue
-
-                # Get the human value in the language we are using
-                field_value = getattr(gl, field)
-                if isinstance(field_value, FieldChoice) or isinstance(field_value, Handshape):
-                    human_value = field_value.name if field_value else field_value
-                else:
-                    human_value = get_human_value_for_field_value(field_value)
-
-                context[topic+'_fields'].append([human_value, field, labels[field], fieldname_to_kind(field)])
 
         (homonyms_of_this_gloss, homonyms_not_saved, saved_but_not_homonyms) = gl.homonyms()
         homonyms_different_phonology = []

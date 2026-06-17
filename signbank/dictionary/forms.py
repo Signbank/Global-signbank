@@ -1894,7 +1894,7 @@ class SearchGlossIds(forms.Form):
 
 class GlossForm(forms.Form):
     gloss = None
-    release_information = forms.CharField(label=_("Release information"))
+    release_information = forms.CharField(label=_('Source'), widget=forms.TextInput())
     useInstr = forms.CharField(label=_("Annotation instructions"))
     wordClass2 = forms.CharField(label=_('Word class 2'))
 
