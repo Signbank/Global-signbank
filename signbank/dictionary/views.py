@@ -46,7 +46,7 @@ from signbank.dictionary.models import (Dataset, Language, Gloss, Morpheme, Lemm
                                         DeletedGlossOrMedia,
                                         get_default_language_id, CATEGORY_MODELS_MAPPING)
 from signbank.dictionary.forms import (LemmaCreateForm, GlossCreateForm, MorphemeCreateForm, ImageUploadForHandshapeForm,
-                                       ImageUploadForGlossForm, CSVUploadForm, PhonologyForm, SemanticsForm)
+                                       ImageUploadForGlossForm, CSVUploadForm)
 from signbank.dictionary.update import update_dialect
 from signbank.dictionary.update_csv import (update_simultaneous_morphology, update_blend_morphology,
                                             update_sequential_morphology, subst_relations, subst_foreignrelations,
@@ -54,7 +54,6 @@ from signbank.dictionary.update_csv import (update_simultaneous_morphology, upda
 from signbank.dictionary.context_data import get_selected_datasets
 from signbank.tools import (get_two_letter_dir, get_default_annotationidglosstranslation,
                             get_dataset_languages, get_datasets_with_public_glosses,
-                            get_interface_language_and_default_language_codes,
                             create_gloss_from_valuedict, compare_valuedict_to_gloss, compare_valuedict_to_lemma,
                             create_zip_with_json_files,
                             detect_delimiter,
@@ -70,7 +69,6 @@ from signbank.abstract_machine import get_interface_language_api
 from signbank.api_token import put_api_user_in_request
 from signbank.dictionary.gloss_revision import pretty_print_revisions
 from signbank.dictionary.adminviews import show_warning
-from signbank.dictionary.display_functions import show_fields_rows
 
 
 def login_required_config(f):
@@ -1266,7 +1264,7 @@ def import_csv_update(request):
 
                 new_human_value_list = [v.strip() for v in new_value.split(',')]
 
-                update_dialect(gloss,None,new_human_value_list)
+                update_dialect(request.user, gloss,None,new_human_value_list)
                 gloss.save()
                 continue
 

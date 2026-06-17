@@ -3083,7 +3083,7 @@ def update_morpheme(request, morphemeid):
     elif field == 'dialect':
         # expecting possibly multiple values
 
-        return update_dialect(morpheme, field, values)
+        return update_dialect(request.user, morpheme, field, values)
 
     elif field == 'semanticfield':
         # expecting possibly multiple values
@@ -3108,7 +3108,7 @@ def update_morpheme(request, morphemeid):
 
     elif field.startswith('annotation_idgloss'):
 
-        return update_annotation_idgloss(morpheme, field, value)
+        return update_annotation_idgloss(request, morpheme, field, value)
 
     elif field.startswith('lemmaidgloss'):
         # Set new lemmaidgloss for this gloss
