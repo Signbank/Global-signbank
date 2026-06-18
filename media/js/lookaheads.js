@@ -1,7 +1,7 @@
 
 var busy_editing = false;
 
-var console_log = false;
+var console_log = true;
 
 // bloodhounds for field choices
 
@@ -30,9 +30,20 @@ const typeaheadConfigs = [
 // Factory function to create bloodhounds
 function createTypeahead(config) {
     const bloodhound = new Bloodhound({
-        datumTokenizer: function(d) { return d.tokens; },
+        datumTokenizer: Bloodhound.tokenizers.obj.whitespace('value'),
         queryTokenizer: Bloodhound.tokenizers.whitespace,
-        remote: `${url}/dictionary/ajax/${config.endpoint}/%QUERY`
+        remote: {
+            url: `${url}/dictionary/ajax/${config.endpoint}/%QUERY`,
+            wildcard: '%QUERY',
+            ajax: {
+                type: 'GET',
+                beforeSend: function(xhr, settings) {
+                    if (!csrfSafeMethod(settings.type)) {
+                        xhr.setRequestHeader("X-CSRFToken", csrf_token);
+                    }
+                }
+            }
+        }
     });
 
     bloodhound.initialize();
@@ -178,79 +189,56 @@ function initialise_multiselects() {
 }
 
 // language fields typeaheads
+const languageConfigs = [
+    { name: 'lemma', endpoint: 'lemma/'+gloss_dataset_id+'/'+gloss_default_language_code, displayKey: 'lemma' },
+    { name: 'gloss', endpoint: 'gloss/'+gloss_dataset_id, displayKey: 'annotation_idgloss' },
+    { name: 'morph', endpoint: 'morph', displayKey: 'annotation_idgloss' }
+];
 
-var lemma_bloodhound = new Bloodhound({
-      datumTokenizer: function(d) { return d.tokens; },
-      queryTokenizer: Bloodhound.tokenizers.whitespace,
-      remote: url+'/dictionary/ajax/lemma/'+gloss_dataset_id+'/'+gloss_default_language_code+'/%QUERY'
+// Factory function to create bloodhounds
+function createLanguageTypeahead(config) {
+    const bloodhound = new Bloodhound({
+        datumTokenizer: Bloodhound.tokenizers.obj.whitespace('value'),
+        queryTokenizer: Bloodhound.tokenizers.whitespace,
+        remote: {
+            url: `${url}/dictionary/ajax/${config.endpoint}/%QUERY`,
+            wildcard: '%QUERY',
+            ajax: {
+                type: 'GET',
+                beforeSend: function(xhr, settings) {
+                    if (!csrfSafeMethod(settings.type)) {
+                        xhr.setRequestHeader("X-CSRFToken", csrf_token);
+                    }
+                }
+            }
+        }
     });
 
-lemma_bloodhound.initialize();
+    bloodhound.initialize();
 
-function lemmatypeahead(target) {
-
-     $(target).typeahead({
-         minLength: 0
-     }, {
-          name: 'lemmatarget',
-          displayKey: 'lemma',
-          limit: 10,
-          source: lemma_bloodhound.ttAdapter(),
-          templates: {
-              suggestion: function(lemma) {
-                  return("<p><strong>" + lemma.lemma + "</strong></p>");
-              }
-          }
-      });
+    return function(target) {
+        $(target).typeahead({
+            minLength: 0,
+            hint: false
+            }, {
+            name: config.name,
+            limit: 50,
+            displayKey: config.displayKey,
+            source: bloodhound.ttAdapter(),
+            autoSelect: false,
+            templates: {
+                suggestion: function(fc) {
+                    return `<p><strong>${fc[config.displayKey]}</strong></p>`;
+                }
+            }
+        });
+    };
 }
 
-var gloss_bloodhound = new Bloodhound({
-      datumTokenizer: function(d) { return d.tokens; },
-      queryTokenizer: Bloodhound.tokenizers.whitespace,
-      remote: url+'/dictionary/ajax/gloss/'+gloss_dataset_id+'/%QUERY'
-    });
-
-gloss_bloodhound.initialize();
-
-function glosstypeahead(target) {
-
-     $(target).typeahead({
-         minLength: 0
-     }, {
-          name: 'glosstarget',
-          displayKey: 'annotation_idgloss',
-          source: gloss_bloodhound.ttAdapter(),
-          templates: {
-              suggestion: function(gloss) {
-                  return("<p><strong>" + gloss.annotation_idgloss +  "</strong></p>");
-              }
-          }
-      });
-}
-
-var morph_bloodhound = new Bloodhound({
-      datumTokenizer: function(d) { return d.tokens; },
-      queryTokenizer: Bloodhound.tokenizers.whitespace,
-      remote: url+'/dictionary/ajax/morph/%QUERY'
-    });
-
-morph_bloodhound.initialize();
-
-function morphtypeahead(target) {
-
-     $(target).typeahead({
-         minLength: 0
-     }, {
-          name: 'morphtarget',
-          displayKey: 'annotation_idgloss',
-          source: morph_bloodhound.ttAdapter(),
-          templates: {
-              suggestion: function(gloss) {
-                  return("<p><strong>" + gloss.annotation_idgloss + "</strong></p>");
-              }
-          }
-      });
-}
+// Initialize the language typeaheads
+languageConfigs.forEach(config => {
+    window[config.name + 'typeahead'] = createLanguageTypeahead(config);
+});
 
 $("#show_set_lemma_form").on('click', function() {
     $('#lemma_forms_row').show();
@@ -676,6 +664,7 @@ function readyLookahead(config) {
           $(this).attr('data-preselect', suggestion.machine_value);
     });
     $(config.element).on("focus", function() {
+      if (console_log) { console.log('focus on typeahead '+config.name); }
       var preselect_machine_value = $(this).attr('data-preselect');
       if (!preselect_machine_value) {
         $(this).val('').trigger('input').typeahead('open');
