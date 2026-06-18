@@ -597,7 +597,7 @@ function show_edit_panel(category) {
         $('.edit_only_general').show();
         $('.editdialectform').show();
         $('.editform').show();  // appears in gloss tags and affiliations
-        $('#multiselect_value_dialect').trigger('editDialectField');
+        renderMultiSelected('dialect');
         $('#lemma_buttons_group').show();
     }
     if (category === 'publication') {
@@ -1138,6 +1138,7 @@ $(document).ready(function() {
     });
     busy_editing = false;
     $('#enable_edit_general').on("click", function() {
+        if (console_log) { console.log('click enable edit general '+busy_editing); }
         toggle_edit_panel('general');
     });
     $('#enable_edit_phonology').on("click", function() {
