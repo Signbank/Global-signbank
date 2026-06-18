@@ -1,7 +1,7 @@
 
 var busy_editing = false;
 
-var console_log = true;
+var console_log = false;
 
 // bloodhounds for field choices
 
