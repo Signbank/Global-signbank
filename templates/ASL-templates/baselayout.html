@@ -2,8 +2,9 @@
 {% load bootstrap3 %}
 {% load stylesheet %}
 {% load i18n %}
+{% get_current_language as LANGUAGE_CODE %}
 
-<html>
+<html lang="{{ LANGUAGE_CODE|default:'en' }}">
   <head>
     <title>{% block bootstrap3_title %}ASL Signbank{% endblock %}</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
