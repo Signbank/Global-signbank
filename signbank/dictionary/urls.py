@@ -50,6 +50,18 @@ urlpatterns = [
     re_path(r'^update/morphemedefinition/(?P<glossid>\d+)$', signbank.dictionary.update.add_morpheme_definition, name='add_morphemedefinition'),
     re_path(r'^update/othermedia/', signbank.dictionary.update.add_othermedia, name='add_othermedia'),
     re_path(r'^update/gloss/', signbank.dictionary.update.add_gloss, name='add_gloss'),
+
+    re_path(r'^update/add_phonological_variation/(?P<glossid>\d+)$',
+            signbank.dictionary.update.add_phonological_variation, name='add_phonological_variation'),
+    re_path(r'^gloss/phonological_variations/(?P<glossid>\d+)$',
+            signbank.dictionary.views.gloss_phonological_variations, name='phonological_variations'),
+    re_path(r'^update/update_gloss_phonology/(?P<glossid>\d+)$',
+            signbank.dictionary.update.update_gloss_phonology, name='update_gloss_phonology'),
+    re_path(r'^update/phonological_variation/(?P<variationid>\d+)$',
+            signbank.dictionary.update.update_phonological_variation, name='update_phonological_variation'),
+    re_path(r'^update/delete_phonological_variation/(?P<variationid>\d+)$',
+            signbank.dictionary.update.delete_phonological_variation, name='delete_phonological_variation'),
+
     re_path(r'^update/edit_gloss_save/(?P<glossid>\d+)$',
                 signbank.dictionary.update.edit_gloss_save, name='edit_gloss_save'),
     re_path(r'^update/update_gloss_lemma/(?P<glossid>\d+)$',
