@@ -1175,6 +1175,43 @@ class Phonology(MetaModelMixin, models.Model):
             return '0'
         return '1' if self.altern else '0'
 
+    def display_handCh(self):
+        return self.handCh.name if self.handCh else '-'
+
+    def display_relatArtic(self):
+        return self.relatArtic.name if self.relatArtic else '-'
+
+    def display_locprim(self):
+        return self.locprim.name if self.locprim else '-'
+
+    def display_contType(self):
+        return self.contType.name if self.contType else '-'
+
+    def display_movSh(self):
+        return self.movSh.name if self.movSh else '-'
+
+    def display_movDir(self):
+        return self.movDir.name if self.movDir else '-'
+
+    def display_repeat(self):
+        if self.repeat is None:
+            return '-'
+        return _('Yes') if self.repeat else '-'
+
+    def display_altern(self):
+        if self.altern is None:
+            return '-'
+        return _('Yes') if self.altern else '-'
+
+    def display_relOriMov(self):
+        return self.relOriMov.name if self.relOriMov else '-'
+
+    def display_relOriLoc(self):
+        return self.relOriLoc.name if self.relOriLoc else '-'
+
+    def display_oriCh(self):
+        return self.oriCh.name if self.oriCh else '-'
+
 
 class Gloss(Phonology):
     class Meta:

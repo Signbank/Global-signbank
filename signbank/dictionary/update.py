@@ -50,7 +50,7 @@ from signbank.dictionary.models import (Dataset, SignLanguage, Dialect, Gloss, M
                                         Affiliation, AffiliatedUser, AffiliatedGloss, SearchHistory,
                                         GlossRevision, SenseExamplesentence, SimultaneousMorphologyDefinition,
                                         AnnotatedSentenceSource, AnnotatedSentenceContext, UserProfile, QueryParameter,
-                                        get_default_language_id, GlossProvenance)
+                                        get_default_language_id, GlossProvenance, PhonologicalVariation)
 from signbank.dictionary.forms import (RelationForm, VariantsForm, RelationToForeignSignForm, GlossBlendForm,
                                        GlossCreateForm, DefinitionForm, GlossMorphemeForm, GlossMorphologyForm,
                                        MorphemeCreateForm, LemmaCreateForm, AffiliationUpdateForm, OtherMediaForm,
