@@ -1882,7 +1882,7 @@ class ProvenanceForm(forms.ModelForm):
                                                         ordered=False, id_prefix='', shortlist=False
                                                   ),
                                                   widget=forms.Select(attrs=ATTRS_FOR_FORMS))
-        self.fields['method'].initial = self.provenance.method.name if self.provenance.method else ''
+        self.fields['method'].initial = self.provenance.method.name if self.provenance.method else '-'
         self.fields['description'].initial = self.provenance.description
 
 

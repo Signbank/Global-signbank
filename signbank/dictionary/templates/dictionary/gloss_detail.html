@@ -87,8 +87,8 @@
     var use_lookaheads = '{{use_lookaheads|safe}}';
 </script>
 
-<script type="text/javascript" src="{{STATIC_URL}}js/bloodhound-0-11-1.js"></script>
-<script type="text/javascript" src="{{STATIC_URL}}js/typeahead-bundle-0-11-1.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/typeahead.js/0.11.1/bloodhound.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/typeahead.js/0.11.1/typeahead.bundle.js"></script>
 <script type='text/javascript' src="{{STATIC_URL}}js/lookaheads.js"></script>
 
 <script type='text/javascript'>
@@ -151,6 +151,13 @@
     padding-left: 6px;
     padding-right: 6px;
     border-radius: 6px;
+}
+.quick-save {
+    color:red;
+    font-size:16px;
+    background-color:transparent;
+    border:none;
+    width:2em;
 }
 </style>
     <script type="text/javascript" src="{{STATIC_URL}}js/drag_drop_files.js"></script>
@@ -3955,10 +3962,15 @@ input .tt-hint {
                     </td>
                     {% endwith %}
                     <td class="edit_only_foreignrelations" style='width:2em;'>
-                         <button id='quick_save_foreignrelation_btn_{{rel.id}}' class="quick_save_foreignrelation btn btn-primary"
-                            name='quick_save_foreignrelation_{{rel.id}}' data-category="foreignrelations" data-foreignrelationid="{{rel.id}}"
-                            data-glossid='{{gloss.id}}' style="color:red;font-size:16px;background-color:transparent;border:none;width:2em;"
-                            type="button"><span class="glyphicon glyphicon-check"></span></button>
+                        <button class="quick-save"
+                                data-url-template="/dictionary/update/update_gloss_foreignrelation/{{gloss.id}}/{{rel.id}}/"
+                                data-fields='[
+                                    {"key":"foreignrelation-loan_{{rel.id}}","selector":"#foreignrelation_loan_{{rel.id}}_select_value"},
+                                    {"key":"foreignrelation-other-lang_{{rel.id}}","selector":"#foreignrelation_other_lang_{{rel.id}}_text"},
+                                    {"key":"foreignrelation-other-lang-gloss_{{rel.id}}","selector":"#foreignrelation_other_lang_gloss_{{rel.id}}_text"}
+                                ]' type="button" data-panel="foreignrelations">
+                            <span class="glyphicon glyphicon-check"></span>
+                        </button>
                     </td>
                    </tr>
                    {% endwith %}
@@ -4225,10 +4237,16 @@ input .tt-hint {
                     </div>
                 </td>
                  <td class="edit_only_notes" style='width:2em;'>
-                     <button id='quick_save_note_btn_{{def.id}}' class="quick_save_note btn btn-primary"
-                        name='quick_save_note_{{def.id}}' data-category="notes" data-definitionid="{{def.id}}"
-                        data-glossid='{{gloss.id}}' style="color:red;font-size:16px;background-color:transparent;border:none;width:2em;"
-                        type="button"><span class="glyphicon glyphicon-check"></span></button>
+                     <button class="quick-save"
+                            data-url-template="/dictionary/update/update_gloss_note/{{gloss.id}}/{{def.id}}/"
+                            data-fields='[
+                                {"key":"note-definitionpub_{{def.id}}","selector":"#definitionpub_{{def.id}}_select_value"},
+                                {"key":"note-definitioncount_{{def.id}}","selector":"#definitioncount_{{def.id}}"},
+                                {"key":"note-definitionrole_{{def.id}}","selector":"#definitionrole_{{def.id}}"},
+                                {"key":"note-definition_{{def.id}}","selector":"#definition_{{def.id}}"}
+                            ]' type="button" data-panel="notes">
+                        <span class="glyphicon glyphicon-check"></span>
+                     </button>
                  </td>
               </tr>
               {% endwith %}
@@ -4391,10 +4409,14 @@ input .tt-hint {
                     </div>
                 </td>
                  <td class="edit_only_provenance" style='width:2em;'>
-                     <button id='quick_save_provenance_btn_{{prov.id}}' class="quick_save_provenance btn btn-primary"
-                        data-category="provenance" data-provenanceid="{{prov.id}}"
-                        data-glossid='{{gloss.id}}' style="color:red;font-size:16px;background-color:transparent;border:none;width:2em;"
-                        type="button"><span class="glyphicon glyphicon-check"></span></button>
+                        <button class="quick-save"
+                                data-url-template="/dictionary/update/update_gloss_provenance/{{gloss.id}}/{{prov.id}}/"
+                                data-fields='[
+                                    {"key":"fprovenancemethod_{{prov.id}}","selector":"#provenancemethod_{{prov.id}}"},
+                                    {"key":"provenancedescription_{{prov.id}}","selector":"#provenancedescription_{{prov.id}}"}
+                                ]' type="button" data-panel="provenance">
+                            <span class="glyphicon glyphicon-check"></span>
+                        </button>
                  </td>
               </tr>
               {% endwith %}
@@ -4694,10 +4716,15 @@ input .tt-hint {
                      </td>
                      {% endwith %}
                      <td class="edit_only_othermedia" style='width:2em;'>
-                         <button id='quick_save_othermedia_btn_{{pk}}' class="quick_save_othermedia btn btn-primary"
-                            data-category="othermedia" data-othermediaid="{{pk}}"
-                            data-glossid='{{gloss.id}}' style="color:red;font-size:16px;background-color:transparent;border:none;width:2em;"
-                            type="button"><span class="glyphicon glyphicon-check"></span></button>
+                        <button class="quick-save"
+                                data-url-template="/dictionary/update/update_gloss_othermedia/{{gloss.id}}/{{pk}}/"
+                                data-fields='[
+                                    {"key":"other-media-type_{{pk}}","selector":"#othermedia-type_{{pk}}"},
+                                    {"key":"other-media-alternative-gloss_{{pk}}","selector":"#othermedia-alternative-gloss_{{pk}}_text"},
+                                    {"key":"other-media-description_{{pk}}","selector":"#othermedia-description_{{pk}}"}
+                                ]' type="button" data-panel="othermedia">
+                            <span class="glyphicon glyphicon-check"></span>
+                        </button>
                      </td>
                     </tr>
                {% endwith %}

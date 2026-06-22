@@ -725,6 +725,39 @@ $('[class^="text_"]').each(function() {
     });
 });
 
+function quickSaveAjax(url, data, panel) {
+    data['csrfmiddlewaretoken'] = csrf_token;
+    $.ajax({
+        url: url,
+        type: 'POST',
+        data: data,
+        dataType: 'json',
+        success: function(resp) {
+            if (resp.success) {
+                setTimeout(function() {
+                    location.reload(true);
+                }, 500);
+            }
+        },
+        error: function(xhr, status, error) {
+            alert("There was an error processing this change: " + xhr.responseText);
+        }
+    });
+}
+
+$(document).on('click', '.quick-save', function(e) {
+    e.preventDefault();
+    var $btn = $(this);
+    var url = $btn.data('url-template');
+    var panel = $btn.attr('data-panel');
+    var fields = JSON.parse($btn.attr('data-fields'));
+    var update = {};
+    fields.forEach(function(f) {
+        update[f.key] = $(f.selector).val();
+    });
+    quickSaveAjax(url, update, panel);
+});
+
 $(document).ready(function() {
 
     if (use_lookaheads === 'lookaheads') {
@@ -1001,111 +1034,6 @@ $(document).ready(function() {
             }
          });
      });
-     $('.quick_save_foreignrelation').click(function(e)
-	 {
-         e.preventDefault();
-         var update = { 'csrfmiddlewaretoken': csrf_token };
-         var glossid = $(this).attr('data-glossid');
-         var foreignrelationid = $(this).attr('data-foreignrelationid');
-         update['foreignrelation-loan_'+foreignrelationid] = $('#foreignrelation_loan_'+foreignrelationid+'_select_value').val();
-         update['foreignrelation-other-lang_'+foreignrelationid] = $('#foreignrelation_other_lang_'+foreignrelationid+'_text').val();
-         update['foreignrelation-other-lang-gloss_'+foreignrelationid] = $('#foreignrelation_other_lang_gloss_'+foreignrelationid+'_text').val();
-         $.ajax({
-            url : url + "/dictionary/update/update_gloss_foreignrelation/" + glossid + "/" + foreignrelationid,
-            type: 'POST',
-            data: update,
-            datatype: "json",
-            success : function(data) {
-                if (data.success) {
-                    setTimeout(function() {
-                        location.reload(true);
-                    }, 500);
-                }
-            },
-            error: function (xhr, status, error) {
-                alert("There was an error processing this change: " + xhr.responseText );
-            }
-         });
-     });
-     $('.quick_save_note').click(function(e)
-	 {
-         e.preventDefault();
-         var update = { 'csrfmiddlewaretoken': csrf_token };
-         var glossid = $(this).attr('data-glossid');
-         var definitionid = $(this).attr('data-definitionid');
-         update['note-definitionpub_'+definitionid] = $('#definitionpub_'+definitionid+'_select_value').val();
-         update['note-definitioncount_'+definitionid] = $('#definitioncount_'+definitionid).val();
-         update['note-definitionrole_'+definitionid] = $('#definitionrole_'+definitionid).val();
-         update['note-definition_'+definitionid] = $('#definition_'+definitionid).val();
-         $.ajax({
-            url : url + "/dictionary/update/update_gloss_note/" + glossid + "/" + definitionid,
-            type: 'POST',
-            data: update,
-            datatype: "json",
-            success : function(data) {
-                if (data.success) {
-                    setTimeout(function() {
-                        location.reload(true);
-                    }, 500);
-                }
-            },
-            error: function (xhr, status, error) {
-                alert("There was an error processing this change: " + xhr.responseText );
-            }
-         });
-     });
-     $('.quick_save_provenance').click(function(e)
-	 {
-         e.preventDefault();
-         var update = { 'csrfmiddlewaretoken': csrf_token };
-         var glossid = $(this).attr('data-glossid');
-         var provenanceid = $(this).attr('data-provenanceid');
-         update['provenancemethod_'+provenanceid] = $('#provenancemethod_'+provenanceid).val();
-         update['provenancedescription_'+provenanceid] = $('#provenancedescription_'+provenanceid).val();
-         $.ajax({
-            url : url + "/dictionary/update/update_gloss_provenance/" + glossid + "/" + provenanceid,
-            type: 'POST',
-            data: update,
-            datatype: "json",
-            success : function(data) {
-                if (data.success) {
-                    setTimeout(function() {
-                        location.reload(true);
-                    }, 500);
-                }
-            },
-            error: function (xhr, status, error) {
-                alert("There was an error processing this change: " + xhr.responseText );
-            }
-         });
-     });
-     $('.quick_save_othermedia').click(function(e)
-	 {
-         e.preventDefault();
-         var update = { 'csrfmiddlewaretoken': csrf_token };
-         var glossid = $(this).attr('data-glossid');
-         var othermediaid = $(this).attr('data-othermediaid');
-         // the other media id is split from the field name identifier in the Python method
-         update['other-media-type_'+othermediaid] = $('#othermedia-type_'+othermediaid).val();
-         update['other-media-alternative-gloss_'+othermediaid] = $('#othermedia-alternative-gloss_'+othermediaid+'_text').val();
-         update['other-media-description_'+othermediaid] = $('#othermedia-description_'+othermediaid).val();
-         $.ajax({
-            url : url + "/dictionary/update/update_gloss_othermedia/" + glossid + "/" + othermediaid,
-            type: 'POST',
-            data: update,
-            datatype: "json",
-            success : function(data) {
-                if (data.success) {
-                    setTimeout(function() {
-                        location.reload(true);
-                    }, 500);
-                }
-            },
-            error: function (xhr, status, error) {
-                alert("There was an error processing this change: " + xhr.responseText );
-            }
-         });
-     });
      var lookahead_elements = $('[id*="_lookahead"]');
      lookahead_elements.each(function() {
          var this_id = $(this).attr("id");
@@ -1183,3 +1111,4 @@ $(document).ready(function() {
     initialise_multiselects();
     busy_editing = false;
 });
+
