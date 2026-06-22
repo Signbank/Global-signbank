@@ -2585,10 +2585,10 @@ input .tt-hint {
                  {% if perms.dictionary.change_gloss %}
                  <div>
                     {% csrf_token %}
-                    <button type="button" class="btn btn-danger morphology-edit-dismiss"
-                            style="width:auto;padding:3px 12px;">{% trans "Dismiss" %}</button>
-                    <button id='enable_edit_morphology'
-                             class='btn btn-primary navbar-btn edit-mode'
+                    <button type="button" class="btn btn-danger edit-dismiss-toggle" data-category="morphology"
+                            style="width:auto;padding:3px 12px;" id="morphology_edit_dismiss">{% trans "Dismiss" %}</button>
+                    <button id='enable_edit_morphology' data-category="morphology"
+                             class='enable-edit-toggle btn btn-primary navbar-btn edit-mode'
                              style="width:auto;padding:3px 12px;">{% trans "Edit Morphology" %}</button>
                  </div>
                  {% endif %}
@@ -2608,7 +2608,7 @@ input .tt-hint {
                    </tr>
                    {% if gloss.parent_glosses.count > 0 %}
                   <tr>
-                      <th style="width:2em;" class="morphology_delete_edit_only"></th>
+                      <th style="width:2em;" class="edit_only_morphology"></th>
                       <th style="width:12em;">{% trans "Compound Part" %}</th>
                       <th>{% trans "Component Sign" %}</th>
                   </tr>
@@ -2617,7 +2617,7 @@ input .tt-hint {
 
                    <tr>
                        {% if "change_dataset" in dataset_perms %}
-                         <td style='width:2em;' class="morphology_delete_edit_only">
+                         <td style='width:2em;' class="edit_only_morphology">
                             <span class='glyphicon glyphicon-trash morphology-definition-delete' data-toggle='modal' data-target='#delete_morphology-definition_modal_{{morphdef.id}}'></span>
 
                              <div class="modal fade" id="delete_morphology-definition_modal_{{morphdef.id}}" role="dialog" aria-labelledby="#modalTitleComp" aria-hidden="true">
@@ -2646,7 +2646,7 @@ input .tt-hint {
 
                         </td>
                         {% else %}
-                        <td style='width:2em;' class="morphology_delete_edit_only"></td>
+                        <td style='width:2em;' class="edit_only_morphology"></td>
                         {% endif %}
                         <td class="td td-light" id='morphology-definition-role_{{morphdef.id}}' >{{translated_role}}</td>
                         <td class="td td-light" id='morphology-definition-morpheme_{{morphdef.id}}'><a href='{% url "dictionary:admin_gloss_view" pk=morphdef.morpheme.pk %}'>{{sign_display}}</a></td>
@@ -2659,6 +2659,7 @@ input .tt-hint {
            </table>
 
             {% if "change_dataset" in dataset_perms %}
+            <div class="edit_only_morphology">
             <form id='add_morphologydefinition_form'
                   onsubmit='return validateForm("add_morphologydefinition_form","morpheme_id","parent_gloss_id",
                                                 "Please choose a gloss for Add Component Morphology.",
@@ -2668,7 +2669,7 @@ input .tt-hint {
                <input type='hidden' name='parent_gloss_id' value='{{gloss.id}}'>
                <table class='table table-condensed'>
                    <tr>
-                       <td style="width:2em;" class="morphology_delete_edit_only"></td>
+                       <td style="width:2em;" class="edit_only_morphology"></td>
                        <td class="td td-light" style="width:12em;">{{morphologyform.role}}</td>
                        <td class="td td-light editform-morphology">
                            <input class='form-control form-control-light glosstypeahead glosstypeahead-light' size="80"
@@ -2679,6 +2680,7 @@ input .tt-hint {
                    </tr>
                </table>
             </form>
+            </div>
             {% endif %}
             </td>
             </tr>
@@ -2699,14 +2701,14 @@ input .tt-hint {
                 </tr>
                 {% else %}
                 <tr>
-                    <th style="width:2em;" class="morphology_delete_edit_only"></th>
+                    <th style="width:2em;" class="edit_only_morphology"></th>
                     <th style="width:30em;">{% trans "Morpheme Gloss" %}</th>
                     <th colspan="2">{% trans "Meaning in This Sign" %}</th>
                 </tr>
                 {% endif %}
                 {% else %}
                 <tr>
-                    <th style="width:2em;" class="morphology_delete_edit_only"></th>
+                    <th style="width:2em;" class="edit_only_morphology"></th>
                     <th style="width:30em;">{% trans "Morpheme Gloss" %}</th>
                     <th colspan="2">{% trans "Meaning in This Sign" %}</th>
                 </tr>
@@ -2716,7 +2718,7 @@ input .tt-hint {
                 <tr>
                     <!-- Facility to delete this morpheme -->
                     {% if "change_dataset" in dataset_perms %}
-                     <td style='width:2em;' class="morphology_delete_edit_only">
+                     <td style='width:2em;' class="edit_only_morphology">
                         <span class='glyphicon glyphicon-trash morpheme-definition-delete' data-toggle='modal' data-target='#delete_morpheme-definition_modal_{{morpheme.pk}}'></span>
 
                          <div class="modal fade" id="delete_morpheme-definition_modal_{{morpheme.pk}}" role="dialog" aria-labelledby="#modalTitleMrp" aria-hidden="true">
@@ -2744,7 +2746,7 @@ input .tt-hint {
 
                     </td>
                     {% else %}
-                    <td style='width:2em;' class="morphology_delete_edit_only"></td>
+                    <td style='width:2em;' class="edit_only_morphology"></td>
                     {% endif %}
                     <td id='morpheme-definition_{{morpheme.pk}}'>
                         <a href='{% url "dictionary:admin_morpheme_view" pk=morpheme.morpheme.pk %}'>{{morph_display}} ({{morpheme_type}})</a></td>
@@ -2756,6 +2758,7 @@ input .tt-hint {
             <!-- Facilitate adding and deleting morphemes that are used in this sign -->
             {% if "change_dataset" in dataset_perms %}
             {% if count_morphemes_in_dataset %}
+            <div class="edit_only_morphology">
             <form id='add_morphemedefinition_form'
                   onsubmit='return validateForm("add_morphemedefinition_form","morph_id","host_gloss_id",
                                                 "Please choose a morpheme for Add Morpheme Morphology.",
@@ -2765,7 +2768,7 @@ input .tt-hint {
                <input type='hidden' name='host_gloss_id' value='{{gloss.pk}}'>
                <table class='table table-condensed'>
                    <tr>
-                       <td style="width:2em;" class="morphology_delete_edit_only"></td>
+                       <td style="width:2em;" class="edit_only_morphology"></td>
                        <td class="td td-light editform-morphology" style="width:700px;" colspan="3">
                            <input class='form-control form-control-light morphtypeahead morphtypeahead-light' size="100" type="text"
                                   placeholder='{% trans "Morpheme Gloss" %}' id="morpheme_gloss" value="" maxlength="100" autocomplete="off" >
@@ -2784,6 +2787,7 @@ input .tt-hint {
                {# spacing div to allow room for typeahead dropdown #}
                <div style='height: 10em'></div>
              </form>
+            </div>
             {% endif %}
             {% endif %}
             </td>
@@ -2799,7 +2803,7 @@ input .tt-hint {
                     <th colspan="4">{% trans "Blend Morphology" %}</th>
                 </tr>
                 <tr>
-                    <th style="width:2em;" class="morphology_delete_edit_only"></th>
+                    <th style="width:2em;" class="edit_only_morphology"></th>
                     <th style="width:22em;">{% trans "Blend Gloss" %}</th>
                     <th colspan="2">{% trans "Role in This Sign" %}</th>
                 </tr>
@@ -2807,7 +2811,7 @@ input .tt-hint {
                 <tr>
                     <!-- Facility to delete this blend -->
                     {% if "change_dataset" in dataset_perms %}
-                     <td style='width:2em;' class="morphology_delete_edit_only">
+                     <td style='width:2em;' class="edit_only_morphology">
                         <span class='glyphicon glyphicon-trash blend-definition-delete' data-toggle='modal'
                               data-target='#delete_blend-definition_modal_{{blend.pk}}'></span>
 
@@ -2838,7 +2842,7 @@ input .tt-hint {
 
                     </td>
                     {% else %}
-                    <td style='width:2em;' class="morphology_delete_edit_only"></td>
+                    <td style='width:2em;' class="edit_only_morphology"></td>
                     {% endif %}
                     <td id='blend-definition_{{blend.pk}}'><a href='{% url "dictionary:admin_gloss_view" pk=blend.glosses.pk %}'>{{blend_display}}</a></td>
                     <td id='blend-definition-role_{{blend.pk}}'>{{blend.role}}</td>
@@ -2848,6 +2852,7 @@ input .tt-hint {
 
             <!-- Facilitate adding and deleting blends that are used in this sign -->
             {% if "change_dataset" in dataset_perms %}
+            <div class="edit_only_morphology">
             <form id='add_blenddefinition_form'
                   onsubmit='return validateForm("add_blenddefinition_form","blend_id","host_gloss_id",
                                                 "Please choose a gloss for Add Blend Morphology.",
@@ -2857,7 +2862,7 @@ input .tt-hint {
                <input type='hidden' name='host_gloss_id' value='{{gloss.pk}}'>
                <table class='table table-condensed'>
                    <tr>
-                       <td style="width:2em;" class="morphology_delete_edit_only"></td>
+                       <td style="width:2em;" class="edit_only_morphology"></td>
                        <td class="td td-light editform-morphology" style="width:22em;">
                            <input class='form-control form-control-light glosstypeahead glosstypeahead-light' size="80"
                                   placeholder='{% trans "Blend Gloss" %}' id="morpheme_blend" maxlength="80" type="text" autocomplete="off" >
@@ -2873,13 +2878,13 @@ input .tt-hint {
                {# spacing div to allow room for typeahead dropdown #}
                <div style='height: 10em'></div>
             </form>
+            </div>
             {% endif %}
             </td>
             </tr>
         </table>
         <br/><br/><br/>
         </div>
-
     </div>
 
     <!-- Phonology -->
@@ -3777,10 +3782,10 @@ input .tt-hint {
                  {% if perms.dictionary.change_gloss %}
                  <div>
                     {% csrf_token %}
-                    <button type="button" class="btn btn-danger relations-edit-dismiss"
-                            style="width:auto;padding:3px 12px;">{% trans "Dismiss" %}</button>
-                    <button id='enable_edit_relations'
-                             class='btn btn-primary navbar-btn edit-mode'
+                    <button type="button" class="btn btn-danger edit-dismiss-toggle" data-category="relations"
+                            style="width:auto;padding:3px 12px;" id="relations_edit_dismiss">{% trans "Dismiss" %}</button>
+                    <button id='enable_edit_relations' data-category="relations"
+                             class='enable-edit-toggle btn btn-primary navbar-btn edit-mode'
                              style="width:auto;padding:3px 12px;">{% trans "Edit Relations" %}</button>
                  </div>
                  {% endif %}
@@ -3790,7 +3795,7 @@ input .tt-hint {
                <tr id='row_{{rel.id}}'>
                {% if "change_dataset" in dataset_perms %}
 
-                     <td style='width:2em;' class="relations_delete_edit_only">
+                     <td style='width:2em;' class="edit_only_relations">
                         <span class='glyphicon glyphicon-trash relation_delete' data-toggle='modal' data-target='#delete_relation_modal_{{rel.id}}'></span>
 
                          <div class="modal fade" id="delete_relation_modal_{{rel.id}}" role="dialog" aria-labelledby="#modalTitleRel" aria-hidden="true">
@@ -3818,7 +3823,7 @@ input .tt-hint {
 
                     </td>
                {% else %}
-                    <td class="relations_delete_edit_only"></td>
+                    <td class="edit_only_relations"></td>
                {% endif %}
                     <td class="td td-light" id='relationrole_{{rel.id}}'>{{rel.get_role_display}}</td>
                     <td class="td td-light" id='relationtarget_{{rel.id}}'>
@@ -3831,6 +3836,7 @@ input .tt-hint {
            </table>
 
            {% if "change_dataset" in dataset_perms %}
+           <div class="edit_only_relations">
            <form id='add_relations_form'
                  onsubmit='return validateForm("add_relations_form","targetid","sourceid",
                                                 "Please choose a target gloss for Add Relation to Other Sign.",
@@ -3852,6 +3858,7 @@ input .tt-hint {
                {# spacing div to allow room for typeahead dropdown #}
                <div style='height: 10em'></div>
             </form>
+           </div>
             {% endif %}
 
         </div>
@@ -3874,10 +3881,10 @@ input .tt-hint {
                      {% if perms.dictionary.change_gloss %}
                      <div>
                         {% csrf_token %}
-                        <button type="button" class="btn btn-danger foreignrelations-edit-dismiss"
-                                style="width:auto;padding:3px 12px;">{% trans "Dismiss" %}</button>
-                        <button id='enable_edit_foreignrelations'
-                                 class='btn btn-primary navbar-btn edit-mode'
+                        <button type="button" class="btn btn-danger edit-dismiss-toggle" data-category="foreignrelations"
+                                style="width:auto;padding:3px 12px;" id="foreignrelations_edit_dismiss">{% trans "Dismiss" %}</button>
+                        <button id='enable_edit_foreignrelations' data-category="foreignrelations"
+                                 class='enable-edit-toggle btn btn-primary navbar-btn edit-mode'
                                  style="width:auto;padding:3px 12px;">{% trans "Edit Foreign Relations" %}</button>
                      </div>
                      {% endif %}
@@ -4127,10 +4134,10 @@ input .tt-hint {
                 {% if perms.dictionary.change_gloss %}
                  <div>
                     {% csrf_token %}
-                    <button type="button" class="btn btn-danger notes-edit-dismiss"
+                    <button type="button" class="btn btn-danger edit-dismiss-toggle" data-category="notes"
                             style="width:auto;padding:3px 12px;" id="notes_edit_dismiss" >{% trans "Dismiss" %}</button>
                     <button id='enable_edit_notes'
-                             class='btn btn-primary navbar-btn edit-mode'
+                             class='btn btn-primary navbar-btn edit-mode enable-edit-toggle' data-category="notes"
                              style="width:auto;padding:3px 12px;">{% trans "Edit Notes" %}</button>
                  </div>
                 {% endif %}
@@ -4319,11 +4326,10 @@ input .tt-hint {
                 {% if perms.dictionary.change_gloss %}
                  <div>
                     {% csrf_token %}
-                    <button type="button" class="btn btn-danger provenance-edit-dismiss"
+                    <button type="button" class="btn btn-danger edit-dismiss-toggle" data-category="provenance"
                             style="width:auto;padding:3px 12px;" id="provenance_edit_dismiss" >{% trans "Dismiss" %}</button>
-                    <button id='enable_edit_provenance'
-                             class='btn btn-primary navbar-btn edit-mode'
-                             style="width:auto;padding:3px 12px;">{% trans "Edit Provenance" %}</button>
+                    <button id='enable_edit_provenance' class="enable-edit-toggle btn btn-primary navbar-btn edit-mode"
+                            data-category="provenance" style="width:auto;padding:3px 12px;">{% trans "Edit Provenance" %}</button>
                  </div>
                 {% endif %}
             </div>
@@ -4617,11 +4623,11 @@ input .tt-hint {
                 {% if perms.dictionary.change_gloss %}
                  <div>
                     {% csrf_token %}
-                    <button type="button" class="btn btn-danger othermedia-edit-dismiss"
+                    <button type="button" class="btn btn-danger edit-dismiss-toggle" data-category="othermedia"
                             style="width:auto;padding:3px 12px;" id="othermedia_edit_dismiss" >{% trans "Dismiss" %}</button>
-                    <button id='enable_edit_othermedia'
-                             class='btn btn-primary navbar-btn edit-mode'
-                             style="width:auto;padding:3px 12px;">{% trans "Edit Other Media" %}</button>
+                    <button id='enable_edit_othermedia' data-category="othermedia"
+                            class='enable-edit-toggle btn btn-primary navbar-btn edit-mode'
+                            style="width:auto;padding:3px 12px;">{% trans "Edit Other Media" %}</button>
                  </div>
                 {% endif %}
             </div>

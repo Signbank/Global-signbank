@@ -264,89 +264,6 @@ $(".lemma-form-dismiss").on('click', function() {
     $('#lemma_buttons').show();
 });
 
-const morphology_kinds = ['morphologydefinition', 'morphemedefinition', 'blenddefinition'];
-
-function disable_edit_rows_panel(category) {
-    if (category === 'morphology') {
-        $.each(morphology_kinds, function (_, kind) {
-            $('#add_'+kind+'_form').hide();
-        });
-    } else {
-        $('#add_'+category+'_form').hide();
-    }
-    $('.'+category+'_delete_edit_only').hide();
-    $('.empty_row_'+category).hide();
-}
-
-function enable_edit_rows_panel(category) {
-    if (category === 'morphology') {
-        $.each(morphology_kinds, function (_, kind) {
-            $('#add_'+kind+'_form').show();
-        });
-    } else {
-        $('#add_'+category+'_form').show();
-    }
-    $('.'+category+'_delete_edit_only').show();
-    $('.empty_row_'+category).show();
-}
-
-function disable_edit_morphology() {
-    disable_edit_rows_panel('morphology');
-    $('.morphology-edit-dismiss').hide();
-    $('#enable_edit_morphology').show();
-}
-
-$(".morphology-edit-dismiss").on('click', function() {
-    disable_edit_rows_panel('morphology');
-    $(this).hide();
-    $('#enable_edit_morphology').show();
-});
-
-$("#enable_edit_morphology").on('click', function() {
-    enable_edit_rows_panel('morphology');
-    $('.morphology-edit-dismiss').show();
-    $(this).hide();
-});
-
-function disable_edit_relations() {
-    disable_edit_rows_panel('relations');
-    $('.relations-edit-dismiss').hide();
-    $('#enable_edit_relations').show();
-}
-
-$(".relations-edit-dismiss").on('click', function() {
-    disable_edit_rows_panel('relations');
-    $(this).hide();
-    $('#enable_edit_relations').show();
-});
-
-$("#enable_edit_relations").on('click', function() {
-    enable_edit_rows_panel('relations');
-    $('.relations-edit-dismiss').show();
-    $(this).hide();
-});
-
-function disable_edit_foreignrelations() {
-    disable_edit_rows_panel('foreignrelations');
-    $('.foreignrelations-edit-dismiss').hide();
-    disable_editing('foreignrelations');
-    $('#enable_edit_foreignrelations').show();
-}
-
-$(".foreignrelations-edit-dismiss").on('click', function() {
-    disable_edit_rows_panel('foreignrelations');
-    disable_editing('foreignrelations');
-    $(this).hide();
-    $('#enable_edit_foreignrelations').show();
-});
-
-$("#enable_edit_foreignrelations").on('click', function() {
-    enable_edit_rows_panel('foreignrelations');
-    $('.foreignrelations-edit-dismiss').show();
-    $(this).hide();
-    enable_editing('foreignrelations');
-});
-
 function disable_edit_nme() {
     $('.edit_only_nme').hide();
     $('.read_only_nme').show();
@@ -368,54 +285,6 @@ $("#enable_edit_nme").on('click', function() {
     $(this).hide();
 });
 
-function disable_edit_notes() {
-    $('.edit_only_notes').hide();
-    $('.read_only_notes').show();
-    disable_editing('notes');
-    $('#notes_edit_dismiss').hide();
-    $('#enable_edit_notes').show();
-}
-
-$(".notes-edit-dismiss").on('click', function() {
-    $('.edit_only_notes').hide();
-    disable_editing('notes');
-    $('.read_only_notes').show();
-    $(this).hide();
-    $('#enable_edit_notes').show();
-});
-
-$("#enable_edit_notes").on('click', function() {
-    $('.edit_only_notes').show();
-    $('.read_only_notes').hide();
-    $('#notes_edit_dismiss').show();
-    $(this).hide();
-    enable_editing('notes');
-});
-
-function disable_edit_provenance() {
-    $('.edit_only_provenance').hide();
-    $('.read_only_provenance').show();
-    disable_editing('provenance');
-    $('#provenance_edit_dismiss').hide();
-    $('#enable_edit_provenance').show();
-}
-
-$(".provenance-edit-dismiss").on('click', function() {
-    $('.edit_only_provenance').hide();
-    disable_editing('provenance');
-    $('.read_only_provenance').show();
-    $(this).hide();
-    $('#enable_edit_provenance').show();
-});
-
-$("#enable_edit_provenance").on('click', function() {
-    $('.edit_only_provenance').show();
-    $('.read_only_provenance').hide();
-    $('#provenance_edit_dismiss').show();
-    $(this).hide();
-    enable_editing('provenance');
-});
-
 function disable_edit_annotated_sentences() {
     $('.edit_only_annotated_sentences').hide();
     $("#annotated_sentences_edit_dismiss").hide();
@@ -433,28 +302,33 @@ $("#enable_edit_annotated_sentences").on('click', function() {
     $(this).hide();
 });
 
-function disable_edit_othermedia() {
-    $('.edit_only_othermedia').hide();
-    $('.read_only_othermedia').show();
-    disable_editing('othermedia');
-    $('#othermedia_edit_dismiss').hide();
-    $('#enable_edit_othermedia').show();
-}
+// for relational panels that update relations the gloss has with other models
+$(document).on('click', '.enable-edit-toggle', function() {
+    const category = $(this).data('category');
 
-$(".othermedia-edit-dismiss").on('click', function() {
-    $('.edit_only_othermedia').hide();
-    disable_editing('othermedia');
-    $('.read_only_othermedia').show();
+    if (category === 'morphology') {
+        $('.empty_row_'+category).show();
+    }
+    $(`.edit_only_${category}`).show();
+    $(`.read_only_${category}`).hide();
+    $(`#${category}_edit_dismiss`).show();
     $(this).hide();
-    $('#enable_edit_othermedia').show();
+
+    enable_editing(category);
 });
 
-$("#enable_edit_othermedia").on('click', function() {
-    $('.edit_only_othermedia').show();
-    $('.read_only_othermedia').hide();
-    $('#othermedia_edit_dismiss').show();
+$(document).on('click', '.edit-dismiss-toggle', function() {
+    const category = $(this).data('category');
+
+    if (category === 'morphology') {
+        $('.empty_row_'+category).hide();
+    }
+    $(`.edit_only_${category}`).hide();
+    $(`.read_only_${category}`).show();
     $(this).hide();
-    enable_editing('othermedia');
+    $(`#enable_edit_${category}`).show();
+
+    disable_editing(category);
 });
 
 function ajaxifyTagForm() {
@@ -1083,14 +957,11 @@ $(document).ready(function() {
     hide_edit_panel('phonology');
     hide_edit_panel('semantics');
     hide_edit_panel('publication');
-    disable_edit_relations();
-    disable_edit_foreignrelations();
-    disable_edit_morphology();
+    $('.edit-dismiss-toggle').each(function () {
+        $(this).trigger("click");
+    });
     disable_edit_nme();
-    disable_edit_notes();
-    disable_edit_provenance();
     disable_edit_annotated_sentences();
-    disable_edit_othermedia();
     ajaxifyTagForm();
     // setup required for Ajax POST
     function csrfSafeMethod(method) {
