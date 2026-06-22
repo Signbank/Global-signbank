@@ -608,6 +608,7 @@ function quickSaveAjax(url, data, panel) {
         dataType: 'json',
         success: function(resp) {
             if (resp.success) {
+                sessionStorage.setItem('panel', panel);
                 setTimeout(function() {
                     location.reload(true);
                 }, 500);
@@ -760,6 +761,7 @@ $(document).ready(function() {
 	 {
          e.preventDefault();
 	     var glossid = $(this).attr('value');
+	     var panel = $(this).attr('data-category');
 	     var update = { 'csrfmiddlewaretoken': csrf_token };
          for (var i=0; i < gloss_fields.length; i++) {
             var field = gloss_fields[i];
@@ -814,6 +816,7 @@ $(document).ready(function() {
             datatype: "json",
             success : function(data) {
                 if (data.success) {
+                    sessionStorage.setItem('panel', panel);
                     setTimeout(function() {
                         location.reload(true);
                     }, 500);
@@ -838,6 +841,7 @@ $(document).ready(function() {
             datatype: "json",
             success : function(data) {
                 if (data.success) {
+                    sessionStorage.setItem('panel', 'general');
                     setTimeout(function() {
                         location.reload(true);
                     }, 500);
@@ -866,6 +870,7 @@ $(document).ready(function() {
             datatype: "json",
             success : function(data) {
                 if (data.success) {
+                    sessionStorage.setItem('panel', 'general');
                     setTimeout(function() {
                         location.reload(true);
                     }, 500);
@@ -898,6 +903,7 @@ $(document).ready(function() {
             datatype: "json",
             success : function(data) {
                 if (data.success) {
+                    sessionStorage.setItem('panel', 'nmevideos');
                     setTimeout(function() {
                         location.reload(true);
                     }, 500);
@@ -983,3 +989,9 @@ $(document).ready(function() {
     busy_editing = false;
 });
 
+// ---- ON PAGE LOAD ----
+$(function () {
+    const panel = sessionStorage.getItem('panel') ?? 'general';
+    sessionStorage.removeItem('panel');
+    $('#'+panel).addClass('in');
+});

@@ -1551,7 +1551,7 @@ input .tt-hint {
                         style="width:auto;padding:3px 12px;" id="button-edit-cancel-general" data-category="general" >
                         {% trans "Cancel" %}</button>
                 <button type="button" class="btn btn-danger quick_save button-general-to-appear-in-edit-mode"
-                        style="width:auto;padding:3px 12px;" value="{{gloss.id}}" id="button-edit-save-general" >
+                        style="width:auto;padding:3px 12px;" value="{{gloss.id}}" id="button-edit-save-general" data-category="general" >
                         {% trans "Save General Description" %}</button>
                  <button id='enable_edit_general' type="button"
                          class='btn btn-primary navbar-btn edit-mode'
@@ -2251,13 +2251,9 @@ input .tt-hint {
                     <input type="hidden" name="wordClass" value=""
                            id="wordClass_machine_value" >
                     </div>
-                    <!-- the following div fixes a vertical spacing problem where the lookahead appears behind the next panel-->
-                    <div class="edit_only_general">
-                        <br><br><br><br><br><br><br><br><br><br><br><br><br>
-                    </div>
                     {% else %}
                     <div class="editselect">
-                    <select class="select_wordClass form-control form-control-light" name="wordClass" size="50"
+                    <select class="select_wordClass form-control form-control-light" name="wordClass"
                                 id="wordClass_value" data-category="general" data-initial="{{wordClass_field.initial}}">
                         {% for machine_value, opn in wordClass_field.choices %}
                         {% if machine_value == wordClass_field.initial|to_str %}
@@ -2273,6 +2269,7 @@ input .tt-hint {
                 {% endwith %}
             </tr>
         </table>
+        <br><br><br><br><br><br>
     </div>
 </div>
 {% if prominent_media_type and prominent_media_type.machine_value > 1 %}
@@ -2907,7 +2904,7 @@ input .tt-hint {
                             style="width:auto;padding:3px 12px;" data-category="phonology" >
                             {% trans "Cancel" %}</button>
                     <button type="button" class="btn btn-danger quick_save button-phonology-to-appear-in-edit-mode"
-                            style="width:auto;padding:3px 12px;"
+                            style="width:auto;padding:3px 12px;" data-category="phonology"
                             value="{{gloss.id}}" >{% trans "Save Phonology" %}</button>
                     <button id='enable_edit_phonology'
                              class='btn btn-primary navbar-btn edit-mode'
@@ -3594,7 +3591,7 @@ input .tt-hint {
                         style="width:auto;padding:3px 12px;" data-category="semantics" >
                         {% trans "Cancel" %}</button>
                 <button type="button" class="btn btn-danger quick_save button-semantics-to-appear-in-edit-mode"
-                        style="width:auto;padding:3px 12px;"
+                        style="width:auto;padding:3px 12px;" data-category="semantics"
                         value="{{gloss.id}}" >{% trans "Save Semantics" %}</button>
                 <button id='enable_edit_semantics'
                          class='btn btn-primary navbar-btn edit-mode'
@@ -4019,10 +4016,10 @@ input .tt-hint {
     <!-- Publication status -->
     <div class="panel panel-default panel-light">
         <div class='panel-heading panel-light' data-toggle='collapse'
-             data-target='#pubStatus'>{% trans "Publication Status" %}
+             data-target='#publication'>{% trans "Publication Status" %}
         </div>
 
-        <div id="pubStatus" class="collapse">
+        <div id="publication" class="collapse">
             <div class='pull-right' style="margin-right:15px;margin-top:20px;">
                  {% if perms.dictionary.change_gloss %}
                  <div>
