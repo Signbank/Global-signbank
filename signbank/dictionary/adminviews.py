@@ -87,7 +87,7 @@ from signbank.dictionary.forms import (AnnotatedSentenceSearchForm, GlossSearchF
                                        GlossMorphologyForm, GlossBlendForm, DefinitionForm, NotesForm, GlossMorphemeForm,
                                        SemanticFieldTranslationForm, ZippedVideosForm, SearchGlossIds, ProvenanceForm,
                                        check_language_fields, check_multilingual_fields, SentenceForm,
-                                       GlossForeignRelationForm, OtherMediaUpdateForm,
+                                       GlossForeignRelationForm, OtherMediaUpdateForm, PhonologicalVariationUpdateForm,
                                        check_language_fields_annotatedsentence, GlossProvenanceForm, check_sortOrder_handshapes)
 from signbank.tools import (write_ecv_file_for_dataset, find_duplicate_lemmas,
                             construct_scrollbar, get_dataset_languages, get_datasets_with_public_glosses,
@@ -1476,6 +1476,12 @@ class GlossDetailView(DetailView):
         # these Gloss model fields are used by the javascript code to process push data for edits
         context['gloss_update_fields'] =  GLOSS_FIELDS_UPDATES
         context['gloss_variations'] = PhonologicalVariation.objects.filter(gloss=gloss).order_by('variation')
+
+        variation_forms = dict()
+        for variation in context['gloss_variations']:
+            variation_forms[variation.pk] = PhonologicalVariationUpdateForm(variantid=variation.pk)
+        context['variation_forms'] = variation_forms
+
         context['show_fields_rows_phonology'] = show_fields_rows_phonology(gloss)
         context['show_field_row'] = show_fields_rows(gloss)
         context['language_2chars'] = [language.language_code_2char for language in dataset_languages]

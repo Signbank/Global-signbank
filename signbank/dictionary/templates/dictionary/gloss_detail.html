@@ -2906,9 +2906,9 @@ input .tt-hint {
                     <button type="button" class="btn btn-danger edit-cancel button-phonology-to-appear-in-edit-mode"
                             style="width:auto;padding:3px 12px;" data-category="phonology" >
                             {% trans "Cancel" %}</button>
-                    <button type="button" class="btn btn-danger quick_save button-phonology-to-appear-in-edit-mode"
-                            style="width:auto;padding:3px 12px;" data-category="phonology"
-                            value="{{gloss.id}}" >{% trans "Save Phonology" %}</button>
+<!--                    <button type="button" class="btn btn-danger quick_save button-phonology-to-appear-in-edit-mode"-->
+<!--                            style="width:auto;padding:3px 12px;" data-category="phonology"-->
+<!--                            value="{{gloss.id}}" >{% trans "Save Phonology" %}</button>-->
                     <button id='enable_edit_phonology'
                              class='btn btn-primary navbar-btn edit-mode'
                              style="width:auto;padding:3px 12px;" >{% trans "Edit Phonology" %}</button>
@@ -2918,6 +2918,34 @@ input .tt-hint {
 
         <table class='table table-condensed table-condensed-light phonology-table'>
             {% csrf_token %}
+            <tr>
+                 <th style="width:240px;"></th>
+                 <th class='td td-light' style="color:darkred; float:left;width:150px;border-top:0;">{% trans "Variation" %} #1</th>
+                 {% for gv in gloss_variations %}
+                 <th class='th th-light' style="color:darkred">{% trans "Variation" %} #{{gv.variation}}</th>
+                 {% endfor %}
+             </tr>
+             <tr class="empty_row_phonology">
+                 <th class='td td-light' style="width:240px;"></th>
+                 <th class='td td-light' style="color:darkred">
+                     <button id='quick_save_btn_{{gloss.id}}' class="quick_save edit-mode btn btn-primary"
+                        name='quick_save_{{gloss.id}}' data-type="gloss" data-category="phonology"
+                        value='{{gloss.id}}'
+                        type="button">{% trans "Save" %}</button>
+                 </th>
+                 {% for gv in gloss_variations %}
+                 <th class='td td-light' style="color:darkred">
+                     <button id='quick_save_btn_{{gv.id}}' class="quick_save edit-mode btn btn-primary"
+                        name='quick_save_{{gv.id}}' data-type="variant" data-category="phonology"
+                        value='{{gv.id}}'
+                        type="button">{% trans "Save" %}</button>
+                     <button id='variant_delete_btn_{{gv.id}}' class="btn btn-primary edit-mode"
+                        value='{{gv.id}}' data-category="phonology"
+                        onclick='location.href="{{PREFIX_URL}}/dictionary/update/delete_phonological_variation/{{gv.pk}}"'
+                        type="button">{% trans "Delete" %}</button>
+                 </th>
+                 {% endfor %}
+             </tr>
             {% with show_field_row|get_item:"handedness" as show_field %}
             {% if not show_field %}
             <tr class="empty_row_phonology">
@@ -2929,9 +2957,9 @@ input .tt-hint {
                 {% with phonologyform.fields|get_item:'handedness' as handedness_field %}
                 {% with phonologyform.fields|get_item:'weakdrop' as weakdrop_field %}
                 {% with phonologyform.fields|get_item:'weakprop' as weakprop_field %}
-                <td class="editform-phonology" style="width:auto;">
+                <td class="editform-phonology" style="width:150px !important;">
                     {% if use_lookaheads == 'lookaheads' %}
-                    <div style="display:table-cell;" id="handedness_cell">
+                    <div style="display:table-cell; width:50px;" id="handedness_cell">
                     <input class='form-control form-control-light handednesstypeahead' type="text"
                            id="handedness_lookahead" data-category="phonology" value="{{handedness_field.initial}}"
                            data-machine_value='{{handedness_field.machine_value}}' data-field="handedness"
@@ -2940,7 +2968,7 @@ input .tt-hint {
                            id="handedness_machine_value" >
                     </div>
                     {% else %}
-                    <div style="display:table-cell;" class="editselect">
+                    <div style="display:table-cell;width:50px;" class="editselect">
                     <select class="select_handedness form-control form-control-light" name="handedness"
                                 id="handedness_value" data-category="phonology" data-initial="{{handedness_field.initial}}">
                         {% for machine_value, opn in handedness_field.choices %}
@@ -2953,7 +2981,7 @@ input .tt-hint {
                     </select>
                     </div>
                     {% endif %}
-                    <div class="editselect" style="display:table-cell;">
+                    <div class="editselect" style="display:table-cell;padding-left:0;width:50px;">
                     <select class="select_weakdrop form-control form-control-light" name="weakdrop"
                             id="weakdrop_select_value" data-category="phonology" data-initial="{{weakdrop_field.initial}}">
                         {% for value, opn in weakdrop_field.choices %}
@@ -2965,7 +2993,7 @@ input .tt-hint {
                         {% endfor %}
                     </select>
                     </div>
-                    <div class="editselect" style="display:table-cell;padding-left:0px;">
+                    <div class="editselect" style="display:table-cell;padding-left:0;width:50px;">
                     <select class="select_weakprop form-control form-control-light" name="weakprop"
                             id="weakprop_select_value" data-category="phonology" data-initial="{{weakprop_field.initial}}">
                         {% for value, opn in weakprop_field.choices %}
@@ -2981,6 +3009,52 @@ input .tt-hint {
                 {% endwith %}
                 {% endwith %}
                 {% endwith %}
+
+                 {% for gv in gloss_variations %}
+                 {% with variation_forms|get_item:gv.id as variant_form %}
+                 {% with variant_form.fields|get_item:'handedness' as handedness_field %}
+                 {% with variant_form.fields|get_item:'weakdrop' as weakdrop_field %}
+                 {% with variant_form.fields|get_item:'weakprop' as weakprop_field %}
+                 <td class='td td-light' style="width:150px;">
+                    <div style="display:table-cell;">
+                    <select name="handedness" id="handedness_{{gv.id}}">
+                        {% for machine_value, opn in handedness_field.choices %}
+                        {% if opn == handedness_field.initial %}
+                        <option value={{machine_value}} selected="selected">{{opn}}</option>
+                        {% else %}
+                        <option value={{machine_value}}>{{opn}}</option>
+                        {% endif %}
+                        {% endfor %}
+                    </select>
+                    </div>
+                     <div style="display:table-cell;">
+                        <select name="weakdrop" id="weakdrop_{{gv.id}}">
+                            {% for value, opn in weakdrop_field.choices %}
+                            {% if value == weakdrop_field.initial %}
+                            <option value={{value}} selected="selected">{{opn}}</option>
+                            {% else %}
+                            <option value={{value}}>{{opn}}</option>
+                            {% endif %}
+                            {% endfor %}
+                        </select>
+                     </div>
+                     <div style="display:table-cell;">
+                        <select name="weakprop" id="weakprop_{{gv.id}}">
+                            {% for value, opn in weakprop_field.choices %}
+                            {% if value == weakprop_field.initial %}
+                            <option value={{value}} selected="selected">{{opn}}</option>
+                            {% else %}
+                            <option value={{value}}>{{opn}}</option>
+                            {% endif %}
+                            {% endfor %}
+                        </select>
+                     </div>
+                 </td>
+                 {% endwith %}
+                 {% endwith %}
+                 {% endwith %}
+                 {% endwith %}
+                 {% endfor %}
             </tr>
             {% with show_field_row|get_item:"domhndsh" as show_field %}
             {% if not show_field %}
@@ -3579,7 +3653,7 @@ input .tt-hint {
             <thead>
                  <tr>
                  <th></th>
-                 <th class='th th-light' style="color:darkred">#0</th>
+                 <th class='th th-light' style="color:darkred">#1</th>
                  {% for gv in gloss_variations %}
                  <th class='th th-light' style="color:darkred">#{{gv.variation}}</th>
                  {% endfor %}
