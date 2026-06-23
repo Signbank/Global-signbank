@@ -307,55 +307,22 @@ def add_gloss(request):
     return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': gloss.pk}))
 
 
+@permission_required('dictionary.add_gloss')
 def add_phonological_variation(request, glossid):
     """Create a new phonological variation for a gloss"""
 
-    if not request.user.has_perm('dictionary.add_gloss'):
-        raise PermissionDenied
-
     gloss = get_object_or_404(Gloss, id=glossid, archived=False)
-
-    if 'change_dataset' not in get_user_perms(request.user, gloss.lemma.dataset):
-        messages.add_message(request, messages.INFO, gettext_lazy("No permission to create a phonological variation."))
-        return HttpResponseRedirect(
-            reverse('dictionary:phonological_variations', kwargs={'glossid': str(gloss.pk)}))
 
     qs = PhonologicalVariation.objects.filter(gloss=gloss)
 
-    highest_variation = 0 if not qs.count() else max([phonological_variation.variation for phonological_variation in qs])
-
+    highest_variation = 1 if not qs.count() else max([phonological_variation.variation for phonological_variation in qs])
     new_variation_data = dict()
     new_variation_data['variation'] = highest_variation+1
-
-    fieldnames = FIELDS['phonology']
-    gloss_fields = [PhonologicalVariation.get_field(fname) for fname in PhonologicalVariation.get_field_names()]
-    fieldchoiceforeignkey_fields = [f.name for f in gloss_fields
-                                    if f.name in fieldnames
-                                    and isinstance(f, FieldChoiceForeignKey)]
     new_variation = PhonologicalVariation(gloss=gloss, **new_variation_data)
 
-    for field in fieldnames:
-
-        if field not in PhonologicalVariation.get_field_names() or field not in fieldnames:
-            continue
-
-        if field in ['domhndsh', 'subhndsh', 'final_domhndsh', 'final_subhndsh']:
-            handshape = Handshape.objects.get(machine_value=0)
-            setattr(new_variation, field, handshape)
-        elif isinstance(PhonologicalVariation.get_field(field), BooleanField):
-            if field in ['weakdrop', 'weakprop']:
-                setattr(new_variation, field, None)
-            else:
-                setattr(new_variation, field, False)
-        elif field in fieldchoiceforeignkey_fields:
-            gloss_field = PhonologicalVariation.get_field(field)
-            fieldchoice = FieldChoice.objects.get(field=gloss_field.field_choice_category, machine_value=0)
-            setattr(new_variation, field, fieldchoice)
-        else:
-            setattr(new_variation, field, '')
-
+    for field in FIELDS['phonology']:
+        setattr(new_variation, field, getattr(gloss, field))
     new_variation.save()
-
     gloss.lastUpdated = DT.datetime.now(tz=get_current_timezone())
 
     return HttpResponseRedirect(

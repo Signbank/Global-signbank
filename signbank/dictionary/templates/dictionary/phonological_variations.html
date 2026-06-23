@@ -89,7 +89,7 @@ var gloss_phonology = {{gloss_phonology|safe}};
         {% csrf_token %}
         <button id='add_variation_btn_{{gloss.id}}' class="btn btn-primary"
             name='add_variation_{{gloss.id}}' data-type="gloss"
-            value='{{gloss.id}}' style="height:36px;width:auto;"
+            value='{{gloss.id}}' style="width:auto;"
             onclick='location.href="{{PREFIX_URL}}/dictionary/update/add_phonological_variation/{{gloss.id}}"'
             type="button">{% trans "Add Phonological Variation" %}</button>
        </div>
@@ -113,7 +113,7 @@ var gloss_phonology = {{gloss_phonology|safe}};
      <table class='table table-condensed table-condensed-light' style="width:auto;border: 0px;">
              <tr>
 			    <th class='th th-light' style="color:darkred; width:auto;">{% trans "Phonology" %}</th>
-                 <th class='td td-light' style="color:darkred; float:left;width:300px;border-top:0px;">{% trans "Source Sign" %}</th>
+                 <th class='td td-light' style="color:darkred; float:left;width:300px;border-top:0;">{% trans "Variation" %} #1</th>
                  {% for gv in gloss_variations %}
                  <th class='th th-light' style="color:darkred">{% trans "Variation" %} #{{gv.variation}}</th>
                  {% endfor %}
@@ -123,17 +123,17 @@ var gloss_phonology = {{gloss_phonology|safe}};
                  <th class='td td-light' style="color:darkred">
                      <button id='quick_save_btn_{{gloss.id}}' class="quick_save btn btn-primary"
                         name='quick_save_{{gloss.id}}' data-type="gloss"
-                        value='{{gloss.id}}' style="height:36px;"
+                        value='{{gloss.id}}'
                         type="button">{% trans "Save" %}</button>
                  </th>
                  {% for gv in gloss_variations %}
                  <th class='td td-light' style="color:darkred">
                      <button id='quick_save_btn_{{gv.id}}' class="quick_save btn btn-primary"
                         name='quick_save_{{gv.id}}' data-type="variant"
-                        value='{{gv.id}}' style="height:36px;"
+                        value='{{gv.id}}'
                         type="button">{% trans "Save" %}</button>
                      <button id='variant_delete_btn_{{gv.id}}' class="btn btn-primary"
-                        value='{{gv.id}}' style="height:36px;width:auto;"
+                        value='{{gv.id}}' style="width:auto;"
                         onclick='location.href="{{PREFIX_URL}}/dictionary/update/delete_phonological_variation/{{gv.pk}}"'
                         type="button">{% trans "Delete" %}</button>
                  </th>

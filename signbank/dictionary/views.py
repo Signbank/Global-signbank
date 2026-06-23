@@ -46,7 +46,7 @@ from signbank.dictionary.models import (Dataset, Language, Gloss, Morpheme, Lemm
                                         DeletedGlossOrMedia,
                                         get_default_language_id, CATEGORY_MODELS_MAPPING, PhonologicalVariation)
 from signbank.dictionary.forms import (LemmaCreateForm, GlossCreateForm, MorphemeCreateForm, ImageUploadForHandshapeForm,
-                                       ImageUploadForGlossForm, CSVUploadForm, PhonologicalVariationCreateForm,
+                                       ImageUploadForGlossForm, CSVUploadForm,
                                        PhonologicalVariationUpdateForm, PhonologyUpdateForm)
 from signbank.dictionary.update import update_dialect
 from signbank.dictionary.update_csv import (update_simultaneous_morphology, update_blend_morphology,
