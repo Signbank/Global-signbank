@@ -3,7 +3,6 @@
 {% load stylesheet %}
 {% load annotation_idgloss_translation %}
 {% load field_choice %}
-{% load bootstrap3 %}
 {% load tagging_tags %}
 {% load affiliation_tags %}
 {% load underscore_to_space %}
@@ -2268,8 +2267,12 @@ input .tt-hint {
                 </td>
                 {% endwith %}
             </tr>
+            <tr class="edit_only_general">
+                <td colspan="2">
+                       <div style='height: 15em'></div>
+                </td>
+            </tr>
         </table>
-        <br><br><br><br><br><br>
     </div>
 </div>
 {% if prominent_media_type and prominent_media_type.machine_value > 1 %}
