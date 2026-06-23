@@ -330,7 +330,7 @@ table {
 #fingerspellright {
    width: 470px; /* 847 - 320 - 20 - fiddle factor */
    float: left;
-   padding-left: 20px;or
+   padding-left: 20px;
 }
 
 #fstable td {
@@ -406,11 +406,9 @@ table {
     float:left;
     width:4px;
     height:4px;
-    -moz-border-radius:2px;
     -webkit-border-radius:2px;
     border-radius:2px;
     background:#fff;
-    -moz-box-shadow:-1px -1px 2px #004977;
     -webkit-box-shadow:-1px -1px 2px #004977;
     box-shadow:-1px -1px 2px #004977;
     }
@@ -426,10 +424,6 @@ table {
     padding: 20px;
 }
 
-
-
-// typeahead dropdown styling
-
 .typeahead,
 .tt-query,
 .tt-hint {
@@ -444,7 +438,6 @@ table {
   opacity: 0.99;
   z-index: 9999 !important;
   -webkit-border-radius: 8px;
-     -moz-border-radius: 8px;
           border-radius: 8px;
   outline: none;
 }
@@ -463,7 +456,6 @@ table {
 
 .tt-query {
   -webkit-box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.075);
-     -moz-box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.075);
           box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.075);
 }
 
@@ -476,9 +468,9 @@ table {
   width: 600px;
   max-height: 300px;
   overflow-y: scroll;
-  margin-top: 0px;
-  margin-bottom: 0px;
-  padding: 10px 0px;
+  margin-top: 0;
+  margin-bottom: 0;
+  padding: 10px 0;
   border: 1px solid var(--typeahead-color);
   color: 1px solid var(--typeahead-color);
   background: 1px solid var(--typeahead-background);
@@ -486,7 +478,6 @@ table {
   opacity: 0.99;
   z-index: 9999;
   -webkit-border-radius: 8px;
-     -moz-border-radius: 8px;
           border-radius: 8px;
 }
 
@@ -495,6 +486,7 @@ table {
   line-height: 20px;
   background-color: var(--typeahead-background);
   color: var(--typeahead-color);
+  margin: 0;
 }
 
 .tt-suggestion.tt-cursor {
@@ -505,6 +497,13 @@ table {
 
 .tt-suggestion p {
   margin: 0;
+}
+
+.tt-menu {
+    border: 1px solid black;
+    z-index: 100000 !important;
+    max-height: 25em;
+    overflow: auto;
 }
 
 .col-md-4
@@ -615,7 +614,6 @@ tr.rotated th {
     font-weight: 800;
 }
 
-//Tabs taken from a new version of bootstrap
 .nav-tabs
 {
     border-bottom: 1px solid #dee2e6;
@@ -684,7 +682,7 @@ tr.rotated th {
     position: absolute;
     content:'';
     width: 100%;
-    left: 0px;
+    left: 0;
     height: 10px;
     border-width: 2px;
     border-style: solid;
@@ -874,7 +872,6 @@ table .table-bordered {
 }
 @media screen body {
   background: inherit;
-  background-color: inherit;
   color: inherit;
 }
 
@@ -997,7 +994,6 @@ input {
 }
 .collapse-dark {
     border: solid 1px var(--well-background) !important;
-    border-top-width: 1px !important;
     border-bottom-color: var(--well-background);
 }
 .collapse-light {
@@ -1058,12 +1054,11 @@ input {
     color: var(--text-input-text) !important;
 }
 .td-dark > input {
-    border-top-color: var(--text-input-field) !important;
     border-color: var(--text-input-field) !important;
     background-color: var(--text-container-dark-input-fill) !important;
     border: solid 1px var(--text-input-border) !important;
     color: var(--text-input-text) !important;
-    box-shadow: var(--text-container-dark-input-fill) 0px 0px 0px 0px;
+    box-shadow: var(--text-container-dark-input-fill) 0 0 0 0;
 }
 input:focus,
 select:focus,
@@ -1080,9 +1075,7 @@ button:active {
 input:focus, input.form-control:focus {
 
     outline:none !important;
-    outline-width: 0 !important;
     box-shadow: none;
-    -moz-box-shadow: none;
     -webkit-box-shadow: none;
 }
 .td-dark > .btn-default-dark {
@@ -1222,7 +1215,6 @@ input:focus, input.form-control:focus {
     color: var(--panel-heading-text) !important;
 }
 .query-toggles-dark > tbody > tr > td {
-    border-left: 2px solid var(--well-border);
     color: var(--panel-heading-text) !important;
     border: 1px solid var(--well-border) !important;
 }
@@ -1303,7 +1295,6 @@ input:focus, input.form-control:focus {
 }
 .tbody-dark {
     background-color: var(--tbody-dark-background) !important;
-    border-color: var(--tbody-dark-border) !important;
     color: var(--text-input-text) !important;
     border-color: var(--text-container-dark-border) !important;
     border-width: 0 0 0 0;
@@ -1314,7 +1305,6 @@ input:focus, input.form-control:focus {
 }
 .tbody-dark > tr > td {
     background-color: var(--tbody-dark-background) !important;
-    border-color: var(--tbody-dark-border) !important;
     color: var(--text-input-text) !important;
     border-color: var(--text-container-dark-border) !important;
 }
@@ -1374,7 +1364,6 @@ input:focus, input.form-control:focus {
     background-color: white !important;
     border-color: black !important;
     color: black !important;
-    border: black !important;
 }
 .lemmatypeahead-dark {
     background-color: var(--typeahead-dark-background) !important;
@@ -1386,7 +1375,6 @@ span ::placeholder {
     color: var(--text-input-border) !important;
 }
 .td-dark > span > input {
-    border-top-color: var(--text-input-field) !important;
     border-color: var(--text-input-field) !important;
     background-color: var(--text-input-field) !important;
     border: solid 1px var(--text-input-border) !important;
@@ -1457,7 +1445,7 @@ span ::placeholder {
 .btn-group-dark {
     color: inherit !important;
     --search-results-color: white !important;
-    --search-results-luminosity: 0.35%
+    --search-results-luminosity: 0.35%;
     --search-results-luminosity-hover: 0.7%;
     background-color: inherit !important;
 }
