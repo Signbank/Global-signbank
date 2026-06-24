@@ -158,6 +158,13 @@
     border:none;
     width:2em;
 }
+.glyph-btn {
+    color:red;
+    font-size:16px;
+    background-color:transparent;
+    border:none;
+    width:2em;
+}
 </style>
     <script type="text/javascript" src="{{STATIC_URL}}js/drag_drop_files.js"></script>
     <script type="text/javascript" src="{{STATIC_URL}}js/recordscript.js"></script>
@@ -834,7 +841,7 @@ input .tt-hint {
     padding-right: 2px;
 }
 .phonology-table {
-    border-spacing: 0 3px;
+    border-spacing: 0 5px;
 }
 .semantics-table {
     border-spacing: 0 5px;
@@ -2899,53 +2906,67 @@ input .tt-hint {
                 <span id='phonology_message'></span>
         </div>
         <div id='phonology' class='collapse'>
-            <div class='pull-right' style="margin-right:15px;margin-top:20px;">
+            <div class='pull-right' style="margin-right:15px;margin-top:20px;margin-bottom:20px;">
                  {% if perms.dictionary.change_gloss %}
                  <div>
                     {% csrf_token %}
                     <button type="button" class="btn btn-danger edit-cancel button-phonology-to-appear-in-edit-mode"
                             style="width:auto;padding:3px 12px;" data-category="phonology" >
                             {% trans "Cancel" %}</button>
-<!--                    <button type="button" class="btn btn-danger quick_save button-phonology-to-appear-in-edit-mode"-->
-<!--                            style="width:auto;padding:3px 12px;" data-category="phonology"-->
-<!--                            value="{{gloss.id}}" >{% trans "Save Phonology" %}</button>-->
+                    {% if not gloss_variations %}
+                    <button type="button" class="btn btn-danger quick_save button-phonology-to-appear-in-edit-mode"
+                            style="width:auto;padding:3px 12px;" data-category="phonology"
+                            value="{{gloss.id}}" >{% trans "Save Phonology" %}</button>
+                    {% endif %}
                     <button id='enable_edit_phonology'
-                             class='btn btn-primary navbar-btn edit-mode'
-                             style="width:auto;padding:3px 12px;" >{% trans "Edit Phonology" %}</button>
+                            class='btn btn-primary navbar-btn edit-mode'
+                            style="width:auto;padding:3px 12px;" >{% trans "Edit Phonology" %}</button>
                  </div>
                  {% endif %}
             </div>
 
+            <div class="pull-left edit_only_phonology button-phonology-to-appear-in-edit-mode" style="margin-top:20px;margin-bottom:10px;">
+                {% if perms.dictionary.change_gloss %}
+                 <button id='add_variation_btn_{{gloss.id}}' class="btn btn-primary edit-mode"
+                         name='add_variation_{{gloss.id}}' data-type="gloss"
+                         value='{{gloss.id}}' style="width:auto;padding:3px 12px;"
+                         onclick='location.href="{{PREFIX_URL}}/dictionary/update/add_phonological_variation/{{gloss.id}}"'
+                         type="button">{% trans "Add Phonological Variation" %}</button>
+                {% endif %}
+            </div>
+
         <table class='table table-condensed table-condensed-light phonology-table'>
             {% csrf_token %}
+            {% if gloss_variations %}
             <tr>
-                 <th style="width:240px;"></th>
-                 <th class='td td-light' style="color:darkred; float:left;width:150px;border-top:0;">{% trans "Variation" %} #1</th>
+                 <th style="width:240px;">{% trans "Phonological Variations" %}</th>
+                 <th class='td td-light' style="color:darkred; float:left;width:150px;border-top:0;">#1</th>
                  {% for gv in gloss_variations %}
-                 <th class='th th-light' style="color:darkred">{% trans "Variation" %} #{{gv.variation}}</th>
+                 <th class='th th-light' style="color:darkred">#{{gv.variation}}</th>
                  {% endfor %}
-             </tr>
-             <tr class="empty_row_phonology">
+            </tr>
+            <tr class="empty_row_phonology">
                  <th class='td td-light' style="width:240px;"></th>
                  <th class='td td-light' style="color:darkred">
-                     <button id='quick_save_btn_{{gloss.id}}' class="quick_save edit-mode btn btn-primary"
+                     <button id='quick_save_btn_{{gloss.id}}' class="quick_save edit-mode btn btn-primary glyph-btn"
                         name='quick_save_{{gloss.id}}' data-type="gloss" data-category="phonology"
                         value='{{gloss.id}}'
-                        type="button">{% trans "Save" %}</button>
+                        type="button"><span class="glyphicon glyphicon-check"></span></button>
                  </th>
                  {% for gv in gloss_variations %}
                  <th class='td td-light' style="color:darkred">
-                     <button id='quick_save_btn_{{gv.id}}' class="quick_save edit-mode btn btn-primary"
+                     <button id='quick_save_btn_{{gv.id}}' class="quick_save edit-mode btn btn-primary glyph-btn"
                         name='quick_save_{{gv.id}}' data-type="variant" data-category="phonology"
                         value='{{gv.id}}'
-                        type="button">{% trans "Save" %}</button>
-                     <button id='variant_delete_btn_{{gv.id}}' class="btn btn-primary edit-mode"
+                        type="button"><span class="glyphicon glyphicon-check"></span></button>
+                     <button id='variant_delete_btn_{{gv.id}}' class="btn btn-primary edit-mode glyph-btn"
                         value='{{gv.id}}' data-category="phonology"
                         onclick='location.href="{{PREFIX_URL}}/dictionary/update/delete_phonological_variation/{{gv.pk}}"'
-                        type="button">{% trans "Delete" %}</button>
+                        type="button"><span class='glyphicon glyphicon-trash'></span></button>
                  </th>
                  {% endfor %}
-             </tr>
+            </tr>
+            {% endif %}
             {% with show_field_row|get_item:"handedness" as show_field %}
             {% if not show_field %}
             <tr class="empty_row_phonology">
@@ -3016,10 +3037,11 @@ input .tt-hint {
                  {% with variant_form.fields|get_item:'weakdrop' as weakdrop_field %}
                  {% with variant_form.fields|get_item:'weakprop' as weakprop_field %}
                  <td class='td td-light' style="width:150px;">
-                    <div style="display:table-cell;">
-                    <select name="handedness" id="handedness_{{gv.id}}">
+                    <div style="display:table-cell;" class="editselect">
+                    <select class="select_handedness form-control form-control-light" name="handedness"
+                            id="handedness_{{gv.id}}_value" data-category="phonology" data-initial="{{handedness_field.initial}}" >
                         {% for machine_value, opn in handedness_field.choices %}
-                        {% if opn == handedness_field.initial %}
+                        {% if machine_value == handedness_field.initial|to_str %}
                         <option value={{machine_value}} selected="selected">{{opn}}</option>
                         {% else %}
                         <option value={{machine_value}}>{{opn}}</option>
@@ -3027,8 +3049,9 @@ input .tt-hint {
                         {% endfor %}
                     </select>
                     </div>
-                     <div style="display:table-cell;">
-                        <select name="weakdrop" id="weakdrop_{{gv.id}}">
+                     <div class="editselect" style="display:table-cell;">
+                        <select class="select_weakdrop form-control form-control-light" name="weakdrop"
+                                id="weakdrop_{{gv.id}}_value" data-category="phonology" data-initial="{{weakdrop_field.initial}}">
                             {% for value, opn in weakdrop_field.choices %}
                             {% if value == weakdrop_field.initial %}
                             <option value={{value}} selected="selected">{{opn}}</option>
@@ -3038,8 +3061,9 @@ input .tt-hint {
                             {% endfor %}
                         </select>
                      </div>
-                     <div style="display:table-cell;">
-                        <select name="weakprop" id="weakprop_{{gv.id}}">
+                     <div class="editselect" style="display:table-cell;">
+                        <select class="select_weakprop form-control form-control-light" name="weakprop"
+                                id="weakprop_{{gv.id}}_value" data-category="phonology" data-initial="{{weakprop_field.initial}}">
                             {% for value, opn in weakprop_field.choices %}
                             {% if value == weakprop_field.initial %}
                             <option value={{value}} selected="selected">{{opn}}</option>
@@ -3106,6 +3130,29 @@ input .tt-hint {
                 </td>
                 {% endwith %}
                 {% endwith %}
+
+                 {% for gv in gloss_variations %}
+                 {% with variation_forms|get_item:gv.id as variant_form %}
+                 {% with variant_form.fields|get_item:'domhndsh' as domhndsh_field %}
+                 {% with variant_form.fields|get_item:'domhndsh_letter_or_number' as domhndsh_letter_or_number_field %}
+                 <td class="editform-phonology">
+                    <div style="display:table-cell;" class="editselect">
+                    <select class="select_domhndsh form-control form-control-light" name="domhndsh"
+                                id="domhndsh_{{gv.id}}_value" data-category="phonology" data-initial="{{domhndsh_field.initial}}">
+                        {% for machine_value, opn in domhndsh_field.choices %}
+                        {% if machine_value == domhndsh_field.initial|to_str %}
+                        <option value={{machine_value}} selected="selected">{{opn}}</option>
+                        {% else %}
+                        <option value={{machine_value}}>{{opn}}</option>
+                        {% endif %}
+                        {% endfor %}
+                    </select>
+                    </div>
+                 </td>
+                 {% endwith %}
+                 {% endwith %}
+                 {% endwith %}
+                 {% endfor %}
             </tr>
             {% with show_field_row|get_item:"subhndsh" as show_field %}
             {% if not show_field %}
@@ -3623,17 +3670,17 @@ input .tt-hint {
                            value="{{phonetVar_field.initial}}" size="50"
                            id="phonetVar_text" data-category="phonology" data-initial="{{phonetVar_field.initial}}">
                     </div>
-                    <!-- the following div fixes a vertical spacing problem where the lookahead appears behind the next panel-->
-                    <div class="edit_only_phonology">
-                        <br><br><br><br><br><br><br>
-                    </div>
                 </td>
                 {% endwith %}
             </tr>
             </table>
+            <!-- the following div fixes a vertical spacing problem where the lookahead appears behind the next panel-->
+            <div class="edit_only_phonology" style='height: 15em'>
+            </div>
         </div>
     </div>
 
+    {% if 0 %}
     <!-- Phonological Variations -->
 	<div class="panel panel-default panel-light">
         <div class='panel-heading panel-light' id='phonological_variations_heading'
@@ -3925,6 +3972,7 @@ input .tt-hint {
             {% endif %}
         </div>
     </div>
+    {% endif %}
 
     <div class="panel panel-default panel-light">
             <div class='panel-heading panel-light' data-toggle='collapse'

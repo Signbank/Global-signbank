@@ -78,6 +78,12 @@ def fields_to_fieldcategory_dict(fieldnames=[]):
         elif field in ['hasRelation']:
             choice_categories[field] = 'Relation'
             continue
+        elif field in ['dialect']:
+            choice_categories[field] = 'Dialect'
+            continue
+        elif field in ['signlanguage']:
+            choice_categories[field] = 'SignLanguage'
+            continue
         if field in HANDSHAPE_ETYMOLOGY_FIELDS + HANDEDNESS_ARTICULATION_FIELDS:
             continue
         if field in Gloss.get_field_names():
@@ -99,10 +105,6 @@ def fields_to_fieldcategory_dict(fieldnames=[]):
             continue
         if field in ['domhndsh', 'subhndsh', 'final_domhndsh', 'final_subhndsh']:
             choice_categories[field] = 'Handshape'
-        elif field in ['dialect']:
-            choice_categories[field] = 'Dialect'
-        elif field in ['signlanguage']:
-            choice_categories[field] = 'SignLanguage'
         elif hasattr(field_field, 'field_choice_category'):
             choice_categories[field] = field_field.field_choice_category
     return choice_categories

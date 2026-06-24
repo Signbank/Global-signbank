@@ -47,7 +47,7 @@ from signbank.dictionary.models import (Dataset, Language, Gloss, Morpheme, Lemm
                                         get_default_language_id, CATEGORY_MODELS_MAPPING, PhonologicalVariation)
 from signbank.dictionary.forms import (LemmaCreateForm, GlossCreateForm, MorphemeCreateForm, ImageUploadForHandshapeForm,
                                        ImageUploadForGlossForm, CSVUploadForm,
-                                       PhonologicalVariationUpdateForm, PhonologyUpdateForm)
+                                       PhonologicalVariationUpdateForm, PhonologyForm)
 from signbank.dictionary.update import update_dialect
 from signbank.dictionary.update_csv import (update_simultaneous_morphology, update_blend_morphology,
                                             update_sequential_morphology, subst_relations, subst_foreignrelations,
@@ -469,7 +469,7 @@ def gloss_phonological_variations(request, glossid):
     for variation in context['gloss_variations']:
         variation_forms[variation.pk] = PhonologicalVariationUpdateForm(variantid=variation.pk)
     context['variation_forms'] = variation_forms
-    context['gloss_form'] = PhonologyUpdateForm(glossid=gloss.id)
+    context['gloss_form'] = PhonologyForm(gloss=context['gloss'], use_lookaheads='lists')
 
     (interface_language, interface_language_code,
      default_language, default_language_code) = get_interface_language_and_default_language_codes(request)
