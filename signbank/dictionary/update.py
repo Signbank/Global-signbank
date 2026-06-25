@@ -307,7 +307,8 @@ def add_gloss(request):
     return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': gloss.pk}))
 
 
-@permission_required('dictionary.add_gloss')
+@require_http_methods(["POST"])
+@permission_required('dictionary.change_gloss')
 def add_phonological_variation(request, glossid):
     """Create a new phonological variation for a gloss"""
 
@@ -325,15 +326,13 @@ def add_phonological_variation(request, glossid):
     new_variation.save()
     gloss.lastUpdated = DT.datetime.now(tz=get_current_timezone())
 
-    return HttpResponseRedirect(
-        reverse('dictionary:admin_gloss_view', kwargs={'pk': str(gloss.pk)}))
+    return JsonResponse({'success': True}, status=200)
 
 
+@require_http_methods(["POST"])
+@permission_required('dictionary.change_gloss')
 def delete_phonological_variation(request, variationid):
     """Delete a phonological variation for a gloss"""
-
-    if not request.user.has_perm('dictionary.add_gloss'):
-        raise PermissionDenied
 
     variation = get_object_or_404(PhonologicalVariation, id=variationid)
     gloss = variation.gloss
@@ -345,8 +344,8 @@ def delete_phonological_variation(request, variationid):
         variant.save()
 
     gloss.lastUpdated = DT.datetime.now(tz=get_current_timezone())
-    return HttpResponseRedirect(
-        reverse('dictionary:admin_gloss_view', kwargs={'pk': str(gloss.pk)}))
+
+    return JsonResponse({'success': True}, status=200)
 
 
 def get_gloss_update_human_readable_value_dict(request):

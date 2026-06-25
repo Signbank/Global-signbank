@@ -155,7 +155,7 @@
     padding-right: 6px;
     border-radius: 6px;
 }
-.quick-save {
+.quick-save-row {
     color:red;
     font-size:16px;
     background-color:transparent;
@@ -2936,12 +2936,14 @@ input .tt-hint {
                  {% endif %}
             </div>
 
-            <div class="pull-left edit_only_phonology button-phonology-to-appear-in-edit-mode" style="margin-top:20px;margin-bottom:10px;">
+            <div class="pull-left edit_only_phonology" style="margin-top:20px;margin-bottom:10px;">
                 {% if perms.dictionary.change_gloss %}
-                 <button id='add_variation_btn_{{gloss.id}}' class="btn btn-primary edit-mode"
-                         name='add_variation_{{gloss.id}}' data-type="gloss"
+                 <button id='add_variation_btn_{{gloss.id}}'
+                         class="quick-save btn btn-primary edit-mode button-phonology-to-appear-in-edit-mode"
+                         data-type="gloss"
                          value='{{gloss.id}}' style="width:auto;padding:3px 12px;"
-                         onclick='location.href="{{PREFIX_URL}}/dictionary/update/add_phonological_variation/{{gloss.id}}"'
+                         data-url-template="/dictionary/update/add_phonological_variation/{{gloss.id}}/"
+                         data-fields='[]' data-panel="phonology"
                          type="button">{% trans "Add Phonological Variation" %}</button>
                 {% endif %}
             </div>
@@ -2970,9 +2972,10 @@ input .tt-hint {
                         name='quick_save_{{gv.id}}' data-type="variant" data-category="phonology"
                         value='{{gv.id}}'
                         type="button"><span class="glyphicon glyphicon-check"></span></button>
-                     <button id='variant_delete_btn_{{gv.id}}' class="btn btn-primary edit-mode glyph-btn"
+                     <button id='variant_delete_btn_{{gv.id}}' class="quick-save btn btn-primary edit-mode glyph-btn"
                         value='{{gv.id}}' data-category="phonology"
-                        onclick='location.href="{{PREFIX_URL}}/dictionary/update/delete_phonological_variation/{{gv.pk}}"'
+                        data-url-template="/dictionary/update/delete_phonological_variation/{{gv.pk}}/"
+                        data-fields="[]" data-panel="phonology"
                         type="button"><span class='glyphicon glyphicon-trash'></span></button>
                  </th>
                  {% endfor %}
@@ -4477,7 +4480,7 @@ input .tt-hint {
                     </td>
                     {% endwith %}
                     <td class="edit_only_foreignrelations" style='width:2em;'>
-                        <button class="quick-save"
+                        <button class="quick-save quick-save-row"
                                 data-url-template="/dictionary/update/update_gloss_foreignrelation/{{gloss.id}}/{{rel.id}}/"
                                 data-fields='[
                                     {"key":"foreignrelation-loan_{{rel.id}}","selector":"#foreignrelation_loan_{{rel.id}}_select_value"},
@@ -4752,7 +4755,7 @@ input .tt-hint {
                     </div>
                 </td>
                  <td class="edit_only_notes" style='width:2em;'>
-                     <button class="quick-save"
+                     <button class="quick-save quick-save-row"
                             data-url-template="/dictionary/update/update_gloss_note/{{gloss.id}}/{{def.id}}/"
                             data-fields='[
                                 {"key":"note-definitionpub_{{def.id}}","selector":"#definitionpub_{{def.id}}_select_value"},
@@ -4923,7 +4926,7 @@ input .tt-hint {
                     </div>
                 </td>
                  <td class="edit_only_provenance" style='width:2em;'>
-                        <button class="quick-save"
+                        <button class="quick-save quick-save-row"
                                 data-url-template="/dictionary/update/update_gloss_provenance/{{gloss.id}}/{{prov.id}}/"
                                 data-fields='[
                                     {"key":"fprovenancemethod_{{prov.id}}","selector":"#provenancemethod_{{prov.id}}"},
@@ -5230,7 +5233,7 @@ input .tt-hint {
                      </td>
                      {% endwith %}
                      <td class="edit_only_othermedia" style='width:2em;'>
-                        <button class="quick-save"
+                        <button class="quick-save quick-save-row"
                                 data-url-template="/dictionary/update/update_gloss_othermedia/{{gloss.id}}/{{pk}}/"
                                 data-fields='[
                                     {"key":"other-media-type_{{pk}}","selector":"#othermedia-type_{{pk}}"},

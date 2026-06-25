@@ -627,7 +627,7 @@ $(document).on('click', '.quick-save', function(e) {
     var panel = $btn.attr('data-panel');
     var fields = JSON.parse($btn.attr('data-fields'));
     var update = {};
-    fields.forEach(function(f) {
+    fields.forEach(function (f) {
         update[f.key] = $(f.selector).val();
     });
     quickSaveAjax(url, update, panel);
