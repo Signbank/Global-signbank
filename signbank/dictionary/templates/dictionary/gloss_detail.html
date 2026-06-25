@@ -3373,6 +3373,27 @@ input .tt-hint {
                     {% endif %}
                 </td>
                 {% endwith %}
+
+                 {% for gv in gloss_variations %}
+                 {% with variation_forms|get_item:gv.id as variant_form %}
+                 {% with variant_form.fields|get_item:'relatArtic' as relatArtic_field %}
+                 <td class="editform-phonology">
+                    <div style="display:table-cell;" class="editselect">
+                    <select class="select_relatArtic form-control form-control-light" name="relatArtic"
+                                id="relatArtic_{{gv.id}}_value" data-category="phonology" data-initial="{{relatArtic_field.initial}}">
+                        {% for machine_value, opn in relatArtic_field.choices %}
+                        {% if machine_value == relatArtic_field.initial|to_str %}
+                        <option value={{machine_value}} selected="selected">{{opn}}</option>
+                        {% else %}
+                        <option value={{machine_value}}>{{opn}}</option>
+                        {% endif %}
+                        {% endfor %}
+                    </select>
+                    </div>
+                 </td>
+                 {% endwith %}
+                 {% endwith %}
+                 {% endfor %}
             </tr>
             {% with show_field_row|get_item:"locprim" as show_field %}
             {% if not show_field %}
@@ -3409,6 +3430,26 @@ input .tt-hint {
                     {% endif %}
                 </td>
                 {% endwith %}
+                 {% for gv in gloss_variations %}
+                 {% with variation_forms|get_item:gv.id as variant_form %}
+                 {% with variant_form.fields|get_item:'locprim' as locprim_field %}
+                 <td class="editform-phonology">
+                    <div style="display:table-cell;" class="editselect">
+                    <select class="select_locprim form-control form-control-light" name="locprim"
+                                id="locprim_{{gv.id}}_value" data-category="phonology" data-initial="{{locprim_field.initial}}">
+                        {% for machine_value, opn in locprim_field.choices %}
+                        {% if machine_value == locprim_field.initial|to_str %}
+                        <option value={{machine_value}} selected="selected">{{opn}}</option>
+                        {% else %}
+                        <option value={{machine_value}}>{{opn}}</option>
+                        {% endif %}
+                        {% endfor %}
+                    </select>
+                    </div>
+                 </td>
+                 {% endwith %}
+                 {% endwith %}
+                 {% endfor %}
             </tr>
             {% with show_field_row|get_item:"contType" as show_field %}
             {% if not show_field %}
@@ -3445,6 +3486,26 @@ input .tt-hint {
                     {% endif %}
                 </td>
                 {% endwith %}
+                 {% for gv in gloss_variations %}
+                 {% with variation_forms|get_item:gv.id as variant_form %}
+                 {% with variant_form.fields|get_item:'contType' as contType_field %}
+                 <td class="editform-phonology">
+                    <div style="display:table-cell;" class="editselect">
+                    <select class="select_contType form-control form-control-light" name="contType"
+                                id="contType_{{gv.id}}_value" data-category="phonology" data-initial="{{contType_field.initial}}">
+                        {% for machine_value, opn in contType_field.choices %}
+                        {% if machine_value == contType_field.initial|to_str %}
+                        <option value={{machine_value}} selected="selected">{{opn}}</option>
+                        {% else %}
+                        <option value={{machine_value}}>{{opn}}</option>
+                        {% endif %}
+                        {% endfor %}
+                    </select>
+                    </div>
+                 </td>
+                 {% endwith %}
+                 {% endwith %}
+                 {% endfor %}
             </tr>
             {% with show_field_row|get_item:"movSh" as show_field %}
             {% if not show_field %}
@@ -3481,6 +3542,26 @@ input .tt-hint {
                     {% endif %}
                 </td>
                 {% endwith %}
+                 {% for gv in gloss_variations %}
+                 {% with variation_forms|get_item:gv.id as variant_form %}
+                 {% with variant_form.fields|get_item:'movSh' as movSh_field %}
+                 <td class="editform-phonology">
+                    <div style="display:table-cell;" class="editselect">
+                    <select class="select_movSh form-control form-control-light" name="movSh"
+                                id="movSh_{{gv.id}}_value" data-category="phonology" data-initial="{{movSh_field.initial}}">
+                        {% for machine_value, opn in movSh_field.choices %}
+                        {% if machine_value == movSh_field.initial|to_str %}
+                        <option value={{machine_value}} selected="selected">{{opn}}</option>
+                        {% else %}
+                        <option value={{machine_value}}>{{opn}}</option>
+                        {% endif %}
+                        {% endfor %}
+                    </select>
+                    </div>
+                 </td>
+                 {% endwith %}
+                 {% endwith %}
+                 {% endfor %}
             </tr>
             {% with show_field_row|get_item:"movDir" as show_field %}
             {% if not show_field %}
@@ -3517,6 +3598,26 @@ input .tt-hint {
                     {% endif %}
                 </td>
                 {% endwith %}
+                 {% for gv in gloss_variations %}
+                 {% with variation_forms|get_item:gv.id as variant_form %}
+                 {% with variant_form.fields|get_item:'movDir' as movDir_field %}
+                 <td class="editform-phonology">
+                    <div style="display:table-cell;" class="editselect">
+                    <select class="select_movDir form-control form-control-light" name="movDir"
+                                id="movDir_{{gv.id}}_value" data-category="phonology" data-initial="{{movDir_field.initial}}">
+                        {% for machine_value, opn in movDir_field.choices %}
+                        {% if machine_value == movDir_field.initial|to_str %}
+                        <option value={{machine_value}} selected="selected">{{opn}}</option>
+                        {% else %}
+                        <option value={{machine_value}}>{{opn}}</option>
+                        {% endif %}
+                        {% endfor %}
+                    </select>
+                    </div>
+                 </td>
+                 {% endwith %}
+                 {% endwith %}
+                 {% endfor %}
             </tr>
 
 
@@ -3544,6 +3645,26 @@ input .tt-hint {
                     </div>
                 </td>
                 {% endwith %}
+                 {% for gv in gloss_variations %}
+                 {% with variation_forms|get_item:gv.id as variant_form %}
+                 {% with variant_form.fields|get_item:'repeat' as repeat_field %}
+                 <td class="editform-phonology">
+                     <div class="editselect">
+                     <select class="select_repeat form-control form-control-light" name="repeat"
+                             id="repeat_{{gv.id}}_select_value" data-category="phonology" data-initial="{{repeat_field.initial}}">
+                         {% for value, opn in repeat_field.choices %}
+                         {% if value == repeat_field.initial %}
+                         <option value={{value}} selected="selected">{{opn}}</option>
+                         {% else %}
+                         <option value={{value}}>{{opn}}</option>
+                         {% endif %}
+                         {% endfor %}
+                     </select>
+                     </div>
+                 </td>
+                 {% endwith %}
+                 {% endwith %}
+                 {% endfor %}
             </tr>
 
             {% with show_field_row|get_item:"altern" as show_field %}
@@ -3570,6 +3691,26 @@ input .tt-hint {
                     </div>
                 </td>
                 {% endwith %}
+                 {% for gv in gloss_variations %}
+                 {% with variation_forms|get_item:gv.id as variant_form %}
+                 {% with variant_form.fields|get_item:'altern' as altern_field %}
+                 <td class="editform-phonology">
+                     <div class="editselect">
+                     <select class="select_altern form-control form-control-light" name="altern"
+                             id="altern_{{gv.id}}_select_value" data-category="phonology" data-initial="{{altern_field.initial}}">
+                         {% for value, opn in altern_field.choices %}
+                         {% if value == altern_field.initial %}
+                         <option value={{value}} selected="selected">{{opn}}</option>
+                         {% else %}
+                         <option value={{value}}>{{opn}}</option>
+                         {% endif %}
+                         {% endfor %}
+                     </select>
+                     </div>
+                 </td>
+                 {% endwith %}
+                 {% endwith %}
+                 {% endfor %}
             </tr>
             {% with show_field_row|get_item:"relOriMov" as show_field %}
             {% if not show_field %}
@@ -3606,6 +3747,26 @@ input .tt-hint {
                     {% endif %}
                 </td>
                 {% endwith %}
+                 {% for gv in gloss_variations %}
+                 {% with variation_forms|get_item:gv.id as variant_form %}
+                 {% with variant_form.fields|get_item:'relOriMov' as relOriMov_field %}
+                 <td class="editform-phonology">
+                    <div style="display:table-cell;" class="editselect">
+                    <select class="select_relOriMov form-control form-control-light" name="relOriMov"
+                                id="relOriMov_{{gv.id}}_value" data-category="phonology" data-initial="{{relOriMov_field.initial}}">
+                        {% for machine_value, opn in relOriMov_field.choices %}
+                        {% if machine_value == relOriMov_field.initial|to_str %}
+                        <option value={{machine_value}} selected="selected">{{opn}}</option>
+                        {% else %}
+                        <option value={{machine_value}}>{{opn}}</option>
+                        {% endif %}
+                        {% endfor %}
+                    </select>
+                    </div>
+                 </td>
+                 {% endwith %}
+                 {% endwith %}
+                 {% endfor %}
             </tr>
 
             {% with show_field_row|get_item:"relOriLoc" as show_field %}
@@ -3643,6 +3804,26 @@ input .tt-hint {
                     {% endif %}
                 </td>
                 {% endwith %}
+                 {% for gv in gloss_variations %}
+                 {% with variation_forms|get_item:gv.id as variant_form %}
+                 {% with variant_form.fields|get_item:'relOriLoc' as relOriLoc_field %}
+                 <td class="editform-phonology">
+                    <div style="display:table-cell;" class="editselect">
+                    <select class="select_relOriLoc form-control form-control-light" name="relOriLoc"
+                                id="relOriLoc_{{gv.id}}_value" data-category="phonology" data-initial="{{relOriLoc_field.initial}}">
+                        {% for machine_value, opn in relOriLoc_field.choices %}
+                        {% if machine_value == relOriLoc_field.initial|to_str %}
+                        <option value={{machine_value}} selected="selected">{{opn}}</option>
+                        {% else %}
+                        <option value={{machine_value}}>{{opn}}</option>
+                        {% endif %}
+                        {% endfor %}
+                    </select>
+                    </div>
+                 </td>
+                 {% endwith %}
+                 {% endwith %}
+                 {% endfor %}
             </tr>
             {% with show_field_row|get_item:"oriCh" as show_field %}
             {% if not show_field %}
@@ -3679,6 +3860,26 @@ input .tt-hint {
                     {% endif %}
                 </td>
                 {% endwith %}
+                 {% for gv in gloss_variations %}
+                 {% with variation_forms|get_item:gv.id as variant_form %}
+                 {% with variant_form.fields|get_item:'oriCh' as oriCh_field %}
+                 <td class="editform-phonology">
+                    <div style="display:table-cell;" class="editselect">
+                    <select class="select_oriCh form-control form-control-light" name="oriCh"
+                                id="oriCh_{{gv.id}}_value" data-category="phonology" data-initial="{{oriCh_field.initial}}">
+                        {% for machine_value, opn in oriCh_field.choices %}
+                        {% if machine_value == oriCh_field.initial|to_str %}
+                        <option value={{machine_value}} selected="selected">{{opn}}</option>
+                        {% else %}
+                        <option value={{machine_value}}>{{opn}}</option>
+                        {% endif %}
+                        {% endfor %}
+                    </select>
+                    </div>
+                 </td>
+                 {% endwith %}
+                 {% endwith %}
+                 {% endfor %}
             </tr>
             {% with show_field_row|get_item:"locVirtObj" as show_field %}
             {% if not show_field %}
