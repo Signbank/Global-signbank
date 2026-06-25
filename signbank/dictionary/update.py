@@ -44,7 +44,7 @@ from signbank.dictionary.models import (Dataset, SignLanguage, Dialect, Gloss, M
                                         Relation, RelationToForeignSign, BlendMorphology, MorphologyDefinition,
                                         Language, LemmaIdgloss, AnnotationIdglossTranslation, Definition,
                                         FieldChoice, FieldChoiceForeignKey, OtherMedia,
-                                        SemanticField, SemanticFieldTranslation,
+                                        SemanticField, SemanticFieldTranslation, GLOSS_FIELDS_UPDATES, PHONOLOGY_FIELDS_UPDATES,
                                         DerivationHistory, AnnotatedSentence, AnnotatedSentenceTranslation,
                                         ExampleSentence, ExampleSentenceTranslation,
                                         Affiliation, AffiliatedUser, AffiliatedGloss, SearchHistory,
@@ -403,16 +403,24 @@ def update_gloss_phonology(request, glossid):
 
 
 @require_http_methods(["POST"])
+@permission_required('dictionary.change_gloss')
 def update_phonological_variation(request, variationid):
     """Update a phonological variation for a gloss"""
-
-    if not request.user.has_perm('dictionary.add_gloss'):
-        raise PermissionDenied
 
     variation = get_object_or_404(PhonologicalVariation, id=variationid)
     value_dict = get_gloss_update_human_readable_value_dict(request)
     for field, value in value_dict.items():
-        if field not in FIELDS['phonology']:
+        if field not in PHONOLOGY_FIELDS_UPDATES:
+            continue
+        if field in ['domhndsh_letter_or_number']:
+            letter_or_number = {'0': None, '1': 'letter', '2': 'number'}[value]
+            setattr(variation, 'domhndsh_letter', letter_or_number == 'letter')
+            setattr(variation, 'domhndsh_number', letter_or_number == 'number')
+            continue
+        if field in ['subhndsh_letter_or_number']:
+            letter_or_number = {'0': None, '1': 'letter', '2': 'number'}[value]
+            setattr(variation, 'subhndsh_letter', letter_or_number == 'letter')
+            setattr(variation, 'subhndsh_number', letter_or_number == 'number')
             continue
         internal_field = PhonologicalVariation.get_field(field)
         original_internal_value = getattr(variation, field)
@@ -428,11 +436,11 @@ def update_phonological_variation(request, variationid):
             setattr(variation, field, new_value)
         elif isinstance(internal_field, BooleanField):
             if field in ['weakdrop', 'weakprop']:
-                boolean_value = {'0': None, '1': None, '2': True, '3': False}[value]
+                boolean_value = {'0': None, '1': True, '2': False}[value]
                 variation.__setattr__(field, boolean_value)
                 variation.save()
-            elif field in ['repeat', 'altern', 'domhndsh_letter', 'domhndsh_number', 'subhndsh_letter', 'subhndsh_number']:
-                boolean_value = {'0': None, '1': True}[value]
+            elif field in ['repeat', 'altern']:
+                boolean_value = {'0': False, '1': True}[value]
                 if boolean_value == original_internal_value:
                     continue
                 setattr(variation, field, boolean_value)

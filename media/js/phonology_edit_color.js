@@ -1,9 +1,15 @@
 
 function reset_fields(variationid) {
-    console.log('reset select '+variationid);
     for (var i=0; i < gloss_phonology.length; i++) {
         var field = gloss_phonology[i];
-        var field_lookup = '#'+field+'_'+variationid+'_value';
+        var field_lookup = '#'+field+'_'+variationid;
+        if (['weakdrop', 'weakprop', 'domhndsh_letter_or_number', 'subhndsh_letter_or_number', 'repeat', 'altern'].includes(field)) {
+            field_lookup += '_select_value';
+        } else if (['locVirtObj', 'phonOth', 'mouthG', 'mouthing', 'phonetVar'].includes(field)) {
+            field_lookup += '_text';
+        } else {
+            field_lookup += '_value';
+        }
         var field_input = $(field_lookup);
         if (!field_input) {return;}
         var field_value = $(field_lookup).val();
@@ -53,15 +59,22 @@ function toggle_save(data) {
         e.preventDefault();
 	    var objectid = $(this).attr('value');
 	    var datatype = $(this).attr('data-type');
-	    if (datatype == 'variant') {
-	        var update_url = url + "/dictionary/update/phonological_variation/" + objectid;
+	    if (datatype === 'variant') {
+	        var update_url = url + "/dictionary/update/phonological_variation/" + objectid + "/";
 	    } else {
-	        var update_url = url + "/dictionary/update/update_gloss_phonology/" + objectid;
+	        var update_url = url + "/dictionary/update/update_gloss_phonology/" + objectid + "/";
 	    }
         var update = { 'csrfmiddlewaretoken': csrf_token };
         for (var i=0; i < gloss_phonology.length; i++) {
             var field = gloss_phonology[i];
-            var field_lookup = '#'+field+'_'+objectid+'_value';
+            var field_lookup = '#'+field+'_'+objectid;
+            if (['weakdrop', 'weakprop', 'domhndsh_letter_or_number', 'subhndsh_letter_or_number', 'repeat', 'altern'].includes(field)) {
+                field_lookup += '_select_value';
+            } else if (['locVirtObj', 'phonOth', 'mouthG', 'mouthing', 'phonetVar'].includes(field)) {
+                field_lookup += '_text';
+            } else {
+                field_lookup += '_value';
+            }
             var field_key = $(field_lookup).attr("name");
             update[field_key] = $(field_lookup).val();
          }
