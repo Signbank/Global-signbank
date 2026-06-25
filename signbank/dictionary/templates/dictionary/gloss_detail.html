@@ -20,7 +20,10 @@
     var dark_mode_django = '{{dark_mode}}';
     var url = '{{PREFIX_URL}}';
     var gloss_fields = {{gloss_update_fields|safe}};
+    var gloss_phonology = {{gloss_phonology|safe}};
     var language_code = '{{LANGUAGE_CODE}}';
+
+    var phonology_saved_str = "{% trans "Phonology saved" %}";
 
     {% trans "Edit" as edit_mode_str %}
     {% trans "Turn Off Edit Mode" as turn_off_edit_mode_str %}
@@ -88,7 +91,8 @@
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/typeahead.js/0.11.1/bloodhound.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/typeahead.js/0.11.1/typeahead.bundle.js"></script>
-<script type='text/javascript' src="{{STATIC_URL}}js/lookaheads.js"></script>
+<script type='text/javascript' src="{{STATIC_URL}}js/phonology_edit_color.js"></script>
+<script type='text/javascript' src="{{STATIC_URL}}js/gloss_detail_edit.js"></script>
 
 <script type='text/javascript'>
     {% include "dictionary/search_result_bar.html" %}
@@ -848,6 +852,13 @@ input .tt-hint {
 }
 .highlight {
     background-color: rgb(255, 149, 63);
+}
+.item {
+        display: inline-block;
+        padding: 8px 12px;
+        margin: 5px;
+        position: relative;
+        color: red;
 }
 </style>
 {% endblock %}
@@ -2955,7 +2966,7 @@ input .tt-hint {
                  </th>
                  {% for gv in gloss_variations %}
                  <th class='td td-light' style="color:darkred">
-                     <button id='quick_save_btn_{{gv.id}}' class="quick_save edit-mode btn btn-primary glyph-btn"
+                     <button id='quick_save_btn_{{gv.id}}' class="quick_save_phonology edit-mode btn btn-primary glyph-btn"
                         name='quick_save_{{gv.id}}' data-type="variant" data-category="phonology"
                         value='{{gv.id}}'
                         type="button"><span class="glyphicon glyphicon-check"></span></button>
@@ -2966,6 +2977,19 @@ input .tt-hint {
                  </th>
                  {% endfor %}
             </tr>
+             <tr>
+                 <td></td>
+                 <td>
+                    <div id="feedback" class="feedback">
+                    </div>
+                 </td>
+                 {% for gv in gloss_variations %}
+                 <td>
+                    <div id="feedback_{{gv.id}}" class="feedback">
+                    </div>
+                 </td>
+                 {% endfor %}
+             </tr>
             {% endif %}
             {% with show_field_row|get_item:"handedness" as show_field %}
             {% if not show_field %}
@@ -3148,6 +3172,19 @@ input .tt-hint {
                         {% endfor %}
                     </select>
                     </div>
+                    <div class="editselect" style="display:table-cell;">
+                    <select class="select_domhndsh_letter_or_number form-control form-control-light" name="domhndsh_letter_or_number"
+                            id="domhndsh_letter_or_number_{{gv.id}}_select_value" data-category="phonology"
+                            data-initial="{{domhndsh_letter_or_number_field.initial}}">
+                        {% for value, opn in domhndsh_letter_or_number_field.choices %}
+                        {% if value == domhndsh_letter_or_number_field.initial %}
+                        <option value={{value}} selected="selected">{{opn}}</option>
+                        {% else %}
+                        <option value={{value}}>{{opn}}</option>
+                        {% endif %}
+                        {% endfor %}
+                    </select>
+                    </div>
                  </td>
                  {% endwith %}
                  {% endwith %}
@@ -3167,7 +3204,8 @@ input .tt-hint {
                 <td class="editform-phonology">
                     {% if use_lookaheads == 'lookaheads' %}
                     <div style="display:table-cell;" id="subhndsh_cell" >
-                    <input class='form-control form-control-light subhndshtypeahead' type="text" size="40" placeholder="{{subhndsh_field.initial}}"
+                    <input class='form-control form-control-light subhndshtypeahead' type="text" size="40"
+                           placeholder="{{subhndsh_field.initial}}"
                            id="subhndsh_lookahead" value="{{subhndsh_field.initial}}" data-initial="{{subhndsh_field.initial}}"
                            data-machine_value='{{subhndsh_field.machine_value}}' data-field="subhndsh"
                            data-category="phonology" autocomplete="off" >
@@ -3204,6 +3242,42 @@ input .tt-hint {
                 </td>
                 {% endwith %}
                 {% endwith %}
+
+                 {% for gv in gloss_variations %}
+                 {% with variation_forms|get_item:gv.id as variant_form %}
+                 {% with variant_form.fields|get_item:'subhndsh' as subhndsh_field %}
+                 {% with variant_form.fields|get_item:'subhndsh_letter_or_number' as subhndsh_letter_or_number_field %}
+                 <td class="editform-phonology">
+                    <div style="display:table-cell;" class="editselect">
+                    <select class="select_subhndsh form-control form-control-light" name="subhndsh"
+                                id="subhndsh_{{gv.id}}_value" data-category="phonology" data-initial="{{subhndsh_field.initial}}">
+                        {% for machine_value, opn in subhndsh_field.choices %}
+                        {% if machine_value == subhndsh_field.initial|to_str %}
+                        <option value={{machine_value}} selected="selected">{{opn}}</option>
+                        {% else %}
+                        <option value={{machine_value}}>{{opn}}</option>
+                        {% endif %}
+                        {% endfor %}
+                    </select>
+                    </div>
+                    <div class="editselect" style="display:table-cell;">
+                    <select class="select_subhndsh_letter_or_number form-control form-control-light" name="subhndsh_letter_or_number"
+                            id="subhndsh_letter_or_number_{{gv.id}}_select_value" data-category="phonology"
+                            data-initial="{{subhndsh_letter_or_number_field.initial}}">
+                        {% for value, opn in subhndsh_letter_or_number_field.choices %}
+                        {% if value == subhndsh_letter_or_number_field.initial %}
+                        <option value={{value}} selected="selected">{{opn}}</option>
+                        {% else %}
+                        <option value={{value}}>{{opn}}</option>
+                        {% endif %}
+                        {% endfor %}
+                    </select>
+                    </div>
+                 </td>
+                 {% endwith %}
+                 {% endwith %}
+                 {% endwith %}
+                 {% endfor %}
             </tr>
             {% with show_field_row|get_item:"handCh" as show_field %}
             {% if not show_field %}
@@ -3216,7 +3290,7 @@ input .tt-hint {
                 {% with phonologyform.fields|get_item:'handCh' as handCh_field %}
                 <td class="editform-phonology" style="width:auto;">
                     {% if use_lookaheads == 'lookaheads' %}
-                    <div>
+                    <div id="handCh_cell">
                     <input class='form-control form-control-light handChtypeahead' type="text" size="40"
                            placeholder="{{handCh_field.initial}}" id="handCh_lookahead" value="{{handCh_field.initial}}"
                            data-machine_value='{{handCh_field.machine_value}}' data-field="handCh"
@@ -3240,6 +3314,26 @@ input .tt-hint {
                     {% endif %}
                 </td>
                 {% endwith %}
+                 {% for gv in gloss_variations %}
+                 {% with variation_forms|get_item:gv.id as variant_form %}
+                 {% with variant_form.fields|get_item:'handCh' as handCh_field %}
+                 <td class="editform-phonology">
+                    <div style="display:table-cell;" class="editselect">
+                    <select class="select_handCh form-control form-control-light" name="handCh"
+                                id="handCh_{{gv.id}}_value" data-category="phonology" data-initial="{{handCh_field.initial}}">
+                        {% for machine_value, opn in handCh_field.choices %}
+                        {% if machine_value == handCh_field.initial|to_str %}
+                        <option value={{machine_value}} selected="selected">{{opn}}</option>
+                        {% else %}
+                        <option value={{machine_value}}>{{opn}}</option>
+                        {% endif %}
+                        {% endfor %}
+                    </select>
+                    </div>
+                 </td>
+                 {% endwith %}
+                 {% endwith %}
+                 {% endfor %}
             </tr>
             {% with show_field_row|get_item:"relatArtic" as show_field %}
             {% if not show_field %}
@@ -3252,7 +3346,7 @@ input .tt-hint {
                 {% with phonologyform.fields|get_item:'relatArtic' as relatArtic_field %}
                 <td class="editform-phonology">
                     {% if use_lookaheads == 'lookaheads' %}
-                    <div>
+                    <div id="relatArtic_cell">
                     <input class='form-control form-control-light relatArtictypeahead' type="text" size="40"
                            placeholder="{{relatArtic_field.initial}}" id="relatArtic_lookahead" value="{{relatArtic_field.initial}}"
                            data-machine_value='{{relatArtic_field.machine_value}}' data-field="relatArtic"
@@ -3288,7 +3382,7 @@ input .tt-hint {
                 {% with phonologyform.fields|get_item:'locprim' as locprim_field %}
                 <td class="editform-phonology">
                     {% if use_lookaheads == 'lookaheads' %}
-                    <div>
+                    <div id="locprim_cell">
                     <input class='form-control form-control-light locprimtypeahead' type="text" size="40"
                            placeholder="{{locprim_field.initial}}" id="locprim_lookahead" value="{{locprim_field.initial}}"
                            data-machine_value='{{locprim_field.machine_value}}' data-field="locprim"
@@ -3324,7 +3418,7 @@ input .tt-hint {
                 {% with phonologyform.fields|get_item:'contType' as contType_field %}
                 <td class="editform-phonology">
                     {% if use_lookaheads == 'lookaheads' %}
-                    <div>
+                    <div id="contType_cell">
                     <input class='form-control form-control-light contTypetypeahead' type="text" size="40"
                            placeholder="{{contType_field.initial}}" id="contType_lookahead" value="{{contType_field.initial}}"
                            data-machine_value='{{contType_field.machine_value}}' data-field="contType"
@@ -3360,7 +3454,7 @@ input .tt-hint {
                 {% with phonologyform.fields|get_item:'movSh' as movSh_field %}
                 <td class="editform-phonology">
                     {% if use_lookaheads == 'lookaheads' %}
-                    <div>
+                    <div id="movSh_cell">
                     <input class='form-control form-control-light movShtypeahead' type="text" size="40"
                            placeholder="{{movSh_field.initial}}" id="movSh_lookahead" value="{{movSh_field.initial}}"
                            data-machine_value='{{movSh_field.machine_value}}' data-field="movSh"
@@ -3396,7 +3490,7 @@ input .tt-hint {
                 {% with phonologyform.fields|get_item:'movDir' as movDir_field %}
                 <td class="editform-phonology">
                     {% if use_lookaheads == 'lookaheads' %}
-                    <div>
+                    <div id="movDir_cell">
                     <input class='form-control form-control-light movDirtypeahead' type="text" size="40"
                            placeholder="{{movDir_field.initial}}" id="movDir_lookahead" value="{{movDir_field.initial}}"
                            data-machine_value='{{movDir_field.machine_value}}' data-field="movDir"
@@ -3485,7 +3579,7 @@ input .tt-hint {
                 {% with phonologyform.fields|get_item:'relOriMov' as relOriMov_field %}
                 <td class="editform-phonology">
                     {% if use_lookaheads == 'lookaheads' %}
-                    <div>
+                    <div id="relOriMov_cell">
                     <input class='form-control form-control-light relOriMovtypeahead' type="text" size="40"
                            placeholder="{{relOriMov_field.initial}}" id="relOriMov_lookahead" value="{{relOriMov_field.initial}}"
                            data-machine_value='{{relOriMov_field.machine_value}}' data-field="relOriMov"
@@ -3522,7 +3616,7 @@ input .tt-hint {
                 {% with phonologyform.fields|get_item:'relOriLoc' as relOriLoc_field %}
                 <td class="editform-phonology">
                     {% if use_lookaheads == 'lookaheads' %}
-                    <div>
+                    <div id="relOriLoc_cell">
                     <input class='form-control form-control-light relOriLoctypeahead' type="text" size="40"
                            placeholder="{{relOriLoc_field.initial}}" id="relOriLoc_lookahead" value="{{relOriLoc_field.initial}}"
                            data-machine_value='{{relOriLoc_field.machine_value}}' data-field="relOriLoc"
@@ -3558,7 +3652,7 @@ input .tt-hint {
                 {% with phonologyform.fields|get_item:'oriCh' as oriCh_field %}
                 <td class="editform-phonology">
                     {% if use_lookaheads == 'lookaheads' %}
-                    <div>
+                    <div id="oriCh_cell">
                     <input class='form-control form-control-light oriChtypeahead' type="text" size="40"
                            placeholder="{{oriCh_field.initial}}" id="oriCh_lookahead" value="{{oriCh_field.initial}}"
                            data-machine_value='{{oriCh_field.machine_value}}' data-field="oriCh"
@@ -4075,7 +4169,7 @@ input .tt-hint {
                 {% with semanticsform.fields|get_item:'namEnt' as namEnt_field %}
                 <td class="editform-semantics">
                     {% if use_lookaheads == 'lookaheads' %}
-                    <div>
+                    <div id="namEnt_cell">
                     <input class='form-control form-control-light namEnttypeahead' type="text" size="40"
                            placeholder="{{namEnt_field.initial}}" id="namEnt_lookahead" value="{{namEnt_field.initial}}"
                            data-machine_value='{{namEnt_field.machine_value}}' data-field="namEnt"
@@ -4111,7 +4205,7 @@ input .tt-hint {
                 {% with semanticsform.fields|get_item:'valence' as valence_field %}
                 <td class="editform-semantics">
                     {% if use_lookaheads == 'lookaheads' %}
-                    <div>
+                    <div id="valence_cell">
                     <input class='form-control form-control-light valencetypeahead' type="text" size="40"
                            placeholder="{{valence_field.initial}}" id="valence_lookahead" value="{{valence_field.initial}}"
                            data-machine_value='{{valence_field.machine_value}}' data-field="valence"

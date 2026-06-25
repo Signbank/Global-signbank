@@ -216,7 +216,6 @@ class PhonologicalVariationUpdateForm(forms.ModelForm):
 
         self.variant = PhonologicalVariation.objects.get(pk=self.variantid)
 
-        print('variant ', self.variantid, ': ', self.variant.__dict__)
         self.fields['handedness'] = forms.ChoiceField(label=_('Handedness'),
                                                       choices = choicelist_queryset_to_translated_dict(
                                                           list(FieldChoice.objects.filter(field='Handedness').order_by(
@@ -260,7 +259,7 @@ class PhonologicalVariationUpdateForm(forms.ModelForm):
                                                    ),
                                                     widget=forms.Select(attrs=ATTRS_FOR_FORMS),
                                                     required=False)
-        self.fields['handCh'].initial = self.variant.display_handCh
+        self.fields['handCh'].initial = self.variant.handCh.machine_value if self.variant.handCh else 0
         self.fields['relatArtic'] = forms.ChoiceField(label=_('Relation between Articulators'),
                                                    choices=choicelist_queryset_to_translated_dict(
                                                        list(FieldChoice.objects.filter(field='RelatArtic').order_by(
@@ -269,7 +268,7 @@ class PhonologicalVariationUpdateForm(forms.ModelForm):
                                                    ),
                                                     widget=forms.Select(attrs=ATTRS_FOR_FORMS),
                                                     required=False)
-        self.fields['relatArtic'].initial = self.variant.display_relatArtic
+        self.fields['relatArtic'].initial = self.variant.relatArtic.machine_value if self.variant.relatArtic else 0
         self.fields['locprim'] = forms.ChoiceField(label=_('Location'),
                                                    choices=choicelist_queryset_to_translated_dict(
                                                        list(FieldChoice.objects.filter(field='Location').order_by(
@@ -278,7 +277,7 @@ class PhonologicalVariationUpdateForm(forms.ModelForm):
                                                    ),
                                                    widget=forms.Select(attrs=ATTRS_FOR_FORMS),
                                                    required=False)
-        self.fields['locprim'].initial = self.variant.display_locprim
+        self.fields['locprim'].initial = self.variant.locprim.machine_value if self.variant.locprim else 0
         self.fields['contType'] = forms.ChoiceField(label=_('Contact Type'),
                                                    choices=choicelist_queryset_to_translated_dict(
                                                        list(FieldChoice.objects.filter(field='ContactType').order_by(
@@ -287,7 +286,7 @@ class PhonologicalVariationUpdateForm(forms.ModelForm):
                                                    ),
                                                    widget=forms.Select(attrs=ATTRS_FOR_FORMS),
                                                    required=False)
-        self.fields['contType'].initial = self.variant.display_contType
+        self.fields['contType'].initial = self.variant.contType.machine_value if self.variant.contType else 0
         self.fields['movSh'] = forms.ChoiceField(label=_('Movement Shape'),
                                                    choices=choicelist_queryset_to_translated_dict(
                                                        list(FieldChoice.objects.filter(field='MovementShape').order_by(
@@ -296,7 +295,7 @@ class PhonologicalVariationUpdateForm(forms.ModelForm):
                                                    ),
                                                    widget=forms.Select(attrs=ATTRS_FOR_FORMS),
                                                    required=False)
-        self.fields['movSh'].initial = self.variant.display_movSh
+        self.fields['movSh'].initial = self.variant.movSh.machine_value if self.variant.movSh else 0
         self.fields['movDir'] = forms.ChoiceField(label=_('Movement Direction'),
                                                    choices=choicelist_queryset_to_translated_dict(
                                                        list(FieldChoice.objects.filter(field='MovementDir').order_by(
@@ -305,11 +304,11 @@ class PhonologicalVariationUpdateForm(forms.ModelForm):
                                                    ),
                                                    widget=forms.Select(attrs=ATTRS_FOR_FORMS),
                                                    required=False)
-        self.fields['movDir'].initial = self.variant.display_movDir
+        self.fields['movDir'].initial = self.variant.movDir.machine_value if self.variant.movDir else 0
         for boolean_field in ['repeat', 'altern']:
-            self.fields[boolean_field].choices = [(0, '-'), (1, _('Yes'))]
-        self.fields['repeat'].initial = self.variant.display_repeat
-        self.fields['altern'].initial = self.variant.display_altern
+            self.fields[boolean_field].choices = [('0', ''), ('1', _('Yes'))]
+        self.fields['repeat'].initial = self.variant.repeat_to_choice()
+        self.fields['altern'].initial = self.variant.altern_to_choice()
         self.fields['relOriMov'] = forms.ChoiceField(label=_('Relative Orientation: Movement'),
                                                    choices=choicelist_queryset_to_translated_dict(
                                                        list(FieldChoice.objects.filter(field='RelOriMov').order_by(
@@ -318,7 +317,7 @@ class PhonologicalVariationUpdateForm(forms.ModelForm):
                                                    ),
                                                    widget=forms.Select(attrs=ATTRS_FOR_FORMS),
                                                    required=False)
-        self.fields['relOriMov'].initial = self.variant.display_relOriMov
+        self.fields['relOriMov'].initial = self.variant.relOriMov.machine_value if self.variant.relOriMov else 0
         self.fields['relOriLoc'] = forms.ChoiceField(label=_('Relative Orientation: Location'),
                                                    choices=choicelist_queryset_to_translated_dict(
                                                        list(FieldChoice.objects.filter(field='RelOriLoc').order_by(
@@ -327,7 +326,7 @@ class PhonologicalVariationUpdateForm(forms.ModelForm):
                                                    ),
                                                    widget=forms.Select(attrs=ATTRS_FOR_FORMS),
                                                    required=False)
-        self.fields['relOriLoc'].initial = self.variant.display_relOriLoc
+        self.fields['relOriLoc'].initial = self.variant.relOriLoc.machine_value if self.variant.relOriLoc else 0
         self.fields['oriCh'] = forms.ChoiceField(label=_('Orientation Change'),
                                                    choices=choicelist_queryset_to_translated_dict(
                                                        list(FieldChoice.objects.filter(field='OriChange').order_by(
@@ -336,12 +335,12 @@ class PhonologicalVariationUpdateForm(forms.ModelForm):
                                                    ),
                                                    widget=forms.Select(attrs=ATTRS_FOR_FORMS),
                                                    required=False)
-        self.fields['oriCh'].initial = self.variant.display_oriCh
-        self.fields['locVirtObj'].initial = self.variant.locVirtObj if self.variant.locVirtObj else ''
-        self.fields['phonOth'].initial = self.variant.phonOth if self.variant.phonOth else ''
-        self.fields['mouthG'].initial = self.variant.mouthG
-        self.fields['mouthing'].initial = self.variant.mouthing
-        self.fields['phonetVar'].initial = self.variant.phonetVar
+        self.fields['oriCh'].initial = self.variant.oriCh.machine_value if self.variant.oriCh else 0
+        self.fields['locVirtObj'].initial = self.variant.locVirtObj if self.variant.locVirtObj not in ['', '-', None] else ''
+        self.fields['phonOth'].initial = self.variant.phonOth if self.variant.phonOth not in ['', '-', None] else ''
+        self.fields['mouthG'].initial = self.variant.mouthG if self.variant.mouthG not in ['', '-', None] else ''
+        self.fields['mouthing'].initial = self.variant.mouthing if self.variant.mouthing not in ['', '-', None] else ''
+        self.fields['phonetVar'].initial = self.variant.phonetVar if self.variant.phonetVar not in ['', '-', None] else ''
 
 
 class TagUpdateForm(forms.Form):

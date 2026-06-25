@@ -4261,6 +4261,13 @@ GLOSS_FIELDS_UPDATES = ['release_information', 'dialect', 'useInstr', 'wordClass
                         'domhndsh_letter_or_number', 'subhndsh_letter_or_number',
                         'semField', 'derivHist', 'namEnt', 'valence', 'iconImg', 'concConcSet',
                         'inWeb', 'isNew', 'excludeFromEcv']
+PHONOLOGY_FIELDS_UPDATES = ['handedness', 'domhndsh', 'subhndsh', 'handCh',
+                            'relatArtic', 'locprim', 'contType', 'movSh', 'movDir',
+                            'repeat', 'altern',
+                            'relOriMov', 'relOriLoc', 'oriCh',
+                            'locVirtObj', 'phonOth', 'mouthG', 'mouthing', 'phonetVar',
+                            'weakdrop', 'weakprop',
+                            'domhndsh_letter_or_number', 'subhndsh_letter_or_number']
 
 
 class AnnotatedGloss(MetaModelMixin, models.Model):

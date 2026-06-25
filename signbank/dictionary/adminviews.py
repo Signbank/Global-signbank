@@ -61,7 +61,7 @@ from signbank.video.models import (GlossVideo, find_dangling_video_files, delete
                                    weedout_duplicate_backup_videos, flipped_backup_filename)
 from signbank.communication.models import generate_communication
 from signbank.dictionary.models import (Dataset, UserProfile, AffiliatedUser, AffiliatedGloss,
-                                        Language, Dialect, Gloss, Morpheme, GlossSense, Sense, GLOSS_FIELDS_UPDATES,
+                                        Language, Dialect, Gloss, Morpheme, GlossSense, Sense, GLOSS_FIELDS_UPDATES, PHONOLOGY_FIELDS_UPDATES,
                                         Corpus, Speaker, Document, GlossFrequency,
                                         LemmaIdgloss, LemmaIdglossTranslation, AnnotationIdglossTranslation, Translation,
                                         AnnotatedGloss, AnnotatedSentence, AnnotatedSentenceTranslation, Handshape,
@@ -1475,6 +1475,7 @@ class GlossDetailView(DetailView):
 
         # these Gloss model fields are used by the javascript code to process push data for edits
         context['gloss_update_fields'] =  GLOSS_FIELDS_UPDATES
+        context['gloss_phonology'] = PHONOLOGY_FIELDS_UPDATES
         context['gloss_variations'] = PhonologicalVariation.objects.filter(gloss=gloss).order_by('variation')
 
         variation_forms = dict()

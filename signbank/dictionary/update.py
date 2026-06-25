@@ -412,6 +412,7 @@ def update_phonological_variation(request, variationid):
 
     variation = get_object_or_404(PhonologicalVariation, id=variationid)
     value_dict = get_gloss_update_human_readable_value_dict(request)
+    print('update variation: ', value_dict)
     for field, value in value_dict.items():
         if field not in FIELDS['phonology']:
             continue

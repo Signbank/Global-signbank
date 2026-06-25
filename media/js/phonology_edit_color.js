@@ -1,4 +1,15 @@
 
+function reset_fields(variationid) {
+    console.log('reset select '+variationid);
+    for (var i=0; i < gloss_phonology.length; i++) {
+        var field = gloss_phonology[i];
+        var field_lookup = '#'+field+'_'+variationid+'_value';
+        var field_input = $(field_lookup);
+        if (!field_input) {return;}
+        var field_value = $(field_lookup).val();
+        $(field_lookup).attr("data-initial", field_value);
+     }
+}
 
 function toggle_save(data) {
     if ($.isEmptyObject(data)) {
@@ -9,6 +20,7 @@ function toggle_save(data) {
         return;
     }
     var variationid = data.variationid;
+    reset_fields(variationid);
     var feedbackElt ='#feedback_'+variationid;
     $(feedbackElt).empty();
     var feedback = "<span class='item'>"+phonology_saved_str+"&nbsp; &nbsp;  <span class='delete-btn' data-value='"+variationid+"'>&times;</span></span>";
@@ -36,7 +48,7 @@ function toggle_save(data) {
         $(this).parent(".item").remove();
     });
 
-     $('.quick_save').click(function(e)
+     $('.quick_save_phonology').click(function(e)
 	 {
         e.preventDefault();
 	    var objectid = $(this).attr('value');
@@ -49,11 +61,12 @@ function toggle_save(data) {
         var update = { 'csrfmiddlewaretoken': csrf_token };
         for (var i=0; i < gloss_phonology.length; i++) {
             var field = gloss_phonology[i];
-            var field_lookup = '#'+field+'_'+objectid;
+            var field_lookup = '#'+field+'_'+objectid+'_value';
             var field_key = $(field_lookup).attr("name");
             var field_value = $(field_lookup).val();
             update[field_key] = field_value;
          }
+         alert('update: '+JSON.stringify(update));
          $.ajax({
             url : update_url,
             type: 'POST',
