@@ -63,10 +63,8 @@ function toggle_save(data) {
             var field = gloss_phonology[i];
             var field_lookup = '#'+field+'_'+objectid+'_value';
             var field_key = $(field_lookup).attr("name");
-            var field_value = $(field_lookup).val();
-            update[field_key] = field_value;
+            update[field_key] = $(field_lookup).val();
          }
-         alert('update: '+JSON.stringify(update));
          $.ajax({
             url : update_url,
             type: 'POST',
