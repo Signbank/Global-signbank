@@ -1108,7 +1108,8 @@ class FieldChoiceAdmin(VersionAdmin, TranslationAdmin):
                 if new_name_value != original_value:
                     setattr(obj, name_field, new_name_value)
             try:
-                obj.save()
+                updated = list(form.data.keys())
+                obj.save(update_fields=updated)
             except Exception as e:
                 print('Constraint violated, FieldChoice not saved: ', obj.field, obj.machine_value, obj.id, e)
 

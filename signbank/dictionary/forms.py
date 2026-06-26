@@ -1540,11 +1540,9 @@ class FieldChoiceForm(forms.ModelForm):
         for language_code in MODELTRANSLATION_LANGUAGES:
             name_languagecode = 'name_' + language_code.replace('-', '_')
             name_languagecode_value = data_fields[name_languagecode]
-            language_code_2char = "zh" if language_code == "zh-hans" else language_code
-            language = Language.objects.filter(language_code_2char=language_code_2char)
             if self.already_exists(field, name_languagecode, name_languagecode_value):
                 raise forms.ValidationError(_('The combination ' + field + ' -- ' + name_languagecode_value
-                                              + ' already exists for ' + language.name))
+                                              + ' already exists'))
 
         if field != 'RelationRole':
             # the fields regarding the reverse relation are ignored
@@ -1565,8 +1563,6 @@ class FieldChoiceForm(forms.ModelForm):
 
         for language_code in MODELTRANSLATION_LANGUAGES:
             name_languagecode = 'reverse_name_' + language_code.replace('-', '_')
-            language_code_2char = "zh" if language_code == "zh-hans" else language_code
-            language = Language.objects.filter(language_code_2char=language_code_2char)
             if name_languagecode not in data_fields.keys() or not data_fields[name_languagecode]:
                 raise forms.ValidationError(_('The Reverse Relation Name fields for all languages are required'))
 
@@ -1575,7 +1571,7 @@ class FieldChoiceForm(forms.ModelForm):
 
             if self.already_exists(field, other_name_languagecode, name_languagecode_value):
                 raise forms.ValidationError(_('The combination ' + field + ' -- ' + name_languagecode_value
-                                              + ' already exists for ' + language.name))
+                                              + ' already exists'))
 
 
 class SemanticFieldColorForm(forms.Form):

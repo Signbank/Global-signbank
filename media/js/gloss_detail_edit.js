@@ -30,7 +30,7 @@ const typeaheadConfigs = [
 // Factory function to create bloodhounds
 function createTypeahead(config) {
     const bloodhound = new Bloodhound({
-        datumTokenizer: Bloodhound.tokenizers.obj.whitespace('value'),
+        datumTokenizer: Bloodhound.tokenizers.obj.whitespace(['name']),
         queryTokenizer: Bloodhound.tokenizers.whitespace,
         remote: {
             url: `${url}/dictionary/ajax/${config.endpoint}/%QUERY`,
@@ -46,6 +46,7 @@ function createTypeahead(config) {
         }
     });
 
+    bloodhound.clearPrefetchCache();
     bloodhound.initialize();
 
     return function(target) {
@@ -54,12 +55,14 @@ function createTypeahead(config) {
             hint: false
             }, {
             name: config.name,
-            limit: 50,
+            limit: 100,
             displayKey: 'name',
             source: bloodhound.ttAdapter(),
             autoSelect: false,
             templates: {
                 suggestion: function(fc) {
+                    console.log('name: '+fc.machine_value+' '+fc.name);
+                    console.log('pattern: '+`${fc.name}`);
                     return `<p><strong>${fc.name}</strong></p>`;
                 }
             }
