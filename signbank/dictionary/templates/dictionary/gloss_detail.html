@@ -79,6 +79,7 @@
     var model_view = 'gloss';
     var search_results_url = '{% url 'dictionary:ajax_search_results' %}';
 
+    var phonological_variations_ids = {{phonological_variations_ids|safe}};
     var initial_semFields = {{selected_semFields|safe}};
     var selected_semFields = {{selected_semFields|safe}};
     var initial_derivHists = {{selected_derivHists|safe}};
@@ -647,10 +648,21 @@ input .tt-hint {
 .editform-phonology input {
     background-color: inherit !important;
 }
+.editform-phonology textarea {
+    background-color: inherit !important;
+    resize: vertical;
+    width: 220px;
+}
 .editform-phonology input:enabled {
     color: red !important;
     opacity: 1;
     outline: thin solid grey;
+}
+.editform-phonology textarea:enabled {
+    color: red !important;
+    opacity: 1;
+    outline: thin solid grey;
+    resize: vertical;
 }
 .editform-phonology input:disabled {
     color: inherit !important;
@@ -661,9 +673,15 @@ input .tt-hint {
     opacity: 1;
     outline: none;
 }
-.editform-phonology input::placeholder {
+.editform-phonology textarea:disabled {
     color: inherit !important;
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    border: none;
     opacity: 1;
+    outline: none;
+    resize: vertical;
 }
 .editform-nme input {
     background-color: inherit !important;
@@ -690,7 +708,6 @@ input .tt-hint {
     opacity: 1;
 }
 .editform-foreignrelations input:disabled, textarea:disabled {
-    resize: none;
     resize: vertical;
     overflow: auto;
     color: inherit !important;
@@ -728,7 +745,6 @@ input .tt-hint {
     opacity: 1;
 }
 .editform-provenance input:disabled, textarea:disabled {
-    resize: none;
     resize: vertical;
     color: inherit !important;
     appearance: none;
@@ -746,7 +762,6 @@ input .tt-hint {
     opacity: 1;
 }
 .editform-othermedia input:disabled, textarea:disabled {
-    resize: none;
     resize: vertical;
     overflow: auto;
     color: inherit !important;
@@ -1567,7 +1582,7 @@ input .tt-hint {
                 <button type="button" class="btn btn-danger edit-cancel button-general-to-appear-in-edit-mode"
                         style="width:auto;padding:3px 12px;" id="button-edit-cancel-general" data-category="general" >
                         {% trans "Cancel" %}</button>
-                <button type="button" class="btn btn-danger quick_save button-general-to-appear-in-edit-mode"
+                <button type="button" class="btn btn-danger quick_save_general button-general-to-appear-in-edit-mode"
                         style="width:auto;padding:3px 12px;" value="{{gloss.id}}" id="button-edit-save-general" data-category="general" >
                         {% trans "Save General Description" %}</button>
                  <button id='enable_edit_general' type="button"
@@ -1696,7 +1711,7 @@ input .tt-hint {
             <tr>
             {% endif %}
             {% endwith %}
-                <th style="width:240px;">{% trans "Dialect" %}</th>
+                <th style="width:300px;">{% trans "Dialect" %}</th>
                 {% with glossform.fields|get_item:'dialect' as dialect_field %}
                 <td style="width:auto;" id="multiselect_value_dialect" data-name="dialect">
 
@@ -1714,7 +1729,7 @@ input .tt-hint {
             </tr>
 
             <tr>
-                <th>{% trans "Lemma ID Gloss" %}</th>
+                <th style="width:300px;">{% trans "Lemma ID Gloss" %}</th>
                 <td colspan="2"><span id="lemma">{{gloss.lemma}}
                         {% if lemma_group %}
                             <a href='{{lemma_group_url}}' title='{% trans "Show Lemma Group" %}'><span class="glyphicon glyphicon-th-list"></span></a>
@@ -1782,7 +1797,7 @@ input .tt-hint {
 
             {% for lang, annotation_idgloss_translation in annotation_idgloss.items %}
             <tr>
-                <th>
+                <th style="width:300px;">
                     {% trans "Annotation ID Gloss" %}
                     {% if SHOW_DATASET_INTERFACE_OPTIONS %} ({{ lang.name }}) {% endif %}
                 </th>
@@ -1824,7 +1839,7 @@ input .tt-hint {
 
         <table class='table table-condensed table-condensed-light' style="width:100%;">
             <tr>
-                <th>{% trans "Senses" %}</th>
+                <th style="width:300px;">{% trans "Senses" %}</th>
                 <td>
                     <table class='table table-condensed' style="table-layout: fixed">
                         {% for sense in senses %}
@@ -2166,6 +2181,7 @@ input .tt-hint {
                         {% endfor %}
                         {% if "change_dataset" in dataset_perms %}
                             <tr class="sense-icon edit_only">
+                                <td></td>
                                 <td>
                                     <button data-toggle='modal' data-target='#add_sense_modal_{{gloss.id}}' class='sense-button btn btn-primary btn-space sense-button sense_add'>{% trans "Add a sense" %}</button>
                                     <div class="modal fade modal-sense" id="add_sense_modal_{{gloss.id}}" role="dialog" aria-labelledby="#modalTitleGloss" aria-hidden="true">
@@ -2237,7 +2253,7 @@ input .tt-hint {
             <tr>
             {% endif %}
             {% endwith %}
-                <th style="width:auto;">{% trans "Annotation instructions" %}</th>
+                <th style="width:300px;">{% trans "Annotation instructions" %}</th>
                 {% with glossform.fields|get_item:'useInstr' as useInstr_field %}
                 <td class="editform-general" style="width:auto;">
                     <div>
@@ -2256,7 +2272,7 @@ input .tt-hint {
             <tr>
             {% endif %}
             {% endwith %}
-                <th style="width:auto;">{% trans "Word class" %}</th>
+                <th style="width:300px;">{% trans "Word class" %}</th>
                 {% with glossform.fields|get_item:'wordClass' as wordClass_field %}
                 <td class="editform-general" style="width:auto;">
                     {% if use_lookaheads == 'lookaheads' %}
@@ -2285,12 +2301,10 @@ input .tt-hint {
                 </td>
                 {% endwith %}
             </tr>
-            <tr class="edit_only_general">
-                <td colspan="2">
-                       <div style='height: 15em'></div>
-                </td>
-            </tr>
         </table>
+        <!-- the following div fixes a vertical spacing problem where the lookahead appears behind the next panel-->
+        <div class="edit_only_general" style='height: 20em'>
+        </div>
     </div>
 </div>
 {% if prominent_media_type and prominent_media_type.machine_value > 1 %}
@@ -2924,11 +2938,9 @@ input .tt-hint {
                     <button type="button" class="btn btn-danger edit-cancel button-phonology-to-appear-in-edit-mode"
                             style="width:auto;padding:3px 12px;" data-category="phonology" >
                             {% trans "Cancel" %}</button>
-                    {% if not gloss_variations %}
-                    <button type="button" class="btn btn-danger quick_save button-phonology-to-appear-in-edit-mode"
+                    <button type="button" class="btn btn-danger quick_save_phonology button-phonology-to-appear-in-edit-mode"
                             style="width:auto;padding:3px 12px;" data-category="phonology"
                             value="{{gloss.id}}" >{% trans "Save Phonology" %}</button>
-                    {% endif %}
                     <button id='enable_edit_phonology'
                             class='btn btn-primary navbar-btn edit-mode'
                             style="width:auto;padding:3px 12px;" >{% trans "Edit Phonology" %}</button>
@@ -2952,47 +2964,22 @@ input .tt-hint {
             {% csrf_token %}
             {% if gloss_variations %}
             <tr>
-                 <th style="width:240px;">{% trans "Phonological Variations" %}</th>
+                 <th style="width:300px;">{% trans "Phonological Variations" %}</th>
                  <th class='td td-light' style="color:darkred; float:left;width:150px;border-top:0;">#1</th>
                  {% for gv in gloss_variations %}
-                 <th class='th th-light' style="color:darkred">#{{gv.variation}}</th>
-                 {% endfor %}
-            </tr>
-            <tr class="empty_row_phonology">
-                 <th class='td td-light' style="width:240px;"></th>
-                 <th class='td td-light' style="color:darkred">
-                     <button id='quick_save_btn_{{gloss.id}}' class="quick_save edit-mode btn btn-primary glyph-btn"
-                        name='quick_save_{{gloss.id}}' data-type="gloss" data-category="phonology"
-                        value='{{gloss.id}}'
-                        type="button"><span class="glyphicon glyphicon-check"></span></button>
-                 </th>
-                 {% for gv in gloss_variations %}
-                 <th class='td td-light' style="color:darkred">
-                     <button id='quick_save_btn_{{gv.id}}' class="quick_save_phonology edit-mode btn btn-primary glyph-btn"
-                        name='quick_save_{{gv.id}}' data-type="variant" data-category="phonology"
-                        value='{{gv.id}}'
-                        type="button"><span class="glyphicon glyphicon-check"></span></button>
-                     <button id='variant_delete_btn_{{gv.id}}' class="quick-save btn btn-primary edit-mode glyph-btn"
+                 <th class='th th-light' style="color:darkred">
+                     #{{gv.variation}}
+                     <span>
+                     <button id='variant_delete_btn_{{gv.id}}' class="quick-save btn btn-primary edit-mode glyph-btn button-phonology-to-appear-in-edit-mode"
                         value='{{gv.id}}' data-category="phonology"
                         data-url-template="/dictionary/update/delete_phonological_variation/{{gv.pk}}/"
                         data-fields="[]" data-panel="phonology"
                         type="button"><span class='glyphicon glyphicon-trash'></span></button>
+                     </span>
                  </th>
                  {% endfor %}
             </tr>
-             <tr>
-                 <td></td>
-                 <td>
-                    <div id="feedback" class="feedback">
-                    </div>
-                 </td>
-                 {% for gv in gloss_variations %}
-                 <td>
-                    <div id="feedback_{{gv.id}}" class="feedback">
-                    </div>
-                 </td>
-                 {% endfor %}
-             </tr>
+
             {% endif %}
             {% with show_field_row|get_item:"handedness" as show_field %}
             {% if not show_field %}
@@ -3001,7 +2988,7 @@ input .tt-hint {
             <tr>
             {% endif %}
             {% endwith %}
-                <th style="width:240px;">{% trans "Handedness" %}</th>
+                <th style="width:300px;">{% trans "Handedness" %}</th>
                 {% with phonologyform.fields|get_item:'handedness' as handedness_field %}
                 {% with phonologyform.fields|get_item:'weakdrop' as weakdrop_field %}
                 {% with phonologyform.fields|get_item:'weakprop' as weakprop_field %}
@@ -3114,7 +3101,7 @@ input .tt-hint {
             <tr>
             {% endif %}
             {% endwith %}
-                <th style="width:240px;">{% trans "Strong Hand" %}</th>
+                <th style="width:300px;">{% trans "Strong Hand" %}</th>
                 {% with phonologyform.fields|get_item:'domhndsh' as domhndsh_field %}
                 {% with phonologyform.fields|get_item:'domhndsh_letter_or_number' as domhndsh_letter_or_number_field %}
                 <td class="editform-phonology">
@@ -3201,7 +3188,7 @@ input .tt-hint {
             <tr>
             {% endif %}
             {% endwith %}
-                <th style="width:240px;">{% trans "Weak Hand" %}</th>
+                <th style="width:300px;">{% trans "Weak Hand" %}</th>
                 {% with phonologyform.fields|get_item:'subhndsh' as subhndsh_field %}
                 {% with phonologyform.fields|get_item:'subhndsh_letter_or_number' as subhndsh_letter_or_number_field %}
                 <td class="editform-phonology">
@@ -3289,7 +3276,7 @@ input .tt-hint {
             <tr>
             {% endif %}
             {% endwith %}
-                <th style="width:240px;">{% trans "Handshape Change" %}</th>
+                <th style="width:300px;">{% trans "Handshape Change" %}</th>
                 {% with phonologyform.fields|get_item:'handCh' as handCh_field %}
                 <td class="editform-phonology" style="width:auto;">
                     {% if use_lookaheads == 'lookaheads' %}
@@ -3345,7 +3332,7 @@ input .tt-hint {
             <tr>
             {% endif %}
             {% endwith %}
-                <th style="width:240px;">{% trans "Relation between Articulators" %}</th>
+                <th style="width:300px;">{% trans "Relation between Articulators" %}</th>
                 {% with phonologyform.fields|get_item:'relatArtic' as relatArtic_field %}
                 <td class="editform-phonology">
                     {% if use_lookaheads == 'lookaheads' %}
@@ -3402,7 +3389,7 @@ input .tt-hint {
             <tr>
             {% endif %}
             {% endwith %}
-                <th style="width:240px;">{% trans "Location" %}</th>
+                <th style="width:300px;">{% trans "Location" %}</th>
                 {% with phonologyform.fields|get_item:'locprim' as locprim_field %}
                 <td class="editform-phonology">
                     {% if use_lookaheads == 'lookaheads' %}
@@ -3458,7 +3445,7 @@ input .tt-hint {
             <tr>
             {% endif %}
             {% endwith %}
-                <th style="width:240px;">{% trans "Contact Type" %}</th>
+                <th style="width:300px;">{% trans "Contact Type" %}</th>
                 {% with phonologyform.fields|get_item:'contType' as contType_field %}
                 <td class="editform-phonology">
                     {% if use_lookaheads == 'lookaheads' %}
@@ -3514,7 +3501,7 @@ input .tt-hint {
             <tr>
             {% endif %}
             {% endwith %}
-                <th style="width:240px;">{% trans "Movement Shape" %}</th>
+                <th style="width:300px;">{% trans "Movement Shape" %}</th>
                 {% with phonologyform.fields|get_item:'movSh' as movSh_field %}
                 <td class="editform-phonology">
                     {% if use_lookaheads == 'lookaheads' %}
@@ -3570,7 +3557,7 @@ input .tt-hint {
             <tr>
             {% endif %}
             {% endwith %}
-                <th style="width:240px;">{% trans "Movement Direction" %}</th>
+                <th style="width:300px;">{% trans "Movement Direction" %}</th>
                 {% with phonologyform.fields|get_item:'movDir' as movDir_field %}
                 <td class="editform-phonology">
                     {% if use_lookaheads == 'lookaheads' %}
@@ -3628,7 +3615,7 @@ input .tt-hint {
             <tr>
             {% endif %}
             {% endwith %}
-                <th style="width:240px;">{% trans "Repeating Movement" %}</th>
+                <th style="width:300px;">{% trans "Repeating Movement" %}</th>
                 {% with phonologyform.fields|get_item:'repeat' as repeat_field %}
                 <td class="editform-phonology">
                     <div class="editselect">
@@ -3674,7 +3661,7 @@ input .tt-hint {
             <tr>
             {% endif %}
             {% endwith %}
-                <th style="width:240px;">{% trans "Alternating Movement" %}</th>
+                <th style="width:300px;">{% trans "Alternating Movement" %}</th>
                 {% with phonologyform.fields|get_item:'altern' as altern_field %}
                 <td class="editform-phonology">
                     <div class="editselect">
@@ -3719,7 +3706,7 @@ input .tt-hint {
             <tr>
             {% endif %}
             {% endwith %}
-                <th style="width:240px;">{% trans "Relative Orientation: Movement" %}</th>
+                <th style="width:300px;">{% trans "Relative Orientation: Movement" %}</th>
                 {% with phonologyform.fields|get_item:'relOriMov' as relOriMov_field %}
                 <td class="editform-phonology">
                     {% if use_lookaheads == 'lookaheads' %}
@@ -3776,7 +3763,7 @@ input .tt-hint {
             <tr>
             {% endif %}
             {% endwith %}
-                <th style="width:240px;">{% trans "Relative Orientation: Location" %}</th>
+                <th style="width:300px;">{% trans "Relative Orientation: Location" %}</th>
                 {% with phonologyform.fields|get_item:'relOriLoc' as relOriLoc_field %}
                 <td class="editform-phonology">
                     {% if use_lookaheads == 'lookaheads' %}
@@ -3832,7 +3819,7 @@ input .tt-hint {
             <tr>
             {% endif %}
             {% endwith %}
-                <th style="width:240px;">{% trans "Orientation Change" %}</th>
+                <th style="width:300px;">{% trans "Orientation Change" %}</th>
                 {% with phonologyform.fields|get_item:'oriCh' as oriCh_field %}
                 <td class="editform-phonology">
                     {% if use_lookaheads == 'lookaheads' %}
@@ -3888,16 +3875,31 @@ input .tt-hint {
             <tr>
             {% endif %}
             {% endwith %}
-                <th style="width:auto;">{% trans "Virtual Object" %}</th>
+                <th style="width:300px;">{% trans "Virtual Object" %}</th>
                 {% with phonologyform.fields|get_item:'locVirtObj' as locVirtObj_field %}
                 <td class="editform-phonology" style="width:auto;">
-                    <div>
-                    <input class='text_locVirtObj form-control form-control-light' type="text" name="locVirtObj"
-                           value="{{locVirtObj_field.initial}}" size="50"
-                           id="locVirtObj_text" data-category="phonology" data-initial="{{locVirtObj_field.initial}}" >
-                    </div>
+                    <span>
+                    <textarea class='text_locVirtObj form-control form-control-light'
+                              name="locVirtObj" cols="25" rows="2"
+                              id="locVirtObj_text" data-category="phonology"
+                              data-initial="{{locVirtObj_field.initial}}" >{{locVirtObj_field.initial}}</textarea>
+                    </span>
                 </td>
                 {% endwith %}
+                 {% for gv in gloss_variations %}
+                 {% with variation_forms|get_item:gv.id as variant_form %}
+                 {% with variant_form.fields|get_item:'locVirtObj' as locVirtObj_field %}
+                 <td class="editform-phonology" style="width:auto;">
+                     <span>
+                     <textarea class='text_locVirtObj form-control form-control-light'
+                               name="locVirtObj" cols="25" rows="2"
+                               id="locVirtObj_{{gv.id}}_text" data-category="phonology"
+                               data-initial="{{locVirtObj_field.initial}}" >{{locVirtObj_field.initial}}</textarea>
+                     </span>
+                 </td>
+                 {% endwith %}
+                 {% endwith %}
+                 {% endfor %}
             </tr>
             {% with show_field_row|get_item:"phonOth" as show_field %}
             {% if not show_field %}
@@ -3906,16 +3908,31 @@ input .tt-hint {
             <tr>
             {% endif %}
             {% endwith %}
-                <th style="width:auto;">{% trans "Phonology Other" %}</th>
+                <th style="width:300px;">{% trans "Phonology Other" %}</th>
                 {% with phonologyform.fields|get_item:'phonOth' as phonOth_field %}
                 <td class="editform-phonology" style="width:auto;">
-                    <div>
-                    <input class='text_phonOth form-control form-control-light' type="text" name="phonOth"
-                           value="{{phonOth_field.initial}}" size="50"
-                           id="phonOth_text" data-category="phonology" data-initial="{{phonOth_field.initial}}">
-                    </div>
+                    <span>
+                    <textarea class='text_phonOth form-control form-control-light'
+                              name="phonOth" cols="25" rows="2"
+                              id="phonOth_text" data-category="phonology"
+                              data-initial="{{phonOth_field.initial}}" >{{phonOth_field.initial}}</textarea>
+                    </span>
                 </td>
                 {% endwith %}
+                 {% for gv in gloss_variations %}
+                 {% with variation_forms|get_item:gv.id as variant_form %}
+                 {% with variant_form.fields|get_item:'phonOth' as phonOth_field %}
+                 <td class="editform-phonology" style="width:auto;">
+                     <span>
+                     <textarea class='text_phonOth form-control form-control-light'
+                               name="phonOth" cols="25" rows="2"
+                               id="phonOth_{{gv.id}}_text" data-category="phonology"
+                               data-initial="{{phonOth_field.initial}}" >{{phonOth_field.initial}}</textarea>
+                     </span>
+                 </td>
+                 {% endwith %}
+                 {% endwith %}
+                 {% endfor %}
             </tr>
             {% with show_field_row|get_item:"mouthG" as show_field %}
             {% if not show_field %}
@@ -3924,16 +3941,31 @@ input .tt-hint {
             <tr>
             {% endif %}
             {% endwith %}
-                <th style="width:auto;">{% trans "Mouth Gesture" %}</th>
+                <th style="width:300px;">{% trans "Mouth Gesture" %}</th>
                 {% with phonologyform.fields|get_item:'mouthG' as mouthG_field %}
                 <td class="editform-phonology" style="width:auto;">
-                    <div>
-                    <input class='text_mouthG form-control form-control-light' type="text" name="mouthG"
-                           value="{{mouthG_field.initial}}" size="50"
-                           id="mouthG_text" data-category="phonology" data-initial="{{mouthG_field.initial}}">
-                    </div>
+                    <span>
+                    <textarea class='text_mouthG form-control form-control-light'
+                              name="mouthG" cols="25" rows="2"
+                              id="mouthG_text" data-category="phonology"
+                              data-initial="{{mouthG_field.initial}}" >{{mouthG_field.initial}}</textarea>
+                    </span>
                 </td>
                 {% endwith %}
+                 {% for gv in gloss_variations %}
+                 {% with variation_forms|get_item:gv.id as variant_form %}
+                 {% with variant_form.fields|get_item:'mouthG' as mouthG_field %}
+                 <td class="editform-phonology" style="width:auto;">
+                     <span>
+                     <textarea class='text_mouthG form-control form-control-light'
+                               name="mouthG" cols="25" rows="2"
+                               id="mouthG_{{gv.id}}_text" data-category="phonology"
+                               data-initial="{{mouthG_field.initial}}" >{{mouthG_field.initial}}</textarea>
+                     </span>
+                 </td>
+                 {% endwith %}
+                 {% endwith %}
+                 {% endfor %}
             </tr>
             {% with show_field_row|get_item:"mouthing" as show_field %}
             {% if not show_field %}
@@ -3942,16 +3974,31 @@ input .tt-hint {
             <tr>
             {% endif %}
             {% endwith %}
-                <th style="width:auto;">{% trans "Mouthing" %}</th>
+                <th style="width:300px;">{% trans "Mouthing" %}</th>
                 {% with phonologyform.fields|get_item:'mouthing' as mouthing_field %}
                 <td class="editform-phonology" style="width:auto;">
                     <div>
-                    <input class='text_mouthing form-control form-control-light' type="text" name="mouthing"
-                           value="{{mouthing_field.initial}}" size="50"
-                           id="mouthing_text" data-category="phonology" data-initial="{{mouthing_field.initial}}">
+                    <textarea class='text_mouthing form-control form-control-light'
+                              name="mouthing" cols="25" rows="2"
+                              id="mouthing_text" data-category="phonology"
+                              data-initial="{{mouthing_field.initial}}" >{{mouthing_field.initial}}</textarea>
                     </div>
                 </td>
                 {% endwith %}
+                 {% for gv in gloss_variations %}
+                 {% with variation_forms|get_item:gv.id as variant_form %}
+                 {% with variant_form.fields|get_item:'mouthing' as mouthing_field %}
+                 <td class="editform-phonology" style="width:auto;">
+                     <span>
+                     <textarea class='text_mouthing form-control form-control-light'
+                               name="mouthing" cols="25" rows="2"
+                               id="mouthing_{{gv.id}}_text" data-category="phonology"
+                               data-initial="{{mouthing_field.initial}}" >{{mouthing_field.initial}}</textarea>
+                     </span>
+                 </td>
+                 {% endwith %}
+                 {% endwith %}
+                 {% endfor %}
             </tr>
             {% with show_field_row|get_item:"phonetVar" as show_field %}
             {% if not show_field %}
@@ -3960,20 +4007,35 @@ input .tt-hint {
             <tr>
             {% endif %}
             {% endwith %}
-                <th style="width:auto;">{% trans "Phonetic Variation" %}</th>
+                <th style="width:300px;">{% trans "Phonetic Variation" %}</th>
                 {% with phonologyform.fields|get_item:'phonetVar' as phonetVar_field %}
                 <td class="editform-phonology" style="width:auto;">
-                    <div>
-                    <input class='text_phonetVar form-control form-control-light' type="text" name="phonetVar"
-                           value="{{phonetVar_field.initial}}" size="50"
-                           id="phonetVar_text" data-category="phonology" data-initial="{{phonetVar_field.initial}}">
-                    </div>
+                    <span>
+                    <textarea class='text_phonetVar form-control form-control-light'
+                              name="phonetVar" cols="25" rows="2"
+                              id="phonetVar_text" data-category="phonology"
+                              data-initial="{{phonetVar_field.initial}}" >{{phonetVar_field.initial}}</textarea>
+                    </span>
                 </td>
                 {% endwith %}
+                 {% for gv in gloss_variations %}
+                 {% with variation_forms|get_item:gv.id as variant_form %}
+                 {% with variant_form.fields|get_item:'phonetVar' as phonetVar_field %}
+                 <td class="editform-phonology" style="width:auto;">
+                     <span>
+                     <textarea class='text_phonetVar form-control form-control-light'
+                               name="mouthing" cols="25" rows="2"
+                               id="phonetVar_{{gv.id}}_text" data-category="phonology"
+                               data-initial="{{phonetVar_field.initial}}" >{{phonetVar_field.initial}}</textarea>
+                     </span>
+                 </td>
+                 {% endwith %}
+                 {% endwith %}
+                 {% endfor %}
             </tr>
             </table>
             <!-- the following div fixes a vertical spacing problem where the lookahead appears behind the next panel-->
-            <div class="edit_only_phonology" style='height: 15em'>
+            <div class="edit_only_phonology" style='height: 5em'>
             </div>
         </div>
     </div>
@@ -4011,7 +4073,7 @@ input .tt-hint {
                 <button type="button" class="btn btn-danger edit-cancel button-semantics-to-appear-in-edit-mode"
                         style="width:auto;padding:3px 12px;" data-category="semantics" >
                         {% trans "Cancel" %}</button>
-                <button type="button" class="btn btn-danger quick_save button-semantics-to-appear-in-edit-mode"
+                <button type="button" class="btn btn-danger quick_save_semantics button-semantics-to-appear-in-edit-mode"
                         style="width:auto;padding:3px 12px;" data-category="semantics"
                         value="{{gloss.id}}" >{% trans "Save Semantics" %}</button>
                 <button id='enable_edit_semantics'
@@ -4447,7 +4509,7 @@ input .tt-hint {
                     {% csrf_token %}
                     <button type="button" class="btn btn-danger edit-cancel button-publication-to-appear-in-edit-mode"
                             style="width:auto;padding:3px 12px;" data-category="publication" >{% trans "Cancel" %}</button>
-                    <button type="button" class="btn btn-danger quick_save button-publication-to-appear-in-edit-mode"
+                    <button type="button" class="btn btn-danger quick_save_publication button-publication-to-appear-in-edit-mode"
                             style="width:auto;padding:3px 12px;" data-category="publication"
                             value="{{gloss.id}}" >{% trans "Save Publication Status" %}</button>
                     <button id='enable_edit_publication' data-category="publication"

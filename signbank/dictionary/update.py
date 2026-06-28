@@ -360,99 +360,67 @@ def get_gloss_update_human_readable_value_dict(request):
 
 
 @require_http_methods(["POST"])
+@permission_required('dictionary.change_gloss')
 def update_gloss_phonology(request, glossid):
     """Update the phonology of a gloss"""
 
-    if not request.user.has_perm('dictionary.add_gloss'):
-        raise PermissionDenied
-
     gloss = get_object_or_404(Gloss, id=glossid)
+    gloss_variations = PhonologicalVariation.objects.filter(gloss=gloss).order_by('variation')
+    variations = {str(variation.pk): variation for variation in gloss_variations }
     value_dict = get_gloss_update_human_readable_value_dict(request)
-    for field, value in value_dict.items():
-        if field not in FIELDS['phonology']:
+    for field_pattern, value in value_dict.items():
+        if re.search(r'_(\d+)$', field_pattern):
+            field, variantid = field_pattern.rsplit('_', 1)
+            variant = variations[variantid]
+        else:
+            field = field_pattern
+            variant = gloss
+        if field in ['domhndsh_letter_or_number']:
+            letter_or_number = {'0': None, '1': 'letter', '2': 'number'}[value]
+            setattr(variant, 'domhndsh_letter', letter_or_number == 'letter')
+            setattr(variant, 'domhndsh_number', letter_or_number == 'number')
+            variant.save()
+            continue
+        if field in ['subhndsh_letter_or_number']:
+            letter_or_number = {'0': None, '1': 'letter', '2': 'number'}[value]
+            setattr(variant, 'subhndsh_letter', letter_or_number == 'letter')
+            setattr(variant, 'subhndsh_number', letter_or_number == 'number')
+            variant.save()
+            continue
+        if field not in PHONOLOGY_FIELDS_UPDATES:
             continue
         internal_field = Gloss.get_field(field)
-        original_internal_value = getattr(gloss, field)
+        original_internal_value = getattr(variant, field)
         if isinstance(internal_field, FieldChoiceForeignKey):
             new_value = FieldChoice.objects.get(field=internal_field.field_choice_category, machine_value=int(value))
             if new_value.machine_value == original_internal_value:
                 continue
-            setattr(gloss, field, new_value)
+            setattr(variant, field, new_value)
+            variant.save()
         elif isinstance(internal_field, ForeignKey) and internal_field.related_model == Handshape:
             new_value = Handshape.objects.get(machine_value=int(value))
             if new_value.machine_value == original_internal_value:
                 continue
-            setattr(gloss, field, new_value)
+            setattr(variant, field, new_value)
+            variant.save()
         elif isinstance(internal_field, BooleanField):
             if field in ['weakdrop', 'weakprop']:
-                boolean_value = {'0': None, '1': None, '2': True, '3': False}[value]
-                gloss.__setattr__(field, boolean_value)
-                gloss.save()
+                boolean_value = {'0': None, '1': True, '2': False}[value]
+                variant.__setattr__(field, boolean_value)
+                variant.save()
             elif field in ['repeat', 'altern', 'domhndsh_letter', 'domhndsh_number', 'subhndsh_letter', 'subhndsh_number']:
                 boolean_value = {'0': None, '1': True}[value]
                 if boolean_value == original_internal_value:
                     continue
-                setattr(gloss, field, boolean_value)
+                setattr(variant, field, boolean_value)
+                variant.save()
         elif isinstance(internal_field, CharField) or isinstance(internal_field, TextField):
             value = value.strip()
             if value == original_internal_value:
                 continue
-            setattr(gloss, field, value)
-    gloss.save()
-    return JsonResponse({})
-
-
-@require_http_methods(["POST"])
-@permission_required('dictionary.change_gloss')
-def update_phonological_variation(request, variationid):
-    """Update a phonological variation for a gloss"""
-
-    variation = get_object_or_404(PhonologicalVariation, id=variationid)
-    value_dict = get_gloss_update_human_readable_value_dict(request)
-    for field, value in value_dict.items():
-        if field not in PHONOLOGY_FIELDS_UPDATES:
-            continue
-        if field in ['domhndsh_letter_or_number']:
-            letter_or_number = {'0': None, '1': 'letter', '2': 'number'}[value]
-            setattr(variation, 'domhndsh_letter', letter_or_number == 'letter')
-            setattr(variation, 'domhndsh_number', letter_or_number == 'number')
-            continue
-        if field in ['subhndsh_letter_or_number']:
-            letter_or_number = {'0': None, '1': 'letter', '2': 'number'}[value]
-            setattr(variation, 'subhndsh_letter', letter_or_number == 'letter')
-            setattr(variation, 'subhndsh_number', letter_or_number == 'number')
-            continue
-        internal_field = PhonologicalVariation.get_field(field)
-        original_internal_value = getattr(variation, field)
-        if isinstance(internal_field, FieldChoiceForeignKey):
-            new_value = FieldChoice.objects.get(field=internal_field.field_choice_category, machine_value=int(value))
-            if new_value.machine_value == original_internal_value:
-                continue
-            setattr(variation, field, new_value)
-        elif isinstance(internal_field, ForeignKey) and internal_field.related_model == Handshape:
-            new_value = Handshape.objects.get(machine_value=int(value))
-            if new_value.machine_value == original_internal_value:
-                continue
-            setattr(variation, field, new_value)
-        elif isinstance(internal_field, BooleanField):
-            if field in ['weakdrop', 'weakprop']:
-                boolean_value = {'0': None, '1': True, '2': False}[value]
-                variation.__setattr__(field, boolean_value)
-                variation.save()
-            elif field in ['repeat', 'altern']:
-                boolean_value = {'0': False, '1': True}[value]
-                if boolean_value == original_internal_value:
-                    continue
-                setattr(variation, field, boolean_value)
-        elif isinstance(internal_field, CharField) or isinstance(internal_field, TextField):
-            value = value.strip()
-            if value == original_internal_value:
-                continue
-            setattr(variation, field, value)
-    variation.save()
-    variation.gloss.lastUpdated = DT.datetime.now(tz=get_current_timezone())
-    result = {'variationid': variationid}
-    return JsonResponse(result)
+            setattr(variant, field, value)
+            variant.save()
+    return JsonResponse({'success': True}, status=200)
 
 
 @require_http_methods(["POST"])
@@ -1020,7 +988,7 @@ def get_gloss_non_empty_value_dict(request):
 @require_http_methods(["POST"])
 @permission_required('dictionary.change_gloss')
 def edit_gloss_save(request, glossid):
-    """Update the fields of a gloss"""
+    """Update the non-phonology fields of a gloss"""
 
     gloss = get_object_or_404(Gloss, id=glossid)
     value_dict = get_gloss_non_empty_value_dict(request)
@@ -1049,16 +1017,6 @@ def edit_gloss_save(request, glossid):
                 dialect = Dialect.objects.get(id=dialect_machine_value)
                 gloss.dialect.add(dialect)
             continue
-        if field in ['domhndsh_letter_or_number']:
-            letter_or_number = {'0': None, '1': 'letter', '2': 'number'}[value]
-            setattr(gloss, 'domhndsh_letter', letter_or_number == 'letter')
-            setattr(gloss, 'domhndsh_number', letter_or_number == 'number')
-            continue
-        if field in ['subhndsh_letter_or_number']:
-            letter_or_number = {'0': None, '1': 'letter', '2': 'number'}[value]
-            setattr(gloss, 'subhndsh_letter', letter_or_number == 'letter')
-            setattr(gloss, 'subhndsh_number', letter_or_number == 'number')
-            continue
         if field not in Gloss.get_field_names():
             continue
         internal_field = Gloss.get_field(field)
@@ -1074,11 +1032,7 @@ def edit_gloss_save(request, glossid):
                 continue
             setattr(gloss, field, new_value)
         elif isinstance(internal_field, BooleanField):
-            if field in ['weakdrop', 'weakprop']:
-                boolean_value = {'0': None, '1': True, '2': False}[value]
-                gloss.__setattr__(field, boolean_value)
-                gloss.save()
-            elif field in ['repeat', 'altern', 'inWeb', 'isNew', 'excludeFromEcv']:
+            if field in ['inWeb', 'isNew', 'excludeFromEcv']:
                 boolean_value = {'0': False, '1': True}[value]
                 if boolean_value == original_internal_value:
                     continue

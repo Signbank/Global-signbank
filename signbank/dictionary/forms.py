@@ -199,11 +199,11 @@ class PhonologicalVariationUpdateForm(forms.ModelForm):
     subhndsh_letter_or_number = forms.ChoiceField(label=_('letter|number'), choices=[(0, '-')], required=False,
                                                   widget=forms.Select(attrs=ATTRS_FOR_BOOLEAN_FORMS))
 
-    locVirtObj = forms.CharField(label=_('Virtual Object'), widget=forms.TextInput(), required=False)
-    phonOth = forms.CharField(label=_('Phonology Other'), widget=forms.TextInput(), required=False)
-    mouthG = forms.CharField(label=_("Mouth Gesture"), widget=forms.TextInput(), required=False)
-    mouthing = forms.CharField(label=_("Mouthing"), widget=forms.TextInput(), required=False)
-    phonetVar = forms.CharField(label=_("Phonetic Variation"), widget=forms.TextInput(), required=False)
+    locVirtObj = forms.CharField(label=_('Virtual Object'), max_length=50, widget=forms.Textarea(attrs={'cols': 25, 'rows': 2}))
+    phonOth = forms.CharField(label=_('Phonology Other'), max_length=50, widget=forms.Textarea(attrs={'cols': 25, 'rows': 2}))
+    mouthG = forms.CharField(label=_("Mouth Gesture"), max_length=50, widget=forms.Textarea(attrs={'cols': 25, 'rows': 2}))
+    mouthing = forms.CharField(label=_("Mouthing"), max_length=50, widget=forms.Textarea(attrs={'cols': 25, 'rows': 2}))
+    phonetVar = forms.CharField(label=_("Phonetic Variation"), max_length=50, widget=forms.Textarea(attrs={'cols': 25, 'rows': 2}))
 
     class Meta:
         model = PhonologicalVariation
@@ -2092,11 +2092,11 @@ class PhonologyForm(forms.Form):
                                widget=forms.Select(attrs=ATTRS_FOR_BOOLEAN_FORMS))
     altern = forms.ChoiceField(label=_('Alternating Movement'), choices=[('0', '-')], required=False,
                                widget=forms.Select(attrs=ATTRS_FOR_BOOLEAN_FORMS))
-    locVirtObj = forms.CharField(label=_('Virtual Object'), max_length=50)
-    phonOth = forms.CharField(label=_('Phonology Other'))
-    mouthG = forms.CharField(label=_('Mouth Gesture'), max_length=50)
-    mouthing = forms.CharField(label=_('Mouthing'), max_length=50)
-    phonetVar = forms.CharField(label=_('Phonetic Variation'), max_length=50)
+    locVirtObj = forms.CharField(label=_('Virtual Object'), max_length=50, widget=forms.Textarea(attrs={'cols': 25, 'rows': 2}))
+    phonOth = forms.CharField(label=_('Phonology Other'), max_length=50, widget=forms.Textarea(attrs={'cols': 25, 'rows': 2}))
+    mouthG = forms.CharField(label=_('Mouth Gesture'), max_length=50, widget=forms.Textarea(attrs={'cols': 25, 'rows': 2}))
+    mouthing = forms.CharField(label=_('Mouthing'), max_length=50, widget=forms.Textarea(attrs={'cols': 25, 'rows': 2}))
+    phonetVar = forms.CharField(label=_('Phonetic Variation'), max_length=50, widget=forms.Textarea(attrs={'cols': 25, 'rows': 2}))
 
     class Meta:
         model = Gloss

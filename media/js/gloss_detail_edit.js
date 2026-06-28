@@ -61,8 +61,8 @@ function createTypeahead(config) {
             autoSelect: false,
             templates: {
                 suggestion: function(fc) {
-                    console.log('name: '+fc.machine_value+' '+fc.name);
-                    console.log('pattern: '+`${fc.name}`);
+                    if (console_log) { console.log('name: '+fc.machine_value+' '+fc.name); }
+                    if (console_log) { console.log('pattern: '+`${fc.name}`); }
                     return `<p><strong>${fc.name}</strong></p>`;
                 }
             }
@@ -464,6 +464,8 @@ function show_edit_panel(category) {
         $('.editform').show();  // appears in gloss tags and affiliations
         renderMultiSelected('dialect');
         $('#lemma_buttons_group').show();
+        $('.sense-button').show();
+        $('.sense-icon').show();
     }
     if (category === 'publication') {
         $('.read_only_publication').hide();
@@ -489,6 +491,8 @@ function hide_edit_panel(category) {
         $('.read_only').show();
         $('.edit_only').hide();
         $('.edit_only_general').hide();
+        $('.sense-button').hide();
+        $('.sense-icon').hide();
     }
     if (category === 'publication') {
         $('.read_only_publication').show();
@@ -760,7 +764,7 @@ $(document).ready(function() {
         }
     });
 
-     $('.quick_save').click(function(e)
+     $('.quick_save_publication').click(function(e)
 	 {
          e.preventDefault();
 	     var glossid = $(this).attr('value');
@@ -768,7 +772,41 @@ $(document).ready(function() {
 	     var update = { 'csrfmiddlewaretoken': csrf_token };
          for (var i=0; i < gloss_fields.length; i++) {
             var field = gloss_fields[i];
-            if (['semField', 'derivHist', 'dialect'].includes(field)) {
+            if (['inWeb', 'isNew', 'excludeFromEcv'].includes(field)) {
+                var field_lookup = '#'+field+'_select_value';
+                var field_key = $(field_lookup).attr("name");
+                var field_value = $(field_lookup).val();
+                update[field_key] = field_value;
+            }
+         }
+         alert('update: '+JSON.stringify(update));
+         $.ajax({
+            url : url + "/dictionary/update/edit_gloss_save/" + glossid,
+            type: 'POST',
+            data: update,
+            datatype: "json",
+            success : function(data) {
+                if (data.success) {
+                    sessionStorage.setItem('panel', panel);
+                    setTimeout(function() {
+                        location.reload(true);
+                    }, 500);
+                }
+            },
+            error: function (xhr, status, error) {
+                alert("There was an error processing this change: " + xhr.responseText );
+            }
+         });
+     });
+     $('.quick_save_general').click(function(e)
+	 {
+         e.preventDefault();
+	     var glossid = $(this).attr('value');
+	     var panel = $(this).attr('data-category');
+	     var update = { 'csrfmiddlewaretoken': csrf_token };
+         for (var i=0; i < gloss_fields.length; i++) {
+            var field = gloss_fields[i];
+            if (['dialect'].includes(field)) {
                 var field_key = field;
                 var field_values = [];
                 var field_lookup = '#'+field+'_hidden_input_values';
@@ -781,27 +819,12 @@ $(document).ready(function() {
                 } else {
                     update[field_key] = field_values;
                 }
-            } else if (['weakdrop', 'weakprop'].includes(field)) {
-                var field_lookup = '#'+field+'_select_value';
-                var field_key = $(field_lookup).attr("name");
-                var field_value = $(field_lookup).val();
-                update[field_key] = field_value;
-            } else if (['domhndsh_letter_or_number', 'subhndsh_letter_or_number'].includes(field)) {
-                var field_lookup = '#'+field+'_select_value';
-                var field_key = $(field_lookup).attr("name");
-                var field_value = $(field_lookup).val();
-                update[field_key] = field_value;
-            } else if (['repeat', 'altern', 'inWeb', 'isNew', 'excludeFromEcv'].includes(field)) {
-                var field_lookup = '#'+field+'_select_value';
-                var field_key = $(field_lookup).attr("name");
-                var field_value = $(field_lookup).val();
-                update[field_key] = field_value;
-            } else if (['release_information', 'useInstr', 'locVirtObj', 'phonOth', 'mouthG', 'mouthing', 'phonetVar', 'iconImg', 'concConcSet'].includes(field)) {
+            } else if (['release_information', 'useInstr'].includes(field)) {
                 var field_lookup = '#'+field+'_text';
                 var field_key = $(field_lookup).attr("name");
                 var field_value = $(field_lookup).val();
                 update[field_key] = field_value;
-            } else {
+            } else if (['wordClass'].includes(field)) {
                 if (use_lookaheads === 'lookaheads') {
                     var field_lookup = '#'+field+'_machine_value';
                 } else {
@@ -810,6 +833,7 @@ $(document).ready(function() {
                 var field_key = $(field_lookup).attr("name");
                 var field_value = $(field_lookup).val();
                 update[field_key] = field_value;
+            } else {
             }
          }
          $.ajax({
@@ -907,6 +931,62 @@ $(document).ready(function() {
             success : function(data) {
                 if (data.success) {
                     sessionStorage.setItem('panel', 'nmevideos');
+                    setTimeout(function() {
+                        location.reload(true);
+                    }, 500);
+                }
+            },
+            error: function (xhr, status, error) {
+                alert("There was an error processing this change: " + xhr.responseText );
+            }
+         });
+     });
+     $('.quick_save_semantics').click(function(e)
+	 {
+         e.preventDefault();
+	     var glossid = $(this).attr('value');
+	     var panel = $(this).attr('data-category');
+	     var update = { 'csrfmiddlewaretoken': csrf_token };
+         for (var i=0; i < gloss_fields.length; i++) {
+            var field = gloss_fields[i];
+            if (['semField', 'derivHist'].includes(field)) {
+                var field_key = field;
+                var field_values = [];
+                var field_lookup = '#'+field+'_hidden_input_values';
+                $(field_lookup).find('input[name="'+field+'"]').each(function() {
+                    var this_value = $(this).val();
+                    field_values.push(this_value);
+                });
+                if (!field_values.length) {
+                    update[field_key] = 'None'
+                } else {
+                    update[field_key] = field_values;
+                }
+            } else if (['iconImg', 'concConcSet'].includes(field)) {
+                var field_lookup = '#'+field+'_text';
+                var field_key = $(field_lookup).attr("name");
+                var field_value = $(field_lookup).val();
+                update[field_key] = field_value;
+            } else if (['namEnt', 'valence'].includes(field)) {
+                if (use_lookaheads === 'lookaheads') {
+                    var field_lookup = '#'+field+'_machine_value';
+                } else {
+                    var field_lookup = '#'+field+'_value';
+                }
+                var field_key = $(field_lookup).attr("name");
+                var field_value = $(field_lookup).val();
+                update[field_key] = field_value;
+            } else {
+            }
+         }
+         $.ajax({
+            url : url + "/dictionary/update/edit_gloss_save/" + glossid,
+            type: 'POST',
+            data: update,
+            datatype: "json",
+            success : function(data) {
+                if (data.success) {
+                    sessionStorage.setItem('panel', panel);
                     setTimeout(function() {
                         location.reload(true);
                     }, 500);

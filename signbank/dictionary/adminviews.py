@@ -1477,7 +1477,7 @@ class GlossDetailView(DetailView):
         context['gloss_update_fields'] =  GLOSS_FIELDS_UPDATES
         context['gloss_phonology'] = PHONOLOGY_FIELDS_UPDATES
         context['gloss_variations'] = PhonologicalVariation.objects.filter(gloss=gloss).order_by('variation')
-
+        context['phonological_variations_ids'] = [str(gv.pk) for gv in context['gloss_variations']]
         variation_forms = dict()
         for variation in context['gloss_variations']:
             variation_forms[variation.pk] = PhonologicalVariationUpdateForm(variantid=variation.pk)

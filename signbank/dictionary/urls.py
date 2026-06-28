@@ -53,10 +53,8 @@ urlpatterns = [
 
     re_path(r'^update/add_phonological_variation/(?P<glossid>\d+)/$',
             signbank.dictionary.update.add_phonological_variation, name='add_phonological_variation'),
-    re_path(r'^update/update_gloss_phonology/(?P<glossid>\d+)$',
+    re_path(r'^update/update_gloss_phonology/(?P<glossid>\d+)/$',
             signbank.dictionary.update.update_gloss_phonology, name='update_gloss_phonology'),
-    re_path(r'^update/phonological_variation/(?P<variationid>\d+)/$',
-            signbank.dictionary.update.update_phonological_variation, name='update_phonological_variation'),
     re_path(r'^update/delete_phonological_variation/(?P<variationid>\d+)/$',
             signbank.dictionary.update.delete_phonological_variation, name='delete_phonological_variation'),
 
