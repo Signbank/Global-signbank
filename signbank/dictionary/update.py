@@ -1343,39 +1343,6 @@ def update_gloss_othermedia(request, glossid, othermediaid):
     return JsonResponse({'success': True}, status=200)
 
 
-# DOCUMENTATION TO DO LIST
-# specific update_gloss functions are needed for new template because the old ones pass back data for editable:
-# 'perspectivevideo_delete_{{perspvideo.id}}'
-# 'nmevideo_delete_{{videonme.id}}'
-# 'morphology-definition-delete_{{morphdef.id}}'
-# 'morpheme-definition-delete_{{morpheme.pk}}'
-# 'blend-definition-delete_{{blend.pk}}'
-# 'relationdelete_{{rel.id}}'
-# 'definitiondelete_{{def.id}}'
-# 'provenancedelete_{{prov.id}}'
-
-# to other update methods:
-# "dictionary:create_sense" gloss.id
-# 'dictionary:update_sense' sense.id
-# "dictionary:create_examplesentence" sense.id
-# "dictionary:update_examplesentence" examplesentence.id
-# 'dictionary:add_morphologydefinition'
-# 'dictionary:add_morphemedefinition' glossid=gloss.id
-# 'dictionary:add_blenddefinition' glossid=gloss.id
-# "dictionary:add_relation"
-# "dictionary:add_definition" gloss.id
-# "dictionary:add_provenance" gloss.id
-# 'dictionary:create_citation_image'  gloss.id
-# 'dictionary:create_lemma_gloss' gloss.id
-# "dictionary:sort_sense" gloss.id forloop.counter "up"
-# "dictionary:sort_sense" gloss.id forloop.counter "down"
-# 'dictionary:delete_sense' gloss.id
-# "dictionary:sort_examplesentence" sense.id gloss.id forloop.counter "up"
-# "dictionary:sort_examplesentence" sense.id gloss.id forloop.counter "down"
-# "dictionary:add_sentence_video" glossid=gloss.id examplesentenceid=examplesentence.id
-# 'dictionary:delete_examplesentence' sense.id
-
-
 @require_http_methods(["POST"])
 def update_gloss(request, glossid):
     """View to update a gloss model from the jeditable jquery form

@@ -69,7 +69,6 @@ from signbank.dictionary.models import (Dataset, UserProfile, AffiliatedUser, Af
                                         DerivationHistory, BlendMorphology, MorphologyDefinition, SimultaneousMorphologyDefinition,
                                         FieldChoice, FieldChoiceForeignKey, get_default_language_id, fieldname_to_kind,
                                         CATEGORY_MODELS_MAPPING, ExampleSentence, PhonologicalVariation)
-from signbank.dictionary.phonology_functions import show_fields_rows_phonology
 from signbank.dictionary.translate_choice_list import (machine_value_to_translated_human_value,
                                                        choicelist_queryset_to_translated_dict,
                                                        choicelist_queryset_to_machine_value_dict,
@@ -1483,7 +1482,6 @@ class GlossDetailView(DetailView):
             variation_forms[variation.pk] = PhonologicalVariationUpdateForm(variantid=variation.pk)
         context['variation_forms'] = variation_forms
 
-        context['show_fields_rows_phonology'] = show_fields_rows_phonology(gloss)
         context['show_field_row'] = show_fields_rows(gloss)
         context['language_2chars'] = [language.language_code_2char for language in dataset_languages]
 
