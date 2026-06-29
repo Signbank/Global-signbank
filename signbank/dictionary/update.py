@@ -368,7 +368,9 @@ def update_gloss_phonology(request, glossid):
     gloss_variations = PhonologicalVariation.objects.filter(gloss=gloss).order_by('variation')
     variations = {str(variation.pk): variation for variation in gloss_variations }
     value_dict = get_gloss_update_human_readable_value_dict(request)
+    print('value dict: ', value_dict)
     for field_pattern, value in value_dict.items():
+        print('update gloss phonology: ', field_pattern, value, type(value))
         if re.search(r'_(\d+)$', field_pattern):
             field, variantid = field_pattern.rsplit('_', 1)
             variant = variations[variantid]
@@ -392,14 +394,18 @@ def update_gloss_phonology(request, glossid):
         internal_field = Gloss.get_field(field)
         original_internal_value = getattr(variant, field)
         if isinstance(internal_field, FieldChoiceForeignKey):
+            if not value:
+                continue
             new_value = FieldChoice.objects.get(field=internal_field.field_choice_category, machine_value=int(value))
-            if new_value.machine_value == original_internal_value:
+            if new_value == original_internal_value:
                 continue
             setattr(variant, field, new_value)
             variant.save()
         elif isinstance(internal_field, ForeignKey) and internal_field.related_model == Handshape:
+            if not value:
+                continue
             new_value = Handshape.objects.get(machine_value=int(value))
-            if new_value.machine_value == original_internal_value:
+            if new_value == original_internal_value:
                 continue
             setattr(variant, field, new_value)
             variant.save()
@@ -408,7 +414,7 @@ def update_gloss_phonology(request, glossid):
                 boolean_value = {'0': None, '1': True, '2': False}[value]
                 variant.__setattr__(field, boolean_value)
                 variant.save()
-            elif field in ['repeat', 'altern', 'domhndsh_letter', 'domhndsh_number', 'subhndsh_letter', 'subhndsh_number']:
+            elif field in ['repeat', 'altern']:
                 boolean_value = {'0': None, '1': True}[value]
                 if boolean_value == original_internal_value:
                     continue

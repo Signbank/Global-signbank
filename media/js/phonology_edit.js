@@ -20,13 +20,12 @@
 	 {
         e.preventDefault();
 	    var objectid = $(this).attr('value');
-	    var datatype = $(this).attr('data-type');
         var panel = $(this).attr('data-category');
         var update_url = url + "/dictionary/update/update_gloss_phonology/" + objectid + "/";
         var update = { 'csrfmiddlewaretoken': csrf_token };
         for (var i=0; i < gloss_phonology.length; i++) {
             var field = gloss_phonology[i];
-            var select_key = '#'+field;
+            var select_key = '#' + field;
             if (['weakdrop', 'weakprop', 'domhndsh_letter_or_number', 'subhndsh_letter_or_number', 'repeat', 'altern'].includes(field)) {
                 select_key += '_select_value';
             } else if (['locVirtObj', 'phonOth', 'mouthG', 'mouthing', 'phonetVar'].includes(field)) {
@@ -37,17 +36,18 @@
                 select_key += '_value';  // field choice selections
             }
             update[field] = $(select_key).val();
-            for (const variationid of phonological_variations_ids) {
+        }
+        for (const variationid of phonological_variations_ids) {
+            for (var i=0; i < gloss_phonology.length; i++) {
+                var field = gloss_phonology[i];
                 var field_key = field+'_'+variationid;
                 var select_key = '#'+field_key;
                 if (['weakdrop', 'weakprop', 'domhndsh_letter_or_number', 'subhndsh_letter_or_number', 'repeat', 'altern'].includes(field)) {
                     select_key += '_select_value';
                 } else if (['locVirtObj', 'phonOth', 'mouthG', 'mouthing', 'phonetVar'].includes(field)) {
                     select_key += '_text';
-                } else if (use_lookaheads === 'lookaheads') {
-                    select_key += '_machine_value';  // field choice selections
                 } else {
-                    select_key += '_value';  // field choice selections
+                    select_key += '_value';  // field choice selections, no lookaheads for variations
                 }
                 update[field_key] = $(select_key).val();
             }

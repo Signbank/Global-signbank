@@ -92,7 +92,7 @@
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/typeahead.js/0.11.1/bloodhound.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/typeahead.js/0.11.1/typeahead.bundle.js"></script>
-<script type='text/javascript' src="{{STATIC_URL}}js/phonology_edit_color.js"></script>
+<script type='text/javascript' src="{{STATIC_URL}}js/phonology_edit.js"></script>
 <script type='text/javascript' src="{{STATIC_URL}}js/gloss_detail_edit.js"></script>
 
 <script type='text/javascript'>
@@ -2952,7 +2952,6 @@ input .tt-hint {
                 {% if perms.dictionary.change_gloss %}
                  <button id='add_variation_btn_{{gloss.id}}'
                          class="quick-save btn btn-primary edit-mode button-phonology-to-appear-in-edit-mode"
-                         data-type="gloss"
                          value='{{gloss.id}}' style="width:auto;padding:3px 12px;"
                          data-url-template="/dictionary/update/add_phonological_variation/{{gloss.id}}/"
                          data-fields='[]' data-panel="phonology"
