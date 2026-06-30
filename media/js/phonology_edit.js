@@ -46,8 +46,10 @@
                     select_key += '_select_value';
                 } else if (['locVirtObj', 'phonOth', 'mouthG', 'mouthing', 'phonetVar'].includes(field)) {
                     select_key += '_text';
+                } else if (use_lookaheads === 'lookaheads') {
+                    select_key += '_machine_value';  // field choice selections
                 } else {
-                    select_key += '_value';  // field choice selections, no lookaheads for variations
+                    select_key += '_value';  // field choice selections
                 }
                 update[field_key] = $(select_key).val();
             }

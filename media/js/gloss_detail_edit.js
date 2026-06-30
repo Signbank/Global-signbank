@@ -556,6 +556,21 @@ function readyLookahead(config) {
       $(this).attr("val", preselect_name);
       $(this).trigger('typeahead:selected', [{'name': preselect_name, 'machine_value': preselect_machine_value}]);
     });
+    for (const variationid of phonological_variations_ids) {
+        var typeahead_element = '#'+config.name+'_'+variationid+'_lookahead';
+        $(typeahead_element).on("focus", function() {
+              if (console_log) { console.log('focus on typeahead '+config.name+' '+variationid); }
+              var preselect_machine_value = $(this).attr('data-preselect');
+              if (!preselect_machine_value) {
+                $(this).val('').trigger('input').typeahead('open');
+                return;
+              }
+              var preselect_name = $(this).attr('placeholder');
+              if (!preselect_name || preselect_name === '-') {return;}
+              $(this).attr("val", preselect_name);
+              $(this).trigger('typeahead:selected', [{'name': preselect_name, 'machine_value': preselect_machine_value}]);
+        });
+    }
 }
 
 const multiselectConfig = [

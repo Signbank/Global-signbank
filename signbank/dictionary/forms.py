@@ -211,131 +211,175 @@ class PhonologicalVariationUpdateForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         self.variantid = kwargs.pop('variantid')
-
+        self.use_lookaheads = kwargs.pop('use_lookaheads')
         super(PhonologicalVariationUpdateForm, self).__init__(*args, **kwargs)
 
         self.variant = PhonologicalVariation.objects.get(pk=self.variantid)
 
-        self.fields['handedness'] = forms.ChoiceField(label=_('Handedness'),
-                                                      choices = choicelist_queryset_to_translated_dict(
-                                                          list(FieldChoice.objects.filter(field='Handedness').order_by(
-                                                              'machine_value')),
-                                                          ordered=False, id_prefix='', shortlist=False
-                                                      ),
-                                                      widget=forms.Select(attrs=ATTRS_FOR_FORMS),
-                                                      required=False)
-        self.fields['handedness'].initial = self.variant.handedness.machine_value if self.variant.handedness else 0
+        if self.use_lookaheads == 'lookaheads':
+            self.fields['handedness'] = forms.CharField(label=_('Handedness'))
+            self.fields['handedness'].initial = self.variant.handedness.name if self.variant.handedness else '-'
+            self.fields['handedness'].machine_value = self.variant.handedness.machine_value if self.variant.handedness else 0
+        else:
+            self.fields['handedness'] = forms.ChoiceField(label=_('Handedness'),
+                                                          choices = choicelist_queryset_to_translated_dict(
+                                                              list(FieldChoice.objects.filter(field='Handedness').order_by(
+                                                                  'machine_value')),
+                                                              ordered=False, id_prefix='', shortlist=False
+                                                          ),
+                                                          widget=forms.Select(attrs=ATTRS_FOR_FORMS),
+                                                          required=False)
+            self.fields['handedness'].initial = self.variant.handedness.machine_value if self.variant.handedness else 0
         self.fields['weakdrop'].choices = [('0', _('')), ('1', _('+WD')), ('2', _('-WD'))]
         self.fields['weakdrop'].initial = self.variant.weakdrop_to_choice()
         self.fields['weakprop'].choices = [('0', _('')), ('1', _('+WP')), ('2', _('-WP'))]
         self.fields['weakprop'].initial = self.variant.weakprop_to_choice()
-        self.fields['domhndsh'] = forms.ChoiceField(label=_('Strong Hand'),
-                                                    choices = choicelist_queryset_to_translated_dict(
-                                                        list(Handshape.objects.all().order_by(
-                                                            'machine_value')),
-                                                        ordered=False, id_prefix='', shortlist=False
-                                                    ),
-                                                    widget=forms.Select(attrs=ATTRS_FOR_FORMS),
-                                                    required=False)
-        self.fields['domhndsh'].initial = self.variant.domhndsh.machine_value if self.variant.domhndsh else 0
-        self.fields['subhndsh'] = forms.ChoiceField(label=_('Weak Hand'),
-                                                    choices = choicelist_queryset_to_translated_dict(
-                                                        list(Handshape.objects.all().order_by(
-                                                            'machine_value')),
-                                                        ordered=False, id_prefix='', shortlist=False
-                                                    ),
-                                                    widget=forms.Select(attrs=ATTRS_FOR_FORMS),
-                                                    required=False)
-        self.fields['subhndsh'].initial = self.variant.subhndsh.machine_value if self.variant.subhndsh else 0
+        if self.use_lookaheads == 'lookaheads':
+            self.fields['domhndsh'] = forms.CharField(label=_('Strong Hand'))
+            self.fields['domhndsh'].initial = self.variant.domhndsh.name if self.variant.domhndsh else '-'
+            self.fields['domhndsh'].machine_value = self.variant.domhndsh.machine_value if self.variant.domhndsh else 0
+            self.fields['subhndsh'] = forms.CharField(label=_('Weak Hand'))
+            self.fields['subhndsh'].initial = self.variant.subhndsh.name if self.variant.subhndsh else '-'
+            self.fields['subhndsh'].machine_value = self.variant.subhndsh.machine_value if self.variant.subhndsh else 0
+        else:
+            self.fields['domhndsh'] = forms.ChoiceField(label=_('Strong Hand'),
+                                                        choices = choicelist_queryset_to_translated_dict(
+                                                            list(Handshape.objects.all().order_by(
+                                                                'machine_value')),
+                                                            ordered=False, id_prefix='', shortlist=False
+                                                        ),
+                                                        widget=forms.Select(attrs=ATTRS_FOR_FORMS),
+                                                        required=False)
+            self.fields['domhndsh'].initial = self.variant.domhndsh.machine_value if self.variant.domhndsh else 0
+            self.fields['subhndsh'] = forms.ChoiceField(label=_('Weak Hand'),
+                                                        choices = choicelist_queryset_to_translated_dict(
+                                                            list(Handshape.objects.all().order_by(
+                                                                'machine_value')),
+                                                            ordered=False, id_prefix='', shortlist=False
+                                                        ),
+                                                        widget=forms.Select(attrs=ATTRS_FOR_FORMS),
+                                                        required=False)
+            self.fields['subhndsh'].initial = self.variant.subhndsh.machine_value if self.variant.subhndsh else 0
         self.fields['domhndsh_letter_or_number'].choices = [('0', ''), ('1', _('letter')), ('2', _('number'))]
         self.fields['domhndsh_letter_or_number'].initial = self.variant.domhndsh_letter_or_number_to_choice()
         self.fields['subhndsh_letter_or_number'].choices = [('0', ''), ('1', _('letter')), ('2', _('number'))]
         self.fields['subhndsh_letter_or_number'].initial = self.variant.subhndsh_letter_or_number_to_choice()
-        self.fields['handCh'] = forms.ChoiceField(label=_('Handshape Change'),
-                                                   choices=choicelist_queryset_to_translated_dict(
-                                                       list(FieldChoice.objects.filter(field='HandshapeChange').order_by(
-                                                           'machine_value')),
-                                                       ordered=False, id_prefix='', shortlist=False
-                                                   ),
-                                                    widget=forms.Select(attrs=ATTRS_FOR_FORMS),
-                                                    required=False)
-        self.fields['handCh'].initial = self.variant.handCh.machine_value if self.variant.handCh else 0
-        self.fields['relatArtic'] = forms.ChoiceField(label=_('Relation between Articulators'),
-                                                   choices=choicelist_queryset_to_translated_dict(
-                                                       list(FieldChoice.objects.filter(field='RelatArtic').order_by(
-                                                           'machine_value')),
-                                                       ordered=False, id_prefix='', shortlist=False
-                                                   ),
-                                                    widget=forms.Select(attrs=ATTRS_FOR_FORMS),
-                                                    required=False)
-        self.fields['relatArtic'].initial = self.variant.relatArtic.machine_value if self.variant.relatArtic else 0
-        self.fields['locprim'] = forms.ChoiceField(label=_('Location'),
-                                                   choices=choicelist_queryset_to_translated_dict(
-                                                       list(FieldChoice.objects.filter(field='Location').order_by(
-                                                           'machine_value')),
-                                                       ordered=False, id_prefix='', shortlist=False
-                                                   ),
-                                                   widget=forms.Select(attrs=ATTRS_FOR_FORMS),
-                                                   required=False)
-        self.fields['locprim'].initial = self.variant.locprim.machine_value if self.variant.locprim else 0
-        self.fields['contType'] = forms.ChoiceField(label=_('Contact Type'),
-                                                   choices=choicelist_queryset_to_translated_dict(
-                                                       list(FieldChoice.objects.filter(field='ContactType').order_by(
-                                                           'machine_value')),
-                                                       ordered=False, id_prefix='', shortlist=False
-                                                   ),
-                                                   widget=forms.Select(attrs=ATTRS_FOR_FORMS),
-                                                   required=False)
-        self.fields['contType'].initial = self.variant.contType.machine_value if self.variant.contType else 0
-        self.fields['movSh'] = forms.ChoiceField(label=_('Movement Shape'),
-                                                   choices=choicelist_queryset_to_translated_dict(
-                                                       list(FieldChoice.objects.filter(field='MovementShape').order_by(
-                                                           'machine_value')),
-                                                       ordered=False, id_prefix='', shortlist=False
-                                                   ),
-                                                   widget=forms.Select(attrs=ATTRS_FOR_FORMS),
-                                                   required=False)
-        self.fields['movSh'].initial = self.variant.movSh.machine_value if self.variant.movSh else 0
-        self.fields['movDir'] = forms.ChoiceField(label=_('Movement Direction'),
-                                                   choices=choicelist_queryset_to_translated_dict(
-                                                       list(FieldChoice.objects.filter(field='MovementDir').order_by(
-                                                           'machine_value')),
-                                                       ordered=False, id_prefix='', shortlist=False
-                                                   ),
-                                                   widget=forms.Select(attrs=ATTRS_FOR_FORMS),
-                                                   required=False)
-        self.fields['movDir'].initial = self.variant.movDir.machine_value if self.variant.movDir else 0
+        if self.use_lookaheads == 'lookaheads':
+            self.fields['handCh'] = forms.CharField(label=_('Handshape Change'))
+            self.fields['handCh'].initial = self.variant.handCh.name if self.variant.handCh else '-'
+            self.fields['handCh'].machine_value = self.variant.handCh.machine_value if self.variant.handCh else 0
+            self.fields['relatArtic'] = forms.CharField(label=_('Relation between Articulators'))
+            self.fields['relatArtic'].initial = self.variant.relatArtic.name if self.variant.relatArtic else '-'
+            self.fields['relatArtic'].machine_value = self.variant.relatArtic.machine_value if self.variant.relatArtic else 0
+            self.fields['locprim'] = forms.CharField(label=_('Location'))
+            self.fields['locprim'].initial = self.variant.locprim.name if self.variant.locprim else '-'
+            self.fields['locprim'].machine_value = self.variant.locprim.machine_value if self.variant.locprim else 0
+            self.fields['contType'] = forms.CharField(label=_('Contact Type'))
+            self.fields['contType'].initial = self.variant.contType.name if self.variant.contType else '-'
+            self.fields['contType'].machine_value = self.variant.contType.machine_value if self.variant.contType else 0
+            self.fields['movSh'] = forms.CharField(label=_('Movement Shape'))
+            self.fields['movSh'].initial = self.variant.movSh.name if self.variant.movSh else '-'
+            self.fields['movSh'].machine_value = self.variant.movSh.machine_value if self.variant.movSh else 0
+            self.fields['movDir'] = forms.CharField(label=_('Movement Direction'))
+            self.fields['movDir'].initial = self.variant.movDir.name if self.variant.movDir else '-'
+            self.fields['movDir'].machine_value = self.variant.movDir.machine_value if self.variant.movDir else 0
+        else:
+            self.fields['handCh'] = forms.ChoiceField(label=_('Handshape Change'),
+                                                       choices=choicelist_queryset_to_translated_dict(
+                                                           list(FieldChoice.objects.filter(field='HandshapeChange').order_by(
+                                                               'machine_value')),
+                                                           ordered=False, id_prefix='', shortlist=False
+                                                       ),
+                                                        widget=forms.Select(attrs=ATTRS_FOR_FORMS),
+                                                        required=False)
+            self.fields['handCh'].initial = self.variant.handCh.machine_value if self.variant.handCh else 0
+            self.fields['relatArtic'] = forms.ChoiceField(label=_('Relation between Articulators'),
+                                                       choices=choicelist_queryset_to_translated_dict(
+                                                           list(FieldChoice.objects.filter(field='RelatArtic').order_by(
+                                                               'machine_value')),
+                                                           ordered=False, id_prefix='', shortlist=False
+                                                       ),
+                                                        widget=forms.Select(attrs=ATTRS_FOR_FORMS),
+                                                        required=False)
+            self.fields['relatArtic'].initial = self.variant.relatArtic.machine_value if self.variant.relatArtic else 0
+            self.fields['locprim'] = forms.ChoiceField(label=_('Location'),
+                                                       choices=choicelist_queryset_to_translated_dict(
+                                                           list(FieldChoice.objects.filter(field='Location').order_by(
+                                                               'machine_value')),
+                                                           ordered=False, id_prefix='', shortlist=False
+                                                       ),
+                                                       widget=forms.Select(attrs=ATTRS_FOR_FORMS),
+                                                       required=False)
+            self.fields['locprim'].initial = self.variant.locprim.machine_value if self.variant.locprim else 0
+            self.fields['contType'] = forms.ChoiceField(label=_('Contact Type'),
+                                                       choices=choicelist_queryset_to_translated_dict(
+                                                           list(FieldChoice.objects.filter(field='ContactType').order_by(
+                                                               'machine_value')),
+                                                           ordered=False, id_prefix='', shortlist=False
+                                                       ),
+                                                       widget=forms.Select(attrs=ATTRS_FOR_FORMS),
+                                                       required=False)
+            self.fields['contType'].initial = self.variant.contType.machine_value if self.variant.contType else 0
+            self.fields['movSh'] = forms.ChoiceField(label=_('Movement Shape'),
+                                                       choices=choicelist_queryset_to_translated_dict(
+                                                           list(FieldChoice.objects.filter(field='MovementShape').order_by(
+                                                               'machine_value')),
+                                                           ordered=False, id_prefix='', shortlist=False
+                                                       ),
+                                                       widget=forms.Select(attrs=ATTRS_FOR_FORMS),
+                                                       required=False)
+            self.fields['movSh'].initial = self.variant.movSh.machine_value if self.variant.movSh else 0
+            self.fields['movDir'] = forms.ChoiceField(label=_('Movement Direction'),
+                                                       choices=choicelist_queryset_to_translated_dict(
+                                                           list(FieldChoice.objects.filter(field='MovementDir').order_by(
+                                                               'machine_value')),
+                                                           ordered=False, id_prefix='', shortlist=False
+                                                       ),
+                                                       widget=forms.Select(attrs=ATTRS_FOR_FORMS),
+                                                       required=False)
+            self.fields['movDir'].initial = self.variant.movDir.machine_value if self.variant.movDir else 0
         for boolean_field in ['repeat', 'altern']:
             self.fields[boolean_field].choices = [('0', ''), ('1', _('Yes'))]
         self.fields['repeat'].initial = self.variant.repeat_to_choice()
         self.fields['altern'].initial = self.variant.altern_to_choice()
-        self.fields['relOriMov'] = forms.ChoiceField(label=_('Relative Orientation: Movement'),
-                                                   choices=choicelist_queryset_to_translated_dict(
-                                                       list(FieldChoice.objects.filter(field='RelOriMov').order_by(
-                                                           'machine_value')),
-                                                       ordered=False, id_prefix='', shortlist=False
-                                                   ),
-                                                   widget=forms.Select(attrs=ATTRS_FOR_FORMS),
-                                                   required=False)
-        self.fields['relOriMov'].initial = self.variant.relOriMov.machine_value if self.variant.relOriMov else 0
-        self.fields['relOriLoc'] = forms.ChoiceField(label=_('Relative Orientation: Location'),
-                                                   choices=choicelist_queryset_to_translated_dict(
-                                                       list(FieldChoice.objects.filter(field='RelOriLoc').order_by(
-                                                           'machine_value')),
-                                                       ordered=False, id_prefix='', shortlist=False
-                                                   ),
-                                                   widget=forms.Select(attrs=ATTRS_FOR_FORMS),
-                                                   required=False)
-        self.fields['relOriLoc'].initial = self.variant.relOriLoc.machine_value if self.variant.relOriLoc else 0
-        self.fields['oriCh'] = forms.ChoiceField(label=_('Orientation Change'),
-                                                   choices=choicelist_queryset_to_translated_dict(
-                                                       list(FieldChoice.objects.filter(field='OriChange').order_by(
-                                                           'machine_value')),
-                                                       ordered=False, id_prefix='', shortlist=False
-                                                   ),
-                                                   widget=forms.Select(attrs=ATTRS_FOR_FORMS),
-                                                   required=False)
-        self.fields['oriCh'].initial = self.variant.oriCh.machine_value if self.variant.oriCh else 0
+        if self.use_lookaheads == 'lookaheads':
+            self.fields['relOriMov'] = forms.CharField(label=_('Relative Orientation: Movement'))
+            self.fields['relOriMov'].initial = self.variant.relOriMov.name if self.variant.relOriMov else '-'
+            self.fields['relOriMov'].machine_value = self.variant.relOriMov.machine_value if self.variant.relOriMov else 0
+            self.fields['relOriLoc'] = forms.CharField(label=_('Relative Orientation: Location'))
+            self.fields['relOriLoc'].initial = self.variant.relOriLoc.name if self.variant.relOriLoc else '-'
+            self.fields['relOriLoc'].machine_value = self.variant.relOriLoc.machine_value if self.variant.relOriLoc else 0
+            self.fields['oriCh'] = forms.CharField(label=_('Orientation Change'))
+            self.fields['oriCh'].initial = self.variant.oriCh.name if self.variant.oriCh else '-'
+            self.fields['oriCh'].machine_value = self.variant.oriCh.machine_value if self.variant.oriCh else 0
+        else:
+            self.fields['relOriMov'] = forms.ChoiceField(label=_('Relative Orientation: Movement'),
+                                                       choices=choicelist_queryset_to_translated_dict(
+                                                           list(FieldChoice.objects.filter(field='RelOriMov').order_by(
+                                                               'machine_value')),
+                                                           ordered=False, id_prefix='', shortlist=False
+                                                       ),
+                                                       widget=forms.Select(attrs=ATTRS_FOR_FORMS),
+                                                       required=False)
+            self.fields['relOriMov'].initial = self.variant.relOriMov.machine_value if self.variant.relOriMov else 0
+            self.fields['relOriLoc'] = forms.ChoiceField(label=_('Relative Orientation: Location'),
+                                                       choices=choicelist_queryset_to_translated_dict(
+                                                           list(FieldChoice.objects.filter(field='RelOriLoc').order_by(
+                                                               'machine_value')),
+                                                           ordered=False, id_prefix='', shortlist=False
+                                                       ),
+                                                       widget=forms.Select(attrs=ATTRS_FOR_FORMS),
+                                                       required=False)
+            self.fields['relOriLoc'].initial = self.variant.relOriLoc.machine_value if self.variant.relOriLoc else 0
+            self.fields['oriCh'] = forms.ChoiceField(label=_('Orientation Change'),
+                                                       choices=choicelist_queryset_to_translated_dict(
+                                                           list(FieldChoice.objects.filter(field='OriChange').order_by(
+                                                               'machine_value')),
+                                                           ordered=False, id_prefix='', shortlist=False
+                                                       ),
+                                                       widget=forms.Select(attrs=ATTRS_FOR_FORMS),
+                                                       required=False)
+            self.fields['oriCh'].initial = self.variant.oriCh.machine_value if self.variant.oriCh else 0
         self.fields['locVirtObj'].initial = self.variant.locVirtObj if self.variant.locVirtObj not in ['', '-', None] else ''
         self.fields['phonOth'].initial = self.variant.phonOth if self.variant.phonOth not in ['', '-', None] else ''
         self.fields['mouthG'].initial = self.variant.mouthG if self.variant.mouthG not in ['', '-', None] else ''
