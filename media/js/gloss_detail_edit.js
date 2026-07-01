@@ -1,8 +1,6 @@
 
 var busy_editing = false;
 
-var console_log = false;
-
 // bloodhounds for field choices
 
 // Define all typeahead configurations in one place
@@ -61,8 +59,6 @@ function createTypeahead(config) {
             autoSelect: false,
             templates: {
                 suggestion: function(fc) {
-                    if (console_log) { console.log('name: '+fc.machine_value+' '+fc.name); }
-                    if (console_log) { console.log('pattern: '+`${fc.name}`); }
                     return `<p class="tt-choice"><strong>${fc.name}</strong></p>`;
                 }
             }
@@ -100,7 +96,6 @@ function selectionIncludes(selection, new_selection) {
 }
 
 function selectField(field, machine_value, value) {
-    if (console_log) { console.log('selectField: '+field+' '+machine_value+' '+value+' busy editing '+busy_editing); }
     if (field === 'dialect') {
         selected_dialect.push({'name': value, 'machine_value': machine_value})
     } else if (field === 'semField') {
@@ -112,22 +107,18 @@ function selectField(field, machine_value, value) {
 }
 
 function unselectField(field, machine_value) {
-    if (console_log) { console.log('unselectField: '+field+' '+machine_value+' busy editing '+busy_editing); }
     if (field === 'dialect') {
         selected_dialect = selected_dialect.filter(item => {
             return !(item['machine_value'] === machine_value);
         });
-        if (console_log) { console.log('unselect '+JSON.stringify(selected_dialect)); }
     } else if (field === 'semField') {
         selected_semField = selected_semField.filter(item => {
             return !(item['machine_value'] === machine_value);
         });
-        if (console_log) { console.log('unselect '+JSON.stringify(selected_semField)); }
     } else if (field === 'derivHist') {
         selected_derivHist = selected_derivHist.filter(item => {
             return !(item['machine_value'] === machine_value);
         });
-        if (console_log) { console.log('unselect '+JSON.stringify(selected_derivHist)); }
     }
     busy_editing = true;
     renderMultiSelected(field);  // stay in edit mode
@@ -135,27 +126,21 @@ function unselectField(field, machine_value) {
 
 // dynamically sets up the editable buttons in the left column during edit mode
 function renderMultiSelected(field) {
-    if (console_log) { console.log('call to renderMultiSelecte: '+field+' busy is '+busy_editing); }
     var selected_fields = window["selected_"+field];  // read-only in this function
-    if (console_log) { console.log('call to render multiselected '+field+' '+JSON.stringify(selected_fields)); }
     var container = $('#multiselect_value_'+field);
     container.empty();
     var values_input = $('#'+field+'_hidden_input_values');
     values_input.empty();
     var placeholder_lookahead = $('#'+field+'_multiselect');
-    if (console_log) { console.log('selected fields: '+JSON.stringify(selected_fields)); }
     selected_fields.forEach(function(item) {
         var input_value = $('<input type="hidden" name="'+field+'" value="'+item.machine_value+'">');
         var tag = $('<button class="actionButton remove_field_'+field+'">').text(item.name);
         var removeBtn = $('<span class="remove" data-field="'+field+'" data-machine_value="'+item.machine_value+'">&nbsp;&nbsp;&times;</span>').on('click', function(e) {
-            if (console_log) { console.log('removeBtn clicked: '+item.name+' busy editing is '+busy_editing); }
             busy_editing = true;
-            if (console_log) { console.log('parent id '+$(this).parent().attr('class')); }
             $(this).parent().trigger('removeClicked');
         });
         tag.append(removeBtn);
         tag.append('</button>').on('removeClicked', function() {
-            if (console_log) { console.log('button received event removeClicked'); }
             unselectField(field, item.machine_value);  // destructive
         });
         container.append(tag);
@@ -378,33 +363,10 @@ function disable_editing(category) {
          var data_category = $(this).attr('data-category');
          if (!data_category) {return;}
          if (data_category !== category) {return;}
-         if (this_id.endsWith("_lookahead")) {
+         if (["_lookahead", "_value", "_text", "_textarea", "_multiselect", ""].some(pattern => this_id.endsWith(pattern))) {
              $(this).attr('disabled', true);
-             return;
-         }
-         if (this_id.endsWith("_value")) {
+         } else if (["definition", "provenance", "othermedia", "nmevideo"].some(pattern => this_id.startsWith(pattern))) {
              $(this).attr('disabled', true);
-         }
-         if (this_id.endsWith("_text")) {
-             $(this).attr('disabled', true);
-         }
-         if (this_id.endsWith("_textarea")) {
-             $(this).attr('disabled', true);
-         }
-         if (this_id.startsWith("definition")) {
-             $(this).attr('disabled', true);
-         }
-         if (this_id.startsWith("provenance")) {
-             $(this).attr('disabled', true);
-         }
-         if (this_id.startsWith("othermedia")) {
-             $(this).attr('disabled', true);
-         }
-         if (this_id.endsWith("_multiselect")) {
-             $(this).attr('disabled', true);
-         }
-         if (this_id.startsWith("nmevideo")) {
-            $(this).attr('disabled', true);
          }
      });
 }
@@ -417,33 +379,10 @@ function enable_editing(category) {
          var data_category = $(this).attr('data-category');
          if (!data_category) {return;}
          if (data_category !== category) {return;}
-         if (this_id.endsWith("_lookahead")) {
+         if (["_lookahead", "_value", "_text", "_textarea", "_multiselect", ""].some(pattern => this_id.endsWith(pattern))) {
              $(this).removeAttr('disabled');
-             return;
-         }
-         if (this_id.endsWith("_value")) {
+         } else if (["definition", "provenance", "othermedia", "nmevideo"].some(pattern => this_id.startsWith(pattern))) {
              $(this).removeAttr('disabled');
-         }
-         if (this_id.endsWith("_text")) {
-             $(this).removeAttr('disabled');
-         }
-         if (this_id.endsWith("_textarea")) {
-             $(this).removeAttr('disabled');
-         }
-         if (this_id.startsWith("definition")) {
-             $(this).removeAttr('disabled');
-         }
-         if (this_id.startsWith("provenance")) {
-             $(this).removeAttr('disabled');
-         }
-         if (this_id.startsWith("othermedia")) {
-             $(this).removeAttr('disabled');
-         }
-         if (this_id.endsWith("_multiselect")) {
-             $(this).removeAttr('disabled');
-         }
-         if (this_id.startsWith("nmevideo")) {
-            $(this).removeAttr('disabled');
          }
      });
 }
@@ -506,8 +445,7 @@ function hide_edit_panel(category) {
 }
 
 function toggle_edit_panel(category) {
-    if ($('#enable_edit_'+category).hasClass('edit_enabled'))
-    {
+    if ($('#enable_edit_'+category).hasClass('edit_enabled')) {
         hide_edit_panel(category);
     } else {
         show_edit_panel(category);
@@ -545,7 +483,6 @@ function readyLookahead(config) {
           $(this).attr('data-preselect', suggestion.machine_value);
     });
     $(config.element).on("focus", function() {
-      if (console_log) { console.log('focus on typeahead '+config.name); }
       var preselect_machine_value = $(this).attr('data-preselect');
       if (!preselect_machine_value) {
         $(this).val('').trigger('input').typeahead('open');
@@ -559,7 +496,6 @@ function readyLookahead(config) {
     for (const variationid of phonological_variations_ids) {
         var typeahead_element = '#'+config.name+'_'+variationid+'_lookahead';
         $(typeahead_element).on("focus", function() {
-              if (console_log) { console.log('focus on typeahead '+config.name+' '+variationid); }
               var preselect_machine_value = $(this).attr('data-preselect');
               if (!preselect_machine_value) {
                 $(this).val('').trigger('input').typeahead('open');
@@ -585,8 +521,6 @@ function readyMultiselect(config) {
     typeahead($(config.lookup));
 
     $(config.lookup).bind('typeahead:selected', function(ev, suggestion) {
-          if (console_log) { console.log('bind selection: '+suggestion.name); }
-          if (console_log) { console.log('check selection '+config.selected_fields); }
           if (!selectionIncludes(config.selected_fields, suggestion)) {
                 busy_editing = true;
                 selectField(config.name, suggestion.machine_value, suggestion.name)
@@ -704,7 +638,6 @@ $(document).ready(function() {
     $('.edit-cancel').on('click', function() {
         var panel_category = $(this).attr('data-category');
         if (!panel_category) { return; }
-        if (console_log) { console.log('panel '+panel_category+' busy editing '+busy_editing); }
         if (!busy_editing) {
             if (panel_category === 'semantics') {
                 initialise_multiselect('semField');
@@ -746,8 +679,6 @@ $(document).ready(function() {
             } else if (this_name === 'semField') {
                 selected_semField.length = 0;
                 selected_semField = JSON.parse(JSON.stringify(initial_semField));
-                if (console_log) { console.log('edit-cancel initial semField: '+JSON.stringify(initial_semField)); }
-                if (console_log) { console.log('edit-cancel selected semField: '+JSON.stringify(selected_semField)); }
                 initialise_multiselect('semField');
             } else if (this_name === 'derivHist') {
                 selected_derivHist.length = 0;
@@ -1034,7 +965,6 @@ $(document).ready(function() {
     });
     busy_editing = false;
     $('#enable_edit_general').on("click", function() {
-        if (console_log) { console.log('click enable edit general '+busy_editing); }
         toggle_edit_panel('general');
     });
     $('#enable_edit_phonology').on("click", function() {
