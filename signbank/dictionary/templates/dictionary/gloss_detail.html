@@ -575,7 +575,7 @@ input[type="text"]:focus {
     color: red;
 }
 .tt-input {
-    background-color: rgba(50,50,50,15%) !important;
+    background-color: var(--ultron) !important;
     border: none;
     width: auto;
 }
@@ -584,7 +584,8 @@ input[type="text"]:focus {
     z-index: 999;
 }
 input .tt-hint {
-    color: grey;
+    color: var(--beam);
+    opacity: 1;
 }
 .tt-dropdown-menu:active {
     z-index: 999 !important;
@@ -647,6 +648,10 @@ input .tt-hint {
 }
 .editform-phonology input {
     background-color: inherit !important;
+}
+.editform-phonology input::placeholder {
+    color: inherit;
+    opacity: 1;
 }
 .editform-phonology textarea {
     background-color: inherit !important;
@@ -825,6 +830,7 @@ input .tt-hint {
     cursor: pointer;
     color: var(--beam) !important;
     background-color: inherit !important;
+    opacity: 1;
 }
 .form-control:enabled input {
     color: red;
@@ -2964,7 +2970,7 @@ input .tt-hint {
             {% if gloss_variations %}
             <tr>
                  <th style="width:300px;">{% trans "Phonological Variations" %}</th>
-                 <th class='td td-light' style="color:darkred; float:left;width:150px;border-top:0;">#1</th>
+                 <th class='th th-light' style="color:darkred; float:left;width:150px;border-top:0;">#1</th>
                  {% for gv in gloss_variations %}
                  <th class='th th-light' style="color:darkred">
                      #{{gv.variation}}
@@ -2991,7 +2997,7 @@ input .tt-hint {
                 {% with phonologyform.fields|get_item:'handedness' as handedness_field %}
                 {% with phonologyform.fields|get_item:'weakdrop' as weakdrop_field %}
                 {% with phonologyform.fields|get_item:'weakprop' as weakprop_field %}
-                <td class="editform-phonology" style="width:150px !important;">
+                <td class="editform-phonology" style="width:150px;">
                     {% if use_lookaheads == 'lookaheads' %}
                     <div style="display:table-cell; width:50px;" id="handedness_cell">
                     <input class='form-control form-control-light handednesstypeahead' type="text"
@@ -3049,7 +3055,7 @@ input .tt-hint {
                  {% with variant_form.fields|get_item:'handedness' as handedness_field %}
                  {% with variant_form.fields|get_item:'weakdrop' as weakdrop_field %}
                  {% with variant_form.fields|get_item:'weakprop' as weakprop_field %}
-                 <td class='td td-light' style="width:150px;">
+                 <td class='editform-phonology' style="width:150px;">
                     {% if use_lookaheads == 'lookaheads' %}
                     <div style="display:table-cell; width:50px;" id="handedness_{{gv.id}}_cell">
                     <input class='form-control form-control-light handednesstypeahead' type="text"
@@ -3117,7 +3123,7 @@ input .tt-hint {
                 <td class="editform-phonology">
                     {% if use_lookaheads == 'lookaheads' %}
                     <div style="display:table-cell;" id="domhndsh_cell">
-                    <input class='form-control form-control-light domhndshtypeahead' type="text" size="40"
+                    <input class='form-control form-control-light domhndshtypeahead' type="text" size="25"
                            placeholder="{{domhndsh_field.initial}}" id="domhndsh_lookahead" value="{{domhndsh_field.initial}}"
                            data-machine_value='{{domhndsh_field.machine_value}}' data-field="domhndsh"
                            data-category="phonology" autocomplete="off" data-initial="{{domhndsh_field.initial}}" >
@@ -3162,7 +3168,7 @@ input .tt-hint {
                  <td class="editform-phonology">
                     {% if use_lookaheads == 'lookaheads' %}
                     <div style="display:table-cell;" id="domhndsh_{{gv.id}}_cell">
-                    <input class='form-control form-control-light domhndshtypeahead' type="text" size="40"
+                    <input class='form-control form-control-light domhndshtypeahead' type="text" size="25"
                            placeholder="{{domhndsh_field.initial}}" id="domhndsh_{{gv.id}}_lookahead" value="{{domhndsh_field.initial}}"
                            data-machine_value='{{domhndsh_field.machine_value}}' data-field="domhndsh"
                            data-category="phonology" autocomplete="off" data-initial="{{domhndsh_field.initial}}" >
@@ -3215,7 +3221,7 @@ input .tt-hint {
                 <td class="editform-phonology">
                     {% if use_lookaheads == 'lookaheads' %}
                     <div style="display:table-cell;" id="subhndsh_cell" >
-                    <input class='form-control form-control-light subhndshtypeahead' type="text" size="40"
+                    <input class='form-control form-control-light subhndshtypeahead' type="text" size="25"
                            placeholder="{{subhndsh_field.initial}}"
                            id="subhndsh_lookahead" value="{{subhndsh_field.initial}}" data-initial="{{subhndsh_field.initial}}"
                            data-machine_value='{{subhndsh_field.machine_value}}' data-field="subhndsh"
@@ -3261,7 +3267,7 @@ input .tt-hint {
                  <td class="editform-phonology">
                     {% if use_lookaheads == 'lookaheads' %}
                     <div style="display:table-cell;" id="subhndsh_{{gv.id}}_cell" >
-                    <input class='form-control form-control-light subhndshtypeahead' type="text" size="40"
+                    <input class='form-control form-control-light subhndshtypeahead' type="text" size="25"
                            placeholder="{{subhndsh_field.initial}}"
                            id="subhndsh_{{gv.id}}_lookahead" value="{{subhndsh_field.initial}}" data-initial="{{subhndsh_field.initial}}"
                            data-machine_value='{{subhndsh_field.machine_value}}' data-field="subhndsh"

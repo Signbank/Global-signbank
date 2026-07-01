@@ -503,7 +503,7 @@ table {
     border: 1px solid black;
     z-index: 100000 !important;
     max-height: 25em;
-    overflow: auto;
+    overflow-y: auto;
 }
 
 .col-md-4

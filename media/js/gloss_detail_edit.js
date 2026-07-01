@@ -1,7 +1,7 @@
 
 var busy_editing = false;
 
-var console_log = true;
+var console_log = false;
 
 // bloodhounds for field choices
 
@@ -63,7 +63,7 @@ function createTypeahead(config) {
                 suggestion: function(fc) {
                     if (console_log) { console.log('name: '+fc.machine_value+' '+fc.name); }
                     if (console_log) { console.log('pattern: '+`${fc.name}`); }
-                    return `<p><strong>${fc.name}</strong></p>`;
+                    return `<p class="tt-choice"><strong>${fc.name}</strong></p>`;
                 }
             }
         });
@@ -1012,23 +1012,24 @@ $(document).ready(function() {
             }
          });
      });
-     var lookahead_elements = $('[id*="_lookahead"]');
+     var lookahead_elements = $('[id$="_lookahead"]');
      lookahead_elements.each(function() {
          var this_id = $(this).attr("id");
          var cell_lookup = '#' + this_id.slice(0, -'_lookahead'.length) + '_cell';
-         var placeholder_text = $(this).attr("placeholder")
+         var placeholder_text = $(this).attr("placeholder");
          if (!placeholder_text) {return;}
          var width_of_new_value = placeholder_text.length * 10 + 30;
          $(cell_lookup).attr('data-width', width_of_new_value);
     });
-    var cell_elements = $('[id*="_cell"]');
+    var cell_elements = $('[id$="_cell"]');
     cell_elements.each(function() {
         var this_width = $(this).attr("data-width");
         if (!this_width) {return;};
         $(this).css('width', this_width+"px");
-        var tt_children = $(this).find('.tt-input');
+        var max_width = 300;
+        var tt_children = $(this).find('.tt-menu');
         $(tt_children).each(function() {
-            $(this).css('width', this_width);
+            $(this).css('width', max_width+"px");
         });
     });
     busy_editing = false;
