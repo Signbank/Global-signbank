@@ -368,9 +368,7 @@ def update_gloss_phonology(request, glossid):
     gloss_variations = PhonologicalVariation.objects.filter(gloss=gloss).order_by('variation')
     variations = {str(variation.pk): variation for variation in gloss_variations }
     value_dict = get_gloss_update_human_readable_value_dict(request)
-    print('value dict: ', value_dict)
     for field_pattern, value in value_dict.items():
-        print('update gloss phonology: ', field_pattern, value, type(value))
         if re.search(r'_(\d+)$', field_pattern):
             field, variantid = field_pattern.rsplit('_', 1)
             variant = variations[variantid]
