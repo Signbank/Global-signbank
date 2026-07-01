@@ -516,7 +516,6 @@ const multiselectConfig = [
 ]
 
 function readyMultiselect(config) {
-    let selected_fields = window[config.selected_fields];
     let typeahead = window[config.name+'typeahead'];
     typeahead($(config.lookup));
 
@@ -710,8 +709,62 @@ $(document).ready(function() {
         }
     });
 
-     $('.quick_save_publication').click(function(e)
-	 {
+     $('.quick_save_phonology').click(function(e) {
+        e.preventDefault();
+	    var objectid = $(this).attr('value');
+        var panel = $(this).attr('data-category');
+        var update_url = url + "/dictionary/update/update_gloss_phonology/" + objectid + "/";
+        var update = { 'csrfmiddlewaretoken': csrf_token };
+        for (var i=0; i < gloss_phonology.length; i++) {
+            var field = gloss_phonology[i];
+            var select_key = '#' + field;
+            if (['weakdrop', 'weakprop', 'domhndsh_letter_or_number', 'subhndsh_letter_or_number', 'repeat', 'altern'].includes(field)) {
+                select_key += '_select_value';
+            } else if (['locVirtObj', 'phonOth', 'mouthG', 'mouthing', 'phonetVar'].includes(field)) {
+                select_key += '_text';
+            } else if (use_lookaheads === 'lookaheads') {
+                select_key += '_machine_value';  // field choice selections
+            } else {
+                select_key += '_value';  // field choice selections
+            }
+            update[field] = $(select_key).val();
+        }
+        for (const variationid of phonological_variations_ids) {
+            for (var i=0; i < gloss_phonology.length; i++) {
+                var field = gloss_phonology[i];
+                var field_key = field+'_'+variationid;
+                var select_key = '#'+field_key;
+                if (['weakdrop', 'weakprop', 'domhndsh_letter_or_number', 'subhndsh_letter_or_number', 'repeat', 'altern'].includes(field)) {
+                    select_key += '_select_value';
+                } else if (['locVirtObj', 'phonOth', 'mouthG', 'mouthing', 'phonetVar'].includes(field)) {
+                    select_key += '_text';
+                } else if (use_lookaheads === 'lookaheads') {
+                    select_key += '_machine_value';  // field choice selections
+                } else {
+                    select_key += '_value';  // field choice selections
+                }
+                update[field_key] = $(select_key).val();
+            }
+         }
+         $.ajax({
+            url : update_url,
+            type: 'POST',
+            data: update,
+            datatype: "json",
+            success : function(data) {
+                if (data.success) {
+                    sessionStorage.setItem('panel', panel);
+                    setTimeout(function() {
+                        location.reload(true);
+                    }, 500);
+                }
+            },
+            error: function (xhr, status, error) {
+                alert("There was an error processing this change: " + xhr.responseText );
+            }
+         });
+     });
+     $('.quick_save_publication').click(function(e) {
          e.preventDefault();
 	     var glossid = $(this).attr('value');
 	     var panel = $(this).attr('data-category');
@@ -725,7 +778,6 @@ $(document).ready(function() {
                 update[field_key] = field_value;
             }
          }
-         alert('update: '+JSON.stringify(update));
          $.ajax({
             url : url + "/dictionary/update/edit_gloss_save/" + glossid,
             type: 'POST',
@@ -744,8 +796,7 @@ $(document).ready(function() {
             }
          });
      });
-     $('.quick_save_general').click(function(e)
-	 {
+     $('.quick_save_general').click(function(e) {
          e.preventDefault();
 	     var glossid = $(this).attr('value');
 	     var panel = $(this).attr('data-category');
@@ -800,8 +851,7 @@ $(document).ready(function() {
             }
          });
      });
-     $('.quick_set_lemma').click(function(e)
-	 {
+     $('.quick_set_lemma').click(function(e) {
          e.preventDefault();
 	     var set_lemma_url = $('#set_lemma_form').attr("action");
 	     var new_lemma_pk = $('#new_lemma_pk').attr('value');
@@ -825,8 +875,7 @@ $(document).ready(function() {
             }
          });
      });
-     $('.quick_set_annotation').click(function(e)
-	 {
+     $('.quick_set_annotation').click(function(e) {
          e.preventDefault();
          var update = { 'csrfmiddlewaretoken': csrf_token };
          var button_id = $(this).attr('id');
@@ -854,8 +903,7 @@ $(document).ready(function() {
             }
          });
      });
-     $('.quick_update_nmevideo').click(function(e)
-	 {
+     $('.quick_update_nmevideo').click(function(e) {
          e.preventDefault();
          var nmevideoid = $(this).attr('data-value');
 	     var update_nmevideo_url = $('#nmevideo_update_'+nmevideoid).attr("action");
@@ -887,8 +935,7 @@ $(document).ready(function() {
             }
          });
      });
-     $('.quick_save_semantics').click(function(e)
-	 {
+     $('.quick_save_semantics').click(function(e) {
          e.preventDefault();
 	     var glossid = $(this).attr('value');
 	     var panel = $(this).attr('data-category');

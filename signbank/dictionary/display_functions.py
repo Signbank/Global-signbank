@@ -8,17 +8,9 @@ from signbank.dictionary.models import FieldChoiceForeignKey, Gloss, Phonologica
 def show_fields_rows(gloss):
     show_field = {}
     for field in GLOSS_FIELDS_UPDATES:
-        if field in ['semField']:
-            semantic_fields = gloss.semField.all()
-            show_field[field] = [semantic_fields.count() > 0]
-            continue
-        if field in ['derivHist']:
-            derivation_history_fields = gloss.derivHist.all()
-            show_field[field] = [derivation_history_fields.count() > 0]
-            continue
-        if field in ['dialect']:
-            dialect_fields = gloss.dialect.all()
-            show_field[field] = [dialect_fields.count() > 0]
+        if field in ['semField', 'derivHist', 'dialect']:
+            field_value = getattr(gloss, field)
+            show_field[field] = [field_value.exists()]
             continue
         if field in ['domhndsh_letter_or_number']:
             letter_value = getattr(gloss, 'domhndsh_letter')
