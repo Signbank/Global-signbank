@@ -537,17 +537,24 @@ function readyMultiselect(config) {
     $(config.lookup).bind('typeahead:selected', function(ev, suggestion) {
           if (!selectionIncludes(config.selected_fields, suggestion)) {
                 busy_editing = true;
-                selectField(config.name, suggestion.machine_value, suggestion.name)
+                selectField(config.name, suggestion.machine_value, suggestion.name);
                 renderMultiSelected(config.name);
           }
           $(this).typeahead('val', '');
     });
-    $(config.element).on("focus", function() {
+    $(config.element).on("click", function() {
       $(this).attr('value', '');
+      $(this).val('').trigger('input').typeahead('open');
     });
 }
 
-$('[class^="multiselect_"], [class^="select_"]').each(function() {
+$('[class^="multiselect_"]').each(function() {
+    $(this).on('change', function() {
+        busy_editing = true;
+    });
+});
+
+$('[class^="select_"]').each(function() {
     $(this).on('change', function() {
         busy_editing = true;
     });
