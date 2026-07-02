@@ -495,6 +495,14 @@ function readyLookahead(config) {
     });
     for (const variationid of phonological_variations_ids) {
         var typeahead_element = '#'+config.name+'_'+variationid+'_lookahead';
+        $(typeahead_element).bind('typeahead:selected', function(ev, suggestion) {
+              busy_editing = true;
+              $(this).attr('value', suggestion.name);
+              $(this).attr("val", suggestion.name);
+              $(this).attr('placeholder', suggestion.name);
+              $('#'+config.name+'_'+variationid+'_machine_value').attr('value', suggestion.machine_value);
+              $(this).attr('data-preselect', suggestion.machine_value);
+        });
         $(typeahead_element).on("focus", function() {
               var preselect_machine_value = $(this).attr('data-preselect');
               if (!preselect_machine_value) {

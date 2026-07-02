@@ -86,7 +86,7 @@ from signbank.dictionary.forms import (AnnotatedSentenceSearchForm, GlossSearchF
                                        GlossMorphologyForm, GlossBlendForm, DefinitionForm, NotesForm, GlossMorphemeForm,
                                        SemanticFieldTranslationForm, ZippedVideosForm, SearchGlossIds, ProvenanceForm,
                                        check_language_fields, check_multilingual_fields, SentenceForm,
-                                       GlossForeignRelationForm, OtherMediaUpdateForm, PhonologicalVariationUpdateForm,
+                                       GlossForeignRelationForm, OtherMediaUpdateForm,
                                        check_language_fields_annotatedsentence, GlossProvenanceForm, check_sortOrder_handshapes)
 from signbank.tools import (write_ecv_file_for_dataset, find_duplicate_lemmas,
                             construct_scrollbar, get_dataset_languages, get_datasets_with_public_glosses,
@@ -1433,7 +1433,7 @@ class GlossDetailView(DetailView):
         context['use_lookaheads'] = self.use_lookaheads
 
         context['glossform'] = GlossForm(gloss=context['gloss'], use_lookaheads=context['use_lookaheads'])
-        context['phonologyform'] = PhonologyForm(gloss=context['gloss'], use_lookaheads=context['use_lookaheads'])
+        context['phonologyform'] = PhonologyForm(object=context['gloss'], use_lookaheads=context['use_lookaheads'])
         context['semanticsform'] = SemanticsForm(gloss=context['gloss'], use_lookaheads=context['use_lookaheads'])
         context['publicationform'] = PublicationForm(gloss=context['gloss'])
 
@@ -1479,7 +1479,7 @@ class GlossDetailView(DetailView):
         context['phonological_variations_ids'] = [str(gv.pk) for gv in context['gloss_variations']]
         variation_forms = dict()
         for variation in context['gloss_variations']:
-            variation_forms[variation.pk] = PhonologicalVariationUpdateForm(variantid=variation.pk, use_lookaheads=context['use_lookaheads'])
+            variation_forms[variation.pk] = PhonologyForm(object=variation, use_lookaheads=context['use_lookaheads'])
         context['variation_forms'] = variation_forms
 
         context['show_field_row'] = show_fields_rows(gloss)
