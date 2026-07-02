@@ -127,10 +127,13 @@ function unselectField(field, machine_value) {
 // dynamically sets up the editable buttons in the left column during edit mode
 function renderMultiSelected(field) {
     var selected_fields = window["selected_"+field];  // read-only in this function
+
     var container = $('#multiselect_value_'+field);
     container.empty();
+
     var values_input = $('#'+field+'_hidden_input_values');
     values_input.empty();
+
     var placeholder_lookahead = $('#'+field+'_multiselect');
     selected_fields.forEach(function(item) {
         var input_value = $('<input type="hidden" name="'+field+'" value="'+item.machine_value+'">');
@@ -143,6 +146,7 @@ function renderMultiSelected(field) {
         tag.append('</button>').on('removeClicked', function() {
             unselectField(field, item.machine_value);  // destructive
         });
+
         container.append(tag);
         values_input.append(input_value);
     });
@@ -155,10 +159,13 @@ function renderMultiSelected(field) {
 function initialise_multiselect(field) {
     busy_editing = false;
     var initial_selection = window["initial_"+field];  // read-only in this function
+
     var this_multiselect = $("#multiselect_value_"+field);
     this_multiselect.empty();
+
     var values_input = $('#'+field+'_hidden_input_values');
     values_input.empty();
+
     initial_selection.forEach(function(item) {
         var tag = $('<button class="actionButton"></button>').text(item.name);
         this_multiselect.append(tag);
@@ -540,13 +547,7 @@ function readyMultiselect(config) {
     });
 }
 
-$('[class^="multiselect_"]').each(function() {
-    $(this).on('change', function() {
-        busy_editing = true;
-    });
-});
-
-$('[class^="select_"]').each(function() {
+$('[class^="multiselect_"], [class^="select_"]').each(function() {
     $(this).on('change', function() {
         busy_editing = true;
     });
