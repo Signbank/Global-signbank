@@ -12,15 +12,7 @@ def show_fields_rows(gloss):
             field_value = getattr(gloss, field)
             show_field[field] = [field_value.exists()]
             continue
-        if field in ['domhndsh_letter_or_number']:
-            letter_value = getattr(gloss, 'domhndsh_letter')
-            number_value = getattr(gloss, 'domhndsh_number')
-            show_field[field] = [not letter_value and not number_value]
-            continue
-        if field in ['subhndsh_letter_or_number']:
-            letter_value = getattr(gloss, 'subhndsh_letter')
-            number_value = getattr(gloss, 'subhndsh_number')
-            show_field[field] = [not letter_value and not number_value]
+        if field in ['domhndsh_letter_or_number', 'subhndsh_letter_or_number']:
             continue
         field_value = getattr(gloss, field)
         if field_value is None or field_value in ['', 0, '-']:
@@ -42,15 +34,7 @@ def show_fields_rows(gloss):
         show_field[field] = [field_value not in [None, 0, '-', '', False]]
     for gv in PhonologicalVariation.objects.filter(gloss=gloss).order_by('variation'):
         for field in PHONOLOGY_FIELDS_UPDATES:
-            if field in ['domhndsh_letter_or_number']:
-                letter_value = getattr(gv, 'domhndsh_letter')
-                number_value = getattr(gv, 'domhndsh_number')
-                show_field[field].append(not letter_value and not number_value)
-                continue
-            if field in ['subhndsh_letter_or_number']:
-                letter_value = getattr(gv, 'subhndsh_letter')
-                number_value = getattr(gv, 'subhndsh_number')
-                show_field[field].append(not letter_value and not number_value)
+            if field in ['domhndsh_letter_or_number', 'subhndsh_letter_or_number']:
                 continue
             field_value = getattr(gv, field)
             if field_value is None or field_value in ['', 0, '-']:
@@ -72,5 +56,7 @@ def show_fields_rows(gloss):
             show_field[field].append(field_value not in [None, 0, '-', '', False])
     show_field_row = {}
     for field in GLOSS_FIELDS_UPDATES:
+        if field in ['domhndsh_letter_or_number', 'subhndsh_letter_or_number']:
+            continue
         show_field_row[field] = any(show_field[field])
     return show_field_row
