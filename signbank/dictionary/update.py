@@ -38,13 +38,13 @@ from signbank.settings.server_specific import (WRITABLE_FOLDER, PREFIX_URL, USE_
                                                OTHER_MEDIA_DIRECTORY, MORPHEME_DISPLAY_FIELDS,
                                                DATASET_METADATA_DIRECTORY, DATASET_EAF_DIRECTORY,
                                                GUARDED_GLOSS_DELETE, GUARDED_MORPHEME_DELETE,
-                                               FIELDS, HANDSHAPE_ETYMOLOGY_FIELDS, HANDEDNESS_ARTICULATION_FIELDS)
+                                               FIELDS)
 from signbank.dictionary.models import (Dataset, SignLanguage, Dialect, Gloss, Morpheme, Handshape,
                                         GlossSense, Sense, SenseTranslation, Translation, Keyword,
                                         Relation, RelationToForeignSign, BlendMorphology, MorphologyDefinition,
                                         Language, LemmaIdgloss, AnnotationIdglossTranslation, Definition,
                                         FieldChoice, FieldChoiceForeignKey, OtherMedia,
-                                        SemanticField, SemanticFieldTranslation, GLOSS_FIELDS_UPDATES, PHONOLOGY_FIELDS_UPDATES,
+                                        SemanticField, SemanticFieldTranslation, PHONOLOGY_FIELDS_UPDATES,
                                         DerivationHistory, AnnotatedSentence, AnnotatedSentenceTranslation,
                                         ExampleSentence, ExampleSentenceTranslation,
                                         Affiliation, AffiliatedUser, AffiliatedGloss, SearchHistory,
@@ -52,11 +52,10 @@ from signbank.dictionary.models import (Dataset, SignLanguage, Dialect, Gloss, M
                                         AnnotatedSentenceSource, AnnotatedSentenceContext, UserProfile, QueryParameter,
                                         get_default_language_id, GlossProvenance, PhonologicalVariation)
 from signbank.dictionary.forms import (RelationForm, VariantsForm, RelationToForeignSignForm, GlossBlendForm,
-                                       GlossCreateForm, DefinitionForm, GlossMorphemeForm, GlossMorphologyForm,
-                                       MorphemeCreateForm, LemmaCreateForm, AffiliationUpdateForm, OtherMediaForm,
-                                       CSVMetadataForm, EAFFilesForm, FieldChoiceColorForm,
-                                       SemanticFieldColorForm, HandshapeColorForm, DerivationHistoryColorForm,
-                                       TagUpdateForm, LemmaUpdateForm, GlossProvenanceForm)
+                                       DefinitionForm, GlossMorphemeForm, GlossMorphologyForm,
+                                       MorphemeCreateForm, LemmaCreateForm, AffiliationUpdateForm,
+                                       CSVMetadataForm, EAFFilesForm,
+                                       TagUpdateForm, LemmaUpdateForm)
 from signbank.dictionary.translate_choice_list import machine_value_to_translated_human_value
 from signbank.dictionary.context_data import get_selected_datasets
 
@@ -3710,6 +3709,7 @@ def update_excluded_choices(request):
 
 
 @require_http_methods(["POST"])
+@permission_required('dictionary.change_dataset')
 def update_field_choice_color(request, category, fieldchoiceid):
 
     new_color = request.POST.get('field_color', '#ffffff')

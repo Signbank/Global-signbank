@@ -1222,16 +1222,6 @@ class RecentGlossSearchForm(forms.ModelForm):
                                                     widget=forms.RadioSelect, required=True, initial='creationDate')
 
 
-class FieldChoiceColorForm(forms.Form):
-    field_color = forms.CharField(widget=ColorWidget)
-    readonly_fields = ['machine_value']
-
-    class Meta:
-        model = FieldChoice
-        fields = ['field', 'name'] \
-                 + ['field_color', 'machine_value', ]
-
-
 class FieldChoiceForm(forms.ModelForm):
     # this ModelForm is needed in order to validate against duplicates
 
@@ -1418,18 +1408,6 @@ class FieldChoiceForm(forms.ModelForm):
                                               + ' already exists'))
 
 
-class SemanticFieldColorForm(forms.Form):
-
-    show_field_choice_colors = SHOW_FIELD_CHOICE_COLORS
-    field_color = forms.CharField(widget=ColorWidget)
-    readonly_fields = ['machine_value']
-
-    class Meta:
-        model = SemanticField
-        fields = ['name'] \
-                 + ['field_color', 'machine_value', ]
-
-
 class SemanticFieldForm(forms.ModelForm):
     # this ModelForm is needed in order to validate against duplicates
 
@@ -1493,30 +1471,6 @@ class SemanticFieldTranslationForm(forms.ModelForm):
                     self.fields[namefield].value = semfield_translation.name
                 else:
                     self.fields[namefield].value = default_initial
-
-
-class DerivationHistoryColorForm(forms.Form):
-
-    show_field_choice_colors = SHOW_FIELD_CHOICE_COLORS
-    field_color = forms.CharField(widget=ColorWidget)
-    readonly_fields = ['machine_value']
-
-    class Meta:
-        model = DerivationHistory
-        fields = ['name'] \
-                 + ['field_color', 'machine_value', ]
-
-
-class HandshapeColorForm(forms.Form):
-
-    show_field_choice_colors = SHOW_FIELD_CHOICE_COLORS
-    field_color = forms.CharField(widget=ColorWidget)
-    readonly_fields = ['machine_value']
-
-    class Meta:
-        model = Handshape
-        fields = ['name'] \
-                 + ['field_color', 'machine_value', ]
 
 
 class HandshapeForm(forms.ModelForm):
