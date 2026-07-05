@@ -5767,7 +5767,9 @@ def handshape_ajax_complete(request, prefix):
 
     result = []
     for g in qs:
-        result.append({'name': g.name, 'machine_value': g.machine_value})
+        result += [{'name': f'{g.name}', 'machine_value': g.machine_value,
+                    'color': g.field_color if g.field_color[0] == '#' else f'#{g.field_color}'}]
+
 
     return JsonResponse(result, safe=False)
 

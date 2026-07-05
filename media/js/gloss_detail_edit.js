@@ -59,7 +59,7 @@ function createTypeahead(config) {
             autoSelect: false,
             templates: {
                 suggestion: function(fc) {
-                    return `<p class="tt-choice"><strong>${fc.name}</strong></p>`;
+                    return `<p class="tt-choice" style="background-color:${fc.color}"><strong>${fc.name}</strong></p>`;;
                 }
             }
         });

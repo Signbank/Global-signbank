@@ -3712,32 +3712,30 @@ def update_excluded_choices(request):
 @require_http_methods(["POST"])
 def update_field_choice_color(request, category, fieldchoiceid):
 
-    if category == 'SemField':
-        form = SemanticFieldColorForm(request.POST)
-        thisfieldchoice = get_object_or_404(SemanticField, pk=fieldchoiceid)
-    elif category == 'derivHist':
-        form = DerivationHistoryColorForm(request.POST)
-        thisfieldchoice = get_object_or_404(DerivationHistory, pk=fieldchoiceid)
-    elif category == 'Handshape':
-        form = HandshapeColorForm(request.POST)
-        thisfieldchoice = get_object_or_404(Handshape, pk=fieldchoiceid)
-    else:
-        form = FieldChoiceColorForm(request.POST)
-        thisfieldchoice = get_object_or_404(FieldChoice, pk=fieldchoiceid)
-
-    if not form.is_valid():
-        messages.add_message(request, messages.ERROR, gettext_lazy("The form is not valid."))
-        return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
-
-    new_color = form.cleaned_data['field_color']
-
+    new_color = request.POST.get('field_color', '#ffffff')
     if new_color[0] == '#':
         new_color = new_color[1:]
 
-    original_value = thisfieldchoice.field_color
-    machine_value = str(thisfieldchoice.machine_value)
-    thisfieldchoice.field_color = new_color
-    thisfieldchoice.save()
+    if category == 'SemField':
+        thisfieldchoice = SemanticField.objects.select_for_update().filter(pk=fieldchoiceid)
+        original_value = thisfieldchoice.first().field_color
+        machine_value = str(thisfieldchoice.first().machine_value)
+        thisfieldchoice.update(field_color=new_color)
+    elif category == 'derivHist':
+        thisfieldchoice = DerivationHistory.objects.select_for_update().filter(pk=fieldchoiceid)
+        original_value = thisfieldchoice.first().field_color
+        machine_value = str(thisfieldchoice.first().machine_value)
+        thisfieldchoice.update(field_color=new_color)
+    elif category == 'Handshape':
+        thisfieldchoice = Handshape.objects.select_for_update().filter(pk=fieldchoiceid)
+        original_value = thisfieldchoice.first().field_color
+        machine_value = str(thisfieldchoice.first().machine_value)
+        thisfieldchoice.update(field_color=new_color)
+    else:
+        thisfieldchoice = FieldChoice.objects.select_for_update().filter(pk=fieldchoiceid)
+        original_value = thisfieldchoice.first().field_color
+        machine_value = str(thisfieldchoice.first().machine_value)
+        thisfieldchoice.update(field_color=new_color)
 
     return HttpResponse(category + '\t' + fieldchoiceid + '\t' + str(original_value) + '\t' + str(new_color) + '\t' + machine_value,
                         {'content-type': 'text/plain'})

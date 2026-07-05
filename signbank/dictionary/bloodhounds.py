@@ -23,7 +23,8 @@ def fieldchoice_ajax_complete(request, field, prefix):
 
     result = []
     for f in qs:
-        result += [{'name': f'{f.name}', 'machine_value': f.machine_value}]
+        result += [{'name': f'{f.name}', 'machine_value': f.machine_value,
+                    'color': f.field_color if f.field_color[0] == '#' else f'#{f.field_color}'}]
 
     return JsonResponse(result, safe=False)
 
