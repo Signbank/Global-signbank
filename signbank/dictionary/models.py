@@ -4538,3 +4538,54 @@ class PhonologicalVariation(Phonology):
     class Meta:
         unique_together = (("gloss", "variation"),)
         ordering = ['gloss', 'variation']
+
+    def add_video(self, user, videofile):
+        # Preventing circular import
+        from signbank.video.models import (PhonologicalVariationVideo,
+                                           get_phonologicalvariation_video_file_path)
+
+        if not isinstance(videofile, TemporaryUploadedFile) or not isinstance(videofile, File):
+            msg = gettext("No video file supplied for video upload of variation video {variationid}.").format(variationid=self.pk)
+            raise ValidationError(msg)
+
+        # get existing gloss video objects but exclude NME and perspective videos
+        existing_videos = PhonologicalVariationVideo.objects.filter(variation=self).order_by('pk')
+
+        # Create a new GlossVideo object
+        video = PhonologicalVariationVideo(variation=self)
+        video.save()
+
+        # see if there is a file with the correct path that is not referred to by an object
+        relative_path = get_phonologicalvariation_video_file_path(video, str(videofile))
+        video_file_full_path = os.path.join(WRITABLE_FOLDER, relative_path)
+
+        video.videofile.save(relative_path, videofile)
+
+        self.save()
+
+        return video
+
+    def get_video(self):
+        """Return the video object for this gloss or None if no video available"""
+        from signbank.video.models import PhonologicalVariationVideo
+
+        existing_video = PhonologicalVariationVideo.objects.filter(variation=self).order_by('-pk').first()
+
+        if not existing_video:
+            return ''
+
+        video_path = str(existing_video.videofile)
+        filepath = os.path.join(settings.WRITABLE_FOLDER, video_path)
+
+        if not os.path.exists(filepath):
+            return ''
+
+        return video_path
+
+    def has_video(self):
+        return self.get_video() not in ['', None]
+
+    def get_video_url(self):
+        """return the url of the video for this gloss"""
+        video_path = self.get_video()
+        return escape_uri_path(video_path) if video_path else ''

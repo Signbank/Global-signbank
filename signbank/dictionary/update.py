@@ -347,6 +347,29 @@ def delete_phonological_variation(request, variationid):
     return JsonResponse({'success': True}, status=200)
 
 
+@require_http_methods(["POST"])
+@permission_required('dictionary.change_gloss')
+def add_phonological_variation_video(request, variationid):
+
+    variation = get_object_or_404(PhonologicalVariation, id=variationid)
+    gloss = variation.gloss
+
+    if 'videofile' in request.FILES.keys():
+        vfile = request.FILES['videofile']
+    elif 'videofile' in request.POST.keys():
+        # for unit tests, the file is found in the POST data
+        vfile = request.POST['videofile']
+    else:
+        error_message = gettext("A video file is required.")
+        # return JsonResponse({'error': error_message}, status=400)
+        messages.add_message(request, messages.ERROR, error_message)
+        return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': gloss.pk}))
+
+    variation.add_video(request.user, vfile)
+
+    return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': gloss.pk}))
+
+
 def get_gloss_update_human_readable_value_dict(request):
 
     value_dict = dict()

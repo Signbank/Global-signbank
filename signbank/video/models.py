@@ -32,7 +32,7 @@ from signbank.video.operations import (filename_matches_nme, filename_matches_nm
                                        filename_matches_perspective_backup, filename_matches_video,
                                        filename_matches_backup_video, move_file_to_prullenmand)
 from signbank.dictionary.models import (Gloss, Morpheme, Dataset, Language, LemmaIdgloss, LemmaIdglossTranslation,
-                                        ExampleSentence, AnnotatedSentence, AnnotatedSentenceSource)
+                                        ExampleSentence, AnnotatedSentence, AnnotatedSentenceSource, PhonologicalVariation)
 from signbank.tools import get_two_letter_dir, generate_still_image, get_checksum_for_path
 
 from signbank.video.resize_videos import VideoResizer
@@ -1528,3 +1528,43 @@ def delete_files(sender, instance, **kwargs):
         status = instance.delete_files()
     else:
         status = instance.delete_files()
+
+
+def get_phonologicalvariation_video_file_path(instance, original_filename):
+
+    ext = extension_on_filename(original_filename)
+
+    idgloss = instance.variation.gloss.idgloss
+    video_folder = os.path.join(GLOSS_VIDEO_DIRECTORY,
+                                instance.variation.gloss.lemma.dataset.acronym,
+                                get_two_letter_dir(idgloss))
+
+    filename = f'{instance.pk}-{instance.variation.gloss.pk}-{instance.variation.pk}{ext}'
+
+    path = os.path.join(str(video_folder), filename)
+    if ESCAPE_UPLOADED_VIDEO_FILE_PATH:
+        path = escape_uri_path(path)
+    if DEBUG_VIDEOS:
+        print('get_video_file_path: ', path)
+    return path
+
+
+class PhonologicalVariationVideo(models.Model):
+    """A video that represents a particular idgloss"""
+
+    videofile = models.FileField("video file", storage=storage,
+                                 validators=[validate_file_extension])
+
+    variation = models.ForeignKey(PhonologicalVariation, on_delete=models.CASCADE)
+
+    # video version, version = 0 is always the one that will be displayed
+    # we will increment the version (via reversion) if a new video is added
+    # for this gloss
+    version = models.IntegerField("Version", default=0, null=False)
+
+    def __init__(self, *args, **kwargs):
+        if 'upload_to' in kwargs:
+            self.upload_to = kwargs.pop('upload_to')
+        else:
+            self.upload_to = get_phonologicalvariation_video_file_path
+        super().__init__(*args, **kwargs)

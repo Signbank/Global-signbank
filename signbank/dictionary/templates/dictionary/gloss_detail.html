@@ -2563,7 +2563,27 @@
                  </th>
                  {% endfor %}
             </tr>
-
+            <tr>
+                <td></td><td></td>
+                 {% for gv in gloss_variations %}
+                        <td class="td td-light">
+                            {% if gv.has_video %}
+                                    <div id="player_variation_{{gv.id}}" style="display:table-cell;" class="read_only_phonology">
+                                        <video id='videoplayer_variation_{{gv.id}}' src="{{protected_media_url}}{{gv.get_video_url}}"
+                                               playsinline autoplay muted controls></video>
+                                    </div>
+                            {% endif %}
+                            <div class="edit_only_phonology" style="display:table-cell;">
+                            <form id='add_variations_video_{{gv.id}}' action='{% url "dictionary:add_phonological_variation_video" gv.id %}' method="POST" enctype="multipart/form-data">
+                             {% csrf_token %}
+                             <input type='file' name="videofile" class='form-control form-control-light'
+                                    id="variation_video_upload_{{gv.id}}" required="">
+                             <input class='btn btn-primary' value='Add Video' type='submit'>
+                            </form>
+                            </div>
+                        </td>
+                 {% endfor %}
+            </tr>
             {% endif %}
             {% with show_field_row|get_item:"handedness" as show_field %}
             {% if not show_field %}

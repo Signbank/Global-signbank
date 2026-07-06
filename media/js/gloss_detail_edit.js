@@ -413,6 +413,10 @@ function show_edit_panel(category) {
         $('.sense-button').show();
         $('.sense-icon').show();
     }
+    if (category === 'phonology') {
+        $('.edit_only_phonology').show();
+        $('.read_only_phonology').hide();
+    }
     if (category === 'publication') {
         $('.read_only_publication').hide();
         $('.edit_only_publication').show();
@@ -439,6 +443,10 @@ function hide_edit_panel(category) {
         $('.edit_only_general').hide();
         $('.sense-button').hide();
         $('.sense-icon').hide();
+    }
+    if (category === 'phonology') {
+        $('.edit_only_phonology').hide();
+        $('.read_only_phonology').show();
     }
     if (category === 'publication') {
         $('.read_only_publication').show();
