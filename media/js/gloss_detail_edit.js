@@ -548,22 +548,13 @@ function readyMultiselect(config) {
     });
 }
 
-$('[class^="multiselect_"]').each(function() {
-    $(this).on('change', function() {
-        busy_editing = true;
-    });
-});
-
-$('[class^="select_"]').each(function() {
+$('[class^="multiselect_"], [class^="select_"], [class^="text_"]').each(function() {
     $(this).on('change', function() {
         busy_editing = true;
     });
 });
 
 $('[class^="text_"]').each(function() {
-    $(this).on('change', function() {
-        busy_editing = true;
-    });
     $(this).on('reset', function() {
         var initial_value = $(this).attr('data-initial');
         $(this).val(initial_value);
