@@ -1,7 +1,7 @@
 
 from django.contrib import admin
 from signbank.video.models import (GlossVideo, GlossVideoHistory, AnnotatedVideo, ExampleVideoHistory,
-                                   build_filename)
+                                   build_filename, PhonologicalVariationVideo)
 from signbank.dictionary.models import Dataset, AnnotatedGloss, Gloss
 from django.contrib.auth.models import User
 from signbank.settings.base import *
@@ -820,7 +820,45 @@ class ExampleVideoHistoryAdmin(admin.ModelAdmin):
     search_fields = ['^examplesentence__examplesentencetranslation__text']
 
 
+class PhonologicalVariationVideoAdmin(admin.ModelAdmin):
+
+    list_display = ['id', 'variation', 'gloss', 'video_file']
+
+    def video_file(self, obj=None):
+        """
+        column VIDEO FILE
+        this will display the full path in the list view, also for non-existent files
+        this allows to browse the file paths also on the development servers
+        """
+        if obj is None or not str(obj.videofile):
+            return ""
+        video_file_full_path = os.path.join(WRITABLE_FOLDER, str(obj.videofile))
+
+        return video_file_full_path
+
+    def variation(self, obj=None):
+        """
+        column VIDEO FILE
+        this will display the full path in the list view, also for non-existent files
+        this allows to browse the file paths also on the development servers
+        """
+        if obj is None:
+            return ""
+        return obj.variation.variation
+
+    def gloss(self, obj=None):
+        """
+        column VIDEO FILE
+        this will display the full path in the list view, also for non-existent files
+        this allows to browse the file paths also on the development servers
+        """
+        if obj is None:
+            return ""
+        return obj.variation.gloss
+
+
 admin.site.register(GlossVideo, GlossVideoAdmin)
+admin.site.register(PhonologicalVariationVideo, PhonologicalVariationVideoAdmin)
 admin.site.register(GlossVideoHistory, GlossVideoHistoryAdmin)
 admin.site.register(AnnotatedVideo, AnnotatedVideoAdmin)
 admin.site.register(ExampleVideoHistory, ExampleVideoHistoryAdmin)

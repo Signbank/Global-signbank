@@ -4548,16 +4548,17 @@ class PhonologicalVariation(Phonology):
             msg = gettext("No video file supplied for video upload of variation video {variationid}.").format(variationid=self.pk)
             raise ValidationError(msg)
 
-        # get existing gloss video objects but exclude NME and perspective videos
+        # get existing video objects for this variation and delete them
         existing_videos = PhonologicalVariationVideo.objects.filter(variation=self).order_by('pk')
+        for ev in existing_videos:
+            ev.delete()
 
-        # Create a new GlossVideo object
+        # Create a new video object
         video = PhonologicalVariationVideo(variation=self)
         video.save()
 
         # see if there is a file with the correct path that is not referred to by an object
         relative_path = get_phonologicalvariation_video_file_path(video, str(videofile))
-        video_file_full_path = os.path.join(WRITABLE_FOLDER, relative_path)
 
         video.videofile.save(relative_path, videofile)
 

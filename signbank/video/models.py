@@ -1568,3 +1568,35 @@ class PhonologicalVariationVideo(models.Model):
         else:
             self.upload_to = get_phonologicalvariation_video_file_path
         super().__init__(*args, **kwargs)
+
+    def delete_files(self):
+        """Delete the files associated with this object"""
+        if not self.videofile or not self.videofile.name:
+            return
+
+        if os.path.exists(self.videofile.path):
+            try:
+                os.remove(self.videofile.path)
+            except (OSError, PermissionError, IOError, KeyError, ValueError):
+                self.videofile.name = ''
+                return
+        else:
+            self.videofile.name = ''
+        return
+
+
+@receiver(models.signals.pre_delete, sender=PhonologicalVariationVideo)
+def delete_files(sender, instance, **kwargs):
+    """
+    Deletes all associated files when the PhonologicalVariationVideo instance is deleted.
+    :param sender:
+    :param instance:
+    :param kwargs:
+    :return:
+    """
+    if DEBUG_VIDEOS:
+        print('delete_files pre_delete: ', sender, str(instance))
+    if not instance.videofile or not instance.videofile.name:
+        return
+
+    instance.delete_files()

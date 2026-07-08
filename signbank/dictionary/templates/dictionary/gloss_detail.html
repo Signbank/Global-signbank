@@ -2560,7 +2560,15 @@
                  {% endfor %}
             </tr>
             <tr>
-                <td></td><td></td>
+                <td></td>
+                <td>
+                    {% if gloss.has_video %}
+                        <div id="player_variation_{{gloss.id}}" style="display:table-cell;" class="read_only_phonology">
+                            <video id='videoplayer_variation_{{gloss.id}}' src="{{protected_media_url}}{{gloss.get_video_url}}"
+                                   playsinline autoplay muted controls></video>
+                        </div>
+                    {% endif %}
+                </td>
                  {% for gv in gloss_variations %}
                         <td class="td td-light">
                             {% if gv.has_video %}
