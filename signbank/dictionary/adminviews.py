@@ -5843,10 +5843,16 @@ def lemma_ajax_complete(request, dataset_id, language_code, q):
     interface_language = Language.objects.get(language_code_3char=interface_language_3char)
     activate(interface_language.language_code_2char)
 
-    lemmas = LemmaIdgloss.objects.filter(dataset_id=dataset_id,
-                                         lemmaidglosstranslation__text__istartswith=q)\
-        .order_by('lemmaidglosstranslation__text')
+    lemmas_of_dataset = LemmaIdgloss.objects.filter(dataset_id=dataset_id)
 
+    morphemes_of_dataset = Morpheme.objects.filter(lemma__dataset_id=dataset_id)
+
+    morpheme_lemma_ids = [g.lemma.pk for g in morphemes_of_dataset]
+
+    lemmas = lemmas_of_dataset.exclude(id__in=morpheme_lemma_ids)
+    lemmas = lemmas.filter(lemmaidglosstranslation__text__istartswith=q)\
+        .order_by('lemmaidglosstranslation__text')
+    
     lemmas_dict_list = []
     for lemma in set(lemmas):
         trans_dict = {'pk': lemma.pk,
