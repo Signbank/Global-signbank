@@ -7,7 +7,7 @@ const languageConfigs = [
     { name: 'gloss', endpoint: 'gloss/'+gloss_dataset_id, displayKey: 'annotation_idgloss' },
     { name: 'morphemeblend', endpoint: 'gloss/'+gloss_dataset_id, displayKey: 'annotation_idgloss' },
     { name: 'relatedgloss', endpoint: 'gloss/'+gloss_dataset_id, displayKey: 'annotation_idgloss' },
-    { name: 'morph', endpoint: 'morph', displayKey: 'annotation_idgloss', nodes: ['morpheme_gloss'] }
+    { name: 'morph', endpoint: 'morph', displayKey: 'annotation_idgloss' }
 ];
 
 // Factory function to create bloodhounds
