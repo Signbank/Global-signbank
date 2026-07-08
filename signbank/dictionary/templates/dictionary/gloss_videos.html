@@ -138,6 +138,28 @@ $('.quick_preview').click(function(e)
 </div>
     <div class='panel panel-group panel-default panel-light' id="definition"
          style="width:auto; z-index: 0;opacity:.99; position: relative;background-color:inherit;">
+            {% if gloss_variations %}
+            <div class="panel panel-default panel-default-light">
+            <div class="panel-heading" data-toggle="collapse" data-target="#phonological_variations">{% trans "Phonological Variations" %}</div>
+            <div class="panel-body collapse" id="phonological_variations">
+                <table class='table table-condensed table-condensed-light' style="margin-right:5px;margin-top:10px;margin-bottom:10px;">
+                    <tr>
+                        <td>#1</td>
+                        <td>{{gloss.get_video_url}}</td>
+                    </tr>
+                    {% for gv in gloss_variations %}
+                        {% if gv.has_video %}
+                        <tr>
+                            <td>#{{gv.variation}}</td>
+                            <td>{{gv.get_video_url}}</td>
+                        </tr>
+                        {% endif %}
+                    {% endfor %}
+                </table>
+            </div>
+            </div>
+            <br>
+            {% endif %}
 
         {% if gloss.has_sense_with_examplesentence_with_video %}
         <!-- Example Sentences -->

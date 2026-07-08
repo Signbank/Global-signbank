@@ -1852,6 +1852,9 @@ class GlossVideosView(DetailView):
         context['active_id'] = gl.id
         labels = gl.field_labels()
 
+        # phonological variations
+        context['gloss_variations'] = PhonologicalVariation.objects.filter(gloss=gl).order_by('variation')
+
         # Gather the OtherMedia
         context['other_media'] = []
         context['other_media_field_choices'] = {}

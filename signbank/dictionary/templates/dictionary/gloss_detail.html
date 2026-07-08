@@ -2564,8 +2564,8 @@
                 <td>
                     {% if gloss.has_video %}
                         <div id="player_variation_{{gloss.id}}" style="display:table-cell;" class="read_only_phonology">
-                            <video id='videoplayer_variation_{{gloss.id}}' src="{{protected_media_url}}{{gloss.get_video_url}}"
-                                   playsinline autoplay muted controls></video>
+                            <video id='videoplayer_variation_{{gloss.id}}' src="{{protected_media_url}}{{gloss.get_video_url}}" onmouseover="this.play()"
+                                   playsinline autoplay muted ></video>
                         </div>
                     {% endif %}
                 </td>
@@ -2573,15 +2573,15 @@
                         <td class="td td-light">
                             {% if gv.has_video %}
                                     <div id="player_variation_{{gv.id}}" style="display:table-cell;" class="read_only_phonology">
-                                        <video id='videoplayer_variation_{{gv.id}}' src="{{protected_media_url}}{{gv.get_video_url}}"
-                                               playsinline autoplay muted controls></video>
+                                        <video id='videoplayer_variation_{{gv.id}}' src="{{protected_media_url}}{{gv.get_video_url}}" onmouseover="this.play()"
+                                               playsinline autoplay muted ></video>
                                     </div>
                             {% endif %}
                             <div class="edit_only_phonology" style="display:table-cell;">
                             <form id='add_variations_video_{{gv.id}}' action='{% url "dictionary:add_phonological_variation_video" gv.id %}' method="POST" enctype="multipart/form-data">
                              {% csrf_token %}
                              <input type='file' name="videofile" class='form-control form-control-light'
-                                    id="variation_video_upload_{{gv.id}}" required="">
+                                    id="variation_video_upload_{{gv.id}}" accept="video/mp4" required="">
                              <input class='btn btn-primary' value='Add Video' type='submit'>
                             </form>
                             </div>
