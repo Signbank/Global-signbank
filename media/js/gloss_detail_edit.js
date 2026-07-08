@@ -183,58 +183,6 @@ function initialise_multiselects() {
     busy_editing = false;
 }
 
-// language fields typeaheads
-const languageConfigs = [
-    { name: 'lemma', endpoint: 'lemma/'+gloss_dataset_id+'/'+gloss_default_language_code, displayKey: 'lemma' },
-    { name: 'gloss', endpoint: 'gloss/'+gloss_dataset_id, displayKey: 'annotation_idgloss' },
-    { name: 'morph', endpoint: 'morph', displayKey: 'annotation_idgloss' }
-];
-
-// Factory function to create bloodhounds
-function createLanguageTypeahead(config) {
-    const bloodhound = new Bloodhound({
-        datumTokenizer: Bloodhound.tokenizers.obj.whitespace('value'),
-        queryTokenizer: Bloodhound.tokenizers.whitespace,
-        remote: {
-            url: `${url}/dictionary/ajax/${config.endpoint}/%QUERY`,
-            wildcard: '%QUERY',
-            ajax: {
-                type: 'GET',
-                beforeSend: function(xhr, settings) {
-                    if (!csrfSafeMethod(settings.type)) {
-                        xhr.setRequestHeader("X-CSRFToken", csrf_token);
-                    }
-                }
-            }
-        }
-    });
-
-    bloodhound.initialize();
-
-    return function(target) {
-        $(target).typeahead({
-            minLength: 0,
-            hint: false
-            }, {
-            name: config.name,
-            limit: 50,
-            displayKey: config.displayKey,
-            source: bloodhound.ttAdapter(),
-            autoSelect: false,
-            templates: {
-                suggestion: function(fc) {
-                    return `<p><strong>${fc[config.displayKey]}</strong></p>`;
-                }
-            }
-        });
-    };
-}
-
-// Initialize the language typeaheads
-languageConfigs.forEach(config => {
-    window[config.name + 'typeahead'] = createLanguageTypeahead(config);
-});
-
 $("#show_set_lemma_form").on('click', function() {
     $('#lemma_forms_row').show();
     $("#set_lemma_form").show();
@@ -607,38 +555,8 @@ $(document).ready(function() {
         window[config.name + 'typeahead'] = readyMultiselect(config);
     });
 
-    lemmatypeahead($('.lemmatypeahead'));
-    $('.lemmatypeahead').bind('typeahead:selected', function(ev, suggestion) {
-          $(this).parent().next().val(suggestion.pk);
-          busy_editing = true;
-          $('#new_lemma_pk').attr('value', suggestion.pk);
-    });
-    $('.lemmatypeahead').on("click", function() {
-          $(this).parent().next().val("");
-    });
-    glosstypeahead($('.glosstypeahead'));
-    $('.glosstypeahead').bind('typeahead:selected', function(ev, suggestion) {
-          $(this).parent().next().val(suggestion.pk);
-          var target_gloss_lookahead = $(this).attr("id");
-          busy_editing = true;
-          var width_of_new_value = suggestion.annotation_idgloss.length * 8 + 20;
-          $(this).css("width", width_of_new_value + "px");
-          $('#'+target_gloss_lookahead+'_id').attr('value', suggestion.pk);
-    });
-    $('.glosstypeahead').on("input", function() {
-          $(this).parent().next().val("");
-    });
-    morphtypeahead($('.morphtypeahead'));
-    $('.morphtypeahead').bind('typeahead:selected', function(ev, suggestion) {
-          $(this).parent().next().val(suggestion.pk);
-          var target_morph_lookahead = $(this).attr("id");
-          busy_editing = true;
-          var width_of_new_value = suggestion.annotation_idgloss.length * 8 + 20;
-          $(this).css("width", width_of_new_value + "px");
-          $('#'+target_morph_lookahead+'_id').attr('value', suggestion.pk);
-    });
-    $('.morphtypeahead').on("input", function() {
-          $(this).parent().next().val("")
+    lookaheadLanguageConfig.forEach(config => {
+        window[config.lookup] = readyLanguageLookahead(config);
     });
 
     $('.edit-cancel').on('click', function() {

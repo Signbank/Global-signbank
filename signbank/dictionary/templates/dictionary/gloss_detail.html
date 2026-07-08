@@ -92,6 +92,7 @@
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/typeahead.js/0.11.1/bloodhound.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/typeahead.js/0.11.1/typeahead.bundle.js"></script>
+<script type='text/javascript' src="{{STATIC_URL}}js/language_typeaheads.js"></script>
 <script type='text/javascript' src="{{STATIC_URL}}js/gloss_detail_edit.js"></script>
 
 <script type='text/javascript'>
@@ -1350,7 +1351,7 @@
 
                     <!-- Input of the type ahead -->
                     <input class='form-control form-control-light lemmatypeahead lemmatypeahead-light' size="80"
-                           placeholder='{% trans "Lemma" %}' data-category="general" autocomplete="off" >
+                           placeholder='{% trans "Lemma" %}' id="new_lemma" data-category="general" autocomplete="off" >
 
                     <input type='hidden' name='new_lemma_pk' value='' id="new_lemma_pk">
                     <button class='btn btn-primary quick_set_lemma' type='button' style="width:auto;">{% trans "Set Lemma" %}</button>
@@ -2477,7 +2478,7 @@
                    <tr>
                        <td style="width:2em;" class="edit_only_morphology"></td>
                        <td class="td td-light editform-morphology" style="width:22em;">
-                           <input class='form-control form-control-light glosstypeahead glosstypeahead-light' size="80"
+                           <input class='form-control form-control-light morphemeblendtypeahead morphemeblendtypeahead-light' size="80"
                                   placeholder='{% trans "Blend Gloss" %}' id="morpheme_blend" maxlength="80" type="text" autocomplete="off" >
                            <input type="hidden" name='blend_id' id="morpheme_blend_id"
                                   value="{{blendform.blend_id.value|default:''}}" >
@@ -4041,7 +4042,7 @@
                    <tr>
                        <td class="td td-light">{{relationform.role_fk}}</td>
                        <td class="td td-light">
-                           <input class='form-control form-control-light glosstypeahead glosstypeahead-light' size="80"
+                           <input class='form-control form-control-light relatedglosstypeahead relatedglosstypeahead-light' size="80"
                                   placeholder='{% trans "Annotation ID Gloss" %}' id="relation_target" maxlength="80" autocomplete="off" >
                            <input type="hidden" name="targetid" value="" id="relation_target_id" >
                        </td>

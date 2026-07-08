@@ -5744,7 +5744,7 @@ def gloss_ajax_complete(request, datasetid, prefix):
     # the following query only retrieves annotations for the language that match the prefix
     query = Q(annotationidglosstranslation__text__istartswith=prefix,
               annotationidglosstranslation__language=interface_language)
-    qs = Gloss.objects.filter(lemma__dataset=dataset, archived__exact=False).filter(query).distinct()
+    qs = Gloss.objects.filter(lemma__dataset=dataset, morpheme=None, archived__exact=False).filter(query).distinct()
 
     for gloss in qs:
         try:
