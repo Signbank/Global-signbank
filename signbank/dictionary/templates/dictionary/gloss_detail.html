@@ -646,11 +646,7 @@
             <div class="toggle-container">
                 <div id="data_type_lists" class="btn toggle-button" data-type="lists">Lists</div>
                 <div id="data_type_lookaheads" class="btn toggle-button" data-type="lookaheads">Lookaheads</div>
-                {% if use_lookaheads == 'lists' %}
-                <input type='hidden' id='use_lookaheads' name='use_lookaheads' value='lists'>
-                {% else %}
-                <input type="hidden" id="use_lookaheads" name='use_lookaheads' value='lookaheads'>
-                {% endif %}
+                <input type='hidden' id='use_lookaheads' name='use_lookaheads' value='{{use_lookaheads}}'>
                 <input type="hidden" name="glossid" value="{{gloss.id}}">
                 <input id="use_lookaheads_btn" type="submit" class="btn btn-primary toggle-set-button" value='{% trans "Set" %}' />
             </div>

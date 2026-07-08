@@ -1171,7 +1171,7 @@ class GlossDetailView(DetailView):
     query_parameters = dict()
     dark_mode = False
     public = False
-    use_lookaheads = 'lists'
+    use_lookaheads = 'lookaheads'
 
     def get_template_names(self):
         if not self.request.user.is_authenticated:
