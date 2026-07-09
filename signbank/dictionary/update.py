@@ -3000,18 +3000,18 @@ def add_morpheme(request):
 
     # Lemma handling
     lemmaidgloss = None
-    lemma_form = None
-    if request.POST['select_or_new_lemma'] == 'new':
-        lemma_form = LemmaCreateForm(request.POST, languages=dataset_languages, user=request.user,
-                                     last_used_dataset=last_used_dataset)
-    else:
-        try:
-            lemmaidgloss_id = request.POST['idgloss']
-            lemmaidgloss = LemmaIdgloss.objects.get(id=lemmaidgloss_id)
-        except ObjectDoesNotExist:
-            messages.add_message(request, messages.ERROR,
-                                 gettext_lazy("The given Lemma Idgloss ID is unknown."))
-            return render(request, 'dictionary/add_morpheme.html', {'add_morpheme_form': form})
+    # lemma_form = None
+    # if request.POST['select_or_new_lemma'] == 'new':
+    lemma_form = LemmaCreateForm(request.POST, languages=dataset_languages, user=request.user,
+                                 last_used_dataset=last_used_dataset)
+    # else:
+    #     try:
+    #         lemmaidgloss_id = request.POST['idgloss']
+    #         lemmaidgloss = LemmaIdgloss.objects.get(id=lemmaidgloss_id)
+    #     except ObjectDoesNotExist:
+    #         messages.add_message(request, messages.ERROR,
+    #                              gettext_lazy("The given Lemma Idgloss ID is unknown."))
+    #         return render(request, 'dictionary/add_morpheme.html', {'add_morpheme_form': form})
 
     # Check for 'change_dataset' permission
     if dataset and ('change_dataset' not in get_user_perms(request.user, dataset)) \

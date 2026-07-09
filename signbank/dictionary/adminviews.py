@@ -2212,7 +2212,7 @@ class MorphemeListView(ListView):
         self.request.session['search_type'] = self.search_type
 
         context['default_dataset_lang'] = dataset_languages.first().language_code_2char if dataset_languages else LANGUAGE_CODE
-        context['add_morpheme_form'] = MorphemeCreateForm(self.request.GET, languages=dataset_languages, user=self.request.user, last_used_dataset=self.last_used_dataset)
+        # context['add_morpheme_form'] = MorphemeCreateForm(self.request.GET, languages=dataset_languages, user=self.request.user, last_used_dataset=self.last_used_dataset)
 
         context['input_names_fields_and_labels'] = {}
 
@@ -5852,7 +5852,7 @@ def lemma_ajax_complete(request, dataset_id, language_code, q):
     lemmas = lemmas_of_dataset.exclude(id__in=morpheme_lemma_ids)
     lemmas = lemmas.filter(lemmaidglosstranslation__text__istartswith=q)\
         .order_by('lemmaidglosstranslation__text')
-    
+
     lemmas_dict_list = []
     for lemma in set(lemmas):
         trans_dict = {'pk': lemma.pk,
@@ -6612,12 +6612,11 @@ class LemmaCreateView(CreateView):
 
 
 def create_lemma_for_gloss(request, glossid):
-    print('create lemma for gloss')
     try:
         gloss = Gloss.objects.get(id=glossid, archived=False)
     except ObjectDoesNotExist:
         try:
-            gloss = Morpheme.objects.get(id=glossid).gloss
+            gloss = Morpheme.objects.get(id=glossid)
         except ObjectDoesNotExist:
             messages.add_message(request, messages.ERROR, _("The specified gloss does not exist."))
             return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
@@ -6625,9 +6624,7 @@ def create_lemma_for_gloss(request, glossid):
     # get data from gloss before updating anything
     dataset = gloss.lemma.dataset
     dataset_languages = dataset.translation_languages.all()
-    # the last used dataset is a hidden field in the form, set by Django
-    last_used_dataset = request.POST['last_used_dataset']
-    form = LemmaCreateForm(request.POST, languages=dataset_languages, user=request.user, last_used_dataset=last_used_dataset)
+    form = LemmaCreateForm(request.POST, languages=dataset_languages, user=request.user, last_used_dataset=dataset.acronym)
     for item, value in request.POST.items():
         value = value.strip()
         if item.startswith(form.lemma_create_field_prefix):
