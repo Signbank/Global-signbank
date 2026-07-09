@@ -22,7 +22,8 @@ tr > td > form > input[type="submit"] {
 {% block extrajs %}
     <script type="text/javascript" src="{{ STATIC_URL }}js/jquery.jeditable.mini.js"></script>
     <script type="text/javascript" src="{{ STATIC_URL }}js/jquery.jeditable.checkbox.js"></script>
-    <script type="text/javascript" src="{{ STATIC_URL }}js/typeahead.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/typeahead.js/0.11.1/bloodhound.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/typeahead.js/0.11.1/typeahead.bundle.js"></script>
     <script type='text/javascript'>
     var url = '{{PREFIX_URL}}';
     var csrf_token = '{{csrf_token}}';
