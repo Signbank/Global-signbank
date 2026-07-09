@@ -33,8 +33,10 @@ $(document).ready(function() {
     usertypeahead($('.usertypeahead'));
     $('.usertypeahead').bind('typeahead:selected', function(ev, suggestion) {
           $(this).parent().next().val(suggestion.username)
+          var width_of_new_value = suggestion[config.displayKey].length * 8 + 20;
+          $(this).css("width", width_of_new_value + "px");
         });
-    $('.usertypeahead').on("input", function() {
+    $('.usertypeahead').on("focus", function() {
           $(this).parent().next().val("")
         });
 
@@ -212,19 +214,19 @@ user_bloodhound.initialize();
 
 function usertypeahead(target) {
 
-     $(target).typeahead(({
-            minLength: 0,
-            hint: false
-            }, {
-            name: 'username',
-            limit: 50,
-            displayKey: 'username',
-            source: user_bloodhound.ttAdapter(),
-            autoSelect: false,
-            templates: {
-                suggestion: function(user) {
-                    return("<p>" + user.first_name + " " + user.last_name + " (<strong>" + user.username + "</strong>)</p>");
-                }
+     $(target).typeahead({
+        minLength: 0,
+        hint: false
+        }, {
+        name: 'gebruiker',
+        limit: 50,
+        displayKey: 'gebruiker',
+        source: user_bloodhound.ttAdapter(),
+        autoSelect: false,
+        templates: {
+            suggestion: function(user) {
+                return("<p>" + user.first_name + " " + user.last_name + " (<strong>" + user.username + "</strong>)</p>");
             }
-        });
+        }
+    });
 };
