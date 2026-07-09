@@ -63,18 +63,14 @@ input[type="text"]:focus {
     var csrf_token = '{{csrf_token}}';
 
     </script>
-
-    <script type="text/javascript" src="{{STATIC_URL}}js/jquery.jeditable.mini_colors.js"></script>
-    <script type="text/javascript" src="{{STATIC_URL}}js/jquery.jeditable.checkbox.js"></script>
-    <script type="text/javascript" src="{{STATIC_URL}}js/typeahead.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/typeahead.js/0.11.1/bloodhound.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/typeahead.js/0.11.1/typeahead.bundle.js"></script>
+    <script type='text/javascript' src="{{STATIC_URL}}js/language_typeaheads.js"></script>
     <script type="text/javascript" src="{{STATIC_URL}}js/gloss_add.js"></script>
-    <script type='text/javascript' src="{{STATIC_URL}}js/lemma_typeahead.js"></script>
     <script type="text/javascript" src="{{STATIC_URL}}js/drag_drop_files.js"></script>
-    <script type="text/javascript" src="{{STATIC_URL}}js/recordscript.js"></script>
 
     <script type="text/javascript">
     var lemma_create_field_prefix = "{{lemma_create_field_prefix}}";
-    var lookahead_initial_language = "{{default_dataset_lang}}";
 
     $(document).ready(function(){
         /**
@@ -86,7 +82,11 @@ input[type="text"]:focus {
             set_annotationidglosslanguages();
          });
 
-         set_initial_language_lemma_lookahead(lookahead_initial_language);
+         lookaheadLanguageConfig.forEach(config => {
+            var elements = $(config.lookup);
+            if (!elements) { return; }
+            window[config.lookup] = readyLanguageLookahead(config);
+        });
     });
 
     /**
@@ -158,24 +158,14 @@ input[type="text"]:focus {
                              <div><label>{% trans "Select Existing Lemma" %}</label>&nbsp;
                              <label><a href="#" onclick="return toggleAddLemma()">{% trans "Create New Lemma" %}</a></label>
                              </div>
-                             <label for="selected_lemma_language">
-                             <span id="selected_lemma_language" value="{{default_dataset_lang}}">
-                             {% for dataset_lang in dataset_languages %}
-                                 <input id="lemma_language_{{dataset_lang.language_code_2char}}"
-                                        type="radio" name="lemma_language" onclick="do_set_lemma_language(this)"
-                                        value="{{dataset_lang.language_code_2char}}"/>
-                                 <label id="lemma_language_label_{{dataset_lang.language_code_2char}}">{{dataset_lang.name}}</label>
-                             {% endfor %}
-                             </span>
-                             </label>
                              <br/>
-                             <!-- Input of the type ahead -->
-                             <div class="text-container" data-toggle="tooltip" data-placement="top" style="z-index:100;"
-                                    title='{% trans "Type in the initial letters to see if the lemma already exists." %}' >
-                             <input class='form-control form-control-light lemmatypeahead lemmatypeahead-light'
-                                    placeholder='{% trans "Select Existing Lemma" %}' size="50"/>
+                             <div >
+
+                             <input class='form-control form-control-light lemmatypeahead lemmatypeahead-light' size="80"
+                                    placeholder='{% trans "Select Existing Lemma" %}' id="new_lemma" data-category="general" autocomplete="off" >
+
                              <!-- Input that holds the lemma id the user chose from the type ahead -->
-                             <input type='hidden' name='idgloss' value='confirmed' required="">
+                             <input id="new_lemma_pk" type='hidden' name='idgloss' value='confirmed' required="">
                              </div>
                          </div>
                          <div id="lemma_add">
