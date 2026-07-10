@@ -102,9 +102,8 @@ textarea:focus {
                             <td class="td td-light">
                             {% csrf_token %}
                             <input class='form-control form-control-light usertypeahead usertypeahead-light' size="150"
-                                   placeholder='{% trans "Name of User" %}'>
+                                   placeholder='{% trans "Name of User" %}' name="gebruiker" >
                             <input type="hidden" autocomplete="off"/>
-                            <input type="hidden" name="gebruiker" id="gebruiker" value="">
                             </td>
                             <td>
                             <input class='btn btn-primary' id='add_owner' name='add_owner' type='submit' value='{% trans "Add Owner" %}'>

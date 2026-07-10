@@ -216,7 +216,7 @@ function usertypeahead(target) {
         minLength: 0,
         hint: false
         }, {
-        name: 'username',
+        name: 'gebruiker',
         limit: 50,
         displayKey: 'username',
         source: user_bloodhound.ttAdapter(),
