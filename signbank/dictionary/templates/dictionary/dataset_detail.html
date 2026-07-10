@@ -22,7 +22,8 @@
     </script>
     <script type="text/javascript" src="{{STATIC_URL}}js/jquery.jeditable.mini.js"></script>
     <script type="text/javascript" src="{{ STATIC_URL }}js/jquery.jeditable.checkbox.js"></script>
-    <script type="text/javascript" src="{{ STATIC_URL }}js/typeahead.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/typeahead.js/0.11.1/bloodhound.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/typeahead.js/0.11.1/typeahead.bundle.js"></script>
     <script type='text/javascript' src="{{ STATIC_URL }}js/dataset_edit.js"></script>
 
 <style>
@@ -100,9 +101,10 @@ textarea:focus {
                         <tr class="tr tr-light">
                             <td class="td td-light">
                             {% csrf_token %}
-                            <input class='form-control form-control-light usertypeahead usertypeahead-light' size="36"
-                                   placeholder='{% trans "Username" %}'>
-                            <input type="hidden" name="username" id="username" value="">
+                            <input class='form-control form-control-light usertypeahead usertypeahead-light' size="150"
+                                   placeholder='{% trans "Name of User" %}'>
+                            <input type="hidden" autocomplete="off"/>
+                            <input type="hidden" name="gebruiker" id="gebruiker" value="">
                             </td>
                             <td>
                             <input class='btn btn-primary' id='add_owner' name='add_owner' type='submit' value='{% trans "Add Owner" %}'>
