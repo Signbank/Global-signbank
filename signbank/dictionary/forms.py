@@ -232,6 +232,8 @@ class GlossSearchForm(forms.ModelForm):
     search = forms.CharField(label=_('Search Gloss'))
     sortOrder = forms.CharField(label=_('Sort Order'), initial="")
     translation = forms.CharField(label=_('Search Senses'))
+    hasphonologicalvariations = forms.ChoiceField(label=_('Has Phonological Variations'), choices=[(0, '-')],
+                                                  widget=forms.Select(attrs=ATTRS_FOR_BOOLEAN_FORMS))
     hasvideo = forms.ChoiceField(label=_('Has Video'), choices=[(0, '-')],
                                  widget=forms.Select(attrs=ATTRS_FOR_BOOLEAN_FORMS))
     hasnmevideo = forms.ChoiceField(label=_('Has NME Video'), choices=[(0, '-')],
@@ -358,7 +360,7 @@ class GlossSearchForm(forms.ModelForm):
         self.fields['tags'] = forms.ModelChoiceField(label=_('Tags'),
                                                      queryset=Tag.objects.all(), empty_label=None,
                                                      widget=forms.Select(attrs=ATTRS_FOR_FORMS))
-        for boolean_field in ['hasvideo', 'hasnmevideo', 'repeat', 'altern', 'isNew', 'inWeb', 'defspublished',
+        for boolean_field in ['hasphonologicalvariations', 'hasvideo', 'hasnmevideo', 'repeat', 'altern', 'isNew', 'inWeb', 'defspublished',
                               'excludeFromEcv', 'hasRelationToForeignSign', 'hasmultiplesenses',
                               'hasothermedia', 'isablend', 'ispartofablend', 'hasannotatedsentences']:
             self.fields[boolean_field].choices = [('0', '-'), ('2', _('Yes')), ('3', _('No'))]

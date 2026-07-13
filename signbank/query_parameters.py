@@ -15,7 +15,7 @@ from signbank.settings.base import EARLIEST_GLOSS_CREATION_DATE, DATE_FORMAT
 from signbank.settings.server_specific import (USE_REGULAR_EXPRESSIONS, WRITABLE_FOLDER,
                                                GLOSS_LIST_DISPLAY_FIELDS, SEARCH_BY, HANDEDNESS_ARTICULATION_FIELDS, HANDSHAPE_ETYMOLOGY_FIELDS)
 from signbank.video.models import GlossVideo, GlossVideoNME
-from signbank.dictionary.models import (Language, SignLanguage, Dialect, Gloss, Morpheme, GlossSense, ExampleSentence,
+from signbank.dictionary.models import (Language, SignLanguage, Dialect, Gloss, PhonologicalVariation, Morpheme, GlossSense, ExampleSentence,
                                         Definition, FieldChoice, Handshape, SemanticField, DerivationHistory,
                                         AnnotatedGloss, OtherMedia, RelationToForeignSign, Relation,
                                         AnnotatedSentenceTranslation, ExampleSentenceTranslation,
@@ -275,6 +275,18 @@ def convert_query_parameters_to_filter(query_parameters):
         elif get_key == 'translation' and get_value:
             query_filter_sense_text = 'translation__translation__text__' + text_filter
             query_list.append(Q(**{query_filter_sense_text: get_value}))
+
+        elif get_key == 'hasphonologicalvariations' and get_value != '':
+            # Remember the pk of all glosses that have phonological variations
+            pks_for_glosses_with_phonological_variations = [ pv.gloss.pk for pv in PhonologicalVariation.objects.all() ]
+            if get_value == '2':
+                # value '1' filters glosses with othermedia
+                query_list.append(Q(pk__in=pks_for_glosses_with_phonological_variations))
+            elif get_value == '3':
+                # the code for '3' excludes the above glosses from the results
+                query_list.append(~Q(pk__in=pks_for_glosses_with_phonological_variations))
+            else:
+                continue
 
         elif get_key == 'inWeb' and get_value != '':
             val = get_value == '2'
@@ -686,7 +698,7 @@ def pretty_print_query_values(dataset_languages, query_parameters):
                 query_dict[key] = _('Yes')
             elif query_parameters[key] in ['3']:
                 query_dict[key] = _('No')
-        elif key in ['inWeb', 'isNew', 'excludeFromEcv', 'hasvideo', 'hasnmevideo', 'hasothermedia']:
+        elif key in ['hasphonologicalvariations', 'inWeb', 'isNew', 'excludeFromEcv', 'hasvideo', 'hasnmevideo', 'hasothermedia']:
             query_dict[key] = NULLBOOLEANCHOICES.get(query_parameters[key], NULLBOOLEANCHOICES['0'])
         elif key in ['defspublished', 'hasmultiplesenses', 'negative', 'hasannotatedsentences']:
             query_dict[key] = YESNOCHOICES.get(query_parameters[key], YESNOCHOICES['0'])
@@ -937,7 +949,15 @@ def queryset_from_get(formclass, searchform, GET, qs):
             elif get_key == 'createdAfter':
                 qs = qs.filter(creationDate__range=(created_after_date, DT.datetime.now()))
         elif searchform.fields[get_key].widget.input_type in ['select']:
-            if get_key in ['inWeb', 'repeat', 'altern', 'isNew']:
+            if get_key in ['hasphonologicalvariations']:
+                pks_for_glosses_with_phonological_variations = [pv.gloss.pk for pv in
+                                                                PhonologicalVariation.objects.all()]
+                if get_value == '2':
+                    qs = qs.filter(pk__in=pks_for_glosses_with_phonological_variations)
+                elif get_value == '3':
+                    qs = qs.exclude(pk__in=pks_for_glosses_with_phonological_variations)
+                continue
+            elif get_key in ['inWeb', 'repeat', 'altern', 'isNew']:
                 val = get_value == '2'
                 key = get_key + '__exact'
             elif get_key in ['hasvideo', 'hasnmevideo']:
@@ -1205,7 +1225,15 @@ def queryset_glosssense_from_get(model, formclass, searchform, GET, qs):
             elif get_key == 'createdAfter':
                 qs = qs.filter(**{query_filter: (created_after_date, DT.datetime.now())})
         elif searchform.fields[get_key].widget.input_type in ['select']:
-            if get_key in ['hasmultiplesenses']:
+            if get_key in ['hasphonologicalvariations']:
+                pks_for_glosses_with_phonological_variations = [pv.gloss.pk for pv in
+                                                                PhonologicalVariation.objects.all()]
+                if get_value == '2':
+                    qs = qs.filter(pk__in=pks_for_glosses_with_phonological_variations)
+                elif get_value == '3':
+                    qs = qs.exclude(pk__in=pks_for_glosses_with_phonological_variations)
+                continue
+            elif get_key in ['hasmultiplesenses']:
                 if get_value == '2':
                     multiple_senses = [gsv['gloss'] for gsv in GlossSense.objects.values(
                         'gloss').annotate(Count('id')).filter(id__count__gt=1)]
