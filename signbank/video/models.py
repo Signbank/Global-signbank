@@ -1569,7 +1569,7 @@ class PhonologicalVariationVideo(models.Model):
             self.upload_to = get_phonologicalvariation_video_file_path
         super().__init__(*args, **kwargs)
 
-    def delete_files(self):
+    def delete_phonologicalvariationvideo_files(self):
         """Delete the files associated with this object"""
         if not self.videofile or not self.videofile.name:
             return
@@ -1586,7 +1586,7 @@ class PhonologicalVariationVideo(models.Model):
 
 
 @receiver(models.signals.pre_delete, sender=PhonologicalVariationVideo)
-def delete_files(sender, instance, **kwargs):
+def delete_phonologicalvariationvideo_files(sender, instance, **kwargs):
     """
     Deletes all associated files when the PhonologicalVariationVideo instance is deleted.
     :param sender:
