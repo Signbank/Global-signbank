@@ -824,6 +824,14 @@ class PhonologicalVariationVideoAdmin(admin.ModelAdmin):
 
     list_display = ['id', 'variation', 'gloss', 'video_file']
 
+    def get_list_display_links(self, request, list_display):
+        # do not allow the user to click on data of individual elements in the list display
+        self.list_display_links = (None,)
+        return self.list_display_links
+
+    def has_add_permission(self, request):
+        return False
+
     def video_file(self, obj=None):
         """
         column VIDEO FILE

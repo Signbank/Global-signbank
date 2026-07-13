@@ -4544,7 +4544,7 @@ class PhonologicalVariation(Phonology):
         from signbank.video.models import (PhonologicalVariationVideo,
                                            get_phonologicalvariation_video_file_path)
 
-        if not isinstance(videofile, TemporaryUploadedFile) or not isinstance(videofile, File):
+        if not isinstance(videofile, File):
             msg = gettext("No video file supplied for video upload of variation video {variationid}.").format(variationid=self.pk)
             raise ValidationError(msg)
 
@@ -4557,13 +4557,9 @@ class PhonologicalVariation(Phonology):
         video = PhonologicalVariationVideo(variation=self)
         video.save()
 
-        # see if there is a file with the correct path that is not referred to by an object
         relative_path = get_phonologicalvariation_video_file_path(video, str(videofile))
-
         video.videofile.save(relative_path, videofile)
-
         self.save()
-
         return video
 
     def get_video(self):

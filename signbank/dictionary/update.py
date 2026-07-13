@@ -353,16 +353,9 @@ def add_phonological_variation_video(request, variationid):
 
     variation = get_object_or_404(PhonologicalVariation, id=variationid)
     gloss = variation.gloss
-
-    if 'videofile' in request.FILES.keys():
-        vfile = request.FILES['videofile']
-    elif 'videofile' in request.POST.keys():
-        # for unit tests, the file is found in the POST data
-        vfile = request.POST['videofile']
-    else:
-        error_message = gettext("A video file is required.")
-        # return JsonResponse({'error': error_message}, status=400)
-        messages.add_message(request, messages.ERROR, error_message)
+    vfile = request.FILES.get('videofile') or request.POST.get('videofile')
+    if not vfile:
+        messages.add_message(request, messages.ERROR, gettext("A video file is required."))
         return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': gloss.pk}))
 
     variation.add_video(request.user, vfile)
