@@ -4246,8 +4246,8 @@ class DatasetManagerView(ListView):
         """
         get = self.request.GET
         username = ''
-        if 'username' in get:
-            username = get['username']
+        if 'gebruiker' in get:
+            username = get['gebruiker']
         if username == '':
             messages.add_message(self.request, messages.ERROR,
                                  _('Username must be non-empty. Please make a selection using the drop-down list.'))
@@ -4672,8 +4672,8 @@ class DatasetDetailView(DetailView):
 
         get = self.request.GET
         username = ''
-        if 'username' in get:
-            username = get['username']
+        if 'gebruiker' in get:
+            username = get['gebruiker']
         if username == '':
             messages.add_message(self.request, messages.ERROR, _('Username must be non-empty.'))
             return HttpResponseRedirect(PREFIX_URL + '/datasets/available')

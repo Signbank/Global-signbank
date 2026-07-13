@@ -795,27 +795,11 @@ attrs_default = {'class': 'form-control'}
 FINGER_SELECTION = ((True, 'True'), (False, 'False'))
 
 
-class HandshapeSearchForm(forms.ModelForm):
+class HandshapeSearchForm(forms.Form):
     use_required_attribute = False  # otherwise the html required attribute will show up on every form
 
     sortOrder = forms.CharField(label=_("Sort Order"),
                                 initial="machine_value")  # Used in Handshapelistview to store user-selection
-
-    fsT = forms.NullBooleanSelect()
-    fsI = forms.NullBooleanSelect()
-    fsM = forms.NullBooleanSelect()
-    fsR = forms.NullBooleanSelect()
-    fsP = forms.NullBooleanSelect()
-    fs2T = forms.NullBooleanSelect()
-    fs2I = forms.NullBooleanSelect()
-    fs2M = forms.NullBooleanSelect()
-    fs2R = forms.NullBooleanSelect()
-    fs2P = forms.NullBooleanSelect()
-    ufT = forms.NullBooleanSelect()
-    ufI = forms.NullBooleanSelect()
-    ufM = forms.NullBooleanSelect()
-    ufR = forms.NullBooleanSelect()
-    ufP = forms.NullBooleanSelect()
 
     class Meta:
         ATTRS_FOR_FORMS = {'class': 'form-control'}
@@ -827,27 +811,26 @@ class HandshapeSearchForm(forms.ModelForm):
                   'fsT', 'fsI', 'fsM', 'fsR', 'fsP',
                   'fs2T', 'fs2I', 'fs2M', 'fs2R', 'fs2P',
                   'ufT', 'ufI', 'ufM', 'ufR', 'ufP')
-        widgets = {
-                'fsT': forms.RadioSelect(choices=FINGER_SELECTION),
-                'fsI': forms.RadioSelect(choices=FINGER_SELECTION),
-                'fsM': forms.RadioSelect(choices=FINGER_SELECTION),
-                'fsR': forms.RadioSelect(choices=FINGER_SELECTION),
-                'fsP': forms.RadioSelect(choices=FINGER_SELECTION),
-                'fs2T': forms.RadioSelect(choices=FINGER_SELECTION),
-                'fs2I': forms.RadioSelect(choices=FINGER_SELECTION),
-                'fs2M': forms.RadioSelect(choices=FINGER_SELECTION),
-                'fs2R': forms.RadioSelect(choices=FINGER_SELECTION),
-                'fs2P': forms.RadioSelect(choices=FINGER_SELECTION),
-                'ufT': forms.RadioSelect(choices=FINGER_SELECTION),
-                'ufI': forms.RadioSelect(choices=FINGER_SELECTION),
-                'ufM': forms.RadioSelect(choices=FINGER_SELECTION),
-                'ufR': forms.RadioSelect(choices=FINGER_SELECTION),
-                'ufP': forms.RadioSelect(choices=FINGER_SELECTION),
-        }
 
     def __init__(self, queryDict=None, *args, **kwargs):
         super(HandshapeSearchForm, self).__init__(queryDict, *args, **kwargs)
 
+        self.fields['hsFingSel'] = forms.ChoiceField(label=_("Finger selection"),
+                                                    choices=choicelist_queryset_to_translated_dict(
+                                                        list(
+                                                            FieldChoice.objects.filter(field='FingerSelection').order_by(
+                                                                'machine_value')),
+                                                        ordered=False, id_prefix='', shortlist=False
+                                                    ),
+                                                    widget=forms.Select(attrs=ATTRS_FOR_FORMS))
+        self.fields['hsFingSel2'] = forms.ChoiceField(label=_("Finger selection 2"),
+                                                    choices=choicelist_queryset_to_translated_dict(
+                                                        list(
+                                                            FieldChoice.objects.filter(field='FingerSelection').order_by(
+                                                                'machine_value')),
+                                                        ordered=False, id_prefix='', shortlist=False
+                                                    ),
+                                                    widget=forms.Select(attrs=ATTRS_FOR_FORMS))
         self.fields['unselectedFingers'] = forms.ChoiceField(label=_('Unselected Fingers Extended'),
                                                     choices=choicelist_queryset_to_translated_dict(
                                                         list(
@@ -899,6 +882,11 @@ class HandshapeSearchForm(forms.ModelForm):
         for finger in ['fsT', 'fsI', 'fsM', 'fsR', 'fsP',
                        'fs2T', 'fs2I', 'fs2M', 'fs2R', 'fs2P',
                        'ufT', 'ufI', 'ufM', 'ufR', 'ufP']:
+            self.fields[finger] = forms.NullBooleanField(
+                                        label=finger,
+                                        required=False,
+                                        widget=forms.RadioSelect(choices=FINGER_SELECTION)
+                                    )
             self.fields[finger].initial = False
             self.fields[finger].widget.choices = [(True, _('Yes')), (False, _('No'))]
 
