@@ -143,6 +143,7 @@ from signbank.dataset_operations import (get_primary_videos_for_gloss, get_persp
                                          get_nme_videos_for_gloss, get_wrong_videos_for_gloss,
                                          get_backup_videos_for_gloss)
 from signbank.dictionary.display_functions import show_fields_rows
+from signbank.dictionary.phonology_functions import phonological_variations_matrix, display_phonology_matrix
 
 
 def order_annotatedsentence_queryset_by_sort_order(get, qs, queryset_language_codes):
@@ -1401,7 +1402,7 @@ class GlossDetailView(DetailView):
 
             return context
 
-        phonology_matrix = context['gloss'].phonology_matrix_homonymns(use_machine_value=True)
+        phonology_matrix = context['gloss'].phonology_matrix(use_machine_value=True)
         phonology_focus = [field for field in phonology_matrix.keys()
                            if phonology_matrix[field] is not None
                            and phonology_matrix[field] not in ['Neutral',  '0', '1', 'False']]
@@ -1481,6 +1482,10 @@ class GlossDetailView(DetailView):
         for variation in context['gloss_variations']:
             variation_forms[variation.pk] = PhonologyForm(object=variation, use_lookaheads=context['use_lookaheads'])
         context['variation_forms'] = variation_forms
+
+        variations_dict = phonological_variations_matrix(gloss)
+        display_dict = display_phonology_matrix(variations_dict)
+        print('Phonological Variations by Differing Fields: ', display_dict)
 
         context['show_field_row'] = show_fields_rows(gloss)
         context['language_2chars'] = [language.language_code_2char for language in dataset_languages]

@@ -1174,6 +1174,51 @@ class Phonology(MetaModelMixin, models.Model):
             return '0'
         return '1' if self.altern else '0'
 
+    def phonology_matrix(self, use_machine_value=False):
+        # this method uses string representations for Boolean values
+        # in order to distinguish between null values, False values, and Neutral values
+
+        phonology_dict = dict()
+        for field in FIELDS['phonology']:
+            gloss_field = Gloss._meta.get_field(field)
+            if isinstance(gloss_field, models.CharField) or isinstance(gloss_field, models.TextField):
+                continue
+            field_value = getattr(self, gloss_field.name)
+            if isinstance(field_value, Handshape):
+                if field_value is None:
+                    # this differentiates between null field choice fields (here) versus null Boolean fields
+                    # which get mapped to either 'False' or 'Neutral'
+                    phonology_dict[field] = None
+                else:
+                    phonology_dict[field] = str(field_value.machine_value)
+            elif hasattr(gloss_field, 'field_choice_category'):
+                if field_value is None:
+                    # this differentiates between null field choice fields (here) versus null Boolean fields
+                    # which get mapped to either 'False' or 'Neutral'
+                    phonology_dict[field] = None
+                else:
+                    phonology_dict[field] = str(field_value.machine_value if use_machine_value else field_value.id)
+            else:
+                # gloss_field is a Boolean
+                # TO DO: check these conversions to Strings instead of Booleans
+
+                if field_value is not None:
+                    if field_value:
+                        # machine value is 1
+                        phonology_dict[field] = 'True'
+                    else:
+                        # machine value is 0
+                        phonology_dict[field] = 'False'
+                else:
+                    # machine value is None, for weakdrop and weakprop, this is Neutral
+                    # value is Neutral
+                    if field in settings.HANDEDNESS_ARTICULATION_FIELDS:
+                        phonology_dict[field] = 'Neutral'
+                    else:
+                        phonology_dict[field] = 'False'
+
+        return phonology_dict
+
 
 class Gloss(Phonology):
     class Meta:
@@ -2056,51 +2101,6 @@ class Gloss(Phonology):
         other_relations = self.other_relations()
         return other_relations, variant_relations
 
-    def phonology_matrix_homonymns(self, use_machine_value=False):
-        # this method uses string representations for Boolean values
-        # in order to distinguish between null values, False values, and Neutral values
-
-        phonology_dict = dict()
-        for field in FIELDS['phonology']:
-            gloss_field = Gloss._meta.get_field(field)
-            if isinstance(gloss_field, models.CharField) or isinstance(gloss_field, models.TextField):
-                continue
-            field_value = getattr(self, gloss_field.name)
-            if isinstance(field_value, Handshape):
-                if field_value is None:
-                    # this differentiates between null field choice fields (here) versus null Boolean fields
-                    # which get mapped to either 'False' or 'Neutral'
-                    phonology_dict[field] = None
-                else:
-                    phonology_dict[field] = str(field_value.machine_value)
-            elif hasattr(gloss_field, 'field_choice_category'):
-                if field_value is None:
-                    # this differentiates between null field choice fields (here) versus null Boolean fields
-                    # which get mapped to either 'False' or 'Neutral'
-                    phonology_dict[field] = None
-                else:
-                    phonology_dict[field] = str(field_value.machine_value if use_machine_value else field_value.id)
-            else:
-                # gloss_field is a Boolean
-                # TO DO: check these conversions to Strings instead of Booleans
-
-                if field_value is not None:
-                    if field_value:
-                        # machine value is 1
-                        phonology_dict[field] = 'True'
-                    else:
-                        # machine value is 0
-                        phonology_dict[field] = 'False'
-                else:
-                    # machine value is None, for weakdrop and weakprop, this is Neutral
-                    # value is Neutral
-                    if field in settings.HANDEDNESS_ARTICULATION_FIELDS:
-                        phonology_dict[field] = 'Neutral'
-                    else:
-                        phonology_dict[field] = 'False'
-
-        return phonology_dict
-
     def minimal_pairs_tuple(self):
         minimal_pairs_fields = settings.MINIMAL_PAIRS_FIELDS
 
@@ -2267,7 +2267,7 @@ class Gloss(Phonology):
         if not self.lemma or not self.lemma.dataset:
             return homonym_objects_list
 
-        phonology_for_gloss = self.phonology_matrix_homonymns()
+        phonology_for_gloss = self.phonology_matrix()
         handedness_of_this_gloss = phonology_for_gloss['handedness']
 
         homonym_objects_list = []
@@ -2339,7 +2339,7 @@ class Gloss(Phonology):
 
         targets_of_homonyms_of_this_gloss = [r.target for r in gloss_homonym_relations]
 
-        phonology_for_gloss = self.phonology_matrix_homonymns()
+        phonology_for_gloss = self.phonology_matrix()
         handedness_of_this_gloss = phonology_for_gloss['handedness']
         empty_or_X_handedness = [str(fc.id) for fc in FieldChoice.objects.filter(field='Handedness', name__in=['-','N/A', 'X'])]
         if handedness_of_this_gloss in empty_or_X_handedness:
