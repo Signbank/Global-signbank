@@ -147,11 +147,11 @@ $('.quick_preview').click(function(e)
                         <td>#1</td>
                         <td>{{gloss.get_video_url}}</td>
                     </tr>
-                    {% for gv in gloss_variations %}
-                        {% if gv.has_video %}
+                    {% for gloss_variation in gloss_variations %}
+                        {% if gloss_variation.has_video %}
                         <tr>
-                            <td>#{{gv.variation}}</td>
-                            <td>{{gv.get_video_url}}</td>
+                            <td>#{{gloss_variation.variation}}</td>
+                            <td>{{gloss_variation.get_video_url}}</td>
                         </tr>
                         {% endif %}
                     {% endfor %}

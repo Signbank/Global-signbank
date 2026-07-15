@@ -1476,10 +1476,10 @@ class GlossDetailView(DetailView):
         context['gloss_update_fields'] =  GLOSS_FIELDS_UPDATES
         context['gloss_phonology'] = PHONOLOGY_FIELDS_UPDATES
         context['gloss_variations'] = PhonologicalVariation.objects.filter(gloss=gloss).order_by('variation')
-        context['phonological_variations_ids'] = [str(gv.pk) for gv in context['gloss_variations']]
+        context['phonological_variations_ids'] = [str(gloss_variation.pk) for gloss_variation in context['gloss_variations']]
         variation_forms = dict()
-        for variation in context['gloss_variations']:
-            variation_forms[variation.pk] = PhonologyForm(object=variation, use_lookaheads=context['use_lookaheads'])
+        for gloss_variation in context['gloss_variations']:
+            variation_forms[gloss_variation.pk] = PhonologyForm(object=gloss_variation, use_lookaheads=context['use_lookaheads'])
         context['variation_forms'] = variation_forms
 
         context['show_field_row'] = show_fields_rows(gloss)

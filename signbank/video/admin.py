@@ -835,34 +835,20 @@ class PhonologicalVariationVideoAdmin(admin.ModelAdmin):
     def video_file(self, obj=None):
         """
         column VIDEO FILE
-        this will display the full path in the list view, also for non-existent files
-        this allows to browse the file paths also on the development servers
         """
-        if obj is None or not str(obj.videofile):
-            return ""
-        video_file_full_path = os.path.join(WRITABLE_FOLDER, str(obj.videofile))
-
-        return video_file_full_path
+        return str(obj.videofile) if obj is not None else ''
 
     def variation(self, obj=None):
         """
-        column VIDEO FILE
-        this will display the full path in the list view, also for non-existent files
-        this allows to browse the file paths also on the development servers
+        column VARIATION
         """
-        if obj is None:
-            return ""
-        return obj.variation.variation
+        return obj.variation.variation if obj is not None else ''
 
     def gloss(self, obj=None):
         """
-        column VIDEO FILE
-        this will display the full path in the list view, also for non-existent files
-        this allows to browse the file paths also on the development servers
+        column GLOSS
         """
-        if obj is None:
-            return ""
-        return obj.variation.gloss
+        return obj.variation.gloss if obj is not None else ''
 
 
 admin.site.register(GlossVideo, GlossVideoAdmin)

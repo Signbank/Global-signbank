@@ -1530,16 +1530,14 @@ def delete_files(sender, instance, **kwargs):
         status = instance.delete_files()
 
 
-def get_phonologicalvariation_video_file_path(instance, original_filename):
+def get_phonologicalvariation_video_file_path(phonological_variation_video, original_filename):
 
     ext = extension_on_filename(original_filename)
 
-    idgloss = instance.variation.gloss.idgloss
-    video_folder = os.path.join(GLOSS_VIDEO_DIRECTORY,
-                                instance.variation.gloss.lemma.dataset.acronym,
-                                get_two_letter_dir(idgloss))
+    gloss = phonological_variation_video.variation.gloss
+    video_folder = os.path.join(GLOSS_VIDEO_DIRECTORY, gloss.lemma.dataset.acronym, get_two_letter_dir(gloss.idgloss))
 
-    filename = f'{instance.pk}-{instance.variation.gloss.pk}-{instance.variation.pk}{ext}'
+    filename = f'{phonological_variation_video.pk}-{phonological_variation_video.variation.gloss.pk}-{phonological_variation_video.variation.pk}{ext}'
 
     path = os.path.join(str(video_folder), filename)
     if ESCAPE_UPLOADED_VIDEO_FILE_PATH:
@@ -1563,10 +1561,7 @@ class PhonologicalVariationVideo(models.Model):
     version = models.IntegerField("Version", default=0, null=False)
 
     def __init__(self, *args, **kwargs):
-        if 'upload_to' in kwargs:
-            self.upload_to = kwargs.pop('upload_to')
-        else:
-            self.upload_to = get_phonologicalvariation_video_file_path
+        self.upload_to = kwargs.pop('upload_to', get_phonologicalvariation_video_file_path)
         super().__init__(*args, **kwargs)
 
     def delete_phonologicalvariationvideo_files(self):
@@ -1574,15 +1569,15 @@ class PhonologicalVariationVideo(models.Model):
         if not self.videofile or not self.videofile.name:
             return
 
-        if os.path.exists(self.videofile.path):
-            try:
-                os.remove(self.videofile.path)
-            except (OSError, PermissionError, IOError, KeyError, ValueError):
-                self.videofile.name = ''
-                return
-        else:
+        if not os.path.exists(self.videofile.path):
             self.videofile.name = ''
-        return
+            return
+
+        try:
+            os.remove(self.videofile.path)
+        except (OSError, PermissionError, IOError, KeyError, ValueError):
+            self.videofile.name = ''
+            return
 
 
 @receiver(models.signals.pre_delete, sender=PhonologicalVariationVideo)
@@ -1599,4 +1594,4 @@ def delete_phonologicalvariationvideo_files(sender, instance, **kwargs):
     if not instance.videofile or not instance.videofile.name:
         return
 
-    instance.delete_files()
+    instance.delete_phonologicalvariationvideo_files()
