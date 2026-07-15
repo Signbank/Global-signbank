@@ -2547,13 +2547,13 @@
             <tr>
                  <th style="width:300px;">{% trans "Phonological Variations" %}</th>
                  <th class='th th-light' style="color:darkred; float:left;width:150px;border-top:0;">#1</th>
-                 {% for gv in gloss_variations %}
+                 {% for gloss_variation in gloss_variations %}
                  <th class='th th-light' style="color:darkred">
-                     #{{gv.variation}}
+                     #{{gloss_variation.variation}}
                      <span>
-                     <button id='variant_delete_btn_{{gv.id}}' class="quick-save btn btn-primary edit-mode glyph-btn button-phonology-to-appear-in-edit-mode"
-                        value='{{gv.id}}' data-category="phonology"
-                        data-url-template="/dictionary/update/delete_phonological_variation/{{gv.pk}}/"
+                     <button id='variant_delete_btn_{{gloss_variation.id}}' class="quick-save btn btn-primary edit-mode glyph-btn button-phonology-to-appear-in-edit-mode"
+                        value='{{gloss_variation.id}}' data-category="phonology"
+                        data-url-template="/dictionary/update/delete_phonological_variation/{{gloss_variation.pk}}/"
                         data-fields="[]" data-panel="phonology"
                         type="button"><span class='glyphicon glyphicon-trash'></span></button>
                      </span>
@@ -2564,26 +2564,30 @@
                 <td></td>
                 <td>
                     {% if gloss.has_video %}
-                        <div id="player_variation_{{gloss.id}}" style="display:table-cell;" class="read_only_phonology">
+                        <div id="player_variation_{{gloss.id}}" style="display:table-cell;" >
                             <video id='videoplayer_variation_{{gloss.id}}' src="{{protected_media_url}}{{gloss.get_video_url}}" onmouseover="this.play()"
                                    playsinline autoplay muted ></video>
                         </div>
                     {% endif %}
                 </td>
-                 {% for gv in gloss_variations %}
+                 {% for gloss_variation in gloss_variations %}
                         <td class="td td-light">
-                            {% if gv.has_video %}
-                                    <div id="player_variation_{{gv.id}}" style="display:table-cell;" class="read_only_phonology">
-                                        <video id='videoplayer_variation_{{gv.id}}' src="{{protected_media_url}}{{gv.get_video_url}}" onmouseover="this.play()"
+                            {% if gloss_variation.has_video %}
+                                    <div id="player_variation_{{gloss_variation.id}}"  >
+                                        <video id='videoplayer_variation_{{gloss_variation.id}}' src="{{protected_media_url}}{{gloss_variation.get_video_url}}" onmouseover="this.play()"
                                                playsinline autoplay muted ></video>
                                     </div>
                             {% endif %}
-                            <div class="edit_only_phonology" style="display:table-cell;">
-                            <form id='add_variations_video_{{gv.id}}' action='{% url "dictionary:add_phonological_variation_video" gv.id %}' method="POST" enctype="multipart/form-data">
+                            <div class="edit_only_phonology" >
+                            <form id='add_variations_video_{{gloss_variation.id}}' action='{% url "dictionary:add_phonological_variation_video" gloss_variation.id %}' method="POST" enctype="multipart/form-data">
                              {% csrf_token %}
                              <input type='file' name="videofile" class='form-control form-control-light'
-                                    id="variation_video_upload_{{gv.id}}" accept="video/mp4" required="">
-                             <input class='btn btn-primary' value='Add Video' type='submit'>
+                                    id="variation_video_upload_{{gloss_variation.id}}" accept="video/mp4" required="">
+                             {% if gloss_variation.has_video %}
+                             <input class='btn btn-primary' value='{% trans "Replace Video" %}' type='submit'>
+                             {% else %}
+                             <input class='btn btn-primary' value='{% trans "Add Video" %}' type='submit'>
+                             {% endif %}
                             </form>
                             </div>
                         </td>
@@ -2654,25 +2658,25 @@
                 {% endwith %}
                 {% endwith %}
 
-                 {% for gv in gloss_variations %}
-                 {% with variation_forms|get_item:gv.id as variant_form %}
+                 {% for gloss_variation in gloss_variations %}
+                 {% with variation_forms|get_item:gloss_variation.id as variant_form %}
                  {% with variant_form.fields|get_item:'handedness' as handedness_field %}
                  {% with variant_form.fields|get_item:'weakdrop' as weakdrop_field %}
                  {% with variant_form.fields|get_item:'weakprop' as weakprop_field %}
                  <td class='editform-phonology' style="width:150px;">
                     {% if use_lookaheads == 'lookaheads' %}
-                    <div style="display:table-cell; width:50px;" id="handedness_{{gv.id}}_cell">
+                    <div style="display:table-cell; width:50px;" id="handedness_{{gloss_variation.id}}_cell">
                     <input class='form-control form-control-light handednesstypeahead' type="text"
-                           id="handedness_{{gv.id}}_lookahead" data-category="phonology" value="{{handedness_field.initial}}"
+                           id="handedness_{{gloss_variation.id}}_lookahead" data-category="phonology" value="{{handedness_field.initial}}"
                            data-machine_value='{{handedness_field.machine_value}}' data-field="handedness"
                            placeholder="{{handedness_field.initial}}" autocomplete="off" data-initial="{{handedness_field.initial}}" >
                     <input type="hidden" name="handedness" value=""
-                           id="handedness_{{gv.id}}_machine_value" >
+                           id="handedness_{{gloss_variation.id}}_machine_value" >
                     </div>
                     {% else %}
                     <div style="display:table-cell;" class="editselect">
                     <select class="select_handedness form-control form-control-light" name="handedness"
-                            id="handedness_{{gv.id}}_value" data-category="phonology" data-initial="{{handedness_field.initial}}" >
+                            id="handedness_{{gloss_variation.id}}_value" data-category="phonology" data-initial="{{handedness_field.initial}}" >
                         {% for machine_value, opn in handedness_field.choices %}
                         {% if machine_value == handedness_field.initial|to_str %}
                         <option value={{machine_value}} selected="selected">{{opn}}</option>
@@ -2685,7 +2689,7 @@
                      {% endif %}
                      <div class="editselect" style="display:table-cell;">
                         <select class="select_weakdrop form-control form-control-light" name="weakdrop"
-                                id="weakdrop_{{gv.id}}_select_value" data-category="phonology" data-initial="{{weakdrop_field.initial}}">
+                                id="weakdrop_{{gloss_variation.id}}_select_value" data-category="phonology" data-initial="{{weakdrop_field.initial}}">
                             {% for value, opn in weakdrop_field.choices %}
                             {% if value == weakdrop_field.initial %}
                             <option value={{value}} selected="selected">{{opn}}</option>
@@ -2697,7 +2701,7 @@
                      </div>
                      <div class="editselect" style="display:table-cell;">
                         <select class="select_weakprop form-control form-control-light" name="weakprop"
-                                id="weakprop_{{gv.id}}_select_value" data-category="phonology" data-initial="{{weakprop_field.initial}}">
+                                id="weakprop_{{gloss_variation.id}}_select_value" data-category="phonology" data-initial="{{weakprop_field.initial}}">
                             {% for value, opn in weakprop_field.choices %}
                             {% if value == weakprop_field.initial %}
                             <option value={{value}} selected="selected">{{opn}}</option>
@@ -2765,24 +2769,24 @@
                 {% endwith %}
                 {% endwith %}
 
-                 {% for gv in gloss_variations %}
-                 {% with variation_forms|get_item:gv.id as variant_form %}
+                 {% for gloss_variation in gloss_variations %}
+                 {% with variation_forms|get_item:gloss_variation.id as variant_form %}
                  {% with variant_form.fields|get_item:'domhndsh' as domhndsh_field %}
                  {% with variant_form.fields|get_item:'domhndsh_letter_or_number' as domhndsh_letter_or_number_field %}
                  <td class="editform-phonology">
                     {% if use_lookaheads == 'lookaheads' %}
-                    <div style="display:table-cell;" id="domhndsh_{{gv.id}}_cell">
+                    <div style="display:table-cell;" id="domhndsh_{{gloss_variation.id}}_cell">
                     <input class='form-control form-control-light domhndshtypeahead' type="text" size="25"
-                           placeholder="{{domhndsh_field.initial}}" id="domhndsh_{{gv.id}}_lookahead" value="{{domhndsh_field.initial}}"
+                           placeholder="{{domhndsh_field.initial}}" id="domhndsh_{{gloss_variation.id}}_lookahead" value="{{domhndsh_field.initial}}"
                            data-machine_value='{{domhndsh_field.machine_value}}' data-field="domhndsh"
                            data-category="phonology" autocomplete="off" data-initial="{{domhndsh_field.initial}}" >
                     <input type="hidden" name="domhndsh" value=""
-                           id="domhndsh_{{gv.id}}_machine_value" >
+                           id="domhndsh_{{gloss_variation.id}}_machine_value" >
                     </div>
                     {% else %}
                     <div style="display:table-cell;" class="editselect">
                     <select class="select_domhndsh form-control form-control-light" name="domhndsh"
-                                id="domhndsh_{{gv.id}}_value" data-category="phonology" data-initial="{{domhndsh_field.initial}}">
+                                id="domhndsh_{{gloss_variation.id}}_value" data-category="phonology" data-initial="{{domhndsh_field.initial}}">
                         {% for machine_value, opn in domhndsh_field.choices %}
                         {% if machine_value == domhndsh_field.initial|to_str %}
                         <option value={{machine_value}} selected="selected">{{opn}}</option>
@@ -2795,7 +2799,7 @@
                     {% endif %}
                     <div class="editselect" style="display:table-cell;">
                     <select class="select_domhndsh_letter_or_number form-control form-control-light" name="domhndsh_letter_or_number"
-                            id="domhndsh_letter_or_number_{{gv.id}}_select_value" data-category="phonology"
+                            id="domhndsh_letter_or_number_{{gloss_variation.id}}_select_value" data-category="phonology"
                             data-initial="{{domhndsh_letter_or_number_field.initial}}">
                         {% for value, opn in domhndsh_letter_or_number_field.choices %}
                         {% if value == domhndsh_letter_or_number_field.initial %}
@@ -2864,25 +2868,25 @@
                 {% endwith %}
                 {% endwith %}
 
-                 {% for gv in gloss_variations %}
-                 {% with variation_forms|get_item:gv.id as variant_form %}
+                 {% for gloss_variation in gloss_variations %}
+                 {% with variation_forms|get_item:gloss_variation.id as variant_form %}
                  {% with variant_form.fields|get_item:'subhndsh' as subhndsh_field %}
                  {% with variant_form.fields|get_item:'subhndsh_letter_or_number' as subhndsh_letter_or_number_field %}
                  <td class="editform-phonology">
                     {% if use_lookaheads == 'lookaheads' %}
-                    <div style="display:table-cell;" id="subhndsh_{{gv.id}}_cell" >
+                    <div style="display:table-cell;" id="subhndsh_{{gloss_variation.id}}_cell" >
                     <input class='form-control form-control-light subhndshtypeahead' type="text" size="25"
                            placeholder="{{subhndsh_field.initial}}"
-                           id="subhndsh_{{gv.id}}_lookahead" value="{{subhndsh_field.initial}}" data-initial="{{subhndsh_field.initial}}"
+                           id="subhndsh_{{gloss_variation.id}}_lookahead" value="{{subhndsh_field.initial}}" data-initial="{{subhndsh_field.initial}}"
                            data-machine_value='{{subhndsh_field.machine_value}}' data-field="subhndsh"
                            data-category="phonology" autocomplete="off" >
                     <input type="hidden" name="subhndsh" value=""
-                           id="subhndsh_{{gv.id}}_machine_value" >
+                           id="subhndsh_{{gloss_variation.id}}_machine_value" >
                     </div>
                     {% else %}
                     <div style="display:table-cell;" class="editselect">
                     <select class="select_subhndsh form-control form-control-light" name="subhndsh"
-                                id="subhndsh_{{gv.id}}_value" data-category="phonology" data-initial="{{subhndsh_field.initial}}">
+                                id="subhndsh_{{gloss_variation.id}}_value" data-category="phonology" data-initial="{{subhndsh_field.initial}}">
                         {% for machine_value, opn in subhndsh_field.choices %}
                         {% if machine_value == subhndsh_field.initial|to_str %}
                         <option value={{machine_value}} selected="selected">{{opn}}</option>
@@ -2895,7 +2899,7 @@
                     {% endif %}
                     <div class="editselect" style="display:table-cell;">
                     <select class="select_subhndsh_letter_or_number form-control form-control-light" name="subhndsh_letter_or_number"
-                            id="subhndsh_letter_or_number_{{gv.id}}_select_value" data-category="phonology"
+                            id="subhndsh_letter_or_number_{{gloss_variation.id}}_select_value" data-category="phonology"
                             data-initial="{{subhndsh_letter_or_number_field.initial}}">
                         {% for value, opn in subhndsh_letter_or_number_field.choices %}
                         {% if value == subhndsh_letter_or_number_field.initial %}
@@ -2947,23 +2951,23 @@
                     {% endif %}
                 </td>
                 {% endwith %}
-                 {% for gv in gloss_variations %}
-                 {% with variation_forms|get_item:gv.id as variant_form %}
+                 {% for gloss_variation in gloss_variations %}
+                 {% with variation_forms|get_item:gloss_variation.id as variant_form %}
                  {% with variant_form.fields|get_item:'handCh' as handCh_field %}
                  <td class="editform-phonology">
                     {% if use_lookaheads == 'lookaheads' %}
-                    <div id="handCh_{{gv.id}}_cell">
+                    <div id="handCh_{{gloss_variation.id}}_cell">
                     <input class='form-control form-control-light handChtypeahead' type="text" size="40"
-                           placeholder="{{handCh_field.initial}}" id="handCh_{{gv.id}}_lookahead" value="{{handCh_field.initial}}"
+                           placeholder="{{handCh_field.initial}}" id="handCh_{{gloss_variation.id}}_lookahead" value="{{handCh_field.initial}}"
                            data-machine_value='{{handCh_field.machine_value}}' data-field="handCh"
                            data-category="phonology" autocomplete="off" data-initial="{{handCh_field.initial}}" >
                     <input type="hidden" name="handCh" value=""
-                           id="handCh_{{gv.id}}_machine_value" >
+                           id="handCh_{{gloss_variation.id}}_machine_value" >
                     </div>
                     {% else %}
                     <div style="display:table-cell;" class="editselect">
                     <select class="select_handCh form-control form-control-light" name="handCh"
-                                id="handCh_{{gv.id}}_value" data-category="phonology" data-initial="{{handCh_field.initial}}">
+                                id="handCh_{{gloss_variation.id}}_value" data-category="phonology" data-initial="{{handCh_field.initial}}">
                         {% for machine_value, opn in handCh_field.choices %}
                         {% if machine_value == handCh_field.initial|to_str %}
                         <option value={{machine_value}} selected="selected">{{opn}}</option>
@@ -3015,23 +3019,23 @@
                 </td>
                 {% endwith %}
 
-                 {% for gv in gloss_variations %}
-                 {% with variation_forms|get_item:gv.id as variant_form %}
+                 {% for gloss_variation in gloss_variations %}
+                 {% with variation_forms|get_item:gloss_variation.id as variant_form %}
                  {% with variant_form.fields|get_item:'relatArtic' as relatArtic_field %}
                  <td class="editform-phonology">
                     {% if use_lookaheads == 'lookaheads' %}
-                    <div id="relatArtic_{{gv.id}}_cell">
+                    <div id="relatArtic_{{gloss_variation.id}}_cell">
                     <input class='form-control form-control-light relatArtictypeahead' type="text" size="40"
-                           placeholder="{{relatArtic_field.initial}}" id="relatArtic_{{gv.id}}_lookahead" value="{{relatArtic_field.initial}}"
+                           placeholder="{{relatArtic_field.initial}}" id="relatArtic_{{gloss_variation.id}}_lookahead" value="{{relatArtic_field.initial}}"
                            data-machine_value='{{relatArtic_field.machine_value}}' data-field="relatArtic"
                            data-category="phonology" autocomplete="off" data-initial="{{relatArtic_field.initial}}" >
                     <input type="hidden" name="relatArtic" value=""
-                           id="relatArtic_{{gv.id}}_machine_value" >
+                           id="relatArtic_{{gloss_variation.id}}_machine_value" >
                     </div>
                     {% else %}
                     <div style="display:table-cell;" class="editselect">
                     <select class="select_relatArtic form-control form-control-light" name="relatArtic"
-                                id="relatArtic_{{gv.id}}_value" data-category="phonology" data-initial="{{relatArtic_field.initial}}">
+                                id="relatArtic_{{gloss_variation.id}}_value" data-category="phonology" data-initial="{{relatArtic_field.initial}}">
                         {% for machine_value, opn in relatArtic_field.choices %}
                         {% if machine_value == relatArtic_field.initial|to_str %}
                         <option value={{machine_value}} selected="selected">{{opn}}</option>
@@ -3082,23 +3086,23 @@
                     {% endif %}
                 </td>
                 {% endwith %}
-                 {% for gv in gloss_variations %}
-                 {% with variation_forms|get_item:gv.id as variant_form %}
+                 {% for gloss_variation in gloss_variations %}
+                 {% with variation_forms|get_item:gloss_variation.id as variant_form %}
                  {% with variant_form.fields|get_item:'locprim' as locprim_field %}
                  <td class="editform-phonology">
                     {% if use_lookaheads == 'lookaheads' %}
-                    <div id="locprim_{{gv.id}}_cell">
+                    <div id="locprim_{{gloss_variation.id}}_cell">
                     <input class='form-control form-control-light locprimtypeahead' type="text" size="40"
-                           placeholder="{{locprim_field.initial}}" id="locprim_{{gv.id}}_lookahead" value="{{locprim_field.initial}}"
+                           placeholder="{{locprim_field.initial}}" id="locprim_{{gloss_variation.id}}_lookahead" value="{{locprim_field.initial}}"
                            data-machine_value='{{locprim_field.machine_value}}' data-field="locprim"
                            data-category="phonology" autocomplete="off" data-initial="{{locprim_field.initial}}" >
                     <input type="hidden" name="locprim" value=""
-                           id="locprim_{{gv.id}}_machine_value" >
+                           id="locprim_{{gloss_variation.id}}_machine_value" >
                     </div>
                     {% else %}
                     <div style="display:table-cell;" class="editselect">
                     <select class="select_locprim form-control form-control-light" name="locprim"
-                                id="locprim_{{gv.id}}_value" data-category="phonology" data-initial="{{locprim_field.initial}}">
+                                id="locprim_{{gloss_variation.id}}_value" data-category="phonology" data-initial="{{locprim_field.initial}}">
                         {% for machine_value, opn in locprim_field.choices %}
                         {% if machine_value == locprim_field.initial|to_str %}
                         <option value={{machine_value}} selected="selected">{{opn}}</option>
@@ -3149,23 +3153,23 @@
                     {% endif %}
                 </td>
                 {% endwith %}
-                 {% for gv in gloss_variations %}
-                 {% with variation_forms|get_item:gv.id as variant_form %}
+                 {% for gloss_variation in gloss_variations %}
+                 {% with variation_forms|get_item:gloss_variation.id as variant_form %}
                  {% with variant_form.fields|get_item:'contType' as contType_field %}
                  <td class="editform-phonology">
                     {% if use_lookaheads == 'lookaheads' %}
-                    <div id="contType_{{gv.id}}_cell">
+                    <div id="contType_{{gloss_variation.id}}_cell">
                     <input class='form-control form-control-light contTypetypeahead' type="text" size="40"
-                           placeholder="{{contType_field.initial}}" id="contType_{{gv.id}}_lookahead" value="{{contType_field.initial}}"
+                           placeholder="{{contType_field.initial}}" id="contType_{{gloss_variation.id}}_lookahead" value="{{contType_field.initial}}"
                            data-machine_value='{{contType_field.machine_value}}' data-field="contType"
                            data-category="phonology" autocomplete="off" data-initial="{{contType_field.initial}}" >
                     <input type="hidden" name="contType" value=""
-                           id="contType_{{gv.id}}_machine_value" >
+                           id="contType_{{gloss_variation.id}}_machine_value" >
                     </div>
                     {% else %}
                     <div style="display:table-cell;" class="editselect">
                     <select class="select_contType form-control form-control-light" name="contType"
-                                id="contType_{{gv.id}}_value" data-category="phonology" data-initial="{{contType_field.initial}}">
+                                id="contType_{{gloss_variation.id}}_value" data-category="phonology" data-initial="{{contType_field.initial}}">
                         {% for machine_value, opn in contType_field.choices %}
                         {% if machine_value == contType_field.initial|to_str %}
                         <option value={{machine_value}} selected="selected">{{opn}}</option>
@@ -3216,23 +3220,23 @@
                     {% endif %}
                 </td>
                 {% endwith %}
-                 {% for gv in gloss_variations %}
-                 {% with variation_forms|get_item:gv.id as variant_form %}
+                 {% for gloss_variation in gloss_variations %}
+                 {% with variation_forms|get_item:gloss_variation.id as variant_form %}
                  {% with variant_form.fields|get_item:'movSh' as movSh_field %}
                  <td class="editform-phonology">
                     {% if use_lookaheads == 'lookaheads' %}
-                    <div id="movSh_{{gv.id}}_cell">
+                    <div id="movSh_{{gloss_variation.id}}_cell">
                     <input class='form-control form-control-light movShtypeahead' type="text" size="40"
-                           placeholder="{{movSh_field.initial}}" id="movSh_{{gv.id}}_lookahead" value="{{movSh_field.initial}}"
+                           placeholder="{{movSh_field.initial}}" id="movSh_{{gloss_variation.id}}_lookahead" value="{{movSh_field.initial}}"
                            data-machine_value='{{movSh_field.machine_value}}' data-field="movSh"
                            data-category="phonology" autocomplete="off" data-initial="{{movSh_field.initial}}" >
                     <input type="hidden" name="movSh" value=""
-                           id="movSh_{{gv.id}}_machine_value" >
+                           id="movSh_{{gloss_variation.id}}_machine_value" >
                     </div>
                     {% else %}
                     <div style="display:table-cell;" class="editselect">
                     <select class="select_movSh form-control form-control-light" name="movSh"
-                                id="movSh_{{gv.id}}_value" data-category="phonology" data-initial="{{movSh_field.initial}}">
+                                id="movSh_{{gloss_variation.id}}_value" data-category="phonology" data-initial="{{movSh_field.initial}}">
                         {% for machine_value, opn in movSh_field.choices %}
                         {% if machine_value == movSh_field.initial|to_str %}
                         <option value={{machine_value}} selected="selected">{{opn}}</option>
@@ -3283,23 +3287,23 @@
                     {% endif %}
                 </td>
                 {% endwith %}
-                 {% for gv in gloss_variations %}
-                 {% with variation_forms|get_item:gv.id as variant_form %}
+                 {% for gloss_variation in gloss_variations %}
+                 {% with variation_forms|get_item:gloss_variation.id as variant_form %}
                  {% with variant_form.fields|get_item:'movDir' as movDir_field %}
                  <td class="editform-phonology">
                     {% if use_lookaheads == 'lookaheads' %}
-                    <div id="movDir_{{gv.id}}_cell">
+                    <div id="movDir_{{gloss_variation.id}}_cell">
                     <input class='form-control form-control-light movDirtypeahead' type="text" size="40"
-                           placeholder="{{movDir_field.initial}}" id="movDir_{{gv.id}}_lookahead" value="{{movDir_field.initial}}"
+                           placeholder="{{movDir_field.initial}}" id="movDir_{{gloss_variation.id}}_lookahead" value="{{movDir_field.initial}}"
                            data-machine_value='{{movDir_field.machine_value}}' data-field="movDir"
                            data-category="phonology" autocomplete="off" data-initial="{{movDir_field.initial}}" >
                     <input type="hidden" name="movDir" value=""
-                           id="movDir_{{gv.id}}_machine_value" >
+                           id="movDir_{{gloss_variation.id}}_machine_value" >
                     </div>
                     {% else %}
                     <div style="display:table-cell;" class="editselect">
                     <select class="select_movDir form-control form-control-light" name="movDir"
-                                id="movDir_{{gv.id}}_value" data-category="phonology" data-initial="{{movDir_field.initial}}">
+                                id="movDir_{{gloss_variation.id}}_value" data-category="phonology" data-initial="{{movDir_field.initial}}">
                         {% for machine_value, opn in movDir_field.choices %}
                         {% if machine_value == movDir_field.initial|to_str %}
                         <option value={{machine_value}} selected="selected">{{opn}}</option>
@@ -3341,13 +3345,13 @@
                     </div>
                 </td>
                 {% endwith %}
-                 {% for gv in gloss_variations %}
-                 {% with variation_forms|get_item:gv.id as variant_form %}
+                 {% for gloss_variation in gloss_variations %}
+                 {% with variation_forms|get_item:gloss_variation.id as variant_form %}
                  {% with variant_form.fields|get_item:'repeat' as repeat_field %}
                  <td class="editform-phonology">
                      <div class="editselect">
                      <select class="select_repeat form-control form-control-light" name="repeat"
-                             id="repeat_{{gv.id}}_select_value" data-category="phonology" data-initial="{{repeat_field.initial}}">
+                             id="repeat_{{gloss_variation.id}}_select_value" data-category="phonology" data-initial="{{repeat_field.initial}}">
                          {% for value, opn in repeat_field.choices %}
                          {% if value == repeat_field.initial %}
                          <option value={{value}} selected="selected">{{opn}}</option>
@@ -3387,13 +3391,13 @@
                     </div>
                 </td>
                 {% endwith %}
-                 {% for gv in gloss_variations %}
-                 {% with variation_forms|get_item:gv.id as variant_form %}
+                 {% for gloss_variation in gloss_variations %}
+                 {% with variation_forms|get_item:gloss_variation.id as variant_form %}
                  {% with variant_form.fields|get_item:'altern' as altern_field %}
                  <td class="editform-phonology">
                      <div class="editselect">
                      <select class="select_altern form-control form-control-light" name="altern"
-                             id="altern_{{gv.id}}_select_value" data-category="phonology" data-initial="{{altern_field.initial}}">
+                             id="altern_{{gloss_variation.id}}_select_value" data-category="phonology" data-initial="{{altern_field.initial}}">
                          {% for value, opn in altern_field.choices %}
                          {% if value == altern_field.initial %}
                          <option value={{value}} selected="selected">{{opn}}</option>
@@ -3443,23 +3447,23 @@
                     {% endif %}
                 </td>
                 {% endwith %}
-                 {% for gv in gloss_variations %}
-                 {% with variation_forms|get_item:gv.id as variant_form %}
+                 {% for gloss_variation in gloss_variations %}
+                 {% with variation_forms|get_item:gloss_variation.id as variant_form %}
                  {% with variant_form.fields|get_item:'relOriMov' as relOriMov_field %}
                  <td class="editform-phonology">
                     {% if use_lookaheads == 'lookaheads' %}
-                    <div id="relOriMov_{{gv.id}}_cell">
+                    <div id="relOriMov_{{gloss_variation.id}}_cell">
                     <input class='form-control form-control-light relOriMovtypeahead' type="text" size="40"
-                           placeholder="{{relOriMov_field.initial}}" id="relOriMov_{{gv.id}}_lookahead" value="{{relOriMov_field.initial}}"
+                           placeholder="{{relOriMov_field.initial}}" id="relOriMov_{{gloss_variation.id}}_lookahead" value="{{relOriMov_field.initial}}"
                            data-machine_value='{{relOriMov_field.machine_value}}' data-field="relOriMov"
                            data-category="phonology" autocomplete="off" data-initial="{{relOriMov_field.initial}}" >
                     <input type="hidden" name="relOriMov" value=""
-                           id="relOriMov_{{gv.id}}_machine_value" >
+                           id="relOriMov_{{gloss_variation.id}}_machine_value" >
                     </div>
                     {% else %}
                     <div style="display:table-cell;" class="editselect">
                     <select class="select_relOriMov form-control form-control-light" name="relOriMov"
-                                id="relOriMov_{{gv.id}}_value" data-category="phonology" data-initial="{{relOriMov_field.initial}}">
+                                id="relOriMov_{{gloss_variation.id}}_value" data-category="phonology" data-initial="{{relOriMov_field.initial}}">
                         {% for machine_value, opn in relOriMov_field.choices %}
                         {% if machine_value == relOriMov_field.initial|to_str %}
                         <option value={{machine_value}} selected="selected">{{opn}}</option>
@@ -3511,23 +3515,23 @@
                     {% endif %}
                 </td>
                 {% endwith %}
-                 {% for gv in gloss_variations %}
-                 {% with variation_forms|get_item:gv.id as variant_form %}
+                 {% for gloss_variation in gloss_variations %}
+                 {% with variation_forms|get_item:gloss_variation.id as variant_form %}
                  {% with variant_form.fields|get_item:'relOriLoc' as relOriLoc_field %}
                  <td class="editform-phonology">
                     {% if use_lookaheads == 'lookaheads' %}
-                    <div id="relOriLoc_{{gv.id}}_cell">
+                    <div id="relOriLoc_{{gloss_variation.id}}_cell">
                     <input class='form-control form-control-light relOriLoctypeahead' type="text" size="40"
-                           placeholder="{{relOriLoc_field.initial}}" id="relOriLoc_{{gv.id}}_lookahead" value="{{relOriLoc_field.initial}}"
+                           placeholder="{{relOriLoc_field.initial}}" id="relOriLoc_{{gloss_variation.id}}_lookahead" value="{{relOriLoc_field.initial}}"
                            data-machine_value='{{relOriLoc_field.machine_value}}' data-field="relOriLoc"
                            data-category="phonology" autocomplete="off" data-initial="{{relOriLoc_field.initial}}" >
                     <input type="hidden" name="relOriLoc" value=""
-                           id="relOriLoc_{{gv.id}}_machine_value" >
+                           id="relOriLoc_{{gloss_variation.id}}_machine_value" >
                     </div>
                     {% else %}
                     <div style="display:table-cell;" class="editselect">
                     <select class="select_relOriLoc form-control form-control-light" name="relOriLoc"
-                                id="relOriLoc_{{gv.id}}_value" data-category="phonology" data-initial="{{relOriLoc_field.initial}}">
+                                id="relOriLoc_{{gloss_variation.id}}_value" data-category="phonology" data-initial="{{relOriLoc_field.initial}}">
                         {% for machine_value, opn in relOriLoc_field.choices %}
                         {% if machine_value == relOriLoc_field.initial|to_str %}
                         <option value={{machine_value}} selected="selected">{{opn}}</option>
@@ -3578,23 +3582,23 @@
                     {% endif %}
                 </td>
                 {% endwith %}
-                 {% for gv in gloss_variations %}
-                 {% with variation_forms|get_item:gv.id as variant_form %}
+                 {% for gloss_variation in gloss_variations %}
+                 {% with variation_forms|get_item:gloss_variation.id as variant_form %}
                  {% with variant_form.fields|get_item:'oriCh' as oriCh_field %}
                  <td class="editform-phonology">
                     {% if use_lookaheads == 'lookaheads' %}
-                    <div id="oriCh_{{gv.id}}_cell">
+                    <div id="oriCh_{{gloss_variation.id}}_cell">
                     <input class='form-control form-control-light oriChtypeahead' type="text" size="40"
-                           placeholder="{{oriCh_field.initial}}" id="oriCh_{{gv.id}}_lookahead" value="{{oriCh_field.initial}}"
+                           placeholder="{{oriCh_field.initial}}" id="oriCh_{{gloss_variation.id}}_lookahead" value="{{oriCh_field.initial}}"
                            data-machine_value='{{oriCh_field.machine_value}}' data-field="oriCh"
                            data-category="phonology" autocomplete="off" data-initial="{{oriCh_field.initial}}" >
                     <input type="hidden" name="oriCh" value=""
-                           id="oriCh_{{gv.id}}_machine_value" >
+                           id="oriCh_{{gloss_variation.id}}_machine_value" >
                     </div>
                     {% else %}
                     <div style="display:table-cell;" class="editselect">
                     <select class="select_oriCh form-control form-control-light" name="oriCh"
-                            id="oriCh_{{gv.id}}_value" data-category="phonology" data-initial="{{oriCh_field.initial}}">
+                            id="oriCh_{{gloss_variation.id}}_value" data-category="phonology" data-initial="{{oriCh_field.initial}}">
                         {% for machine_value, opn in oriCh_field.choices %}
                         {% if machine_value == oriCh_field.initial|to_str %}
                         <option value={{machine_value}} selected="selected">{{opn}}</option>
@@ -3628,14 +3632,14 @@
                     </span>
                 </td>
                 {% endwith %}
-                 {% for gv in gloss_variations %}
-                 {% with variation_forms|get_item:gv.id as variant_form %}
+                 {% for gloss_variation in gloss_variations %}
+                 {% with variation_forms|get_item:gloss_variation.id as variant_form %}
                  {% with variant_form.fields|get_item:'locVirtObj' as locVirtObj_field %}
                  <td class="editform-phonology" style="width:auto;">
                      <span>
                      <textarea class='text_locVirtObj form-control form-control-light'
                                name="locVirtObj" cols="25" rows="2"
-                               id="locVirtObj_{{gv.id}}_text" data-category="phonology"
+                               id="locVirtObj_{{gloss_variation.id}}_text" data-category="phonology"
                                data-initial="{{locVirtObj_field.initial}}" >{{locVirtObj_field.initial}}</textarea>
                      </span>
                  </td>
@@ -3661,14 +3665,14 @@
                     </span>
                 </td>
                 {% endwith %}
-                 {% for gv in gloss_variations %}
-                 {% with variation_forms|get_item:gv.id as variant_form %}
+                 {% for gloss_variation in gloss_variations %}
+                 {% with variation_forms|get_item:gloss_variation.id as variant_form %}
                  {% with variant_form.fields|get_item:'phonOth' as phonOth_field %}
                  <td class="editform-phonology" style="width:auto;">
                      <span>
                      <textarea class='text_phonOth form-control form-control-light'
                                name="phonOth" cols="25" rows="2"
-                               id="phonOth_{{gv.id}}_text" data-category="phonology"
+                               id="phonOth_{{gloss_variation.id}}_text" data-category="phonology"
                                data-initial="{{phonOth_field.initial}}" >{{phonOth_field.initial}}</textarea>
                      </span>
                  </td>
@@ -3694,14 +3698,14 @@
                     </span>
                 </td>
                 {% endwith %}
-                 {% for gv in gloss_variations %}
-                 {% with variation_forms|get_item:gv.id as variant_form %}
+                 {% for gloss_variation in gloss_variations %}
+                 {% with variation_forms|get_item:gloss_variation.id as variant_form %}
                  {% with variant_form.fields|get_item:'mouthG' as mouthG_field %}
                  <td class="editform-phonology" style="width:auto;">
                      <span>
                      <textarea class='text_mouthG form-control form-control-light'
                                name="mouthG" cols="25" rows="2"
-                               id="mouthG_{{gv.id}}_text" data-category="phonology"
+                               id="mouthG_{{gloss_variation.id}}_text" data-category="phonology"
                                data-initial="{{mouthG_field.initial}}" >{{mouthG_field.initial}}</textarea>
                      </span>
                  </td>
@@ -3727,14 +3731,14 @@
                     </div>
                 </td>
                 {% endwith %}
-                 {% for gv in gloss_variations %}
-                 {% with variation_forms|get_item:gv.id as variant_form %}
+                 {% for gloss_variation in gloss_variations %}
+                 {% with variation_forms|get_item:gloss_variation.id as variant_form %}
                  {% with variant_form.fields|get_item:'mouthing' as mouthing_field %}
                  <td class="editform-phonology" style="width:auto;">
                      <span>
                      <textarea class='text_mouthing form-control form-control-light'
                                name="mouthing" cols="25" rows="2"
-                               id="mouthing_{{gv.id}}_text" data-category="phonology"
+                               id="mouthing_{{gloss_variation.id}}_text" data-category="phonology"
                                data-initial="{{mouthing_field.initial}}" >{{mouthing_field.initial}}</textarea>
                      </span>
                  </td>
@@ -3760,14 +3764,14 @@
                     </span>
                 </td>
                 {% endwith %}
-                 {% for gv in gloss_variations %}
-                 {% with variation_forms|get_item:gv.id as variant_form %}
+                 {% for gloss_variation in gloss_variations %}
+                 {% with variation_forms|get_item:gloss_variation.id as variant_form %}
                  {% with variant_form.fields|get_item:'phonetVar' as phonetVar_field %}
                  <td class="editform-phonology" style="width:auto;">
                      <span>
                      <textarea class='text_phonetVar form-control form-control-light'
                                name="mouthing" cols="25" rows="2"
-                               id="phonetVar_{{gv.id}}_text" data-category="phonology"
+                               id="phonetVar_{{gloss_variation.id}}_text" data-category="phonology"
                                data-initial="{{phonetVar_field.initial}}" >{{phonetVar_field.initial}}</textarea>
                      </span>
                  </td>

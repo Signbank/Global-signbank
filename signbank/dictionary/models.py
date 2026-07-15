@@ -4549,9 +4549,9 @@ class PhonologicalVariation(Phonology):
             raise ValidationError(msg)
 
         # get existing video objects for this variation and delete them
-        existing_videos = PhonologicalVariationVideo.objects.filter(variation=self).order_by('pk')
-        for ev in existing_videos:
-            ev.delete()
+        existing_phonological_variation_videos = PhonologicalVariationVideo.objects.filter(variation=self).order_by('pk')
+        for video in existing_phonological_variation_videos:
+            video.delete()
 
         # Create a new video object
         video = PhonologicalVariationVideo(variation=self)
@@ -4580,7 +4580,9 @@ class PhonologicalVariation(Phonology):
         return video_path
 
     def has_video(self):
-        return self.get_video() not in ['', None]
+        from signbank.video.models import PhonologicalVariationVideo
+
+        return PhonologicalVariationVideo.objects.filter(variation=self).exists()
 
     def get_video_url(self):
         """return the url of the video for this gloss"""
