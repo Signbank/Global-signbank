@@ -2583,7 +2583,11 @@
                              {% csrf_token %}
                              <input type='file' name="videofile" class='form-control form-control-light'
                                     id="variation_video_upload_{{gloss_variation.id}}" accept="video/mp4" required="">
-                             <input class='btn btn-primary' value='Add Video' type='submit'>
+                             {% if gloss_variation.has_video %}
+                             <input class='btn btn-primary' value='{% trans "Replace Video" %}' type='submit'>
+                             {% else %}
+                             <input class='btn btn-primary' value='{% trans "Add Video" %}' type='submit'>
+                             {% endif %}
                             </form>
                             </div>
                         </td>
