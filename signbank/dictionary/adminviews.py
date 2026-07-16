@@ -1483,10 +1483,6 @@ class GlossDetailView(DetailView):
             variation_forms[gloss_variation.pk] = PhonologyForm(object=gloss_variation, use_lookaheads=context['use_lookaheads'])
         context['variation_forms'] = variation_forms
 
-        variations_dict = phonological_variations_matrix(gloss)
-        display_dict = display_phonology_matrix(variations_dict)
-        print('Phonological Variations by Differing Fields: ', display_dict)
-
         context['show_field_row'] = show_fields_rows(gloss)
         context['language_2chars'] = [language.language_code_2char for language in dataset_languages]
 

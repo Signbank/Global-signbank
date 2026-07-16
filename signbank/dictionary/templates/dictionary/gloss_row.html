@@ -109,7 +109,7 @@
         <td class="field_dataset" style="width:12em;"></td>
     {% endif %}
 
-    <td class="field_hasvideo" style="margin-left:20px;"></td>
+    <td class="field_hasvideo" style="padding-left:20px;"></td>
     <td class="field_hasvideo">
       {% if gloss_variation.has_video %}
       {% url 'dictionary:protected_media' '' as protected_media_url %}
@@ -132,7 +132,7 @@
            </div>
       {% endif %}
     </td>
-    <td>{% trans "Variation" %} #{{gloss_variation.variation}}</td>
+    <td colspan="999"><small>{% trans "Variation" %} #{{gloss_variation.variation}}</small></td>
 </tr>
 {% endfor %}
 {% endif %}

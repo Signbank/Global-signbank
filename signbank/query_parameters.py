@@ -277,14 +277,12 @@ def convert_query_parameters_to_filter(query_parameters):
             query_list.append(Q(**{query_filter_sense_text: get_value}))
 
         elif get_key == 'hasphonologicalvariations' and get_value != '':
-            # Remember the pk of all glosses that have phonological variations
-            pks_for_glosses_with_phonological_variations = [ pv.gloss.pk for pv in PhonologicalVariation.objects.all() ]
+            gloss_ids_with_phonological_variations = PhonologicalVariation.objects.values_list('gloss_id',
+                                                                                               flat=True).distinct()
             if get_value == '2':
-                # value '1' filters glosses with othermedia
-                query_list.append(Q(pk__in=pks_for_glosses_with_phonological_variations))
+                query_list.append(Q(pk__in=gloss_ids_with_phonological_variations))
             elif get_value == '3':
-                # the code for '3' excludes the above glosses from the results
-                query_list.append(~Q(pk__in=pks_for_glosses_with_phonological_variations))
+                query_list.append(~Q(pk__in=gloss_ids_with_phonological_variations))
             else:
                 continue
 
@@ -950,12 +948,12 @@ def queryset_from_get(formclass, searchform, GET, qs):
                 qs = qs.filter(creationDate__range=(created_after_date, DT.datetime.now()))
         elif searchform.fields[get_key].widget.input_type in ['select']:
             if get_key in ['hasphonologicalvariations']:
-                pks_for_glosses_with_phonological_variations = [pv.gloss.pk for pv in
-                                                                PhonologicalVariation.objects.all()]
+                gloss_ids_with_phonological_variations = PhonologicalVariation.objects.values_list('gloss_id',
+                                                                                                   flat=True).distinct()
                 if get_value == '2':
-                    qs = qs.filter(pk__in=pks_for_glosses_with_phonological_variations)
+                    qs = qs.filter(pk__in=gloss_ids_with_phonological_variations)
                 elif get_value == '3':
-                    qs = qs.exclude(pk__in=pks_for_glosses_with_phonological_variations)
+                    qs = qs.exclude(pk__in=gloss_ids_with_phonological_variations)
                 continue
             elif get_key in ['inWeb', 'repeat', 'altern', 'isNew']:
                 val = get_value == '2'
@@ -1226,12 +1224,12 @@ def queryset_glosssense_from_get(model, formclass, searchform, GET, qs):
                 qs = qs.filter(**{query_filter: (created_after_date, DT.datetime.now())})
         elif searchform.fields[get_key].widget.input_type in ['select']:
             if get_key in ['hasphonologicalvariations']:
-                pks_for_glosses_with_phonological_variations = [pv.gloss.pk for pv in
-                                                                PhonologicalVariation.objects.all()]
+                gloss_ids_with_phonological_variations = PhonologicalVariation.objects.values_list('gloss_id',
+                                                                                                   flat=True).distinct()
                 if get_value == '2':
-                    qs = qs.filter(pk__in=pks_for_glosses_with_phonological_variations)
+                    qs = qs.filter(pk__in=gloss_ids_with_phonological_variations)
                 elif get_value == '3':
-                    qs = qs.exclude(pk__in=pks_for_glosses_with_phonological_variations)
+                    qs = qs.exclude(pk__in=gloss_ids_with_phonological_variations)
                 continue
             elif get_key in ['hasmultiplesenses']:
                 if get_value == '2':

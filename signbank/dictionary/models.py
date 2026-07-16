@@ -5,6 +5,7 @@ import copy
 import os
 import json
 import tagging
+from django.db.models.fields import BooleanField
 
 from django.utils.timezone import get_current_timezone
 from django.db.models import Q, When, Case, IntegerField
@@ -1180,24 +1181,16 @@ class Phonology(MetaModelMixin, models.Model):
 
         phonology_dict = dict()
         for field in FIELDS['phonology']:
-            gloss_field = Gloss._meta.get_field(field)
+            gloss_field = self._meta.get_field(field)
             if isinstance(gloss_field, models.CharField) or isinstance(gloss_field, models.TextField):
                 continue
             field_value = getattr(self, gloss_field.name)
-            if isinstance(field_value, Handshape):
-                if field_value is None:
-                    # this differentiates between null field choice fields (here) versus null Boolean fields
-                    # which get mapped to either 'False' or 'Neutral'
-                    phonology_dict[field] = None
-                else:
-                    phonology_dict[field] = str(field_value.machine_value)
+            if field_value is None and not isinstance(field_value, BooleanField):
+                phonology_dict[field] = None
+            elif isinstance(field_value, Handshape):
+                phonology_dict[field] = str(field_value.machine_value)
             elif hasattr(gloss_field, 'field_choice_category'):
-                if field_value is None:
-                    # this differentiates between null field choice fields (here) versus null Boolean fields
-                    # which get mapped to either 'False' or 'Neutral'
-                    phonology_dict[field] = None
-                else:
-                    phonology_dict[field] = str(field_value.machine_value if use_machine_value else field_value.id)
+                phonology_dict[field] = str(field_value.machine_value if use_machine_value else field_value.id)
             else:
                 # gloss_field is a Boolean
                 # TO DO: check these conversions to Strings instead of Booleans

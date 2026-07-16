@@ -50,9 +50,10 @@ def phonological_variations_matrix(gloss):
     for field in FIELDS['phonology']:
         primary_value = gloss_phonology[field]
         for variation in variations.keys():
-            if variations[variation][field] != primary_value:
-                if field not in phonology_differences.keys():
-                    phonology_differences[field] = {}
+            if variations[variation][field] == primary_value:
+                continue
+            if field not in phonology_differences.keys():
+                phonology_differences[field] = {}
     for field in phonology_differences.keys():
         for variation_num in variations.keys():
             phonology_differences[field][1] = gloss_phonology[field]
