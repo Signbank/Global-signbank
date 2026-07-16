@@ -100,3 +100,39 @@
     {% endif %}
     {% endif %}
 </tr>
+
+{% if gloss_variations %}
+{% for gloss_variation in gloss_variations %}
+<tr id = "glossrow_{{gloss_variation.id}}" class="gloss_row">
+
+    {% if SHOW_DATASET_INTERFACE_OPTIONS and selected_datasets|length > 1 %}
+        <td class="field_dataset" style="width:12em;"></td>
+    {% endif %}
+
+    <td class="field_hasvideo" style="padding-left:20px;"></td>
+    <td class="field_hasvideo">
+      {% if gloss_variation.has_video %}
+      {% url 'dictionary:protected_media' '' as protected_media_url %}
+
+      <div class="thumbnail_container">
+      <a href="{{PREFIX_URL}}/dictionary/gloss/{{focus_gloss.pk}}{% if user.is_anonymous %}.html{% else %}/{% endif %}">
+
+        <div id='glossvideo_variation_{{gloss_variation.id}}'>
+            {% if gloss_variation.has_video %}
+            <video id="videoplayer_variation_{{gloss_variation.id}}" class="thumbnail-video" src="{{protected_media_url}}{{gloss_variation.get_video_url}}"
+                   type="video/mp4" muted="muted" onmouseover="this.play()"></video>
+            {% endif %}
+        </div>
+
+      </a>
+      </div>
+     {% else %}
+           <div class="thumbnail_container">
+               <img id="videoplayer_{{gloss_variation.id}}" class="thumbnail-video" src='{{STATIC_URL}}images/no-video.png' >
+           </div>
+      {% endif %}
+    </td>
+    <td colspan="999"><small>{% trans "Variation" %} #{{gloss_variation.variation}}</small></td>
+</tr>
+{% endfor %}
+{% endif %}

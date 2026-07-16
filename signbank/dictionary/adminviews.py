@@ -143,6 +143,7 @@ from signbank.dataset_operations import (get_primary_videos_for_gloss, get_persp
                                          get_nme_videos_for_gloss, get_wrong_videos_for_gloss,
                                          get_backup_videos_for_gloss)
 from signbank.dictionary.display_functions import show_fields_rows
+from signbank.dictionary.phonology_functions import phonological_variations_matrix, display_phonology_matrix
 
 
 def order_annotatedsentence_queryset_by_sort_order(get, qs, queryset_language_codes):
@@ -1401,7 +1402,7 @@ class GlossDetailView(DetailView):
 
             return context
 
-        phonology_matrix = context['gloss'].phonology_matrix_homonymns(use_machine_value=True)
+        phonology_matrix = context['gloss'].phonology_matrix(use_machine_value=True)
         phonology_focus = [field for field in phonology_matrix.keys()
                            if phonology_matrix[field] is not None
                            and phonology_matrix[field] not in ['Neutral',  '0', '1', 'False']]
@@ -6084,6 +6085,8 @@ def glosslist_ajax_complete(request, gloss_id):
             else:
                 column_values.append((fieldname, '-'))
 
+    gloss_variations = PhonologicalVariation.objects.filter(gloss=this_gloss).order_by('variation')
+
     return render(request, 'dictionary/gloss_row.html',
                   {'focus_gloss': this_gloss,
                    'dataset_languages': dataset_languages,
@@ -6093,6 +6096,7 @@ def glosslist_ajax_complete(request, gloss_id):
                    'width_lemma_columns': len(dataset_languages),
                    'sensetranslations_per_language': sensetranslations_per_language,
                    'column_values': column_values,
+                   'gloss_variations': gloss_variations,
                    'USE_REGULAR_EXPRESSIONS': USE_REGULAR_EXPRESSIONS,
                    'SHOW_DATASET_INTERFACE_OPTIONS': SHOW_DATASET_INTERFACE_OPTIONS})
 

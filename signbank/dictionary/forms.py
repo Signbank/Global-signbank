@@ -2,6 +2,7 @@ from colorfield.fields import ColorWidget
 from datetime import timedelta
 import datetime as DT
 import re
+from enum import Enum
 
 from django import forms
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
@@ -27,7 +28,7 @@ from signbank.dictionary.models import (Phonology, Gloss, Morpheme, Definition, 
                                         QueryParameterFieldChoice, SearchHistory, QueryParameter,
                                         QueryParameterMultilingual, QueryParameterHandshape, SemanticFieldTranslation,
                                         ExampleSentence, Affiliation, AffiliatedUser, AffiliatedGloss, GlossSense,
-                                        SenseTranslation, AnnotatedGloss, GlossProvenance, Dialect, PhonologicalVariation)
+                                        SenseTranslation, AnnotatedGloss, GlossProvenance, Dialect)
 from signbank.dictionary.translate_choice_list import choicelist_queryset_to_translated_dict
 from signbank.tools import get_selected_datasets_for_user
 
@@ -232,6 +233,8 @@ class GlossSearchForm(forms.ModelForm):
     search = forms.CharField(label=_('Search Gloss'))
     sortOrder = forms.CharField(label=_('Sort Order'), initial="")
     translation = forms.CharField(label=_('Search Senses'))
+    hasphonologicalvariations = forms.ChoiceField(label=_('Has Phonological Variations'), choices=[(0, '-')],
+                                                  widget=forms.Select(attrs=ATTRS_FOR_BOOLEAN_FORMS))
     hasvideo = forms.ChoiceField(label=_('Has Video'), choices=[(0, '-')],
                                  widget=forms.Select(attrs=ATTRS_FOR_BOOLEAN_FORMS))
     hasnmevideo = forms.ChoiceField(label=_('Has NME Video'), choices=[(0, '-')],
@@ -358,7 +361,7 @@ class GlossSearchForm(forms.ModelForm):
         self.fields['tags'] = forms.ModelChoiceField(label=_('Tags'),
                                                      queryset=Tag.objects.all(), empty_label=None,
                                                      widget=forms.Select(attrs=ATTRS_FOR_FORMS))
-        for boolean_field in ['hasvideo', 'hasnmevideo', 'repeat', 'altern', 'isNew', 'inWeb', 'defspublished',
+        for boolean_field in ['hasphonologicalvariations', 'hasvideo', 'hasnmevideo', 'repeat', 'altern', 'isNew', 'inWeb', 'defspublished',
                               'excludeFromEcv', 'hasRelationToForeignSign', 'hasmultiplesenses',
                               'hasothermedia', 'isablend', 'ispartofablend', 'hasannotatedsentences']:
             self.fields[boolean_field].choices = [('0', '-'), ('2', _('Yes')), ('3', _('No'))]
@@ -2069,6 +2072,11 @@ class PhonologyForm(forms.Form):
         self.fields['mouthG'].initial = self.object.mouthG if self.object.mouthG not in ['', '-', None] else ''
         self.fields['mouthing'].initial = self.object.mouthing if self.object.mouthing not in ['', '-', None] else ''
         self.fields['phonetVar'].initial = self.object.phonetVar if self.object.phonetVar not in ['', '-', None] else ''
+
+
+class PhonologicalVariationFilter(Enum):
+    HAS_VARIATION = '2'
+    NO_VARIATION = '3'
 
 
 class SemanticsForm(forms.Form):
