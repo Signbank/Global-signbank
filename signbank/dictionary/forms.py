@@ -20,14 +20,14 @@ from signbank.settings.server_specific import (LANGUAGES, LANGUAGE_CODE, USE_REG
                                                MINIMAL_PAIRS_SEARCH_FIELDS, MINIMAL_PAIRS_CHOICE_FIELDS,
                                                RECENTLY_ADDED_SIGNS_PERIOD, OBLIGATORY_FIELDS)
 from signbank.video.models import GlossVideo
-from signbank.dictionary.models import (Gloss, Morpheme, Definition, Relation, RelationToForeignSign,
+from signbank.dictionary.models import (Phonology, Gloss, Morpheme, Definition, Relation, RelationToForeignSign,
                                         OtherMedia, Handshape, SemanticField, DerivationHistory,
                                         AnnotationIdglossTranslation, Dataset, FieldChoice, LemmaIdgloss,
                                         LemmaIdglossTranslation, Language, AnnotatedSentence,
                                         QueryParameterFieldChoice, SearchHistory, QueryParameter,
                                         QueryParameterMultilingual, QueryParameterHandshape, SemanticFieldTranslation,
                                         ExampleSentence, Affiliation, AffiliatedUser, AffiliatedGloss, GlossSense,
-                                        SenseTranslation, AnnotatedGloss, GlossProvenance, Dialect)
+                                        SenseTranslation, AnnotatedGloss, GlossProvenance, Dialect, PhonologicalVariation)
 from signbank.dictionary.translate_choice_list import choicelist_queryset_to_translated_dict
 from signbank.tools import get_selected_datasets_for_user
 
@@ -560,6 +560,31 @@ class DefinitionForm(forms.ModelForm):
                                                 widget=forms.Select(attrs=ATTRS_FOR_FORMS))
 
 
+class NotesForm(forms.ModelForm):
+
+    text = forms.CharField(widget=forms.Textarea(attrs={'cols': 60, 'rows': 5, 'placeholder': _('Enter New Note')}))
+    published = forms.ChoiceField(label=_('Published'), choices=[('0', '-')],
+                                  widget=forms.Select(attrs=ATTRS_FOR_BOOLEAN_FORMS))
+
+    class Meta:
+        model = Definition
+        fields = ('published', 'count', 'text')
+
+    def __init__(self, *args, **kwargs):
+        self.note = kwargs.pop('note')
+        super().__init__(*args, **kwargs)
+        self.fields['role'] = forms.ChoiceField(label=_('Type'),
+                                                choices=choicelist_queryset_to_translated_dict(
+                                                     list(FieldChoice.objects.filter(field='NoteType').order_by(
+                                                         'machine_value')),
+                                                     ordered=False, id_prefix='', shortlist=False
+                                                ),
+                                                widget=forms.Select(attrs=ATTRS_FOR_FORMS))
+        self.fields['role'].initial = self.note.role.name if self.note.role else ''
+        self.fields['published'].choices = [('0', _('No')), ('1', _('Yes'))]
+        self.fields['published'].initial = self.note.display_published
+
+
 class RelationForm(forms.ModelForm):
 
     sourceid = forms.CharField(label=_('Source Gloss'))
@@ -598,6 +623,29 @@ class RelationToForeignSignForm(forms.ModelForm):
         widgets = {}
 
 
+class GlossForeignRelationForm(forms.ModelForm):
+
+    sourceid = forms.CharField(label=_('Source Gloss'))
+    loan = forms.ChoiceField(label=_('Loan'), choices=[('0', '-')],
+                             widget=forms.Select(attrs=ATTRS_FOR_BOOLEAN_FORMS))
+    other_lang = forms.CharField(label=_('Related Language'))
+    other_lang_gloss = forms.CharField(label=_('Gloss in Related Language'), required=False)
+
+    class Meta:
+        model = RelationToForeignSign
+        fields = ['loan', 'other_lang', 'other_lang_gloss']
+        widgets = {}
+
+    def __init__(self, *args, **kwargs):
+        self.foreignrelation = kwargs.pop('foreignrelation')
+        super(GlossForeignRelationForm, self).__init__(*args, **kwargs)
+        self.fields['sourceid'] = self.foreignrelation.gloss.id
+        self.fields['loan'].choices = [('0', _('No')), ('1', _('Yes'))]
+        self.fields['loan'].initial = self.foreignrelation.display_loan
+        self.fields['other_lang'].initial = self.foreignrelation.other_lang
+        self.fields['other_lang_gloss'].initial = self.foreignrelation.other_lang_gloss
+
+
 class GlossMorphologyForm(forms.Form):
     """Morphology specification of a Gloss"""
 
@@ -611,12 +659,14 @@ class GlossMorphologyForm(forms.Form):
         self.fields['role'].choices = list(FieldChoice.objects.filter(field='MorphologyType').order_by('machine_value')
                                            .values_list('pk', 'name'))
 
-
 class GlossMorphemeForm(forms.Form):
     """Specify simultaneous morphology components belonging to a Gloss"""
 
     host_gloss_id = forms.CharField(label=_('Host Gloss'))
-    description = forms.CharField(label=_('Meaning'), required=False)
+    description = forms.CharField(label=_('Meaning'),
+                                  widget=forms.Textarea(attrs={'cols': 60, 'rows': 1,
+                                                               'placeholder': _("Meaning in This Sign")}),
+                                  required=False)
     morph_id = forms.CharField(label=_('Morpheme'))
 
 
@@ -624,7 +674,9 @@ class GlossBlendForm(forms.Form):
     """Specify simultaneous morphology components belonging to a Gloss"""
 
     host_gloss_id = forms.CharField(label=_('Host Gloss'))
-    role = forms.CharField(label=_('Role'))
+    role = forms.CharField(label=_('Role'), widget=forms.Textarea(attrs={'cols': 80, 'rows': 1,
+                                                                         'placeholder': _("Role in This Sign")}),
+                           required=False)
     blend_id = forms.CharField(label=_('Blend'))
 
 
@@ -634,7 +686,7 @@ class OtherMediaForm(forms.ModelForm):
     file = forms.FileField(widget=forms.FileInput(attrs={'accept': 'video/*, image/*, application/pdf'}),
                            required=True)
     alternative_gloss = forms.TextInput()
-    description = forms.CharField(widget=forms.Textarea(attrs={'cols': 80, 'rows': 5,
+    description = forms.CharField(widget=forms.Textarea(attrs={'cols': 60, 'rows': 5,
                                                                'placeholder': _("Description/Explanation")}),
                                   required=False)
 
@@ -659,6 +711,31 @@ class OtherMediaForm(forms.ModelForm):
             raise forms.ValidationError(_("Please choose a video or image file to upload."))
         else:
             return data
+
+
+class OtherMediaUpdateForm(forms.ModelForm):
+
+    alternative_gloss = forms.TextInput()
+    description = forms.CharField(widget=forms.Textarea(attrs={'cols': 60, 'rows': 5,
+                                                               'placeholder': _("Description/Explanation")}),
+                                  required=False)
+    class Meta:
+        model = OtherMedia
+        fields = ['alternative_gloss', 'description']
+
+    def __init__(self, *args, **kwargs):
+        self.othermedia = kwargs.pop('othermedia')
+        super(OtherMediaUpdateForm, self).__init__(*args, **kwargs)
+        self.fields['type'] = forms.ChoiceField(label=_('Type'),
+                                                choices= choicelist_queryset_to_translated_dict(
+                                                    list(FieldChoice.objects.filter(field='OtherMediaType').order_by(
+                                                        'machine_value')),
+                                                    ordered=False, id_prefix='', shortlist=False
+                                                ),
+                                                widget=forms.Select(attrs=ATTRS_FOR_FORMS))
+        self.fields['type'].initial = self.othermedia.type.name if self.othermedia.type else ''
+        self.fields['alternative_gloss'].initial = self.othermedia.alternative_gloss
+        self.fields['description'].initial = self.othermedia.description
 
 
 class ZippedVideosForm(forms.Form):
@@ -718,27 +795,11 @@ attrs_default = {'class': 'form-control'}
 FINGER_SELECTION = ((True, 'True'), (False, 'False'))
 
 
-class HandshapeSearchForm(forms.ModelForm):
+class HandshapeSearchForm(forms.Form):
     use_required_attribute = False  # otherwise the html required attribute will show up on every form
 
     sortOrder = forms.CharField(label=_("Sort Order"),
                                 initial="machine_value")  # Used in Handshapelistview to store user-selection
-
-    fsT = forms.NullBooleanSelect()
-    fsI = forms.NullBooleanSelect()
-    fsM = forms.NullBooleanSelect()
-    fsR = forms.NullBooleanSelect()
-    fsP = forms.NullBooleanSelect()
-    fs2T = forms.NullBooleanSelect()
-    fs2I = forms.NullBooleanSelect()
-    fs2M = forms.NullBooleanSelect()
-    fs2R = forms.NullBooleanSelect()
-    fs2P = forms.NullBooleanSelect()
-    ufT = forms.NullBooleanSelect()
-    ufI = forms.NullBooleanSelect()
-    ufM = forms.NullBooleanSelect()
-    ufR = forms.NullBooleanSelect()
-    ufP = forms.NullBooleanSelect()
 
     class Meta:
         ATTRS_FOR_FORMS = {'class': 'form-control'}
@@ -750,27 +811,26 @@ class HandshapeSearchForm(forms.ModelForm):
                   'fsT', 'fsI', 'fsM', 'fsR', 'fsP',
                   'fs2T', 'fs2I', 'fs2M', 'fs2R', 'fs2P',
                   'ufT', 'ufI', 'ufM', 'ufR', 'ufP')
-        widgets = {
-                'fsT': forms.RadioSelect(choices=FINGER_SELECTION),
-                'fsI': forms.RadioSelect(choices=FINGER_SELECTION),
-                'fsM': forms.RadioSelect(choices=FINGER_SELECTION),
-                'fsR': forms.RadioSelect(choices=FINGER_SELECTION),
-                'fsP': forms.RadioSelect(choices=FINGER_SELECTION),
-                'fs2T': forms.RadioSelect(choices=FINGER_SELECTION),
-                'fs2I': forms.RadioSelect(choices=FINGER_SELECTION),
-                'fs2M': forms.RadioSelect(choices=FINGER_SELECTION),
-                'fs2R': forms.RadioSelect(choices=FINGER_SELECTION),
-                'fs2P': forms.RadioSelect(choices=FINGER_SELECTION),
-                'ufT': forms.RadioSelect(choices=FINGER_SELECTION),
-                'ufI': forms.RadioSelect(choices=FINGER_SELECTION),
-                'ufM': forms.RadioSelect(choices=FINGER_SELECTION),
-                'ufR': forms.RadioSelect(choices=FINGER_SELECTION),
-                'ufP': forms.RadioSelect(choices=FINGER_SELECTION),
-        }
 
     def __init__(self, queryDict=None, *args, **kwargs):
         super(HandshapeSearchForm, self).__init__(queryDict, *args, **kwargs)
 
+        self.fields['hsFingSel'] = forms.ChoiceField(label=_("Finger selection"),
+                                                    choices=choicelist_queryset_to_translated_dict(
+                                                        list(
+                                                            FieldChoice.objects.filter(field='FingerSelection').order_by(
+                                                                'machine_value')),
+                                                        ordered=False, id_prefix='', shortlist=False
+                                                    ),
+                                                    widget=forms.Select(attrs=ATTRS_FOR_FORMS))
+        self.fields['hsFingSel2'] = forms.ChoiceField(label=_("Finger selection 2"),
+                                                    choices=choicelist_queryset_to_translated_dict(
+                                                        list(
+                                                            FieldChoice.objects.filter(field='FingerSelection').order_by(
+                                                                'machine_value')),
+                                                        ordered=False, id_prefix='', shortlist=False
+                                                    ),
+                                                    widget=forms.Select(attrs=ATTRS_FOR_FORMS))
         self.fields['unselectedFingers'] = forms.ChoiceField(label=_('Unselected Fingers Extended'),
                                                     choices=choicelist_queryset_to_translated_dict(
                                                         list(
@@ -822,6 +882,11 @@ class HandshapeSearchForm(forms.ModelForm):
         for finger in ['fsT', 'fsI', 'fsM', 'fsR', 'fsP',
                        'fs2T', 'fs2I', 'fs2M', 'fs2R', 'fs2P',
                        'ufT', 'ufI', 'ufM', 'ufR', 'ufP']:
+            self.fields[finger] = forms.NullBooleanField(
+                                        label=finger,
+                                        required=False,
+                                        widget=forms.RadioSelect(choices=FINGER_SELECTION)
+                                    )
             self.fields[finger].initial = False
             self.fields[finger].widget.choices = [(True, _('Yes')), (False, _('No'))]
 
@@ -1145,16 +1210,6 @@ class RecentGlossSearchForm(forms.ModelForm):
                                                     widget=forms.RadioSelect, required=True, initial='creationDate')
 
 
-class FieldChoiceColorForm(forms.Form):
-    field_color = forms.CharField(widget=ColorWidget)
-    readonly_fields = ['machine_value']
-
-    class Meta:
-        model = FieldChoice
-        fields = ['field', 'name'] \
-                 + ['field_color', 'machine_value', ]
-
-
 class FieldChoiceForm(forms.ModelForm):
     # this ModelForm is needed in order to validate against duplicates
 
@@ -1307,11 +1362,9 @@ class FieldChoiceForm(forms.ModelForm):
         for language_code in MODELTRANSLATION_LANGUAGES:
             name_languagecode = 'name_' + language_code.replace('-', '_')
             name_languagecode_value = data_fields[name_languagecode]
-            language_code_2char = "zh" if language_code == "zh-hans" else language_code
-            language = Language.objects.filter(language_code_2char=language_code_2char)
             if self.already_exists(field, name_languagecode, name_languagecode_value):
                 raise forms.ValidationError(_('The combination ' + field + ' -- ' + name_languagecode_value
-                                              + ' already exists for ' + language.name))
+                                              + ' already exists'))
 
         if field != 'RelationRole':
             # the fields regarding the reverse relation are ignored
@@ -1332,8 +1385,6 @@ class FieldChoiceForm(forms.ModelForm):
 
         for language_code in MODELTRANSLATION_LANGUAGES:
             name_languagecode = 'reverse_name_' + language_code.replace('-', '_')
-            language_code_2char = "zh" if language_code == "zh-hans" else language_code
-            language = Language.objects.filter(language_code_2char=language_code_2char)
             if name_languagecode not in data_fields.keys() or not data_fields[name_languagecode]:
                 raise forms.ValidationError(_('The Reverse Relation Name fields for all languages are required'))
 
@@ -1342,19 +1393,7 @@ class FieldChoiceForm(forms.ModelForm):
 
             if self.already_exists(field, other_name_languagecode, name_languagecode_value):
                 raise forms.ValidationError(_('The combination ' + field + ' -- ' + name_languagecode_value
-                                              + ' already exists for ' + language.name))
-
-
-class SemanticFieldColorForm(forms.Form):
-
-    show_field_choice_colors = SHOW_FIELD_CHOICE_COLORS
-    field_color = forms.CharField(widget=ColorWidget)
-    readonly_fields = ['machine_value']
-
-    class Meta:
-        model = SemanticField
-        fields = ['name'] \
-                 + ['field_color', 'machine_value', ]
+                                              + ' already exists'))
 
 
 class SemanticFieldForm(forms.ModelForm):
@@ -1420,30 +1459,6 @@ class SemanticFieldTranslationForm(forms.ModelForm):
                     self.fields[namefield].value = semfield_translation.name
                 else:
                     self.fields[namefield].value = default_initial
-
-
-class DerivationHistoryColorForm(forms.Form):
-
-    show_field_choice_colors = SHOW_FIELD_CHOICE_COLORS
-    field_color = forms.CharField(widget=ColorWidget)
-    readonly_fields = ['machine_value']
-
-    class Meta:
-        model = DerivationHistory
-        fields = ['name'] \
-                 + ['field_color', 'machine_value', ]
-
-
-class HandshapeColorForm(forms.Form):
-
-    show_field_choice_colors = SHOW_FIELD_CHOICE_COLORS
-    field_color = forms.CharField(widget=ColorWidget)
-    readonly_fields = ['machine_value']
-
-    class Meta:
-        model = Handshape
-        fields = ['name'] \
-                 + ['field_color', 'machine_value', ]
 
 
 class HandshapeForm(forms.ModelForm):
@@ -1785,6 +1800,343 @@ class GlossProvenanceForm(forms.ModelForm):
                                                   widget=forms.Select(attrs=ATTRS_FOR_FORMS))
 
 
+class ProvenanceForm(forms.ModelForm):
+
+    description = forms.CharField(widget=forms.Textarea(attrs={'cols': 60, 'rows': 5, 'placeholder': _('Enter New Note')}))
+    method = forms.ChoiceField(label=_('Method'),
+                               choices=[(0, '-')],
+                               widget=forms.Select(attrs=ATTRS_FOR_FORMS))
+    class Meta:
+        model = GlossProvenance
+        fields = ('gloss', 'description', 'method')
+
+    def __init__(self, *args, **kwargs):
+        self.provenance = kwargs.pop('provenance')
+        super(ProvenanceForm, self).__init__(*args, **kwargs)
+        self.fields['method'] = forms.ChoiceField(label=_('Method'),
+                                                  choices=choicelist_queryset_to_translated_dict(
+                                                        list(FieldChoice.objects.filter(field='Provenance').order_by(
+                                                            'machine_value')),
+                                                        ordered=False, id_prefix='', shortlist=False
+                                                  ),
+                                                  widget=forms.Select(attrs=ATTRS_FOR_FORMS))
+        self.fields['method'].initial = self.provenance.method.name if self.provenance.method else '-'
+        self.fields['description'].initial = self.provenance.description
+
+
+
 class SearchGlossIds(forms.Form):
     glossids = forms.CharField(label=_("Gloss Ids"), required=False, initial='',
                                widget=forms.Textarea(attrs={'cols': 60, 'rows': 5, 'placeholder': _('Enter Gloss Ids')}))
+
+
+class GlossForm(forms.Form):
+    gloss = None
+    release_information = forms.CharField(label=_('Source'), widget=forms.TextInput())
+    useInstr = forms.CharField(label=_("Annotation instructions"))
+    wordClass2 = forms.CharField(label=_('Word class 2'))
+
+    class Meta:
+        model = Gloss
+        fields = ['release_information']
+
+    def __init__(self, *args, **kwargs):
+        self.gloss = kwargs.pop('gloss')
+        self.use_lookaheads = kwargs.pop('use_lookaheads')
+        super(GlossForm, self).__init__(*args, **kwargs)
+        self.fields['release_information'].initial = self.gloss.release_information if self.gloss.release_information not in ['', '-', None] else ''
+        self.fields['dialect'] = forms.CharField(label=_('Dialect'))
+        self.fields['dialect'].initial = self.gloss.get_dialect_display()
+        self.fields['useInstr'].initial = self.gloss.useInstr if self.gloss.useInstr not in ['', '-', None] else ''
+        if self.use_lookaheads == 'lookaheads':
+            self.fields['wordClass'] = forms.CharField(label=_('Word class'))
+            self.fields['wordClass'].initial = self.gloss.wordClass.name if self.gloss.wordClass else '-'
+            self.fields['wordClass'].machine_value = self.gloss.wordClass.machine_value if self.gloss.wordClass else 0
+        else:
+            self.fields['wordClass'] = forms.ChoiceField(label=_('Word class'),
+                                                         choices=choicelist_queryset_to_translated_dict(
+                                                                 list(FieldChoice.objects.filter(field='WordClass').order_by(
+                                                                     'machine_value')),
+                                                         ordered=False, id_prefix='', shortlist=False
+                                                         ),
+                                                         widget=forms.Select(attrs=ATTRS_FOR_FORMS))
+            self.fields['wordClass'].initial = self.gloss.wordClass.machine_value if self.gloss.wordClass else 0
+
+
+class PhonologyForm(forms.Form):
+    # this is for updating the primary gloss phonology
+    object = None
+    weakprop = forms.ChoiceField(label=_('Weak Prop'), choices=[(0, '-')],
+                                 widget=forms.Select(attrs=ATTRS_FOR_BOOLEAN_FORMS))
+    weakdrop = forms.ChoiceField(label=_('Weak Drop'), choices=[(0, '-')],
+                                 widget=forms.Select(attrs=ATTRS_FOR_BOOLEAN_FORMS))
+    domhndsh_letter_or_number = forms.ChoiceField(label=_('letter|number'), choices=[(0, '-')], required=False,
+                                                  widget=forms.Select(attrs=ATTRS_FOR_BOOLEAN_FORMS))
+    subhndsh_letter_or_number = forms.ChoiceField(label=_('letter|number'), choices=[(0, '-')], required=False,
+                                                  widget=forms.Select(attrs=ATTRS_FOR_BOOLEAN_FORMS))
+    repeat = forms.ChoiceField(label=_('Repeating Movement'), choices=[('0', '-')], required=False,
+                               widget=forms.Select(attrs=ATTRS_FOR_BOOLEAN_FORMS))
+    altern = forms.ChoiceField(label=_('Alternating Movement'), choices=[('0', '-')], required=False,
+                               widget=forms.Select(attrs=ATTRS_FOR_BOOLEAN_FORMS))
+    locVirtObj = forms.CharField(label=_('Virtual Object'), max_length=50, widget=forms.Textarea(attrs={'cols': 25, 'rows': 2}))
+    phonOth = forms.CharField(label=_('Phonology Other'), max_length=50, widget=forms.Textarea(attrs={'cols': 25, 'rows': 2}))
+    mouthG = forms.CharField(label=_('Mouth Gesture'), max_length=50, widget=forms.Textarea(attrs={'cols': 25, 'rows': 2}))
+    mouthing = forms.CharField(label=_('Mouthing'), max_length=50, widget=forms.Textarea(attrs={'cols': 25, 'rows': 2}))
+    phonetVar = forms.CharField(label=_('Phonetic Variation'), max_length=50, widget=forms.Textarea(attrs={'cols': 25, 'rows': 2}))
+
+    class Meta:
+        model = Phonology
+        fields = ['locVirtObj', 'phonOth']
+
+    def __init__(self, *args, **kwargs):
+        self.object = kwargs.pop('object')
+        self.use_lookaheads = kwargs.pop('use_lookaheads')
+        super(PhonologyForm, self).__init__(*args, **kwargs)
+
+        if self.use_lookaheads == 'lookaheads':
+            self.fields['handedness'] = forms.CharField(label=_('Handedness'))
+            self.fields['handedness'].initial = self.object.handedness.name if self.object.handedness else '-'
+            self.fields['handedness'].machine_value = self.object.handedness.machine_value if self.object.handedness else 0
+        else:
+            self.fields['handedness'] = forms.ChoiceField(label=_('Handedness'),
+                                                          choices=choicelist_queryset_to_translated_dict(
+                                                              list(FieldChoice.objects.filter(
+                                                                  field='Handedness').order_by(
+                                                                  'machine_value')),
+                                                              ordered=False, id_prefix='', shortlist=False
+                                                          ),
+                                                          widget=forms.Select(attrs=ATTRS_FOR_FORMS),
+                                                          required=False)
+            self.fields['handedness'].initial = self.object.handedness.machine_value if self.object.handedness else 0
+        self.fields['weakdrop'].choices = [('0', _('')), ('1', _('+WD')), ('2', _('-WD'))]
+        self.fields['weakdrop'].initial = self.object.weakdrop_to_choice()
+        self.fields['weakprop'].choices = [('0', _('')), ('1', _('+WP')), ('2', _('-WP'))]
+        self.fields['weakprop'].initial = self.object.weakprop_to_choice()
+        if self.use_lookaheads == 'lookaheads':
+            self.fields['domhndsh'] = forms.CharField(label=_('Strong Hand'))
+            self.fields['domhndsh'].initial = self.object.domhndsh.name if self.object.domhndsh else '-'
+            self.fields['domhndsh'].machine_value = self.object.domhndsh.machine_value if self.object.domhndsh else 0
+            self.fields['subhndsh'] = forms.CharField(label=_('Weak Hand'))
+            self.fields['subhndsh'].initial = self.object.subhndsh.name if self.object.subhndsh else '-'
+            self.fields['subhndsh'].machine_value = self.object.subhndsh.machine_value if self.object.subhndsh else 0
+        else:
+            self.fields['domhndsh'] = forms.ChoiceField(label=_('Strong Hand'),
+                                                        choices=choicelist_queryset_to_translated_dict(
+                                                            list(Handshape.objects.all().order_by(
+                                                                'machine_value')),
+                                                            ordered=False, id_prefix='', shortlist=False
+                                                        ),
+                                                        widget=forms.Select(attrs=ATTRS_FOR_FORMS),
+                                                        required=False)
+            self.fields['domhndsh'].initial = self.object.domhndsh.machine_value if self.object.domhndsh else 0
+            self.fields['subhndsh'] = forms.ChoiceField(label=_('Weak Hand'),
+                                                        choices=choicelist_queryset_to_translated_dict(
+                                                            list(Handshape.objects.all().order_by(
+                                                                'machine_value')),
+                                                            ordered=False, id_prefix='', shortlist=False
+                                                        ),
+                                                        widget=forms.Select(attrs=ATTRS_FOR_FORMS),
+                                                        required=False)
+            self.fields['subhndsh'].initial = self.object.subhndsh.machine_value if self.object.subhndsh else 0
+        self.fields['domhndsh_letter_or_number'].choices = [('0', ''), ('1', _('letter')), ('2', _('number'))]
+        self.fields['domhndsh_letter_or_number'].initial = self.object.domhndsh_letter_or_number_to_choice()
+        self.fields['subhndsh_letter_or_number'].choices = [('0', ''), ('1', _('letter')), ('2', _('number'))]
+        self.fields['subhndsh_letter_or_number'].initial = self.object.subhndsh_letter_or_number_to_choice()
+        if self.use_lookaheads == 'lookaheads':
+            self.fields['handCh'] = forms.CharField(label=_('Handshape Change'))
+            self.fields['handCh'].initial = self.object.handCh.name if self.object.handCh else '-'
+            self.fields['handCh'].machine_value = self.object.handCh.machine_value if self.object.handCh else 0
+            self.fields['relatArtic'] = forms.CharField(label=_('Relation between Articulators'))
+            self.fields['relatArtic'].initial = self.object.relatArtic.name if self.object.relatArtic else '-'
+            self.fields['relatArtic'].machine_value = self.object.relatArtic.machine_value if self.object.relatArtic else 0
+            self.fields['locprim'] = forms.CharField(label=_('Location'))
+            self.fields['locprim'].initial = self.object.locprim.name if self.object.locprim else '-'
+            self.fields['locprim'].machine_value = self.object.locprim.machine_value if self.object.locprim else 0
+            self.fields['contType'] = forms.CharField(label=_('Contact Type'))
+            self.fields['contType'].initial = self.object.contType.name if self.object.contType else '-'
+            self.fields['contType'].machine_value = self.object.contType.machine_value if self.object.contType else 0
+            self.fields['movSh'] = forms.CharField(label=_('Movement Shape'))
+            self.fields['movSh'].initial = self.object.movSh.name if self.object.movSh else '-'
+            self.fields['movSh'].machine_value = self.object.movSh.machine_value if self.object.movSh else 0
+            self.fields['movDir'] = forms.CharField(label=_('Movement Direction'))
+            self.fields['movDir'].initial = self.object.movDir.name if self.object.movDir else '-'
+            self.fields['movDir'].machine_value = self.object.movDir.machine_value if self.object.movDir else 0
+        else:
+            self.fields['handCh'] = forms.ChoiceField(label=_('Handshape Change'),
+                                                      choices=choicelist_queryset_to_translated_dict(
+                                                          list(FieldChoice.objects.filter(
+                                                              field='HandshapeChange').order_by(
+                                                              'machine_value')),
+                                                          ordered=False, id_prefix='', shortlist=False
+                                                      ),
+                                                      widget=forms.Select(attrs=ATTRS_FOR_FORMS),
+                                                      required=False)
+            self.fields['handCh'].initial = self.object.handCh.machine_value if self.object.handCh else 0
+            self.fields['relatArtic'] = forms.ChoiceField(label=_('Relation between Articulators'),
+                                                          choices=choicelist_queryset_to_translated_dict(
+                                                              list(FieldChoice.objects.filter(
+                                                                  field='RelatArtic').order_by(
+                                                                  'machine_value')),
+                                                              ordered=False, id_prefix='', shortlist=False
+                                                          ),
+                                                          widget=forms.Select(attrs=ATTRS_FOR_FORMS),
+                                                          required=False)
+            self.fields['relatArtic'].initial = self.object.relatArtic.machine_value if self.object.relatArtic else 0
+            self.fields['locprim'] = forms.ChoiceField(label=_('Location'),
+                                                       choices=choicelist_queryset_to_translated_dict(
+                                                           list(FieldChoice.objects.filter(field='Location').order_by(
+                                                               'machine_value')),
+                                                           ordered=False, id_prefix='', shortlist=False
+                                                       ),
+                                                       widget=forms.Select(attrs=ATTRS_FOR_FORMS),
+                                                       required=False)
+            self.fields['locprim'].initial = self.object.locprim.machine_value if self.object.locprim else 0
+            self.fields['contType'] = forms.ChoiceField(label=_('Contact Type'),
+                                                        choices=choicelist_queryset_to_translated_dict(
+                                                            list(FieldChoice.objects.filter(
+                                                                field='ContactType').order_by(
+                                                                'machine_value')),
+                                                            ordered=False, id_prefix='', shortlist=False
+                                                        ),
+                                                        widget=forms.Select(attrs=ATTRS_FOR_FORMS),
+                                                        required=False)
+            self.fields['contType'].initial = self.object.contType.machine_value if self.object.contType else 0
+            self.fields['movSh'] = forms.ChoiceField(label=_('Movement Shape'),
+                                                     choices=choicelist_queryset_to_translated_dict(
+                                                         list(
+                                                             FieldChoice.objects.filter(field='MovementShape').order_by(
+                                                                 'machine_value')),
+                                                         ordered=False, id_prefix='', shortlist=False
+                                                     ),
+                                                     widget=forms.Select(attrs=ATTRS_FOR_FORMS),
+                                                     required=False)
+            self.fields['movSh'].initial = self.object.movSh.machine_value if self.object.movSh else 0
+            self.fields['movDir'] = forms.ChoiceField(label=_('Movement Direction'),
+                                                      choices=choicelist_queryset_to_translated_dict(
+                                                          list(FieldChoice.objects.filter(field='MovementDir').order_by(
+                                                              'machine_value')),
+                                                          ordered=False, id_prefix='', shortlist=False
+                                                      ),
+                                                      widget=forms.Select(attrs=ATTRS_FOR_FORMS),
+                                                      required=False)
+            self.fields['movDir'].initial = self.object.movDir.machine_value if self.object.movDir else 0
+        for boolean_field in ['repeat', 'altern']:
+            self.fields[boolean_field].choices = [('0', ''), ('1', _('Yes'))]
+        self.fields['repeat'].initial = self.object.repeat_to_choice()
+        self.fields['altern'].initial = self.object.altern_to_choice()
+        if self.use_lookaheads == 'lookaheads':
+            self.fields['relOriMov'] = forms.CharField(label=_('Relative Orientation: Movement'))
+            self.fields['relOriMov'].initial = self.object.relOriMov.name if self.object.relOriMov else '-'
+            self.fields['relOriMov'].machine_value = self.object.relOriMov.machine_value if self.object.relOriMov else 0
+            self.fields['relOriLoc'] = forms.CharField(label=_('Relative Orientation: Location'))
+            self.fields['relOriLoc'].initial = self.object.relOriLoc.name if self.object.relOriLoc else '-'
+            self.fields['relOriLoc'].machine_value = self.object.relOriLoc.machine_value if self.object.relOriLoc else 0
+            self.fields['oriCh'] = forms.CharField(label=_('Orientation Change'))
+            self.fields['oriCh'].initial = self.object.oriCh.name if self.object.oriCh else '-'
+            self.fields['oriCh'].machine_value = self.object.oriCh.machine_value if self.object.oriCh else 0
+        else:
+            self.fields['relOriMov'] = forms.ChoiceField(label=_('Relative Orientation: Movement'),
+                                                         choices=choicelist_queryset_to_translated_dict(
+                                                             list(
+                                                                 FieldChoice.objects.filter(field='RelOriMov').order_by(
+                                                                     'machine_value')),
+                                                             ordered=False, id_prefix='', shortlist=False
+                                                         ),
+                                                         widget=forms.Select(attrs=ATTRS_FOR_FORMS),
+                                                         required=False)
+            self.fields['relOriMov'].initial = self.object.relOriMov.machine_value if self.object.relOriMov else 0
+            self.fields['relOriLoc'] = forms.ChoiceField(label=_('Relative Orientation: Location'),
+                                                         choices=choicelist_queryset_to_translated_dict(
+                                                             list(
+                                                                 FieldChoice.objects.filter(field='RelOriLoc').order_by(
+                                                                     'machine_value')),
+                                                             ordered=False, id_prefix='', shortlist=False
+                                                         ),
+                                                         widget=forms.Select(attrs=ATTRS_FOR_FORMS),
+                                                         required=False)
+            self.fields['relOriLoc'].initial = self.object.relOriLoc.machine_value if self.object.relOriLoc else 0
+            self.fields['oriCh'] = forms.ChoiceField(label=_('Orientation Change'),
+                                                     choices=choicelist_queryset_to_translated_dict(
+                                                         list(FieldChoice.objects.filter(field='OriChange').order_by(
+                                                             'machine_value')),
+                                                         ordered=False, id_prefix='', shortlist=False
+                                                     ),
+                                                     widget=forms.Select(attrs=ATTRS_FOR_FORMS),
+                                                     required=False)
+            self.fields['oriCh'].initial = self.object.oriCh.machine_value if self.object.oriCh else 0
+        self.fields['locVirtObj'].initial = self.object.locVirtObj if self.object.locVirtObj not in ['', '-', None] else ''
+        self.fields['phonOth'].initial = self.object.phonOth if self.object.phonOth not in ['', '-', None] else ''
+        self.fields['mouthG'].initial = self.object.mouthG if self.object.mouthG not in ['', '-', None] else ''
+        self.fields['mouthing'].initial = self.object.mouthing if self.object.mouthing not in ['', '-', None] else ''
+        self.fields['phonetVar'].initial = self.object.phonetVar if self.object.phonetVar not in ['', '-', None] else ''
+
+
+class SemanticsForm(forms.Form):
+    gloss = None
+    iconImg = forms.CharField(label=_('Iconic Image'), max_length=50)
+    concConcSet = forms.CharField(label=_("Concepticon Concept Set"), max_length=300)
+
+    class Meta:
+        model = Gloss
+        fields = ['iconImg', 'concConcSet']
+
+    def __init__(self, *args, **kwargs):
+        self.gloss = kwargs.pop('gloss')
+        self.use_lookaheads = kwargs.pop('use_lookaheads')
+        super(SemanticsForm, self).__init__(*args, **kwargs)
+
+        self.fields['semField'] = forms.CharField(label=_('Semantics Field'))
+        self.fields['semField'].initial = self.gloss.get_semField_display() if self.gloss.semField else '-'
+        self.fields['derivHist'] = forms.CharField(label=_('Derivation History'))
+        self.fields['derivHist'].initial = self.gloss.get_derivHist_display() if self.gloss.derivHist else '-'
+        if self.use_lookaheads == 'lookaheads':
+            self.fields['namEnt'] = forms.CharField(label=_('Named Entity'))
+            self.fields['namEnt'].initial = self.gloss.namEnt.name if self.gloss.namEnt else '-'
+            self.fields['namEnt'].machine_value = self.gloss.namEnt.machine_value if self.gloss.namEnt else 0
+            self.fields['valence'] = forms.CharField(label=_('Valence'))
+            self.fields['valence'].initial = self.gloss.valence.name if self.gloss.valence else '-'
+            self.fields['valence'].machine_value = self.gloss.valence.machine_value if self.gloss.valence else 0
+        else:
+            self.fields['namEnt'] = forms.ChoiceField(label=_('Named Entity'),
+                                                         choices=choicelist_queryset_to_translated_dict(
+                                                             list(FieldChoice.objects.filter(field='NamedEntity').order_by(
+                                                                 'machine_value')),
+                                                             ordered=False, id_prefix='', shortlist=False
+                                                         ),
+                                                         widget=forms.Select(attrs=ATTRS_FOR_FORMS))
+            self.fields['namEnt'].initial = self.gloss.namEnt.machine_value if self.gloss.namEnt else 0
+            self.fields['valence'] = forms.ChoiceField(label=_('Valence'),
+                                                         choices=choicelist_queryset_to_translated_dict(
+                                                             list(FieldChoice.objects.filter(field='Valence').order_by(
+                                                                 'machine_value')),
+                                                             ordered=False, id_prefix='', shortlist=False
+                                                         ),
+                                                         widget=forms.Select(attrs=ATTRS_FOR_FORMS))
+            self.fields['valence'].initial = self.gloss.valence.machine_value if self.gloss.valence else 0
+        self.fields['iconImg'].initial = self.gloss.iconImg if self.gloss.iconImg not in ['', '-', None] else ''
+        self.fields['concConcSet'].initial = self.gloss.concConcSet if self.gloss.concConcSet not in ['', '-', None] else ''
+
+
+class PublicationForm(forms.Form):
+    gloss = None
+    inWeb = forms.ChoiceField(label=_('In the Web dictionary'), choices=[('0', '-')], required=False,
+                            widget=forms.Select(attrs=ATTRS_FOR_BOOLEAN_FORMS))
+    isNew = forms.ChoiceField(label=_('Is this a proposed new sign?'), choices=[('0', '-')], required=False,
+                            widget=forms.Select(attrs=ATTRS_FOR_BOOLEAN_FORMS))
+    excludeFromEcv = forms.ChoiceField(label=_('Exclude from ECV'), choices=[('0', '-')], required=False,
+                                     widget=forms.Select(attrs=ATTRS_FOR_BOOLEAN_FORMS))
+
+    class Meta:
+        model = Gloss
+        fields = ['inWeb', 'isNew', 'excludeFromEcv']
+
+    def __init__(self, *args, **kwargs):
+        self.gloss = kwargs.pop('gloss')
+        super(PublicationForm, self).__init__(*args, **kwargs)
+
+        for boolean_field in ['inWeb', 'isNew', 'excludeFromEcv']:
+            self.fields[boolean_field].choices = [('0', _('No')), ('1', _('Yes'))]
+
+        self.fields['inWeb'].initial = self.gloss.inWeb_to_choice()
+        self.fields['isNew'].initial = self.gloss.isNew_to_choice()
+        self.fields['excludeFromEcv'].initial = self.gloss.excludeFromEcv_to_choice()

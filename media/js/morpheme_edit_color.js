@@ -25,13 +25,6 @@ var busy_editing = 0;
      if (window.location.search.match('edit')) {
          toggle_edit();
 
-         if (window.location.search.match('editrelforeign')) {
-             $('#relationsforeign').addClass('in');
-         }
-         else if (window.location.search.match('editrel')) {
-             $('#relations').addClass('in');
-         }
-
          if (window.location.search.match('editdef')) {
              $('#definitions').addClass('in');
          }
@@ -54,29 +47,6 @@ var busy_editing = 0;
 	{
 		rewind();
 	});
-
-    glosstypeahead($('.glosstypeahead'));
-    $('.glosstypeahead').bind('typeahead:selected', function(ev, suggestion) {
-          $(this).parent().next().val(suggestion.pk)
-        });
-    $('.glosstypeahead').on("input", function() {
-          $(this).parent().next().val("")
-        });
-    morphtypeahead($('.morphtypeahead'));
-    $('.morphtypeahead').bind('typeahead:selected', function(ev, suggestion) {
-          $(this).parent().next().val(suggestion.pk)
-        });
-    $('.morphtypeahead').on("input", function() {
-          $(this).parent().next().val("")
-        });
-    lemmatypeahead($('.lemmatypeahead'));
-    $('.lemmatypeahead').bind('typeahead:selected', function(ev, suggestion) {
-          $(this).parent().next().val(suggestion.pk)
-        });
-    $('.lemmatypeahead').on("input", function() {
-          $(this).parent().next().val("")
-        });
-
 
     // a lot of console logging has been added to show events the user presses
     // this is needed to help check different browsers
@@ -140,36 +110,17 @@ function disable_edit() {
     $('.edit').editable('disable');
     $('.edit').css('color', 'inherit');
     $('#edit_message').text('');
-    if (busy_editing) {
-        new_lemma_group = $('#idgloss').text();
-        new_lemma_group_value = new_values_for_changes_made['idgloss'];
-        original_lemma_group_value = original_values_for_changes_made['idgloss'];
-        if (new_lemma_group_value == undefined) {
-            if (original_lemma_group_url) {
-                $('#idgloss').html('<a href="' + original_lemma_group_url + '">' + original_lemma_group_value + '</a>')
-            }
-        } else {
-            if (lemma_group == 'True') {
-                new_lemma_group_url = url + 'signs/search/?search_type=sign&view_type=lemma_groups&lemmaGloss=%5E' + new_lemma_group + '%24'
-                $('#idgloss').html('<a href="' + new_lemma_group_url + '">' + new_lemma_group + '</a>')
-            }
-        }
-    };
     $('.editform').hide();
     $('.button-to-appear-in-edit-mode').hide();
     $('#enable_edit').addClass('btn-primary').removeClass('btn-danger');
     $('#add_definition').hide();
-    $('#add_relation_form').hide();
-    $('#add_relationtoforeignsign_form').hide();
     $('#add_morphologydefinition_form').hide();
     $('#add_blenddefinition_form').hide();
     $('#add_other_media').hide();
     $('#add_component').hide();
     $('#add_morphemedefinition_form').hide();
     $('.definition_delete').hide();
-    $('.relation_delete').hide();
     $('.other-video-delete').hide();
-    $('.relationtoforeignsign_delete').hide();
     $('.morphology-definition-delete').hide();
     $('.morpheme-definition-delete').hide();
     $('.blend-definition-delete').hide();
@@ -204,26 +155,17 @@ function enable_edit() {
     $('.edit').css('color', 'red');
     $('#edit_message').text('Click on red text to edit  ');
     $('#edit_message').css('color', 'inherit');
-    lemma_group_text = $('#idgloss').text();
-    $('#idgloss').children().remove();
-    $('#idgloss').html(lemma_group_text);
     $('.editform').show();
     $('.button-to-appear-in-edit-mode').show().addClass('btn-danger');
     $('#enable_edit').removeClass('btn-primary').addClass('btn-danger');
     $('#add_definition').show();
-    $('#add_relation_form').show();
-    $('#add_relationtoforeignsign_form').show();
     $('#add_morphologydefinition_form').show();
     $('#add_blenddefinition_form').show();
     $('#add_other_media').show();
     $('#add_component').show();
     $('#add_morphemedefinition_form').show();
     $('.definition_delete').show();
-    $('.relation_delete').show();
-    $('.relation_delete').css('color', 'inherit');
     $('.other-video-delete').show();
-    $('.relationtoforeignsign_delete').show();
-    $('.relationtoforeignsign_delete').css('color', 'inherit');
     $('.morphology-definition-delete').show();
     $('.morpheme-definition-delete').show();
     $('.blend-definition-delete').show();
@@ -348,29 +290,6 @@ function configure_edit() {
          type      : 'checkbox',
          checkbox: { trueValue: yes_str, falseValue: no_str },
 		 callback : update_view_and_remember_original_value
-     });
-     $('.edit_relation_target').editable(edit_post_url, {
-         params : { a: 0 },
-         type      : 'glosstypeahead',
-		 callback : update_view_and_remember_original_value
-     });
-     $('.edit_relation_delete').editable(edit_post_url, {
-        params : { a: "delete",
-                   field: $(this).attr('id'),
-                   choices: relation_delete_choices,
-                   colors: relation_delete_choices_colors },
-        type    : 'select',
-        data    : relation_delete_choices,
-        callback : update_relation_delete
-     });
-     $('.edit_foreign_delete').editable(edit_post_url, {
-        params : { a: "delete",
-                   field: $(this).attr('id'),
-                   choices: relation_delete_choices,
-                   colors: relation_delete_choices_colors },
-        type    : 'select',
-        data    : relation_delete_choices,
-        callback : update_foreign_delete
      });
      $('.edit_mrptype').click(function()
 	 {
@@ -533,118 +452,6 @@ function update_view_and_remember_original_value(change_summary)
     }
 }
 
-var gloss_bloodhound = new Bloodhound({
-      datumTokenizer: function(d) { return d.tokens; },
-      queryTokenizer: Bloodhound.tokenizers.whitespace,
-      remote: url+'/dictionary/ajax/gloss/'+gloss_dataset_id+'/%QUERY'
-    });
-
-gloss_bloodhound.initialize();
-
-function glosstypeahead(target) {
-
-     $(target).typeahead(null, {
-          name: 'glosstarget',
-          displayKey: 'annotation_idgloss',
-          source: gloss_bloodhound.ttAdapter(),
-          templates: {
-              suggestion: function(gloss) {
-                  // Issue #121: remove  (SN: " + gloss.sn + ")
-                  return("<p><strong>" + gloss.annotation_idgloss +  "</strong></p>");
-              }
-          }
-      });
-};
-
-
-$.editable.addInputType('glosstypeahead', {
-
-   element: function(settings, original) {
-      var input = $('<input type="text" class="glosstypeahead">');
-      $(this).append(input);
-
-      glosstypeahead(input);
-
-      return (input);
-   },
-});
-
-/*
- *  Mimic the 'gloss' typeahead facility for 'morpheme', which is a subset of the glosses
- *  (as defined by the 'Morpheme' model, which takes Gloss as basis)
- */
-
-var morph_bloodhound = new Bloodhound({
-      datumTokenizer: function(d) { return d.tokens; },
-      queryTokenizer: Bloodhound.tokenizers.whitespace,
-      remote: url+'/dictionary/ajax/morph/%QUERY'
-    });
-
-morph_bloodhound.initialize();
-
-function morphtypeahead(target) {
-
-     $(target).typeahead(null, {
-          name: 'morphtarget',
-          displayKey: 'annotation_idgloss',
-          source: morph_bloodhound.ttAdapter(),
-          templates: {
-              suggestion: function(gloss) {
-                  // Issue #121: remove (SN: " + gloss.sn + ")
-                  return("<p><strong>" + gloss.annotation_idgloss + "</strong></p>");
-              }
-          }
-      });
-};
-
-
-$.editable.addInputType('morphtypeahead', {
-
-   element: function(settings, original) {
-      var input = $('<input type="text" class="morphtypeahead">');
-      $(this).append(input);
-
-      morphtypeahead(input);
-
-      return (input);
-   },
-});
-
-var lemma_bloodhound = new Bloodhound({
-      datumTokenizer: function(d) { return d.tokens; },
-      queryTokenizer: Bloodhound.tokenizers.whitespace,
-      remote: url+'/dictionary/ajax/lemma/'+gloss_dataset_id+'/'+gloss_default_language_code+'/%QUERY'
-    });
-
-lemma_bloodhound.initialize();
-
-function lemmatypeahead(target) {
-
-     $(target).typeahead(null, {
-          name: 'lemmatarget',
-          displayKey: 'lemma',
-          source: lemma_bloodhound.ttAdapter(),
-          templates: {
-              suggestion: function(lemma) {
-                  return("<p><strong>" + lemma.lemma + "</strong></p>");
-              }
-          }
-      });
-};
-
-
-$.editable.addInputType('lemmatypeahead', {
-
-   element: function(settings, original) {
-      var input = $('<input type="text" class="lemmatypeahead">');
-      $(this).append(input);
-
-      lemmatypeahead(input);
-
-      return (input);
-   },
-});
-
 /*
  * http://stackoverflow.com/questions/1597756/is-there-a-jquery-jeditable-multi-select-plugin
  */
@@ -703,30 +510,6 @@ $.editable.addInputType("multiselect", {
         });
     }
 });
-
-function update_foreign_delete(change_summary)
-{
-    var deleted_relation_for_gloss = $(this).attr('id');
-    var deleted_relation = deleted_relation_for_gloss.split('_');
-    var deleted_relation_id = deleted_relation[1];
-    $(this).css("color", "inherit");
-    var search_id = 'foreign_' + deleted_relation_id;
-    $(document.getElementById(search_id)).replaceWith("<tr id='" + search_id + "' class='empty_row' style='display: none;'>" + "</tr>");
-  	$(this).html('');
-    $('#relationsforeign').addClass('in');
-}
-
-function update_relation_delete(change_summary)
-{
-    var deleted_relation_for_gloss = $(this).attr('id');
-    var deleted_relation = deleted_relation_for_gloss.split('_');
-    var deleted_relation_id = deleted_relation[1];
-    $(this).css("color", "inherit");
-    var search_id = 'row_' + deleted_relation_id;
-    $(document.getElementById(search_id)).replaceWith("<tr id='" + search_id + "' class='empty_row' style='display: none;'>" + "</tr>");
-  	$(this).html('');
-  	$('#relations').addClass('in');
-}
 
 function getCookie(name) {
     var cookieValue = null;
@@ -835,32 +618,27 @@ function check_phonology_modified()
 }
 
 // Lemma toggle stuff
-function showLemmaForm(lemma_element) {
-    lemma_element.hide();
-    lemma_element.parent().find("[name='add_lemma_form']").hide();
-    lemma_element.parent().find("[name='set_lemma_form']").show();
-    lemma_element.parent().find("[name='add_lemma_form']").find(".lemmatypeahead.tt-input").focus();
+function showLemmaForm() {
+    $("#lemma").hide();
+    $("#add_lemma_form").show();
 }
 
-function hideLemmaForm(lemma_element) {
-    lemma_element.parent().find("[name='set_lemma_form']").hide();
-    lemma_element.parent().find("[name='add_lemma_form']").hide();
-    lemma_element.show();
+function hideLemmaForm() {
+    $("#add_lemma_form").hide();
+    $("#lemma").show();
 }
 
 $("#lemma").on('click', function() {
-    if(busy_editing) {
-        showLemmaForm($(this));
+    if (busy_editing) {
+        showLemmaForm();
     }
 });
 
 $(".lemma-form-dismiss").on('click', function() {
-    hideLemmaForm($("#lemma"));
+    hideLemmaForm();
 });
 
 function showAddLemma() {
     $("#lemma").hide();
-    $("#lemma").parent().find("[name='set_lemma_form']").hide();
-    $("#lemma").parent().find("[name='add_lemma_form']").show();
-    return false;
+    $("#add_lemma_form").show();
 }

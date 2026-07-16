@@ -4,18 +4,17 @@ import re
 import datetime as DT
 import urllib.parse
 import magic
-import subprocess
 
 from django.http import (HttpResponse, HttpResponseRedirect, HttpResponseForbidden, HttpResponseBadRequest,
-                         JsonResponse, Http404)
+                         JsonResponse)
 from django.shortcuts import render, get_object_or_404, redirect
 from django.urls import reverse
-from django.core.exceptions import ObjectDoesNotExist, MultipleObjectsReturned, ValidationError, PermissionDenied
+from django.core.exceptions import ObjectDoesNotExist, MultipleObjectsReturned, PermissionDenied
 from django.core.files import File
 from django.contrib.auth.decorators import permission_required
 from django.views.decorators.http import require_http_methods
-from django.db.models.fields import BooleanField, IntegerField
-from django.forms.models import ModelChoiceField
+from django.db.models.fields import BooleanField, IntegerField, CharField, TextField
+from django.db.models import ForeignKey
 from django.forms.utils import ValidationError
 from django.db import DatabaseError, IntegrityError
 from django.utils.timezone import get_current_timezone
@@ -39,25 +38,24 @@ from signbank.settings.server_specific import (WRITABLE_FOLDER, PREFIX_URL, USE_
                                                OTHER_MEDIA_DIRECTORY, MORPHEME_DISPLAY_FIELDS,
                                                DATASET_METADATA_DIRECTORY, DATASET_EAF_DIRECTORY,
                                                GUARDED_GLOSS_DELETE, GUARDED_MORPHEME_DELETE,
-                                               FIELDS, HANDSHAPE_ETYMOLOGY_FIELDS, HANDEDNESS_ARTICULATION_FIELDS)
+                                               FIELDS)
 from signbank.dictionary.models import (Dataset, SignLanguage, Dialect, Gloss, Morpheme, Handshape,
                                         GlossSense, Sense, SenseTranslation, Translation, Keyword,
                                         Relation, RelationToForeignSign, BlendMorphology, MorphologyDefinition,
                                         Language, LemmaIdgloss, AnnotationIdglossTranslation, Definition,
                                         FieldChoice, FieldChoiceForeignKey, OtherMedia,
-                                        SemanticField, SemanticFieldTranslation,
+                                        SemanticField, SemanticFieldTranslation, PHONOLOGY_FIELDS_UPDATES,
                                         DerivationHistory, AnnotatedSentence, AnnotatedSentenceTranslation,
                                         ExampleSentence, ExampleSentenceTranslation,
                                         Affiliation, AffiliatedUser, AffiliatedGloss, SearchHistory,
                                         GlossRevision, SenseExamplesentence, SimultaneousMorphologyDefinition,
                                         AnnotatedSentenceSource, AnnotatedSentenceContext, UserProfile, QueryParameter,
-                                        get_default_language_id, GlossProvenance)
+                                        get_default_language_id, GlossProvenance, PhonologicalVariation)
 from signbank.dictionary.forms import (RelationForm, VariantsForm, RelationToForeignSignForm, GlossBlendForm,
-                                       GlossCreateForm, DefinitionForm, GlossMorphemeForm, GlossMorphologyForm,
-                                       MorphemeCreateForm, LemmaCreateForm, AffiliationUpdateForm, OtherMediaForm,
-                                       CSVMetadataForm, EAFFilesForm, FieldChoiceColorForm,
-                                       SemanticFieldColorForm, HandshapeColorForm, DerivationHistoryColorForm,
-                                       TagUpdateForm, LemmaUpdateForm, GlossProvenanceForm)
+                                       DefinitionForm, GlossMorphemeForm, GlossMorphologyForm,
+                                       MorphemeCreateForm, LemmaCreateForm, AffiliationUpdateForm,
+                                       CSVMetadataForm, EAFFilesForm,
+                                       TagUpdateForm, LemmaUpdateForm)
 from signbank.dictionary.translate_choice_list import machine_value_to_translated_human_value
 from signbank.dictionary.context_data import get_selected_datasets
 
@@ -305,7 +303,127 @@ def add_gloss(request):
         return show_warning(request, feedback_message, selected_datasets)
 
     # new gloss created successfully, go to GlossDetailView
-    return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': gloss.pk}) + '?edit')
+    return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': gloss.pk}))
+
+
+@require_http_methods(["POST"])
+@permission_required('dictionary.change_gloss')
+def add_phonological_variation(request, glossid):
+    """Create a new phonological variation for a gloss"""
+
+    gloss = get_object_or_404(Gloss, id=glossid, archived=False)
+
+    qs = PhonologicalVariation.objects.filter(gloss=gloss)
+
+    highest_variation = 1 if not qs.count() else max([phonological_variation.variation for phonological_variation in qs])
+    new_variation_data = dict()
+    new_variation_data['variation'] = highest_variation+1
+    new_variation = PhonologicalVariation(gloss=gloss, **new_variation_data)
+
+    for field in FIELDS['phonology']:
+        setattr(new_variation, field, getattr(gloss, field))
+    new_variation.save()
+    gloss.lastUpdated = DT.datetime.now(tz=get_current_timezone())
+
+    return JsonResponse({'success': True}, status=200)
+
+
+@require_http_methods(["POST"])
+@permission_required('dictionary.change_gloss')
+def delete_phonological_variation(request, variationid):
+    """Delete a phonological variation for a gloss"""
+
+    variation = get_object_or_404(PhonologicalVariation, id=variationid)
+    gloss = variation.gloss
+    variation.delete()
+
+    revised_variations = PhonologicalVariation.objects.filter(gloss=gloss)
+    for inx, variant in enumerate(revised_variations, 2):
+        variant.variation = inx
+        variant.save()
+
+    gloss.lastUpdated = DT.datetime.now(tz=get_current_timezone())
+
+    return JsonResponse({'success': True}, status=200)
+
+
+def get_gloss_update_human_readable_value_dict(request):
+
+    value_dict = dict()
+    for field in request.POST.keys():
+        if field == 'csrfmiddlewaretoken':
+            continue
+        value = request.POST.get(field, '')
+        value_dict[field] = value.strip() if isinstance(value, str) else value
+    return value_dict
+
+
+@require_http_methods(["POST"])
+@permission_required('dictionary.change_gloss')
+def update_gloss_phonology(request, glossid):
+    """Update the phonology of a gloss"""
+
+    gloss = get_object_or_404(Gloss, id=glossid)
+    gloss_variations = PhonologicalVariation.objects.filter(gloss=gloss).order_by('variation')
+    variations = {str(variation.pk): variation for variation in gloss_variations }
+    value_dict = get_gloss_update_human_readable_value_dict(request)
+    for field_pattern, value in value_dict.items():
+        if re.search(r'_(\d+)$', field_pattern):
+            field, variantid = field_pattern.rsplit('_', 1)
+            variant = variations[variantid]
+        else:
+            field = field_pattern
+            variant = gloss
+        if field in ['domhndsh_letter_or_number']:
+            letter_or_number = {'0': None, '1': 'letter', '2': 'number'}[value]
+            setattr(variant, 'domhndsh_letter', letter_or_number == 'letter')
+            setattr(variant, 'domhndsh_number', letter_or_number == 'number')
+            variant.save()
+            continue
+        if field in ['subhndsh_letter_or_number']:
+            letter_or_number = {'0': None, '1': 'letter', '2': 'number'}[value]
+            setattr(variant, 'subhndsh_letter', letter_or_number == 'letter')
+            setattr(variant, 'subhndsh_number', letter_or_number == 'number')
+            variant.save()
+            continue
+        if field not in PHONOLOGY_FIELDS_UPDATES:
+            continue
+        internal_field = Gloss.get_field(field)
+        original_internal_value = getattr(variant, field)
+        if isinstance(internal_field, FieldChoiceForeignKey):
+            if not value:
+                continue
+            new_value = FieldChoice.objects.get(field=internal_field.field_choice_category, machine_value=int(value))
+            if new_value == original_internal_value:
+                continue
+            setattr(variant, field, new_value)
+            variant.save()
+        elif isinstance(internal_field, ForeignKey) and internal_field.related_model == Handshape:
+            if not value:
+                continue
+            new_value = Handshape.objects.get(machine_value=int(value))
+            if new_value == original_internal_value:
+                continue
+            setattr(variant, field, new_value)
+            variant.save()
+        elif isinstance(internal_field, BooleanField):
+            if field in ['weakdrop', 'weakprop']:
+                boolean_value = {'0': None, '1': True, '2': False}[value]
+                variant.__setattr__(field, boolean_value)
+                variant.save()
+            elif field in ['repeat', 'altern']:
+                boolean_value = {'0': None, '1': True}[value]
+                if boolean_value == original_internal_value:
+                    continue
+                setattr(variant, field, boolean_value)
+                variant.save()
+        elif isinstance(internal_field, CharField) or isinstance(internal_field, TextField):
+            value = value.strip()
+            if value == original_internal_value:
+                continue
+            setattr(variant, field, value)
+            variant.save()
+    return JsonResponse({'success': True}, status=200)
 
 
 @require_http_methods(["POST"])
@@ -353,7 +471,7 @@ def update_examplesentence(request, examplesentenceid):
         if len(vals) == 0 or vals == examplesentence.get_examplestc_translations_dict_without():
             messages.add_message(request, messages.INFO, gettext_lazy('This example sentence was not changed.'))
             return HttpResponseRedirect(
-                reverse('dictionary:admin_gloss_view', kwargs={'pk': request.POST['glossid']}) + '?edit')
+                reverse('dictionary:admin_gloss_view', kwargs={'pk': request.POST['glossid']}))
 
         # Update the examplesentence with examplesentencetranslations
         for dataset_language in dataset_languages:
@@ -384,7 +502,7 @@ def update_examplesentence(request, examplesentenceid):
             revision.save()
 
     return HttpResponseRedirect(
-        reverse('dictionary:admin_gloss_view', kwargs={'pk': request.POST['glossid']}) + '?edit')
+        reverse('dictionary:admin_gloss_view', kwargs={'pk': request.POST['glossid']}))
 
 
 @require_http_methods(["POST"])
@@ -416,7 +534,7 @@ def create_examplesentence(request, senseid):
     if len(vals) == 0:
         messages.add_message(request, messages.ERROR, gettext_lazy('No input sentence given.'))
         return HttpResponseRedirect(
-            reverse('dictionary:admin_gloss_view', kwargs={'pk': request.POST['glossid']}) + '?edit')
+            reverse('dictionary:admin_gloss_view', kwargs={'pk': request.POST['glossid']}))
 
     with atomic():
         stype = FieldChoice.objects.filter(field='SentenceType').get(machine_value=request.POST['sentenceType'])
@@ -440,7 +558,7 @@ def create_examplesentence(request, senseid):
             revision.save()
 
     return HttpResponseRedirect(
-        reverse('dictionary:admin_gloss_view', kwargs={'pk': request.POST['glossid']}) + '?edit')
+        reverse('dictionary:admin_gloss_view', kwargs={'pk': request.POST['glossid']}))
 
 
 @require_http_methods(["POST"])
@@ -471,7 +589,7 @@ def delete_examplesentence(request, senseid):
         revision.save()
 
     return HttpResponseRedirect(
-        reverse('dictionary:admin_gloss_view', kwargs={'pk': request.POST['glossid']}) + '?edit')
+        reverse('dictionary:admin_gloss_view', kwargs={'pk': request.POST['glossid']}))
 
 
 def sort_sense(request, glossid, order, direction):
@@ -481,7 +599,7 @@ def sort_sense(request, glossid, order, direction):
     if gloss_senses_matching_order != 1:
         print('sort_sense: multiple or no match for order: ', glossid, str(order))
         messages.add_message(request, messages.ERROR, gettext_lazy('Could not sort this sense.'))
-        return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': gloss.id}) + '?edit')
+        return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': gloss.id}))
 
     glosssense = GlossSense.objects.get(gloss=gloss, order=order)
     swaporder = 0
@@ -490,7 +608,7 @@ def sort_sense(request, glossid, order, direction):
     elif direction == "down":
         swaporder = order + 1
     else:
-        return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': gloss.id}) + '?edit')
+        return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': gloss.id}))
 
     try:
         glosssensetoswap = GlossSense.objects.get(gloss=gloss, order=swaporder)
@@ -504,7 +622,7 @@ def sort_sense(request, glossid, order, direction):
         print('sort_sense ', direction.upper(), ': multiple or no match for order: ', glossid, str(swaporder))
         messages.add_message(request, messages.ERROR, gettext_lazy('Could not sort this sense.'))
 
-    return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': gloss.id}) + '?edit')
+    return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': gloss.id}))
 
 
 def sort_examplesentence(request, senseid, glossid, order, direction):
@@ -522,7 +640,7 @@ def sort_examplesentence(request, senseid, glossid, order, direction):
     elif direction == "down":
         swaporder = order + 1
     else:
-        return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': gloss.id}) + '?edit')
+        return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': gloss.id}))
 
     try:
         senseexamplesentencetoswap = SenseExamplesentence.objects.get(sense=sense, order=swaporder)
@@ -534,7 +652,7 @@ def sort_examplesentence(request, senseid, glossid, order, direction):
         print('sort_examplesentence ', direction.upper(), ': multiple or no match for order: ', senseid, str(swaporder))
         messages.add_message(request, messages.ERROR, gettext_lazy('Could not sort this examplesentence.'))
 
-    return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': gloss.id}) + '?edit')
+    return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': gloss.id}))
 
 
 def add_sentence_video(request, glossid, examplesentenceid):
@@ -565,7 +683,7 @@ def update_sense(request, senseid):
 
     if not request.user.has_perm('dictionary.change_sense'):
         messages.add_message(request, messages.ERROR, gettext_lazy('Sense Update Not Allowed'))
-        return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': glossid}) + '?edit')
+        return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': glossid}))
 
     # Make a dict of new values
     gloss = Gloss.objects.all().get(id=glossid)
@@ -582,7 +700,7 @@ def update_sense(request, senseid):
     # Check if input given is empty
     if vals == {}:
         messages.add_message(request, messages.ERROR, gettext_lazy('No keywords given for edited sense.'))
-        return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': gloss.id}) + '?edit')
+        return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': gloss.id}))
 
     # Check if this sense changed at all
     sense = Sense.objects.get(id=senseid)
@@ -594,16 +712,16 @@ def update_sense(request, senseid):
 
     if sensetranslation_dict == vals:
         messages.add_message(request, messages.ERROR, gettext_lazy('Sense did not change.'))
-        return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': gloss.id}) + '?edit')
+        return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': gloss.id}))
 
     gloss_senses = GlossSense.objects.filter(gloss_id=gloss.id, sense=sense)
 
     if not gloss_senses.count():
         messages.add_message(request, messages.ERROR, gettext_lazy('GlossSense not found for gloss.'))
-        return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': gloss.id}) + '?edit')
+        return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': gloss.id}))
     if gloss_senses.count() > 1:
         messages.add_message(request, messages.ERROR, gettext_lazy('GlossSense duplicate found for gloss.'))
-        return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': gloss.id}) + '?edit')
+        return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': gloss.id}))
 
     # Check if sense already exists in this gloss
     for existing_sense in gloss.senses.all():
@@ -611,7 +729,7 @@ def update_sense(request, senseid):
             continue
         if vals == existing_sense.get_sense_translations_dict_without_list():
             messages.add_message(request, messages.ERROR, gettext_lazy('This sense was already in this gloss.'))
-            return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': gloss.id}) + '?edit')
+            return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': gloss.id}))
 
     # Update sensetranslations
     this_sense_order = gloss_senses.first().order
@@ -710,7 +828,7 @@ def update_sense(request, senseid):
     revision.save()
 
     messages.add_message(request, messages.INFO, gettext_lazy('Given sense was updated.'))
-    return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': gloss.id}) + '?edit')
+    return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': gloss.id}))
 
 
 @require_http_methods(["POST"])
@@ -719,7 +837,7 @@ def create_sense(request, glossid):
 
     if not request.user.has_perm('dictionary.add_sense'):
         messages.add_message(request, messages.ERROR, gettext_lazy('Sense Creation Not Allowed'))
-        return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': glossid}) + '?edit')
+        return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': glossid}))
 
     # Make a dict of new values
     gloss = Gloss.objects.get(id=glossid, archived=False)
@@ -739,13 +857,13 @@ def create_sense(request, glossid):
     # Check if input given is empty
     if vals == {}:
         messages.add_message(request, messages.ERROR, gettext_lazy('No keywords given for new sense.'))
-        return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': glossid}) + '?edit')
+        return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': glossid}))
 
     # Check if sense already exists in this gloss
     for existing_sense in gloss.senses.all():
         if vals == existing_sense.get_sense_translations_dict_without_list():
             messages.add_message(request, messages.ERROR, gettext_lazy('This sense was already in this gloss.'))
-            return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': glossid}) + '?edit')
+            return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': glossid}))
 
     # Make a new sense object
     sense = Sense.objects.create()
@@ -788,7 +906,7 @@ def create_sense(request, glossid):
                              time=DT.datetime.now(tz=get_current_timezone()))
     revision.save()
 
-    return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': glossid}) + '?edit')
+    return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': glossid}))
 
 
 @require_http_methods(["POST"])
@@ -797,7 +915,7 @@ def delete_sense(request, glossid):
 
     if not request.user.has_perm('dictionary.delete_sense'):
         messages.add_message(request, messages.ERROR, gettext_lazy('Sense Deletion Not Allowed'))
-        return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': glossid}) + '?edit')
+        return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': glossid}))
 
     sense = Sense.objects.get(id=request.POST['senseid'])
     gloss = Gloss.objects.get(id=glossid, archived=False)
@@ -844,7 +962,388 @@ def delete_sense(request, glossid):
                              time=DT.datetime.now(tz=get_current_timezone()))
     revision.save()
 
-    return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': glossid}) + '?edit')
+    return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': glossid}))
+
+
+def get_gloss_non_empty_value_dict(request):
+    # this allows multiselect semantic fields
+    value_dict = dict()
+    for field in request.POST.keys():
+        if field == 'csrfmiddlewaretoken':
+            continue
+        if field in ['semField', 'semField[]']:
+            values = request.POST.getlist(field, [])
+            value_dict['semField'] = values
+        elif field in ['derivHist', 'derivHist[]']:
+            values = request.POST.getlist(field, [])
+            value_dict['derivHist'] = values
+        elif field in ['dialect', 'dialect[]']:
+            values = request.POST.getlist(field)
+            value_dict['dialect'] = values
+        else:
+            value = request.POST.get(field, '')
+            if not value:
+                continue
+            value_dict[field] = value.strip() if isinstance(value, str) else value
+    return value_dict
+
+
+@require_http_methods(["POST"])
+@permission_required('dictionary.change_gloss')
+def edit_gloss_save(request, glossid):
+    """Update the non-phonology fields of a gloss"""
+
+    gloss = get_object_or_404(Gloss, id=glossid)
+    value_dict = get_gloss_non_empty_value_dict(request)
+    for field, value in value_dict.items():
+        if field in ['semField', 'semField[]']:
+            gloss.semField.clear()
+            if value == ['None']:
+                continue
+            for semField_machine_value in value:
+                semField = SemanticField.objects.get(machine_value=semField_machine_value)
+                gloss.semField.add(semField)
+            continue
+        if field in ['derivHist', 'derivHist[]']:
+            gloss.derivHist.clear()
+            if value == ['None']:
+                continue
+            for derivHist_machine_value in value:
+                derivHist = DerivationHistory.objects.get(machine_value=derivHist_machine_value)
+                gloss.derivHist.add(derivHist)
+            continue
+        if field in ['dialect', 'dialect[]']:
+            gloss.dialect.clear()
+            if value == ['None']:
+                continue
+            for dialect_machine_value in value:
+                dialect = Dialect.objects.get(id=dialect_machine_value)
+                gloss.dialect.add(dialect)
+            continue
+        if field not in Gloss.get_field_names():
+            continue
+        internal_field = Gloss.get_field(field)
+        original_internal_value = getattr(gloss, field)
+        if isinstance(internal_field, FieldChoiceForeignKey):
+            new_value = FieldChoice.objects.get(field=internal_field.field_choice_category, machine_value=int(value))
+            if new_value.machine_value == original_internal_value:
+                continue
+            setattr(gloss, field, new_value)
+        elif isinstance(internal_field, ForeignKey) and internal_field.related_model == Handshape:
+            new_value = Handshape.objects.get(machine_value=int(value))
+            if new_value.machine_value == original_internal_value:
+                continue
+            setattr(gloss, field, new_value)
+        elif isinstance(internal_field, BooleanField):
+            if field in ['inWeb', 'isNew', 'excludeFromEcv']:
+                boolean_value = {'0': False, '1': True}[value]
+                if boolean_value == original_internal_value:
+                    continue
+                setattr(gloss, field, boolean_value)
+            else:
+                print('edit_gloss_save not implemented for Boolean field ', field)
+        elif isinstance(internal_field, CharField) or isinstance(internal_field, TextField):
+            value = value.strip()
+            setattr(gloss, field, value)
+        else:
+            print('edit_gloss_save not implemented for field name ', field, ' with internal type ', internal_field)
+    gloss.save()
+    return JsonResponse({'success': True}, status=200)
+
+
+@require_http_methods(["POST"])
+@permission_required('dictionary.change_gloss')
+def update_gloss_lemma(request, glossid):
+
+    gloss = get_object_or_404(Gloss, id=glossid, archived=False)
+    new_lemma_pk = request.POST.get('new_lemma_pk', '')
+
+    lemma_gloss_group = False
+    lemma_group_string = gloss.idgloss
+    other_glosses_in_lemma_group = Gloss.objects.filter(
+        lemma__lemmaidglosstranslation__text__iexact=lemma_group_string).count()
+    if other_glosses_in_lemma_group > 1:
+        lemma_gloss_group = True
+
+    # Set new lemma obtained from lemma lookahead in the Gloss Edit template
+    try:
+        lemma = LemmaIdgloss.objects.get(pk=new_lemma_pk)
+    except ObjectDoesNotExist:
+        error_message = gettext("The specified lemma does not exist.")
+        return JsonResponse({'error': error_message}, status=400)
+
+    if gloss.lemma.dataset != lemma.dataset:
+        error_message = gettext("The dataset of the gloss is not the same as that of the lemma.")
+        return JsonResponse({'error': error_message}, status=400)
+
+    gloss.lemma = lemma
+    gloss.save(update_fields=['lemma'])
+
+    return JsonResponse({'success': True}, status=200)
+
+
+@require_http_methods(["POST"])
+@permission_required('dictionary.change_gloss')
+def update_gloss_annotation(request, glossid):
+
+    gloss = get_object_or_404(Gloss, id=glossid, archived=False)
+    language_code_2char = request.POST.get('language_code_2char', '')
+    value = request.POST.get('value', '')
+    if not isinstance(value, str):
+        error_message = gettext("The translation text must be a string.")
+        return JsonResponse({'error': error_message}, status=400)
+    annotation_text = value.strip()
+
+    try:
+        language = Language.objects.get(language_code_2char=language_code_2char)
+    except (ObjectDoesNotExist, MultipleObjectsReturned):
+        # the language does not exist
+        error_message = gettext("The translation language does not exist.")
+        return JsonResponse({'error': error_message}, status=400)
+
+    if not value:
+        # don't allow user to set Annotation ID Gloss to empty
+        error_message = gettext("The annotation for the translation language cannot be empty.")
+        return JsonResponse({'error': error_message}, status=400)
+
+    try:
+        annotation_idgloss_translation = AnnotationIdglossTranslation.objects.get(gloss=gloss, language=language)
+    except ObjectDoesNotExist:
+        # create an empty annotation for this gloss and language
+        annotation_idgloss_translation = AnnotationIdglossTranslation(gloss=gloss, language=language)
+
+    original_text = annotation_idgloss_translation.text
+    annotation_idgloss_translation.text = annotation_text
+    try:
+        annotation_idgloss_translation.save()
+    except ValidationError as e:
+        error_message = getattr(e, 'message', repr(e))
+        return JsonResponse({'error': error_message}, status=400)
+
+    add_gloss_update_to_revision_history(request.user, gloss, 'annotation_'+language_code_2char, original_text, annotation_text)
+
+    return JsonResponse({'success': True}, status=200)
+
+
+@require_http_methods(["POST"])
+@permission_required('dictionary.change_gloss')
+def update_gloss_nmevideo(request, glossid, nmevideoid):
+    """Update the GlossVideoNME"""
+
+    gloss = get_object_or_404(Gloss, id=glossid, archived=False)
+    nmevideo = get_object_or_404(GlossVideoNME, id=nmevideoid)
+
+    value_dict = {}
+    for field in request.POST.keys():
+        if field == 'csrfmiddlewaretoken':
+            continue
+        value_dict[field] = request.POST.get(field, '')
+
+    for field, value in value_dict.items():
+        if field.startswith('nmevideo_description_'):
+            nmevideoid_language_code_2char = field[len('nmevideo_description_'):]
+            strnmevideoid, language_code_2char = nmevideoid_language_code_2char.split('_')
+            if nmevideoid != strnmevideoid:
+                continue
+            language = Language.objects.filter(language_code_2char=language_code_2char).first()
+            value = value.strip()
+            try:
+                description = GlossVideoDescription.objects.get(nmevideo=nmevideo, language=language)
+            except ObjectDoesNotExist:
+                # if no description object exists yet, create it
+                description = GlossVideoDescription.objects.create(nmevideo=nmevideo, language=language)
+            description.text = value
+            description.save()
+        elif field.startswith('nmevideo_offset_'):
+            strnmevideoid = field[len('nmevideo_offset_'):]
+            if nmevideoid != strnmevideoid:
+                continue
+            new_offset = int(value)
+            existing_nmevideos = GlossVideoNME.objects.filter(gloss=gloss).exclude(id=int(nmevideoid))
+            existing_offsets = [nmev.offset for nmev in existing_nmevideos]
+            if new_offset in existing_offsets or new_offset == nmevideo.offset:
+                continue
+            # also change the offset of perspective videos
+            nme_objects_with_same_offset = GlossVideoNME.objects.filter(gloss=gloss, offset=nmevideo.offset)
+            for nmev in nme_objects_with_same_offset:
+                nmev.offset = new_offset
+                # the save will move the file on disk
+                nmev.save(update_fields=['offset'])
+
+    return JsonResponse({'success': True}, status=200)
+
+
+@require_http_methods(["POST"])
+@permission_required('dictionary.change_gloss')
+def update_gloss_note(request, glossid, definitionid):
+    """Update one of the definition fields"""
+
+    gloss = get_object_or_404(Gloss, id=glossid, archived=False)
+    definition = get_object_or_404(Definition, id=definitionid)
+
+    value_dict = {}
+    for field in request.POST.keys():
+        if field == 'csrfmiddlewaretoken':
+            continue
+        value = request.POST.get(field, '')
+        if not value:
+            continue
+        value_dict[field] = value.strip() if isinstance(value, str) else value
+
+    changes_done = []
+    for field, value in value_dict.items():
+        what, _ = field.split('_')
+        if what == 'note-definition':
+            original_value = definition.note_text()
+            definition.text = value
+            definition.save()
+            changes_done.append((field, original_value, definition.note_text()))
+        elif what == 'note-definitioncount':
+            original_value = str(definition.count)
+            definition.count = int(value)
+            definition.save()
+            changes_done.append((field, original_value, str(definition.count)))
+        elif what == 'note-definitionpub':
+            original_value = str(definition.published)
+            if not request.user.has_perm('dictionary.can_publish'):
+                continue
+            boolean_value = {'0': False, '1': True}[value]
+            definition.published = boolean_value
+            definition.save()
+            changes_done.append((field, original_value, str(definition.published)))
+        elif what == 'note-definitionrole':
+            original_value = definition.role.name if definition.role else ''
+            definition.role = FieldChoice.objects.get(field='NoteType', machine_value=int(value))
+            definition.save()
+            changes_done.append((field, original_value, definition.role.name))
+    for field, original_human_value, new_history_value in changes_done:
+        add_gloss_update_to_revision_history(request.user, gloss, field, original_human_value, new_history_value)
+
+    return JsonResponse({'success': True}, status=200)
+
+
+@require_http_methods(["POST"])
+@permission_required('dictionary.change_gloss')
+def update_gloss_foreignrelation(request, glossid, foreignrelationid):
+    """Update one of the relations for this gloss"""
+    gloss = get_object_or_404(Gloss, id=glossid, archived=False)
+    foreignrelation = get_object_or_404(RelationToForeignSign, id=foreignrelationid)
+
+    value_dict = {}
+    for field in request.POST.keys():
+        if field == 'csrfmiddlewaretoken':
+            continue
+        value = request.POST.get(field, '')
+        if not value:
+            continue
+        value_dict[field] = value.strip() if isinstance(value, str) else value
+
+    changes_done = []
+    for field, value in value_dict.items():
+        what, _ = field.split('_')
+        what = what.replace('-', '_')
+
+        if what == 'foreignrelation_loan':
+            original_value = str(foreignrelation.loan)
+            if not request.user.has_perm('dictionary.can_publish'):
+                continue
+            boolean_value = {'0': False, '1': True}[value]
+            foreignrelation.loan = boolean_value
+            foreignrelation.save()
+            changes_done.append((field, original_value, str(foreignrelation.loan)))
+        elif what == 'foreignrelation_other_lang':
+            original_value = foreignrelation.other_lang_text()
+            foreignrelation.other_lang = value
+            foreignrelation.save()
+            changes_done.append((field, original_value, foreignrelation.other_lang_text()))
+        elif what == 'foreignrelation_other_lang_gloss':
+            original_value = foreignrelation.other_lang_gloss_text()
+            foreignrelation.other_lang_gloss = value
+            foreignrelation.save()
+            changes_done.append((field, original_value, foreignrelation.other_lang_gloss_text()))
+
+    for field, original_human_value, new_history_value in changes_done:
+        add_gloss_update_to_revision_history(request.user, gloss, field, original_human_value, new_history_value)
+
+    return JsonResponse({'success': True}, status=200)
+
+
+@require_http_methods(["POST"])
+@permission_required('dictionary.change_gloss')
+def update_gloss_provenance(request, glossid, provenanceid):
+    """Update one of the provenance fields"""
+    gloss = get_object_or_404(Gloss, id=glossid, archived=False)
+    provenance = get_object_or_404(GlossProvenance, id=provenanceid)
+
+    value_dict = {}
+    for field in request.POST.keys():
+        if field == 'csrfmiddlewaretoken':
+            continue
+        value = request.POST.get(field, '')
+        if not value:
+            continue
+        value_dict[field] = value.strip() if isinstance(value, str) else value
+
+    changes_done = []
+    for field, value in value_dict.items():
+        (what, provid) = field.split('_')
+        if what == 'provenancedescription':
+            original_value = provenance.provenance_text()
+            provenance.description = value
+            provenance.save()
+            changes_done.append((field, original_value, provenance.description))
+        elif what == 'provenancemethod':
+            original_value = provenance.get_method_display()
+            provenance.method = FieldChoice.objects.get(field='Provenance', machine_value=int(value))
+            provenance.save()
+            changes_done.append((field, original_value, provenance.method.name))
+
+    for field, original_human_value, new_history_value in changes_done:
+        add_gloss_update_to_revision_history(request.user, gloss, field, original_human_value, new_history_value)
+
+    return JsonResponse({'success': True}, status=200)
+
+
+@require_http_methods(["POST"])
+@permission_required('dictionary.change_gloss')
+def update_gloss_othermedia(request, glossid, othermediaid):
+    """Update one of the other media fields"""
+    gloss = get_object_or_404(Gloss, id=glossid, archived=False)
+    othermedia = get_object_or_404(OtherMedia, id=othermediaid)
+
+    value_dict = {}
+    for field in request.POST.keys():
+        if field == 'csrfmiddlewaretoken':
+            continue
+        value = request.POST.get(field, '')
+        if not value:
+            continue
+        value_dict[field] = value.strip() if isinstance(value, str) else value
+
+    changes_done = []
+    for field, value in value_dict.items():
+        (what, om_id) = field.split('_')
+        what = what.replace('-', '_')
+        if what == 'other_media_description':
+            original_value = othermedia.description_text()
+            othermedia.description = value
+            othermedia.save()
+            changes_done.append((field, original_value, othermedia.description))
+        elif what == 'other_media_alternative_gloss':
+            original_value = othermedia.alternative_gloss
+            othermedia.alternative_gloss = value
+            othermedia.save()
+            changes_done.append((field, original_value, othermedia.alternative_gloss))
+        elif what == 'other_media_type':
+            original_value = othermedia.get_type_display()
+            othermedia.type = FieldChoice.objects.get(field='OtherMediaType', machine_value=int(value))
+            othermedia.save()
+            changes_done.append((field, original_value, othermedia.type.name))
+
+    for field, original_human_value, new_history_value in changes_done:
+        add_gloss_update_to_revision_history(request.user, gloss, field, original_human_value, new_history_value)
+
+    return JsonResponse({'success': True}, status=200)
 
 
 @require_http_methods(["POST"])
@@ -1549,7 +2048,7 @@ def update_relation(user, gloss, field, value):
     if what == 'relationdelete' and rel.role_fk == synonym:
         # special case for symmetric transitive relation
         remove_transitive_synonym(user, rel)
-        return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': gloss.id}) + '?editrel')
+        return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': gloss.id}))
 
     if what == 'relationdelete':
         rel_source = rel.source
@@ -1572,7 +2071,7 @@ def update_relation(user, gloss, field, value):
                                                      '')
                 revrel.delete()
 
-        return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': gloss.id}) + '?editrel')
+        return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': gloss.id}))
     elif what == 'relationrole':
         rel.role_fk = value
         rel.save()
@@ -1612,7 +2111,7 @@ def update_relationtoforeignsign(gloss, field, value):
 
     if what == 'relationforeign_delete':
         rel.delete()
-        return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': gloss.id}) + '?editrelforeign')
+        return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': gloss.id}))
     elif what == 'relationforeign_loan':
         rel.loan = value in ['Yes', 'yes', 'ja', 'Ja', '是', 'true', 'True', True, 1]
         rel.save()
@@ -1680,7 +2179,7 @@ def update_definition(request, gloss, field, value):
         original_value = defn.note_text()
         defn.delete()
         add_gloss_update_to_revision_history(request.user, gloss_or_morpheme, 'definitiondelete', original_value, '')
-        return HttpResponseRedirect(reverse(reverse_url, kwargs={'pk': gloss_or_morpheme.id}) + '?editdef')
+        return HttpResponseRedirect(reverse(reverse_url, kwargs={'pk': gloss_or_morpheme.id}))
 
     if what == 'definition':
         # update the definition
@@ -1742,7 +2241,7 @@ def update_other_media(gloss, field, value):
             os.remove(file_location)
         other_media.delete()
         return HttpResponseRedirect(reverse(reverse_url,
-                                            kwargs={'pk': gloss_or_morpheme.pk}) + '?editothermedia')
+                                            kwargs={'pk': gloss_or_morpheme.pk}))
 
     elif action_or_fieldname == 'other-media-type':
         # value is the (str) machine value of the Other Media Type from the choice list in the template
@@ -1795,7 +2294,7 @@ def add_relation(request):
         messages.add_message(request, messages.INFO,
                              gettext_lazy("This relation already exists."))
         return HttpResponseRedirect(
-            reverse('dictionary:admin_gloss_view', kwargs={'pk': source.id}) + '?editrel')
+            reverse('dictionary:admin_gloss_view', kwargs={'pk': source.id}))
 
     reverse_role = new_relation.get_reverse_role()
     # Also add the reverse relation
@@ -1805,7 +2304,7 @@ def add_relation(request):
         messages.add_message(request, messages.INFO,
                              gettext_lazy("This relation already exists."))
         return HttpResponseRedirect(
-            reverse('dictionary:admin_gloss_view', kwargs={'pk': source.id}) + '?editrel')
+            reverse('dictionary:admin_gloss_view', kwargs={'pk': source.id}))
 
     if created:
         relation_display = f'{role.name}:{get_default_annotationidglosstranslation(target)}'
@@ -1819,12 +2318,11 @@ def add_relation(request):
     created_transitive_relations = ensure_synonym_transitivity(source)
     add_new_relations_to_revision_history(request.user, created_transitive_relations)
 
-    return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': source.id}) + '?editrel')
+    return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': source.id}))
 
 
 @require_http_methods(["POST"])
 @permission_required('dictionary.change_gloss')
-@require_http_methods(["POST"])
 def variants_of_gloss(request):
 
     form = VariantsForm(request.POST)
@@ -1859,7 +2357,7 @@ def variants_of_gloss(request):
 
 
 @require_http_methods(["POST"])
-def add_relationtoforeignsign(request):
+def add_relationtoforeignsign(request, glossid):
     """Add a new relationtoforeignsign instance"""
 
     form = RelationToForeignSignForm(request.POST)
@@ -1881,7 +2379,7 @@ def add_relationtoforeignsign(request):
     rel = RelationToForeignSign(gloss=gloss, loan=loan, other_lang=other_lang, other_lang_gloss=other_lang_gloss)
     rel.save()
 
-    return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': gloss.id}) + '?editrelforeign')
+    return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': gloss.id}))
 
 
 @require_http_methods(["POST"])
@@ -1916,7 +2414,7 @@ def add_definition(request, glossid):
 
     add_gloss_update_to_revision_history(request.user, gloss_or_morpheme, 'definition_create', '', revision_value)
 
-    return HttpResponseRedirect(reverse(reverse_url, kwargs={'pk': gloss_or_morpheme.id}) + '?editdef')
+    return HttpResponseRedirect(reverse(reverse_url, kwargs={'pk': gloss_or_morpheme.id}))
 
 
 @require_http_methods(["POST"])
@@ -1951,7 +2449,7 @@ def add_morphology_definition(request):
     thisgloss.lastUpdated = DT.datetime.now(tz=get_current_timezone())
     thisgloss.save()
 
-    return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': thisgloss.id}) + '?editmorphdef')
+    return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': thisgloss.id}))
 
 
 # Add a 'morpheme' (according to the Morpheme model)
@@ -1974,11 +2472,11 @@ def add_morpheme_definition(request, glossid):
                 messages.add_message(request, messages.INFO,
                                      gettext_lazy('Edit Simultaneuous Morphology: The dataset of this gloss has no morphemes.'))
                 return HttpResponseRedirect(
-                    reverse('dictionary:admin_gloss_view', kwargs={'pk': thisgloss.id}) + '?editmorphdef')
+                    reverse('dictionary:admin_gloss_view', kwargs={'pk': thisgloss.id}))
 
         messages.add_message(request, messages.INFO, gettext_lazy('Edit Simultaneuous Morphology: No morpheme selected.'))
         return HttpResponseRedirect(
-            reverse('dictionary:admin_gloss_view', kwargs={'pk': thisgloss.id}) + '?editmorphdef')
+            reverse('dictionary:admin_gloss_view', kwargs={'pk': thisgloss.id}))
 
     if not form.is_valid():
         # fallback to the requesting page
@@ -1994,7 +2492,7 @@ def add_morpheme_definition(request, glossid):
         feedback_message = gettext('Simultaneuous morphology: no morpheme found with identifier {morphid}.'.format(morphid=morph_id))
         messages.add_message(request, messages.ERROR, feedback_message)
 
-        return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': thisgloss.id}) + '?editmorphdef')
+        return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': thisgloss.id}))
 
     original_simultaneous = thisgloss.get_morpheme_display()
 
@@ -2011,7 +2509,7 @@ def add_morpheme_definition(request, glossid):
     thisgloss.lastUpdated = DT.datetime.now(tz=get_current_timezone())
     thisgloss.save()
 
-    return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': thisgloss.id}) + '?editmorphdef')
+    return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': thisgloss.id}))
 
 
 # Add a 'blend' (according to the Blend model)
@@ -2029,7 +2527,7 @@ def add_blend_definition(request, glossid):
         # The user has obviously not selected a morpheme
         # Desired action (Issue #199): nothing happens
         return HttpResponseRedirect(
-            reverse('dictionary:admin_gloss_view', kwargs={'pk': thisgloss.id}) + '?editmorphdef')
+            reverse('dictionary:admin_gloss_view', kwargs={'pk': thisgloss.id}))
 
     if not form.is_valid():
         # fallback to the requesting page
@@ -2051,7 +2549,7 @@ def add_blend_definition(request, glossid):
     thisgloss.lastUpdated = DT.datetime.now(tz=get_current_timezone())
     thisgloss.save()
 
-    return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': thisgloss.id}) + '?editmorphdef')
+    return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': thisgloss.id}))
 
 
 @require_http_methods(["POST"])
@@ -2412,7 +2910,7 @@ def add_othermedia(request):
     is_video = filetype.startswith('video')
 
     if not is_video or not video_format_extension:
-        return HttpResponseRedirect(reverse(reverse_url, kwargs={'pk': request.POST['gloss']}) + '?editothermedia')
+        return HttpResponseRedirect(reverse(reverse_url, kwargs={'pk': request.POST['gloss']}))
 
     is_not_mp4_type = filetype != 'video/mp4'
     is_not_mp4_extension = extension != '.mp4'
@@ -2426,7 +2924,7 @@ def add_othermedia(request):
         newothermedia.path = f"{request.POST['gloss']}/{name}.mp4"
         newothermedia.save()
 
-    return HttpResponseRedirect(reverse(reverse_url, kwargs={'pk': request.POST['gloss']})+'?editothermedia')
+    return HttpResponseRedirect(reverse(reverse_url, kwargs={'pk': request.POST['gloss']}))
 
 
 def update_morphology_definition(gloss, field, value):
@@ -2450,7 +2948,7 @@ def update_morphology_definition(gloss, field, value):
     if what == 'morphology_definition_delete':
         print("DELETE morphology definition: ", morph_def)
         morph_def.delete()
-        return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': gloss.id}) + '?editmorphdef')
+        return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': gloss.id}))
     elif what == 'morphology_definition_role':
         morph_def.role = value
         morph_def.save()
@@ -2502,18 +3000,18 @@ def add_morpheme(request):
 
     # Lemma handling
     lemmaidgloss = None
-    lemma_form = None
-    if request.POST['select_or_new_lemma'] == 'new':
-        lemma_form = LemmaCreateForm(request.POST, languages=dataset_languages, user=request.user,
-                                     last_used_dataset=last_used_dataset)
-    else:
-        try:
-            lemmaidgloss_id = request.POST['idgloss']
-            lemmaidgloss = LemmaIdgloss.objects.get(id=lemmaidgloss_id)
-        except ObjectDoesNotExist:
-            messages.add_message(request, messages.ERROR,
-                                 gettext_lazy("The given Lemma Idgloss ID is unknown."))
-            return render(request, 'dictionary/add_morpheme.html', {'add_morpheme_form': form})
+    # lemma_form = None
+    # if request.POST['select_or_new_lemma'] == 'new':
+    lemma_form = LemmaCreateForm(request.POST, languages=dataset_languages, user=request.user,
+                                 last_used_dataset=last_used_dataset)
+    # else:
+    #     try:
+    #         lemmaidgloss_id = request.POST['idgloss']
+    #         lemmaidgloss = LemmaIdgloss.objects.get(id=lemmaidgloss_id)
+    #     except ObjectDoesNotExist:
+    #         messages.add_message(request, messages.ERROR,
+    #                              gettext_lazy("The given Lemma Idgloss ID is unknown."))
+    #         return render(request, 'dictionary/add_morpheme.html', {'add_morpheme_form': form})
 
     # Check for 'change_dataset' permission
     if dataset and ('change_dataset' not in get_user_perms(request.user, dataset)) \
@@ -2568,7 +3066,7 @@ def add_morpheme(request):
             request.session['search_type'] = ''
         request.session['last_used_dataset'] = dataset.acronym
 
-        return HttpResponseRedirect(reverse('dictionary:admin_morpheme_view', kwargs={'pk': morpheme.id}) + '?edit')
+        return HttpResponseRedirect(reverse('dictionary:admin_morpheme_view', kwargs={'pk': morpheme.id}))
     else:
         return render(request, 'dictionary/add_morpheme.html', {'add_morpheme_form': form,
                                                                 'dataset_languages': dataset_languages,
@@ -2657,7 +3155,7 @@ def update_morpheme(request, morphemeid):
     elif field == 'dialect':
         # expecting possibly multiple values
 
-        return update_dialect(morpheme, field, values)
+        return update_dialect(request.user, morpheme, field, values)
 
     elif field == 'semanticfield':
         # expecting possibly multiple values
@@ -2682,7 +3180,7 @@ def update_morpheme(request, morphemeid):
 
     elif field.startswith('annotation_idgloss'):
 
-        return update_annotation_idgloss(morpheme, field, value)
+        return update_annotation_idgloss(request, morpheme, field, value)
 
     elif field.startswith('lemmaidgloss'):
         # Set new lemmaidgloss for this gloss
@@ -2791,7 +3289,7 @@ def update_morpheme_definition(gloss, field, value):
     if what == 'morpheme_definition_delete':
         definition = SimultaneousMorphologyDefinition.objects.get(id=morph_def_id)
         definition.delete()
-        return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': gloss.id}) + '?editmorphdef')
+        return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': gloss.id}))
     elif what == 'morpheme_definition_meaning':
         definition = SimultaneousMorphologyDefinition.objects.get(id=morph_def_id)
         original_value = getattr(definition, 'role')
@@ -2819,7 +3317,7 @@ def update_blend_definition(gloss, field, value):
         definition = BlendMorphology.objects.get(id=blend_id)
         definition.delete()
 
-        return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': gloss.id}) + '?editmorphdef')
+        return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': gloss.id}))
     elif what == 'blend_definition_role':
         definition = BlendMorphology.objects.get(id=blend_id)
         original_value = getattr(definition, 'role')
@@ -3211,34 +3709,33 @@ def update_excluded_choices(request):
 
 
 @require_http_methods(["POST"])
+@permission_required('dictionary.change_dataset')
 def update_field_choice_color(request, category, fieldchoiceid):
 
-    if category == 'SemField':
-        form = SemanticFieldColorForm(request.POST)
-        thisfieldchoice = get_object_or_404(SemanticField, pk=fieldchoiceid)
-    elif category == 'derivHist':
-        form = DerivationHistoryColorForm(request.POST)
-        thisfieldchoice = get_object_or_404(DerivationHistory, pk=fieldchoiceid)
-    elif category == 'Handshape':
-        form = HandshapeColorForm(request.POST)
-        thisfieldchoice = get_object_or_404(Handshape, pk=fieldchoiceid)
-    else:
-        form = FieldChoiceColorForm(request.POST)
-        thisfieldchoice = get_object_or_404(FieldChoice, pk=fieldchoiceid)
-
-    if not form.is_valid():
-        messages.add_message(request, messages.ERROR, gettext_lazy("The form is not valid."))
-        return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
-
-    new_color = form.cleaned_data['field_color']
-
+    new_color = request.POST.get('field_color', '#ffffff')
     if new_color[0] == '#':
         new_color = new_color[1:]
 
-    original_value = thisfieldchoice.field_color
-    machine_value = str(thisfieldchoice.machine_value)
-    thisfieldchoice.field_color = new_color
-    thisfieldchoice.save()
+    if category == 'SemField':
+        thisfieldchoice = SemanticField.objects.select_for_update().filter(pk=fieldchoiceid)
+        original_value = thisfieldchoice.first().field_color
+        machine_value = str(thisfieldchoice.first().machine_value)
+        thisfieldchoice.update(field_color=new_color)
+    elif category == 'derivHist':
+        thisfieldchoice = DerivationHistory.objects.select_for_update().filter(pk=fieldchoiceid)
+        original_value = thisfieldchoice.first().field_color
+        machine_value = str(thisfieldchoice.first().machine_value)
+        thisfieldchoice.update(field_color=new_color)
+    elif category == 'Handshape':
+        thisfieldchoice = Handshape.objects.select_for_update().filter(pk=fieldchoiceid)
+        original_value = thisfieldchoice.first().field_color
+        machine_value = str(thisfieldchoice.first().machine_value)
+        thisfieldchoice.update(field_color=new_color)
+    else:
+        thisfieldchoice = FieldChoice.objects.select_for_update().filter(pk=fieldchoiceid)
+        original_value = thisfieldchoice.first().field_color
+        machine_value = str(thisfieldchoice.first().machine_value)
+        thisfieldchoice.update(field_color=new_color)
 
     return HttpResponse(category + '\t' + fieldchoiceid + '\t' + str(original_value) + '\t' + str(new_color) + '\t' + machine_value,
                         {'content-type': 'text/plain'})
@@ -4005,7 +4502,7 @@ def add_provenance(request, glossid):
     gloss_or_morpheme.lastUpdated = DT.datetime.now(tz=get_current_timezone())
     gloss_or_morpheme.save()
 
-    return HttpResponseRedirect(reverse(reverse_url, kwargs={'pk': gloss_or_morpheme.id}) + '?editprovenance')
+    return HttpResponseRedirect(reverse(reverse_url, kwargs={'pk': gloss_or_morpheme.id}))
 
 
 @require_http_methods(["POST"])
@@ -4019,7 +4516,6 @@ def update_provenance(request, gloss, field, value):
         gloss_or_morpheme = gloss
         reverse_url = 'dictionary:admin_gloss_view'
 
-    newvalue = ''
     (what, provid) = field.split('_')
 
     prov = get_object_or_404(GlossProvenance, id=provid)
@@ -4034,7 +4530,7 @@ def update_provenance(request, gloss, field, value):
         original_value = prov.provenance_text()
         prov.delete()
         add_gloss_update_to_revision_history(request.user, gloss_or_morpheme, 'provenancedelete', original_value, '')
-        return HttpResponseRedirect(reverse(reverse_url, kwargs={'pk': gloss_or_morpheme.id})+'?editprovenance')
+        return HttpResponseRedirect(reverse(reverse_url, kwargs={'pk': gloss_or_morpheme.id}))
 
     if what == 'provenancedescription':
         # update the description
@@ -4050,7 +4546,7 @@ def update_provenance(request, gloss, field, value):
         newvalue = prov.method.name
         new_history_value = newvalue
     else:
-        return HttpResponseRedirect(reverse(reverse_url, kwargs={'pk': gloss_or_morpheme.id}) + '?editprovenance')
+        return HttpResponseRedirect(reverse(reverse_url, kwargs={'pk': gloss_or_morpheme.id}))
 
     add_gloss_update_to_revision_history(request.user, gloss_or_morpheme, what, original_value, new_history_value)
 

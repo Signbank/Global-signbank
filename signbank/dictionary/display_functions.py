@@ -1,0 +1,62 @@
+from django.db.models import ForeignKey
+from django.db.models.fields import BooleanField, IntegerField, CharField, TextField
+
+from signbank.settings.server_specific import FIELDS
+
+from signbank.dictionary.models import FieldChoiceForeignKey, Gloss, PhonologicalVariation, Handshape, GLOSS_FIELDS_UPDATES, PHONOLOGY_FIELDS_UPDATES
+
+def show_fields_rows(gloss):
+    show_field = {}
+    for field in GLOSS_FIELDS_UPDATES:
+        if field in ['semField', 'derivHist', 'dialect']:
+            field_value = getattr(gloss, field)
+            show_field[field] = [field_value.exists()]
+            continue
+        if field in ['domhndsh_letter_or_number', 'subhndsh_letter_or_number']:
+            continue
+        field_value = getattr(gloss, field)
+        if field_value is None or field_value in ['', 0, '-']:
+            show_field[field] = [False]
+            continue
+        internal_field = Gloss.get_field(field)
+        if isinstance(internal_field, FieldChoiceForeignKey):
+            show_field[field] = [field_value.machine_value not in [0]]
+            continue
+        if isinstance(internal_field, ForeignKey) and internal_field.related_model == Handshape:
+            show_field[field] = [field_value.machine_value not in [0]]
+            continue
+        if isinstance(internal_field, CharField) or isinstance(internal_field, TextField):
+            show_field[field] = [field_value not in [None, '-', '']]
+            continue
+        if field in ['weakdrop', 'weakprop']:
+            show_field[field] = [field_value not in [None]]
+            continue
+        show_field[field] = [field_value not in [None, 0, '-', '', False]]
+    for gv in PhonologicalVariation.objects.filter(gloss=gloss).order_by('variation'):
+        for field in PHONOLOGY_FIELDS_UPDATES:
+            if field in ['domhndsh_letter_or_number', 'subhndsh_letter_or_number']:
+                continue
+            field_value = getattr(gv, field)
+            if field_value is None or field_value in ['', 0, '-']:
+                show_field[field].append(False)
+                continue
+            internal_field = PhonologicalVariation.get_field(field)
+            if isinstance(internal_field, FieldChoiceForeignKey):
+                show_field[field].append(field_value.machine_value not in [0])
+                continue
+            if isinstance(internal_field, ForeignKey) and internal_field.related_model == Handshape:
+                show_field[field] = [field_value.machine_value not in [0]]
+                continue
+            if isinstance(internal_field, CharField) or isinstance(internal_field, TextField):
+                show_field[field] = [field_value not in [None, '-', '']]
+                continue
+            if field in ['weakdrop', 'weakprop']:
+                show_field[field].append(field_value not in [None])
+                continue
+            show_field[field].append(field_value not in [None, 0, '-', '', False])
+    show_field_row = {}
+    for field in GLOSS_FIELDS_UPDATES:
+        if field in ['domhndsh_letter_or_number', 'subhndsh_letter_or_number']:
+            continue
+        show_field_row[field] = any(show_field[field])
+    return show_field_row

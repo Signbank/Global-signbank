@@ -33,7 +33,8 @@ from signbank.dictionary.models import (Dataset, Gloss, Translation, LemmaIdglos
                                         SearchHistory,
                                         QueryParameterMultilingual,  QueryParameterSemanticField,
                                         QueryParameterDerivationHistory,
-                                        QueryParameterBoolean, QueryParameterFieldChoice, QueryParameterHandshape)
+                                        QueryParameterBoolean, QueryParameterFieldChoice, QueryParameterHandshape,
+                                        PhonologicalVariation)
 from signbank.dictionary.forms import (FieldChoiceForm, SemanticFieldForm, HandshapeForm,
                                        QueryParameterFieldChoiceForm, SearchHistoryForm, QueryParameterBooleanForm,
                                        QueryParameterMultilingualForm, QueryParameterHandshapeForm)
@@ -1063,7 +1064,7 @@ class FieldChoiceAdmin(VersionAdmin, TranslationAdmin):
     delete_selected.short_description = "Delete selected field choices"
 
     def save_model(self, request, obj, form, change):
-        qs = FieldChoice.objects.filter(field=obj.field, machine_value__gt=1)
+        qs = FieldChoice.objects.filter(field=obj.field)
         highest_machine_value = max([field_choice.machine_value for field_choice in qs])
         if not obj.machine_value:
             # Check out the query-set and make sure that it exists
@@ -1107,7 +1108,8 @@ class FieldChoiceAdmin(VersionAdmin, TranslationAdmin):
                 if new_name_value != original_value:
                     setattr(obj, name_field, new_name_value)
             try:
-                obj.save()
+                updated = list(form.data.keys())
+                obj.save(update_fields=updated)
             except Exception as e:
                 print('Constraint violated, FieldChoice not saved: ', obj.field, obj.machine_value, obj.id, e)
 
@@ -1559,9 +1561,59 @@ class AffiliatedUserAdmin(admin.ModelAdmin):
     list_display = ("affiliation", "user", )
 
 
+ATTRS_FOR_FORMS = {'class': 'form-control'}
+
+
+class PhonologicalVariationForm(forms.ModelForm):
+
+    class meta:
+        model = PhonologicalVariation
+        fields = ['gloss', 'variation', 'handedness', 'domhndsh', 'subhndsh', 'locprim']
+
+    def __init__(self, *args, **kwargs):
+
+        super(PhonologicalVariationForm, self).__init__(*args, **kwargs)
+
+        self.fields['handedness'] = forms.ModelChoiceField(label=_('Handedness'),
+                                                           queryset=FieldChoice.objects.filter(field='Handedness').order_by(
+                                                                   'machine_value'),
+                                                           widget=forms.Select(attrs=ATTRS_FOR_FORMS),
+                                                           required=False)
+        self.fields['domhndsh'] = forms.ModelChoiceField(label=_('Strong Hand'),
+                                                   queryset=Handshape.objects.all().order_by(
+                                                            'machine_value'),
+                                                    widget=forms.Select(attrs=ATTRS_FOR_FORMS),
+                                                    required=False)
+        self.fields['subhndsh'] = forms.ModelChoiceField(label=_('Weak Hand'),
+                                                         queryset=Handshape.objects.all().order_by(
+                                                             'machine_value'),
+                                                         widget=forms.Select(attrs=ATTRS_FOR_FORMS),
+                                                         required=False)
+
+
+    def get_form(self, request, obj=None, **kwargs):
+        form = PhonologicalVariationForm()
+        if obj is not None:
+            instance = PhonologicalVariation.objects.get(pk=obj.pk)
+            gloss = Gloss.objects.get(pk=instance.gloss.id)
+        return form
+
+
+class PhonologicalVariationAdmin(admin.ModelAdmin):
+
+    model = PhonologicalVariation
+    form = PhonologicalVariationForm
+    list_display = ("gloss", "variation", "handedness", "domhndsh", "subhndsh", "locprim")
+    readonly_fields = ['gloss']
+
+    def has_add_permission(self, request):
+        return False
+
+
 admin.site.register(Dialect, DialectAdmin)
 admin.site.register(SignLanguage, SignLanguageAdmin)
 admin.site.register(Gloss, GlossAdmin)
+admin.site.register(PhonologicalVariation, PhonologicalVariationAdmin)
 admin.site.register(Morpheme, GlossAdmin)
 admin.site.register(Keyword, KeywordAdmin)
 admin.site.register(FieldChoice, FieldChoiceAdmin)

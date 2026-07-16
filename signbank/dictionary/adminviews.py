@@ -61,14 +61,14 @@ from signbank.video.models import (GlossVideo, find_dangling_video_files, delete
                                    weedout_duplicate_backup_videos, flipped_backup_filename)
 from signbank.communication.models import generate_communication
 from signbank.dictionary.models import (Dataset, UserProfile, AffiliatedUser, AffiliatedGloss,
-                                        Language, Dialect, Gloss, Morpheme, GlossSense, Sense,
+                                        Language, Dialect, Gloss, Morpheme, GlossSense, Sense, GLOSS_FIELDS_UPDATES, PHONOLOGY_FIELDS_UPDATES,
                                         Corpus, Speaker, Document, GlossFrequency,
                                         LemmaIdgloss, LemmaIdglossTranslation, AnnotationIdglossTranslation, Translation,
                                         AnnotatedGloss, AnnotatedSentence, AnnotatedSentenceTranslation, Handshape,
                                         SenseTranslation, SearchHistory, SemanticField,
                                         DerivationHistory, BlendMorphology, MorphologyDefinition, SimultaneousMorphologyDefinition,
                                         FieldChoice, FieldChoiceForeignKey, get_default_language_id, fieldname_to_kind,
-                                        CATEGORY_MODELS_MAPPING, ExampleSentence)
+                                        CATEGORY_MODELS_MAPPING, ExampleSentence, PhonologicalVariation)
 from signbank.dictionary.translate_choice_list import (machine_value_to_translated_human_value,
                                                        choicelist_queryset_to_translated_dict,
                                                        choicelist_queryset_to_machine_value_dict,
@@ -81,16 +81,18 @@ from signbank.dictionary.forms import (AnnotatedSentenceSearchForm, GlossSearchF
                                        FocusGlossSearchForm, HandshapeSearchForm, KeyMappingSearchForm, RecentGlossSearchForm,
                                        AnnotatedGlossForm, TagUpdateForm, AffiliationUpdateForm, DatasetUpdateForm,
                                        ImageUploadForGlossForm, ImageUploadForHandshapeForm, EAFFilesForm,
-                                       LemmaCreateForm, LemmaUpdateForm, set_up_lemma_language_fields, MorphemeCreateForm, OtherMediaForm, RelationForm,
-                                       GlossMorphologyForm, GlossBlendForm, DefinitionForm, GlossMorphemeForm,
-                                       SemanticFieldTranslationForm, ZippedVideosForm, SearchGlossIds,
+                                       LemmaCreateForm, LemmaUpdateForm, set_up_lemma_language_fields, MorphemeCreateForm,
+                                       OtherMediaForm, RelationForm, SemanticsForm, PhonologyForm, GlossForm, PublicationForm,
+                                       GlossMorphologyForm, GlossBlendForm, DefinitionForm, NotesForm, GlossMorphemeForm,
+                                       SemanticFieldTranslationForm, ZippedVideosForm, SearchGlossIds, ProvenanceForm,
                                        check_language_fields, check_multilingual_fields, SentenceForm,
+                                       GlossForeignRelationForm, OtherMediaUpdateForm,
                                        check_language_fields_annotatedsentence, GlossProvenanceForm, check_sortOrder_handshapes)
 from signbank.tools import (write_ecv_file_for_dataset, find_duplicate_lemmas,
                             construct_scrollbar, get_dataset_languages, get_datasets_with_public_glosses,
                             searchform_panels, map_search_results_to_gloss_list,
                             get_interface_language_and_default_language_codes, get_default_annotationidglosstranslation,
-                            get_page_parameters_for_listview, filter_page_values, add_gloss_update_to_revision_history)
+                            get_page_parameters_for_listview, filter_page_values, add_gloss_update_to_revision_history,)
 from signbank.csv_interface import (csv_gloss_to_row, csv_header_row_glosslist, csv_header_row_morphemelist,
                                     csv_morpheme_to_row, csv_header_row_handshapelist, csv_handshape_to_row,
                                     csv_header_row_lemmalist, csv_lemma_to_row,
@@ -140,6 +142,7 @@ from signbank.relation_tools import ensure_synonym_transitivity
 from signbank.dataset_operations import (get_primary_videos_for_gloss, get_perspective_videos_for_gloss,
                                          get_nme_videos_for_gloss, get_wrong_videos_for_gloss,
                                          get_backup_videos_for_gloss)
+from signbank.dictionary.display_functions import show_fields_rows
 
 
 def order_annotatedsentence_queryset_by_sort_order(get, qs, queryset_language_codes):
@@ -1168,6 +1171,7 @@ class GlossDetailView(DetailView):
     query_parameters = dict()
     dark_mode = False
     public = False
+    use_lookaheads = 'lookaheads'
 
     def get_template_names(self):
         if not self.request.user.is_authenticated:
@@ -1292,6 +1296,8 @@ class GlossDetailView(DetailView):
 
         context['otherrelations'] = get_other_relations(gloss)
 
+        context['foreignrelations'] = gloss.relationtoforeignsign_set.all()
+
         context['annotated_sentences'] = get_annotated_sentences(gloss)
 
         context['nme_video_descriptions'] = get_nme_video_descriptions(gloss)
@@ -1323,9 +1329,8 @@ class GlossDetailView(DetailView):
 
         context['simultaneous_morphology'] = get_simultaneous_morphology(gloss, interface_language)
         context['simultaneous_morphology_display'] = [(sm[0].morpheme.pk, sm[1]) for sm in context['simultaneous_morphology']]
-
-        context['morphdefs'] = get_sequential_morphology(gloss, interface_language)
-        context['sequential_morphology_display'] = [(md[0].morpheme.pk, md[2]) for md in context['morphdefs']]
+        context['sequential_morphology'] = get_sequential_morphology(gloss, interface_language)
+        context['sequential_morphology_display'] = [(md[0].morpheme.pk, md[2]) for md in context['sequential_morphology']]
 
         blend_morphology = []
         for ble_morph in gloss.blend_morphology.filter(parent_gloss__archived__exact=False,
@@ -1422,6 +1427,16 @@ class GlossDetailView(DetailView):
         context['query_parameters_mapping'] = query_parameters_mapping
         context['query_parameters_values_mapping'] = query_parameters_values_mapping
 
+        if 'use_lookaheads' in self.request.session.keys() and self.request.session['use_lookaheads'] in ['lists', 'lookaheads']:
+            self.use_lookaheads = self.request.session['use_lookaheads']
+
+        context['use_lookaheads'] = self.use_lookaheads
+
+        context['glossform'] = GlossForm(gloss=context['gloss'], use_lookaheads=context['use_lookaheads'])
+        context['phonologyform'] = PhonologyForm(object=context['gloss'], use_lookaheads=context['use_lookaheads'])
+        context['semanticsform'] = SemanticsForm(gloss=context['gloss'], use_lookaheads=context['use_lookaheads'])
+        context['publicationform'] = PublicationForm(gloss=context['gloss'])
+
         context['tagform'] = TagUpdateForm()
         context['affiliationform'] = AffiliationUpdateForm()
         context['videoform'] = VideoUploadForObjectForm(languages=dataset_languages)
@@ -1455,42 +1470,32 @@ class GlossDetailView(DetailView):
         self.last_used_dataset = dataset_of_requested_gloss.acronym
 
         self.request.session['last_used_dataset'] = self.last_used_dataset
+        self.request.session['use_lookaheads'] = self.use_lookaheads
 
-        context['gloss_phonology'] = FIELDS['phonology']
-        context['phonology_list_kinds'] = get_phonology_list_kinds()
+        # these Gloss model fields are used by the javascript code to process push data for edits
+        context['gloss_update_fields'] =  GLOSS_FIELDS_UPDATES
+        context['gloss_phonology'] = PHONOLOGY_FIELDS_UPDATES
+        context['gloss_variations'] = PhonologicalVariation.objects.filter(gloss=gloss).order_by('variation')
+        context['phonological_variations_ids'] = [str(gv.pk) for gv in context['gloss_variations']]
+        variation_forms = dict()
+        for variation in context['gloss_variations']:
+            variation_forms[variation.pk] = PhonologyForm(object=variation, use_lookaheads=context['use_lookaheads'])
+        context['variation_forms'] = variation_forms
 
-        context['publication_fields'] = []
-        # field excludeFromEcv is added here in order to show it in Gloss Edit
-        for p_field in FIELDS['publication'] + ['excludeFromEcv']:
-            context['publication_fields'].append([getattr(gl,p_field), p_field, labels[p_field], 'check'])
-        context['release_information'] = [getattr(gl,'release_information'), 'release_information', labels['release_information']]
+        context['show_field_row'] = show_fields_rows(gloss)
+        context['language_2chars'] = [language.language_code_2char for language in dataset_languages]
+
+        context['selected_semFields'] = [{"name": semfield.name, "machine_value": semfield.machine_value}
+                                         for semfield in gloss.semField.all()]
+        context['selected_derivHists'] = [{"name": derivhist.name, "machine_value": derivhist.machine_value}
+                                          for derivhist in gloss.derivHist.all()]
+        context['selected_dialects'] = [{"name": f'{dialect.signlanguage.name}/{dialect.name}', "machine_value": dialect.pk}
+                                        for dialect in gloss.dialect.all()]
 
         # do not lazy evaluate these; evaluate before putting in context variables
         static_choice_lists, static_choice_list_colors = get_static_choice_lists_per_field()
         context['static_choice_lists'] = static_choice_lists
         context['static_choice_list_colors'] = static_choice_list_colors
-
-        # Translate the machine values to human values in the correct language, and save the choice lists along the way
-        for topic in ['main', 'phonology', 'semantics']:
-            context[topic+'_fields'] = []
-            for field in FIELDS[topic]:
-                # these do not appear in the phonology querying list
-                if field in HANDSHAPE_ETYMOLOGY_FIELDS + HANDEDNESS_ARTICULATION_FIELDS:
-                    continue
-
-                if field in ['semField', 'derivHist']:
-                    # these are many to many fields and not in the gloss table of the database
-                    # they are not fields of Gloss
-                    continue
-
-                # Get the human value in the language we are using
-                field_value = getattr(gl, field)
-                if isinstance(field_value, FieldChoice) or isinstance(field_value, Handshape):
-                    human_value = field_value.name if field_value else field_value
-                else:
-                    human_value = get_human_value_for_field_value(field_value)
-
-                context[topic+'_fields'].append([human_value, field, labels[field], fieldname_to_kind(field)])
 
         (homonyms_of_this_gloss, homonyms_not_saved, saved_but_not_homonyms) = gl.homonyms()
         homonyms_different_phonology = []
@@ -1533,9 +1538,27 @@ class GlossDetailView(DetailView):
 
         context['homonyms_but_not_saved'] = homonyms_but_not_saved
 
+        foreignrelations_forms = dict()
+        for foreignrelation in context['foreignrelations']:
+            foreignrelations_forms[foreignrelation.pk] = GlossForeignRelationForm(foreignrelation=foreignrelation)
+        context['foreignrelations_forms'] = foreignrelations_forms
+
         context['notes_groupedby_role'] = get_notes_groupedby_role(gloss)
+
+        notes = gloss.definition_set.all().order_by('count')
+        notes_forms = dict()
+        for note in notes:
+            notes_forms[note.pk] = NotesForm(note=note)
+        context['notes_forms'] = notes_forms
+
         context['provenance_groupedby_method'] = get_provenance_groupedby_method(gloss)
         context['use_provenance'] = dataset_of_requested_gloss.use_provenance
+
+        provenance_entries = gloss.glossprovenance_set.all().order_by('method')
+        provenance_forms = dict()
+        for provenance in provenance_entries:
+            provenance_forms[provenance.pk] = ProvenanceForm(provenance=provenance)
+        context['provenance_forms'] = provenance_forms
 
         # Gather the OtherMedia
         context['prominent_media_type'] = gl.lemma.dataset.prominent_media  # this can be None
@@ -1562,9 +1585,16 @@ class GlossDetailView(DetailView):
 
             if other_media.type is not None and gl.lemma.dataset.prominent_media is not None:
                 if other_media.type.machine_value == gl.lemma.dataset.prominent_media.machine_value:
-                    context['prominent_media'].append((media_okay, other_media.pk, path, file_type, other_media_filename, other_media.description))
+                    context['prominent_media'].append((media_okay, other_media.pk, path, file_type,
+                                                       other_media_filename,
+                                                       other_media.description if other_media.description else ''))
 
         context['other_media_field_choices'] = json.dumps(context['other_media_field_choices'])
+
+        other_media_forms = dict()
+        for other_media in gl.othermedia_set.all():
+            other_media_forms[other_media.pk] = OtherMediaUpdateForm(othermedia=other_media)
+        context['other_media_forms'] = other_media_forms
 
         context['separate_english_idgloss_field'] = SEPARATE_ENGLISH_IDGLOSS_FIELD
 
@@ -1621,6 +1651,13 @@ class GlossDetailView(DetailView):
         return context
 
     def post(self, request, *args, **kwargs):
+        if 'use_lookaheads' in request.POST:
+            self.use_lookaheads = self.request.POST.get('use_lookaheads')
+            glossid = self.request.POST.get('glossid')
+            request.session['use_lookaheads'] = self.use_lookaheads
+            request.session.modified = True
+            return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': glossid}))
+
         if request.method != "POST" or not request.POST or request.POST.get('use_default_query_parameters') != 'default_parameters':
             return redirect(PREFIX_URL + '/dictionary/gloss/' + str(kwargs['pk']))
         # set up gloss details default parameters here
@@ -2175,7 +2212,7 @@ class MorphemeListView(ListView):
         self.request.session['search_type'] = self.search_type
 
         context['default_dataset_lang'] = dataset_languages.first().language_code_2char if dataset_languages else LANGUAGE_CODE
-        context['add_morpheme_form'] = MorphemeCreateForm(self.request.GET, languages=dataset_languages, user=self.request.user, last_used_dataset=self.last_used_dataset)
+        # context['add_morpheme_form'] = MorphemeCreateForm(self.request.GET, languages=dataset_languages, user=self.request.user, last_used_dataset=self.last_used_dataset)
 
         context['input_names_fields_and_labels'] = {}
 
@@ -4206,8 +4243,8 @@ class DatasetManagerView(ListView):
         """
         get = self.request.GET
         username = ''
-        if 'username' in get:
-            username = get['username']
+        if 'gebruiker' in get:
+            username = get['gebruiker']
         if username == '':
             messages.add_message(self.request, messages.ERROR,
                                  _('Username must be non-empty. Please make a selection using the drop-down list.'))
@@ -4632,8 +4669,8 @@ class DatasetDetailView(DetailView):
 
         get = self.request.GET
         username = ''
-        if 'username' in get:
-            username = get['username']
+        if 'gebruiker' in get:
+            username = get['gebruiker']
         if username == '':
             messages.add_message(self.request, messages.ERROR, _('Username must be non-empty.'))
             return HttpResponseRedirect(PREFIX_URL + '/datasets/available')
@@ -5707,7 +5744,7 @@ def gloss_ajax_complete(request, datasetid, prefix):
     # the following query only retrieves annotations for the language that match the prefix
     query = Q(annotationidglosstranslation__text__istartswith=prefix,
               annotationidglosstranslation__language=interface_language)
-    qs = Gloss.objects.filter(lemma__dataset=dataset, archived__exact=False).filter(query).distinct()
+    qs = Gloss.objects.filter(lemma__dataset=dataset, morpheme=None, archived__exact=False).filter(query).distinct()
 
     for gloss in qs:
         try:
@@ -5726,11 +5763,13 @@ def gloss_ajax_complete(request, datasetid, prefix):
 def handshape_ajax_complete(request, prefix):
     """Return a list of handshapes matching the search term
     as a JSON structure suitable for typeahead."""
-    qs = Handshape.objects.filter(name__istartswith=prefix)
+    qs = Handshape.objects.filter(name__istartswith=prefix).order_by('name')
 
     result = []
     for g in qs:
-        result.append({'name': g.name, 'machine_value': g.machine_value})
+        result += [{'name': f'{g.name}', 'machine_value': g.machine_value,
+                    'color': g.field_color if g.field_color[0] == '#' else f'#{g.field_color}'}]
+
 
     return JsonResponse(result, safe=False)
 
@@ -5754,14 +5793,14 @@ def morph_ajax_complete(request, prefix):
     query = Q(lemma__dataset=dataset, annotationidglosstranslation__text__istartswith=prefix)
     qs = Morpheme.objects.filter(query).distinct()
 
-    for g in qs:
-        annotationidglosstranslations = g.annotationidglosstranslation_set.all()
+    for morph in qs:
+        annotationidglosstranslations = morph.annotationidglosstranslation_set.all()
         if not annotationidglosstranslations:
             continue
         # if there are results, just grab the first one
         default_annotationidglosstranslation = annotationidglosstranslations.first().text
-        result.append({'annotation_idgloss': default_annotationidglosstranslation, 'idgloss': g.idgloss,
-                       'pk': "%s" % g.id})
+        result.append({'annotation_idgloss': f'{morph.pk}: {morph.to_string()}', 'idgloss': morph.idgloss,
+                       'pk': "%s" % morph.id})
 
     return JsonResponse(result, safe=False)
 
@@ -5804,8 +5843,14 @@ def lemma_ajax_complete(request, dataset_id, language_code, q):
     interface_language = Language.objects.get(language_code_3char=interface_language_3char)
     activate(interface_language.language_code_2char)
 
-    lemmas = LemmaIdgloss.objects.filter(dataset_id=dataset_id,
-                                         lemmaidglosstranslation__text__istartswith=q)\
+    lemmas_of_dataset = LemmaIdgloss.objects.filter(dataset_id=dataset_id)
+
+    morphemes_of_dataset = Morpheme.objects.filter(lemma__dataset_id=dataset_id)
+
+    morpheme_lemma_ids = [g.lemma.pk for g in morphemes_of_dataset]
+
+    lemmas = lemmas_of_dataset.exclude(id__in=morpheme_lemma_ids)
+    lemmas = lemmas.filter(lemmaidglosstranslation__text__istartswith=q)\
         .order_by('lemmaidglosstranslation__text')
 
     lemmas_dict_list = []
@@ -6567,12 +6612,11 @@ class LemmaCreateView(CreateView):
 
 
 def create_lemma_for_gloss(request, glossid):
-    print('create lemma for gloss')
     try:
         gloss = Gloss.objects.get(id=glossid, archived=False)
     except ObjectDoesNotExist:
         try:
-            gloss = Morpheme.objects.get(id=glossid).gloss
+            gloss = Morpheme.objects.get(id=glossid)
         except ObjectDoesNotExist:
             messages.add_message(request, messages.ERROR, _("The specified gloss does not exist."))
             return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
@@ -6580,9 +6624,7 @@ def create_lemma_for_gloss(request, glossid):
     # get data from gloss before updating anything
     dataset = gloss.lemma.dataset
     dataset_languages = dataset.translation_languages.all()
-    # the last used dataset is a hidden field in the form, set by Django
-    last_used_dataset = request.POST['last_used_dataset']
-    form = LemmaCreateForm(request.POST, languages=dataset_languages, user=request.user, last_used_dataset=last_used_dataset)
+    form = LemmaCreateForm(request.POST, languages=dataset_languages, user=request.user, last_used_dataset=dataset.acronym)
     for item, value in request.POST.items():
         value = value.strip()
         if item.startswith(form.lemma_create_field_prefix):
