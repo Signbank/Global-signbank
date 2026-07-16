@@ -6089,6 +6089,8 @@ def glosslist_ajax_complete(request, gloss_id):
             else:
                 column_values.append((fieldname, '-'))
 
+    gloss_variations = PhonologicalVariation.objects.filter(gloss=this_gloss).order_by('variation')
+
     return render(request, 'dictionary/gloss_row.html',
                   {'focus_gloss': this_gloss,
                    'dataset_languages': dataset_languages,
@@ -6098,6 +6100,7 @@ def glosslist_ajax_complete(request, gloss_id):
                    'width_lemma_columns': len(dataset_languages),
                    'sensetranslations_per_language': sensetranslations_per_language,
                    'column_values': column_values,
+                   'gloss_variations': gloss_variations,
                    'USE_REGULAR_EXPRESSIONS': USE_REGULAR_EXPRESSIONS,
                    'SHOW_DATASET_INTERFACE_OPTIONS': SHOW_DATASET_INTERFACE_OPTIONS})
 
