@@ -1,7 +1,7 @@
 
 from django.contrib import admin
 from signbank.video.models import (GlossVideo, GlossVideoHistory, AnnotatedVideo, ExampleVideoHistory,
-                                   build_filename)
+                                   build_filename, PhonologicalVariationVideo)
 from signbank.dictionary.models import Dataset, AnnotatedGloss, Gloss
 from django.contrib.auth.models import User
 from signbank.settings.base import *
@@ -820,7 +820,39 @@ class ExampleVideoHistoryAdmin(admin.ModelAdmin):
     search_fields = ['^examplesentence__examplesentencetranslation__text']
 
 
+class PhonologicalVariationVideoAdmin(admin.ModelAdmin):
+
+    list_display = ['id', 'variation', 'gloss', 'video_file']
+
+    def get_list_display_links(self, request, list_display):
+        # do not allow the user to click on data of individual elements in the list display
+        self.list_display_links = (None,)
+        return self.list_display_links
+
+    def has_add_permission(self, request):
+        return False
+
+    def video_file(self, obj=None):
+        """
+        column VIDEO FILE
+        """
+        return str(obj.videofile) if obj is not None else ''
+
+    def variation(self, obj=None):
+        """
+        column VARIATION
+        """
+        return obj.variation.variation if obj is not None else ''
+
+    def gloss(self, obj=None):
+        """
+        column GLOSS
+        """
+        return obj.variation.gloss if obj is not None else ''
+
+
 admin.site.register(GlossVideo, GlossVideoAdmin)
+admin.site.register(PhonologicalVariationVideo, PhonologicalVariationVideoAdmin)
 admin.site.register(GlossVideoHistory, GlossVideoHistoryAdmin)
 admin.site.register(AnnotatedVideo, AnnotatedVideoAdmin)
 admin.site.register(ExampleVideoHistory, ExampleVideoHistoryAdmin)
