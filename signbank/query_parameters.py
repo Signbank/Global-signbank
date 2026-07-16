@@ -20,7 +20,7 @@ from signbank.dictionary.models import (Language, SignLanguage, Dialect, Gloss, 
                                         AnnotatedGloss, OtherMedia, RelationToForeignSign, Relation,
                                         AnnotatedSentenceTranslation, ExampleSentenceTranslation,
                                         BlendMorphology, MorphologyDefinition, SimultaneousMorphologyDefinition)
-from signbank.dictionary.forms import GlossSearchForm, SentenceForm
+from signbank.dictionary.forms import GlossSearchForm, SentenceForm, PhonologicalVariationFilter
 from signbank.dictionary.field_choices import fields_to_fieldcategory_dict
 from signbank.dictionary.translate_choice_list import choicelist_queryset_to_translated_dict, \
     machine_value_to_translated_human_value
@@ -279,9 +279,9 @@ def convert_query_parameters_to_filter(query_parameters):
         elif get_key == 'hasphonologicalvariations' and get_value != '':
             gloss_ids_with_phonological_variations = PhonologicalVariation.objects.values_list('gloss_id',
                                                                                                flat=True).distinct()
-            if get_value == '2':
+            if get_value == PhonologicalVariationFilter.HAS_VARIATION.value:
                 query_list.append(Q(pk__in=gloss_ids_with_phonological_variations))
-            elif get_value == '3':
+            elif get_value == PhonologicalVariationFilter.NO_VARIATION.value:
                 query_list.append(~Q(pk__in=gloss_ids_with_phonological_variations))
             else:
                 continue
@@ -950,9 +950,9 @@ def queryset_from_get(formclass, searchform, GET, qs):
             if get_key in ['hasphonologicalvariations']:
                 gloss_ids_with_phonological_variations = PhonologicalVariation.objects.values_list('gloss_id',
                                                                                                    flat=True).distinct()
-                if get_value == '2':
+                if get_value == PhonologicalVariationFilter.HAS_VARIATION.value:
                     qs = qs.filter(pk__in=gloss_ids_with_phonological_variations)
-                elif get_value == '3':
+                elif get_value == PhonologicalVariationFilter.NO_VARIATION.value:
                     qs = qs.exclude(pk__in=gloss_ids_with_phonological_variations)
                 continue
             elif get_key in ['inWeb', 'repeat', 'altern', 'isNew']:
@@ -1226,9 +1226,9 @@ def queryset_glosssense_from_get(model, formclass, searchform, GET, qs):
             if get_key in ['hasphonologicalvariations']:
                 gloss_ids_with_phonological_variations = PhonologicalVariation.objects.values_list('gloss_id',
                                                                                                    flat=True).distinct()
-                if get_value == '2':
+                if get_value == PhonologicalVariationFilter.HAS_VARIATION.value:
                     qs = qs.filter(pk__in=gloss_ids_with_phonological_variations)
-                elif get_value == '3':
+                elif get_value == PhonologicalVariationFilter.NO_VARIATION.value:
                     qs = qs.exclude(pk__in=gloss_ids_with_phonological_variations)
                 continue
             elif get_key in ['hasmultiplesenses']:
