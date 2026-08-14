@@ -7,8 +7,17 @@ ROOT=/var/www/
 git rev-parse HEAD >> "$ROOT"writable/commit_hash_before_latest_deploy
 
 #Step 2: Update the repo 
+STASHED=$(git stash push -u -m "pre-deploy autostash")
+
 git fetch
-git merge
+if ! git merge; then
+    echo "Merge failed — not popping stash. Resolve manually, then run: git stash pop"
+    exit 1
+fi
+
+if [[ "$STASHED" != *"No local changes to save"* ]]; then
+    git stash pop
+fi
 
 #Step 3: Backup the databse
 cp "$ROOT"writable/database/signbank.db "$ROOT"writable/database/manual_backups/before_latest_deploy.db 
@@ -19,7 +28,6 @@ pip install -r "$ROOT"repo/requirements.txt
 
 #Step 5: fix all permissions
 chmod -R g=rw "$ROOT"signbank/live/repo
-setfacl -R -m user:wapsignbank:rx "$ROOT"repo/
 
 #Step 6: migrate the database
 python "$ROOT"repo/bin/develop.py migrate
