@@ -15,9 +15,7 @@ if ! git merge; then
     exit 1
 fi
 
-if [[ "$STASHED" != *"No local changes to save"* ]]; then
-    git stash pop
-fi
+git stash pop
 
 #Step 3: Backup the databse
 cp "$ROOT"writable/database/signbank.db "$ROOT"writable/database/manual_backups/before_latest_deploy.db 
