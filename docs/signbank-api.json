@@ -37,6 +37,135 @@
         "scheme": "bearer",
         "in": "header"
       }
+    },
+    "schemas":
+    {
+      "FileSummary":
+      {
+        "type": "object",
+        "description": "Metadata about a file stored on the server.",
+        "properties":
+        {
+          "filename":    { "type": "string" },
+          "sha256":      { "type": "string", "description": "Hex SHA-256 of the stored file." },
+          "size_bytes":  { "type": "integer" },
+          "uploaded_at": { "type": "string", "format": "date-time", "description": "RFC 3339 / ISO 8601, UTC." },
+          "stored_path": { "type": "string", "description": "Absolute path on the server (omitted in some contexts)." }
+        }
+      },
+      "UploadReceipt":
+      {
+        "type": "object",
+        "description": "Returned by api_update_gloss/.../video and .../image on success (HTTP 200). All `stored_*` keys describe the file as it landed on disk; `incoming` sha256/size_bytes describe what the client uploaded. `replaced` is the prior file's FileSummary, or null.",
+        "properties":
+        {
+          "ok":                { "type": "boolean" },
+          "message":           { "type": "string" },
+          "gloss_id":          { "type": "integer" },
+          "kind":              { "type": "string", "enum": ["video", "image"] },
+          "uploaded_at":       { "type": "string", "format": "date-time" },
+          "uploaded_by":       { "type": "string", "description": "Username of the API user." },
+          "sha256":            { "type": "string", "description": "Hex SHA-256 of the incoming upload." },
+          "size_bytes":        { "type": "integer", "description": "Bytes received from the client." },
+          "stored_filename":   { "type": "string" },
+          "stored_path":       { "type": "string" },
+          "stored_size_bytes": { "type": "integer", "description": "Bytes on disk after save (may differ from incoming after conversion)." },
+          "stored_sha256":     { "type": "string", "description": "SHA-256 of the file on disk after save." },
+          "replaced":
+          {
+            "description": "FileSummary for the prior file at this slot, or null when nothing was replaced.",
+            "oneOf":
+            [
+              { "$ref": "#/components/schemas/FileSummary" },
+              { "type": "null" }
+            ]
+          },
+          "nr_of_videos": { "type": "integer", "description": "Only present on the video endpoint." },
+          "label":        { "type": "string", "description": "Form field name that the video came in under — `file`, `center`, `left`, `right`." }
+        },
+        "required": ["ok", "gloss_id", "kind", "uploaded_at", "uploaded_by", "sha256", "size_bytes"]
+      },
+      "ApiError":
+      {
+        "type": "object",
+        "description": "Uniform error body returned by the JsonErrorMiddleware and by precondition checks. `errors[].message` contains the raw Python exception text only when the caller has DEBUG enabled or belongs to the `Verbose API Errors` group; otherwise it is a generic message.",
+        "properties":
+        {
+          "ok":          { "type": "boolean", "enum": [false] },
+          "status_code": { "type": "integer" },
+          "errors":
+          {
+            "type": "array",
+            "items":
+            {
+              "type": "object",
+              "properties":
+              {
+                "field":   { "type": ["string", "null"] },
+                "code":    { "type": "string", "description": "Machine-readable error code, e.g. `internal_error` or `precondition_failed`." },
+                "message": { "type": "string" }
+              },
+              "required": ["code", "message"]
+            }
+          },
+          "current":
+          {
+            "description": "On 412 responses: FileSummary of what the server currently has, so the client can re-attempt with the correct ETag.",
+            "$ref": "#/components/schemas/FileSummary"
+          },
+          "traceback":
+          {
+            "type": "array",
+            "items": { "type": "string" },
+            "description": "Only present when verbose errors are enabled."
+          }
+        },
+        "required": ["ok", "status_code", "errors"]
+      }
+    },
+    "parameters":
+    {
+      "IfMatchHeader":
+      {
+        "name": "If-Match",
+        "in": "header",
+        "required": false,
+        "description": "Comma-separated list of quoted ETag values (sha256 of the file). The upload is refused with 412 unless the server's current sha256 matches one of them. Use `*` to require that a file is already stored.",
+        "schema": { "type": "string", "example": "\"a1b2…\", \"c3d4…\"" }
+      },
+      "IfNoneMatchHeader":
+      {
+        "name": "If-None-Match",
+        "in": "header",
+        "required": false,
+        "description": "Send `*` to refuse the upload with 412 if anything is already stored for this gloss.",
+        "schema": { "type": "string", "example": "*" }
+      }
+    },
+    "responses":
+    {
+      "PreconditionFailed":
+      {
+        "description": "Idempotency precondition (If-Match / If-None-Match) was not met. Body includes the server's current FileSummary so the client can resync.",
+        "content":
+        {
+          "application/json":
+          {
+            "schema": { "$ref": "#/components/schemas/ApiError" }
+          }
+        }
+      },
+      "InternalError":
+      {
+        "description": "Uncaught server exception, normalised to JSON by JsonErrorMiddleware. The detailed Python exception text is only included for users with verbose errors enabled.",
+        "content":
+        {
+          "application/json":
+          {
+            "schema": { "$ref": "#/components/schemas/ApiError" }
+          }
+        }
+      }
     }
   },
   "paths":
@@ -1210,66 +1339,75 @@
         ]
       }
     },
-    "/dictionary/api_update_gloss/{glossid}/video": 
+    "/dictionary/api_update_gloss/{glossid}/video":
     {
-      "post": 
+      "post":
       {
-        "description": "Updates the video of a gloss.",
-        "parameters": 
+        "description": "Updates the video of a gloss. On success returns an UploadReceipt with sha256 + size of the incoming and stored files and a FileSummary of the file that was replaced (if any). Honors If-Match / If-None-Match for idempotency.",
+        "parameters":
         [
           {
             "name": "glossid",
             "in": "path",
             "description": "ID of the gloss to be updated",
             "required": true,
-            "schema": 
+            "schema":
             {
               "type": "string"
             }
-          }
+          },
+          { "$ref": "#/components/parameters/IfMatchHeader" },
+          { "$ref": "#/components/parameters/IfNoneMatchHeader" }
         ],
         "requestBody":
         {
-          "content": 
+          "content":
           {
-            "multipart/form-data": 
+            "multipart/form-data":
             {
-              "schema": 
+              "schema":
               {
                 "type": "object",
-                "properties": 
+                "properties":
                 {
-                  "center": 
+                  "center":
                   {
                     "type": "string",
-                    "format": "binary", 
+                    "format": "binary",
                     "description": "The video file to upload, default/mid camera perspective/"
                   },
-                  "left": 
+                  "left":
                   {
                     "type": "string",
-                    "format": "binary", 
+                    "format": "binary",
                     "description": "The video file to upload, left camera perspective."
                   },
-                  "right": 
+                  "right":
                   {
                     "type": "string",
-                    "format": "binary", 
+                    "format": "binary",
                     "description": "The video file to upload, right camera perspective."
                   }
                 },
-                "required": 
+                "required":
                 [
                 ]
               }
             }
           }
         },
-        "responses": 
+        "responses":
         {
-          "200": 
+          "200":
           {
-            "description": "Update successful"
+            "description": "Update successful",
+            "content":
+            {
+              "application/json":
+              {
+                "schema": { "$ref": "#/components/schemas/UploadReceipt" }
+              }
+            }
           },
           "400":
           {
@@ -1286,10 +1424,18 @@
           "404":
           {
             "description": "Gloss not found"
+          },
+          "412":
+          {
+            "$ref": "#/components/responses/PreconditionFailed"
+          },
+          "500":
+          {
+            "$ref": "#/components/responses/InternalError"
           }
         },
         "tags": ["Updating Signbank data"],
-        "security": 
+        "security":
         [
           {
             "bearerAuth": []
@@ -1301,7 +1447,7 @@
     {
       "post":
       {
-        "description": "Updates the image of a gloss.",
+        "description": "Updates the image of a gloss. On success returns an UploadReceipt with sha256 + size of the incoming and stored files and a FileSummary of the file that was replaced (if any). Honors If-Match / If-None-Match for idempotency.",
         "parameters":
         [
           {
@@ -1313,7 +1459,9 @@
             {
               "type": "string"
             }
-          }
+          },
+          { "$ref": "#/components/parameters/IfMatchHeader" },
+          { "$ref": "#/components/parameters/IfNoneMatchHeader" }
         ],
         "requestBody":
         {
@@ -1344,7 +1492,14 @@
         {
           "200":
           {
-            "description": "Update successful"
+            "description": "Update successful",
+            "content":
+            {
+              "application/json":
+              {
+                "schema": { "$ref": "#/components/schemas/UploadReceipt" }
+              }
+            }
           },
           "400":
           {
@@ -1361,6 +1516,14 @@
           "404":
           {
             "description": "Gloss not found"
+          },
+          "412":
+          {
+            "$ref": "#/components/responses/PreconditionFailed"
+          },
+          "500":
+          {
+            "$ref": "#/components/responses/InternalError"
           }
         },
         "tags": ["Updating Signbank data"],
