@@ -5,6 +5,7 @@ import copy
 import os
 import json
 import tagging
+from django.db.models.fields import BooleanField
 
 from django.utils.timezone import get_current_timezone
 from django.db.models import Q, When, Case, IntegerField
@@ -1174,6 +1175,43 @@ class Phonology(MetaModelMixin, models.Model):
             return '0'
         return '1' if self.altern else '0'
 
+    def phonology_matrix(self, use_machine_value=False):
+        # this method uses string representations for Boolean values
+        # in order to distinguish between null values, False values, and Neutral values
+
+        phonology_dict = dict()
+        for field in FIELDS['phonology']:
+            gloss_field = self._meta.get_field(field)
+            if isinstance(gloss_field, models.CharField) or isinstance(gloss_field, models.TextField):
+                continue
+            field_value = getattr(self, gloss_field.name)
+            if field_value is None and not isinstance(field_value, BooleanField):
+                phonology_dict[field] = None
+            elif isinstance(field_value, Handshape):
+                phonology_dict[field] = str(field_value.machine_value)
+            elif hasattr(gloss_field, 'field_choice_category'):
+                phonology_dict[field] = str(field_value.machine_value if use_machine_value else field_value.id)
+            else:
+                # gloss_field is a Boolean
+                # TO DO: check these conversions to Strings instead of Booleans
+
+                if field_value is not None:
+                    if field_value:
+                        # machine value is 1
+                        phonology_dict[field] = 'True'
+                    else:
+                        # machine value is 0
+                        phonology_dict[field] = 'False'
+                else:
+                    # machine value is None, for weakdrop and weakprop, this is Neutral
+                    # value is Neutral
+                    if field in settings.HANDEDNESS_ARTICULATION_FIELDS:
+                        phonology_dict[field] = 'Neutral'
+                    else:
+                        phonology_dict[field] = 'False'
+
+        return phonology_dict
+
 
 class Gloss(Phonology):
     class Meta:
@@ -2056,51 +2094,6 @@ class Gloss(Phonology):
         other_relations = self.other_relations()
         return other_relations, variant_relations
 
-    def phonology_matrix_homonymns(self, use_machine_value=False):
-        # this method uses string representations for Boolean values
-        # in order to distinguish between null values, False values, and Neutral values
-
-        phonology_dict = dict()
-        for field in FIELDS['phonology']:
-            gloss_field = Gloss._meta.get_field(field)
-            if isinstance(gloss_field, models.CharField) or isinstance(gloss_field, models.TextField):
-                continue
-            field_value = getattr(self, gloss_field.name)
-            if isinstance(field_value, Handshape):
-                if field_value is None:
-                    # this differentiates between null field choice fields (here) versus null Boolean fields
-                    # which get mapped to either 'False' or 'Neutral'
-                    phonology_dict[field] = None
-                else:
-                    phonology_dict[field] = str(field_value.machine_value)
-            elif hasattr(gloss_field, 'field_choice_category'):
-                if field_value is None:
-                    # this differentiates between null field choice fields (here) versus null Boolean fields
-                    # which get mapped to either 'False' or 'Neutral'
-                    phonology_dict[field] = None
-                else:
-                    phonology_dict[field] = str(field_value.machine_value if use_machine_value else field_value.id)
-            else:
-                # gloss_field is a Boolean
-                # TO DO: check these conversions to Strings instead of Booleans
-
-                if field_value is not None:
-                    if field_value:
-                        # machine value is 1
-                        phonology_dict[field] = 'True'
-                    else:
-                        # machine value is 0
-                        phonology_dict[field] = 'False'
-                else:
-                    # machine value is None, for weakdrop and weakprop, this is Neutral
-                    # value is Neutral
-                    if field in settings.HANDEDNESS_ARTICULATION_FIELDS:
-                        phonology_dict[field] = 'Neutral'
-                    else:
-                        phonology_dict[field] = 'False'
-
-        return phonology_dict
-
     def minimal_pairs_tuple(self):
         minimal_pairs_fields = settings.MINIMAL_PAIRS_FIELDS
 
@@ -2267,7 +2260,7 @@ class Gloss(Phonology):
         if not self.lemma or not self.lemma.dataset:
             return homonym_objects_list
 
-        phonology_for_gloss = self.phonology_matrix_homonymns()
+        phonology_for_gloss = self.phonology_matrix()
         handedness_of_this_gloss = phonology_for_gloss['handedness']
 
         homonym_objects_list = []
@@ -2339,7 +2332,7 @@ class Gloss(Phonology):
 
         targets_of_homonyms_of_this_gloss = [r.target for r in gloss_homonym_relations]
 
-        phonology_for_gloss = self.phonology_matrix_homonymns()
+        phonology_for_gloss = self.phonology_matrix()
         handedness_of_this_gloss = phonology_for_gloss['handedness']
         empty_or_X_handedness = [str(fc.id) for fc in FieldChoice.objects.filter(field='Handedness', name__in=['-','N/A', 'X'])]
         if handedness_of_this_gloss in empty_or_X_handedness:
@@ -4538,3 +4531,53 @@ class PhonologicalVariation(Phonology):
     class Meta:
         unique_together = (("gloss", "variation"),)
         ordering = ['gloss', 'variation']
+
+    def add_video(self, user, videofile):
+        # Preventing circular import
+        from signbank.video.models import (PhonologicalVariationVideo,
+                                           get_phonologicalvariation_video_file_path)
+
+        if not isinstance(videofile, File):
+            msg = gettext("No video file supplied for video upload of variation video {variationid}.").format(variationid=self.pk)
+            raise ValidationError(msg)
+
+        # get existing video objects for this variation and delete them
+        existing_phonological_variation_videos = PhonologicalVariationVideo.objects.filter(variation=self).order_by('pk')
+        for video in existing_phonological_variation_videos:
+            video.delete()
+
+        # Create a new video object
+        video = PhonologicalVariationVideo(variation=self)
+        video.save()
+
+        relative_path = get_phonologicalvariation_video_file_path(video, str(videofile))
+        video.videofile.save(relative_path, videofile)
+        self.save()
+        return video
+
+    def get_video(self):
+        """Return the video object for this gloss or None if no video available"""
+        from signbank.video.models import PhonologicalVariationVideo
+
+        existing_video = PhonologicalVariationVideo.objects.filter(variation=self).order_by('-pk').first()
+
+        if not existing_video:
+            return ''
+
+        video_path = str(existing_video.videofile)
+        filepath = os.path.join(settings.WRITABLE_FOLDER, video_path)
+
+        if not os.path.exists(filepath):
+            return ''
+
+        return video_path
+
+    def has_video(self):
+        from signbank.video.models import PhonologicalVariationVideo
+
+        return PhonologicalVariationVideo.objects.filter(variation=self).exists()
+
+    def get_video_url(self):
+        """return the url of the video for this gloss"""
+        video_path = self.get_video()
+        return escape_uri_path(video_path) if video_path else ''
