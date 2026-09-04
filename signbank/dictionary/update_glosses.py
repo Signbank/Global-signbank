@@ -3,7 +3,7 @@ from django.contrib.auth.decorators import permission_required
 from django.db.transaction import atomic
 from django.utils.translation import gettext
 
-from tagging.models import TaggedItem, Tag
+from signbank.tags.models import TaggedItem, Tag
 
 from signbank.dictionary.models import (GlossSense, Handshape, SemanticField, FieldChoice)
 from signbank.dictionary.batch_edit import create_empty_sense

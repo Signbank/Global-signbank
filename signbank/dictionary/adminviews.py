@@ -37,7 +37,7 @@ from django.core.mail import send_mail
 from guardian.core import ObjectPermissionChecker
 from guardian.shortcuts import get_objects_for_user, assign_perm, remove_perm
 
-from tagging.models import Tag, TaggedItem
+from signbank.tags.models import Tag, TaggedItem
 from urllib.parse import urlencode
 
 from signbank.settings.server_specific import (URL, PREFIX_URL, LANGUAGE_CODE, LANGUAGES_LANGUAGE_CODE_3CHAR,
