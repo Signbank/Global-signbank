@@ -3,21 +3,10 @@ from django.contrib.contenttypes.models import ContentType
 from django.contrib.contenttypes.fields import GenericForeignKey
 
 
-class Tag(models.Model):
-    """Custom Tag model to replace django-tagging"""
-    name = models.CharField(max_length=100, unique=True, db_index=True)
-    created = models.DateTimeField(auto_now_add=True)
+class TagManager(models.Manager):
+    """Custom manager for Tag model"""
     
-    class Meta:
-        ordering = ['name']
-        verbose_name = 'Tag'
-        verbose_name_plural = 'Tags'
-    
-    def __str__(self):
-        return self.name
-    
-    @classmethod
-    def add_tag(cls, obj, tag_name):
+    def add_tag(self, obj, tag_name):
         """Add a tag to an object. Creates tag if it doesn't exist."""
         if not tag_name or not tag_name.strip():
             return None
@@ -25,7 +14,7 @@ class Tag(models.Model):
         # Remove quotes if present (from old tagging system)
         tag_name = tag_name.strip().strip('"\'')
         
-        tag, _ = cls.objects.get_or_create(name=tag_name)
+        tag, _ = self.get_or_create(name=tag_name)
         content_type = ContentType.objects.get_for_model(obj)
         TaggedItem.objects.get_or_create(
             tag=tag,
@@ -34,8 +23,7 @@ class Tag(models.Model):
         )
         return tag
     
-    @classmethod
-    def get_for_object(cls, obj):
+    def get_for_object(self, obj):
         """Get all tags for an object"""
         content_type = ContentType.objects.get_for_model(obj)
         tagged_items = TaggedItem.objects.filter(
@@ -43,6 +31,22 @@ class Tag(models.Model):
             object_id=obj.id
         ).select_related('tag')
         return [ti.tag for ti in tagged_items]
+
+
+class Tag(models.Model):
+    """Custom Tag model to replace django-tagging"""
+    name = models.CharField(max_length=100, unique=True, db_index=True)
+    created = models.DateTimeField(auto_now_add=True)
+    
+    objects = TagManager()
+    
+    class Meta:
+        ordering = ['name']
+        verbose_name = 'Tag'
+        verbose_name_plural = 'Tags'
+    
+    def __str__(self):
+        return self.name
 
 
 class TaggedItem(models.Model):
