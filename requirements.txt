@@ -1,5 +1,5 @@
 Django==5.2
-django-bootstrap3==26.1
+django-bootstrap3==26.2
 django-colorfield==0.14.0
 django-guardian==2.4.0
 django-modeltranslation==0.19.12
