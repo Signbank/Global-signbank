@@ -33,6 +33,7 @@ def migrate_from_tagging(apps, schema_editor):
     try:
         from signbank.dictionary.models import Gloss
         gloss_ct = ContentType.objects.get_for_model(Gloss)
+        gloss_ct_id = gloss_ct.id
     except Exception as e:
         print(f"[tags migration] ERROR: Could not import Gloss model or get content type: {e}. Aborting migration.")
         raise
@@ -65,10 +66,10 @@ def migrate_from_tagging(apps, schema_editor):
                     # Fetch the ContentType by ID from the old table
                     ct = ContentType.objects.get(id=old_item.content_type_id)
                     if ct.app_label == 'dictionary' and ct.model == 'gloss':
-                        # Create the new TaggedItem
+                        # Create the new TaggedItem using content_type_id directly
                         TaggedItem.objects.get_or_create(
                             tag=new_tag,
-                            content_type=gloss_ct,
+                            content_type_id=gloss_ct_id,
                             object_id=old_item.object_id
                         )
                         tagged_items_count += 1
