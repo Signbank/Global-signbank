@@ -1978,7 +1978,7 @@ class FieldChoiceTests(TestCase):
                     update_data[name_languagecode] = 'Default value'
                 else:
                     update_data[name_languagecode] = field_value
-            update_data['reverse'] = '' if not first_field_choice_option.reverse else first_field_choice_option.reverse
+            update_data['reverse'] = '' if not first_field_choice_option.reverse else first_field_choice_option.reverse_relation_role
 
             url_of_field_choice_change = '/'+ADMIN_URL + '/dictionary/fieldchoice/'+admin_url_change_suffix_1
             print('Attempt to change fieldchoice url: ', url_of_field_choice_change)
@@ -2014,7 +2014,7 @@ class FieldChoiceTests(TestCase):
                     self.assertEqual(getattr(first_field_choice_option,name_languagecode), initial_data[name_languagecode])
 
             # the following is true if the override language is en, then name has also been updated
-            # self.assertEqual(first_field_choice_option.name, update_data['name'])
+            self.assertEqual(first_field_choice_option.name, update_data['name'])
 
     def test_update_relation_field_choice(self):
         client = Client(enforce_csrf_checks=False)
@@ -2022,7 +2022,9 @@ class FieldChoiceTests(TestCase):
 
         field_options = FieldChoice.objects.filter(field='RelationRole', machine_value__gt=1)
         first_field_choice_option = field_options.first()
-        admin_url_change_suffix_1 = str(first_field_choice_option.id)+\
+        if first_field_choice_option is None:
+            return
+        admin_url_change_suffix_1 = str(first_field_choice_option.pk)+\
                                   '/change/?_changelist_filters=field__exact%3D'+first_field_choice_option.field
 
         initial_data = dict()
@@ -2070,8 +2072,8 @@ class FieldChoiceTests(TestCase):
         update_data['reverse_identity'] = str(first_field_choice_option.reverse == first_field_choice_option)
 
         url_of_field_choice_change = '/'+ADMIN_URL + '/dictionary/fieldchoice/'+admin_url_change_suffix_1
-        print('Attempt to change fieldchoice url: ', url_of_field_choice_change)
-        print('With data: ', update_data)
+        print('1. Attempt to change fieldchoice url: ', url_of_field_choice_change)
+        print('1. With data: ', update_data)
 
         response = self.client.get(url_of_field_choice_change, update_data)
         self.assertEqual(response.status_code, 302)
@@ -2103,12 +2105,15 @@ class FieldChoiceTests(TestCase):
                 self.assertEqual(getattr(first_field_choice_option,name_languagecode), initial_data[name_languagecode])
 
         last_field_choice_option = field_options.last()
+        if last_field_choice_option is None or last_field_choice_option == first_field_choice_option:
+            return
+
         update_data['reverse'] = str(last_field_choice_option.pk)
         update_data['reverse_identity'] = 'False'
 
         url_of_field_choice_change = '/'+ADMIN_URL + '/dictionary/fieldchoice/'+admin_url_change_suffix_1
-        print('Attempt to change fieldchoice url: ', url_of_field_choice_change)
-        print('With data: ', update_data)
+        print('2. Attempt to change fieldchoice url: ', url_of_field_choice_change)
+        print('2. With data: ', update_data)
 
         response = self.client.get(url_of_field_choice_change, update_data)
         self.assertEqual(response.status_code, 302)
@@ -2139,13 +2144,13 @@ class FieldChoiceTests(TestCase):
             new_data[name_languagecode] = 'New Reverse Relation Role'
 
         url_of_field_choice_change = '/'+ADMIN_URL + '/dictionary/fieldchoice/add/'
-        print('Attempt to add new RelationRole fieldchoice url: ', url_of_field_choice_change)
-        print('With data: ', new_data)
+        print('3. Attempt to add new RelationRole fieldchoice url: ', url_of_field_choice_change)
+        print('3. With data: ', new_data)
 
-        # response = self.client.get(url_of_field_choice_change, new_data)
-        # self.assertEqual(response.status_code, 302)
+        response = self.client.get(url_of_field_choice_change, new_data)
+        self.assertEqual(response.status_code, 302)
 
-        fieldchoice_form = FieldChoiceForm(data=new_data)
+        fieldchoice_form = FieldChoiceForm(instance=last_field_choice_option, data=new_data)
 
         cleaned = fieldchoice_form.is_valid()
 
