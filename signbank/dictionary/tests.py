@@ -1374,14 +1374,14 @@ class ManageDatasetTests(TestCase):
         assign_perm('change_dataset', self.user, self.test_dataset)
 
         # Grant view permission
-        form_data = {'dataset_acronym': self.test_dataset.acronym, 'username': self.user2.username, 'add_view_perm': 'Grant'}
+        form_data = {'dataset_acronym': self.test_dataset.acronym, 'gebruiker': self.user2.username, 'add_view_perm': 'Grant'}
         response = self.client.get(reverse('admin_dataset_manager'), form_data, follow=True)
         self.assertContains(response, 'View permission for user successfully granted.'
                             .format(self.user2.username, self.user2.first_name, self.user2.last_name))
         self.assertEqual(response.status_code, 200)
 
         # Revoke view permission
-        form_data = {'dataset_acronym': self.test_dataset.acronym, 'username': self.user2.username,
+        form_data = {'dataset_acronym': self.test_dataset.acronym, 'gebruiker': self.user2.username,
                      'delete_view_perm': 'Revoke'}
         response = self.client.get(reverse('admin_dataset_manager'), form_data, follow=True)
         self.assertContains(response, 'View (and change) permission for user successfully revoked.'
@@ -1389,23 +1389,23 @@ class ManageDatasetTests(TestCase):
         self.assertEqual(response.status_code, 200)
 
         # Grant change permission without view permission
-        form_data = {'dataset_acronym': self.test_dataset.acronym, 'username': self.user2.username, 'add_change_perm': 'Grant'}
+        form_data = {'dataset_acronym': self.test_dataset.acronym, 'gebruiker': self.user2.username, 'add_change_perm': 'Grant'}
         response = self.client.get(reverse('admin_dataset_manager'), form_data, follow=True)
         self.assertContains(response, 'User does not have view permission for this dataset. Please grant view permission first.'
                             .format(self.user2.username, self.user2.first_name, self.user2.last_name))
 
         # Grant change permission with view permission
         # Grant view permission first
-        form_data = {'dataset_acronym': self.test_dataset.acronym, 'username': self.user2.username, 'add_view_perm': 'Grant'}
+        form_data = {'dataset_acronym': self.test_dataset.acronym, 'gebruiker': self.user2.username, 'add_view_perm': 'Grant'}
         response = self.client.get(reverse('admin_dataset_manager'), form_data, follow=True)
         # Grant change permission second
-        form_data = {'dataset_acronym': self.test_dataset.acronym, 'username': self.user2.username, 'add_change_perm': 'Grant'}
+        form_data = {'dataset_acronym': self.test_dataset.acronym, 'gebruiker': self.user2.username, 'add_change_perm': 'Grant'}
         response = self.client.get(reverse('admin_dataset_manager'), form_data, follow=True)
         self.assertContains(response, 'Change permission for user successfully granted.'
                             .format(self.user2.username))
 
         # Revoke change permission
-        form_data = {'dataset_acronym': self.test_dataset.acronym, 'username': self.user2.username,
+        form_data = {'dataset_acronym': self.test_dataset.acronym, 'gebruiker': self.user2.username,
                      'delete_change_perm': 'Revoke'}
         response = self.client.get(reverse('admin_dataset_manager'), form_data, follow=True)
         self.assertContains(response, 'Change permission for user successfully revoked.'
