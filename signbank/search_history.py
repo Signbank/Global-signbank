@@ -5,7 +5,7 @@ from signbank.dictionary.models import (Gloss, Language, Handshape, MorphologyDe
                                         SemanticField, DerivationHistory, FieldChoice,
                                         QueryParameter, QueryParameterSemanticField, QueryParameterBoolean,
                                         QueryParameterFieldChoice, QueryParameterHandshape,
-                                        QueryParameterDerivationHistory, QueryParameterMultilingual, SearchHistory, Tag)
+                                        QueryParameterDerivationHistory, QueryParameterMultilingual, SearchHistory)
 from signbank.dictionary.field_choices import fields_to_fieldcategory_dict
 
 

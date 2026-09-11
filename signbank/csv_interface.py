@@ -20,7 +20,7 @@ from signbank.dictionary.models import (Dataset, Gloss,
 from signbank.dictionary.consistency_senses import check_consistency_senses
 from signbank.dictionary.update_senses_mapping import add_sense_to_revision_history
 
-from tagging.models import Tag, TaggedItem
+from signbank.tags.models import Tag, TaggedItem
 
 
 def add_sentence_to_revision_history(request, gloss, old_value, new_value):

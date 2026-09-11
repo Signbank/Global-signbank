@@ -46,7 +46,7 @@ from signbank.csv_interface import (sense_translations_for_language, update_sens
 from signbank.dictionary.update_csv import validate_and_resolve_gloss_relations
 from signbank.dictionary.field_choices import fields_to_fieldcategory_dict
 
-from tagging.models import TaggedItem, Tag
+from signbank.tags.models import TaggedItem, Tag
 from signbank.video.extract_middle_frame import MiddleFrameExtracter
 
 

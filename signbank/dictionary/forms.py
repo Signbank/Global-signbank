@@ -12,7 +12,7 @@ from django.db.transaction import atomic
 from django.utils.timezone import get_current_timezone
 
 from urllib.parse import parse_qsl
-from tagging.models import Tag
+from signbank.tags.models import Tag
 
 from signbank.settings.base import (GLOSS_CHOICE_FIELDS, MORPHEME_CHOICE_FIELDS)
 from signbank.settings.server_specific import (LANGUAGES, LANGUAGE_CODE, USE_REGULAR_EXPRESSIONS,

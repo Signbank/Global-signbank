@@ -25,7 +25,7 @@ from django.db.transaction import atomic, TransactionManagementError
 from django.contrib.auth.models import User
 
 from guardian.shortcuts import get_user_perms, get_group_perms, get_objects_for_user
-from tagging.models import TaggedItem, Tag
+from signbank.tags.models import TaggedItem, Tag
 from dateutil.relativedelta import relativedelta
 
 from signbank.video.forms import VideoUploadForObjectForm
