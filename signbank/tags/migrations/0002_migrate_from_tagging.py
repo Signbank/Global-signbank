@@ -39,21 +39,7 @@ def migrate_from_tagging(apps, schema_editor):
         raise
     
     try:
-        # Check if old tagging tables exist and have data
-        with connection.cursor() as cursor:
-            # Check if tagging_tag table exists
-            cursor.execute("""
-                SELECT EXISTS (
-                    SELECT 1 FROM information_schema.tables 
-                    WHERE table_name = 'tagging_tag'
-                )
-            """)
-            table_exists = cursor.fetchone()[0]
-        
-        if not table_exists:
-            print("[tags migration] Old tagging tables not found. Skipping migration.")
-            return
-        
+        # Try to query old tags - if table doesn't exist, migration is skipped
         old_tags = OldTag.objects.all()
         old_tags_count = old_tags.count()
         print(f"[tags migration] Found {old_tags_count} old tags to migrate")
