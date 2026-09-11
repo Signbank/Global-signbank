@@ -1374,14 +1374,14 @@ class ManageDatasetTests(TestCase):
         assign_perm('change_dataset', self.user, self.test_dataset)
 
         # Grant view permission
-        form_data = {'dataset_acronym': self.test_dataset.acronym, 'username': self.user2.username, 'add_view_perm': 'Grant'}
+        form_data = {'dataset_acronym': self.test_dataset.acronym, 'gebruiker': self.user2.username, 'add_view_perm': 'Grant'}
         response = self.client.get(reverse('admin_dataset_manager'), form_data, follow=True)
         self.assertContains(response, 'View permission for user successfully granted.'
                             .format(self.user2.username, self.user2.first_name, self.user2.last_name))
         self.assertEqual(response.status_code, 200)
 
         # Revoke view permission
-        form_data = {'dataset_acronym': self.test_dataset.acronym, 'username': self.user2.username,
+        form_data = {'dataset_acronym': self.test_dataset.acronym, 'gebruiker': self.user2.username,
                      'delete_view_perm': 'Revoke'}
         response = self.client.get(reverse('admin_dataset_manager'), form_data, follow=True)
         self.assertContains(response, 'View (and change) permission for user successfully revoked.'
@@ -1389,23 +1389,23 @@ class ManageDatasetTests(TestCase):
         self.assertEqual(response.status_code, 200)
 
         # Grant change permission without view permission
-        form_data = {'dataset_acronym': self.test_dataset.acronym, 'username': self.user2.username, 'add_change_perm': 'Grant'}
+        form_data = {'dataset_acronym': self.test_dataset.acronym, 'gebruiker': self.user2.username, 'add_change_perm': 'Grant'}
         response = self.client.get(reverse('admin_dataset_manager'), form_data, follow=True)
         self.assertContains(response, 'User does not have view permission for this dataset. Please grant view permission first.'
                             .format(self.user2.username, self.user2.first_name, self.user2.last_name))
 
         # Grant change permission with view permission
         # Grant view permission first
-        form_data = {'dataset_acronym': self.test_dataset.acronym, 'username': self.user2.username, 'add_view_perm': 'Grant'}
+        form_data = {'dataset_acronym': self.test_dataset.acronym, 'gebruiker': self.user2.username, 'add_view_perm': 'Grant'}
         response = self.client.get(reverse('admin_dataset_manager'), form_data, follow=True)
         # Grant change permission second
-        form_data = {'dataset_acronym': self.test_dataset.acronym, 'username': self.user2.username, 'add_change_perm': 'Grant'}
+        form_data = {'dataset_acronym': self.test_dataset.acronym, 'gebruiker': self.user2.username, 'add_change_perm': 'Grant'}
         response = self.client.get(reverse('admin_dataset_manager'), form_data, follow=True)
         self.assertContains(response, 'Change permission for user successfully granted.'
                             .format(self.user2.username))
 
         # Revoke change permission
-        form_data = {'dataset_acronym': self.test_dataset.acronym, 'username': self.user2.username,
+        form_data = {'dataset_acronym': self.test_dataset.acronym, 'gebruiker': self.user2.username,
                      'delete_change_perm': 'Revoke'}
         response = self.client.get(reverse('admin_dataset_manager'), form_data, follow=True)
         self.assertContains(response, 'Change permission for user successfully revoked.'
@@ -1978,7 +1978,7 @@ class FieldChoiceTests(TestCase):
                     update_data[name_languagecode] = 'Default value'
                 else:
                     update_data[name_languagecode] = field_value
-            update_data['reverse'] = '' if not first_field_choice_option.reverse else first_field_choice_option.reverse
+            update_data['reverse'] = '' if not first_field_choice_option.reverse else first_field_choice_option.reverse_relation_role
 
             url_of_field_choice_change = '/'+ADMIN_URL + '/dictionary/fieldchoice/'+admin_url_change_suffix_1
             print('Attempt to change fieldchoice url: ', url_of_field_choice_change)
@@ -2014,7 +2014,7 @@ class FieldChoiceTests(TestCase):
                     self.assertEqual(getattr(first_field_choice_option,name_languagecode), initial_data[name_languagecode])
 
             # the following is true if the override language is en, then name has also been updated
-            # self.assertEqual(first_field_choice_option.name, update_data['name'])
+            self.assertEqual(first_field_choice_option.name, update_data['name'])
 
     def test_update_relation_field_choice(self):
         client = Client(enforce_csrf_checks=False)
@@ -2022,7 +2022,9 @@ class FieldChoiceTests(TestCase):
 
         field_options = FieldChoice.objects.filter(field='RelationRole', machine_value__gt=1)
         first_field_choice_option = field_options.first()
-        admin_url_change_suffix_1 = str(first_field_choice_option.id)+\
+        if first_field_choice_option is None:
+            return
+        admin_url_change_suffix_1 = str(first_field_choice_option.pk)+\
                                   '/change/?_changelist_filters=field__exact%3D'+first_field_choice_option.field
 
         initial_data = dict()
@@ -2070,8 +2072,8 @@ class FieldChoiceTests(TestCase):
         update_data['reverse_identity'] = str(first_field_choice_option.reverse == first_field_choice_option)
 
         url_of_field_choice_change = '/'+ADMIN_URL + '/dictionary/fieldchoice/'+admin_url_change_suffix_1
-        print('Attempt to change fieldchoice url: ', url_of_field_choice_change)
-        print('With data: ', update_data)
+        print('1. Attempt to change fieldchoice url: ', url_of_field_choice_change)
+        print('1. With data: ', update_data)
 
         response = self.client.get(url_of_field_choice_change, update_data)
         self.assertEqual(response.status_code, 302)
@@ -2103,12 +2105,15 @@ class FieldChoiceTests(TestCase):
                 self.assertEqual(getattr(first_field_choice_option,name_languagecode), initial_data[name_languagecode])
 
         last_field_choice_option = field_options.last()
+        if last_field_choice_option is None or last_field_choice_option == first_field_choice_option:
+            return
+
         update_data['reverse'] = str(last_field_choice_option.pk)
         update_data['reverse_identity'] = 'False'
 
         url_of_field_choice_change = '/'+ADMIN_URL + '/dictionary/fieldchoice/'+admin_url_change_suffix_1
-        print('Attempt to change fieldchoice url: ', url_of_field_choice_change)
-        print('With data: ', update_data)
+        print('2. Attempt to change fieldchoice url: ', url_of_field_choice_change)
+        print('2. With data: ', update_data)
 
         response = self.client.get(url_of_field_choice_change, update_data)
         self.assertEqual(response.status_code, 302)
@@ -2139,13 +2144,13 @@ class FieldChoiceTests(TestCase):
             new_data[name_languagecode] = 'New Reverse Relation Role'
 
         url_of_field_choice_change = '/'+ADMIN_URL + '/dictionary/fieldchoice/add/'
-        print('Attempt to add new RelationRole fieldchoice url: ', url_of_field_choice_change)
-        print('With data: ', new_data)
+        print('3. Attempt to add new RelationRole fieldchoice url: ', url_of_field_choice_change)
+        print('3. With data: ', new_data)
 
-        # response = self.client.get(url_of_field_choice_change, new_data)
-        # self.assertEqual(response.status_code, 302)
+        response = self.client.get(url_of_field_choice_change, new_data)
+        self.assertEqual(response.status_code, 302)
 
-        fieldchoice_form = FieldChoiceForm(data=new_data)
+        fieldchoice_form = FieldChoiceForm(instance=last_field_choice_option, data=new_data)
 
         cleaned = fieldchoice_form.is_valid()
 
