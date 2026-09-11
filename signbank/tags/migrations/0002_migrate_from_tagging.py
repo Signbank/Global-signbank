@@ -24,7 +24,6 @@ def migrate_from_tagging(apps, schema_editor):
         tag = models.ForeignKey(OldTag, on_delete=models.CASCADE)
         content_type = models.ForeignKey('contenttypes.ContentType', on_delete=models.CASCADE)
         object_id = models.PositiveIntegerField()
-        created = models.DateTimeField(auto_now_add=True, null=True, blank=True)
         
         class Meta:
             app_label = 'tagging'
@@ -69,8 +68,7 @@ def migrate_from_tagging(apps, schema_editor):
                         TaggedItem.objects.get_or_create(
                             tag=new_tag,
                             content_type=gloss_ct,
-                            object_id=old_item.object_id,
-                            defaults={'created': old_item.created}
+                            object_id=old_item.object_id
                         )
                         tagged_items_count += 1
                 except Exception as item_error:
