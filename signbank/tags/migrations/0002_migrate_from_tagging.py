@@ -9,12 +9,26 @@ def migrate_from_tagging(apps, schema_editor):
     Tag = apps.get_model('tags', 'Tag')
     TaggedItem = apps.get_model('tags', 'TaggedItem')
     
-    # Try to import django-tagging models if package is still installed
-    try:
-        from tagging.models import Tag as OldTag, TaggedItem as OldTaggedItem
-    except (ImportError, ModuleNotFoundError, RuntimeError) as e:
-        print(f"[tags migration] django-tagging not installed or not available: {e}. Skipping migration.")
-        return
+    # Define temporary models that map to the old tagging tables
+    # This works even if django-tagging is not in INSTALLED_APPS
+    from django.db import models, connection
+    
+    class OldTag(models.Model):
+        name = models.CharField(max_length=50, unique=True)
+        
+        class Meta:
+            app_label = 'tagging'
+            db_table = 'tagging_tag'
+    
+    class OldTaggedItem(models.Model):
+        tag = models.ForeignKey(OldTag, on_delete=models.CASCADE)
+        content_type = models.ForeignKey('contenttypes.ContentType', on_delete=models.CASCADE)
+        object_id = models.PositiveIntegerField()
+        created = models.DateTimeField(auto_now_add=True, null=True, blank=True)
+        
+        class Meta:
+            app_label = 'tagging'
+            db_table = 'tagging_taggeditem'
     
     # Get the Gloss content type
     try:
@@ -25,7 +39,21 @@ def migrate_from_tagging(apps, schema_editor):
         raise
     
     try:
-        # Check if old tagging data exists
+        # Check if old tagging tables exist and have data
+        with connection.cursor() as cursor:
+            # Check if tagging_tag table exists
+            cursor.execute("""
+                SELECT EXISTS (
+                    SELECT 1 FROM information_schema.tables 
+                    WHERE table_name = 'tagging_tag'
+                )
+            """)
+            table_exists = cursor.fetchone()[0]
+        
+        if not table_exists:
+            print("[tags migration] Old tagging tables not found. Skipping migration.")
+            return
+        
         old_tags = OldTag.objects.all()
         old_tags_count = old_tags.count()
         print(f"[tags migration] Found {old_tags_count} old tags to migrate")
@@ -47,16 +75,20 @@ def migrate_from_tagging(apps, schema_editor):
             old_items = OldTaggedItem.objects.filter(tag=old_tag)
             
             for old_item in old_items:
-                # Only migrate Gloss tags (object_id and content_type_id match Gloss)
-                if old_item.content_type.app_label == 'dictionary' and old_item.content_type.model == 'gloss':
-                    # Create the new TaggedItem
-                    TaggedItem.objects.get_or_create(
-                        tag=new_tag,
-                        content_type=gloss_ct,
-                        object_id=old_item.object_id,
-                        defaults={'created': old_item.created}
-                    )
-                    tagged_items_count += 1
+                # Only migrate Gloss tags
+                try:
+                    ct = old_item.content_type
+                    if ct.app_label == 'dictionary' and ct.model == 'gloss':
+                        # Create the new TaggedItem
+                        TaggedItem.objects.get_or_create(
+                            tag=new_tag,
+                            content_type=gloss_ct,
+                            object_id=old_item.object_id,
+                            defaults={'created': old_item.created}
+                        )
+                        tagged_items_count += 1
+                except Exception as item_error:
+                    print(f"[tags migration] Warning: Could not migrate tag '{old_tag.name}' for object {old_item.object_id}: {item_error}")
         
         print(f"[tags migration] COMPLETED: {migrated_count} new tags created with {tagged_items_count} tagged items")
     except Exception as e:
