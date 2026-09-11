@@ -62,7 +62,8 @@ def migrate_from_tagging(apps, schema_editor):
             for old_item in old_items:
                 # Only migrate Gloss tags
                 try:
-                    ct = old_item.content_type
+                    # Fetch the ContentType by ID from the old table
+                    ct = ContentType.objects.get(id=old_item.content_type_id)
                     if ct.app_label == 'dictionary' and ct.model == 'gloss':
                         # Create the new TaggedItem
                         TaggedItem.objects.get_or_create(
