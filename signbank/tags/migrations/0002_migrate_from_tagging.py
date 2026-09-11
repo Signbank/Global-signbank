@@ -1,13 +1,10 @@
 # Data migration to migrate from django-tagging to custom tags
 
+import logging
 from django.db import migrations
 from django.contrib.contenttypes.models import ContentType
 
-
-# Data migration to migrate from django-tagging to custom tags
-
-from django.db import migrations
-from django.contrib.contenttypes.models import ContentType
+logger = logging.getLogger(__name__)
 
 
 def migrate_from_tagging(apps, schema_editor):
@@ -18,27 +15,30 @@ def migrate_from_tagging(apps, schema_editor):
     # Try to import django-tagging models if package is still installed
     try:
         from tagging.models import Tag as OldTag, TaggedItem as OldTaggedItem
-        old_tagging_available = True
-    except (ImportError, ModuleNotFoundError, RuntimeError):
-        # django-tagging not installed or not in INSTALLED_APPS, skip migration
-        return
-    
-    if not old_tagging_available:
+    except (ImportError, ModuleNotFoundError, RuntimeError) as e:
+        logger.info(f"django-tagging not installed or not available: {e}. Skipping migration.")
         return
     
     # Get the Gloss content type
     try:
         from signbank.dictionary.models import Gloss
         gloss_ct = ContentType.objects.get_for_model(Gloss)
-    except Exception:
-        return
+    except Exception as e:
+        logger.error(f"Could not import Gloss model or get content type: {e}. Aborting migration.")
+        raise
     
     try:
         # Migrate all old tags
         old_tags = OldTag.objects.all()
+        migrated_count = 0
+        tagged_items_count = 0
+        
+        logger.info(f"Starting migration of {old_tags.count()} old tags")
+        
         for old_tag in old_tags:
             # Create or get the new tag with the same name
             new_tag, _ = Tag.objects.get_or_create(name=old_tag.name)
+            migrated_count += 1
             
             # Get all tagged items for this old tag
             old_items = OldTaggedItem.objects.filter(tag=old_tag)
@@ -53,9 +53,12 @@ def migrate_from_tagging(apps, schema_editor):
                         object_id=old_item.object_id,
                         defaults={'created': old_item.created}
                     )
-    except Exception:
-        # If anything fails, just continue - the migration is best-effort
-        pass
+                    tagged_items_count += 1
+        
+        logger.info(f"Migration completed: {migrated_count} tags migrated with {tagged_items_count} tagged items")
+    except Exception as e:
+        logger.error(f"Error during tag migration: {e}", exc_info=True)
+        raise
 
 
 def reverse_migrate(apps, schema_editor):
