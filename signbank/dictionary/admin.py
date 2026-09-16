@@ -1082,6 +1082,7 @@ class FieldChoiceAdmin(VersionAdmin, TranslationAdmin):
 
         obj.save()
 
+        updated = []
         if 'field_color' in form.data.keys():
             new_color = form.data['field_color']
             # strip any initial #'s
@@ -1090,9 +1091,9 @@ class FieldChoiceAdmin(VersionAdmin, TranslationAdmin):
             # store only the hex part
             original_color = getattr(obj, 'field_color')
             if new_color != original_color:
+                updated.append('field_color')
                 setattr(obj, 'field_color', new_color)
 
-        updated = []
         with override(LANGUAGE_CODE):
             for name_field in form.data.keys():
                 if name_field not in form.fields or name_field == 'machine_value':
