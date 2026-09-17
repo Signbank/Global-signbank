@@ -757,14 +757,8 @@ class GlossListView(ListView):
         if not self.request.user.has_perm('dictionary.export_csv'):
             raise PermissionDenied
 
-        fieldnames = FIELDS['main'] + FIELDS['phonology'] + FIELDS['semantics'] + FIELDS['frequency'] + ['inWeb', 'isNew']
-        fields = [Gloss.get_field(fname) for fname in fieldnames if fname in Gloss.get_field_names()]
-
         selected_datasets = get_selected_datasets(self.request)
         dataset_languages = get_dataset_languages(selected_datasets)
-
-        header = csv_header_row_glosslist(dataset_languages)
-        csv_rows = [header]
 
         if self.object_list:
             query_set = self.object_list
@@ -774,8 +768,19 @@ class GlossListView(ListView):
         if isinstance(query_set, QuerySet):
             query_set = list(query_set)
 
+        extended = False if len(query_set) > 100 else True
+
+        if extended:
+            fieldnames = FIELDS['phonology'] + FIELDS['semantics'] + FIELDS['frequency'] + FIELDS['main'] + ['inWeb', 'isNew']
+        else:
+            fieldnames = FIELDS['phonology']
+        fields = [Gloss.get_field(fname) for fname in fieldnames if fname in Gloss.get_field_names()]
+
+        header = csv_header_row_glosslist(dataset_languages, extended)
+        csv_rows = [header]
+
         for gloss in query_set:
-            safe_row = csv_gloss_to_row(gloss, dataset_languages, fields)
+            safe_row = csv_gloss_to_row(gloss, dataset_languages, fields, extended)
             csv_rows.append(safe_row)
 
         # this is based on an example in the Django 4.2 documentation

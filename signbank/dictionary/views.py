@@ -1147,10 +1147,24 @@ def import_csv_update(request):
             for language in gloss.lemma.dataset.translation_languages.all():
                 lemma_translation = LemmaIdglossTranslation.objects.filter(language=language, lemma=gloss.lemma).first()
                 current_lemmaidglosstranslations[language] = lemma_translation.text if lemma_translation else ''
+            differences_lemmas = []
+            for language in gloss.lemma.dataset.translation_languages.all():
+                if lemmaidglosstranslations and language in lemmaidglosstranslations.keys():
+                    if current_lemmaidglosstranslations and language in current_lemmaidglosstranslations.keys():
+                        if lemmaidglosstranslations[language] != current_lemmaidglosstranslations[language]:
+                            if lemmaidglosstranslations[language] == current_lemmaidglosstranslations[language].strip():
+                                differences_lemmas.append(language)
             if lemmaidglosstranslations \
                     and current_lemmaidglosstranslations != lemmaidglosstranslations:
-                help = gettext("Row {row}: Attempt to update Lemma translations for Signbank ID {glossid}. Use Import CSV Lemma Update instead.").format(row=str(nl+2), glossid=str(pk))
-                error.append(help)
+                help1 = gettext("Row {row}: Attempt to update Lemma translations for Signbank ID {glossid}.").format(row=str(nl+2), glossid=str(pk))
+                error.append(help1)
+                help2 = gettext("The stored lemma translations differ from those in the CSV: {lemmaidglosstranslations}.").format(lemmaidglosstranslations=current_lemmaidglosstranslations)
+                error.append(help2)
+                if differences_lemmas:
+                    help3 = gettext("There are white space characters at the start or end of the text in the database.")
+                else:
+                    help3 = gettext("Use Import CSV Lemma Update instead.")
+                error.append(help3)
                 continue
 
             try:
