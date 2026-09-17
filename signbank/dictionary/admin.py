@@ -868,7 +868,6 @@ class FieldChoiceAdmin(VersionAdmin, TranslationAdmin):
 
     def get_form(self, request, obj=None, **kwargs):
         form = super(FieldChoiceAdmin, self).get_form(request, obj, **kwargs)
-        # form = copy.deepcopy(form)
 
         if obj:
             # for display in the HTML color picker, the field color needs to be prefixed with #
@@ -1081,6 +1080,9 @@ class FieldChoiceAdmin(VersionAdmin, TranslationAdmin):
             # this case is prevented in the interface via Permission Denied
             return
 
+        obj.save()
+
+        updated = []
         if 'field_color' in form.data.keys():
             new_color = form.data['field_color']
             # strip any initial #'s
@@ -1089,6 +1091,7 @@ class FieldChoiceAdmin(VersionAdmin, TranslationAdmin):
             # store only the hex part
             original_color = getattr(obj, 'field_color')
             if new_color != original_color:
+                updated.append('field_color')
                 setattr(obj, 'field_color', new_color)
 
         with override(LANGUAGE_CODE):
@@ -1106,14 +1109,12 @@ class FieldChoiceAdmin(VersionAdmin, TranslationAdmin):
                 new_name_value = form.data[name_field]
                 original_value = getattr(obj, name_field)
                 if new_name_value != original_value:
+                    updated.append(name_field)
                     setattr(obj, name_field, new_name_value)
-            try:
-                updated = list(form.data.keys())
-                obj.save(update_fields=updated)
-            except Exception as e:
-                print('Constraint violated, FieldChoice not saved: ', obj.field, obj.machine_value, obj.id, e)
-
-        obj.refresh_from_db()
+        try:
+            obj.save(update_fields=updated)
+        except Exception as e:
+            print('Constraint violated, FieldChoice not saved: ', e)
 
         if getattr(obj, 'field') != 'RelationRole' or 'reverse_identity' not in form.data.keys():
             # this is not a creation of a new relation role
