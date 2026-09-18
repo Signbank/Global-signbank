@@ -1147,8 +1147,49 @@
         </fieldset>
     </div>
     <br/><br/><br/>
-    {% endif %}
+    <div class="modal fade" id="delete_gloss_modal" tabindex="-1" role="dialog" aria-labelledby="#modalTitleDelete" aria-hidden="true">
+         <div class="modal-dialog modal-lg left-modal">
+            <div class="modal-content">
+                <div class='modal-header'>
+                    <h2 id='modalTitleDelete'>{% trans "Delete This Sign" %}</h2>
+                    <br>
+                    {% with gloss.lemma.dataset.default_language as target_default_language %}
+                    {% with annotation_idgloss|get_item:target_default_language as annotation %}
+                    <h4>{% trans "Sign" %}: {{annotation}}</h4>
+                    {% endwith %}
+                    {% endwith %}
+                </div>
+                <div class='modal-body'>
+                    {% if related_objects.keys %}
+                    <p>{% trans "This sign is related to other signs:" %}</p>
+                    <br>
+                    <table class="table table-condensed table-bordered">
+                        {% for key, glosses in related_objects.items %}
+                        <tr>
+                            <td style="width:240px">{{key}}</td>
+                            <td>{{glosses}}</td>
+                        </tr>
+                        {% endfor %}
+                    </table>
+                    <br><br>
+                    {% endif %}
+                    <p>{% trans "This action will delete this sign and all associated records. It cannot be undone." %}</p>
+                 </div>
+              <form action="{% url 'dictionary:update_gloss' gloss.id %}" method='post'>
+                  {% csrf_token %}
+                  <input type='hidden' name='id' value='deletegloss'>
+                  <input type='hidden' name='value' value='confirmed'>
+                  <div class="modal-footer">
+                    <button type="button" class="btn btn-primary" data-dismiss="modal">{% trans "Cancel" %}</button>
+                    <input type="submit" class="btn btn-danger" value='{% trans "Confirm Delete" %}'>
+                  </div>
+              </form>
 
+            </div>
+        </div>
+    </div>
+    {% endif %}
+        
 </div>
 
     <div class='panel-group' id="definition" style="z-index: 0;opacity:.99; position: static;">

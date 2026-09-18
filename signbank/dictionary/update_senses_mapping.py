@@ -8,7 +8,7 @@ from django.contrib.auth.decorators import permission_required
 from django.db import DatabaseError, IntegrityError
 from django.db.transaction import TransactionManagementError
 
-from signbank.tags.models import TaggedItem, Tag
+from tagging.models import TaggedItem, Tag
 
 from signbank.dictionary.models import (Language, Gloss, Sense, GlossSense, GlossRevision,
                                         SenseTranslation, Translation, Keyword)

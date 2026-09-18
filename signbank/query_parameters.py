@@ -9,7 +9,7 @@ from django.db.models import Q, Count, CharField, TextField, Value as V
 from django.db.models.fields import BooleanField
 from django.utils.translation import gettext, gettext_lazy as _
 
-from signbank.tags.models import TaggedItem, Tag
+from tagging.models import TaggedItem, Tag
 
 from signbank.settings.base import EARLIEST_GLOSS_CREATION_DATE, DATE_FORMAT
 from signbank.settings.server_specific import (USE_REGULAR_EXPRESSIONS, WRITABLE_FOLDER,

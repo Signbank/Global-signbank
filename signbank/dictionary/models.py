@@ -4,6 +4,7 @@ import re
 import copy
 import os
 import json
+import tagging
 from django.db.models.fields import BooleanField
 
 from django.utils.timezone import get_current_timezone
@@ -22,7 +23,7 @@ from django.db import DatabaseError, IntegrityError
 from django.db.transaction import TransactionManagementError
 from django.core.files import File
 from django.core.files.uploadedfile import TemporaryUploadedFile
-from signbank.tags.models import TaggedItem, Tag
+from tagging.models import TaggedItem, Tag
 
 from guardian.shortcuts import get_users_with_perms
 
@@ -2829,8 +2830,14 @@ class Gloss(Phonology):
         return d
 
     def tags(self):
-        from signbank.tags.models import Tag
+        from tagging.models import Tag
         return Tag.objects.get_for_object(self)
+
+# register Gloss for tags
+try:
+    tagging.register(Gloss)
+except:
+    pass
 
 
 @receiver(pre_delete, sender=Gloss, dispatch_uid='gloss_delete_signal')

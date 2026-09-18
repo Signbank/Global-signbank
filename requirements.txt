@@ -3,8 +3,8 @@ django-bootstrap3==26.1
 django-colorfield==0.14.0
 django-guardian==2.4.0
 django-modeltranslation==0.19.12
-django-reversion==6.1.0
 django-summernote==0.8.20
+django-tagging==0.5.0
 future==1.0.0
 flatdict==4.1.0
 lxml==6.1.0

@@ -37,7 +37,7 @@ from django.core.mail import send_mail
 from guardian.core import ObjectPermissionChecker
 from guardian.shortcuts import get_objects_for_user, assign_perm, remove_perm
 
-from signbank.tags.models import Tag, TaggedItem
+from tagging.models import Tag, TaggedItem
 from urllib.parse import urlencode
 
 from signbank.settings.server_specific import (URL, PREFIX_URL, LANGUAGE_CODE, LANGUAGES_LANGUAGE_CODE_3CHAR,
@@ -4294,15 +4294,15 @@ class DatasetManagerView(ListView):
 
     def render_to_add_user_response(self, context):
         dataset_object, response = self.get_dataset_from_request()
-        if response:
+        if not dataset_object:
             return response
         
         response = self.check_user_permissions_for_managing_dataset(dataset_object)
-        if response:
+        if response is not None:
             return response
 
         user_object, response = self.get_user_from_request()
-        if response:
+        if not user_object:
             return response
         username = user_object.username
 

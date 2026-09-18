@@ -5,7 +5,7 @@ from django.utils.timezone import get_current_timezone
 from django.core.exceptions import ObjectDoesNotExist, MultipleObjectsReturned
 from django.utils.translation import gettext
 
-from signbank.tags.models import TaggedItem, Tag
+from tagging.models import TaggedItem, Tag
 
 from signbank.settings.server_specific import MODELTRANSLATION_LANGUAGES, DEBUG_CSV
 from signbank.dictionary.models import (Gloss, Morpheme, FieldChoice, Relation, RelationToForeignSign, Definition,
