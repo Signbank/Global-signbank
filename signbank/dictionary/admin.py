@@ -1,6 +1,5 @@
 from django.db.models import Q
 from django.db import models
-from reversion.admin import VersionAdmin
 from django import forms
 from django.forms import Textarea
 from django.core.exceptions import ObjectDoesNotExist, MultipleObjectsReturned
@@ -8,7 +7,7 @@ from django.core.exceptions import ObjectDoesNotExist, MultipleObjectsReturned
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
 from django.contrib.auth.models import User
-from django.contrib.admin import SimpleListFilter
+from django.contrib.admin import SimpleListFilter, ModelAdmin
 
 from modeltranslation.admin import TranslationAdmin
 from django.contrib.auth import get_permission_codename
@@ -71,7 +70,7 @@ class DatasetAdmin(GuardedModelAdmin):
         return True
 
 
-class KeywordAdmin(VersionAdmin):
+class KeywordAdmin(ModelAdmin):
     search_fields = ['^text']
 
     def get_actions(self, request):
@@ -330,7 +329,7 @@ class GlossAdminForm(forms.ModelForm):
         return form
 
 
-class GlossAdmin(VersionAdmin):
+class GlossAdmin(ModelAdmin):
 
     readonly_fields = ['id', 'lemma', 'signlanguage', 'dialect'] + FIELDS['main'] \
                       + FIELDS['phonology'] \
@@ -387,7 +386,7 @@ class GlossAdmin(VersionAdmin):
         return False
 
 
-class MorphologyDefinitionAdmin(VersionAdmin):
+class MorphologyDefinitionAdmin(ModelAdmin):
     model = MorphologyDefinition
 
     list_display = ['id', 'morpheme', 'parent_gloss_id', 'parent_gloss_translations', 'role']
@@ -424,7 +423,7 @@ class MorphologyDefinitionAdmin(VersionAdmin):
         return ", ".join(translations)
 
 
-class SimultaneousMorphologyDefinitionAdmin(VersionAdmin):
+class SimultaneousMorphologyDefinitionAdmin(ModelAdmin):
     model = MorphologyDefinition
 
     list_display = ['id', 'morpheme', 'parent_gloss_id', 'parent_gloss_translations', 'role']
@@ -461,7 +460,7 @@ class SimultaneousMorphologyDefinitionAdmin(VersionAdmin):
         return ", ".join(translations)
 
 
-class HandshapeAdmin(VersionAdmin, TranslationAdmin):
+class HandshapeAdmin(TranslationAdmin):
 
     readonly_fields = ['machine_value']
     actions = ['delete_selected']
@@ -553,7 +552,7 @@ class SemanticFieldTranslationInline(admin.TabularInline):
         }
 
 
-class SemanticFieldAdmin(VersionAdmin, TranslationAdmin):
+class SemanticFieldAdmin(TranslationAdmin):
 
     model = SemanticField
     fields = ['machine_value', 'name', 'field_color', 'description']
@@ -591,7 +590,7 @@ class SemanticFieldAdmin(VersionAdmin, TranslationAdmin):
         return False
 
 
-class SemanticFieldTranslationAdmin(VersionAdmin):
+class SemanticFieldTranslationAdmin(ModelAdmin):
 
     model = SemanticFieldTranslation
 
@@ -649,7 +648,7 @@ class DerivationHistoryTranslationInline(admin.TabularInline):
         }
 
 
-class DerivationHistoryAdmin(VersionAdmin, TranslationAdmin):
+class DerivationHistoryAdmin(TranslationAdmin):
 
     model = DerivationHistory
     form = DerivationHistoryAdminForm
@@ -674,7 +673,7 @@ class DerivationHistoryAdmin(VersionAdmin, TranslationAdmin):
         return False
 
 
-class DerivationHistoryTranslationAdmin(VersionAdmin):
+class DerivationHistoryTranslationAdmin(ModelAdmin):
 
     model = DerivationHistoryTranslation
 
@@ -733,7 +732,7 @@ class GlossRevisionDatasetFilter(admin.SimpleListFilter):
         return queryset.all()
 
 
-class GlossRevisionAdmin(VersionAdmin):
+class GlossRevisionAdmin(ModelAdmin):
 
     model = GlossRevision
 
@@ -786,7 +785,7 @@ class DialectInline(admin.TabularInline):
     }
 
 
-class DialectAdmin(VersionAdmin):
+class DialectAdmin(ModelAdmin):
     model = Dialect
 
     list_display = ['id', 'signlanguage', 'name', 'description']
@@ -807,7 +806,7 @@ class DialectAdmin(VersionAdmin):
         return actions
 
 
-class SignLanguageAdmin(VersionAdmin):
+class SignLanguageAdmin(ModelAdmin):
     model = SignLanguage
     inlines = [DialectInline]
     list_display = ['id', 'name', 'description']
@@ -840,7 +839,7 @@ class UserAdmin(UserAdmin):
     inlines = (UserProfileInline, )
 
 
-class FieldChoiceAdmin(VersionAdmin, TranslationAdmin):
+class FieldChoiceAdmin(TranslationAdmin):
     readonly_fields = ['machine_value']
     actions = ['delete_selected']
 
@@ -868,7 +867,6 @@ class FieldChoiceAdmin(VersionAdmin, TranslationAdmin):
 
     def get_form(self, request, obj=None, **kwargs):
         form = super(FieldChoiceAdmin, self).get_form(request, obj, **kwargs)
-        # form = copy.deepcopy(form)
 
         if obj:
             # for display in the HTML color picker, the field color needs to be prefixed with #
@@ -1081,6 +1079,9 @@ class FieldChoiceAdmin(VersionAdmin, TranslationAdmin):
             # this case is prevented in the interface via Permission Denied
             return
 
+        obj.save()
+
+        updated = []
         if 'field_color' in form.data.keys():
             new_color = form.data['field_color']
             # strip any initial #'s
@@ -1089,6 +1090,7 @@ class FieldChoiceAdmin(VersionAdmin, TranslationAdmin):
             # store only the hex part
             original_color = getattr(obj, 'field_color')
             if new_color != original_color:
+                updated.append('field_color')
                 setattr(obj, 'field_color', new_color)
 
         with override(LANGUAGE_CODE):
@@ -1106,14 +1108,12 @@ class FieldChoiceAdmin(VersionAdmin, TranslationAdmin):
                 new_name_value = form.data[name_field]
                 original_value = getattr(obj, name_field)
                 if new_name_value != original_value:
+                    updated.append(name_field)
                     setattr(obj, name_field, new_name_value)
-            try:
-                updated = list(form.data.keys())
-                obj.save(update_fields=updated)
-            except Exception as e:
-                print('Constraint violated, FieldChoice not saved: ', obj.field, obj.machine_value, obj.id, e)
-
-        obj.refresh_from_db()
+        try:
+            obj.save(update_fields=updated)
+        except Exception as e:
+            print('Constraint violated, FieldChoice not saved: ', e)
 
         if getattr(obj, 'field') != 'RelationRole' or 'reverse_identity' not in form.data.keys():
             # this is not a creation of a new relation role
@@ -1175,7 +1175,7 @@ class LemmaIdglossAdminForm(forms.ModelForm):
         }
 
 
-class LemmaIdglossAdmin(VersionAdmin):
+class LemmaIdglossAdmin(ModelAdmin):
 
     list_display = ['id', 'dataset', 'lemmaidgloss']
     fields = ['dataset']
@@ -1232,7 +1232,7 @@ class LemmaIdglossAdmin(VersionAdmin):
         return False
 
 
-class LemmaIdglossTranslationAdmin(VersionAdmin):
+class LemmaIdglossTranslationAdmin(ModelAdmin):
     readonly_fields = ['lemma', 'language', 'text']
     fields = ['lemma', 'language', 'text']
 
@@ -1277,7 +1277,7 @@ class LemmaIdglossTranslationAdmin(VersionAdmin):
         return False
 
 
-class QueryParameterFieldChoiceAdmin(VersionAdmin):
+class QueryParameterFieldChoiceAdmin(ModelAdmin):
 
     model = QueryParameterFieldChoice
 
@@ -1302,7 +1302,7 @@ class QueryParameterFieldChoiceAdmin(VersionAdmin):
         return actions
 
 
-class QueryParameterHandshapeAdmin(VersionAdmin):
+class QueryParameterHandshapeAdmin(ModelAdmin):
 
     model = QueryParameterHandshape
     form = QueryParameterHandshapeForm
@@ -1326,7 +1326,7 @@ class QueryParameterHandshapeAdmin(VersionAdmin):
         return actions
 
 
-class QueryParameterSemanticFieldAdmin(VersionAdmin):
+class QueryParameterSemanticFieldAdmin(ModelAdmin):
 
     model = QueryParameterSemanticField
 
@@ -1349,7 +1349,7 @@ class QueryParameterSemanticFieldAdmin(VersionAdmin):
         return actions
 
 
-class QueryParameterDerivationHistoryAdmin(VersionAdmin):
+class QueryParameterDerivationHistoryAdmin(ModelAdmin):
 
     model = QueryParameterDerivationHistory
 
@@ -1372,7 +1372,7 @@ class QueryParameterDerivationHistoryAdmin(VersionAdmin):
         return actions
 
 
-class QueryParameterBooleanAdmin(VersionAdmin):
+class QueryParameterBooleanAdmin(ModelAdmin):
 
     model = QueryParameterBoolean
 
@@ -1397,7 +1397,7 @@ class QueryParameterBooleanAdmin(VersionAdmin):
         return actions
 
 
-class QueryParameterMultilingualAdmin(VersionAdmin):
+class QueryParameterMultilingualAdmin(ModelAdmin):
 
     model = QueryParameterMultilingual
     form = QueryParameterMultilingualForm
@@ -1421,7 +1421,7 @@ class QueryParameterMultilingualAdmin(VersionAdmin):
         return actions
 
 
-class SearchHistoryAdmin(VersionAdmin):
+class SearchHistoryAdmin(ModelAdmin):
 
     model = SearchHistory
 

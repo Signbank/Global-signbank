@@ -4299,15 +4299,15 @@ class DatasetManagerView(ListView):
 
     def render_to_add_user_response(self, context):
         dataset_object, response = self.get_dataset_from_request()
-        if response:
+        if not dataset_object:
             return response
         
         response = self.check_user_permissions_for_managing_dataset(dataset_object)
-        if response:
+        if response is not None:
             return response
 
         user_object, response = self.get_user_from_request()
-        if response:
+        if not user_object:
             return response
         username = user_object.username
 
