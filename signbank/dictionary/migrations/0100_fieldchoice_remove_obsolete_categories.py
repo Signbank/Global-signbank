@@ -27,7 +27,7 @@ def remove_obsolete_fieldchoices(apps, schema_editor):
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('dictionary', '0096_fieldchoice_reverse_populate'),
+        ('dictionary', '0099_fieldchoice_reverse_populate'),
     ]
 
     operations = [
