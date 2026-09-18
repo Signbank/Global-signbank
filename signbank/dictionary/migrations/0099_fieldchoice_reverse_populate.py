@@ -48,7 +48,7 @@ def add_reverse_relation_roles(apps, schema_editor):
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('dictionary', '0098_fieldchoice_reverse'),
+        ('dictionary', '0098_drop_reversion_tables'),
     ]
 
     operations = [
