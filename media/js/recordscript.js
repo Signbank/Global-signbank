@@ -155,7 +155,7 @@ function processBlobs(recordedBlobs){
         console.log(file)
         let container = new DataTransfer();
         container.items.add(file)
-        document.getElementById('videofile').files = container.files;
+        document.getElementById('id_videofile_recorded').files = container.files;
     }
     else{   // size is too big to upload
         errorMsgElement.innerHTML = "<p style='color:#FF0000';>Recorded file is too big. Make a shorter video or try another camera. .</p>"

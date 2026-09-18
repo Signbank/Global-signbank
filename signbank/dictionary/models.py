@@ -5,6 +5,7 @@ import copy
 import os
 import json
 import tagging
+from django.db.models.fields import BooleanField
 
 from django.utils.timezone import get_current_timezone
 from django.db.models import Q, When, Case, IntegerField
@@ -265,6 +266,9 @@ class Definition(MetaModelMixin, models.Model):
     def note_tuple(self):
         return self.get_role_display(), str(self.published), str(self.count), self.note_text()
 
+    def display_published(self):
+        return _('Yes') if self.published else _('No')
+
 
 class SignLanguage(models.Model):
     """A sign language name"""
@@ -335,6 +339,25 @@ class RelationToForeignSign(models.Model):
         list_display = ['gloss', 'loan', 'other_lang', 'other_lang_gloss']
         list_filter = ['other_lang']
         search_fields = ['gloss__idgloss']
+
+    def display_loan(self):
+        return _('Yes') if self.loan else _('No')
+
+    def other_lang_text(self):
+        stripped_text = str(self.other_lang).strip()
+        if '\n' in stripped_text:
+            # this function is used for displaying notes in the CSV update
+            # this makes mysterious differences in old and new values visible
+            stripped_text = stripped_text.replace('\n', '<br>')
+        return stripped_text
+
+    def other_lang_gloss_text(self):
+        stripped_text = str(self.other_lang_gloss).strip()
+        if '\n' in stripped_text:
+            # this function is used for displaying notes in the CSV update
+            # this makes mysterious differences in old and new values visible
+            stripped_text = stripped_text.replace('\n', '<br>')
+        return stripped_text
 
 
 class Handshape(MetaModelMixin, models.Model):
@@ -616,6 +639,9 @@ class ExampleSentence(MetaModelMixin, models.Model):
     def get_type(self):
         return self.sentenceType.name if self.sentenceType else ''
 
+    def get_video_object(self):
+        return self.examplevideo_set.filter(version=0).first()
+
     def get_video_path(self):
         try:
             examplevideo = self.examplevideo_set.get(version=0)
@@ -894,7 +920,300 @@ def post_remove_examplesentence_reorder(sender, instance, **kwargs):
     instance.reorder_examplesentences()
 
 
-class Gloss(MetaModelMixin, models.Model):
+class Phonology(MetaModelMixin, models.Model):
+
+    handedness = FieldChoiceForeignKey(FieldChoice, on_delete=models.SET_NULL, null=True,
+                                       limit_choices_to={'field': FieldChoice.HANDEDNESS},
+                                       field_choice_category=FieldChoice.HANDEDNESS,
+                                       verbose_name=_("Handedness"),
+                                       related_name="%(class)s_handedness")
+
+    weakdrop = models.BooleanField(_("Weak Drop"), null=True, blank=True)
+    weakprop = models.BooleanField(_("Weak Prop"), null=True, blank=True)
+
+    domhndsh = models.ForeignKey(Handshape, on_delete=models.SET_NULL, null=True,
+                                 verbose_name=_("Strong Hand"),
+                                 related_name="%(class)s_strong_hand")
+
+    subhndsh = models.ForeignKey(Handshape, on_delete=models.SET_NULL, null=True, blank=True,
+                                 verbose_name=_("Weak Hand"),
+                                 related_name="%(class)s_weak_hand")
+
+    # Support for handshape etymology
+    domhndsh_number = models.BooleanField(_("Strong hand number"), null=True, blank=True)
+    domhndsh_letter = models.BooleanField(_("Strong hand letter"), null=True, blank=True)
+    subhndsh_number = models.BooleanField(_("Weak hand number"), null=True, blank=True)
+    subhndsh_letter = models.BooleanField(_("Weak hand letter"), null=True, blank=True)
+
+    final_domhndsh = models.ForeignKey(Handshape, on_delete=models.SET_NULL, null=True, blank=True,
+                                       verbose_name=_("Final Dominant Handshape"),
+                                       related_name="%(class)s_final_dominant_handshape")
+
+    final_subhndsh = models.ForeignKey(Handshape, on_delete=models.SET_NULL, null=True, blank=True,
+                                       verbose_name=_("Final Subordinate Handshape"),
+                                       related_name="%(class)s_final_subordinate_handshape")
+
+    locprim = FieldChoiceForeignKey(FieldChoice, on_delete=models.SET_NULL, null=True, blank=True,
+                                          limit_choices_to={'field': FieldChoice.LOCATION},
+                                          field_choice_category=FieldChoice.LOCATION,
+                                          verbose_name=_("Location"),
+                                           related_name="%(class)s_location")
+
+    final_loc = FieldChoiceForeignKey(FieldChoice, on_delete=models.SET_NULL, null=True, blank=True,
+                                      limit_choices_to={'field': FieldChoice.LOCATION},
+                                      field_choice_category=FieldChoice.LOCATION,
+                                      verbose_name=_("Final Primary Location"),
+                                      related_name="%(class)s_final_primary_location")
+
+    locVirtObj = models.CharField(_("Virtual Object"), blank=True, null=True, max_length=50)
+
+    locsecond = FieldChoiceForeignKey(FieldChoice, on_delete=models.SET_NULL, null=True, blank=True,
+                                      limit_choices_to={'field': FieldChoice.LOCATION},
+                                      field_choice_category=FieldChoice.LOCATION,
+                                      verbose_name=_("Secondary Location"),
+                                      related_name="%(class)s_secondary_location")
+
+    initial_secondary_loc = FieldChoiceForeignKey(FieldChoice, on_delete=models.SET_NULL, null=True, blank=True,
+                                                  limit_choices_to={'field': FieldChoice.MINORLOCATION},
+                                                  field_choice_category=FieldChoice.MINORLOCATION,
+                                                  verbose_name=_("Initial Subordinate Location"),
+                                                  related_name="%(class)s_initial_subordinate_location")
+
+    final_secondary_loc = FieldChoiceForeignKey(FieldChoice, on_delete=models.SET_NULL, null=True, blank=True,
+                                                limit_choices_to={'field': FieldChoice.MINORLOCATION},
+                                                field_choice_category=FieldChoice.MINORLOCATION,
+                                                verbose_name=_("Final Subordinate Location"),
+                                                related_name="%(class)s_final_subordinate_location")
+
+    initial_palm_orientation = models.CharField(_("Initial Palm Orientation"), max_length=20, null=True, blank=True)
+    final_palm_orientation = models.CharField(_("Final Palm Orientation"), max_length=20, null=True, blank=True)
+
+    initial_relative_orientation = models.CharField(_("Initial Interacting Dominant Hand Part"), null=True,
+                                                    max_length=20, blank=True)
+    final_relative_orientation = models.CharField(_("Final Interacting Dominant Hand Part"), null=True, max_length=20,
+                                                  blank=True)
+
+    domSF = FieldChoiceForeignKey(FieldChoice, on_delete=models.SET_NULL, null=True, blank=True,
+                                  limit_choices_to={'field': FieldChoice.DOMINANTHANDSELECTEDFINGERS},
+                                  field_choice_category=FieldChoice.DOMINANTHANDSELECTEDFINGERS,
+                                  verbose_name="Dominant hand - Selected Fingers",
+                                  related_name="%(class)s_dominant_hand_selected_fingers")
+
+    domFlex = FieldChoiceForeignKey(FieldChoice, on_delete=models.SET_NULL, null=True, blank=True,
+                                    limit_choices_to={'field': FieldChoice.DOMINANTHANDFLEXION},
+                                    field_choice_category=FieldChoice.DOMINANTHANDFLEXION,
+                                    verbose_name="Dominant hand - Flexion",
+                                    related_name="%(class)s_dominant_hand_flexion")
+
+    oriChAbd = models.BooleanField(_("Abduction change"), null=True, blank=True)
+    oriChFlex = models.BooleanField(_("Flexion change"), null=True, blank=True)
+
+    relatArtic = FieldChoiceForeignKey(FieldChoice, on_delete=models.SET_NULL, null=True, blank=True,
+                                          limit_choices_to={'field': FieldChoice.RELATARTIC},
+                                          field_choice_category=FieldChoice.RELATARTIC,
+                                          verbose_name=_("Relation between Articulators"),
+                                          related_name="%(class)s_relation_between_articulators")
+
+    absOriPalm = FieldChoiceForeignKey(FieldChoice, on_delete=models.SET_NULL, null=True, blank=True,
+                                          limit_choices_to={'field': FieldChoice.ABSORIPALM},
+                                          field_choice_category=FieldChoice.ABSORIPALM,
+                                          verbose_name=_("Absolute Orientation: Palm"),
+                                           related_name="%(class)s_absolute_orientation_palm")
+
+    absOriFing = FieldChoiceForeignKey(FieldChoice, on_delete=models.SET_NULL, null=True, blank=True,
+                                          limit_choices_to={'field': FieldChoice.ABSORIFING},
+                                          field_choice_category=FieldChoice.ABSORIFING,
+                                          verbose_name=_("Absolute Orientation: Fingers"),
+                                           related_name="%(class)s_absolute_orientation_fingers")
+
+    relOriMov = FieldChoiceForeignKey(FieldChoice, on_delete=models.SET_NULL, null=True, blank=True,
+                                          limit_choices_to={'field': FieldChoice.RELORIMOV},
+                                          field_choice_category=FieldChoice.RELORIMOV,
+                                          verbose_name=_("Relative Orientation: Movement"),
+                                           related_name="%(class)s_relative_orientation_movement")
+
+    relOriLoc = FieldChoiceForeignKey(FieldChoice, on_delete=models.SET_NULL, null=True, blank=True,
+                                          limit_choices_to={'field': FieldChoice.RELORILOC},
+                                          field_choice_category=FieldChoice.RELORILOC,
+                                          verbose_name=_("Relative Orientation: Location"),
+                                           related_name="%(class)s_relative_orientation_location")
+
+    oriCh = FieldChoiceForeignKey(FieldChoice, on_delete=models.SET_NULL, null=True, blank=True,
+                                          limit_choices_to={'field': FieldChoice.ORICHANGE},
+                                          field_choice_category=FieldChoice.ORICHANGE,
+                                          verbose_name=_("Orientation Change"),
+                                           related_name="%(class)s_orientation_change")
+
+    handCh = FieldChoiceForeignKey(FieldChoice, on_delete=models.SET_NULL, null=True, blank=True,
+                                          limit_choices_to={'field': FieldChoice.HANDSHAPECHANGE},
+                                          field_choice_category=FieldChoice.HANDSHAPECHANGE,
+                                          verbose_name=_("Handshape Change"),
+                                           related_name="%(class)s_handshape_change")
+
+    repeat = models.BooleanField(_("Repeated Movement"), null=True, default=False)
+    altern = models.BooleanField(_("Alternating Movement"), null=True, default=False)
+
+    movSh = FieldChoiceForeignKey(FieldChoice, on_delete=models.SET_NULL, null=True, blank=True,
+                                          limit_choices_to={'field': FieldChoice.MOVEMENTSHAPE},
+                                          field_choice_category=FieldChoice.MOVEMENTSHAPE,
+                                          verbose_name=_("Movement Shape"),
+                                           related_name="%(class)s_movement_shape")
+
+    movDir = FieldChoiceForeignKey(FieldChoice, on_delete=models.SET_NULL, null=True, blank=True,
+                                          limit_choices_to={'field': FieldChoice.MOVEMENTDIR},
+                                          field_choice_category=FieldChoice.MOVEMENTDIR,
+                                          verbose_name=_("Movement Direction"),
+                                           related_name="%(class)s_movement_direction")
+
+    movMan = FieldChoiceForeignKey(FieldChoice, on_delete=models.SET_NULL, null=True, blank=True,
+                                          limit_choices_to={'field': FieldChoice.MOVEMENTMAN},
+                                          field_choice_category=FieldChoice.MOVEMENTMAN,
+                                          verbose_name=_("Movement Manner"),
+                                           related_name="%(class)s_movement_manner")
+
+    contType = FieldChoiceForeignKey(FieldChoice, on_delete=models.SET_NULL, null=True, blank=True,
+                                          limit_choices_to={'field': FieldChoice.CONTACTTYPE},
+                                          field_choice_category=FieldChoice.CONTACTTYPE,
+                                          verbose_name=_("Contact Type"),
+                                           related_name="%(class)s_contact_type")
+
+    phonOth = models.TextField(_("Phonology Other"), null=True, blank=True)
+
+    mouthG = models.CharField(_("Mouth Gesture"), max_length=50, blank=True)
+    mouthing = models.CharField(_("Mouthing"), max_length=50, blank=True)
+    phonetVar = models.CharField(_("Phonetic Variation"), max_length=50, blank=True)
+
+    locPrimLH = FieldChoiceForeignKey(FieldChoice, on_delete=models.SET_NULL, null=True, blank=True,
+                                          limit_choices_to={'field': FieldChoice.LOCATION},
+                                          field_choice_category=FieldChoice.LOCATION,
+                                          verbose_name=_("Placement Active Articulator LH"),
+                                           related_name="%(class)s_placement_active_articulator_lh")
+
+    locFocSite = models.CharField(_("Placement Focal Site RH"), null=True, blank=True, max_length=5)
+    locFocSiteLH = models.CharField(_("Placement Focal site LH"), null=True, blank=True, max_length=5)
+    initArtOri = models.CharField(_("Orientation RH (initial)"), null=True, blank=True, max_length=5)
+    finArtOri = models.CharField(_("Orientation RH (final)"), null=True, blank=True, max_length=5)
+    initArtOriLH = models.CharField(_("Orientation LH (initial)"), null=True, blank=True, max_length=5)
+    finArtOriLH = models.CharField(_("Orientation LH (final)"), null=True, blank=True, max_length=5)
+
+    class Meta:
+        abstract = True
+
+    def display_handedness(self):
+        return self.handedness.name if self.handedness else '-'
+
+    def weakdrop_to_choice(self):
+        # for use in form choices initial selected
+        if self.weakdrop is None:
+            return '0'
+        return '1' if self.weakdrop else '2'
+
+    def weakprop_to_choice(self):
+        # for use in form choices initial selected
+        if self.weakprop is None:
+            return '0'
+        return '1' if self.weakprop else '2'
+
+    def display_domhndsh(self):
+        return self.domhndsh.name if self.domhndsh else '-'
+
+    def domhndsh_letter_or_number_to_choice(self):
+        # for use in form choices initial selected
+        if self.domhndsh_letter is None and self.domhndsh_number is None:
+            return '0'
+        if self.domhndsh_letter:
+            return '1'
+        if self.domhndsh_number:
+            return '2'
+        # else both are False
+        return '0'
+
+    def display_domhndsh_letter(self):
+        if self.domhndsh_letter is None:
+            return ''
+        return _('letter') if self.domhndsh_letter else ''
+
+    def display_domhndsh_number(self):
+        if self.domhndsh_number is None:
+            return ''
+        return _('number') if self.domhndsh_number else ''
+
+    def display_subhndsh(self):
+        return self.subhndsh.name if self.subhndsh else '-'
+
+    def subhndsh_letter_or_number_to_choice(self):
+        # for use in form choices initial selected
+        if self.subhndsh_letter is None and self.subhndsh_number is None:
+            return '0'
+        if self.subhndsh_letter:
+            return '1'
+        if self.subhndsh_number:
+            return '2'
+        # else both are False
+        return '0'
+
+    def display_subhndsh_letter(self):
+        if self.subhndsh_letter is None:
+            return ''
+        return _('letter') if self.subhndsh_letter else ''
+
+    def display_subhndsh_number(self):
+        if self.subhndsh_number is None:
+            return ''
+        return _('number') if self.subhndsh_number else ''
+
+    def display_locprim(self):
+        return self.locprim.name if self.locprim else '-'
+
+    def repeat_to_choice(self):
+        if self.repeat is None:
+            return '0'
+        return '1' if self.repeat else '0'
+
+    def altern_to_choice(self):
+        if self.altern is None:
+            return '0'
+        return '1' if self.altern else '0'
+
+    def phonology_matrix(self, use_machine_value=False):
+        # this method uses string representations for Boolean values
+        # in order to distinguish between null values, False values, and Neutral values
+
+        phonology_dict = dict()
+        for field in FIELDS['phonology']:
+            gloss_field = self._meta.get_field(field)
+            if isinstance(gloss_field, models.CharField) or isinstance(gloss_field, models.TextField):
+                continue
+            field_value = getattr(self, gloss_field.name)
+            if field_value is None and not isinstance(field_value, BooleanField):
+                phonology_dict[field] = None
+            elif isinstance(field_value, Handshape):
+                phonology_dict[field] = str(field_value.machine_value)
+            elif hasattr(gloss_field, 'field_choice_category'):
+                phonology_dict[field] = str(field_value.machine_value if use_machine_value else field_value.id)
+            else:
+                # gloss_field is a Boolean
+                # TO DO: check these conversions to Strings instead of Booleans
+
+                if field_value is not None:
+                    if field_value:
+                        # machine value is 1
+                        phonology_dict[field] = 'True'
+                    else:
+                        # machine value is 0
+                        phonology_dict[field] = 'False'
+                else:
+                    # machine value is None, for weakdrop and weakprop, this is Neutral
+                    # value is Neutral
+                    if field in settings.HANDEDNESS_ARTICULATION_FIELDS:
+                        phonology_dict[field] = 'Neutral'
+                    else:
+                        phonology_dict[field] = 'False'
+
+        return phonology_dict
+
+
+class Gloss(Phonology):
     class Meta:
         verbose_name_plural = "Glosses"
         # ordering: for Lemma View in the Gloss List View, we need to have glosses in the same Lemma Group sorted
@@ -921,18 +1240,6 @@ class Gloss(MetaModelMixin, models.Model):
             else:
                 translations.append("{}".format(translation.text))
         return ", ".join(translations)
-
-    def display_handedness(self):
-        return self.handedness.name if self.handedness else self.handedness
-
-    def display_domhndsh(self):
-        return self.domhndsh.name if self.domhndsh else self.domhndsh
-
-    def display_subhndsh(self):
-        return self.subhndsh.name if self.subhndsh else self.subhndsh
-
-    def display_locprim(self):
-        return self.locprim.name if self.locprim else self.locprim
 
     def field_labels(self):
         """Return the dictionary of field labels for use in a template"""
@@ -983,98 +1290,28 @@ class Gloss(MetaModelMixin, models.Model):
     compound = models.CharField(_("Compound of"), max_length=100, blank=True)  # This field type is a guess.
     comptf = models.BooleanField(_("Compound"), null=True, blank=True)
 
-    # Phonology fields
-    handedness = FieldChoiceForeignKey(FieldChoice, on_delete=models.SET_NULL, null=True,
-                                          limit_choices_to={'field': FieldChoice.HANDEDNESS},
-                                          field_choice_category=FieldChoice.HANDEDNESS,
-                                          verbose_name=_("Handedness"),
-                                           related_name="handedness")
-
-    weakdrop = models.BooleanField(_("Weak Drop"), null=True, blank=True)
-    weakprop = models.BooleanField(_("Weak Prop"), null=True, blank=True)
-
-    domhndsh = models.ForeignKey(Handshape, on_delete=models.SET_NULL, null=True,
-                                             verbose_name=_("Strong Hand"),
-                                             related_name="strong_hand")
-
-    subhndsh = models.ForeignKey(Handshape, on_delete=models.SET_NULL, null=True,
-                                             verbose_name=_("Weak Hand"),
-                                             related_name="weak_hand")
-
-    # Support for handshape etymology
-    domhndsh_number = models.BooleanField(_("Strong hand number"), null=True, blank=True)
-    domhndsh_letter = models.BooleanField(_("Strong hand letter"), null=True, blank=True)
-    subhndsh_number = models.BooleanField(_("Weak hand number"), null=True, blank=True)
-    subhndsh_letter = models.BooleanField(_("Weak hand letter"), null=True, blank=True)
-
-    final_domhndsh = models.ForeignKey(Handshape, on_delete=models.SET_NULL, null=True,
-                                                   verbose_name=_("Final Dominant Handshape"),
-                                                   related_name="final_dominant_handshape")
-
-    final_subhndsh = models.ForeignKey(Handshape, on_delete=models.SET_NULL, null=True,
-                                                   verbose_name=_("Final Subordinate Handshape"),
-                                                   related_name="final_subordinate_handshape")
-
-    locprim = FieldChoiceForeignKey(FieldChoice, on_delete=models.SET_NULL, null=True,
-                                          limit_choices_to={'field': FieldChoice.LOCATION},
-                                          field_choice_category=FieldChoice.LOCATION,
-                                          verbose_name=_("Location"),
-                                           related_name="location")
-
-    final_loc = FieldChoiceForeignKey(FieldChoice, on_delete=models.SET_NULL, null=True,
-                                          limit_choices_to={'field': FieldChoice.LOCATION},
-                                          field_choice_category=FieldChoice.LOCATION,
-                                          verbose_name=_("Final Primary Location"),
-                                           related_name="final_primary_location")
-
-    locVirtObj = models.CharField(_("Virtual Object"), blank=True, null=True, max_length=50)
-
-    locsecond = FieldChoiceForeignKey(FieldChoice, on_delete=models.SET_NULL, null=True,
-                                          limit_choices_to={'field': FieldChoice.LOCATION},
-                                          field_choice_category=FieldChoice.LOCATION,
-                                          verbose_name=_("Secondary Location"),
-                                           related_name="secondary_location")
-
-    initial_secondary_loc = FieldChoiceForeignKey(FieldChoice, on_delete=models.SET_NULL, null=True,
-                                          limit_choices_to={'field': FieldChoice.MINORLOCATION},
-                                          field_choice_category=FieldChoice.MINORLOCATION,
-                                          verbose_name=_("Initial Subordinate Location"),
-                                           related_name="initial_subordinate_location")
-
-    final_secondary_loc = FieldChoiceForeignKey(FieldChoice, on_delete=models.SET_NULL, null=True,
-                                          limit_choices_to={'field': FieldChoice.MINORLOCATION},
-                                          field_choice_category=FieldChoice.MINORLOCATION,
-                                          verbose_name=_("Final Subordinate Location"),
-                                           related_name="final_subordinate_location")
-
-
-    initial_palm_orientation = models.CharField(_("Initial Palm Orientation"), max_length=20, null=True, blank=True)
-    final_palm_orientation = models.CharField(_("Final Palm Orientation"), max_length=20, null=True, blank=True)
-
-    initial_relative_orientation = models.CharField(_("Initial Interacting Dominant Hand Part"), null=True,
-                                                    max_length=20, blank=True)
-    final_relative_orientation = models.CharField(_("Final Interacting Dominant Hand Part"), null=True, max_length=20,
-                                                  blank=True)
-
-    domSF = FieldChoiceForeignKey(FieldChoice, on_delete=models.SET_NULL, null=True,
-                                          limit_choices_to={'field': FieldChoice.DOMINANTHANDSELECTEDFINGERS},
-                                          field_choice_category=FieldChoice.DOMINANTHANDSELECTEDFINGERS,
-                                          verbose_name="Dominant hand - Selected Fingers",
-                                           related_name="dominant_hand_selected_fingers")
-
-    domFlex = FieldChoiceForeignKey(FieldChoice, on_delete=models.SET_NULL, null=True,
-                                          limit_choices_to={'field': FieldChoice.DOMINANTHANDFLEXION},
-                                          field_choice_category=FieldChoice.DOMINANTHANDFLEXION,
-                                          verbose_name="Dominant hand - Flexion",
-                                           related_name="dominant_hand_flexion")
-
-    oriChAbd = models.BooleanField(_("Abduction change"), null=True, blank=True)
-    oriChFlex = models.BooleanField(_("Flexion change"), null=True, blank=True)
-
     inWeb = models.BooleanField(_("In the Web dictionary"), default=False)
     isNew = models.BooleanField(_("Is this a proposed new sign?"), null=True, default=False)
     excludeFromEcv = models.BooleanField(_("Exclude from ECV"), default=False)
     release_information = models.CharField(_("Release information"), max_length=128, blank=True, default='')
+
+    def inWeb_to_choice(self):
+        # for use in form choices initial selected
+        if self.inWeb is None:
+            return '0'
+        return '1' if self.inWeb else '0'
+
+    def isNew_to_choice(self):
+        # for use in form choices initial selected
+        if self.isNew is None:
+            return '0'
+        return '1' if self.isNew else '0'
+
+    def excludeFromEcv_to_choice(self):
+        # for use in form choices initial selected
+        if self.excludeFromEcv is None:
+            return '0'
+        return '1' if self.excludeFromEcv else '0'
 
     inittext = models.CharField(max_length=50, blank=True)
 
@@ -1117,95 +1354,6 @@ class Gloss(MetaModelMixin, models.Model):
     # and allow gaps between numbers for inserting later signs
 
     StemSN = models.IntegerField(null=True, blank=True)
-
-    relatArtic = FieldChoiceForeignKey(FieldChoice, on_delete=models.SET_NULL, null=True,
-                                          limit_choices_to={'field': FieldChoice.RELATARTIC},
-                                          field_choice_category=FieldChoice.RELATARTIC,
-                                          verbose_name=_("Relation between Articulators"),
-                                           related_name="relation_between_articulators")
-
-    absOriPalm = FieldChoiceForeignKey(FieldChoice, on_delete=models.SET_NULL, null=True,
-                                          limit_choices_to={'field': FieldChoice.ABSORIPALM},
-                                          field_choice_category=FieldChoice.ABSORIPALM,
-                                          verbose_name=_("Absolute Orientation: Palm"),
-                                           related_name="absolute_orientation_palm")
-
-    absOriFing = FieldChoiceForeignKey(FieldChoice, on_delete=models.SET_NULL, null=True,
-                                          limit_choices_to={'field': FieldChoice.ABSORIFING},
-                                          field_choice_category=FieldChoice.ABSORIFING,
-                                          verbose_name=_("Absolute Orientation: Fingers"),
-                                           related_name="absolute_orientation_fingers")
-
-    relOriMov = FieldChoiceForeignKey(FieldChoice, on_delete=models.SET_NULL, null=True,
-                                          limit_choices_to={'field': FieldChoice.RELORIMOV},
-                                          field_choice_category=FieldChoice.RELORIMOV,
-                                          verbose_name=_("Relative Orientation: Movement"),
-                                           related_name="relative_orientation_movement")
-
-    relOriLoc = FieldChoiceForeignKey(FieldChoice, on_delete=models.SET_NULL, null=True,
-                                          limit_choices_to={'field': FieldChoice.RELORILOC},
-                                          field_choice_category=FieldChoice.RELORILOC,
-                                          verbose_name=_("Relative Orientation: Location"),
-                                           related_name="relative_orientation_location")
-
-    oriCh = FieldChoiceForeignKey(FieldChoice, on_delete=models.SET_NULL, null=True,
-                                          limit_choices_to={'field': FieldChoice.ORICHANGE},
-                                          field_choice_category=FieldChoice.ORICHANGE,
-                                          verbose_name=_("Orientation Change"),
-                                           related_name="orientation_change")
-
-    handCh = FieldChoiceForeignKey(FieldChoice, on_delete=models.SET_NULL, null=True,
-                                          limit_choices_to={'field': FieldChoice.HANDSHAPECHANGE},
-                                          field_choice_category=FieldChoice.HANDSHAPECHANGE,
-                                          verbose_name=_("Handshape Change"),
-                                           related_name="handshape_change")
-
-    repeat = models.BooleanField(_("Repeated Movement"), null=True, default=False)
-    altern = models.BooleanField(_("Alternating Movement"), null=True, default=False)
-
-    movSh = FieldChoiceForeignKey(FieldChoice, on_delete=models.SET_NULL, null=True,
-                                          limit_choices_to={'field': FieldChoice.MOVEMENTSHAPE},
-                                          field_choice_category=FieldChoice.MOVEMENTSHAPE,
-                                          verbose_name=_("Movement Shape"),
-                                           related_name="movement_shape")
-
-    movDir = FieldChoiceForeignKey(FieldChoice, on_delete=models.SET_NULL, null=True,
-                                          limit_choices_to={'field': FieldChoice.MOVEMENTDIR},
-                                          field_choice_category=FieldChoice.MOVEMENTDIR,
-                                          verbose_name=_("Movement Direction"),
-                                           related_name="movement_direction")
-
-    movMan = FieldChoiceForeignKey(FieldChoice, on_delete=models.SET_NULL, null=True,
-                                          limit_choices_to={'field': FieldChoice.MOVEMENTMAN},
-                                          field_choice_category=FieldChoice.MOVEMENTMAN,
-                                          verbose_name=_("Movement Manner"),
-                                           related_name="movement_manner")
-
-    contType = FieldChoiceForeignKey(FieldChoice, on_delete=models.SET_NULL, null=True,
-                                          limit_choices_to={'field': FieldChoice.CONTACTTYPE},
-                                          field_choice_category=FieldChoice.CONTACTTYPE,
-                                          verbose_name=_("Contact Type"),
-                                           related_name="contact_type")
-
-
-    phonOth = models.TextField(_("Phonology Other"), null=True, blank=True)
-
-    mouthG = models.CharField(_("Mouth Gesture"), max_length=50, blank=True)
-    mouthing = models.CharField(_("Mouthing"), max_length=50, blank=True)
-    phonetVar = models.CharField(_("Phonetic Variation"), max_length=50, blank=True)
-
-    locPrimLH = FieldChoiceForeignKey(FieldChoice, on_delete=models.SET_NULL, null=True,
-                                          limit_choices_to={'field': FieldChoice.LOCATION},
-                                          field_choice_category=FieldChoice.LOCATION,
-                                          verbose_name=_("Placement Active Articulator LH"),
-                                           related_name="placement_active_articulator_lh")
-
-    locFocSite = models.CharField(_("Placement Focal Site RH"), null=True, blank=True, max_length=5)
-    locFocSiteLH = models.CharField(_("Placement Focal site LH"), null=True, blank=True, max_length=5)
-    initArtOri = models.CharField(_("Orientation RH (initial)"), null=True, blank=True, max_length=5)
-    finArtOri = models.CharField(_("Orientation RH (final)"), null=True, blank=True, max_length=5)
-    initArtOriLH = models.CharField(_("Orientation LH (initial)"), null=True, blank=True, max_length=5)
-    finArtOriLH = models.CharField(_("Orientation LH (final)"), null=True, blank=True, max_length=5)
 
     # Semantic fields
 
@@ -1946,51 +2094,6 @@ class Gloss(MetaModelMixin, models.Model):
         other_relations = self.other_relations()
         return other_relations, variant_relations
 
-    def phonology_matrix_homonymns(self, use_machine_value=False):
-        # this method uses string representations for Boolean values
-        # in order to distinguish between null values, False values, and Neutral values
-
-        phonology_dict = dict()
-        for field in FIELDS['phonology']:
-            gloss_field = Gloss._meta.get_field(field)
-            if isinstance(gloss_field, models.CharField) or isinstance(gloss_field, models.TextField):
-                continue
-            field_value = getattr(self, gloss_field.name)
-            if isinstance(field_value, Handshape):
-                if field_value is None:
-                    # this differentiates between null field choice fields (here) versus null Boolean fields
-                    # which get mapped to either 'False' or 'Neutral'
-                    phonology_dict[field] = None
-                else:
-                    phonology_dict[field] = str(field_value.machine_value)
-            elif hasattr(gloss_field, 'field_choice_category'):
-                if field_value is None:
-                    # this differentiates between null field choice fields (here) versus null Boolean fields
-                    # which get mapped to either 'False' or 'Neutral'
-                    phonology_dict[field] = None
-                else:
-                    phonology_dict[field] = str(field_value.machine_value if use_machine_value else field_value.id)
-            else:
-                # gloss_field is a Boolean
-                # TO DO: check these conversions to Strings instead of Booleans
-
-                if field_value is not None:
-                    if field_value:
-                        # machine value is 1
-                        phonology_dict[field] = 'True'
-                    else:
-                        # machine value is 0
-                        phonology_dict[field] = 'False'
-                else:
-                    # machine value is None, for weakdrop and weakprop, this is Neutral
-                    # value is Neutral
-                    if field in settings.HANDEDNESS_ARTICULATION_FIELDS:
-                        phonology_dict[field] = 'Neutral'
-                    else:
-                        phonology_dict[field] = 'False'
-
-        return phonology_dict
-
     def minimal_pairs_tuple(self):
         minimal_pairs_fields = settings.MINIMAL_PAIRS_FIELDS
 
@@ -2157,7 +2260,7 @@ class Gloss(MetaModelMixin, models.Model):
         if not self.lemma or not self.lemma.dataset:
             return homonym_objects_list
 
-        phonology_for_gloss = self.phonology_matrix_homonymns()
+        phonology_for_gloss = self.phonology_matrix()
         handedness_of_this_gloss = phonology_for_gloss['handedness']
 
         homonym_objects_list = []
@@ -2229,7 +2332,7 @@ class Gloss(MetaModelMixin, models.Model):
 
         targets_of_homonyms_of_this_gloss = [r.target for r in gloss_homonym_relations]
 
-        phonology_for_gloss = self.phonology_matrix_homonymns()
+        phonology_for_gloss = self.phonology_matrix()
         handedness_of_this_gloss = phonology_for_gloss['handedness']
         empty_or_X_handedness = [str(fc.id) for fc in FieldChoice.objects.filter(field='Handedness', name__in=['-','N/A', 'X'])]
         if handedness_of_this_gloss in empty_or_X_handedness:
@@ -2277,6 +2380,10 @@ class Gloss(MetaModelMixin, models.Model):
     def get_image_url(self):
         image_path = self.get_image_path()
         return escape_uri_path(image_path) if image_path else ''
+
+    def get_video_object(self):
+        from signbank.video.models import GlossVideo
+        return GlossVideo.objects.filter(gloss=self, glossvideonme=None, glossvideoperspective=None, version=0).first()
 
     def get_video_path(self, check_file_on_disk=True):
         from signbank.video.models import GlossVideo, get_gloss_path_to_video_file_on_disk, GlossVideoNME, GlossVideoPerspective
@@ -2638,13 +2745,6 @@ class Gloss(MetaModelMixin, models.Model):
             d[rrf.name] = rrf.name
         return json.dumps(d)
 
-    def handedness_weak_choices(self):
-        """Return JSON for the etymology choice list"""
-
-        NEUTRALBOOLEANCHOICES = [('1', _('Neutral')), ('2', _('Yes')), ('3', _('No'))]
-
-        return self.options_to_json(NEUTRALBOOLEANCHOICES)
-
     @staticmethod
     def variant_role_choices():
 
@@ -2943,6 +3043,17 @@ class Morpheme(Gloss):
 
         return self.idgloss
 
+    def to_string(self):
+        morpheme_type = f' ({self.mrpType.name})' if self.mrpType else ''
+        translations = []
+        count_dataset_languages = self.lemma.dataset.translation_languages.all().count() if self.lemma and self.lemma.dataset else 0
+        for translation in self.annotationidglosstranslation_set.all():
+            if settings.SHOW_DATASET_INTERFACE_OPTIONS and count_dataset_languages > 1:
+                translations.append("{}: {}".format(translation.language, translation.text))
+            else:
+                translations.append("{}".format(translation.text))
+        return ", ".join(translations) + f'{morpheme_type}'
+
     def get_mrpType_display(self):
         # to avoid extra code in the template, return '-' if the type has not been set
         return self.mrpType.name if self.mrpType else '-'
@@ -3132,6 +3243,17 @@ class OtherMedia(MetaModelMixin, models.Model):
     alternative_gloss = models.CharField(max_length=50)
     path = models.CharField(max_length=100)
     description = models.TextField(null=True, blank=True, verbose_name=_("Description/Explanation"))
+
+    def get_type_display(self):
+        return self.type.name if self.type else '-'
+
+    def description_text(self):
+        stripped_text = str(self.description).strip() if self.description else ''
+        if '\n' in stripped_text:
+            # this function is used for displaying notes in the CSV update
+            # this makes mysterious differences in old and new values visible
+            stripped_text = stripped_text.replace('\n', '<br>')
+        return stripped_text
 
     def get_othermedia_path(self, gloss_id, check_existence=False):
         # read only method
@@ -4083,6 +4205,26 @@ CATEGORY_MODELS_MAPPING = {
 }
 
 
+# setting for the Gloss Edit template
+GLOSS_FIELDS_UPDATES = ['release_information', 'dialect', 'useInstr', 'wordClass',
+                        'handedness', 'domhndsh', 'subhndsh', 'handCh',
+                        'relatArtic', 'locprim', 'contType', 'movSh', 'movDir',
+                        'repeat', 'altern',
+                        'relOriMov', 'relOriLoc', 'oriCh',
+                        'locVirtObj', 'phonOth', 'mouthG', 'mouthing', 'phonetVar',
+                        'weakdrop', 'weakprop',
+                        'domhndsh_letter_or_number', 'subhndsh_letter_or_number',
+                        'semField', 'derivHist', 'namEnt', 'valence', 'iconImg', 'concConcSet',
+                        'inWeb', 'isNew', 'excludeFromEcv']
+PHONOLOGY_FIELDS_UPDATES = ['handedness', 'domhndsh', 'subhndsh', 'handCh',
+                            'relatArtic', 'locprim', 'contType', 'movSh', 'movDir',
+                            'repeat', 'altern',
+                            'relOriMov', 'relOriLoc', 'oriCh',
+                            'locVirtObj', 'phonOth', 'mouthG', 'mouthing', 'phonetVar',
+                            'weakdrop', 'weakprop',
+                            'domhndsh_letter_or_number', 'subhndsh_letter_or_number']
+
+
 class AnnotatedGloss(MetaModelMixin, models.Model):
     """An annotated gloss belongs to one annotated sentences"""
     gloss = models.ForeignKey("Gloss", on_delete=models.CASCADE)
@@ -4377,3 +4519,65 @@ class GlossProvenance(models.Model):
 
     def provenance_tuple(self):
         return self.get_method_display(), self.provenance_text()
+
+
+class PhonologicalVariation(Phonology):
+
+    gloss = models.ForeignKey("Gloss", on_delete=models.CASCADE)
+
+    # 0 is reserved for the primary gloss
+    variation = models.IntegerField(default=0)
+
+    class Meta:
+        unique_together = (("gloss", "variation"),)
+        ordering = ['gloss', 'variation']
+
+    def add_video(self, user, videofile):
+        # Preventing circular import
+        from signbank.video.models import (PhonologicalVariationVideo,
+                                           get_phonologicalvariation_video_file_path)
+
+        if not isinstance(videofile, File):
+            msg = gettext("No video file supplied for video upload of variation video {variationid}.").format(variationid=self.pk)
+            raise ValidationError(msg)
+
+        # get existing video objects for this variation and delete them
+        existing_phonological_variation_videos = PhonologicalVariationVideo.objects.filter(variation=self).order_by('pk')
+        for video in existing_phonological_variation_videos:
+            video.delete()
+
+        # Create a new video object
+        video = PhonologicalVariationVideo(variation=self)
+        video.save()
+
+        relative_path = get_phonologicalvariation_video_file_path(video, str(videofile))
+        video.videofile.save(relative_path, videofile)
+        self.save()
+        return video
+
+    def get_video(self):
+        """Return the video object for this gloss or None if no video available"""
+        from signbank.video.models import PhonologicalVariationVideo
+
+        existing_video = PhonologicalVariationVideo.objects.filter(variation=self).order_by('-pk').first()
+
+        if not existing_video:
+            return ''
+
+        video_path = str(existing_video.videofile)
+        filepath = os.path.join(settings.WRITABLE_FOLDER, video_path)
+
+        if not os.path.exists(filepath):
+            return ''
+
+        return video_path
+
+    def has_video(self):
+        from signbank.video.models import PhonologicalVariationVideo
+
+        return PhonologicalVariationVideo.objects.filter(variation=self).exists()
+
+    def get_video_url(self):
+        """return the url of the video for this gloss"""
+        video_path = self.get_video()
+        return escape_uri_path(video_path) if video_path else ''

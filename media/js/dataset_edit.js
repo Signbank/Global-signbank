@@ -34,7 +34,7 @@ $(document).ready(function() {
     $('.usertypeahead').bind('typeahead:selected', function(ev, suggestion) {
           $(this).parent().next().val(suggestion.username)
         });
-    $('.usertypeahead').on("input", function() {
+    $('.usertypeahead').on("focus", function() {
           $(this).parent().next().val("")
         });
 
@@ -192,23 +192,39 @@ function update_view_and_remember_original_value(change_summary)
 }
 
 var user_bloodhound = new Bloodhound({
-      datumTokenizer: function(d) { return d.tokens; },
-      queryTokenizer: Bloodhound.tokenizers.whitespace,
-      remote: url+'/dictionary/ajax/user/%QUERY'
-});
+        datumTokenizer: Bloodhound.tokenizers.obj.whitespace('value'),
+        queryTokenizer: Bloodhound.tokenizers.whitespace,
+        remote: {
+            url: url+'/dictionary/ajax/user/%QUERY',
+            wildcard: '%QUERY',
+            ajax: {
+                type: 'GET',
+                beforeSend: function(xhr, settings) {
+                    if (!csrfSafeMethod(settings.type)) {
+                        xhr.setRequestHeader("X-CSRFToken", csrf_token);
+                    }
+                }
+            }
+        }
+    });
 
 user_bloodhound.initialize();
 
 function usertypeahead(target) {
 
-     $(target).typeahead(null, {
-          name: 'username',
-          displayKey: 'username',
-          source: user_bloodhound.ttAdapter(),
-          templates: {
-              suggestion: function(user) {
-                  return("<p>" + user.first_name + " " + user.last_name + " (<strong>" + user.username + "</strong>)</p>");
-              }
-          }
-      });
+     $(target).typeahead({
+        minLength: 0,
+        hint: false
+        }, {
+        name: 'gebruiker',
+        limit: 50,
+        displayKey: 'username',
+        source: user_bloodhound.ttAdapter(),
+        autoSelect: false,
+        templates: {
+            suggestion: function(user) {
+                return("<p>" + user.first_name + " " + user.last_name + " (<strong>" + user.username + "</strong>)</p>");
+            }
+        }
+    });
 };

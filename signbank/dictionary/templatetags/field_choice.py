@@ -21,6 +21,14 @@ def get_field_choice(machine_value,field_category):
 
 register = Library()
 
+@register.filter
+def to_str(value):
+    # convert a machine value to a string
+    try:
+        return str(value)
+    except TypeError:
+        return '0'
+
 
 @register.filter
 def normalise_empty(machine_value):

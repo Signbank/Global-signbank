@@ -115,7 +115,7 @@ $('.quick_preview').click(function(e)
             {% if gloss.has_video %}
 
                 <div id="player">
-                <video id='videoplayer' src="{{protected_media_url}}{{gloss.get_video_url}}?v={% now 'YmdHis' %}" controls autoplay muted></video>
+                <video id='videoplayer' src="{{protected_media_url}}{{gloss.get_video_url}}?v={{ gloss.get_video_object.pk }}" controls autoplay muted></video>
                 </div>
                 <div id="replay"></div>
 
@@ -129,7 +129,7 @@ $('.quick_preview').click(function(e)
         <h3>{% trans "Citation Form Image" %}</h3>
         <div>
             {% if gloss.get_image_path %}
-                <img id="imageframe" src="{{protected_media_url}}{{gloss.get_image_url}}?v={% now 'YmdHis' %}" style="height:259px;width:auto;">
+                <img id="imageframe" src="{{protected_media_url}}{{gloss.get_image_url}}?v={{ gloss.get_video_object.pk }}" style="height:259px;width:auto;">
             {% else %}
                 <p>{% trans "There is no citation form image for this gloss." %}</p>
             {% endif %}
@@ -138,6 +138,28 @@ $('.quick_preview').click(function(e)
 </div>
     <div class='panel panel-group panel-default panel-light' id="definition"
          style="width:auto; z-index: 0;opacity:.99; position: relative;background-color:inherit;">
+            {% if gloss_variations %}
+            <div class="panel panel-default panel-default-light">
+            <div class="panel-heading" data-toggle="collapse" data-target="#phonological_variations">{% trans "Phonological Variations" %}</div>
+            <div class="panel-body collapse" id="phonological_variations">
+                <table class='table table-condensed table-condensed-light' style="margin-right:5px;margin-top:10px;margin-bottom:10px;">
+                    <tr>
+                        <td>#1</td>
+                        <td>{{gloss.get_video_url}}</td>
+                    </tr>
+                    {% for gloss_variation in gloss_variations %}
+                        {% if gloss_variation.has_video %}
+                        <tr>
+                            <td>#{{gloss_variation.variation}}</td>
+                            <td>{{gloss_variation.get_video_url}}</td>
+                        </tr>
+                        {% endif %}
+                    {% endfor %}
+                </table>
+            </div>
+            </div>
+            <br>
+            {% endif %}
 
         {% if gloss.has_sense_with_examplesentence_with_video %}
         <!-- Example Sentences -->

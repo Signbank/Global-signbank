@@ -121,9 +121,6 @@ textarea:focus {
         definition_role_choices_colors[key] = 'ffffff';
     };
     var definition_role_choices_reverse_json = {{morpheme.definition_role_choices_reverse_json|safe}};
-    var relation_role_choices = {{morpheme.relation_role_choices_json|safe}};
-    var relation_delete_choices = '{ "delete" : "Delete" }';
-    var relation_delete_choices_colors = '{ "delete" : "ffffff" }';
     var dialects = {{morpheme.dialect_choices|safe}};
     var semanticfield_choices = {{morpheme.semanticfield_choices|safe}};
     var derivationhistory_choices = {{morpheme.derivationhistory_choices|safe}};
@@ -175,7 +172,6 @@ textarea:focus {
 
 <script type="text/javascript" src="{{ STATIC_URL }}js/jquery.jeditable.mini_colors.js"></script>
 <script type="text/javascript" src="{{ STATIC_URL }}js/jquery.jeditable.checkbox.js"></script>
-<script type="text/javascript" src="{{ STATIC_URL }}js/typeahead.bundle.min.js"></script>
 
 <script type='text/javascript'>
     {% include "dictionary/search_result_bar.html" %}
@@ -409,33 +405,9 @@ function checkKey(e)
 
         <table class='table table-condensed table-condensed-light'>
             <tr><th>{% trans "Lemma ID Gloss" %}</th>
-                <td class='td td-light' style="width:600px;"><span id="lemma">{{ morpheme.lemma }}
-                        {% if lemma_group %}
-                            <a href='{{lemma_group_url}}' title='{% trans "Show Lemma Group" %}'><span class="glyphicon glyphicon-th-list"></span></a>
-                        {% endif %}
-                    </span>
-                    <form name='set_lemma_form' id='set_lemma_form'
-                     onsubmit='return validateForm("set_lemma_form","value","morpheme_lemma_id",
-                                                    "Please choose a lemma.",
-                                                    "Target lemma must be different from the current lemma of this morpheme.")'
-                     method='post' action='{% url "dictionary:update_morpheme" morpheme.id %}'>
-                        {% csrf_token %}
-                        <!-- Input that holds the current lemma id; used by validateForm -->
-                        <input type='hidden' name='morpheme_lemma_id' value='{{morpheme.lemma_id}}'>
+                <td class='td td-light' style="width:600px;">
+                    <span id="lemma">{{ morpheme.lemma }}</span>
 
-                        <!-- Input of the type ahead -->
-                        <input class='form-control form-control-light lemmatypeahead lemmatypeahead-light' placeholder='{% trans "Lemma" %}' />
-
-                        <!-- Input for morpheme_update (2) / Input that holds the lemma id the user chose from the type ahead -->
-                        <input type='hidden' name='value' value='confirmed'>
-                        <!-- Input for morpheme_update (1) -->
-                        <input type='hidden' name='id' value='lemmaidgloss'>
-
-                        <!-- Submit -->
-                        <input class='btn btn-primary' value='{% trans "Set Lemma" %}' type='submit'>
-                        <button type="button" class="btn btn-default btn-default-light lemma-form-dismiss">{% trans "Cancel" %}</button>
-                        <a href="#" onclick="return showAddLemma()">{% trans "Create New" %}</a>
-                    </form>
                     <form name="add_lemma_form" id="add_lemma_form" method="post" action="{% url 'dictionary:create_lemma_gloss' morpheme.id %}" >
                         {% csrf_token %}
                         <input type="hidden" name="dataset" value="{{ morpheme.lemma.dataset.id }}"/>

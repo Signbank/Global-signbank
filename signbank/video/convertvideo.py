@@ -235,12 +235,14 @@ def detect_video_file_extension(file_path):
         video_extension = '.mov'
     elif 'M4V' in filetype:
         video_extension = '.m4v'
-    elif 'Matroska' in filetype:
+    elif 'Matroska' in filetype or 'WebM' in filetype:
         video_extension = '.webm'
     elif 'MKV' in filetype:
         video_extension = '.mkv'
     elif 'MPEG-2' in filetype:
         video_extension = '.m2v'
+    elif extension_on_filename(file_path) == '.mp4':
+        video_extension = '.mp4'
     else:
         video_extension = ''
     return video_extension

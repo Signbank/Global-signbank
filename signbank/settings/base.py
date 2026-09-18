@@ -28,7 +28,10 @@ MEDIA_MOBILE_URL = MEDIA_URL
 # Don't put anything in this directory yourself; store your static files
 # in apps' "static/" subdirectories and in STATICFILES_DIRS.
 # Example: "/home/media/media.lawrence.com/static/"
-STATIC_ROOT = PREFIX_URL
+# server_specific.py may set STATIC_ROOT to a real disk path so
+# collectstatic actually works (PREFIX_URL is a URL fragment, not a path).
+if 'STATIC_ROOT' not in dir():
+    STATIC_ROOT = PREFIX_URL
 
 # URL prefix for static files.
 # Example: "http://media.lawrence.com/static/"
@@ -60,7 +63,6 @@ MIDDLEWARE = (
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'signbank.pages.middleware.PageFallbackMiddleware',
-    'reversion.middleware.RevisionMiddleware',
     'django.middleware.common.CommonMiddleware'
 )
 
@@ -122,7 +124,6 @@ INSTALLED_APPS = (
     'django.contrib.staticfiles',
     'django.contrib.flatpages',
     'corsheaders',
-    'reversion',
     'tagging',
     'guardian',
     'bootstrap3',

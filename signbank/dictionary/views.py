@@ -53,7 +53,7 @@ from signbank.dictionary.update_csv import (update_simultaneous_morphology, upda
                                             update_tags, subst_notes, subst_semanticfield)
 from signbank.dictionary.context_data import get_selected_datasets
 from signbank.tools import (get_two_letter_dir, get_default_annotationidglosstranslation,
-                            get_dataset_languages, get_datasets_with_public_glosses,
+                            get_dataset_languages, get_datasets_with_public_glosses, get_interface_language_and_default_language_codes,
                             create_gloss_from_valuedict, compare_valuedict_to_gloss, compare_valuedict_to_lemma,
                             create_zip_with_json_files,
                             detect_delimiter,
@@ -1264,7 +1264,7 @@ def import_csv_update(request):
 
                 new_human_value_list = [v.strip() for v in new_value.split(',')]
 
-                update_dialect(gloss,None,new_human_value_list)
+                update_dialect(request.user, gloss,None,new_human_value_list)
                 gloss.save()
                 continue
 

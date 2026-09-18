@@ -1,7 +1,9 @@
 ﻿{% extends "baselayout.html" %}
 {% load i18n %}
+{% load stylesheet %}
 {% load annotation_idgloss_translation %}
-{% load bootstrap3 %}
+{% load field_choice %}
+
 {% block bootstrap3_title %}
 {% blocktrans %}Signbank: Search Handshapes{% endblocktrans %}
 {% endblock %}
@@ -11,13 +13,16 @@
 {% block extrajs %}
 <script type="text/javascript" src="{{ STATIC_URL }}js/jquery.jeditable.mini.js"></script>
 <script type="text/javascript" src="{{ STATIC_URL }}js/jquery.jeditable.checkbox.js"></script>
-<script type="text/javascript" src="{{ STATIC_URL }}js/typeahead.bundle.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/typeahead.js/0.11.1/bloodhound.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/typeahead.js/0.11.1/typeahead.bundle.js"></script>
 
 <script type='text/javascript'>
 var url = '{{PREFIX_URL}}';
 var saving_str = "{% trans 'Saving...' %}";
 var sort_order = '{{sortOrder}}';
 </script>
+
+<script type='text/javascript' src="{{STATIC_URL}}js/handshape_search.js"></script>
 
 <style>
 .sort_button {
@@ -55,6 +60,9 @@ $(document).ready(function(){
          $(stopButton).show().trigger('change');
      };
 
+     lookaheadConfig.forEach(config => {
+         window[config.name + 'typeahead'] = readyLookahead(config);
+     });
 });
 </script>
 
@@ -142,8 +150,6 @@ function do_adminsearch(el) {
 }
    </script>
 
-    <script type='text/javascript' src="{{STATIC_URL}}js/handshape_search.js"></script>
-
     <!-- Expand and collapse all panels -->
     <script type='text/javascript'>
         $('#expand-panels').on('click', function() {
@@ -173,16 +179,18 @@ function do_adminsearch(el) {
             <input name='sortOrder' class='form-control' value='machine_value' >
             <input name='search_type' class='form-control' value='{{search_type}}'>
         </div>
-                <div id='handshape_name'>
+                <div id='handshape_name_typeahead'>
                     {% csrf_token %}
                     <table class='table'>
                         <tr id='handshape_name_field'>
-                            <td class='td td-light'><label for='id_name'>{% trans "Handshape Name" %}</label></td>
-                            <td class='td td-light'><input
-                                    class='form-control form-control-light handshapetypeahead handshapetypeahead-light'
+                            <td class='td td-light'><label for='handhshape_lookahead'>{% trans "Handshape Name" %}</label></td>
+                            <td class='td td-light'>
+                                <input class='form-control form-control-light handshapetypeahead handshapetypeahead-light'
                                     placeholder='{% trans "Handshape Name" %}'
-                                    name='name' type='text' id='id_name'
-                                    value="{{searchform.name.value|default:'' }}"/></td>
+                                    name='name' type='text' id='handhshape_lookahead'
+                                    value="{{searchform.name.value|default:'' }}"/>
+<!--                                <input type="hidden" name='machine_value' id='handshape_machine_value' value="">-->
+                            </td>
                         </tr>
                     </table>
                 </div>
@@ -328,7 +336,7 @@ function do_adminsearch(el) {
                         <tr><th class='td td-light'>{{searchform.hsFingConf2.label}}</th>
                             <td class='td td-light'>{{searchform.hsFingConf2}}</td></tr>
                         <tr><th class='td td-light'>{{searchform.hsNumSel.label}}</th>
-                            <td class='td td-light'>{{searchform.hsNumSel}}</td></tr>
+                            <td class='td td-light'>{{searchform.hsNumSel|to_str}}</td></tr>
                         <tr><th class='td td-light'>{{searchform.hsSpread.label}}</th>
                             <td class='td td-light'>{{searchform.hsSpread}}</td></tr>
                         <tr><th class='td td-light'>{{searchform.hsAperture.label}}</th>

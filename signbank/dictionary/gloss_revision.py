@@ -1,3 +1,6 @@
+import os.path
+import re
+
 from django.db.models import Q, BooleanField
 from django.db.models.fields import TextField, CharField
 from django.utils.translation import gettext, gettext_lazy as _
@@ -7,7 +10,8 @@ from django.http import JsonResponse
 
 from signbank.settings.server_specific import HANDEDNESS_ARTICULATION_FIELDS, MODELTRANSLATION_LANGUAGES
 
-from signbank.dictionary.models import Gloss, GlossRevision, Language, FieldChoice, Handshape, FieldChoiceForeignKey
+from signbank.dictionary.models import Gloss, GlossRevision, Language, FieldChoice, Handshape, FieldChoiceForeignKey, \
+    OtherMedia
 from signbank.dictionary.update import okay_to_update_gloss
 from signbank.csv_interface import normalize_field_choice
 
@@ -111,7 +115,13 @@ def pretty_print_revisions(gloss):
         'provenance_create': gettext("Provenance"),
         'provenancedelete': gettext("Provenance"),
         'provenancedescription': gettext("Provenance Description"),
-        'provenancemethod': gettext("Provenance Method")
+        'provenancemethod': gettext("Provenance Method"),
+        'other-media-alternative-gloss': gettext("Alternative gloss"),
+        'other-media-type': gettext("Type"),
+        'other-media-description': gettext("Description"),
+        'foreignrelation-loan': gettext("Loan"),
+        'foreignrelation-other-lang': gettext("Related Language"),
+        'foreignrelation-other-lang-gloss': gettext("Gloss in Related Language")
     }
     revisions = []
     for revision in GlossRevision.objects.filter(gloss=gloss):
@@ -123,10 +133,29 @@ def pretty_print_revisions(gloss):
             revision_verbose_fieldname = gettext('Sense')
         elif revision.field_name.startswith('relation'):
             revision_verbose_fieldname = gettext('Relations to Other Signs')
+        elif revision.field_name.startswith('other-media'):
+            (field, othermediaid) = revision.field_name.split('_')
+            othermedia = OtherMedia.objects.filter(id=int(othermediaid)).first()
+            if othermedia:
+                revision_verbose_fieldname = "{fieldname} ({path})".format(fieldname=gettext("Other Media"), path=os.path.basename(othermedia.path))
+            else:
+                revision_verbose_fieldname = gettext('Other Media')
+        elif revision.field_name.startswith('note-'):
+            (field, note_id) = revision.field_name.split('_')
+            revision_verbose_fieldname = f'{simple_translation_dict[field[len('note-'):]]}'
+        elif re.match(r"^provenance.*_[1-9]\d*$", revision.field_name):
+            (field, prov_id) = revision.field_name.split('_')
+            revision_verbose_fieldname = f'{simple_translation_dict[field]} ({prov_id})'
+        elif re.match(r"^foreignrelation.*_[1-9]\d*$", revision.field_name):
+            (field, forrel_id) = revision.field_name.split('_')
+            revision_verbose_fieldname = f'{simple_translation_dict[field]} ({forrel_id})'
         elif revision.field_name.startswith('description_'):
             prefix, language_2char = revision.field_name.split('_')
-            language = Language.objects.get(language_code_2char=language_2char)
-            revision_verbose_fieldname = gettext('NME Video Description') + " (%s)" % language.name
+            language = Language.objects.filter(language_code_2char=language_2char).first()
+            if not language:
+                revision_verbose_fieldname = gettext('Description')
+            else:
+                revision_verbose_fieldname = gettext('NME Video Description') + " (%s)" % language.name
         elif revision.field_name.startswith('nmevideo_'):
             prefix, operation = revision.field_name.split('_')
             if operation == 'create':
@@ -198,6 +227,9 @@ def pretty_print_revisions(gloss):
             field_name_qualification = ''
         elif revision.field_name.startswith('sense'):
             field_name_qualification = ''
+        elif revision.field_name.startswith('other-media'):
+            (field, othermediaid) = revision.field_name.split('_')
+            field_name_qualification = f': {simple_translation_dict[field]}'
         else:
             field_name_qualification = ''
         if revision.field_name in Gloss.get_field_names():
@@ -214,7 +246,7 @@ def pretty_print_revisions(gloss):
             else:
                 display_old_value = check_value_to_translated_human_value(revision.field_name, revision.old_value)
                 display_new_value = check_value_to_translated_human_value(revision.field_name, revision.new_value)
-        elif revision.field_name in ['definitionpub']:
+        elif revision.field_name in ['definitionpub'] or revision.field_name.startswith('note-definitionpub'):
             display_old_value = _("Yes") if revision.old_value == 'True' else _("No")
             display_new_value = _("Yes") if revision.new_value == 'True' else _("No")
         else:

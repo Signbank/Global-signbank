@@ -153,7 +153,7 @@ FIELDS['handshape'] = ['hsNumSel','hsFingSel','hsFingSel2','hsFingConf','hsFingC
 
 FIELDS['publication'] = ['inWeb', 'isNew']
 
-FIELDS['properties'] = ['hasvideo', 'hasnmevideo', 'hasothermedia', 'hasmultiplesenses', 'hasannotatedsentences',
+FIELDS['properties'] = ['hasphonologicalvariations', 'hasvideo', 'hasnmevideo', 'hasothermedia', 'hasmultiplesenses', 'hasannotatedsentences',
                         'definitionRole', 'definitionContains', 'defspublished',
                         'createdBy', 'createdAfter', 'createdBefore',
                         'tags', 'excludeFromEcv']
