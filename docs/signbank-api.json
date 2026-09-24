@@ -35,7 +35,8 @@
         "name": "Authentication",
         "type": "http",
         "scheme": "bearer",
-        "in": "header"
+        "in": "header",
+        "description": "Create a token on your Signbank user profile page and send it as 'Authorization: Bearer <token>'. The token is only shown once; delete it on your profile to revoke it. Tokens can have an expiry date, a rate limit (requests per hour) and can be read only (GET requests only). Errors: 401 for a missing, unknown, expired or deactivated token, 403 when a read only token is used for a request that changes data, 429 when the rate limit is exceeded. Error responses have the form {\"errors\": [\"...\"]}."
       }
     }
   },

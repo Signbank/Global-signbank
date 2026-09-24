@@ -11,13 +11,20 @@ var url = '{{PREFIX_URL}}';
 var csrf_token = '{{csrf_token}}';
 
 function display_token(data) {
-    console.log(data);
     if ($.isEmptyObject(data)) {
         return;
     };
-    var new_token = data.new_token;
-    var tokenCell = $("#api_token");
-    tokenCell.html(new_token);
+    $("#api_token_errors").hide().text('');
+    $("#api_token").text(data.new_token);
+    $("#new_api_token").show();
+    $("#request_api_token")[0].reset();
+}
+
+function display_token_errors(xhr) {
+    var errors = (xhr.responseJSON && xhr.responseJSON.errors) ? xhr.responseJSON.errors.join(' ')
+                                                               : '{% trans "The API token could not be created." %}';
+    $("#new_api_token").hide();
+    $("#api_token_errors").text(errors).show();
 }
 
 $(document).ready(function() {
@@ -34,16 +41,34 @@ $(document).ready(function() {
             }
         }
     });
-    $('.auth_token').click(function(e)
+    $('#request_api_token').submit(function(e)
     {
          e.preventDefault();
          $.ajax({
             url : url + "/accounts/auth_token/" ,
             type: 'POST',
-            data: { 'csrfmiddlewaretoken': csrf_token },
+            data: $(this).serialize(),
             datatype: "json",
-            success : display_token
+            success : display_token,
+            error : display_token_errors
          });
+    });
+    $('#copy_api_token').click(function(e)
+    {
+         e.preventDefault();
+         navigator.clipboard.writeText($("#api_token").text());
+         $(this).text('{% trans "Copied" %}');
+    });
+    $('#reload_profile').click(function(e)
+    {
+         e.preventDefault();
+         window.location.reload();
+    });
+    $('.delete_api_token').submit(function(e)
+    {
+         if (!confirm('{% trans "Delete this API token? Scripts using it will stop working." %}')) {
+             e.preventDefault();
+         }
     });
 });
 </script>
@@ -146,31 +171,90 @@ $(document).ready(function() {
     <table class="table table-condensed table-condensed-light">
     <thead class="thead thead-light">
     <tr>
-    <th class='th th-light' style="width:200px;">{% trans "Signbank API Tokens" %}</th>
+    <th class='th th-light' colspan="8">{% trans "Signbank API Tokens" %}</th>
     </tr>
     </thead>
     <tbody class="tbody tbody-light">
-    {% for token in user_api_tokens %}
-        <tr><td><span>{% trans "A Signbank API Token was created on" %} {{token}}</span></td></tr>
-    {% endfor %}
-
     <tr>
+        <td colspan="8">
+            {% trans "API tokens let scripts and other programs use the Signbank API on your behalf." %}
+            {% trans "See the" %} <a href="{{api_manual_url}}" target="_blank" rel="noopener">{% trans "Signbank API manual" %}</a>
+            {% trans "for how to use them." %}
+        </td>
+    </tr>
+    {% if user_api_tokens %}
+    <tr>
+        <th>{% trans "Name" %}</th>
+        <th>{% trans "Token" %}</th>
+        <th>{% trans "Created" %}</th>
+        <th>{% trans "Expires" %}</th>
+        <th>{% trans "Last used" %}</th>
+        <th>{% trans "Access" %}</th>
+        <th>{% trans "Rate limit" %}</th>
+        <th></th>
+    </tr>
+    {% for token in user_api_tokens %}
+    <tr>
+        <td>{{token.name|default:"-"}}</td>
+        <td>{% if token.prefix %}<code>{{token.prefix}}&hellip;</code>{% else %}-{% endif %}</td>
+        <td>{{token.created|date:"Y-m-d"}}</td>
         <td>
-            <form name='request_api_token' id='request_api_token' action="{{PREFIX_URL}}/accounts/auth_token/" method='POST'>
+            {% if token.expires_at %}{{token.expires_at|date:"Y-m-d"}}{% else %}{% trans "Never" %}{% endif %}
+            {% if token.is_expired %}<span class="label label-danger">{% trans "Expired" %}</span>{% endif %}
+            {% if not token.is_active %}<span class="label label-default">{% trans "Deactivated" %}</span>{% endif %}
+        </td>
+        <td>{% if token.last_used_at %}{{token.last_used_at|date:"Y-m-d H:i"}}{% else %}{% trans "Never" %}{% endif %}</td>
+        <td>{% if token.read_only %}{% trans "Read only" %}{% else %}{% trans "Read and write" %}{% endif %}</td>
+        <td>{% if token.effective_rate_limit %}{{token.effective_rate_limit}} / {% trans "hour" %}{% else %}{% trans "Unlimited" %}{% endif %}</td>
+        <td>
+            <form class="delete_api_token" action="{% url 'registration:delete_auth_token' token.id %}" method="POST">
             {% csrf_token %}
-            <input type="hidden" name="username" value="{{user.username}}">
-            <button class='auth_token btn btn-primary'
-                    type='submit'>
+            <button class="btn btn-danger btn-xs" type="submit">{% trans "Delete" %}</button>
+            </form>
+        </td>
+    </tr>
+    {% endfor %}
+    {% endif %}
+    <tr>
+        <td colspan="8">
+            <form name='request_api_token' id='request_api_token' class="form-inline" action="{{PREFIX_URL}}/accounts/auth_token/" method='POST'>
+            {% csrf_token %}
+            <div class="form-group">
+                <label for="api_token_name">{% trans "Name" %}</label>
+                <input type="text" class="form-control" id="api_token_name" name="name" maxlength="100"
+                       placeholder="{% trans 'e.g. upload script' %}">
+            </div>
+            <div class="form-group">
+                <label for="api_token_expiry">{% trans "Expires after" %}</label>
+                <select class="form-control" id="api_token_expiry" name="expiry_days">
+                {% for days, label in api_token_expiry_choices %}
+                    <option value="{{days}}"{% if days == api_token_default_expiry_days %} selected{% endif %}>{{label}}</option>
+                {% endfor %}
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="api_token_rate_limit">{% trans "Requests per hour" %}</label>
+                <input type="number" class="form-control" id="api_token_rate_limit" name="rate_limit" min="1"
+                       {% if api_token_default_rate_limit %}max="{{api_token_default_rate_limit}}"
+                       placeholder="{{api_token_default_rate_limit}}"{% else %}placeholder="{% trans 'Unlimited' %}"{% endif %}>
+            </div>
+            <div class="checkbox">
+                <label><input type="checkbox" name="read_only"> {% trans "Read only" %}</label>
+            </div>
+            <button class='auth_token btn btn-primary' type='submit'>
                 {% trans "Generate Signbank API Token" %}
             </button>
             </form>
-            <br><br>
-            <span id='api_token' name='api_token' style="width:100px;outline:1px;"></span>
-
+            <div id="api_token_errors" class="alert alert-danger" style="display:none;margin-top:10px;"></div>
+            <div id="new_api_token" class="alert alert-success" style="display:none;margin-top:10px;">
+                <p>{% trans "Your new API token is shown below. Copy it now: it will not be shown again." %}</p>
+                <p><code id="api_token" style="user-select:all;"></code>
+                   <button id="copy_api_token" class="btn btn-default btn-xs">{% trans "Copy" %}</button></p>
+                <p><a href="#" id="reload_profile">{% trans "Done, refresh the token list" %}</a></p>
+            </div>
         </td>
     </tr>
     </tbody>
-
     </table>
     {% endif %}
     {% if user_has_queries %}
