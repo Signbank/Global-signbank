@@ -877,6 +877,29 @@ def import_csv_update(request):
 
     list_choice_fields_choices = choice_fields_choices()
 
+    if len(selected_datasets) > 1:
+
+        feedback_message = _('Please select only one dataset.')
+        messages.add_message(request, messages.ERROR, feedback_message)
+
+        return render(request, 'dictionary/import_csv_update.html',
+                      {'form': CSVUploadForm(), 'stage': 0, 'changes': [],
+                       'creation': [],
+                       'gloss_already_exists': [],
+                       'error': [],
+                       'dataset_languages': dataset_languages,
+                       'selected_datasets': selected_datasets,
+                       'optional_columns': optional_columns,
+                       'choice_fields_choices': list_choice_fields_choices,
+                       'translation_languages_dict': {},
+                       'seen_datasets': [],
+                       'USE_REGULAR_EXPRESSIONS': USE_REGULAR_EXPRESSIONS,
+                       'SHOW_DATASET_INTERFACE_OPTIONS': SHOW_DATASET_INTERFACE_OPTIONS})
+
+    dataset = selected_datasets.first()
+
+    dataset_languages = dataset.translation_languages.all()
+
     translation_languages_dict = {}
     # this dictionary is used in the template, it maps each dataset to a list of
     # tuples: (English name of dataset, language_code_2char)
@@ -1117,16 +1140,7 @@ def import_csv_update(request):
                 # break out of enumerate csv lines
                 # Dataset or Signbank ID data for configuring updates in the next step is compromised
                 break
-            # The Lemma ID Gloss may already exist.
-            lemmaidglosstranslations = {}
-            contextual_error_messages_lemmaidglosstranslations = []
-            for language in dataset.translation_languages.all():
-                language_name = getattr(language, DEFAULT_LANGUAGE_HEADER_COLUMN['English'])
-                column_name = "Lemma ID Gloss (%s)" % language_name
-                if column_name in value_dict:
-                    lemma_idgloss_value = value_dict[column_name].strip()
-                    # also stores empty values
-                    lemmaidglosstranslations[language] = lemma_idgloss_value
+
             # updating glosses
             try:
                 gloss = Gloss.objects.select_related().get(pk=pk, archived=False)
@@ -1142,29 +1156,44 @@ def import_csv_update(request):
                 continue
             # dataset is the same
 
-            # If there are changes in the LemmaIdglossTranslation, the changes should refer to another LemmaIdgloss
-            current_lemmaidglosstranslations = {}
-            for language in gloss.lemma.dataset.translation_languages.all():
-                lemma_translation = LemmaIdglossTranslation.objects.filter(language=language, lemma=gloss.lemma).first()
-                current_lemmaidglosstranslations[language] = lemma_translation.text if lemma_translation else ''
-            differences_lemmas = []
-            for language in gloss.lemma.dataset.translation_languages.all():
-                if lemmaidglosstranslations and language in lemmaidglosstranslations.keys():
-                    if current_lemmaidglosstranslations and language in current_lemmaidglosstranslations.keys():
-                        if lemmaidglosstranslations[language] != current_lemmaidglosstranslations[language]:
-                            if lemmaidglosstranslations[language] == current_lemmaidglosstranslations[language].strip():
-                                differences_lemmas.append(language)
-            if lemmaidglosstranslations \
-                    and current_lemmaidglosstranslations != lemmaidglosstranslations:
-                help1 = gettext("Row {row}: Attempt to update Lemma translations for Signbank ID {glossid}.").format(row=str(nl+2), glossid=str(pk))
-                error.append(help1)
-                help2 = gettext("The stored lemma translations differ from those in the CSV: {lemmaidglosstranslations}.").format(lemmaidglosstranslations=current_lemmaidglosstranslations)
-                error.append(help2)
-                if differences_lemmas:
-                    help3 = gettext("There are white space characters at the start or end of the text in the database.")
+            def get_current_lemma_translations(lemma):
+                """Return {language: text} for every translation language of the lemma's dataset."""
+                languages = lemma.dataset.translation_languages.all()
+                stored = {t.language_id: t.text for t in lemma.lemmaidglosstranslation_set.all()}
+                return {language: stored.get(language.pk, '') for language in languages}
+
+            def differs_only_by_whitespace(csv_translations, current_translations):
+                """True if some stored text equals the CSV text once its surrounding whitespace is stripped."""
+                for language, csv_text in csv_translations.items():
+                    stored_text = current_translations.get(language)
+                    if stored_text is not None and stored_text != csv_text and stored_text.strip() == csv_text:
+                        return True
+                return False
+
+            # retrieve the values in the lemma translation columns of the csv for this gloss row
+            lemmaidglosstranslations = {}
+            for language in dataset.translation_languages.all():
+                language_name = getattr(language, DEFAULT_LANGUAGE_HEADER_COLUMN['English'])
+                column_name = "Lemma ID Gloss (%s)" % language_name
+                if column_name in value_dict:
+                    lemma_idgloss_value = value_dict[column_name].strip()
+                    # also stores empty values
+                    lemmaidglosstranslations[language] = lemma_idgloss_value
+            
+            current_lemmaidglosstranslations = get_current_lemma_translations(gloss.lemma)
+
+            if lemmaidglosstranslations and lemmaidglosstranslations != current_lemmaidglosstranslations:
+                if differs_only_by_whitespace(lemmaidglosstranslations, current_lemmaidglosstranslations):
+                    hint = gettext("There are white space characters at the start or end of the text in the database.")
                 else:
-                    help3 = gettext("Use Import CSV Lemma Update instead.")
-                error.append(help3)
+                    hint = gettext("Use Import CSV Lemma Update instead.")
+
+                error.append(gettext("Row {row}: Attempt to update Lemma translations for Signbank ID {glossid}.")
+                             .format(row=nl + 2, glossid=pk))
+                error.append(
+                    gettext("The stored lemma translations differ from those in the CSV: {lemmaidglosstranslations}.")
+                    .format(lemmaidglosstranslations=current_lemmaidglosstranslations))
+                error.append(hint)
                 continue
 
             try:
