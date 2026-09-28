@@ -297,6 +297,9 @@ API_FIELDS = ['idgloss']
 # None means unlimited. Tokens created by users on their profile page can only lower this limit.
 API_TOKEN_DEFAULT_RATE_LIMIT = None
 
+# Manual for the API, linked from the API token section of the user profile. Leave empty to hide the link.
+API_MANUAL_URL = 'https://signbank.github.io/Global-signbank/'
+
 # How long will new glosses be considered new?
 import datetime
 RECENTLY_ADDED_SIGNS_PERIOD = datetime.timedelta(days=90)

@@ -66,7 +66,7 @@ from signbank.csv_interface import (csv_create_senses, csv_update_sentences, csv
 from signbank.dictionary.translate_choice_list import (machine_value_to_translated_human_value,
                                                        choicelist_queryset_to_translated_dict)
 from signbank.abstract_machine import get_interface_language_api
-from signbank.api_token import put_api_user_in_request
+from signbank.api_token import put_api_user_in_request, put_api_user_in_request_read_only
 from signbank.dictionary.gloss_revision import pretty_print_revisions
 from signbank.dictionary.adminviews import show_warning
 
@@ -2100,7 +2100,7 @@ def get_unused_videos(request):
 
 
 @csrf_exempt
-@put_api_user_in_request
+@put_api_user_in_request_read_only
 def package(request, language_code='en'):
 
     activate(language_code)
@@ -2176,7 +2176,7 @@ def package(request, language_code='en'):
     return response
 
 
-@put_api_user_in_request
+@put_api_user_in_request_read_only
 def info(request):
     user_datasets = guardian.shortcuts.get_objects_for_user(request.user, 'view_dataset', Dataset)
     viewable_datasets = get_datasets_with_public_glosses()

@@ -22,7 +22,7 @@ from signbank.settings.base import SUPPORTED_CITATION_IMAGE_EXTENSIONS
 
 from signbank.dictionary.models import (Dataset, Gloss, AnnotatedSentence)
 from signbank.tools import get_two_letter_dir, api_fields, add_gloss_update_to_revision_history
-from signbank.api_token import put_api_user_in_request
+from signbank.api_token import put_api_user_in_request, put_api_user_in_request_read_only
 from signbank.abstract_machine import get_interface_language_api, retrieve_language_code_from_header
 from signbank.zip_interface import (check_subfolders_for_unzipping_ids, get_filenames, check_subfolders_for_unzipping,
                                     import_video_file, remove_video_file_from_import_videos, unzip_video_files_ids,
@@ -114,7 +114,7 @@ def check_api_file_storage(dataset):
 
 
 @csrf_exempt
-@put_api_user_in_request
+@put_api_user_in_request_read_only
 def get_fields_data_json(request, datasetid, language_code='en'):
 
     interface_language_code = retrieve_language_code_from_header(language_code,
@@ -148,7 +148,7 @@ def get_fields_data_json(request, datasetid, language_code='en'):
 
 
 @csrf_exempt
-@put_api_user_in_request
+@put_api_user_in_request_read_only
 def get_gloss_data_json(request, datasetid, glossid, language_code='en'):
     interface_language_code = retrieve_language_code_from_header(language_code,
                                                                  request.headers.get('Accept-Language', ''),
@@ -189,7 +189,7 @@ def get_gloss_data_json(request, datasetid, glossid, language_code='en'):
 
 
 @csrf_exempt
-@put_api_user_in_request
+@put_api_user_in_request_read_only
 def get_annotated_sentences_of_gloss_json(request, datasetid, glossid):
 
     interface_language_code = request.headers.get('Accept-Language', 'en')
@@ -333,7 +333,7 @@ def uploaded_video_filepaths(dataset, useid=False):
 
 
 @csrf_exempt
-@put_api_user_in_request
+@put_api_user_in_request_read_only
 def get_unzipped_video_files_json(request, datasetid):
 
     sequence_of_digits = True

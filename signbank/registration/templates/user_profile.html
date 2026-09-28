@@ -16,6 +16,7 @@ function display_token(data) {
     };
     $("#api_token_errors").hide().text('');
     $("#api_token").text(data.new_token);
+    $("#copy_api_token").text('{% trans "Copy" %}');
     $("#new_api_token").show();
     $("#request_api_token")[0].reset();
 }
@@ -45,7 +46,7 @@ $(document).ready(function() {
     {
          e.preventDefault();
          $.ajax({
-            url : url + "/accounts/auth_token/" ,
+            url : "{% url 'registration:generate_api_token' %}",
             type: 'POST',
             data: $(this).serialize(),
             datatype: "json",
@@ -178,8 +179,10 @@ $(document).ready(function() {
     <tr>
         <td colspan="8">
             {% trans "API tokens let scripts and other programs use the Signbank API on your behalf." %}
+            {% if api_manual_url %}
             {% trans "See the" %} <a href="{{api_manual_url}}" target="_blank" rel="noopener">{% trans "Signbank API manual" %}</a>
             {% trans "for how to use them." %}
+            {% endif %}
         </td>
     </tr>
     {% if user_api_tokens %}
@@ -207,7 +210,7 @@ $(document).ready(function() {
         <td>{% if token.read_only %}{% trans "Read only" %}{% else %}{% trans "Read and write" %}{% endif %}</td>
         <td>{% if token.effective_rate_limit %}{{token.effective_rate_limit}} / {% trans "hour" %}{% else %}{% trans "Unlimited" %}{% endif %}</td>
         <td>
-            <form class="delete_api_token" action="{% url 'registration:delete_auth_token' token.id %}" method="POST">
+            <form class="delete_api_token" action="{% url 'registration:delete_api_token' token.id %}" method="POST">
             {% csrf_token %}
             <button class="btn btn-danger btn-xs" type="submit">{% trans "Delete" %}</button>
             </form>
@@ -217,7 +220,7 @@ $(document).ready(function() {
     {% endif %}
     <tr>
         <td colspan="8">
-            <form name='request_api_token' id='request_api_token' class="form-inline" action="{{PREFIX_URL}}/accounts/auth_token/" method='POST'>
+            <form name='request_api_token' id='request_api_token' class="form-inline" action="{% url 'registration:generate_api_token' %}" method='POST'>
             {% csrf_token %}
             <div class="form-group">
                 <label for="api_token_name">{% trans "Name" %}</label>
@@ -234,9 +237,8 @@ $(document).ready(function() {
             </div>
             <div class="form-group">
                 <label for="api_token_rate_limit">{% trans "Requests per hour" %}</label>
-                <input type="number" class="form-control" id="api_token_rate_limit" name="rate_limit" min="1"
-                       {% if api_token_default_rate_limit %}max="{{api_token_default_rate_limit}}"
-                       placeholder="{{api_token_default_rate_limit}}"{% else %}placeholder="{% trans 'Unlimited' %}"{% endif %}>
+                <input type="number" class="form-control" id="api_token_rate_limit" name="rate_limit" min="1" max="{{api_token_max_rate_limit}}"
+                       {% if api_token_default_rate_limit %}placeholder="{{api_token_default_rate_limit}}"{% else %}placeholder="{% trans 'Unlimited' %}"{% endif %}>
             </div>
             <div class="checkbox">
                 <label><input type="checkbox" name="read_only"> {% trans "Read only" %}</label>

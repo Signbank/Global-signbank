@@ -917,10 +917,17 @@ class SignbankAPITokenAdmin(ModelAdmin):
         updated = queryset.update(is_active=True)
         self.message_user(request, _("%(count)d token(s) activated.") % {'count': updated})
 
-    @admin.action(description=_('Extend selected tokens by 90 days from now'))
+    @admin.action(description=_('Extend selected tokens by 90 days'))
     def extend_tokens_90_days(self, request, queryset):
-        updated = queryset.update(expires_at=timezone.now() + timedelta(days=90))
-        self.message_user(request, _("%(count)d token(s) extended.") % {'count': updated})
+        # tokens that never expire are left alone; expired tokens are extended from now
+        now = timezone.now()
+        updated = 0
+        for signbank_token in queryset.filter(expires_at__isnull=False):
+            signbank_token.expires_at = max(signbank_token.expires_at, now) + timedelta(days=90)
+            signbank_token.save(update_fields=['expires_at'])
+            updated += 1
+        self.message_user(request, _("%(count)d token(s) extended. Tokens that never expire were not changed.")
+                          % {'count': updated})
 
 
 class FieldChoiceAdmin(TranslationAdmin):

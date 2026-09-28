@@ -13,7 +13,6 @@ from signbank.dictionary.models import SignbankAPIToken
 
 TOKEN_LENGTH = 40
 TOKEN_PREFIX_LENGTH = 6
-SAFE_METHODS = ('GET', 'HEAD', 'OPTIONS')
 RATE_LIMIT_WINDOW_SECONDS = 3600
 # avoid a database write on every API call: last_used_at is only refreshed after this interval
 LAST_USED_UPDATE_INTERVAL = timedelta(minutes=1)
@@ -79,14 +78,16 @@ def check_rate_limit(signbank_token):
                                     % {'limit': limit})
 
 
-def get_api_user(request):
+def get_api_user(request, allow_read_only=False):
     """
     Return a user if there is a correct API token in the request.
     The HTTP header must contain:
 
     Authorization:"Bearer XXXXXX"
 
-    where XXXXXX represents the user's API Token
+    where XXXXXX represents the user's API Token.
+    Read only tokens are refused unless allow_read_only is set, which is only done for endpoints
+    that never change data. The HTTP method is not used for this, since not every endpoint checks it.
     """
     auth_token_request = request.headers.get('Authorization', '')
     if not auth_token_request:
@@ -106,8 +107,8 @@ def get_api_user(request):
         raise APIAuthException(_("Your Authorization Token has expired."))
     if not signbank_token.signbank_user.is_active:
         raise APIAuthException(_("The user of this Authorization Token is not active."))
-    if signbank_token.read_only and request.method not in SAFE_METHODS:
-        raise APIPermissionException(_("Your Authorization Token is read only."))
+    if signbank_token.read_only and not allow_read_only:
+        raise APIPermissionException(_("Your Authorization Token is read only and cannot be used for this request."))
 
     check_rate_limit(signbank_token)
 
@@ -118,8 +119,7 @@ def get_api_user(request):
     return signbank_token.signbank_user
 
 
-def put_api_user_in_request(func):
-    """A decorator to replace the request.user with the user found by checking an API token"""
+def _put_api_user_in_request(func, allow_read_only):
     def wrapper(*args, **kwargs):
         if not args or not isinstance(args[0], HttpRequest):
             return func(*args, **kwargs)
@@ -127,7 +127,7 @@ def put_api_user_in_request(func):
         request = args[0]
 
         try:
-            api_user = get_api_user(request)
+            api_user = get_api_user(request, allow_read_only=allow_read_only)
         except APIAuthException as api_auth_exception:
             return JsonResponse({'errors': [str(api_auth_exception)]}, status=api_auth_exception.status)
 
@@ -135,3 +135,16 @@ def put_api_user_in_request(func):
             request.user = api_user
         return func(*args, **kwargs)
     return wrapper
+
+
+def put_api_user_in_request(func):
+    """A decorator to replace the request.user with the user found by checking an API token"""
+    return _put_api_user_in_request(func, allow_read_only=False)
+
+
+def put_api_user_in_request_read_only(func):
+    """
+    Like put_api_user_in_request, but also accepts read only tokens.
+    Only use this for endpoints that never change data.
+    """
+    return _put_api_user_in_request(func, allow_read_only=True)

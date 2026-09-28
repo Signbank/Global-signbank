@@ -31,8 +31,6 @@ from signbank.dictionary.context_data import get_selected_datasets
 from signbank.tools import get_users_without_dataset
 from signbank.api_token import create_api_token
 
-API_MANUAL_URL = 'https://signbank.github.io/Global-signbank/'
-
 
 def activate(request, activation_key, template_name='registration/activate.html'):
     """
@@ -347,7 +345,9 @@ def user_profile(request):
                                                  'api_token_expiry_choices': API_TOKEN_EXPIRY_CHOICES,
                                                  'api_token_default_expiry_days': API_TOKEN_DEFAULT_EXPIRY_DAYS,
                                                  'api_token_default_rate_limit': getattr(settings, 'API_TOKEN_DEFAULT_RATE_LIMIT', None),
-                                                 'api_manual_url': API_MANUAL_URL,
+                                                 'api_token_max_rate_limit': (getattr(settings, 'API_TOKEN_DEFAULT_RATE_LIMIT', None)
+                                                                              or API_TOKEN_MAX_RATE_LIMIT),
+                                                 'api_manual_url': getattr(settings, 'API_MANUAL_URL', ''),
                                                  'SHOW_DATASET_INTERFACE_OPTIONS': settings.SHOW_DATASET_INTERFACE_OPTIONS,
                                                  'expiry': expiry,
                                                  'delta': delta})
@@ -356,12 +356,14 @@ def user_profile(request):
 API_TOKEN_EXPIRY_CHOICES = [(30, _("30 days")), (90, _("90 days")), (180, _("180 days")),
                             (365, _("1 year")), (0, _("Never"))]
 API_TOKEN_DEFAULT_EXPIRY_DAYS = 90
+# upper bound for a rate limit chosen on the profile page, well within the range of the database field
+API_TOKEN_MAX_RATE_LIMIT = 1000000
 
 
 @login_required
 @require_POST
-def auth_token(request):
-    """Generate a new API token for the user; the token itself is returned once and never stored"""
+def generate_api_token(request):
+    """The token itself is returned once and never stored"""
     name = request.POST.get('name', '').strip()[:100]
 
     try:
@@ -374,13 +376,14 @@ def auth_token(request):
 
     rate_limit = request.POST.get('rate_limit', '').strip()
     if rate_limit:
-        if not rate_limit.isdigit() or int(rate_limit) < 1:
-            return JsonResponse({'errors': [str(_("The rate limit must be a positive number."))]}, status=400)
+        # checking the length first keeps int() away from huge inputs
+        if len(rate_limit) > len(str(API_TOKEN_MAX_RATE_LIMIT)) or not rate_limit.isdigit():
+            rate_limit = 0
         rate_limit = int(rate_limit)
-        default_rate_limit = getattr(settings, 'API_TOKEN_DEFAULT_RATE_LIMIT', None)
-        if default_rate_limit and rate_limit > default_rate_limit:
-            return JsonResponse({'errors': [str(_("The rate limit can be at most %(limit)s requests per hour.")
-                                                % {'limit': default_rate_limit})]}, status=400)
+        max_rate_limit = getattr(settings, 'API_TOKEN_DEFAULT_RATE_LIMIT', None) or API_TOKEN_MAX_RATE_LIMIT
+        if not 1 <= rate_limit <= max_rate_limit:
+            return JsonResponse({'errors': [str(_("The rate limit must be a number from 1 to %(limit)s requests per hour.")
+                                                % {'limit': max_rate_limit})]}, status=400)
     else:
         rate_limit = None
 
@@ -393,8 +396,8 @@ def auth_token(request):
 
 @login_required
 @require_POST
-def delete_auth_token(request, token_id):
-    """Delete (revoke) one of the user's own API tokens"""
+def delete_api_token(request, token_id):
+    """Only the user's own tokens can be deleted"""
     deleted, _deleted_per_model = SignbankAPIToken.objects.filter(pk=token_id, signbank_user=request.user).delete()
     if deleted:
         messages.add_message(request, messages.INFO, _("The API token has been deleted."))

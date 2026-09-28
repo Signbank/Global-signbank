@@ -36,7 +36,7 @@
         "type": "http",
         "scheme": "bearer",
         "in": "header",
-        "description": "Create a token on your Signbank user profile page and send it as 'Authorization: Bearer <token>'. The token is only shown once; delete it on your profile to revoke it. Tokens can have an expiry date, a rate limit (requests per hour) and can be read only (GET requests only). Errors: 401 for a missing, unknown, expired or deactivated token, 403 when a read only token is used for a request that changes data, 429 when the rate limit is exceeded. Error responses have the form {\"errors\": [\"...\"]}."
+        "description": "Create a token on your Signbank user profile page and send it as 'Authorization: Bearer <token>'. The token is only shown once; delete it on your profile to revoke it. Requests without an Authorization header are handled anonymously and can only see public data. Tokens can have an expiry date, a rate limit (requests per hour) and can be read only: a read only token can only be used for the endpoints that do not change data (get_fields_data, get_gloss_data, get_annotated_sentences_of_gloss, get_unzipped_video_files, package and info). Errors: 401 for an empty, unknown, expired or deactivated token, 403 when a read only token is used for an endpoint that changes data, 429 when the rate limit is exceeded. Error responses have the form {\"errors\": [\"...\"]}."
       }
     }
   },
