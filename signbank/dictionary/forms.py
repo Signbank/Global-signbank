@@ -1836,18 +1836,20 @@ class SearchGlossIds(forms.Form):
 class GlossForm(forms.Form):
     gloss = None
     release_information = forms.CharField(label=_('Source'), widget=forms.TextInput())
+    trigger = forms.CharField(label=_("Trigger"), widget=forms.TextInput())
     useInstr = forms.CharField(label=_("Annotation instructions"))
     wordClass2 = forms.CharField(label=_('Word class 2'))
 
     class Meta:
         model = Gloss
-        fields = ['release_information']
+        fields = ['release_information', 'trigger']
 
     def __init__(self, *args, **kwargs):
         self.gloss = kwargs.pop('gloss')
         self.use_lookaheads = kwargs.pop('use_lookaheads')
         super(GlossForm, self).__init__(*args, **kwargs)
         self.fields['release_information'].initial = self.gloss.release_information if self.gloss.release_information not in ['', '-', None] else ''
+        self.fields['trigger'].initial = self.gloss.trigger if self.gloss.trigger not in ['', '-', None] else ''
         self.fields['dialect'] = forms.CharField(label=_('Dialect'))
         self.fields['dialect'].initial = self.gloss.get_dialect_display()
         self.fields['useInstr'].initial = self.gloss.useInstr if self.gloss.useInstr not in ['', '-', None] else ''
