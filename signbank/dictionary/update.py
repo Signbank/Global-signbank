@@ -1593,7 +1593,7 @@ def update_gloss(request, glossid):
         except (ObjectDoesNotExist, MultipleObjectsReturned):
             # if the handshape field has not been set yet, it is set to the empty handshape object
             handshape = Handshape.objects.get(machine_value=0)
-        gloss.__setattr__(field, handshape)
+        setattr(gloss, field, handshape)
         gloss.save()
         newvalue = handshape.name
 
@@ -1607,7 +1607,7 @@ def update_gloss(request, glossid):
     elif field in text_fields:
         original_value = '' if original_value is None else original_value
         # clear stored value first in case of space characters
-        gloss.__setattr__(field, '')
+        setattr(gloss, field, '')
         gloss.save()
         if field in ['useInstr']:
             # get rid of hidden space characters, this is a text area field
@@ -1617,7 +1617,7 @@ def update_gloss(request, glossid):
             newvalue = ''
         else:
             newvalue = value.strip()
-        gloss.__setattr__(field, newvalue)
+        setattr(gloss, field, newvalue)
         gloss.save()
         add_gloss_update_to_revision_history(request.user, gloss, field, original_value, newvalue)
 
@@ -1651,7 +1651,7 @@ def update_gloss(request, glossid):
             original_value = False if original_value is None else original_value
             display_value = value
             boolean_value = (value in ['letter', 'number'])
-            gloss.__setattr__(field, boolean_value)
+            setattr(gloss, field, boolean_value)
             gloss.save()
             if original_value != boolean_value:
                 add_gloss_update_to_revision_history(request.user, gloss, field, str(original_value), display_value)
@@ -1689,14 +1689,14 @@ def update_gloss(request, glossid):
             fieldchoice = FieldChoice.objects.get(field=gloss_field.field_choice_category, machine_value=value)
         except (ObjectDoesNotExist, MultipleObjectsReturned):
             fieldchoice = FieldChoice.objects.get(field=gloss_field.field_choice_category, machine_value=0)
-        gloss.__setattr__(field, fieldchoice)
+        setattr(gloss, field, fieldchoice)
         gloss.save()
         newvalue = fieldchoice.name
 
     # Regular field updating
     else:
         # Alert: Note that if field is idgloss, the following code updates it
-        gloss.__setattr__(field, value)
+        setattr(gloss, field, value)
         gloss.save()
 
     if field in FIELDS['phonology']:
