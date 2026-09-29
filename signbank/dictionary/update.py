@@ -16,7 +16,7 @@ from django.views.decorators.http import require_http_methods
 from django.db.models.fields import BooleanField, IntegerField, CharField, TextField
 from django.db.models import ForeignKey, Model
 from django.forms.utils import ValidationError
-from django.db import DatabaseError, IntegrityError
+from django.db import DatabaseError, IntegrityError, transaction
 from django.utils.timezone import get_current_timezone
 from django.contrib import messages
 from django.contrib.auth.models import Group
@@ -368,22 +368,18 @@ def add_phonological_variation_video(request, variationid):
 def make_phonological_variation_be_primary(request, variationid):
     """Make a phonological variation be thw primary gloss"""
 
-    variation_to_swap = get_object_or_404(PhonologicalVariation, id=variationid)
-    gloss = variation_to_swap.gloss
-
-    swap_variation_data = dict()
-    gloss_data = dict()
+    variation = get_object_or_404(PhonologicalVariation, id=variationid)
+    gloss = variation.gloss
 
     for field in FIELDS['phonology']:
-        swap_variation_data[field] = getattr(variation_to_swap, field)
-        gloss_data[field] = getattr(gloss, field)
+        variation_value = getattr(variation, field)
+        gloss_value = getattr(gloss, field)
+        setattr(variation, field, gloss_value)
+        setattr(gloss, field, variation_value)
 
-    for field in FIELDS['phonology']:
-        setattr(variation_to_swap, field, getattr(gloss, field))
-        setattr(gloss, field, swap_variation_data[field])
-
-    gloss.save()
-    variation_to_swap.save()
+    with transaction.atomic():
+        gloss.save()
+        variation.save()
 
     return JsonResponse({'success': True}, status=200)
 
