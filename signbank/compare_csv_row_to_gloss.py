@@ -1,8 +1,8 @@
 
 from django.utils.translation import override, activate, gettext, gettext_lazy as _
 
-from signbank.settings.server_specific import DEBUG_CSV
-from signbank.dictionary.models import Gloss, Morpheme, MorphologyDefinition, Relation
+from signbank.settings.server_specific import LANGUAGES, DEBUG_CSV
+from signbank.dictionary.models import Gloss, Morpheme, MorphologyDefinition, Relation, TaggedItem, Tag
 from signbank.dictionary.update_csv import validate_and_resolve_gloss_relations
 
 
@@ -425,4 +425,93 @@ def compare_relations_to_foreign_signs(gloss, new_human_value, human_key, errors
                         'side_effects': {}})
     return errors_found, differences
 
+
+def get_tags_as_string(gloss_id):
+    activate(LANGUAGES[0][0])
+
+    tags_of_gloss = TaggedItem.objects.filter(object_id=gloss_id)
+    tag_names_of_gloss = []
+    for t_obj in tags_of_gloss:
+        tag_id = t_obj.tag_id
+        tag_name = Tag.objects.get(id=tag_id)
+        tag_names_of_gloss += [str(tag_name)]
+    tag_names_of_gloss = sorted(tag_names_of_gloss)
+
+    tag_names_string = ", ".join(tag_names_of_gloss)
+
+    tag_names_display = [t.replace('_', ' ') for t in tag_names_of_gloss]
+    tag_names_display = ', '.join(tag_names_display)
+
+    return tag_names_string, tag_names_display
+
+
+def check_existence_tags(gloss_id, new_human_value_list, tag_name_error, default_annotationidglosstranslation):
+    # convert new Tags csv value to proper format
+    # values is not empty
+
+    tags_objects = Tag.objects.all()
+    refreshed_tags = []
+    for tag in tags_objects:
+        tag.refresh_from_db()
+        refreshed_tags.append(tag)
+    all_tags = [t.name for t in refreshed_tags]
+
+    new_tag_errors = []
+
+    new_human_value_list = [v.replace(' ', '_') for v in new_human_value_list]
+
+    new_human_value_list_no_dups = list(set(new_human_value_list))
+    sorted_new_tags = sorted(new_human_value_list_no_dups)
+
+    # check for non-existent tags
+    for t in sorted_new_tags:
+        if t not in all_tags:
+            error_string = gettext(
+                "For gloss '{annotation}' ({glossid}), an unknown Tag name was encountered: '{tag}'.").format(
+                annotation=default_annotationidglosstranslation, glossid=str(gloss_id), tag=t.replace('_', ' '))
+            new_tag_errors += [error_string]
+            if not tag_name_error:
+                error_string = gettext("See the available Tags in the table on the Import CSV Update Glosses page.")
+                new_tag_errors += [error_string]
+                tag_name_error = True
+
+    new_tag_names_display = [t.replace('_', ' ') for t in sorted_new_tags]
+    new_tag_names_display = ', '.join(new_tag_names_display)
+
+    sorted_new_tags = ", ".join(sorted_new_tags)
+
+    return new_tag_names_display, sorted_new_tags, new_tag_errors, tag_name_error
+
+
+def compare_tags(gloss, new_human_value, human_key, errors_found, differences, tag_name_error):
+    (tag_names_string, sorted_tags_display) = get_tags_as_string(gloss.id)
+
+    if new_human_value in ['None', '']:
+        (sorted_new_tags_display, sorted_new_tags, new_tag_errors, tag_name_error) = \
+            ("", [], [], tag_name_error)
+    else:
+        new_human_value_list = [v.strip() for v in new_human_value.split(',')]
+
+        (sorted_new_tags_display, sorted_new_tags, new_tag_errors, tag_name_error) = \
+            check_existence_tags(gloss.id, new_human_value_list, tag_name_error,
+                                 get_default_annotationidglosstranslation(gloss))
+
+    if len(new_tag_errors):
+        errors_found += new_tag_errors
+        return errors_found, differences, tag_name_error
+
+    if sorted_tags_display == sorted_new_tags_display:
+        return errors_found, differences, tag_name_error
+
+    differences.append({'pk': gloss.id,
+                        'dataset': gloss.lemma.dataset,
+                        'annotationidglosstranslation': get_default_annotationidglosstranslation(gloss),
+                        'machine_key': human_key,
+                        'human_key': human_key,
+                        'original_machine_value': sorted_tags_display,
+                        'original_human_value': sorted_tags_display,
+                        'new_machine_value': sorted_new_tags_display,
+                        'new_human_value': sorted_new_tags_display,
+                        'side_effects': {}})
+    return errors_found, differences, tag_name_error
 

@@ -45,7 +45,7 @@ from signbank.csv_interface import (sense_translations_for_language, update_sens
                                     normalize_field_choice)
 from signbank.compare_csv_row_to_gloss import (get_default_annotationidglosstranslation, compare_simultaneous_morphology,
                                                compare_sequential_morphology, compare_blend_morphology, compare_relations,
-                                               compare_relations_to_foreign_signs)
+                                               compare_relations_to_foreign_signs, compare_tags)
 from signbank.dictionary.field_choices import fields_to_fieldcategory_dict
 
 from tagging.models import TaggedItem, Tag
@@ -605,32 +605,7 @@ def compare_valuedict_to_gloss(valuedict, gloss_id, my_datasets, nl,
                 if tags_toggle == 'keep' and (new_human_value == 'None' or new_human_value == ''):
                     continue
 
-                (tag_names_string, sorted_tags_display) = get_tags_as_string(gloss_id)
-
-                if new_human_value in ['None', '']:
-                    (sorted_new_tags_display, sorted_new_tags, new_tag_errors, tag_name_error) = \
-                        ("", [], [], tag_name_error)
-                else:
-                    new_human_value_list = [v.strip() for v in new_human_value.split(',')]
-
-                    (sorted_new_tags_display, sorted_new_tags, new_tag_errors, tag_name_error) = \
-                        check_existence_tags(gloss_id, new_human_value_list, tag_name_error,
-                                             default_annotationidglosstranslation)
-
-                if len(new_tag_errors):
-                    errors_found += new_tag_errors
-                elif sorted_tags_display != sorted_new_tags_display:
-
-                    differences.append({'pk': gloss_id,
-                                        'dataset': current_dataset,
-                                        'annotationidglosstranslation': default_annotationidglosstranslation,
-                                        'machine_key': human_key,
-                                        'human_key': human_key,
-                                        'original_machine_value': sorted_tags_display,
-                                        'original_human_value': sorted_tags_display,
-                                        'new_machine_value': sorted_new_tags_display,
-                                        'new_human_value': sorted_new_tags_display,
-                                        'side_effects': {}})
+                errors_found, differences, tag_name_error = compare_tags(gloss, new_human_value, human_key, errors_found, differences, tag_name_error)
                 continue
 
             elif human_key == 'Notes':
@@ -1189,63 +1164,6 @@ def get_notes_as_string(gloss):
         notes_display.append(tuple_reordered)
     sorted_notes_display = ', '.join(notes_display)
     return notes_display, sorted_notes_display
-
-
-def get_tags_as_string(gloss_id):
-    activate(LANGUAGES[0][0])
-
-    tags_of_gloss = TaggedItem.objects.filter(object_id=gloss_id)
-    tag_names_of_gloss = []
-    for t_obj in tags_of_gloss:
-        tag_id = t_obj.tag_id
-        tag_name = Tag.objects.get(id=tag_id)
-        tag_names_of_gloss += [str(tag_name)]
-    tag_names_of_gloss = sorted(tag_names_of_gloss)
-
-    tag_names_string = ", ".join(tag_names_of_gloss)
-
-    tag_names_display = [t.replace('_', ' ') for t in tag_names_of_gloss]
-    tag_names_display = ', '.join(tag_names_display)
-
-    return tag_names_string, tag_names_display
-
-
-def check_existence_tags(gloss_id, new_human_value_list, tag_name_error, default_annotationidglosstranslation):
-    # convert new Tags csv value to proper format
-    # values is not empty
-
-    tags_objects = Tag.objects.all()
-    refreshed_tags = []
-    for tag in tags_objects:
-        tag.refresh_from_db()
-        refreshed_tags.append(tag)
-    all_tags = [t.name for t in refreshed_tags]
-
-    new_tag_errors = []
-
-    new_human_value_list = [v.replace(' ', '_') for v in new_human_value_list]
-
-    new_human_value_list_no_dups = list(set(new_human_value_list))
-    sorted_new_tags = sorted(new_human_value_list_no_dups)
-
-    # check for non-existent tags
-    for t in sorted_new_tags:
-        if t not in all_tags:
-            error_string = gettext(
-                "For gloss '{annotation}' ({glossid}), an unknown Tag name was encountered: '{tag}'.").format(
-                annotation=default_annotationidglosstranslation, glossid=str(gloss_id), tag=t.replace('_', ' '))
-            new_tag_errors += [error_string]
-            if not tag_name_error:
-                error_string = gettext("See the available Tags in the table on the Import CSV Update Glosses page.")
-                new_tag_errors += [error_string]
-                tag_name_error = True
-
-    new_tag_names_display = [t.replace('_', ' ') for t in sorted_new_tags]
-    new_tag_names_display = ', '.join(new_tag_names_display)
-
-    sorted_new_tags = ", ".join(sorted_new_tags)
-
-    return new_tag_names_display, sorted_new_tags, new_tag_errors, tag_name_error
 
 
 @csrf_exempt
