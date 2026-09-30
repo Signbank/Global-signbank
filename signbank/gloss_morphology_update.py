@@ -11,11 +11,10 @@ from signbank.settings.server_specific import MODELTRANSLATION_LANGUAGES
 from signbank.dictionary.models import (Dataset, Gloss, GlossRevision)
 from signbank.api_token import put_api_user_in_request
 from signbank.abstract_machine import retrieve_language_code_from_header
-from signbank.tools import (check_existence_sequential_morphology,
-                            check_existence_simultaneous_morphology,
-                            check_existence_blend_morphology)
 from signbank.dictionary.update_csv import (update_simultaneous_morphology, update_blend_morphology,
                                             update_sequential_morphology)
+from signbank.compare_csv_row_to_gloss import (check_existence_simultaneous_morphology, check_existence_sequential_morphology,
+                                               check_existence_blend_morphology)
 
 
 @csrf_exempt
