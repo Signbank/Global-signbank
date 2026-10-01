@@ -1457,6 +1457,8 @@ class Gloss(Phonology):
     creationDate = models.DateField(_('Creation date'), default=datetime(2015, 1, 1))
     lastUpdated = models.DateTimeField(_('Last updated'), auto_now=True)
     creator = models.ManyToManyField(User)
+    trigger = models.TextField(_("Trigger"), null=True, blank=True)
+
     alternative_id = models.CharField(max_length=50, null=True, blank=True)
 
     @property
@@ -4285,7 +4287,7 @@ CATEGORY_MODELS_MAPPING = {
 
 
 # setting for the Gloss Edit template
-GLOSS_FIELDS_UPDATES = ['release_information', 'dialect', 'useInstr', 'wordClass',
+GLOSS_FIELDS_UPDATES = ['release_information', 'trigger', 'dialect', 'useInstr', 'wordClass',
                         'handedness', 'domhndsh', 'subhndsh', 'handCh',
                         'relatArtic', 'locprim', 'contType', 'movSh', 'movDir',
                         'repeat', 'altern',
