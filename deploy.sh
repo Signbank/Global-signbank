@@ -34,4 +34,4 @@ python "$ROOT"repo/bin/develop.py migrate
 #python "$ROOT"repo/bin/develop.py test --keepdb
 
 #Step 8: reboot
-reboot
+sudo systemd-run --on-active=10s /usr/bin/systemctl reboot
