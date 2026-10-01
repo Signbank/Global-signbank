@@ -1,9 +1,12 @@
+import re
+import copy
 
-from django.utils.translation import override, activate, gettext, gettext_lazy as _
+from django.utils.translation import activate, gettext
 
 from signbank.settings.server_specific import LANGUAGES, DEBUG_CSV
-from signbank.dictionary.models import Gloss, Morpheme, MorphologyDefinition, Relation, TaggedItem, Tag
+from signbank.dictionary.models import Gloss, Morpheme, MorphologyDefinition, Relation, FieldChoice
 from signbank.dictionary.update_csv import validate_and_resolve_gloss_relations
+from tagging.models import TaggedItem, Tag
 
 
 def get_default_annotationidglosstranslation(gloss):
@@ -64,7 +67,7 @@ def check_existence_simultaneous_morphology(gloss, values):
             errors.append(error_string)
             continue
         morpheme_gloss = filter_morphemes.first()
-        if not morpheme_gloss.is_morpheme():
+        if not morpheme_gloss or not morpheme_gloss.is_morpheme():
             error_string = gettext(
                 "For gloss '{annotation}' ({glossid}), new Simultaneous Morphology morpheme '{morpheme}' is not a morpheme.").format(
                 annotation=default_annotationidglosstranslation, glossid=str(gloss.pk), morpheme=str(morpheme))
@@ -181,8 +184,6 @@ def check_existence_blend_morphology(gloss, values):
     default_annotationidglosstranslation = get_default_annotationidglosstranslation(gloss)
 
     errors = []
-    found = []
-    not_found = []
     tuples_list = []
     checked = ''
 
@@ -282,19 +283,24 @@ def check_existence_relations(gloss, values):
         return checked, side_effects, errors
 
     gloss_relations = [(relation.source, relation.role_fk, relation.target)
-                       for relation in Relation.objects.filter(source=gloss)]
+                       for relation in Relation.objects.filter(source=gloss).order_by('role_fk__machine_value')]
     checked_relations = []
     for (role, target) in values_mapped_to_objects:
         if (gloss, role, target) in gloss_relations:
+            # checked_relations contains tuples in the display format
+            checked_relations.append((role.name, get_default_annotationidglosstranslation(target)))
             continue
-        # checked_relations contains tuples in the display format
         target_annotation = get_default_annotationidglosstranslation(target)
-        checked_relations.append((role.name, target_annotation))
         if target_annotation not in side_effects.keys():
             side_effects[target_annotation] = []
         side_effects[target_annotation].append({'source_pk': target.pk,
                                                 'role': role.reverse_relation_role(),
                                                 'target': get_default_annotationidglosstranslation(gloss)})
+
+    # remove duplicates and sort
+    checked_relations = list(set(checked_relations))
+    checked_relations = sorted(checked_relations, key=lambda tup: tup[1])
+
     checked = ','.join([f'{role_name}:{target_annotation}'
                         for (role_name, target_annotation) in checked_relations])
     return checked, side_effects, errors
@@ -303,6 +309,9 @@ def check_existence_relations(gloss, values):
 def compare_relations(gloss, new_human_value, human_key, errors_found, differences):
     relations = [(relation.role_fk.name, get_default_annotationidglosstranslation(relation.target))
                  for relation in gloss.get_relations()]
+    # remove duplicates and sort
+    relations = list(set(relations))
+    relations = sorted(relations, key=lambda tup: tup[1])
     current_relations_string = ','.join([f'{role}:{annotation}' for (role, annotation) in relations])
 
     if new_human_value in ['None', ''] and not relations:
@@ -335,7 +344,7 @@ def compare_relations(gloss, new_human_value, human_key, errors_found, differenc
     return errors_found, differences
 
 
-def check_existence_foreign_relations(gloss, relations, values):
+def check_existence_foreign_relations(gloss, values):
     default_annotationidglosstranslation = get_default_annotationidglosstranslation(gloss)
 
     errors = []
@@ -358,7 +367,6 @@ def check_existence_foreign_relations(gloss, relations, values):
 
     # remove duplicates
     sorted_values = list(set(sorted_values))
-
     sorted_values = sorted(sorted_values, key=lambda tup: tup[2])
 
     for (loan_word, other_lang, other_lang_gloss) in sorted_values:
@@ -403,8 +411,7 @@ def compare_relations_to_foreign_signs(gloss, new_human_value, human_key, errors
     else:
         new_human_value_list = [v.strip() for v in new_human_value.split(',')]
 
-    (checked_new_human_value, errors) = check_existence_foreign_relations(gloss, relations_with_categories,
-                                                                          new_human_value_list)
+    (checked_new_human_value, errors) = check_existence_foreign_relations(gloss, new_human_value_list)
 
     if len(errors):
         errors_found += errors
@@ -514,4 +521,186 @@ def compare_tags(gloss, new_human_value, human_key, errors_found, differences, t
                         'new_human_value': sorted_new_tags_display,
                         'side_effects': {}})
     return errors_found, differences, tag_name_error
+
+
+def check_existence_notes(gloss, values, note_type_error, note_tuple_error, default_annotationidglosstranslation):
+    # convert new Notes csv value to proper format
+    # values is not empty
+
+    activate(LANGUAGES[0][0])
+    # The following need to be ordered reversely because note name 'Project Note' contains 'Note'
+    note_role_choices = FieldChoice.objects.filter(field__iexact='NoteType',
+                                                   machine_value__gte=0).order_by('-name')
+
+    new_human_values = []
+    new_note_errors = []
+
+    # first replace the note names with their machine value
+    # this is needed in order to parse the input, since some notes have parentheses and numbers, etc.
+    mapped_values, map_errors = map_values_to_notes_id(values)
+
+    if map_errors:
+        note_tuple_error = True
+        # error in processing new notes
+        error_string1 = gettext(
+            "For gloss '{annotation}' ({glossid}), unknown type for Notes: '{values}'").format(
+            annotation=default_annotationidglosstranslation, glossid=str(gloss.pk), values=values)
+        new_note_errors.append(error_string1)
+        if not note_type_error:
+            error_string2 = gettext("See the available Notes types in the table on the Import CSV Update Glosses page.")
+            new_note_errors.append(error_string2)
+            note_type_error = True
+        # it doesn't work to use the translation here because it's a proxy
+        # new_note_errors.append(_('A non-existent note type was found.'))
+        return values, values, new_note_errors, note_type_error, note_tuple_error
+
+    # the space is required in order to identify multiple notes in the input
+    split_human_values = re.split(r', ([0-9]+: ?)', mapped_values)
+
+    # this doesn't split cleanly, because the "split" is also shown in the result
+    # e.g., ['NNN: (...,...,...)', "NNN: ', '(...,...,...)']
+    # an index variable is used in order to obtain the correct item from the list of splits
+    # consecutive elements must be concatenated after the first element, as shown above
+    splits_combined = []
+    list_index = 0
+    # find the patterns of the different notes in the input
+    for split_value in split_human_values:
+        if re.match(r'[0-9]+: ?(.+,.+,.+)', split_value):
+            # there is a match to the pattern <machine_value>:(<published>,<index>,<text>) possibly with spaces
+            splits_combined.append(split_value)
+        elif re.match(r'[0-9]+: ?', split_value):
+            next_value = split_human_values[list_index+1]
+            splits_combined.append(split_value+next_value)
+        # else skip over this one, it was combined with the previous
+        list_index += 1
+
+    for split_value in splits_combined:
+        take_apart = re.match(r'([0-9]+): ?[(](False|True),\s?(-?[0-9]+),\s?(.+)[)]', split_value)
+        if take_apart:
+            (field, name, count, text) = take_apart.groups()
+            new_tuple = (field, name, count, text.strip())
+            new_human_values.append(new_tuple)
+        else:
+            # error in processing new notes
+            error_string = gettext(
+                "For gloss '{annotation}' ({glossid}), could not parse Notes: '{values}'.").format(
+                annotation=default_annotationidglosstranslation, glossid=str(gloss.pk), values=values)
+
+            if not note_tuple_error:
+                new_note_errors += [error_string]
+                error_string1 = gettext("Notes values must be a comma-separated list of tagged tuples: 'Type:(Boolean,Index,Text)'")
+                new_note_errors += [error_string1]
+                error_string2 = gettext("Try exporting a CSV for glosses with Notes to check the format.")
+                new_note_errors += [error_string2]
+                note_tuple_error = True
+            else:
+                new_note_errors += [error_string]
+
+    note_translations = {}
+    for nrc in note_role_choices:
+        note_translations[str(nrc.machine_value)] = nrc.name
+
+    new_notes_mapped = []
+    for (machine_value, published, count, text) in new_human_values:
+        role = note_translations[machine_value]
+        new_notes_mapped.append((role, published, count, text))
+
+    sorted_new_human_values = sorted(new_notes_mapped, key=lambda x: (x[0], x[1], x[2], x[3]))
+
+    new_notes_display = []
+    for (role, published, count, text) in sorted_new_human_values:
+        new_note = f'{role}: ({published},{count},{text})'
+        new_notes_display.append(new_note)
+    sorted_new_notes_display = ', '.join(new_notes_display)
+    return new_notes_display, sorted_new_notes_display, new_note_errors, note_type_error, note_tuple_error
+
+
+def map_values_to_notes_id(input_values):
+
+    values = copy.deepcopy(input_values)
+    map_errors = False
+    activate(LANGUAGES[0][0])
+    note_role_choices = FieldChoice.objects.filter(field__iexact='NoteType', machine_value__gte=0).order_by('-name')
+
+    # this needs to be done twice in order to reverse map to escaped names
+    # some of the names include parentheses
+    note_reverse_translation = {}
+    for nrc in note_role_choices:
+        note_reverse_translation[nrc.name] = str(nrc.machine_value)
+
+    sorted_note_names = note_reverse_translation.keys()
+    pattern_mapped_sorted_note_names = []
+    escaped_note_reverse_translation = {}
+    for note_name in sorted_note_names:
+        escaped_note_name = re.sub(r'([()])', r'\\\1', note_name)
+        pattern_mapped_sorted_note_names.append(escaped_note_name)
+        escaped_note_reverse_translation[escaped_note_name] = note_reverse_translation[note_name]
+
+    mapped_values = values
+    for note_name in pattern_mapped_sorted_note_names:
+        regex_string = r"%s: \(" % note_name
+        m = re.search(regex_string, mapped_values)
+        if m:
+            regex = re.compile(note_name+": \\(")
+            mapped_values = regex.sub(escaped_note_reverse_translation[note_name]+': (', mapped_values)
+    # see if any note names have not been reverse mapped
+    find_all = re.findall(r'\D+: ?[(]', mapped_values)
+    if find_all:
+        map_errors = True
+    return mapped_values, map_errors
+
+
+def get_notes_as_string(gloss):
+    activate(LANGUAGES[0][0])
+    notes_of_gloss = gloss.definition_set.all()
+
+    notes_list = []
+    for note in notes_of_gloss:
+        notes_list += [note.note_tuple()]
+    sorted_notes_list = sorted(notes_list, key=lambda x: (x[0], x[1], x[2], x[3]))
+
+    notes_display = []
+    for (role, published, count, text) in sorted_notes_list:
+        # does not use a comprehension because of nested parentheses in role and text fields
+        tuple_reordered = f'{role}: ({published},{count},{text})'
+        notes_display.append(tuple_reordered)
+    sorted_notes_display = ', '.join(notes_display)
+    return notes_display, sorted_notes_display
+
+
+def compare_notes(gloss, new_human_value, human_key, notes_assign_toggle, errors_found, differences, note_type_error, note_tuple_error):
+
+    notes_list, sorted_notes_display = get_notes_as_string(gloss)
+
+    if new_human_value == 'None' or new_human_value == '':
+        (new_notes_display, sorted_new_notes_display, new_note_errors, note_type_error, note_tuple_error) = \
+            ([], "", [], note_type_error, note_tuple_error)
+    else:
+        (new_notes_display, sorted_new_notes_display, new_note_errors, note_type_error, note_tuple_error) = \
+            check_existence_notes(gloss, new_human_value, note_type_error,
+                                  note_tuple_error, get_default_annotationidglosstranslation(gloss))
+
+    if len(new_note_errors):
+        errors_found += new_note_errors
+        return errors_found, differences, note_type_error, note_tuple_error
+
+    if new_notes_display == notes_list:
+        return errors_found, differences, note_type_error, note_tuple_error
+
+    if notes_assign_toggle == 'update':
+        combined_notes = notes_list + new_notes_display
+        sorted_new_notes_display = ', '.join(combined_notes)
+
+    differences.append({'pk': gloss.id,
+                        'dataset': gloss.lemma.dataset,
+                        'annotationidglosstranslation': get_default_annotationidglosstranslation(gloss),
+                        'machine_key': human_key,
+                        'human_key': human_key,
+                        'original_machine_value': sorted_notes_display,
+                        'original_human_value': sorted_notes_display,
+                        'new_machine_value': sorted_new_notes_display,
+                        'new_human_value': sorted_new_notes_display,
+                        'side_effects': {}})
+
+    return errors_found, differences, note_type_error, note_tuple_error
 
