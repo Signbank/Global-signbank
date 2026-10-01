@@ -29,6 +29,34 @@ def fieldchoice_ajax_complete(request, field, prefix):
     return JsonResponse(result, safe=False)
 
 
+def domhndsh_ajax_complete(request, prefix):
+    """Return a list of handshapes matching the search term
+    as a JSON structure suitable for typeahead."""
+    qs = Handshape.objects.filter(name__istartswith=prefix).order_by('name')
+
+    result = []
+    for g in qs:
+        result += [{'name': f'{g.name}', 'machine_value': g.machine_value,
+                    'color': g.field_color if g.field_color[0] == '#' else f'#{g.field_color}'}]
+
+
+    return JsonResponse(result, safe=False)
+
+
+def subhndsh_ajax_complete(request, prefix):
+    """Return a list of handshapes matching the search term
+    as a JSON structure suitable for typeahead."""
+    qs = Handshape.objects.filter(name__istartswith=prefix).order_by('name')
+
+    result = []
+    for g in qs:
+        result += [{'name': f'{g.name}', 'machine_value': g.machine_value,
+                    'color': g.field_color if g.field_color[0] == '#' else f'#{g.field_color}'}]
+
+
+    return JsonResponse(result, safe=False)
+
+
 def derivHist_ajax_complete(request, prefix):
     """Return a list of derivation history choices matching the search term"""
     qs = DerivationHistory.objects.filter(name__istartswith=prefix).order_by('name')

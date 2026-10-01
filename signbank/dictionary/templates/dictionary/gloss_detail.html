@@ -2592,6 +2592,12 @@
                  <th class='th th-light' style="color:darkred">
                      #{{gloss_variation.variation}}
                      <span>
+                     {% csrf_token %}
+                     <button id='variant_primary_btn_{{gloss_variation.id}}' class="quick-save btn btn-primary edit-mode glyph-btn button-phonology-to-appear-in-edit-mode"
+                        value='{{gloss_variation.id}}' data-category="phonology"
+                        data-url-template="/dictionary/update/make_phonological_variation_be_primary/{{gloss_variation.pk}}/"
+                        data-fields="[]" data-panel="phonology"
+                        type="button"><span class='glyphicon glyphicon-star-empty'></span></button>
                      <button id='variant_delete_btn_{{gloss_variation.id}}' class="quick-save btn btn-primary edit-mode glyph-btn button-phonology-to-appear-in-edit-mode"
                         value='{{gloss_variation.id}}' data-category="phonology"
                         data-url-template="/dictionary/update/delete_phonological_variation/{{gloss_variation.pk}}/"
@@ -2767,24 +2773,24 @@
             {% endif %}
             {% endwith %}
                 <th style="width:300px;">{% trans "Strong Hand" %}</th>
-                {% with phonologyform.fields|get_item:'domhndsh' as domhndsh_field %}
+                {% with phonologyform.fields|get_item:'domhndsh' as gloss_domhndsh_field %}
                 {% with phonologyform.fields|get_item:'domhndsh_letter_or_number' as domhndsh_letter_or_number_field %}
                 <td class="editform-phonology">
                     {% if use_lookaheads == 'lookaheads' %}
                     <div style="display:table-cell;" id="domhndsh_cell">
                     <input class='form-control form-control-light domhndshtypeahead' type="text" size="25"
-                           placeholder="{{domhndsh_field.initial}}" id="domhndsh_lookahead" value="{{domhndsh_field.initial}}"
-                           data-machine_value='{{domhndsh_field.machine_value}}' data-field="domhndsh"
-                           data-category="phonology" autocomplete="off" data-initial="{{domhndsh_field.initial}}" >
+                           placeholder="{{gloss_domhndsh_field.initial}}" id="domhndsh_lookahead" value="{{gloss_domhndsh_field.initial}}"
+                           data-machine_value='{{gloss_domhndsh_field.machine_value}}' data-field="domhndsh"
+                           data-category="phonology" autocomplete="off" data-initial="{{gloss_domhndsh_field.initial}}" >
                     <input type="hidden" name="domhndsh" value=""
                            id="domhndsh_machine_value" >
                     </div>
                     {% else %}
                     <div style="display:table-cell;" class="editselect">
                     <select class="select_domhndsh form-control form-control-light" name="domhndsh"
-                                id="domhndsh_value" data-category="phonology" data-initial="{{domhndsh_field.initial}}">
-                        {% for machine_value, opn in domhndsh_field.choices %}
-                        {% if machine_value == domhndsh_field.initial|to_str %}
+                                id="domhndsh_value" data-category="phonology" data-initial="{{gloss_domhndsh_field.initial}}">
+                        {% for machine_value, opn in gloss_domhndsh_field.choices %}
+                        {% if machine_value == gloss_domhndsh_field.initial|to_str %}
                         <option value={{machine_value}} selected="selected">{{opn}}</option>
                         {% else %}
                         <option value={{machine_value}}>{{opn}}</option>
@@ -2865,15 +2871,15 @@
             {% endif %}
             {% endwith %}
                 <th style="width:300px;">{% trans "Weak Hand" %}</th>
-                {% with phonologyform.fields|get_item:'subhndsh' as subhndsh_field %}
+                {% with phonologyform.fields|get_item:'subhndsh' as gloss_subhndsh_field %}
                 {% with phonologyform.fields|get_item:'subhndsh_letter_or_number' as subhndsh_letter_or_number_field %}
                 <td class="editform-phonology">
                     {% if use_lookaheads == 'lookaheads' %}
                     <div style="display:table-cell;" id="subhndsh_cell" >
                     <input class='form-control form-control-light subhndshtypeahead' type="text" size="25"
-                           placeholder="{{subhndsh_field.initial}}"
-                           id="subhndsh_lookahead" value="{{subhndsh_field.initial}}" data-initial="{{subhndsh_field.initial}}"
-                           data-machine_value='{{subhndsh_field.machine_value}}' data-field="subhndsh"
+                           placeholder="{{gloss_subhndsh_field.initial}}"
+                           id="subhndsh_lookahead" value="{{gloss_subhndsh_field.initial}}" data-initial="{{gloss_subhndsh_field.initial}}"
+                           data-machine_value='{{gloss_subhndsh_field.machine_value}}' data-field="subhndsh"
                            data-category="phonology" autocomplete="off" >
                     <input type="hidden" name="subhndsh" value=""
                            id="subhndsh_machine_value" >
@@ -2881,9 +2887,9 @@
                     {% else %}
                     <div style="display:table-cell;" class="editselect">
                     <select class="select_subhndsh form-control form-control-light" name="subhndsh"
-                                id="subhndsh_value" data-category="phonology" data-initial="{{subhndsh_field.initial}}">
-                        {% for machine_value, opn in subhndsh_field.choices %}
-                        {% if machine_value == subhndsh_field.initial|to_str %}
+                                id="subhndsh_value" data-category="phonology" data-initial="{{gloss_subhndsh_field.initial}}">
+                        {% for machine_value, opn in gloss_subhndsh_field.choices %}
+                        {% if machine_value == gloss_subhndsh_field.initial|to_str %}
                         <option value={{machine_value}} selected="selected">{{opn}}</option>
                         {% else %}
                         <option value={{machine_value}}>{{opn}}</option>

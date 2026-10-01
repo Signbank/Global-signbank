@@ -6,8 +6,8 @@ var busy_editing = false;
 // Define all typeahead configurations in one place
 const typeaheadConfigs = [
     { name: 'handedness', endpoint: 'fieldchoice/Handedness' },
-    { name: 'domhndsh', endpoint: 'handshape' },
-    { name: 'subhndsh', endpoint: 'handshape' },
+    { name: 'domhndsh', endpoint: 'domhndsh' },
+    { name: 'subhndsh', endpoint: 'subhndsh' },
     { name: 'handCh', endpoint: 'fieldchoice/HandshapeChange' },
     { name: 'relatArtic', endpoint: 'fieldchoice/RelatArtic' },
     { name: 'locprim', endpoint: 'fieldchoice/Location' },
@@ -434,50 +434,54 @@ const lookaheadConfig = [
 ];
 
 function readyLookahead(config) {
-    let typeahead = window[config.name+'typeahead'];
-    typeahead($(config.lookup));
-
-    $(config.lookup).bind('typeahead:selected', function(ev, suggestion) {
-          busy_editing = true;
-          $(this).attr('value', suggestion.name);
-          $(this).attr("val", suggestion.name);
-          $(this).attr('placeholder', suggestion.name);
-          $('#'+config.name+'_machine_value').attr('value', suggestion.machine_value);
-          $(this).attr('data-preselect', suggestion.machine_value);
-    });
-    $(config.element).on("focus", function() {
-      var preselect_machine_value = $(this).attr('data-preselect');
-      if (!preselect_machine_value) {
-        $(this).val('').trigger('input').typeahead('open');
-        return;
-      }
-      var preselect_name = $(this).attr('placeholder');
-      if (!preselect_name || preselect_name === '-') {return;}
-      $(this).attr("val", preselect_name);
-      $(this).trigger('typeahead:selected', [{'name': preselect_name, 'machine_value': preselect_machine_value}]);
-    });
-    for (const variationid of phonological_variations_ids) {
-        var typeahead_element = '#'+config.name+'_'+variationid+'_lookahead';
-        $(typeahead_element).bind('typeahead:selected', function(ev, suggestion) {
+    var lookahead_elements = $(config.lookup);
+    lookahead_elements.each(function () {
+        let typeahead = window[config.name+'typeahead'];
+        typeahead($(config.lookup));
+        const typeahead_element_gloss = '#'+config.name+'_lookahead';
+        const machine_value_element_gloss = '#'+config.name+'_machine_value';
+        $(typeahead_element_gloss).bind('typeahead:selected', function(ev, suggestion) {
               busy_editing = true;
-              $(this).attr('value', suggestion.name);
-              $(this).attr("val", suggestion.name);
+              $(this).val(suggestion.name);
               $(this).attr('placeholder', suggestion.name);
-              $('#'+config.name+'_'+variationid+'_machine_value').attr('value', suggestion.machine_value);
+              $(machine_value_element_gloss).attr('value', suggestion.machine_value);
               $(this).attr('data-preselect', suggestion.machine_value);
         });
-        $(typeahead_element).on("focus", function() {
-              var preselect_machine_value = $(this).attr('data-preselect');
-              if (!preselect_machine_value) {
-                $(this).val('').trigger('input').typeahead('open');
-                return;
-              }
-              var preselect_name = $(this).attr('placeholder');
-              if (!preselect_name || preselect_name === '-') {return;}
-              $(this).attr("val", preselect_name);
-              $(this).trigger('typeahead:selected', [{'name': preselect_name, 'machine_value': preselect_machine_value}]);
+        $(typeahead_element_gloss).on("focus", function() {
+          var preselect_machine_value = $(this).attr('data-preselect');
+          if (!preselect_machine_value) {
+            $(this).val('').trigger('input').typeahead('open');
+            return;
+          }
+          var preselect_name = $(this).attr('placeholder');
+          if (!preselect_name || preselect_name === '-') {return;}
+          $(this).val(preselect_name);
+          $(this).trigger('typeahead:selected', [{'name': preselect_name, 'machine_value': preselect_machine_value}]);
         });
-    }
+
+        for (const variationid of phonological_variations_ids) {
+            const typeahead_element = '#'+config.name+'_'+variationid+'_lookahead';
+            const machine_value_element = '#'+config.name+'_'+variationid+'_machine_value';
+            $(typeahead_element).bind('typeahead:selected', function(ev, suggestion) {
+                  busy_editing = true;
+                  $(this).val(suggestion.name);
+                  $(this).attr('placeholder', suggestion.name);
+                  $(machine_value_element).attr('value', suggestion.machine_value);
+                  $(this).attr('data-preselect', suggestion.machine_value);
+            });
+            $(typeahead_element).on("focus", function() {
+                  var preselect_machine_value = $(this).attr('data-preselect');
+                  if (!preselect_machine_value) {
+                    $(this).val('').trigger('input').typeahead('open');
+                    return;
+                  }
+                  var preselect_name = $(this).attr('placeholder');
+                  if (!preselect_name || preselect_name === '-') {return;}
+                  $(this).val(preselect_name);
+                  $(this).trigger('typeahead:selected', [{'name': preselect_name, 'machine_value': preselect_machine_value}]);
+            });
+        }
+    });
 }
 
 const multiselectConfig = [
