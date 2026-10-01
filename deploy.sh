@@ -24,14 +24,14 @@ chmod a-w "$ROOT"writable/database/manual_backups/before_latest_deploy.db
 #Step 4: install any new requirements
 pip install -r "$ROOT"repo/requirements.txt
 
-#Step 5: fix all permissions
-chmod -R g=rw "$ROOT"signbank/live/repo
-
-#Step 6: migrate the database
+#Step 5: migrate the database
 python "$ROOT"repo/bin/develop.py migrate
 
-#Step 7: create a new test database that includes migrations
+#Step 6: create a new test database that includes migrations
 #python "$ROOT"repo/bin/develop.py create_test_db
 
-#Step 8: Run all unit tests
+#Step 7: Run all unit tests
 #python "$ROOT"repo/bin/develop.py test --keepdb
+
+#Step 8: reboot
+reboot
