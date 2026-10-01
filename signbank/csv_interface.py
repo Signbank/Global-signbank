@@ -709,9 +709,12 @@ def required_csv_columns(dataset_languages, create_or_update='create_gloss'):
     return required_columns, language_fields, optional_columns
 
 
-def csv_header_row_glosslist(dataset_languages):
+def csv_header_row_glosslist(dataset_languages, extended):
 
-    fieldnames = FIELDS['main'] + FIELDS['phonology'] + FIELDS['semantics'] + FIELDS['frequency'] + ['inWeb', 'isNew']
+    if extended:
+        fieldnames = FIELDS['phonology'] + FIELDS['semantics'] + FIELDS['frequency'] + ['inWeb', 'isNew'] + FIELDS['main']
+    else:
+        fieldnames = FIELDS['phonology']
     fields = [Gloss.get_field(fname) for fname in fieldnames if fname in Gloss.get_field_names()]
 
     lang_attr_name = 'name_' + DEFAULT_KEYWORDS_LANGUAGE['language_code_2char']
@@ -720,25 +723,28 @@ def csv_header_row_glosslist(dataset_languages):
     lemmaidglosstranslation_fields = ["Lemma ID Gloss" + " (" + getattr(language, lang_attr_name) + ")"
                                       for language in dataset_languages]
 
-    keyword_fields = ["Senses" + " (" + getattr(language, lang_attr_name) + ")"
-                      for language in dataset_languages]
-
-    sentence_fields = ["Example Sentences" + " (" + getattr(language, lang_attr_name) + ")"
-                       for language in dataset_languages]
-
     # CSV should be the first language in the settings
     activate(LANGUAGES[0][0])
-    header = ['Signbank ID', 'Dataset'] + lemmaidglosstranslation_fields + annotationidglosstranslation_fields \
-        + keyword_fields + sentence_fields + [f.verbose_name.encode('ascii', 'ignore').decode() for f in fields]
-    for extra_column in ['Dialects', 'Sequential Morphology', 'Simultaneous Morphology',
-                         'Blend Morphology',
-                         'Relations to other signs', 'Relations to foreign signs', 'Tags', 'Notes']:
-        header.append(extra_column)
 
+    if extended:
+        keyword_fields = ["Senses" + " (" + getattr(language, lang_attr_name) + ")"
+                          for language in dataset_languages]
+
+        sentence_fields = ["Example Sentences" + " (" + getattr(language, lang_attr_name) + ")"
+                           for language in dataset_languages]
+        header = ['Signbank ID', 'Dataset'] + lemmaidglosstranslation_fields + annotationidglosstranslation_fields \
+                 + keyword_fields + sentence_fields + [f.verbose_name.encode('ascii', 'ignore').decode() for f in fields]
+        for extra_column in ['Dialects', 'Sequential Morphology', 'Simultaneous Morphology',
+                             'Blend Morphology',
+                             'Relations to other signs', 'Relations to foreign signs', 'Tags', 'Notes']:
+            header.append(extra_column)
+    else:
+        header = ['Signbank ID', 'Dataset'] + lemmaidglosstranslation_fields + annotationidglosstranslation_fields \
+                 + [f.verbose_name.encode('ascii', 'ignore').decode() for f in fields]
     return header
 
 
-def csv_gloss_to_row(gloss, dataset_languages, fields):
+def csv_gloss_to_row(gloss, dataset_languages, fields, extended):
 
     row = [str(gloss.pk), gloss.lemma.dataset.acronym]
     for language in dataset_languages:
@@ -758,15 +764,16 @@ def csv_gloss_to_row(gloss, dataset_languages, fields):
         else:
             row.append("")
 
-    # Put senses (keywords) per language in a cell
-    for language in dataset_languages:
-        gloss_senses_of_language = sense_translations_for_language(gloss, language)
-        row.append(gloss_senses_of_language)
+    if extended:
+        # Put senses (keywords) per language in a cell
+        for language in dataset_languages:
+            gloss_senses_of_language = sense_translations_for_language(gloss, language)
+            row.append(gloss_senses_of_language)
 
-    # Put example sentences per language in a cell
-    for language in dataset_languages:
-        gloss_example_sentences_of_language = sense_examplesentences_for_language(gloss, language)
-        row.append(gloss_example_sentences_of_language)
+        # Put example sentences per language in a cell
+        for language in dataset_languages:
+            gloss_example_sentences_of_language = sense_examplesentences_for_language(gloss, language)
+            row.append(gloss_example_sentences_of_language)
 
     for f in fields:
         # Try the value of the choicelist
@@ -776,12 +783,12 @@ def csv_gloss_to_row(gloss, dataset_languages, fields):
             else:
                 field_value = getattr(gloss, f.name)
                 value = field_value.name if field_value else '-'
-        elif isinstance(f, models.ForeignKey) and f.related_model == Handshape:
+        elif f.related_model == Handshape:
             handshape_field_value = getattr(gloss, f.name)
             value = handshape_field_value.name if handshape_field_value else '-'
-        elif f.related_model == SemanticField:
+        elif f.related_model == SemanticField and extended:
             value = ", ".join([str(sf.name) for sf in gloss.semField.all()])
-        elif f.related_model == DerivationHistory:
+        elif f.related_model == DerivationHistory and extended:
             value = ", ".join([str(sf.name) for sf in gloss.derivHist.all()])
         else:
             internal_value = getattr(gloss, f.name)
@@ -815,58 +822,59 @@ def csv_gloss_to_row(gloss, dataset_languages, fields):
             value = str(value)
         row.append(value)
 
-    # get dialects
-    dialects = gloss.get_dialect_display()
-    row.append(dialects)
+    if extended:
+        # get dialects
+        dialects = gloss.get_dialect_display()
+        row.append(dialects)
 
-    # get morphology
-    # Sequential Morphology
-    morphemes = gloss.get_hasComponentOfType_display()
-    row.append(morphemes)
+        # get morphology
+        # Sequential Morphology
+        morphemes = gloss.get_hasComponentOfType_display()
+        row.append(morphemes)
 
-    # Simultaneous Morphology
-    simultaneous_morphemes = gloss.get_morpheme_display()
-    row.append(simultaneous_morphemes)
+        # Simultaneous Morphology
+        simultaneous_morphemes = gloss.get_morpheme_display()
+        row.append(simultaneous_morphemes)
 
-    # Blend Morphology
-    blend_morphemes = gloss.get_blendmorphology_display()
-    row.append(blend_morphemes)
+        # Blend Morphology
+        blend_morphemes = gloss.get_blendmorphology_display()
+        row.append(blend_morphemes)
 
-    # get relations to other signs
-    relations_categories = gloss.get_relation_display()
-    row.append(relations_categories)
+        # get relations to other signs
+        relations_categories = gloss.get_relation_display()
+        row.append(relations_categories)
 
-    # get relations to foreign signs
-    relations_categories = gloss.get_relationToForeignSign_display()
-    row.append(relations_categories)
+        # get relations to foreign signs
+        relations_categories = gloss.get_relationToForeignSign_display()
+        row.append(relations_categories)
 
-    # export tags
-    tags_of_gloss = TaggedItem.objects.filter(object_id=gloss.id)
-    tag_names_of_gloss = []
-    for t_obj in tags_of_gloss:
-        tag_id = t_obj.tag_id
-        tag_name = Tag.objects.get(id=tag_id)
-        tag_names_of_gloss += [str(tag_name).replace('_', ' ')]
+        # export tags
+        tags_of_gloss = TaggedItem.objects.filter(object_id=gloss.id)
+        tag_names_of_gloss = []
+        for t_obj in tags_of_gloss:
+            tag_id = t_obj.tag_id
+            tag_name = Tag.objects.get(id=tag_id)
+            tag_names_of_gloss += [str(tag_name).replace('_', ' ')]
 
-    tag_names = ", ".join(tag_names_of_gloss)
-    row.append(tag_names)
+        tag_names = ", ".join(tag_names_of_gloss)
+        row.append(tag_names)
 
-    # export notes
-    notes_of_gloss = gloss.definition_set.all()
+        # export notes
+        notes_of_gloss = gloss.definition_set.all()
 
-    notes_list = []
-    for note in notes_of_gloss:
-        notes_list += [note.note_tuple()]
-    sorted_notes_list = sorted(notes_list, key=lambda x: (x[0], x[1], x[2], x[3]))
+        notes_list = []
+        for note in notes_of_gloss:
+            notes_list += [note.note_tuple()]
+        sorted_notes_list = sorted(notes_list, key=lambda x: (x[0], x[1], x[2], x[3]))
 
-    notes_list = []
-    for (role, published, count, text) in sorted_notes_list:
-        # does not use a comprehension because of nested parentheses in role and text fields
-        tuple_reordered = role + ': (' + published + ',' + count + ',' + text + ')'
-        notes_list.append(tuple_reordered)
+        notes_list = []
+        for (role, published, count, text) in sorted_notes_list:
+            # does not use a comprehension because of nested parentheses in role and text fields
+            tuple_reordered = role + ': (' + published + ',' + count + ',' + text + ')'
+            notes_list.append(tuple_reordered)
 
-    notes_display = ", ".join(notes_list)
-    row.append(notes_display)
+        notes_display = ", ".join(notes_list)
+        row.append(notes_display)
 
     # Make it safe for weird chars
     safe_row = []
@@ -922,7 +930,7 @@ def csv_morpheme_to_row(gloss, dataset_languages, fields):
             else:
                 field_value = getattr(gloss, f.name)
                 value = field_value.name if field_value else '-'
-        elif isinstance(f, models.ForeignKey) and f.related_model == Handshape:
+        elif f.related_model == Handshape:
             handshape_field_value = getattr(gloss, f.name)
             value = handshape_field_value.name if handshape_field_value else '-'
         elif f.related_model == SemanticField:
