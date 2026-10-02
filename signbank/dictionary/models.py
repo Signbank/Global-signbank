@@ -5,10 +5,11 @@ import copy
 import os
 import json
 import tagging
-from django.db.models.fields import BooleanField
 
 from django.utils.timezone import get_current_timezone
-from django.db.models import Q, When, Case, IntegerField
+from django.db.models import Q, When, Case, ForeignKey
+from django.db.models.fields import BooleanField, IntegerField, CharField, TextField
+from django.utils import timezone
 from django.db import models
 from django.conf import settings
 from django.utils.encoding import escape_uri_path
@@ -16,7 +17,6 @@ from django.contrib.auth.models import User
 from django.dispatch import receiver
 from django.db.models.signals import post_save, pre_delete, m2m_changed
 from django.utils.translation import gettext_noop, gettext_lazy as _, gettext, activate
-from django.forms.utils import ValidationError
 from django.forms.models import model_to_dict
 from django.core.exceptions import ObjectDoesNotExist, MultipleObjectsReturned
 from django.db import DatabaseError, IntegrityError
@@ -1211,6 +1211,58 @@ class Phonology(MetaModelMixin, models.Model):
                         phonology_dict[field] = 'False'
 
         return phonology_dict
+
+    def update_phonology(self, **kwargs):
+        """
+        Polymorphic update method. Mutates common abstract fields
+        and any subclass fields passed via kwargs.
+        """
+        updated_fields = []
+        for field, value in kwargs.items():
+            if field in ['domhndsh_letter_or_number']:
+                letter_or_number = {'0': None, '1': 'letter', '2': 'number'}[value]
+                setattr(self, 'domhndsh_letter', letter_or_number == 'letter')
+                setattr(self, 'domhndsh_number', letter_or_number == 'number')
+                updated_fields.append('domhndsh_letter')
+                updated_fields.append('domhndsh_number')
+                continue
+            if field in ['subhndsh_letter_or_number']:
+                letter_or_number = {'0': None, '1': 'letter', '2': 'number'}[value]
+                setattr(self, 'subhndsh_letter', letter_or_number == 'letter')
+                setattr(self, 'subhndsh_number', letter_or_number == 'number')
+                updated_fields.append('subhndsh_letter')
+                updated_fields.append('subhndsh_number')
+                continue
+            if field not in PHONOLOGY_FIELDS_UPDATES:
+                continue
+            internal_field = Gloss.get_field(field)
+            if isinstance(internal_field, FieldChoiceForeignKey):
+                if not value:
+                    continue
+                new_value = FieldChoice.objects.get(field=internal_field.field_choice_category, machine_value=int(value))
+                setattr(self, field, new_value)
+                updated_fields.append(field)
+            elif internal_field.concrete and isinstance(internal_field, models.ForeignKey) and internal_field.related_model == Handshape:
+                if not value:
+                    continue
+                new_value = Handshape.objects.get(machine_value=int(value))
+                setattr(self, field, new_value)
+                updated_fields.append(field)
+            elif isinstance(internal_field, BooleanField):
+                if field in ['weakdrop', 'weakprop']:
+                    boolean_value = {'0': None, '1': True, '2': False}[value]
+                    self.__setattr__(field, boolean_value)
+                    updated_fields.append(field)
+                elif field in ['repeat', 'altern']:
+                    boolean_value = {'0': None, '1': True}[value]
+                    setattr(self, field, boolean_value)
+                    updated_fields.append(field)
+            elif isinstance(internal_field, CharField) or isinstance(internal_field, TextField):
+                value = value.strip()
+                setattr(self, field, value)
+                updated_fields.append(field)
+
+        self.save(update_fields=updated_fields)
 
 
 class Gloss(Phonology):
@@ -3519,20 +3571,47 @@ class SignbankAPIToken(models.Model):
     Overrides the Token model to use the
     non-built-in user model
     """
-    api_token = models.CharField(max_length=16,
+    # only the SHA-256 hash of the token is stored, the token itself is shown once on creation
+    api_token = models.CharField(max_length=64, db_index=True, editable=False,
                                  verbose_name=_("Token"))
     signbank_user = models.ForeignKey(User, verbose_name=_("Signbank User"), related_name='tokens',
                                       on_delete=models.CASCADE)
     created = models.DateTimeField(_("Created"), auto_now_add=True)
+    name = models.CharField(_("Name"), max_length=100, blank=True,
+                            help_text=_("A label to recognise the token by, e.g. the script or machine using it"))
+    prefix = models.CharField(_("Prefix"), max_length=8, blank=True, editable=False,
+                              help_text=_("The first characters of the token, to help identify it"))
+    expires_at = models.DateTimeField(_("Expires"), null=True, blank=True,
+                                      help_text=_("Leave empty for a token that does not expire"))
+    last_used_at = models.DateTimeField(_("Last used"), null=True, blank=True, editable=False)
+    is_active = models.BooleanField(_("Active"), default=True,
+                                    help_text=_("Inactive tokens are rejected by the API"))
+    read_only = models.BooleanField(_("Read only"), default=False,
+                                    help_text=_("Read only tokens can only be used for GET requests"))
+    rate_limit = models.PositiveIntegerField(_("Rate limit"), null=True, blank=True,
+                                             help_text=_("Maximum number of requests per hour. "
+                                                         "Leave empty to use the site default."))
 
     class Meta:
-        verbose_name = _("Token")
-        verbose_name_plural = _("Tokens")
+        verbose_name = _("API Token")
+        verbose_name_plural = _("API Tokens")
+        ordering = ['-created']
 
     def __str__(self):
-        # only show creation date when used as a string
-        creation_date = self.created.strftime("%Y-%m-%d")
-        return creation_date
+        # never show the (hashed) token itself
+        label = self.name or self.created.strftime("%Y-%m-%d")
+        if self.prefix:
+            return f"{label} ({self.prefix}...)"
+        return label
+
+    def is_expired(self):
+        return self.expires_at is not None and self.expires_at <= timezone.now()
+
+    def effective_rate_limit(self):
+        """The maximum number of requests per hour for this token, or None for unlimited"""
+        if self.rate_limit:
+            return self.rate_limit
+        return getattr(settings, 'API_TOKEN_DEFAULT_RATE_LIMIT', None)
 
 
 class Affiliation(models.Model):

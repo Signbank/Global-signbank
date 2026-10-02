@@ -4,7 +4,7 @@ from django import forms
 from django.forms import Textarea
 from django.core.exceptions import ObjectDoesNotExist, MultipleObjectsReturned
 
-from django.contrib import admin
+from django.contrib import admin, messages
 from django.contrib.auth.admin import UserAdmin
 from django.contrib.auth.models import User
 from django.contrib.admin import SimpleListFilter, ModelAdmin
@@ -16,6 +16,8 @@ from urllib.parse import parse_qsl
 import copy
 
 from guardian.admin import GuardedModelAdmin
+from datetime import timedelta
+from django.utils import timezone
 
 from signbank.settings.server_specific import (FIELDS, SHOW_DATASET_INTERFACE_OPTIONS, LANGUAGE_CODE, SHOW_FIELD_CHOICE_COLORS,
                                                LANGUAGES, MODELTRANSLATION_LANGUAGES)
@@ -28,7 +30,7 @@ from signbank.dictionary.models import (Dataset, Gloss, Translation, LemmaIdglos
                                         MorphologyDefinition, SimultaneousMorphologyDefinition,
                                         DerivationHistory, DerivationHistoryTranslation,
                                         GlossRevision, DeletedGlossOrMedia,
-                                        UserProfile, Affiliation, AffiliatedUser,
+                                        UserProfile, Affiliation, AffiliatedUser, SignbankAPIToken,
                                         SearchHistory,
                                         QueryParameterMultilingual,  QueryParameterSemanticField,
                                         QueryParameterDerivationHistory,
@@ -834,9 +836,98 @@ class UserProfileInline(admin.StackedInline):
     verbose_name_plural = 'profile'
 
 
+class SignbankAPITokenInline(admin.TabularInline):
+    """Show a user's API tokens on the user page; new tokens are made in the API Tokens admin or the profile page"""
+    model = SignbankAPIToken
+    fk_name = 'signbank_user'
+    fields = ['name', 'prefix', 'created', 'expires_at', 'last_used_at', 'is_active', 'read_only', 'rate_limit']
+    readonly_fields = ['prefix', 'created', 'last_used_at']
+    extra = 0
+    show_change_link = True
+
+    def has_add_permission(self, request, obj=None):
+        return False
+
+
 # Define a new User admin
 class UserAdmin(UserAdmin):
-    inlines = (UserProfileInline, )
+    inlines = (UserProfileInline, SignbankAPITokenInline)
+
+
+class APITokenStatusFilter(SimpleListFilter):
+    title = _('status')
+    parameter_name = 'status'
+
+    def lookups(self, request, model_admin):
+        return [('valid', _('Valid')), ('expired', _('Expired')), ('inactive', _('Inactive'))]
+
+    def queryset(self, request, queryset):
+        now = timezone.now()
+        if self.value() == 'valid':
+            return queryset.filter(is_active=True).filter(Q(expires_at__isnull=True) | Q(expires_at__gt=now))
+        if self.value() == 'expired':
+            return queryset.filter(expires_at__lte=now)
+        if self.value() == 'inactive':
+            return queryset.filter(is_active=False)
+        return queryset
+
+
+class SignbankAPITokenAdmin(ModelAdmin):
+    list_display = ['signbank_user', 'name', 'prefix', 'created', 'expires_at', 'last_used_at',
+                    'is_active', 'read_only', 'rate_limit', 'is_expired']
+    list_filter = [APITokenStatusFilter, 'is_active', 'read_only']
+    search_fields = ['signbank_user__username', 'signbank_user__email', 'name', 'prefix']
+    list_select_related = ['signbank_user']
+    autocomplete_fields = ['signbank_user']
+    readonly_fields = ['prefix', 'created', 'last_used_at']
+    fields = ['signbank_user', 'name', 'prefix', 'created', 'last_used_at',
+              'expires_at', 'is_active', 'read_only', 'rate_limit']
+    actions = ['deactivate_tokens', 'activate_tokens', 'extend_tokens_90_days']
+
+    @admin.display(boolean=True, description=_('Expired'))
+    def is_expired(self, obj):
+        return obj.is_expired()
+
+    def get_readonly_fields(self, request, obj=None):
+        if obj:
+            # a token cannot be moved to another user
+            return self.readonly_fields + ['signbank_user']
+        return self.readonly_fields
+
+    def save_model(self, request, obj, form, change):
+        if change:
+            super().save_model(request, obj, form, change)
+            return
+        from signbank.api_token import generate_auth_token, hash_token, TOKEN_PREFIX_LENGTH
+        new_token = generate_auth_token()
+        obj.api_token = hash_token(new_token)
+        obj.prefix = new_token[:TOKEN_PREFIX_LENGTH]
+        super().save_model(request, obj, form, change)
+        self.message_user(request, _("The new API token for %(user)s is: %(token)s  "
+                                     "Copy it now and give it to the user: it will not be shown again.")
+                          % {'user': obj.signbank_user.username, 'token': new_token}, messages.WARNING)
+
+    @admin.action(description=_('Deactivate selected tokens'))
+    def deactivate_tokens(self, request, queryset):
+        updated = queryset.update(is_active=False)
+        self.message_user(request, _("%(count)d token(s) deactivated.") % {'count': updated})
+
+    @admin.action(description=_('Activate selected tokens'))
+    def activate_tokens(self, request, queryset):
+        updated = queryset.update(is_active=True)
+        self.message_user(request, _("%(count)d token(s) activated.") % {'count': updated})
+
+    @admin.action(description=_('Extend selected tokens by 90 days'))
+    def extend_tokens_90_days(self, request, queryset):
+        # tokens that never expire are left alone; expired tokens are extended from now
+        now = timezone.now()
+        updated = 0
+        for signbank_token in queryset.filter(expires_at__isnull=False):
+            signbank_token.expires_at = max(signbank_token.expires_at, now) + timedelta(days=90)
+            signbank_token.save(update_fields=['expires_at'])
+            updated += 1
+        self.message_user(request, _("%(count)d token(s) extended. Tokens that never expire were not changed.")
+                          % {'count': updated})
 
 
 class FieldChoiceAdmin(TranslationAdmin):
@@ -1632,6 +1723,7 @@ admin.site.register(DeletedGlossOrMedia, DeletedGlossOrMediaAdmin)
 admin.site.register(UserProfile)
 admin.site.register(Affiliation, AffiliationAdmin)
 admin.site.register(AffiliatedUser, AffiliatedUserAdmin)
+admin.site.register(SignbankAPIToken, SignbankAPITokenAdmin)
 
 admin.site.register(Language, LanguageAdmin)
 admin.site.register(Dataset, DatasetAdmin)
