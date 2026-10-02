@@ -38,13 +38,16 @@ from signbank.dictionary.models import (Dataset, Gloss, Morpheme, Dialect, SignL
                                         LemmaIdglossTranslation, MorphologyDefinition, AnnotatedSentenceTranslation,
                                         ExampleSentence, OtherMedia, Relation, GlossRevision)
 from signbank.csv_interface import (sense_translations_for_language, update_senses_parse,
-                                    update_sentences_parse, sense_examplesentences_for_language, get_sense_numbers,
-                                    parse_sentence_row, get_senses_to_sentences, csv_sentence_tuples_list_compare,
+                                    parse_sentence_row,
                                     required_csv_columns, trim_columns_in_row,
                                     normalize_field_choice)
-from signbank.compare_csv_row_to_gloss import (get_default_annotationidglosstranslation, compare_simultaneous_morphology,
-                                               compare_sequential_morphology, compare_blend_morphology, compare_relations,
-                                               compare_relations_to_foreign_signs, compare_tags, compare_notes)
+from signbank.compare_csv_row_to_gloss import (get_default_annotationidglosstranslation,
+                                               compare_simultaneous_morphology,
+                                               compare_sequential_morphology, compare_blend_morphology,
+                                               compare_relations,
+                                               compare_relations_to_foreign_signs, compare_tags, compare_notes,
+                                               compare_dataset,
+                                               compare_signlanguages, compare_dialects, compare_example_sentences)
 from signbank.dictionary.field_choices import fields_to_fieldcategory_dict
 
 from signbank.video.extract_middle_frame import MiddleFrameExtracter
@@ -448,130 +451,23 @@ def compare_valuedict_to_gloss(valuedict, gloss_id, my_datasets, nl,
 
             example_sentences_key_prefix = "Example Sentences ("
             if human_key.startswith(example_sentences_key_prefix):
-                language_name_column = DEFAULT_LANGUAGE_HEADER_COLUMN['English']
-                language_name = human_key[len(example_sentences_key_prefix):-1]
-                language = Language.objects.filter(**{language_name_column: language_name}).first()
-                sense_numbers = get_sense_numbers(gloss)
-                sense_numbers_to_sentences = get_senses_to_sentences(gloss)
-                if not language:
-                    current_sentences_string = ""
-                    error_string = gettext("Non-existent language specified for Senses column: {column}").format(column=human_key)
-                    errors_found += [error_string]
-                else:
-                    current_sentences_string = sense_examplesentences_for_language(gloss, language)
-                    if current_sentences_string and DEBUG_CSV:
-                        print('Current sentences: ', current_sentences_string)
-                    okay = update_sentences_parse(sense_numbers, sense_numbers_to_sentences, new_human_value)
-                    if not okay:
-                        print('current sentences: ', current_sentences_string)
-                        print('not okay new sentences string: ', new_human_value)
-                        error_string = gettext("For gloss {glossid}: Error parsing value in Example Sentences column {column}: {value}").format(glossid=str(gloss_id), column=human_key, value=new_human_value)
-                        errors_found += [error_string]
-                difference_org, difference, errors_found = csv_sentence_tuples_list_compare(str(gloss_id),
-                                                                                            current_sentences_string,
-                                                                                            new_human_value,
-                                                                                            errors_found)
 
-                if difference:
-                    differences.append({'pk': gloss_id,
-                                        'dataset': current_dataset,
-                                        'annotationidglosstranslation': default_annotationidglosstranslation,
-                                        'machine_key': human_key,
-                                        'human_key': human_key,
-                                        'original_machine_value': difference_org,
-                                        'original_human_value': difference_org,
-                                        'new_machine_value': difference,
-                                        'new_human_value': difference,
-                                        'side_effects': {}})
+                errors_found, differences = compare_example_sentences(gloss, new_human_value, human_key, errors_found, differences)
                 continue
 
             elif human_key == 'SignLanguages':
 
-                if new_human_value in ['None', '']:
-                    continue
-
-                current_signlanguages_string = str(', '.join([str(lang.name) for lang in gloss.signlanguage.all()]))
-
-                new_human_value_list = [v.strip() for v in new_human_value.split(',')]
-
-                (found, not_found, errors) = check_existence_signlanguage(gloss, new_human_value_list)
-
-                if len(errors):
-                    errors_found += errors
-
-                if current_signlanguages_string != new_human_value:
-                    differences.append({'pk': gloss_id,
-                                        'dataset': current_dataset,
-                                        'annotationidglosstranslation': default_annotationidglosstranslation,
-                                        'machine_key': human_key,
-                                        'human_key': human_key,
-                                        'original_machine_value': current_signlanguages_string,
-                                        'original_human_value': current_signlanguages_string,
-                                        'new_machine_value': new_human_value,
-                                        'new_human_value': new_human_value,
-                                        'side_effects': {}})
+                errors_found, differences = compare_signlanguages(gloss, new_human_value, human_key, errors_found, differences)
                 continue
 
             elif human_key == 'Dialects':
-                if new_human_value in ['None', '', '-']:
-                    continue
 
-                current_dialects_string = str(', '.join([f'{dia.signlanguage.name}/{dia.name}'
-                                                         for dia in gloss.dialect.all()]))
-
-                new_human_value_list = [v.strip() for v in new_human_value.split(',')]
-
-                (found, not_found, errors) = check_existence_dialect(gloss, new_human_value_list)
-
-                if len(errors):
-                    errors_found += errors
-
-                elif current_dialects_string != new_human_value:
-                    differences.append({'pk': gloss_id,
-                                        'dataset': current_dataset,
-                                        'annotationidglosstranslation': default_annotationidglosstranslation,
-                                        'machine_key': human_key,
-                                        'human_key': human_key,
-                                        'original_machine_value': current_dialects_string,
-                                        'original_human_value': current_dialects_string,
-                                        'new_machine_value': new_human_value,
-                                        'new_human_value': new_human_value,
-                                        'side_effects': {}})
+                errors_found, differences = compare_dialects(gloss, new_human_value, human_key, errors_found, differences)
                 continue
 
-            elif human_key == 'Dataset' or human_key == 'Glosses dataset':
+            elif human_key == 'Dataset':
 
-                # cach legacy value
-                if human_key == 'Glosses dataset':
-                    human_key = 'Dataset'
-                if new_human_value == 'None' or new_human_value == '':
-                    # This check assumes that if the Dataset column is empty, it means no change
-                    # Since we already know the id of the gloss, we keep the original dataset
-                    # To be safe, confirm the original dataset is not empty, to catch legacy code
-                    if not current_dataset or current_dataset == 'None' or current_dataset is None:
-                        # Dataset must be non-empty to create a new gloss
-                        error_string = gettext("For gloss '{annotation}' ({glossid}), Dataset must be non-empty. There is currently no dataset defined for this gloss.").format(annotation=default_annotationidglosstranslation, glossid=str(gloss_id))
-                        errors_found += [error_string]
-                    continue
-
-                # if we get to here, the user has specificed a new value for the dataset
-                if new_human_value in my_datasets:
-                    if current_dataset != new_human_value:
-                        differences.append({'pk': gloss_id,
-                                            'dataset': current_dataset,
-                                            'annotationidglosstranslation': default_annotationidglosstranslation,
-                                            'machine_key': human_key,
-                                            'human_key': human_key,
-                                            'original_machine_value': current_dataset,
-                                            'original_human_value': current_dataset,
-                                            'new_machine_value': new_human_value,
-                                            'new_human_value': new_human_value,
-                                            'side_effects': {}})
-                else:
-                    error_string = gettext(
-                        "For gloss '{annotation}' ({glossid}), could not find '{value}' for '{column}'.").format(annotation=default_annotationidglosstranslation, glossid=str(gloss_id), value=new_human_value, column=human_key)
-                    errors_found += [error_string]
-
+                errors_found, differences = compare_dataset(gloss, new_human_value, human_key, errors_found, differences, my_datasets)
                 continue
 
             elif human_key == 'Relations to other signs':
@@ -600,7 +496,8 @@ def compare_valuedict_to_gloss(valuedict, gloss_id, my_datasets, nl,
                 continue
 
             elif human_key == 'Tags':
-                if tags_toggle == 'keep' and (new_human_value == 'None' or new_human_value == ''):
+
+                if tags_toggle == 'keep' and new_human_value in ['None', '']:
                     continue
 
                 errors_found, differences, tag_name_error = compare_tags(gloss, new_human_value, human_key, errors_found, differences, tag_name_error)
@@ -608,7 +505,7 @@ def compare_valuedict_to_gloss(valuedict, gloss_id, my_datasets, nl,
 
             elif human_key == 'Notes':
 
-                if notes_toggle == 'keep' and (new_human_value == 'None' or new_human_value == ''):
+                if notes_toggle == 'keep' and new_human_value in ['None', '']:
                     continue
 
                 errors_found, differences, note_type_error, note_tuple_error = compare_notes(gloss, new_human_value, human_key, notes_assign_toggle, errors_found, differences, note_type_error, note_tuple_error)
@@ -941,57 +838,6 @@ def compare_valuedict_to_lemma(valuedict, lemma_id, my_datasets, nl,
                 print('Unknown lemma field encountered while comparing new to existing fields: ', human_key)
 
     return differences, errors_found, earlier_updates_same_csv, earlier_updates_lemmaidgloss
-
-
-def check_existence_dialect(gloss, values):
-    default_annotationidglosstranslation = get_default_annotationidglosstranslation(gloss)
-
-    errors = []
-    found = []
-    not_found = []
-    for new_value in values:
-        dialect_signlanguage_str, dialect_name_str = new_value.split('/')
-        dialect_signlanguage = dialect_signlanguage_str.strip()
-        dialect_name = dialect_name_str.strip()
-        if Dialect.objects.filter(name=dialect_name, signlanguage__name=dialect_signlanguage):
-            if new_value not in found:
-                found += [new_value]
-        else:
-            error_string = gettext(
-                "For gloss '{annotation}' ({glossid}), new Dialect value '{value}' not found.").format(
-                annotation=default_annotationidglosstranslation, glossid=str(gloss.pk), value=str(new_value))
-            errors.append(error_string)
-            not_found += [new_value]
-        continue
-
-    return found, not_found, errors
-
-
-def check_existence_signlanguage(gloss, values):
-    default_annotationidglosstranslation = get_default_annotationidglosstranslation(gloss)
-
-    errors = []
-    found = []
-    not_found = []
-
-    for new_value in values:
-        if SignLanguage.objects.filter(name__iexact=new_value):
-            if new_value in found:
-                error_string = gettext(
-                    "For gloss '{annotation}' ({glossid}), Sign Language value '{value}' is a duplicate.").format(
-                    annotation=default_annotationidglosstranslation, glossid=str(gloss.pk), value=str(new_value))
-                errors.append(error_string)
-            else:
-                found += [new_value]
-        else:
-            error_string = gettext(
-                "For gloss '{annotation}' ({glossid}), an unknown Sign Language value was encountered: '{value}'.").format(
-                annotation=default_annotationidglosstranslation, glossid=str(gloss.pk), value=str(new_value))
-            errors.append(error_string)
-            not_found += [new_value]
-        continue
-
-    return found, not_found, errors
 
 
 @csrf_exempt
