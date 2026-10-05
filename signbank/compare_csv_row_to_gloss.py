@@ -883,18 +883,21 @@ def compare_example_sentences(gloss, new_human_value, human_key, errors_found, d
             print('current sentences: ', current_sentences_string)
             print('not okay new sentences string: ', new_human_value)
         error_string = gettext(
-            "For gloss {glossid}: Error parsing value in Example Sentences column {column}: {value}").format(
+            "For gloss {glossid}: Error parsing value in column {column}: {value}").format(
             glossid=str(gloss.id), column=human_key, value=new_human_value)
         errors_found += [error_string]
         return errors_found, differences
 
-    # check what the following is doing
-    difference_org, difference, errors_found = csv_sentence_tuples_list_compare(str(gloss.id),
+    difference_org, difference, parse_errors = csv_sentence_tuples_list_compare(gloss,
                                                                                 current_sentences_string,
-                                                                                new_human_value,
-                                                                                errors_found)
+                                                                                new_human_value)
 
-    if errors_found:
+    if parse_errors:
+        error_string = gettext(
+            "For gloss {glossid}: Error parsing value in column {column}: {value}").format(
+            glossid=str(gloss.id), column=human_key, value=new_human_value)
+        errors_found += [error_string]
+        errors_found += parse_errors
         return errors_found, differences
 
     if difference:

@@ -301,7 +301,7 @@ def create_gloss_from_valuedict(valuedict, dataset, row_nr, earlier_creation_sam
         earlier_creation_lemmaidgloss
 
 
-def compare_valuedict_to_gloss(valuedict, gloss_id, my_datasets, nl,
+def compare_valuedict_to_gloss(valuedict, gloss, my_datasets, nl,
                                earlier_updates_same_csv, earlier_updates_lemmaidgloss,
                                notes_toggle, notes_assign_toggle, semfield_toggle, semfield_assign_toggle, tags_toggle):
     """Takes a dict of arbitrary key-value pairs, and compares them to a gloss"""
@@ -310,19 +310,6 @@ def compare_valuedict_to_gloss(valuedict, gloss_id, my_datasets, nl,
     errors_found = []
     differences = []
 
-    try:
-        gloss = Gloss.objects.select_related().get(pk=gloss_id)
-    except ObjectDoesNotExist:
-        error_string = gettext("Could not find gloss for ID {glossid}.").format(glossid=str(gloss_id))
-        errors_found.append(error_string)
-        return differences, errors_found, earlier_updates_same_csv, earlier_updates_lemmaidgloss
-
-    if gloss_id in earlier_updates_same_csv:
-        e = gettext("Signbank ID {glossid} found in multiple rows (Row {row}).").format(glossid=str(gloss_id), row=str(nl+1))
-        errors_found.append(e)
-        return differences, errors_found, earlier_updates_same_csv, earlier_updates_lemmaidgloss
-    else:
-        earlier_updates_same_csv.append(gloss_id)
     column_name_error = False
     tag_name_error = False
 
@@ -346,12 +333,6 @@ def compare_valuedict_to_gloss(valuedict, gloss_id, my_datasets, nl,
         for fieldname in glossfieldnames:
             field = Gloss.get_field(fieldname)
             fields[field.verbose_name] = field
-
-        if gloss.lemma.dataset:
-            current_dataset = gloss.lemma.dataset.acronym
-        else:
-            # because of legacy code, the current dataset might not have been set
-            current_dataset = 'None'
 
         # Go through all values in the value dict, looking for differences with the gloss
         for human_key, new_human_value in valuedict.items():
@@ -380,12 +361,12 @@ def compare_valuedict_to_gloss(valuedict, gloss_id, my_datasets, nl,
                                 lemma__dataset=gloss.lemma.dataset).count()
 
                             if glosses_with_same_annotation:
-                                error_string = gettext("Signbank ID {glossid} key value already exists: '{column}': '{value}'").format(glossid=str(gloss_id), column=human_key, value=str(new_human_value))
+                                error_string = gettext("Signbank ID {glossid} annotation already exists in dataset: '{column}': '{value}'").format(glossid=str(gloss.id), column=human_key, value=str(new_human_value))
                                 errors_found += [error_string]
 
                             else:
-                                differences.append({'pk': gloss_id,
-                                                    'dataset': current_dataset,
+                                differences.append({'pk': gloss.id,
+                                                    'dataset': gloss.lemma.dataset,
                                                     'annotationidglosstranslation': default_annotationidglosstranslation,
                                                     'machine_key': human_key,
                                                     'human_key': human_key,
@@ -398,20 +379,7 @@ def compare_valuedict_to_gloss(valuedict, gloss_id, my_datasets, nl,
 
             lemma_idgloss_key_prefix = "Lemma ID Gloss ("
             if human_key.startswith(lemma_idgloss_key_prefix):
-                language_name_column = DEFAULT_LANGUAGE_HEADER_COLUMN['English']
-                language_name = human_key[len(lemma_idgloss_key_prefix):-1]
-                languages = Language.objects.filter(**{language_name_column: language_name})
-                if languages:
-                    language = languages[0]
-                    lemma_idglosses = gloss.lemma.lemmaidglosstranslation_set.filter(language=language)
-                    if lemma_idglosses:
-                        lemma_idgloss_string = lemma_idglosses[0].text
-                    else:
-                        # lemma not set
-                        lemma_idgloss_string = ''
-                    if lemma_idgloss_string != new_human_value and new_human_value not in ['None', '']:
-                        error_string = gettext("Attempt to update Lemma translations: '{column}'").format(column=human_key)
-                        errors_found += [error_string]
+                # Any attempts to change the lemma translations are handled in the outer scope
                 continue
 
             keywords_key_prefix = "Senses ("
@@ -433,12 +401,12 @@ def compare_valuedict_to_gloss(valuedict, gloss_id, my_datasets, nl,
                         if not okay:
                             print('current senses: ', current_keyword_string)
                             print('not okay new string: ', new_human_value)
-                            error_string = gettext("For gloss {glossid}: Error parsing value in Senses column '{column}': {value}").format(glossid=str(gloss_id), column=human_key, value=new_human_value)
+                            error_string = gettext("For gloss {glossid}: Error parsing value in Senses column '{column}': {value}").format(glossid=str(gloss.id), column=human_key, value=new_human_value)
                             errors_found += [error_string]
 
                 if new_human_value not in ['None', ''] and not current_keyword_string:
-                    differences.append({'pk': gloss_id,
-                                        'dataset': current_dataset,
+                    differences.append({'pk': gloss.id,
+                                        'dataset': gloss.lemma.dataset,
                                         'annotationidglosstranslation': default_annotationidglosstranslation,
                                         'machine_key': human_key,
                                         'human_key': human_key,
@@ -451,6 +419,8 @@ def compare_valuedict_to_gloss(valuedict, gloss_id, my_datasets, nl,
 
             example_sentences_key_prefix = "Example Sentences ("
             if human_key.startswith(example_sentences_key_prefix):
+                if new_human_value in ['None', '']:
+                    continue
 
                 errors_found, differences = compare_example_sentences(gloss, new_human_value, human_key, errors_found, differences)
                 continue
@@ -526,7 +496,7 @@ def compare_valuedict_to_gloss(valuedict, gloss_id, my_datasets, nl,
                 new_values_sorted_lookup = lookup_semantic_fields(new_human_value_list)
                 if new_values_sorted_lookup.count() != len(new_human_value_list):
                     error_string = gettext("For gloss '{annotation}' ({glossid}), could not parse '{value}' for '{column}'.").format(
-                        annotation=default_annotationidglosstranslation, glossid=str(gloss_id), value=new_human_value,
+                        annotation=default_annotationidglosstranslation, glossid=str(gloss.id), value=new_human_value,
                         column=human_key)
                     errors_found += [error_string]
                     continue
@@ -540,8 +510,8 @@ def compare_valuedict_to_gloss(valuedict, gloss_id, my_datasets, nl,
                         compined_values_sorted_lookup = lookup_semantic_fields(combined_semfield)
                         new_semanticfield_value = ', '.join([str(sf.name) for sf in compined_values_sorted_lookup])
 
-                    differences.append({'pk': gloss_id,
-                                        'dataset': current_dataset,
+                    differences.append({'pk': gloss.id,
+                                        'dataset': gloss.lemma.dataset,
                                         'annotationidglosstranslation': default_annotationidglosstranslation,
                                         'machine_key': human_key,
                                         'human_key': human_key,
@@ -566,7 +536,7 @@ def compare_valuedict_to_gloss(valuedict, gloss_id, my_datasets, nl,
                 # Skip above fields with complex values: Keywords, Signlanguages, Dialects,
                 # Relations to other signs, Relations to foreign signs, Morphology.
                 error_string = gettext("For gloss '{annotation}' ({glossid}), could not identify column name: '{column}'.").format(
-                    annotation=default_annotationidglosstranslation, glossid=str(gloss_id), column=human_key)
+                    annotation=default_annotationidglosstranslation, glossid=str(gloss.id), column=human_key)
                 errors_found += [error_string]
 
                 if not column_name_error:
@@ -593,7 +563,7 @@ def compare_valuedict_to_gloss(valuedict, gloss_id, my_datasets, nl,
                     except ObjectDoesNotExist:
                         error_string = gettext(
                             "For gloss '{annotation}' ({glossid}), could not find option '{value}' for '{column}'.").format(
-                            annotation=default_annotationidglosstranslation, glossid=str(gloss_id),
+                            annotation=default_annotationidglosstranslation, glossid=str(gloss.id),
                             value=new_human_value, column=human_key)
                         errors_found += [error_string]
                         continue
@@ -608,7 +578,7 @@ def compare_valuedict_to_gloss(valuedict, gloss_id, my_datasets, nl,
                 except ObjectDoesNotExist:
                     error_string = gettext(
                         "For gloss '{annotation}' ({glossid}), could not find option '{value}' for '{column}'.").format(
-                        annotation=default_annotationidglosstranslation, glossid=str(gloss_id),
+                        annotation=default_annotationidglosstranslation, glossid=str(gloss.id),
                         value=new_human_value, column=human_key)
                     errors_found += [error_string]
                     continue
@@ -642,13 +612,13 @@ def compare_valuedict_to_gloss(valuedict, gloss_id, my_datasets, nl,
                         if new_human_value is not None and new_human_value not in ['None', '']:
                             error_string = gettext(
                                 "For gloss '{annotation}' ({glossid}), value '{value}' for '{column}' should be a Boolean or Neutral.").format(
-                                annotation=default_annotationidglosstranslation, glossid=str(gloss_id),
+                                annotation=default_annotationidglosstranslation, glossid=str(gloss.id),
                                 value=new_human_value, column=human_key)
                     else:
                         if new_human_value is not None and new_human_value not in ['None', '']:
                             error_string = gettext(
                                 "For gloss '{annotation}' ({glossid}), value '{value}' for '{column}' is not a Boolean.").format(
-                                annotation=default_annotationidglosstranslation, glossid=str(gloss_id),
+                                annotation=default_annotationidglosstranslation, glossid=str(gloss.id),
                                 value=new_human_value, column=human_key)
                     if error_string:
                         errors_found += [error_string]
@@ -668,7 +638,7 @@ def compare_valuedict_to_gloss(valuedict, gloss_id, my_datasets, nl,
             except KeyError:
                 error_string = gettext(
                     "For gloss '{annotation}' ({glossid}), could not get original value for field: '{field}'").format(
-                    annotation=default_annotationidglosstranslation, glossid=str(gloss_id),
+                    annotation=default_annotationidglosstranslation, glossid=str(gloss.id),
                     field=gloss_field_name)
                 errors_found += [error_string]
                 continue
@@ -732,8 +702,8 @@ def compare_valuedict_to_gloss(valuedict, gloss_id, my_datasets, nl,
             # Check for change, and save your findings if there is one
             elif original_machine_value != new_machine_value and new_machine_value is not None:
 
-                differences.append({'pk': gloss_id,
-                                    'dataset': current_dataset,
+                differences.append({'pk': gloss.id,
+                                    'dataset': gloss.lemma.dataset,
                                     'annotationidglosstranslation': default_annotationidglosstranslation,
                                     'machine_key': gloss_field_name,
                                     'human_key': human_key,

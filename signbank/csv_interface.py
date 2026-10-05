@@ -1,8 +1,10 @@
 import re
 import csv
 import datetime as DT
+from xmlrpc.client import Boolean
 
 from django.db import models
+from django.forms.fields import BooleanField
 from django.utils.timezone import get_current_timezone
 from django.utils.translation import override, activate, gettext
 from django.core.exceptions import ObjectDoesNotExist, MultipleObjectsReturned
@@ -253,8 +255,9 @@ def update_sentences_parse(sense_numbers, sense_numbers_to_sentences, new_senten
     new_sentence_tuples = []
     for sentence_tuple in new_sentences:
         find_all, map_errors = map_values_to_sentence_type(sentence_tuple, include_sentences=True)
-        if map_errors or not find_all:
-            # examine errors
+        if map_errors:
+            return False
+        if not find_all:
             continue
         new_sentence_tuples.append(find_all[0])
 
@@ -279,39 +282,48 @@ def update_sentences_parse(sense_numbers, sense_numbers_to_sentences, new_senten
 
 def sentence_tuple_list_to_string(sentence_tuple_string):
     tuple_list_of_strings = []
+    errors = False
 
     if not sentence_tuple_string:
-        return tuple_list_of_strings
+        return tuple_list_of_strings, errors
     sentences = [k for k in sentence_tuple_string.split(' | ')]
     for sentence_tuple in sentences:
         find_all, map_errors = map_values_to_sentence_type(sentence_tuple, include_sentences=True)
-        if map_errors or not find_all:
-            # skip any non-parsing tuples, this was already checked so should not happen
+        if map_errors:
+            errors = True
+            continue
+        if not find_all:
             continue
         tuple_list_of_strings.append(find_all[0])
 
-    return tuple_list_of_strings
+    return tuple_list_of_strings, errors
 
 
-def csv_sentence_tuples_list_compare(gloss_id, sentence_string_old, sentence_string_new, errors_found):
+def csv_sentence_tuples_list_compare(gloss, sentence_string_old, sentence_string_new):
     # convert input to list of tuples (order, sentence_id, sentence_type, negative, sentence_text)
-    sentence_tuples_old = sentence_tuple_list_to_string(sentence_string_old)
-    sentence_tuples_new = sentence_tuple_list_to_string(sentence_string_new)
+    sentence_tuples_old, _ = sentence_tuple_list_to_string(sentence_string_old)
+    sentence_tuples_new, map_errors = sentence_tuple_list_to_string(sentence_string_new)
 
     different_org = []
     different_new = []
-    errors = errors_found
+    errors = []
+
+    if map_errors:
+        error_string = gettext("Sentence column values must be a |-separated list of tuples: '(Sense,Type,Negative,Text)'")
+        errors_found = [error_string]
+        return different_org, different_new, errors_found
+
     original_sentences_lookup = {sid: (so, styp, sn, stxt)
                                  for (so, sid, styp, sn, stxt) in sentence_tuples_old}
     for (order, sentence_id, sentence_type, negative, sentence_text) in sentence_tuples_new:
         if (order, sentence_type, negative, sentence_text) != original_sentences_lookup[sentence_id]:
             (sord, styp, sneg, stxt) = original_sentences_lookup[sentence_id]
             if sord != order:
-                errors += ['ERROR Gloss ' + gloss_id + ': The Sense Number cannot be modified in CSV Update.']
+                errors += [gettext('The Sense Number cannot be modified in CSV Update.')]
             if styp != sentence_type:
-                errors += ['ERROR Gloss ' + gloss_id + ': The Sentence Type cannot be modified in CSV Update.']
+                errors += [gettext('The Sentence Type cannot be modified in CSV Update.')]
             if sneg != negative:
-                errors += ['ERROR Gloss ' + gloss_id + ': The Sentence Negative cannot be modified in CSV Update.']
+                errors += [gettext('The Sentence Negative cannot be modified in CSV Update.')]
             if errors:
                 continue
             tuple_string_new = '(' + order + ', ' + sentence_id + ', ' + sentence_type \
@@ -712,7 +724,7 @@ def required_csv_columns(dataset_languages, create_or_update='create_gloss'):
 def csv_header_row_glosslist(dataset_languages, extended):
 
     if extended:
-        fieldnames = FIELDS['phonology'] + FIELDS['semantics'] + FIELDS['frequency'] + ['inWeb', 'isNew'] + FIELDS['main']
+        fieldnames = FIELDS['phonology'] + FIELDS['semantics'] + FIELDS['frequency'] + FIELDS['main'] + ['inWeb', 'isNew']
     else:
         fieldnames = FIELDS['phonology']
     fields = [Gloss.get_field(fname) for fname in fieldnames if fname in Gloss.get_field_names()]
@@ -792,7 +804,6 @@ def csv_gloss_to_row(gloss, dataset_languages, fields, extended):
             value = ", ".join([str(sf.name) for sf in gloss.derivHist.all()])
         else:
             internal_value = getattr(gloss, f.name)
-
             if ((f.__class__.__name__ == 'CharField' or f.__class__.__name__ == 'TextField')
                     and internal_value not in [None, '', '-', '------', ' ']):
                 # surround internal string value with double quotes for export, in case of punctuation (semi-colon) in string
@@ -812,11 +823,12 @@ def csv_gloss_to_row(gloss, dataset_languages, fields, extended):
                 elif f.__class__.__name__ == 'CharField' or f.__class__.__name__ == 'TextField':
                     value = ''
                 elif f.__class__.__name__ == 'IntegerField':
-                    value = 0
+                    value = '0'
+                elif f.__class__.__name__ == 'BooleanField':
+                    value = str(value)
                 else:
                     # what to do here? leave it as None or use empty string (for export to csv)
                     value = ''
-
         if not isinstance(value, str):
             # this is needed for csv
             value = str(value)
