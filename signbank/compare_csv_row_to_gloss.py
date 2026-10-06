@@ -8,7 +8,8 @@ from signbank.dictionary.models import (Gloss, Morpheme, MorphologyDefinition, R
                                         Language, SemanticField)
 from signbank.dictionary.update_csv import validate_and_resolve_gloss_relations
 from signbank.csv_interface import (update_sentences_parse, sense_examplesentences_for_language, get_sense_numbers,
-                                    get_senses_to_sentences, csv_sentence_tuples_list_compare)
+                                    get_senses_to_sentences, csv_sentence_tuples_list_compare, sense_translations_for_language,
+                                    update_senses_parse)
 from tagging.models import TaggedItem, Tag
 
 
@@ -862,6 +863,9 @@ def compare_dialects(gloss, new_human_value, human_key, errors_found, difference
 
 
 def compare_example_sentences(gloss, new_human_value, human_key, errors_found, differences):
+    if new_human_value in ['None', '']:
+        return errors_found, differences
+
     example_sentences_key_prefix = "Example Sentences ("
     language_name_column = DEFAULT_LANGUAGE_HEADER_COLUMN['English']
     language_name = human_key[len(example_sentences_key_prefix):-1]
@@ -962,5 +966,49 @@ def compare_semantic_fields(gloss, new_human_value, human_key, errors_found, dif
                         'original_human_value': original_semanticfield_value,
                         'new_machine_value': new_semanticfield_value,
                         'new_human_value': new_semanticfield_value,
+                        'side_effects': {}})
+    return errors_found, differences
+
+
+def compare_senses(gloss, new_human_value, human_key, errors_found, differences):
+    if new_human_value in ['None', '']:
+        return errors_found, differences
+
+    keywords_key_prefix = "Senses ("
+    language_name_column = DEFAULT_LANGUAGE_HEADER_COLUMN['English']
+    language_name = human_key[len(keywords_key_prefix):-1]
+    language = Language.objects.filter(**{language_name_column: language_name}).first()
+    if not language:
+        error_string = gettext("Non-existent language specified for Senses column: '{column}'").format(column=human_key)
+        errors_found += [error_string]
+        return errors_found, differences
+
+    current_keyword_string = sense_translations_for_language(gloss, language)
+
+    if current_keyword_string == new_human_value:
+        return errors_found, differences
+
+    if current_keyword_string:
+        error_string = gettext("For gloss '{annotation}' ({glossid}), update of senses not available: {column}: {value}.").format(annotation=get_default_annotationidglosstranslation(gloss), glossid=gloss.id, column=human_key, value=new_human_value)
+        errors_found += [error_string]
+        return errors_found, differences
+
+    okay = update_senses_parse(new_human_value)
+    if not okay:
+        error_string = gettext(
+            "For gloss {glossid}: Error parsing value in Senses column '{column}': {value}").format(
+            glossid=str(gloss.id), column=human_key, value=new_human_value)
+        errors_found += [error_string]
+        return errors_found, differences
+
+    differences.append({'pk': gloss.id,
+                        'dataset': gloss.lemma.dataset,
+                        'annotationidglosstranslation': get_default_annotationidglosstranslation(gloss),
+                        'machine_key': human_key,
+                        'human_key': human_key,
+                        'original_machine_value': current_keyword_string,
+                        'original_human_value': current_keyword_string,
+                        'new_machine_value': new_human_value,
+                        'new_human_value': new_human_value,
                         'side_effects': {}})
     return errors_found, differences

@@ -37,8 +37,7 @@ from signbank.dictionary.models import (Dataset, Gloss, Morpheme, Dialect, SignL
                                         Handshape, LemmaIdgloss, FieldChoiceForeignKey, Definition,
                                         LemmaIdglossTranslation, MorphologyDefinition, AnnotatedSentenceTranslation,
                                         ExampleSentence, OtherMedia, Relation, GlossRevision)
-from signbank.csv_interface import (sense_translations_for_language, update_senses_parse,
-                                    parse_sentence_row,
+from signbank.csv_interface import (parse_sentence_row,
                                     required_csv_columns, trim_columns_in_row,
                                     normalize_field_choice)
 from signbank.compare_csv_row_to_gloss import (get_default_annotationidglosstranslation,
@@ -47,7 +46,7 @@ from signbank.compare_csv_row_to_gloss import (get_default_annotationidglosstran
                                                compare_relations,
                                                compare_relations_to_foreign_signs, compare_tags, compare_notes,
                                                compare_dataset,
-                                               compare_signlanguages, compare_dialects, compare_example_sentences, compare_semantic_fields)
+                                               compare_signlanguages, compare_dialects, compare_example_sentences, compare_semantic_fields, compare_senses)
 from signbank.dictionary.field_choices import fields_to_fieldcategory_dict
 
 from signbank.video.extract_middle_frame import MiddleFrameExtracter
@@ -302,7 +301,6 @@ def create_gloss_from_valuedict(valuedict, dataset, row_nr, earlier_creation_sam
 
 
 def compare_valuedict_to_gloss(valuedict, gloss, my_datasets, nl,
-                               earlier_updates_same_csv,
                                notes_toggle, notes_assign_toggle, semfield_toggle, semfield_assign_toggle, tags_toggle):
     """Takes a dict of arbitrary key-value pairs, and compares them to a gloss"""
     # called by import_csv_update in views.py
@@ -384,43 +382,12 @@ def compare_valuedict_to_gloss(valuedict, gloss, my_datasets, nl,
 
             keywords_key_prefix = "Senses ("
             if human_key.startswith(keywords_key_prefix):
-                language_name_column = DEFAULT_LANGUAGE_HEADER_COLUMN['English']
-                language_name = human_key[len(keywords_key_prefix):-1]
-                language = Language.objects.filter(**{language_name_column: language_name}).first()
-                if not language:
-                    current_keyword_string = ""
-                    error_string = gettext("Non-existent language specified for Senses column: '{column}'").format(column=human_key)
-                    errors_found += [error_string]
-                else:
-                    current_keyword_string = sense_translations_for_language(gloss, language)
-                    if current_keyword_string:
-                        # update of existing senses currently not supported
-                        pass
-                    else:
-                        okay = update_senses_parse(new_human_value)
-                        if not okay:
-                            print('current senses: ', current_keyword_string)
-                            print('not okay new string: ', new_human_value)
-                            error_string = gettext("For gloss {glossid}: Error parsing value in Senses column '{column}': {value}").format(glossid=str(gloss.id), column=human_key, value=new_human_value)
-                            errors_found += [error_string]
 
-                if new_human_value not in ['None', ''] and not current_keyword_string:
-                    differences.append({'pk': gloss.id,
-                                        'dataset': gloss.lemma.dataset,
-                                        'annotationidglosstranslation': default_annotationidglosstranslation,
-                                        'machine_key': human_key,
-                                        'human_key': human_key,
-                                        'original_machine_value': current_keyword_string,
-                                        'original_human_value': current_keyword_string,
-                                        'new_machine_value': new_human_value,
-                                        'new_human_value': new_human_value,
-                                        'side_effects': {}})
+                errors_found, differences = compare_senses(gloss, new_human_value, human_key, errors_found, differences)
                 continue
 
             example_sentences_key_prefix = "Example Sentences ("
             if human_key.startswith(example_sentences_key_prefix):
-                if new_human_value in ['None', '']:
-                    continue
 
                 errors_found, differences = compare_example_sentences(gloss, new_human_value, human_key, errors_found, differences)
                 continue
@@ -676,7 +643,7 @@ def compare_valuedict_to_gloss(valuedict, gloss, my_datasets, nl,
                                     'new_human_value': new_human_value,
                                     'side_effects': {}})
 
-    return differences, errors_found, earlier_updates_same_csv
+    return differences, errors_found
 
 
 def compare_valuedict_to_lemma(valuedict, lemma_id, my_datasets, nl,
