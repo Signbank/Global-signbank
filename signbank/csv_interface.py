@@ -312,7 +312,7 @@ def csv_sentence_tuples_list_compare(gloss, sentence_string_old, sentence_string
     errors = []
 
     if map_errors:
-        error_string = gettext("Sentence column values must be a |-separated list of tuples: '(Sense,Type,Negative,Text)'")
+        error_string = gettext("Sentence column values must be a |-separated list of tuples: '(SenseNr,SentenceID,Type,Negative,Text)'")
         errors_found = [error_string]
         return different_org, different_new, errors_found
 

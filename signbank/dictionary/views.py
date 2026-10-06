@@ -1197,9 +1197,9 @@ def import_csv_update(request):
                 continue
 
             try:
-                (changes_found, errors_found, earlier_updates_same_csv, earlier_updates_lemmaidgloss) = \
+                (changes_found, errors_found, earlier_updates_same_csv) = \
                             compare_valuedict_to_gloss(value_dict, gloss, user_datasets_names, nl,
-                                                       earlier_updates_same_csv, earlier_updates_lemmaidgloss,
+                                                       earlier_updates_same_csv,
                                                        notes_toggle, notes_assign_toggle,
                                                        semfield_toggle, semfield_assign_toggle, tags_toggle)
                 changes += changes_found

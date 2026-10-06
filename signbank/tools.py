@@ -47,7 +47,7 @@ from signbank.compare_csv_row_to_gloss import (get_default_annotationidglosstran
                                                compare_relations,
                                                compare_relations_to_foreign_signs, compare_tags, compare_notes,
                                                compare_dataset,
-                                               compare_signlanguages, compare_dialects, compare_example_sentences)
+                                               compare_signlanguages, compare_dialects, compare_example_sentences, compare_semantic_fields)
 from signbank.dictionary.field_choices import fields_to_fieldcategory_dict
 
 from signbank.video.extract_middle_frame import MiddleFrameExtracter
@@ -302,7 +302,7 @@ def create_gloss_from_valuedict(valuedict, dataset, row_nr, earlier_creation_sam
 
 
 def compare_valuedict_to_gloss(valuedict, gloss, my_datasets, nl,
-                               earlier_updates_same_csv, earlier_updates_lemmaidgloss,
+                               earlier_updates_same_csv,
                                notes_toggle, notes_assign_toggle, semfield_toggle, semfield_assign_toggle, tags_toggle):
     """Takes a dict of arbitrary key-value pairs, and compares them to a gloss"""
     # called by import_csv_update in views.py
@@ -483,68 +483,31 @@ def compare_valuedict_to_gloss(valuedict, gloss, my_datasets, nl,
 
             elif human_key == 'Semantic Field':
 
-                if new_human_value in ['', '0', ' ', None, 'None']:
-                    new_human_value = '-'
-                    new_human_value_list = []
-                else:
-                    new_human_value_list = [v.strip() for v in new_human_value.split(',')]
-
                 if semfield_toggle == 'keep' and new_human_value == '-':
                     continue
 
-                # make sure all fields exist
-                new_values_sorted_lookup = lookup_semantic_fields(new_human_value_list)
-                if new_values_sorted_lookup.count() != len(new_human_value_list):
-                    error_string = gettext("For gloss '{annotation}' ({glossid}), could not parse '{value}' for '{column}'.").format(
-                        annotation=default_annotationidglosstranslation, glossid=str(gloss.id), value=new_human_value,
-                        column=human_key)
-                    errors_found += [error_string]
-                    continue
-                new_semfield_sorted_lookup_values = [str(sf.name) for sf in new_values_sorted_lookup]
-                new_semanticfield_value = ', '.join(new_semfield_sorted_lookup_values)
-                original_sorted_semfield_values = [str(sf.name) for sf in gloss.semField.all().order_by('machine_value')]
-                original_semanticfield_value = ", ".join(original_sorted_semfield_values)
-                if new_semanticfield_value != original_semanticfield_value:
-                    if semfield_assign_toggle == 'update':
-                        combined_semfield = original_sorted_semfield_values + new_semfield_sorted_lookup_values
-                        compined_values_sorted_lookup = lookup_semantic_fields(combined_semfield)
-                        new_semanticfield_value = ', '.join([str(sf.name) for sf in compined_values_sorted_lookup])
-
-                    differences.append({'pk': gloss.id,
-                                        'dataset': gloss.lemma.dataset,
-                                        'annotationidglosstranslation': default_annotationidglosstranslation,
-                                        'machine_key': human_key,
-                                        'human_key': human_key,
-                                        'original_machine_value': original_semanticfield_value,
-                                        'original_human_value': original_semanticfield_value,
-                                        'new_machine_value': new_semanticfield_value,
-                                        'new_human_value': new_semanticfield_value,
-                                        'side_effects': {}})
+                errors_found, differences = compare_semantic_fields(gloss, new_human_value, human_key, errors_found, differences, semfield_assign_toggle)
                 continue
 
             elif human_key in ['Derivation history', 'Derivation History']:
 
                 continue
 
-            # If not, find the matching field in the gloss, and remember its 'real' name
-            try:
-                field = fields[human_key]
-                gloss_field_name = field.name
-
-            except KeyError:
-                # Signbank ID is skipped, for this purpose it was popped from the fields to compare
-                # Skip above fields with complex values: Keywords, Signlanguages, Dialects,
-                # Relations to other signs, Relations to foreign signs, Morphology.
+            if human_key not in fields.keys():
                 error_string = gettext("For gloss '{annotation}' ({glossid}), could not identify column name: '{column}'.").format(
                     annotation=default_annotationidglosstranslation, glossid=str(gloss.id), column=human_key)
                 errors_found += [error_string]
 
                 if not column_name_error:
+                    # a setting is used to avoid repeating this feedback message
                     error_string = gettext("HINT: Try exporting a CSV file to see what column names can be used.")
                     errors_found += [error_string]
                     column_name_error = True
-
                 continue
+
+            # What follows is processing for the Gloss model fields that are not complex related models
+            field = fields[human_key]
+            gloss_field_name = field.name
 
             # Try to translate the value to machine values if needed
             if hasattr(field, 'field_choice_category'):
@@ -713,7 +676,7 @@ def compare_valuedict_to_gloss(valuedict, gloss, my_datasets, nl,
                                     'new_human_value': new_human_value,
                                     'side_effects': {}})
 
-    return differences, errors_found, earlier_updates_same_csv, earlier_updates_lemmaidgloss
+    return differences, errors_found, earlier_updates_same_csv
 
 
 def compare_valuedict_to_lemma(valuedict, lemma_id, my_datasets, nl,
@@ -822,18 +785,6 @@ def set_dark_mode(request):
         request.session['dark_mode'] = "True"
     request.session.modified = True
     return JsonResponse({})
-
-
-def lookup_semantic_fields(values):
-    # case insensitive lookup of values for semantic fields
-    semantic_fields_machine_values = []
-    for value in values:
-        semfields = SemanticField.objects.filter(name__iexact=value)
-        if not semfields or semfields.count() > 1:
-            continue
-        semantic_fields_machine_values.append(semfields.first().machine_value)
-    semantic_fields = SemanticField.objects.filter(machine_value__in=semantic_fields_machine_values).order_by('machine_value')
-    return semantic_fields
 
 
 def reload_signbank(request=None):

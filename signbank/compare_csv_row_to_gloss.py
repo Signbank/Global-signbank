@@ -5,7 +5,7 @@ from django.utils.translation import activate, gettext
 
 from signbank.settings.server_specific import LANGUAGES, DEBUG_CSV, DEFAULT_LANGUAGE_HEADER_COLUMN
 from signbank.dictionary.models import (Gloss, Morpheme, MorphologyDefinition, Relation, FieldChoice, SignLanguage, Dialect,
-                                        Language)
+                                        Language, SemanticField)
 from signbank.dictionary.update_csv import validate_and_resolve_gloss_relations
 from signbank.csv_interface import (update_sentences_parse, sense_examplesentences_for_language, get_sense_numbers,
                                     get_senses_to_sentences, csv_sentence_tuples_list_compare)
@@ -909,4 +909,58 @@ def compare_example_sentences(gloss, new_human_value, human_key, errors_found, d
                             'new_machine_value': difference,
                             'new_human_value': difference,
                             'side_effects': {}})
+    return errors_found, differences
+
+
+def lookup_semantic_fields(values):
+    # case insensitive lookup of values for semantic fields
+    semantic_fields_machine_values = []
+    for value in values:
+        semfields = SemanticField.objects.filter(name__iexact=value)
+        if not semfields or semfields.count() > 1:
+            continue
+        semantic_fields_machine_values.append(semfields.first().machine_value)
+    semantic_fields = SemanticField.objects.filter(machine_value__in=semantic_fields_machine_values).order_by('machine_value')
+    return semantic_fields
+
+
+def compare_semantic_fields(gloss, new_human_value, human_key, errors_found, differences, semfield_assign_toggle):
+    if new_human_value in ['', '0', ' ', None, 'None']:
+        new_human_value = '-'
+        new_human_value_list = []
+    else:
+        new_human_value_list = [v.strip() for v in new_human_value.split(',')]
+
+    # make sure all fields exist
+    new_values_sorted_lookup = lookup_semantic_fields(new_human_value_list)
+    if new_values_sorted_lookup.count() != len(new_human_value_list):
+        error_string = gettext(
+            "For gloss '{annotation}' ({glossid}), could not parse '{value}' for '{column}'.").format(
+            annotation=get_default_annotationidglosstranslation(gloss), glossid=str(gloss.id), value=new_human_value,
+            column=human_key)
+        errors_found += [error_string]
+        return errors_found, differences
+
+    new_semfield_sorted_lookup_values = [str(sf.name) for sf in new_values_sorted_lookup]
+    new_semanticfield_value = ', '.join(new_semfield_sorted_lookup_values)
+    original_sorted_semfield_values = [str(sf.name) for sf in gloss.semField.all().order_by('machine_value')]
+    original_semanticfield_value = ", ".join(original_sorted_semfield_values)
+    if new_semanticfield_value == original_semanticfield_value:
+        return errors_found, differences
+
+    if semfield_assign_toggle == 'update':
+        combined_semfield = original_sorted_semfield_values + new_semfield_sorted_lookup_values
+        compined_values_sorted_lookup = lookup_semantic_fields(combined_semfield)
+        new_semanticfield_value = ', '.join([str(sf.name) for sf in compined_values_sorted_lookup])
+
+    differences.append({'pk': gloss.id,
+                        'dataset': gloss.lemma.dataset,
+                        'annotationidglosstranslation': get_default_annotationidglosstranslation(gloss),
+                        'machine_key': human_key,
+                        'human_key': human_key,
+                        'original_machine_value': original_semanticfield_value,
+                        'original_human_value': original_semanticfield_value,
+                        'new_machine_value': new_semanticfield_value,
+                        'new_human_value': new_semanticfield_value,
+                        'side_effects': {}})
     return errors_found, differences
