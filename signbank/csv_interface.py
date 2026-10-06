@@ -129,7 +129,7 @@ def sense_examplesentences_for_language(gloss, language):
     return sentences_display
 
 
-def map_values_to_sentence_type(values, include_sentences=True):
+def map_values_to_sentence_type(values, include_sentences=True, include_ids=False):
     map_errors = False
     activate(LANGUAGES[0][0])
     sentencetype_role_choices = [st.name for st in FieldChoice.objects.filter(field__iexact='SentenceType',
@@ -146,7 +146,10 @@ def map_values_to_sentence_type(values, include_sentences=True):
         pattern_sentence_types = '(-|N/A)'
     mapped_values = values
 
-    if include_sentences:
+    if include_sentences and include_ids:
+        regex_string = (r'\s?\(([1-9]),\s?([1-9]), %s, (True|False), %s([^\"]+)%s\)\s?'
+                        % (pattern_sentence_types, LEFT_DOUBLE_QUOTE_PATTERNS, RIGHT_DOUBLE_QUOTE_PATTERNS))
+    elif include_sentences:
         regex_string = (r'\s?\(([1-9]), %s, (True|False), %s([^\"]+)%s\)\s?'
                         % (pattern_sentence_types, LEFT_DOUBLE_QUOTE_PATTERNS, RIGHT_DOUBLE_QUOTE_PATTERNS))
     else:
@@ -220,7 +223,7 @@ def trim_columns_in_row(row):
 def parse_sentence_row(row_nr, sentence_dict):
     errors = []
     sentence_fields = '(' + sentence_dict['order'] + ', ' + sentence_dict['sentence_type'] + ', ' + sentence_dict['negative'] + ')'
-    find_all, map_errors = map_values_to_sentence_type(sentence_fields, include_sentences=False)
+    find_all, map_errors = map_values_to_sentence_type(sentence_fields, include_sentences=False, include_ids=False)
     if map_errors:
         errors += ['Row '+row_nr + ': Error parsing sentence columns Sense Number, Sentence Type, Negative: '+sentence_fields]
     gloss_pk = sentence_dict['gloss_pk']
@@ -254,7 +257,7 @@ def update_sentences_parse(sense_numbers, sense_numbers_to_sentences, new_senten
 
     new_sentence_tuples = []
     for sentence_tuple in new_sentences:
-        find_all, map_errors = map_values_to_sentence_type(sentence_tuple, include_sentences=True)
+        find_all, map_errors = map_values_to_sentence_type(sentence_tuple, include_sentences=True, include_ids=True)
         if map_errors:
             return False
         if not find_all:
@@ -288,7 +291,7 @@ def sentence_tuple_list_to_string(sentence_tuple_string):
         return tuple_list_of_strings, errors
     sentences = [k for k in sentence_tuple_string.split(' | ')]
     for sentence_tuple in sentences:
-        find_all, map_errors = map_values_to_sentence_type(sentence_tuple, include_sentences=True)
+        find_all, map_errors = map_values_to_sentence_type(sentence_tuple, include_sentences=True, include_ids=True)
         if map_errors:
             errors = True
             continue
@@ -369,7 +372,7 @@ def csv_update_sentences(request, gloss, language, new_sentences_string, update=
 
     new_sentence_tuples = []
     for sentence_tuple in new_sentences:
-        find_all, map_errors = map_values_to_sentence_type(sentence_tuple, include_sentences=True)
+        find_all, map_errors = map_values_to_sentence_type(sentence_tuple, include_sentences=True, include_ids=False)
         if map_errors or not find_all:
             # examine errors
             if DEBUG_CSV:

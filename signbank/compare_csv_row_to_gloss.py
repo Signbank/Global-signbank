@@ -866,32 +866,30 @@ def compare_example_sentences(gloss, new_human_value, human_key, errors_found, d
     language_name_column = DEFAULT_LANGUAGE_HEADER_COLUMN['English']
     language_name = human_key[len(example_sentences_key_prefix):-1]
     language = Language.objects.filter(**{language_name_column: language_name}).first()
-    sense_numbers = get_sense_numbers(gloss)
-    sense_numbers_to_sentences = get_senses_to_sentences(gloss)
     if not language:
-        error_string = gettext("Non-existent language specified for Senses column: {column}").format(column=human_key)
+        error_string = gettext("Non-existent language specified for column: {column}").format(column=human_key)
         errors_found += [error_string]
         return errors_found, differences
 
-    current_sentences_string = sense_examplesentences_for_language(gloss, language)
-    if current_sentences_string and DEBUG_CSV:
-        print('Current sentences: ', current_sentences_string)
+    sense_numbers_to_sentences = get_senses_to_sentences(gloss)
+    if not sense_numbers_to_sentences:
+        error_string = gettext("For gloss '{annotation}' ({glossid}), creation of new sentences not available: {column}. Only update is available, but the gloss has no sentences.").format(annotation=get_default_annotationidglosstranslation(gloss), glossid=gloss.id, column=human_key)
+        errors_found += [error_string]
+        return errors_found, differences
 
+    sense_numbers = get_sense_numbers(gloss)
     okay = update_sentences_parse(sense_numbers, sense_numbers_to_sentences, new_human_value)
     if not okay:
-        if DEBUG_CSV:
-            print('current sentences: ', current_sentences_string)
-            print('not okay new sentences string: ', new_human_value)
         error_string = gettext(
             "For gloss {glossid}: Error parsing value in column {column}: {value}").format(
             glossid=str(gloss.id), column=human_key, value=new_human_value)
         errors_found += [error_string]
         return errors_found, differences
 
+    current_sentences_string = sense_examplesentences_for_language(gloss, language)
     difference_org, difference, parse_errors = csv_sentence_tuples_list_compare(gloss,
                                                                                 current_sentences_string,
                                                                                 new_human_value)
-
     if parse_errors:
         error_string = gettext(
             "For gloss {glossid}: Error parsing value in column {column}: {value}").format(
