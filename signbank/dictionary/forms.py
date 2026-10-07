@@ -1913,9 +1913,9 @@ class PhonologyForm(forms.Form):
                                                           widget=forms.Select(attrs=ATTRS_FOR_FORMS),
                                                           required=False)
             self.fields['handedness'].initial = self.object.handedness.machine_value if self.object.handedness else 0
-        self.fields['weakdrop'].choices = [('0', _('')), ('1', _('+WD')), ('2', _('-WD'))]
+        self.fields['weakdrop'].choices = [('0', ''), ('1', _('+WD')), ('2', _('-WD'))]
         self.fields['weakdrop'].initial = self.object.weakdrop_to_choice()
-        self.fields['weakprop'].choices = [('0', _('')), ('1', _('+WP')), ('2', _('-WP'))]
+        self.fields['weakprop'].choices = [('0', ''), ('1', _('+WP')), ('2', _('-WP'))]
         self.fields['weakprop'].initial = self.object.weakprop_to_choice()
         if self.use_lookaheads == 'lookaheads':
             self.fields['domhndsh'] = forms.CharField(label=_('Strong Hand'))
