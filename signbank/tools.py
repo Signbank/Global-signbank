@@ -1,6 +1,5 @@
 import os
 import shutil
-import html
 from zipfile import ZipFile
 import json
 import hashlib
@@ -27,26 +26,27 @@ from urllib.parse import urlencode
 from guardian.shortcuts import get_objects_for_user
 
 from signbank.settings.server_specific import (FIELDS, DEFAULT_LANGUAGE_HEADER_COLUMN, WRITABLE_FOLDER, LANGUAGE_CODE,
-                                               DEBUG_CSV, HANDEDNESS_ARTICULATION_FIELDS, LANGUAGES, WSGI_FILE,
+                                               WSGI_FILE,
                                                DEFAULT_DATASET_PK, TMP_DIR, FFMPEG_PROGRAM, GLOSS_VIDEO_DIRECTORY,
                                                GLOSS_IMAGE_DIRECTORY, DEFAULT_DATASET_ACRONYM, DEFAULT_KEYWORDS_LANGUAGE,
                                                ECV_SETTINGS, ECV_FOLDER_ABSOLUTE_PATH, URL, PREFIX_URL,
                                                LANGUAGES_LANGUAGE_CODE_3CHAR)
-from signbank.dictionary.models import (Dataset, Gloss, Morpheme, Dialect, SignLanguage, Language, FieldChoice,
-                                        SemanticField, DeletedGlossOrMedia, UserProfile, get_default_language_id,
+from signbank.dictionary.models import (Dataset, Gloss, Morpheme, Language, FieldChoice,
+                                        DeletedGlossOrMedia, UserProfile, get_default_language_id,
                                         Handshape, LemmaIdgloss, FieldChoiceForeignKey, Definition,
                                         LemmaIdglossTranslation, MorphologyDefinition, AnnotatedSentenceTranslation,
                                         ExampleSentence, OtherMedia, Relation, GlossRevision)
 from signbank.csv_interface import (parse_sentence_row,
-                                    required_csv_columns, trim_columns_in_row,
-                                    normalize_field_choice)
+                                    required_csv_columns, trim_columns_in_row)
 from signbank.compare_csv_row_to_gloss import (get_default_annotationidglosstranslation,
                                                compare_simultaneous_morphology,
                                                compare_sequential_morphology, compare_blend_morphology,
                                                compare_relations,
                                                compare_relations_to_foreign_signs, compare_tags, compare_notes,
                                                compare_dataset,
-                                               compare_signlanguages, compare_dialects, compare_example_sentences, compare_semantic_fields, compare_senses)
+                                               compare_signlanguages, compare_dialects, compare_example_sentences,
+                                               compare_semantic_fields, compare_senses, compare_choice_field,
+                                               compare_handshape, compare_booleans, compare_text)
 from signbank.dictionary.field_choices import fields_to_fieldcategory_dict
 
 from signbank.video.extract_middle_frame import MiddleFrameExtracter
@@ -161,11 +161,6 @@ def save_media(source_folder, language_code_3char, goal_folder, gloss, extension
         pass
 
     return overwritten, was_allowed
-
-
-def unescape(string):
-
-    return html.unescape(string)
 
 
 def create_gloss_from_valuedict(valuedict, dataset, row_nr, earlier_creation_same_csv,
@@ -474,174 +469,25 @@ def compare_valuedict_to_gloss(valuedict, gloss, my_datasets, nl,
 
             # What follows is processing for the Gloss model fields that are not complex related models
             field = fields[human_key]
-            gloss_field_name = field.name
 
-            # Try to translate the value to machine values if needed
             if hasattr(field, 'field_choice_category'):
-                if new_human_value in ['', '0', ' ', None, 'None']:
-                    new_human_value = '-'
+                errors_found, differences = compare_choice_field(gloss, field, new_human_value, human_key, errors_found, differences)
 
-                try:
-                    field_choice = FieldChoice.objects.get(name__iexact=new_human_value, field=field.field_choice_category)
-                    new_machine_value = field_choice.machine_value
-                except ObjectDoesNotExist:
-                    normalised_choice = normalize_field_choice(new_human_value)
-                    try:
-                        field_choice = FieldChoice.objects.get(name__iexact=normalised_choice,
-                                                               field=field.field_choice_category)
-                        new_machine_value = field_choice.machine_value
-                    except ObjectDoesNotExist:
-                        error_string = gettext(
-                            "For gloss '{annotation}' ({glossid}), could not find option '{value}' for '{column}'.").format(
-                            annotation=default_annotationidglosstranslation, glossid=str(gloss.id),
-                            value=new_human_value, column=human_key)
-                        errors_found += [error_string]
-                        continue
-
-            elif isinstance(field, models.ForeignKey) and field.related_model == Handshape:
-                if new_human_value in ['', '0', ' ', None, 'None']:
-                    new_human_value = '-'
-
-                try:
-                    handshape = Handshape.objects.get(name__iexact=new_human_value)
-                    new_machine_value = handshape.machine_value
-                except ObjectDoesNotExist:
-                    error_string = gettext(
-                        "For gloss '{annotation}' ({glossid}), could not find option '{value}' for '{column}'.").format(
-                        annotation=default_annotationidglosstranslation, glossid=str(gloss.id),
-                        value=new_human_value, column=human_key)
-                    errors_found += [error_string]
-                    continue
-
-            # Do something special for integers and booleans
-            elif field.__class__.__name__ == 'IntegerField':
-
-                try:
-                    new_machine_value = int(new_human_value)
-                except ValueError:
-                    new_human_value = 'None'
-                    new_machine_value = None
-            elif field.__class__.__name__ == 'BooleanField':
-
-                new_human_value_lower = new_human_value.lower()
-                if new_human_value_lower == 'neutral' and (field.name in HANDEDNESS_ARTICULATION_FIELDS):
-                    new_machine_value = None
-                elif new_human_value_lower in ['true', 'yes', '1']:
-                    new_machine_value = True
-                    new_human_value = 'True'
-                elif new_human_value_lower == 'none':
-                    new_machine_value = None
-                elif new_human_value_lower in ['false', 'no', '0']:
-                    new_machine_value = False
-                    new_human_value = 'False'
-                else:
-                    # Boolean expected
-                    error_string = ''
-                    # If the new value is empty, don't count this as a type error, error_string is generated conditionally
-                    if field.name in HANDEDNESS_ARTICULATION_FIELDS:
-                        if new_human_value is not None and new_human_value not in ['None', '']:
-                            error_string = gettext(
-                                "For gloss '{annotation}' ({glossid}), value '{value}' for '{column}' should be a Boolean or Neutral.").format(
-                                annotation=default_annotationidglosstranslation, glossid=str(gloss.id),
-                                value=new_human_value, column=human_key)
-                    else:
-                        if new_human_value is not None and new_human_value not in ['None', '']:
-                            error_string = gettext(
-                                "For gloss '{annotation}' ({glossid}), value '{value}' for '{column}' is not a Boolean.").format(
-                                annotation=default_annotationidglosstranslation, glossid=str(gloss.id),
-                                value=new_human_value, column=human_key)
-                    if error_string:
-                        errors_found += [error_string]
-                    continue
-            # If all the above does not apply, this is a None value or plain text
-            else:
-                if new_human_value == 'None':
-                    new_machine_value = None
-                elif field.__class__.__name__ == 'CharField' or field.__class__.__name__ == 'TextField':
-                    new_machine_value = new_human_value.lstrip('\"').rstrip('\"')
-                else:
-                    new_machine_value = new_human_value
-
-            # Try to translate the key to machine keys if possible
-            try:
-                original_machine_value = getattr(gloss, gloss_field_name)
-            except KeyError:
-                error_string = gettext(
-                    "For gloss '{annotation}' ({glossid}), could not get original value for field: '{field}'").format(
-                    annotation=default_annotationidglosstranslation, glossid=str(gloss.id),
-                    field=gloss_field_name)
-                errors_found += [error_string]
                 continue
 
-            # Translate back the machine value from the gloss
+            if isinstance(field, models.ForeignKey) and field.related_model == Handshape:
+                errors_found, differences = compare_handshape(gloss, field, new_human_value, human_key, errors_found, differences)
 
-            if hasattr(field, 'field_choice_category'):
-                original_field_value = getattr(gloss, gloss_field_name)
-                original_machine_value = original_field_value.machine_value if original_field_value else 0
-                original_human_value = original_field_value.name if original_field_value else '-'
+                continue
 
-            elif isinstance(field, models.ForeignKey) and field.related_model == Handshape:
-                original_field_value = getattr(gloss, gloss_field_name)
-                original_machine_value = original_field_value.machine_value if original_field_value else 0
-                original_human_value = original_field_value.name if original_field_value else '-'
+            if field.__class__.__name__ == 'BooleanField':
+                errors_found, differences = compare_booleans(gloss, field, new_human_value, human_key, errors_found, differences)
 
-            elif field.__class__.__name__ == 'BooleanField':
-                if original_machine_value is None and (field.name in HANDEDNESS_ARTICULATION_FIELDS):
-                    original_human_value = 'Neutral'
-                elif original_machine_value:
-                    original_machine_value = True
-                    original_human_value = 'True'
-                else:
-                    original_machine_value = False
-                    original_human_value = 'False'
-            # some legacy glosses have empty text fields of other formats
-            elif (field.__class__.__name__ == 'CharField' or field.__class__.__name__ == 'TextField') \
-                    and (original_machine_value is None or original_machine_value == '-'
-                         or original_machine_value == '------' or original_machine_value == ' '):
-                original_machine_value = ''
-                original_human_value = ''
-            else:
-                value = getattr(gloss, field.name)
-                original_human_value = value
+                continue
+            if field.__class__.__name__ == 'CharField' or field.__class__.__name__ == 'TextField':
+                errors_found, differences = compare_text(gloss, field, new_human_value, human_key, errors_found, differences)
 
-            # Remove any weird char
-            if not type(new_human_value) == str:
-                # make sure passed parameter is a string
-                coerced_string = str(new_human_value)
-            else:
-                coerced_string = new_human_value.lstrip('\"').rstrip('\"').replace('\n', '\\n')
-                original_human_value = original_human_value.replace('\n', '\\n')
-
-            if type(original_machine_value) == str:
-                # escape any newlines in text fields
-                original_machine_value = original_machine_value.replace('\n', '\\n')
-
-            new_human_value = unescape(coerced_string)
-
-            # test if blank value
-
-            original_human_value = str(original_human_value)
-            new_human_value = str(new_human_value)
-
-            s1 = re.sub(' ', '', original_human_value)
-            s2 = re.sub(' ', '', new_human_value)
-
-            # If the original value is implicitly not set, and the new value is not set, ignore this change
-            if (s1 in ['', 'None', 'False']) and s2 in ['', '-']:
-                pass
-            # Check for change, and save your findings if there is one
-            elif original_machine_value != new_machine_value and new_machine_value is not None:
-
-                differences.append({'pk': gloss.id,
-                                    'dataset': gloss.lemma.dataset,
-                                    'annotationidglosstranslation': default_annotationidglosstranslation,
-                                    'machine_key': gloss_field_name,
-                                    'human_key': human_key,
-                                    'original_machine_value': original_machine_value,
-                                    'original_human_value': original_human_value,
-                                    'new_machine_value': new_machine_value,
-                                    'new_human_value': new_human_value,
-                                    'side_effects': {}})
+                continue
 
     return differences, errors_found
 

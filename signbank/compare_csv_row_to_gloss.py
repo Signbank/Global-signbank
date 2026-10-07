@@ -1,15 +1,17 @@
 import re
 import copy
+import html
 
 from django.utils.translation import activate, gettext
+from django.core.exceptions import ObjectDoesNotExist
 
-from signbank.settings.server_specific import LANGUAGES, DEBUG_CSV, DEFAULT_LANGUAGE_HEADER_COLUMN
+from signbank.settings.server_specific import LANGUAGES, DEBUG_CSV, DEFAULT_LANGUAGE_HEADER_COLUMN, HANDEDNESS_ARTICULATION_FIELDS
 from signbank.dictionary.models import (Gloss, Morpheme, MorphologyDefinition, Relation, FieldChoice, SignLanguage, Dialect,
-                                        Language, SemanticField)
+                                        Language, SemanticField, Handshape)
 from signbank.dictionary.update_csv import validate_and_resolve_gloss_relations
 from signbank.csv_interface import (update_sentences_parse, sense_examplesentences_for_language, get_sense_numbers,
                                     get_senses_to_sentences, csv_sentence_tuples_list_compare, sense_translations_for_language,
-                                    update_senses_parse)
+                                    update_senses_parse, normalize_field_choice)
 from tagging.models import TaggedItem, Tag
 
 
@@ -1009,6 +1011,192 @@ def compare_senses(gloss, new_human_value, human_key, errors_found, differences)
                         'original_machine_value': current_keyword_string,
                         'original_human_value': current_keyword_string,
                         'new_machine_value': new_human_value,
+                        'new_human_value': new_human_value,
+                        'side_effects': {}})
+    return errors_found, differences
+
+
+def compare_choice_field(gloss, field, new_human_value, human_key, errors_found, differences):
+    if new_human_value in ['', '0', ' ', None, 'None']:
+        # normalise to make this be the value for the empty field choice
+        new_human_value = '-'
+
+    try:
+        field_choice = FieldChoice.objects.get(name__iexact=new_human_value, field=field.field_choice_category)
+        new_machine_value = field_choice.machine_value
+    except ObjectDoesNotExist:
+        # if necessary, normalise special characters in the human-readable name
+        normalised_choice = normalize_field_choice(new_human_value)
+        try:
+            field_choice = FieldChoice.objects.get(name__iexact=normalised_choice,
+                                                   field=field.field_choice_category)
+            new_machine_value = field_choice.machine_value
+        except ObjectDoesNotExist:
+            error_string = gettext(
+                "For gloss '{annotation}' ({glossid}), could not find option '{value}' for '{column}'.").format(
+                annotation=get_default_annotationidglosstranslation(gloss), glossid=str(gloss.id),
+                value=new_human_value, column=human_key)
+            errors_found += [error_string]
+            return errors_found, differences
+
+    original_field_value = getattr(gloss, field.name)
+    original_machine_value = original_field_value.machine_value if original_field_value else 0
+    original_human_value = original_field_value.name if original_field_value else '-'
+
+    if original_machine_value == new_machine_value:
+        return errors_found, differences
+
+    differences.append({'pk': gloss.id,
+                        'dataset': gloss.lemma.dataset,
+                        'annotationidglosstranslation': get_default_annotationidglosstranslation(gloss),
+                        'machine_key': field.name,
+                        'human_key': human_key,
+                        'original_machine_value': original_machine_value,
+                        'original_human_value': original_human_value,
+                        'new_machine_value': new_machine_value,
+                        'new_human_value': new_human_value,
+                        'side_effects': {}})
+    return errors_found, differences
+
+
+def compare_handshape(gloss, field, new_human_value, human_key, errors_found, differences):
+    if new_human_value in ['', '0', ' ', None, 'None']:
+        new_human_value = '-'
+
+    try:
+        handshape = Handshape.objects.get(name__iexact=new_human_value)
+        new_machine_value = handshape.machine_value
+    except ObjectDoesNotExist:
+        error_string = gettext(
+            "For gloss '{annotation}' ({glossid}), could not find option '{value}' for '{column}'.").format(
+            annotation=get_default_annotationidglosstranslation(gloss), glossid=str(gloss.id),
+            value=new_human_value, column=human_key)
+        errors_found += [error_string]
+        return errors_found, differences
+
+    original_field_value = getattr(gloss, field.name)
+    original_machine_value = original_field_value.machine_value if original_field_value else 0
+    original_human_value = original_field_value.name if original_field_value else '-'
+
+    if original_machine_value == new_machine_value:
+        return errors_found, differences
+
+    differences.append({'pk': gloss.id,
+                        'dataset': gloss.lemma.dataset,
+                        'annotationidglosstranslation': get_default_annotationidglosstranslation(gloss),
+                        'machine_key': field.name,
+                        'human_key': human_key,
+                        'original_machine_value': original_machine_value,
+                        'original_human_value': original_human_value,
+                        'new_machine_value': new_machine_value,
+                        'new_human_value': new_human_value,
+                        'side_effects': {}})
+    return errors_found, differences
+
+
+def compare_booleans(gloss, field, new_human_value, human_key, errors_found, differences):
+    new_human_value_lower = new_human_value.lower()
+    if new_human_value_lower == 'neutral' and (field.name in HANDEDNESS_ARTICULATION_FIELDS):
+        new_machine_value = None
+    elif new_human_value_lower in ['true', 'yes', '1']:
+        new_machine_value = True
+        new_human_value = 'True'
+    elif new_human_value_lower == 'none':
+        new_machine_value = None
+    elif new_human_value_lower in ['false', 'no', '0']:
+        new_machine_value = False
+        new_human_value = 'False'
+    else:
+        # Boolean expected
+        error_string = ''
+        # If the new value is empty, don't count this as a type error, error_string is generated conditionally
+        if field.name in HANDEDNESS_ARTICULATION_FIELDS:
+            if new_human_value is not None and new_human_value not in ['None', '']:
+                error_string = gettext(
+                    "For gloss '{annotation}' ({glossid}), value '{value}' for '{column}' should be a Boolean or Neutral.").format(
+                    annotation=get_default_annotationidglosstranslation(gloss), glossid=str(gloss.id),
+                    value=new_human_value, column=human_key)
+        else:
+            if new_human_value is not None and new_human_value not in ['None', '']:
+                error_string = gettext(
+                    "For gloss '{annotation}' ({glossid}), value '{value}' for '{column}' is not a Boolean.").format(
+                    annotation=get_default_annotationidglosstranslation(gloss), glossid=str(gloss.id),
+                    value=new_human_value, column=human_key)
+        if error_string:
+            errors_found += [error_string]
+        return errors_found, differences
+
+    original_machine_value = getattr(gloss, field.name)
+    if original_machine_value is None and (field.name in HANDEDNESS_ARTICULATION_FIELDS):
+        original_human_value = 'Neutral'
+    elif original_machine_value:
+        original_machine_value = True
+        original_human_value = 'True'
+    else:
+        original_machine_value = False
+        original_human_value = 'False'
+
+    if original_machine_value == new_machine_value:
+        return errors_found, differences
+
+    differences.append({'pk': gloss.id,
+                        'dataset': gloss.lemma.dataset,
+                        'annotationidglosstranslation': get_default_annotationidglosstranslation(gloss),
+                        'machine_key': field.name,
+                        'human_key': human_key,
+                        'original_machine_value': original_machine_value,
+                        'original_human_value': original_human_value,
+                        'new_machine_value': new_machine_value,
+                        'new_human_value': new_human_value,
+                        'side_effects': {}})
+    return errors_found, differences
+
+
+def unescape(string):
+
+    return html.unescape(string)
+
+
+def compare_text(gloss, field, new_human_value, human_key, errors_found, differences):
+    new_machine_value = new_human_value.lstrip('\"').rstrip('\"')
+    original_machine_value = getattr(gloss, field.name)
+
+    if original_machine_value in ['-', '------', ' ', None]:
+        original_machine_value = ''
+    original_human_value = original_machine_value
+
+    original_human_value = str(original_human_value)
+    new_human_value = str(new_human_value)
+
+    if not original_machine_value and not new_machine_value:
+        return errors_found, differences
+
+    coerced_string = new_human_value.lstrip('\"').rstrip('\"').replace('\n', '\\n')
+    original_human_value = original_human_value.replace('\n', '\\n')
+    original_machine_value = original_machine_value.replace('\n', '\\n')
+    new_human_value = unescape(coerced_string)
+
+    original_human_value = str(original_human_value)
+    new_human_value = str(new_human_value)
+
+    s1 = re.sub(' ', '', original_human_value)
+    s2 = re.sub(' ', '', new_human_value)
+
+    # If the original value is implicitly not set, and the new value is not set, ignore this change
+    if (s1 in ['', 'None', 'False']) and s2 in ['', '-']:
+        return errors_found, differences
+
+    if original_machine_value == new_machine_value:
+        return errors_found, differences
+
+    differences.append({'pk': gloss.id,
+                        'dataset': gloss.lemma.dataset,
+                        'annotationidglosstranslation': get_default_annotationidglosstranslation(gloss),
+                        'machine_key': field.name,
+                        'human_key': human_key,
+                        'original_machine_value': original_machine_value,
+                        'original_human_value': original_human_value,
+                        'new_machine_value': new_machine_value,
                         'new_human_value': new_human_value,
                         'side_effects': {}})
     return errors_found, differences
