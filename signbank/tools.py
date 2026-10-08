@@ -46,7 +46,7 @@ from signbank.compare_csv_row_to_gloss import (get_default_annotationidglosstran
                                                compare_dataset,
                                                compare_signlanguages, compare_dialects, compare_example_sentences,
                                                compare_semantic_fields, compare_senses, compare_choice_field,
-                                               compare_handshape, compare_booleans, compare_text)
+                                               compare_handshape, compare_booleans, compare_text, compare_annotations)
 from signbank.dictionary.field_choices import fields_to_fieldcategory_dict
 
 from signbank.video.extract_middle_frame import MiddleFrameExtracter
@@ -312,8 +312,6 @@ def compare_valuedict_to_gloss(valuedict, gloss, my_datasets, nl,
     # Create an overview of all fields, sorted by their human name
     with override(LANGUAGE_CODE):
 
-        default_annotationidglosstranslation = get_default_annotationidglosstranslation(gloss)
-
         # these are the same fields as for csv export
         # do not include frequency fields
         fieldnames = FIELDS['main']+FIELDS['phonology']+FIELDS['semantics']+['inWeb', 'isNew']
@@ -332,42 +330,13 @@ def compare_valuedict_to_gloss(valuedict, gloss, my_datasets, nl,
 
             new_human_value = new_human_value.strip()
 
-            # If these are not fields, but relations to other parts of the database, compare complex values
             if human_key == 'Signbank ID':
                 continue
 
             annotation_idgloss_key_prefix = "Annotation ID Gloss ("
             if human_key.startswith(annotation_idgloss_key_prefix):
-                language_name_column = DEFAULT_LANGUAGE_HEADER_COLUMN['English']
-                language_name = human_key[len(annotation_idgloss_key_prefix):-1]
-                languages = Language.objects.filter(**{language_name_column: language_name})
-                if languages:
-                    language = languages.first()
-                    annotation_idglosses = gloss.annotationidglosstranslation_set.filter(language=language)
-                    if annotation_idglosses.count() > 0:
-                        annotation_idgloss_string = annotation_idglosses.first().text
 
-                        if annotation_idgloss_string != new_human_value and new_human_value not in ['None', '']:
-                            glosses_with_same_annotation = Gloss.objects.filter(
-                                annotationidglosstranslation__text__exact=new_human_value,
-                                annotationidglosstranslation__language=language,
-                                lemma__dataset=gloss.lemma.dataset).count()
-
-                            if glosses_with_same_annotation:
-                                error_string = gettext("Signbank ID {glossid} annotation already exists in dataset: '{column}': '{value}'").format(glossid=str(gloss.id), column=human_key, value=str(new_human_value))
-                                errors_found += [error_string]
-
-                            else:
-                                differences.append({'pk': gloss.id,
-                                                    'dataset': gloss.lemma.dataset,
-                                                    'annotationidglosstranslation': default_annotationidglosstranslation,
-                                                    'machine_key': human_key,
-                                                    'human_key': human_key,
-                                                    'original_machine_value': annotation_idgloss_string,
-                                                    'original_human_value': annotation_idgloss_string,
-                                                    'new_machine_value': new_human_value,
-                                                    'new_human_value': new_human_value,
-                                                    'side_effects': {}})
+                errors_found, differences = compare_annotations(gloss, new_human_value, human_key, errors_found, differences)
                 continue
 
             lemma_idgloss_key_prefix = "Lemma ID Gloss ("
@@ -455,9 +424,10 @@ def compare_valuedict_to_gloss(valuedict, gloss, my_datasets, nl,
 
                 continue
 
+            # Before obtaining the Gloss field associated with the human key (column header) in the next step, make sure it is a field verbose name
             if human_key not in fields.keys():
                 error_string = gettext("For gloss '{annotation}' ({glossid}), could not identify column name: '{column}'.").format(
-                    annotation=default_annotationidglosstranslation, glossid=str(gloss.id), column=human_key)
+                    annotation=get_default_annotationidglosstranslation(gloss), glossid=str(gloss.id), column=human_key)
                 errors_found += [error_string]
 
                 if not column_name_error:

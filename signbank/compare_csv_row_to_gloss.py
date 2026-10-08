@@ -1200,3 +1200,53 @@ def compare_text(gloss, field, new_human_value, human_key, errors_found, differe
                         'new_human_value': new_human_value,
                         'side_effects': {}})
     return errors_found, differences
+
+
+def compare_annotations(gloss, new_human_value, human_key, errors_found, differences):
+    annotation_idgloss_key_prefix = "Annotation ID Gloss ("
+    language_name_column = DEFAULT_LANGUAGE_HEADER_COLUMN['English']
+    language_name = human_key[len(annotation_idgloss_key_prefix):-1]
+    language = Language.objects.filter(**{language_name_column: language_name}).first()
+    if not language:
+        error_string = gettext("Non-existent language specified for annotation column: '{column}'").format(column=human_key)
+        errors_found += [error_string]
+        return errors_found, differences
+
+    annotation_idgloss = gloss.annotationidglosstranslation_set.filter(language=language).first()
+    annotation_idgloss_string = annotation_idgloss.text if annotation_idgloss else ''
+
+    if annotation_idgloss_string == new_human_value:
+        return errors_found, differences
+
+    if new_human_value in ['None', '']:
+        error_string = gettext(
+            "For gloss '{annotation}' ({glossid}), value '{value}' for '{column}' should not be empty.").format(
+            annotation=get_default_annotationidglosstranslation(gloss), glossid=str(gloss.id),
+            value=new_human_value, column=human_key)
+        errors_found += [error_string]
+        return errors_found, differences
+
+    glosses_with_same_annotation = Gloss.objects.filter(
+        annotationidglosstranslation__text__exact=new_human_value,
+        annotationidglosstranslation__language=language,
+        lemma__dataset=gloss.lemma.dataset).count()
+
+    if glosses_with_same_annotation:
+        error_string = gettext(
+            "Signbank ID {glossid} annotation already exists in dataset: '{column}': '{value}'").format(
+            glossid=str(gloss.id), column=human_key, value=str(new_human_value))
+        errors_found += [error_string]
+        return errors_found, differences
+
+    differences.append({'pk': gloss.id,
+                        'dataset': gloss.lemma.dataset,
+                        'annotationidglosstranslation': get_default_annotationidglosstranslation(gloss),
+                        'machine_key': human_key,
+                        'human_key': human_key,
+                        'original_machine_value': annotation_idgloss_string,
+                        'original_human_value': annotation_idgloss_string,
+                        'new_machine_value': new_human_value,
+                        'new_human_value': new_human_value,
+                        'side_effects': {}})
+
+    return errors_found, differences
