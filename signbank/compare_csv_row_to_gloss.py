@@ -50,7 +50,7 @@ def check_existence_simultaneous_morphology(gloss, values):
             tuples_list.append((morpheme, role))
         except ValueError:
             error_string = gettext(
-                "For gloss '{annotation}' ({glossid}), formatting error in Simultaneous MorphMorphologyDefinitionology: {input}. Tuple morpheme:role expected.").format(
+                "For gloss '{annotation}' ({glossid}), formatting error in Simultaneous Morphology: {input}. Tuple morpheme:role expected.").format(
                 annotation=default_annotationidglosstranslation, glossid=str(gloss.pk), input=str(new_value_tuple))
             errors.append(error_string)
 

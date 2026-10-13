@@ -913,6 +913,7 @@ def import_csv_update(request):
 
     seen_datasets = []
     seen_dataset_names = []
+    earlier_updates_same_csv = []
 
     # fatal errors are duplicate column headers, data in columns without headers
     # column headers that do not correspond to database fields
@@ -1146,6 +1147,13 @@ def import_csv_update(request):
                 e = gettext("Row {row}: Could not find gloss for Signbank ID {glossid}.").format(row=str(nl+2), glossid=str(pk))
                 error.append(e)
                 continue
+
+            if gloss.pk in earlier_updates_same_csv:
+                e = gettext("Row {row}: Signbank ID {glossid} already seen.").format(row=str(nl+2), glossid=str(gloss.pk))
+                error.append(e)
+                continue
+            else:
+                earlier_updates_same_csv.append(gloss.pk)
 
             if gloss.lemma.dataset != dataset:
                 e1 = gettext('Row {row}: The Dataset column ({acronym}) does not correspond to that of the Signbank ID ({glossid})').format(row=str(nl+2), acronym=dataset.acronym, glossid=str(pk))

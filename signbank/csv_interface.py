@@ -147,13 +147,13 @@ def map_values_to_sentence_type(values, include_sentences=True, include_ids=Fals
     mapped_values = values
 
     if include_sentences and include_ids:
-        regex_string = (r'\s?\(([1-9]),\s?([1-9]), %s, (True|False), %s([^\"]+)%s\)\s?'
+        regex_string = (r'\s?\(([1-9][0-9]*),\s?([1-9][0-9]*), %s, (True|False), %s([^\"]+)%s\)\s?'
                         % (pattern_sentence_types, LEFT_DOUBLE_QUOTE_PATTERNS, RIGHT_DOUBLE_QUOTE_PATTERNS))
     elif include_sentences:
-        regex_string = (r'\s?\(([1-9]), %s, (True|False), %s([^\"]+)%s\)\s?'
+        regex_string = (r'\s?\(([1-9][0-9]*), %s, (True|False), %s([^\"]+)%s\)\s?'
                         % (pattern_sentence_types, LEFT_DOUBLE_QUOTE_PATTERNS, RIGHT_DOUBLE_QUOTE_PATTERNS))
     else:
-        regex_string = r'\s?\(([1-9]), %s, (True|False)\)\s?' % pattern_sentence_types
+        regex_string = r'\s?\(([1-9][0-9]*), %s, (True|False)\)\s?' % pattern_sentence_types
     find_all = re.findall(regex_string, mapped_values)
     if not find_all:
         map_errors = True
