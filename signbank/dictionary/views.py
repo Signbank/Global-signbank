@@ -877,7 +877,9 @@ def import_csv_update(request):
 
     list_choice_fields_choices = choice_fields_choices()
 
-    if len(selected_datasets) > 1:
+    all_selected_datasets_have_change_permission = all([ds in user_datasets for ds in selected_datasets])
+
+    if len(selected_datasets) > 1 and not all_selected_datasets_have_change_permission:
 
         feedback_message = _('Please select only one dataset.')
         messages.add_message(request, messages.ERROR, feedback_message)
@@ -1154,13 +1156,6 @@ def import_csv_update(request):
                 continue
             else:
                 earlier_updates_same_csv.append(gloss.pk)
-
-            if gloss.lemma.dataset != dataset:
-                e1 = gettext('Row {row}: The Dataset column ({acronym}) does not correspond to that of the Signbank ID ({glossid})').format(row=str(nl+2), acronym=dataset.acronym, glossid=str(pk))
-                error.append(e1)
-                # ignore the rest of the row
-                continue
-            # dataset is the same
 
             def get_current_lemma_translations(lemma):
                 """Return {language: text} for every translation language of the lemma's dataset."""
