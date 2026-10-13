@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-01-21 11:18+0100\n"
+"POT-Creation-Date: 2026-10-07 12:19+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -17,93 +17,93 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 
-#: signbank/registration/forms.py:50
+#: signbank/registration/forms.py:49
 msgid "Username"
 msgstr ""
 
-#: signbank/registration/forms.py:53
+#: signbank/registration/forms.py:52
 msgid "First Name"
 msgstr ""
 
-#: signbank/registration/forms.py:56
+#: signbank/registration/forms.py:55
 msgid "Last Name"
 msgstr ""
 
-#: signbank/registration/forms.py:58
+#: signbank/registration/forms.py:57
 msgid "Your Email Address"
 msgstr ""
 
-#: signbank/registration/forms.py:60 signbank/registration/forms.py:230
+#: signbank/registration/forms.py:59 signbank/registration/forms.py:229
 msgid "Password"
 msgstr ""
 
-#: signbank/registration/forms.py:62
+#: signbank/registration/forms.py:61
 msgid "Password (again)"
 msgstr ""
 
-#: signbank/registration/forms.py:76
+#: signbank/registration/forms.py:75
 msgid "Requested Datasets"
 msgstr ""
 
-#: signbank/registration/forms.py:81
+#: signbank/registration/forms.py:80
 msgid "Motivation"
 msgstr ""
 
-#: signbank/registration/forms.py:88
+#: signbank/registration/forms.py:87
 msgid ""
 "Please explain why you would like to get access to this dataset. What are "
 "the purposes for which you wish to use it?"
 msgstr ""
 
-#: signbank/registration/forms.py:105
+#: signbank/registration/forms.py:104
 msgid "Usernames should not have special characters."
 msgstr ""
 
-#: signbank/registration/forms.py:110
+#: signbank/registration/forms.py:109
 msgid "This username is already taken. Please choose another."
 msgstr ""
 
-#: signbank/registration/forms.py:120
+#: signbank/registration/forms.py:119
 msgid "You must type the same password each time"
 msgstr ""
 
-#: signbank/registration/forms.py:129
+#: signbank/registration/forms.py:128
 msgid "Please provide motivation for your request"
 msgstr ""
 
-#: signbank/registration/forms.py:138
+#: signbank/registration/forms.py:137
 msgid "Please consider the Terms of Service."
 msgstr ""
 
-#: signbank/registration/forms.py:179
+#: signbank/registration/forms.py:178
 msgid "I have read and agree to the Terms of Service"
 msgstr ""
 
-#: signbank/registration/forms.py:188
+#: signbank/registration/forms.py:187
 msgid "You must agree to the terms to register"
 msgstr ""
 
-#: signbank/registration/forms.py:207
+#: signbank/registration/forms.py:206
 msgid ""
 "This email address is already in use. Please supply a different email "
 "address."
 msgstr ""
 
-#: signbank/registration/forms.py:229
+#: signbank/registration/forms.py:228
 msgid "Email"
 msgstr ""
 
-#: signbank/registration/forms.py:250
+#: signbank/registration/forms.py:249
 msgid ""
 "Please enter a correct email and password. Note that password is case-"
 "sensitive."
 msgstr ""
 
-#: signbank/registration/forms.py:252
+#: signbank/registration/forms.py:251
 msgid "This account is inactive."
 msgstr ""
 
-#: signbank/registration/forms.py:257
+#: signbank/registration/forms.py:256
 msgid ""
 "Your Web browser doesn't appear to have cookies enabled. Cookies are "
 "required for logging in."
@@ -191,31 +191,31 @@ msgstr ""
 msgid "days remaining"
 msgstr ""
 
-#: signbank/registration/templates/user_profile.html:121
+#: signbank/registration/templates/user_profile.html:123
 msgid "Extend Expiry"
 msgstr ""
 
-#: signbank/registration/templates/user_profile.html:130
+#: signbank/registration/templates/user_profile.html:135
 msgid "Affiliation"
 msgstr "Affiliatie"
 
-#: signbank/registration/templates/user_profile.html:144
+#: signbank/registration/templates/user_profile.html:149
 msgid "Signbank API Tokens"
 msgstr "Signbank API-tokens"
 
-#: signbank/registration/templates/user_profile.html:149
+#: signbank/registration/templates/user_profile.html:154
 msgid "A Signbank API Token was created on"
 msgstr "Een Signbank API-token is aangemaakt op"
 
-#: signbank/registration/templates/user_profile.html:159
+#: signbank/registration/templates/user_profile.html:164
 msgid "Generate Signbank API Token"
 msgstr "Maak een Signbank API-token aan"
 
-#: signbank/registration/templates/user_profile.html:176
+#: signbank/registration/templates/user_profile.html:181
 msgid "Recently Saved Queries"
 msgstr "Bewaarde zoekopdrachten"
 
-#: signbank/registration/templates/user_profile.html:181
+#: signbank/registration/templates/user_profile.html:186
 msgid "Search History"
 msgstr "Zoek-geschiedenis"
 

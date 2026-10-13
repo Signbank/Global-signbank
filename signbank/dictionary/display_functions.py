@@ -1,8 +1,6 @@
 from django.db.models import ForeignKey
 from django.db.models.fields import BooleanField, IntegerField, CharField, TextField
 
-from signbank.settings.server_specific import FIELDS
-
 from signbank.dictionary.models import FieldChoiceForeignKey, Gloss, PhonologicalVariation, Handshape, GLOSS_FIELDS_UPDATES, PHONOLOGY_FIELDS_UPDATES
 
 def show_fields_rows(gloss):

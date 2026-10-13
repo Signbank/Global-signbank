@@ -1327,6 +1327,26 @@
                 {% endwith %}
             </tr>
 
+            {% with show_field_row|get_item:"trigger" as show_field %}
+            {% if not show_field %}
+            <tr class="empty_row_general">
+            {% else %}
+            <tr>
+            {% endif %}
+            {% endwith %}
+                <th style="width:auto;">{% trans "Trigger" %}</th>
+                {% with glossform.fields|get_item:'trigger' as trigger_field %}
+                <td class="editform-general" style="width:auto;">
+                    <span>
+                    <textarea class='text_trigger form-control form-control-light'
+                              name="trigger" cols="25" rows="2"
+                              id="trigger_text" data-category="general"
+                              data-initial="{{trigger_field.initial}}" >{{trigger_field.initial}}</textarea>
+                    </span>
+                </td>
+                {% endwith %}
+            </tr>
+
             {% with show_field_row|get_item:"dialect" as show_field %}
             {% if not show_field %}
             <tr class="empty_row_general">

@@ -1386,7 +1386,7 @@ def update_gloss(request, glossid):
     # field is a valid field
     # value is a valid value for field
 
-    fieldnames = FIELDS['main'] + FIELDS['phonology'] + FIELDS['semantics'] + ['inWeb', 'isNew', 'excludeFromEcv', 'release_information']
+    fieldnames = FIELDS['main'] + FIELDS['phonology'] + FIELDS['semantics'] + ['inWeb', 'isNew', 'excludeFromEcv', 'release_information', 'trigger']
     gloss_fields = [Gloss.get_field(fname) for fname in Gloss.get_field_names()]
     text_fields = [f.name for f in gloss_fields
                    if f.name in fieldnames and f.__class__.__name__ in ['CharField', 'TextField']]
