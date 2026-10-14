@@ -1198,7 +1198,7 @@ def import_csv_update(request):
                 continue
 
             try:
-                (changes_found, errors_found) = \
+                (changes_found, errors_found, fatal_error) = \
                             compare_valuedict_to_gloss(value_dict, gloss, user_datasets_names, nl,
                                                        notes_toggle, notes_assign_toggle,
                                                        semfield_toggle, semfield_assign_toggle, tags_toggle)
@@ -1207,6 +1207,9 @@ def import_csv_update(request):
                 if errors_found:
                     errors_found_string = '\n'.join(errors_found)
                     error += [errors_found_string]
+
+                if fatal_error:
+                    break
 
             except KeyError as e:
 

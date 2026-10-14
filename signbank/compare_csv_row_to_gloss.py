@@ -34,6 +34,14 @@ def get_default_annotationidglosstranslation(gloss):
     return annotationidglosstranslations.first().text
 
 
+def gloss_cell_error(gloss, nl, message, **kwargs):
+    """Fill in the standard {annotation} / {glossid} placeholders.
+        `message` is passed in already wrapped in gettext() at the call site,
+        so makemessages still finds the literal strings."""
+    return message.format(row=str(nl+1), annotation=get_default_annotationidglosstranslation(gloss),
+                          glossid=str(gloss.pk), **kwargs)
+
+
 def check_existence_simultaneous_morphology(gloss, values):
     default_annotationidglosstranslation = get_default_annotationidglosstranslation(gloss)
 
@@ -864,45 +872,46 @@ def compare_dialects(gloss, new_human_value, human_key, errors_found, difference
     return errors_found, differences
 
 
-def compare_example_sentences(gloss, new_human_value, human_key, errors_found, differences):
-    if new_human_value in ['None', '']:
-        return errors_found, differences
-
+def compare_example_sentences(gloss, nl, new_human_value, human_key, errors_found, differences):
     example_sentences_key_prefix = "Example Sentences ("
     language_name_column = DEFAULT_LANGUAGE_HEADER_COLUMN['English']
     language_name = human_key[len(example_sentences_key_prefix):-1]
     language = Language.objects.filter(**{language_name_column: language_name}).first()
     if not language:
-        error_string = gettext("Non-existent language specified for column: {column}").format(column=human_key)
+        error_string = gloss_cell_error(gloss, nl, gettext("Row {row}: Non-existent language specified for column: '{column}'"), **{'column': human_key})
         errors_found += [error_string]
-        return errors_found, differences
+        fatal_error = True
+        return errors_found, differences, fatal_error
+
+    fatal_error = False
+    if new_human_value in ['None', '']:
+        return errors_found, differences, fatal_error
 
     sense_numbers_to_sentences = get_senses_to_sentences(gloss)
     if not sense_numbers_to_sentences:
-        error_string = gettext("For gloss '{annotation}' ({glossid}), creation of new sentences not available: {column}. Only update is available, but the gloss has no sentences.").format(annotation=get_default_annotationidglosstranslation(gloss), glossid=gloss.id, column=human_key)
+        error_string = gloss_cell_error(gloss, nl, gettext("Row {row}: For gloss '{annotation}' ({glossid}), creation of new sentences not available: {column}. Only update is available, but the gloss has no sentences."), **{'column': human_key})
         errors_found += [error_string]
-        return errors_found, differences
+        errors_found += [error_string]
+        return errors_found, differences, fatal_error
 
     sense_numbers = get_sense_numbers(gloss)
     okay = update_sentences_parse(sense_numbers, sense_numbers_to_sentences, new_human_value)
     if not okay:
-        error_string = gettext(
-            "For gloss {glossid}: Error parsing value in column {column}: {value}").format(
-            glossid=str(gloss.id), column=human_key, value=new_human_value)
+        error_string = gloss_cell_error(gloss, nl, gettext(
+            "Row {row}: For gloss {glossid}: Error parsing value in column {column}: {value}"), **{'column': human_key, 'value': new_human_value})
         errors_found += [error_string]
-        return errors_found, differences
+        return errors_found, differences, fatal_error
 
     current_sentences_string = sense_examplesentences_for_language(gloss, language)
     difference_org, difference, parse_errors = csv_sentence_tuples_list_compare(gloss,
                                                                                 current_sentences_string,
                                                                                 new_human_value)
     if parse_errors:
-        error_string = gettext(
-            "For gloss {glossid}: Error parsing value in column {column}: {value}").format(
-            glossid=str(gloss.id), column=human_key, value=new_human_value)
+        error_string = gloss_cell_error(gloss, nl, gettext(
+            "Row {row}: For gloss {glossid}: Error parsing value in column {column}: {value}"), **{'column': human_key, 'value': new_human_value})
         errors_found += [error_string]
         errors_found += parse_errors
-        return errors_found, differences
+        return errors_found, differences, fatal_error
 
     if difference:
         differences.append({'pk': gloss.id,
@@ -915,7 +924,7 @@ def compare_example_sentences(gloss, new_human_value, human_key, errors_found, d
                             'new_machine_value': difference,
                             'new_human_value': difference,
                             'side_effects': {}})
-    return errors_found, differences
+    return errors_found, differences, fatal_error
 
 
 def lookup_semantic_fields(values):
@@ -972,36 +981,37 @@ def compare_semantic_fields(gloss, new_human_value, human_key, errors_found, dif
     return errors_found, differences
 
 
-def compare_senses(gloss, new_human_value, human_key, errors_found, differences):
-    if new_human_value in ['None', '']:
-        return errors_found, differences
-
+def compare_senses(gloss, nl, new_human_value, human_key, errors_found, differences):
     keywords_key_prefix = "Senses ("
     language_name_column = DEFAULT_LANGUAGE_HEADER_COLUMN['English']
     language_name = human_key[len(keywords_key_prefix):-1]
     language = Language.objects.filter(**{language_name_column: language_name}).first()
     if not language:
-        error_string = gettext("Non-existent language specified for Senses column: '{column}'").format(column=human_key)
+        error_string = gloss_cell_error(gloss, nl, gettext("Row {row}: Non-existent language specified for Senses column: '{column}'"), **{'column': human_key})
         errors_found += [error_string]
-        return errors_found, differences
+        fatal_error = True
+        return errors_found, differences, fatal_error
+
+    fatal_error = False
+    if new_human_value in ['None', '']:
+        return errors_found, differences, fatal_error
 
     current_keyword_string = sense_translations_for_language(gloss, language)
 
     if current_keyword_string == new_human_value:
-        return errors_found, differences
+        return errors_found, differences, fatal_error
 
     if current_keyword_string:
-        error_string = gettext("For gloss '{annotation}' ({glossid}), update of senses not available: {column}: {value}.").format(annotation=get_default_annotationidglosstranslation(gloss), glossid=gloss.id, column=human_key, value=new_human_value)
+        error_string = gloss_cell_error(gloss, nl, gettext("Row {row}: For gloss '{annotation}' ({glossid}), update of senses not available: {column}: {value}."), **{'column': human_key, 'value': new_human_value})
         errors_found += [error_string]
-        return errors_found, differences
+        return errors_found, differences, fatal_error
 
     okay = update_senses_parse(new_human_value)
     if not okay:
-        error_string = gettext(
-            "For gloss {glossid}: Error parsing value in Senses column '{column}': {value}").format(
-            glossid=str(gloss.id), column=human_key, value=new_human_value)
+        error_string = gloss_cell_error(gloss, nl, gettext(
+            "Row {row}: For gloss {glossid}: Error parsing value in Senses column '{column}': {value}"), **{'column': human_key, 'value': new_human_value})
         errors_found += [error_string]
-        return errors_found, differences
+        return errors_found, differences, fatal_error
 
     differences.append({'pk': gloss.id,
                         'dataset': gloss.lemma.dataset,
@@ -1013,7 +1023,7 @@ def compare_senses(gloss, new_human_value, human_key, errors_found, differences)
                         'new_machine_value': new_human_value,
                         'new_human_value': new_human_value,
                         'side_effects': {}})
-    return errors_found, differences
+    return errors_found, differences, fatal_error
 
 
 def compare_choice_field(gloss, field, new_human_value, human_key, errors_found, differences):
@@ -1202,29 +1212,29 @@ def compare_text(gloss, field, new_human_value, human_key, errors_found, differe
     return errors_found, differences
 
 
-def compare_annotations(gloss, new_human_value, human_key, errors_found, differences):
+def compare_annotations(gloss, nl, new_human_value, human_key, errors_found, differences):
     annotation_idgloss_key_prefix = "Annotation ID Gloss ("
     language_name_column = DEFAULT_LANGUAGE_HEADER_COLUMN['English']
     language_name = human_key[len(annotation_idgloss_key_prefix):-1]
     language = Language.objects.filter(**{language_name_column: language_name}).first()
     if not language:
-        error_string = gettext("Non-existent language specified for annotation column: '{column}'").format(column=human_key)
+        error_string = gloss_cell_error(gloss, nl, gettext("Row {row}: Non-existent language specified for annotation column: '{column}'"), **{'column': human_key})
         errors_found += [error_string]
-        return errors_found, differences
+        fatal_error = True
+        return errors_found, differences, fatal_error
 
+    fatal_error = False
     annotation_idgloss = gloss.annotationidglosstranslation_set.filter(language=language).first()
     annotation_idgloss_string = annotation_idgloss.text if annotation_idgloss else ''
 
     if annotation_idgloss_string == new_human_value:
-        return errors_found, differences
+        return errors_found, differences, fatal_error
 
     if new_human_value in ['None', '']:
-        error_string = gettext(
-            "For gloss '{annotation}' ({glossid}), value '{value}' for '{column}' should not be empty.").format(
-            annotation=get_default_annotationidglosstranslation(gloss), glossid=str(gloss.id),
-            value=new_human_value, column=human_key)
+        error_string = gloss_cell_error(gloss, nl, gettext(
+            "Row {row}: For gloss '{annotation}' ({glossid}), value '{value}' for '{column}' should not be empty."), **{'value': new_human_value, 'column': human_key})
         errors_found += [error_string]
-        return errors_found, differences
+        return errors_found, differences, fatal_error
 
     glosses_with_same_annotation = Gloss.objects.filter(
         annotationidglosstranslation__text__exact=new_human_value,
@@ -1232,11 +1242,10 @@ def compare_annotations(gloss, new_human_value, human_key, errors_found, differe
         lemma__dataset=gloss.lemma.dataset).count()
 
     if glosses_with_same_annotation:
-        error_string = gettext(
-            "Signbank ID {glossid} annotation already exists in dataset: '{column}': '{value}'").format(
-            glossid=str(gloss.id), column=human_key, value=str(new_human_value))
+        error_string = gloss_cell_error(gloss, nl, gettext(
+            "Row {row}: Signbank ID {glossid} annotation already exists in dataset: '{column}': '{value}'"), **{'value': new_human_value, 'column': human_key})
         errors_found += [error_string]
-        return errors_found, differences
+        return errors_found, differences, fatal_error
 
     differences.append({'pk': gloss.id,
                         'dataset': gloss.lemma.dataset,
@@ -1249,4 +1258,4 @@ def compare_annotations(gloss, new_human_value, human_key, errors_found, differe
                         'new_human_value': new_human_value,
                         'side_effects': {}})
 
-    return errors_found, differences
+    return errors_found, differences, fatal_error

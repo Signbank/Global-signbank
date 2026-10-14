@@ -336,8 +336,11 @@ def compare_valuedict_to_gloss(valuedict, gloss, my_datasets, nl,
             annotation_idgloss_key_prefix = "Annotation ID Gloss ("
             if human_key.startswith(annotation_idgloss_key_prefix):
 
-                errors_found, differences = compare_annotations(gloss, new_human_value, human_key, errors_found, differences)
-                continue
+                errors_found, differences, fatal_error = compare_annotations(gloss, nl, new_human_value, human_key, errors_found, differences)
+                if fatal_error:
+                    return differences, errors_found, fatal_error
+                else:
+                    continue
 
             lemma_idgloss_key_prefix = "Lemma ID Gloss ("
             if human_key.startswith(lemma_idgloss_key_prefix):
@@ -347,14 +350,20 @@ def compare_valuedict_to_gloss(valuedict, gloss, my_datasets, nl,
             keywords_key_prefix = "Senses ("
             if human_key.startswith(keywords_key_prefix):
 
-                errors_found, differences = compare_senses(gloss, new_human_value, human_key, errors_found, differences)
-                continue
+                errors_found, differences, fatal_error = compare_senses(gloss, nl, new_human_value, human_key, errors_found, differences)
+                if fatal_error:
+                    return differences, errors_found, fatal_error
+                else:
+                    continue
 
             example_sentences_key_prefix = "Example Sentences ("
             if human_key.startswith(example_sentences_key_prefix):
 
-                errors_found, differences = compare_example_sentences(gloss, new_human_value, human_key, errors_found, differences)
-                continue
+                errors_found, differences, fatal_error = compare_example_sentences(gloss, nl, new_human_value, human_key, errors_found, differences)
+                if fatal_error:
+                    return differences, errors_found, fatal_error
+                else:
+                    continue
 
             elif human_key == 'SignLanguages':
 
@@ -459,7 +468,7 @@ def compare_valuedict_to_gloss(valuedict, gloss, my_datasets, nl,
 
                 continue
 
-    return differences, errors_found
+    return differences, errors_found, False
 
 
 def compare_valuedict_to_lemma(valuedict, lemma_id, my_datasets, nl,
