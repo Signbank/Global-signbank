@@ -281,9 +281,11 @@ def check_existence_relations(gloss, nl, values):
 
     if errors:
         row_error = gloss_cell_error(gloss, nl, gettext(
-            "Row {row}: For gloss '{annotation}' ({glossid}), errors found in column Relations to other signs."), **{})
-        errors = [row_error] + errors
-        return checked, side_effects, errors
+            "Row {row}: For gloss '{annotation}' ({glossid}), errors found in column Relations to other signs: "), **{})
+        for e in errors:
+            row_error += e
+        joined_errors = [row_error]
+        return checked, side_effects, joined_errors
 
     gloss_relations = [(relation.source, relation.role_fk, relation.target)
                        for relation in Relation.objects.filter(source=gloss).order_by('role_fk__machine_value')]

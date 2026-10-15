@@ -879,8 +879,8 @@ def import_csv_update(request):
 
     all_selected_datasets_have_change_permission = all([ds in user_datasets for ds in selected_datasets])
 
-    if len(selected_datasets) > 1 and not all_selected_datasets_have_change_permission:
-
+    if selected_datasets.count() > 1 and not all_selected_datasets_have_change_permission:
+        # if more than one dataset is selected, only allowed if the user has change permission for all selected datasets, otherwise only one should be selected
         feedback_message = _('Please select only one dataset.')
         messages.add_message(request, messages.ERROR, feedback_message)
 
