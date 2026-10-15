@@ -367,27 +367,27 @@ def compare_valuedict_to_gloss(valuedict, gloss, my_datasets, nl,
 
             elif human_key == 'SignLanguages':
 
-                errors_found, differences = compare_signlanguages(gloss, new_human_value, human_key, errors_found, differences)
+                errors_found, differences = compare_signlanguages(gloss, nl, new_human_value, human_key, errors_found, differences)
                 continue
 
             elif human_key == 'Dialects':
 
-                errors_found, differences = compare_dialects(gloss, new_human_value, human_key, errors_found, differences)
+                errors_found, differences = compare_dialects(gloss, nl, new_human_value, human_key, errors_found, differences)
                 continue
 
             elif human_key == 'Dataset':
 
-                errors_found, differences = compare_dataset(gloss, new_human_value, human_key, errors_found, differences, my_datasets)
+                errors_found, differences = compare_dataset(gloss, nl, new_human_value, human_key, errors_found, differences, my_datasets)
                 continue
 
             elif human_key == 'Relations to other signs':
 
-                errors_found, differences = compare_relations(gloss, new_human_value, human_key, errors_found, differences)
+                errors_found, differences = compare_relations(gloss, nl, new_human_value, human_key, errors_found, differences)
                 continue
 
             elif human_key == 'Relations to foreign signs':
 
-                errors_found, differences = compare_relations_to_foreign_signs(gloss, new_human_value, human_key, errors_found, differences)
+                errors_found, differences = compare_relations_to_foreign_signs(gloss, nl, new_human_value, human_key, errors_found, differences)
                 continue
 
             elif human_key == 'Sequential Morphology':
@@ -410,7 +410,7 @@ def compare_valuedict_to_gloss(valuedict, gloss, my_datasets, nl,
                 if tags_toggle == 'keep' and new_human_value in ['None', '']:
                     continue
 
-                errors_found, differences, tag_name_error = compare_tags(gloss, new_human_value, human_key, errors_found, differences, tag_name_error)
+                errors_found, differences, tag_name_error = compare_tags(gloss, nl, new_human_value, human_key, errors_found, differences, tag_name_error)
                 continue
 
             elif human_key == 'Notes':
@@ -418,7 +418,7 @@ def compare_valuedict_to_gloss(valuedict, gloss, my_datasets, nl,
                 if notes_toggle == 'keep' and new_human_value in ['None', '']:
                     continue
 
-                errors_found, differences, note_type_error, note_tuple_error = compare_notes(gloss, new_human_value, human_key, notes_assign_toggle, errors_found, differences, note_type_error, note_tuple_error)
+                errors_found, differences, note_type_error, note_tuple_error = compare_notes(gloss, nl, new_human_value, human_key, notes_assign_toggle, errors_found, differences, note_type_error, note_tuple_error)
                 continue
 
             elif human_key == 'Semantic Field':
@@ -426,7 +426,7 @@ def compare_valuedict_to_gloss(valuedict, gloss, my_datasets, nl,
                 if semfield_toggle == 'keep' and new_human_value == '-':
                     continue
 
-                errors_found, differences = compare_semantic_fields(gloss, new_human_value, human_key, errors_found, differences, semfield_assign_toggle)
+                errors_found, differences = compare_semantic_fields(gloss, nl, new_human_value, human_key, errors_found, differences, semfield_assign_toggle)
                 continue
 
             elif human_key in ['Derivation history', 'Derivation History']:
@@ -450,17 +450,17 @@ def compare_valuedict_to_gloss(valuedict, gloss, my_datasets, nl,
             field = fields[human_key]
 
             if hasattr(field, 'field_choice_category'):
-                errors_found, differences = compare_choice_field(gloss, field, new_human_value, human_key, errors_found, differences)
+                errors_found, differences = compare_choice_field(gloss, nl, field, new_human_value, human_key, errors_found, differences)
 
                 continue
 
             if isinstance(field, models.ForeignKey) and field.related_model == Handshape:
-                errors_found, differences = compare_handshape(gloss, field, new_human_value, human_key, errors_found, differences)
+                errors_found, differences = compare_handshape(gloss, nl, field, new_human_value, human_key, errors_found, differences)
 
                 continue
 
             if field.__class__.__name__ == 'BooleanField':
-                errors_found, differences = compare_booleans(gloss, field, new_human_value, human_key, errors_found, differences)
+                errors_found, differences = compare_booleans(gloss, nl, field, new_human_value, human_key, errors_found, differences)
 
                 continue
             if field.__class__.__name__ == 'CharField' or field.__class__.__name__ == 'TextField':
