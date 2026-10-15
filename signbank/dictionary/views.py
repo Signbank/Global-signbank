@@ -877,8 +877,10 @@ def import_csv_update(request):
 
     list_choice_fields_choices = choice_fields_choices()
 
-    if selected_datasets.count() != 1:
+    all_selected_datasets_have_change_permission = all([ds in user_datasets for ds in selected_datasets])
 
+    if selected_datasets.count() > 1 and not all_selected_datasets_have_change_permission:
+        # if more than one dataset is selected, only allowed if the user has change permission for all selected datasets, otherwise only one should be selected
         feedback_message = _('Please select only one dataset.')
         messages.add_message(request, messages.ERROR, feedback_message)
 
@@ -913,6 +915,7 @@ def import_csv_update(request):
 
     seen_datasets = []
     seen_dataset_names = []
+    earlier_updates_same_csv = []
 
     # fatal errors are duplicate column headers, data in columns without headers
     # column headers that do not correspond to database fields
@@ -929,8 +932,6 @@ def import_csv_update(request):
     error = []
     creation = []
     gloss_already_exists = []
-    earlier_updates_same_csv = []
-    earlier_updates_lemmaidgloss = {}
 
     encoding_error = False
 
@@ -1149,12 +1150,12 @@ def import_csv_update(request):
                 error.append(e)
                 continue
 
-            if gloss.lemma.dataset != dataset:
-                e1 = gettext('Row {row}: The Dataset column ({acronym}) does not correspond to that of the Signbank ID ({glossid})').format(row=str(nl+2), acronym=dataset.acronym, glossid=str(pk))
-                error.append(e1)
-                # ignore the rest of the row
+            if gloss.pk in earlier_updates_same_csv:
+                e = gettext("Row {row}: Signbank ID {glossid} already seen.").format(row=str(nl+2), glossid=str(gloss.pk))
+                error.append(e)
                 continue
-            # dataset is the same
+            else:
+                earlier_updates_same_csv.append(gloss.pk)
 
             def get_current_lemma_translations(lemma):
                 """Return {language: text} for every translation language of the lemma's dataset."""
@@ -1197,9 +1198,8 @@ def import_csv_update(request):
                 continue
 
             try:
-                (changes_found, errors_found, earlier_updates_same_csv, earlier_updates_lemmaidgloss) = \
-                            compare_valuedict_to_gloss(value_dict, gloss.id, user_datasets_names, nl,
-                                                       earlier_updates_same_csv, earlier_updates_lemmaidgloss,
+                (changes_found, errors_found, fatal_error) = \
+                            compare_valuedict_to_gloss(value_dict, gloss, user_datasets_names, nl,
                                                        notes_toggle, notes_assign_toggle,
                                                        semfield_toggle, semfield_assign_toggle, tags_toggle)
                 changes += changes_found
@@ -1207,6 +1207,9 @@ def import_csv_update(request):
                 if errors_found:
                     errors_found_string = '\n'.join(errors_found)
                     error += [errors_found_string]
+
+                if fatal_error:
+                    break
 
             except KeyError as e:
 

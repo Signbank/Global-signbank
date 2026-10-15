@@ -149,7 +149,7 @@ def validate_and_resolve_gloss_relations(gloss, values):
         try:
             role = FieldChoice.lookup('RelationRole', role_str)
         except (ObjectDoesNotExist, MultipleObjectsReturned):
-            errors.append(gettext("FieldChoice for {role} is not defined.").format(role=role_str))
+            errors.append(gettext("Relation role '{role}' is not defined.").format(role=role_str))
             continue
         matching_glosses = Gloss.objects.filter(lemma__dataset=gloss.lemma.dataset, archived=False,
                                                 annotationidglosstranslation__language=gloss.lemma.dataset.default_language,
