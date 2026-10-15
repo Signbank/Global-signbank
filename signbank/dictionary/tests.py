@@ -528,6 +528,10 @@ class ImportExportTests(TestCase):
 
         # a new test user is created for use during the tests
         self.user = User.objects.create_user('test-user', 'example@example.com', 'test-user')
+        self.userprofile = UserProfile(user=self.user)
+        self.userprofile.save()
+        self.userprofile.selected_datasets.add(self.test_dataset)
+        self.userprofile.save()
 
     def test_DatasetListView_ECV_export_empty_dataset(self):
 
