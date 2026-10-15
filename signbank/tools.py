@@ -392,17 +392,17 @@ def compare_valuedict_to_gloss(valuedict, gloss, my_datasets, nl,
 
             elif human_key == 'Sequential Morphology':
 
-                errors_found, differences = compare_sequential_morphology(gloss, new_human_value, human_key, errors_found, differences)
+                errors_found, differences = compare_sequential_morphology(gloss, nl, new_human_value, human_key, errors_found, differences)
                 continue
 
             elif human_key == 'Simultaneous Morphology':
 
-                errors_found, differences = compare_simultaneous_morphology(gloss, new_human_value, human_key, errors_found, differences)
+                errors_found, differences = compare_simultaneous_morphology(gloss, nl, new_human_value, human_key, errors_found, differences)
                 continue
 
             elif human_key == 'Blend Morphology':
 
-                errors_found, differences = compare_blend_morphology(gloss, new_human_value, human_key, errors_found, differences)
+                errors_found, differences = compare_blend_morphology(gloss, nl, new_human_value, human_key, errors_found, differences)
                 continue
 
             elif human_key == 'Tags':

@@ -42,7 +42,7 @@ def gloss_cell_error(gloss, nl, message, **kwargs):
                           glossid=str(gloss.pk), **kwargs)
 
 
-def check_existence_simultaneous_morphology(gloss, values):
+def check_existence_simultaneous_morphology(gloss, nl, values):
     default_annotationidglosstranslation = get_default_annotationidglosstranslation(gloss)
 
     errors = []
@@ -57,9 +57,8 @@ def check_existence_simultaneous_morphology(gloss, values):
             morpheme = morpheme.strip()
             tuples_list.append((morpheme, role))
         except ValueError:
-            error_string = gettext(
-                "For gloss '{annotation}' ({glossid}), formatting error in Simultaneous Morphology: {input}. Tuple morpheme:role expected.").format(
-                annotation=default_annotationidglosstranslation, glossid=str(gloss.pk), input=str(new_value_tuple))
+            error_string = gloss_cell_error(gloss, nl, gettext(
+                "Row {row}: For gloss '{annotation}' ({glossid}), formatting error in Simultaneous Morphology: {input}. Tuple morpheme:role expected."), **{'input' : new_value_tuple})
             errors.append(error_string)
 
     for (morpheme, role) in tuples_list:
@@ -69,22 +68,19 @@ def check_existence_simultaneous_morphology(gloss, values):
                                                    annotationidglosstranslation__text__exact=morpheme).distinct()
 
         if not filter_morphemes:
-            error_string = gettext(
-                "For gloss '{annotation}' ({glossid}), new Simultaneous Morphology morpheme '{morpheme}' not found.").format(
-                annotation=default_annotationidglosstranslation, glossid=str(gloss.pk), morpheme=str(morpheme))
+            error_string = gloss_cell_error(gloss, nl, gettext(
+                "Row {row}: For gloss '{annotation}' ({glossid}), new Simultaneous Morphology morpheme '{morpheme}' not found."), **{'morpheme' : morpheme})
             errors.append(error_string)
             continue
         elif filter_morphemes.count() > 1:
-            error_string = gettext(
-                "For gloss '{annotation}' ({glossid}), multiple matches found for Simultaneous Morphology morpheme '{morpheme}'.").format(
-                annotation=default_annotationidglosstranslation, glossid=str(gloss.pk), morpheme=morpheme)
+            error_string = gloss_cell_error(gloss, nl, gettext(
+                "Row {row}: For gloss '{annotation}' ({glossid}), multiple matches found for Simultaneous Morphology morpheme '{morpheme}'."), **{'morpheme' : morpheme})
             errors.append(error_string)
             continue
         morpheme_gloss = filter_morphemes.first()
         if not morpheme_gloss or not morpheme_gloss.is_morpheme():
-            error_string = gettext(
-                "For gloss '{annotation}' ({glossid}), new Simultaneous Morphology morpheme '{morpheme}' is not a morpheme.").format(
-                annotation=default_annotationidglosstranslation, glossid=str(gloss.pk), morpheme=str(morpheme))
+            error_string = gloss_cell_error(gloss, nl, gettext(
+                "Row {row}: For gloss '{annotation}' ({glossid}), new Simultaneous Morphology morpheme '{morpheme}' is not a morpheme."), **{'morpheme' : morpheme})
             errors.append(error_string)
             continue
         if checked:
@@ -94,7 +90,7 @@ def check_existence_simultaneous_morphology(gloss, values):
 
     return checked, errors
 
-def compare_simultaneous_morphology(gloss, new_human_value, human_key, errors_found, differences):
+def compare_simultaneous_morphology(gloss, nl, new_human_value, human_key, errors_found, differences):
     if new_human_value in ['None', '', '-']:
         return errors_found, differences
 
@@ -107,7 +103,7 @@ def compare_simultaneous_morphology(gloss, new_human_value, human_key, errors_fo
 
     new_human_value_list = new_human_value.split(',')
 
-    (checked_new_human_value, errors) = check_existence_simultaneous_morphology(gloss, new_human_value_list)
+    (checked_new_human_value, errors) = check_existence_simultaneous_morphology(gloss, nl, new_human_value_list)
 
     if len(errors):
         errors_found += errors
@@ -129,7 +125,7 @@ def compare_simultaneous_morphology(gloss, new_human_value, human_key, errors_fo
     return errors_found, differences
 
 
-def check_existence_sequential_morphology(gloss, values):
+def check_existence_sequential_morphology(gloss, nl, values):
     default_annotationidglosstranslation = get_default_annotationidglosstranslation(gloss)
     new_values = values.split(' + ')
     errors = []
@@ -140,31 +136,28 @@ def check_existence_sequential_morphology(gloss, values):
                                                 annotationidglosstranslation__language=gloss.lemma.dataset.default_language,
                                                 annotationidglosstranslation__text__exact=new_value).distinct()
         if not filter_morphemes:
-            error_string = gettext(
-                "For gloss '{annotation}' ({glossid}), new Sequential Morphology gloss '{value}' not found.").format(
-                annotation=default_annotationidglosstranslation, glossid=str(gloss.pk), value=new_value)
+            error_string = gloss_cell_error(gloss, nl, gettext(
+                "Row {row}: For gloss '{annotation}' ({glossid}), new Sequential Morphology gloss '{value}' not found."), **{'value' : new_value})
             errors.append(error_string)
             not_found += [new_value]
             continue
         elif filter_morphemes.count() > 1:
-            error_string = gettext(
-                "For gloss '{annotation}' ({glossid}), multiple matches found for Sequential Morphology gloss '{value}'.").format(
-                annotation=default_annotationidglosstranslation, glossid=str(gloss.pk), value=new_value)
+            error_string = gloss_cell_error(gloss, nl, gettext(
+                "Row {row}: For gloss '{annotation}' ({glossid}), multiple matches found for Sequential Morphology gloss '{value}'."), **{'value' : new_value})
             errors.append(error_string)
             continue
         else:
             found += [new_value]
 
     if len(new_values) > 4:
-        error_string = gettext(
-            "For gloss '{annotation}' ({glossid}), too many Sequential Morphology components.").format(
-            annotation=default_annotationidglosstranslation, glossid=str(gloss.pk))
+        error_string = gloss_cell_error(gloss, nl, gettext(
+            "Row {row}: For gloss '{annotation}' ({glossid}), too many Sequential Morphology components."), **{})
         errors.append(error_string)
 
     return found, not_found, errors
 
 
-def compare_sequential_morphology(gloss, new_human_value, human_key, errors_found, differences):
+def compare_sequential_morphology(gloss, nl, new_human_value, human_key, errors_found, differences):
     if new_human_value in ['None', '', '-']:
         return errors_found, differences
 
@@ -172,7 +165,7 @@ def compare_sequential_morphology(gloss, new_human_value, human_key, errors_foun
                  for morpheme in MorphologyDefinition.objects.filter(parent_gloss=gloss)]
     morphemes_string = " + ".join(morphemes)
 
-    (found, not_found, errors) = check_existence_sequential_morphology(gloss, new_human_value)
+    (found, not_found, errors) = check_existence_sequential_morphology(gloss, nl, new_human_value)
 
     if len(errors):
         errors_found += errors
@@ -194,7 +187,7 @@ def compare_sequential_morphology(gloss, new_human_value, human_key, errors_foun
     return errors_found, differences
 
 
-def check_existence_blend_morphology(gloss, values):
+def check_existence_blend_morphology(gloss, nl, values):
     default_annotationidglosstranslation = get_default_annotationidglosstranslation(gloss)
 
     errors = []
@@ -209,9 +202,8 @@ def check_existence_blend_morphology(gloss, values):
             morpheme = morpheme.strip()
             tuples_list.append((morpheme, role))
         except ValueError:
-            error_string = gettext(
-                "For gloss '{annotation}' ({glossid}), formatting error in Blend Morphology: {input}. Tuple gloss:role expected.").format(
-                annotation=default_annotationidglosstranslation, glossid=str(gloss.pk), input=str(new_value_tuple))
+            error_string = gloss_cell_error(gloss, nl, gettext(
+                "Row {row}: For gloss '{annotation}' ({glossid}), formatting error in Blend Morphology: {input}. Tuple gloss:role expected."), **{'input' : new_value_tuple})
             errors.append(error_string)
 
     for (morpheme, role) in tuples_list:
@@ -220,15 +212,13 @@ def check_existence_blend_morphology(gloss, values):
                                               annotationidglosstranslation__text__exact=morpheme).distinct()
 
         if not filter_glosses:
-            error_string = gettext(
-                "For gloss '{annotation}' ({glossid}), new Blend Morphology gloss '{morpheme}' not found.").format(
-                annotation=default_annotationidglosstranslation, glossid=str(gloss.pk), morpheme=morpheme)
+            error_string = gloss_cell_error(gloss, nl, gettext(
+                "Row {row}: For gloss '{annotation}' ({glossid}), new Blend Morphology gloss '{morpheme}' not found."), **{'morpheme' : morpheme})
             errors.append(error_string)
             continue
         elif filter_glosses.count() > 1:
-            error_string = gettext(
-                "For gloss '{annotation}' ({glossid}), multiple matches found for Blend Morphology gloss '{morpheme}'.").format(
-                annotation=default_annotationidglosstranslation, glossid=str(gloss.pk), morpheme=morpheme)
+            error_string = gloss_cell_error(gloss, nl, gettext(
+                "Row {row}: For gloss '{annotation}' ({glossid}), multiple matches found for Blend Morphology gloss '{morpheme}'."), **{'morpheme' : morpheme})
             errors.append(error_string)
             continue
         if checked:
@@ -239,7 +229,7 @@ def check_existence_blend_morphology(gloss, values):
     return checked, errors
 
 
-def compare_blend_morphology(gloss, new_human_value, human_key, errors_found, differences):
+def compare_blend_morphology(gloss, nl, new_human_value, human_key, errors_found, differences):
     if new_human_value in ['None', '', '-']:
         return errors_found, differences
 
@@ -254,7 +244,7 @@ def compare_blend_morphology(gloss, new_human_value, human_key, errors_found, di
 
     new_human_value_list = [v.strip() for v in new_human_value.split(',')]
 
-    (checked_new_human_value, errors) = check_existence_blend_morphology(gloss, new_human_value_list)
+    (checked_new_human_value, errors) = check_existence_blend_morphology(gloss, nl, new_human_value_list)
 
     if len(errors):
         errors_found += errors
@@ -291,7 +281,7 @@ def check_existence_relations(gloss, nl, values):
 
     if errors:
         row_error = gloss_cell_error(gloss, nl, gettext(
-            "For gloss '{annotation}' ({glossid}), errors found in column Relations to other signs."), **{})
+            "Row {row}: For gloss '{annotation}' ({glossid}), errors found in column Relations to other signs."), **{})
         errors = [row_error] + errors
         return checked, side_effects, errors
 
@@ -372,7 +362,7 @@ def check_existence_foreign_relations(gloss, nl, values):
             sorted_values.append((loan_word, other_lang, other_lang_gloss))
         except ValueError:
             error_string = gloss_cell_error(gloss, nl, gettext(
-                "For gloss '{annotation}' ({glossid}), formatting error in Relations to foreign signs: '{input}'. Tuple 'bool:string:string' expected."), **{'input' : new_value_tuple})
+                "Row {row}: For gloss '{annotation}' ({glossid}), formatting error in Relations to foreign signs: '{input}'. Tuple 'bool:string:string' expected."), **{'input' : new_value_tuple})
             errors.append(error_string)
 
     # remove duplicates
@@ -394,7 +384,7 @@ def check_existence_foreign_relations(gloss, nl, values):
                 output_string = f'{loan_word}:{other_lang}:{other_lang_gloss}'
         except ValueError:
             error_string = gloss_cell_error(gloss, nl, gettext(
-                "For gloss {annotation} ({glossid}), formatting error in Relations to foreign signs: '{loan_word}:{other_lang}:{other_lang_gloss}'. Tuple 'bool:string:string' expected."),
+                "Row {row}: For gloss {annotation} ({glossid}), formatting error in Relations to foreign signs: '{loan_word}:{other_lang}:{other_lang_gloss}'. Tuple 'bool:string:string' expected."),
                                             **{'loan_word': loan_word, 'other_lang': other_lang, 'other_lang_gloss': other_lang_gloss})
             errors.append(error_string)
 
@@ -483,7 +473,7 @@ def check_existence_tags(gloss, nl, new_human_value_list, tag_name_error):
     for t in sorted_new_tags:
         if t not in all_tags:
             error_string = gloss_cell_error(gloss, nl, gettext(
-                "For gloss '{annotation}' ({glossid}), an unknown Tag name was encountered: '{tag}'."), **{'tag': t.replace('_', ' ')})
+                "Row {row}: For gloss '{annotation}' ({glossid}), an unknown Tag name was encountered: '{tag}'."), **{'tag': t.replace('_', ' ')})
             new_tag_errors += [error_string]
             if not tag_name_error:
                 error_string = gettext("See the available Tags in the table on the Import CSV Update Glosses page.")
@@ -550,7 +540,7 @@ def check_existence_notes(gloss, nl, values, note_type_error, note_tuple_error):
         note_tuple_error = True
         # error in processing new notes
         error_string1 = gloss_cell_error(gloss, nl, gettext(
-            "For gloss '{annotation}' ({glossid}), unknown type for Notes: '{values}'"), **{'values': values})
+            "Row {row}: For gloss '{annotation}' ({glossid}), unknown type for Notes: '{values}'"), **{'values': values})
         new_note_errors.append(error_string1)
         if not note_type_error:
             error_string2 = gettext("See the available Notes types in the table on the Import CSV Update Glosses page.")
@@ -589,7 +579,7 @@ def check_existence_notes(gloss, nl, values, note_type_error, note_tuple_error):
         else:
             # error in processing new notes
             error_string = gloss_cell_error(gloss, nl, gettext(
-                "For gloss '{annotation}' ({glossid}), could not parse Notes: '{values}'."), **{'values': values})
+                "Row {row}: For gloss '{annotation}' ({glossid}), could not parse Notes: '{values}'."), **{'values': values})
 
             if not note_tuple_error:
                 new_note_errors += [error_string]
@@ -719,7 +709,7 @@ def compare_dataset(gloss, nl, new_human_value, human_key, errors_found, differe
         if not current_dataset or current_dataset == 'None' or current_dataset is None:
             # Dataset must be non-empty to create a new gloss
             error_string = gloss_cell_error(gloss, nl, gettext(
-                "For gloss '{annotation}' ({glossid}), Dataset must be non-empty. There is currently no dataset defined for this gloss."), **{})
+                "Row {row}: For gloss '{annotation}' ({glossid}), Dataset must be non-empty. There is currently no dataset defined for this gloss."), **{})
             errors_found += [error_string]
             return errors_found, differences
 
@@ -727,7 +717,7 @@ def compare_dataset(gloss, nl, new_human_value, human_key, errors_found, differe
     # This allows a user to move glosses from a temporary dataset to another dataset, making use of a CSV file
     if new_human_value not in my_datasets:
         error_string = gloss_cell_error(gloss, nl, gettext(
-            "For gloss '{annotation}' ({glossid}), could not find '{value}' for '{column}'."), **{'column': human_key, 'value': new_human_value})
+            "Row {row}: For gloss '{annotation}' ({glossid}), you do not have change permission for dataset '{value}' for column '{column}'."), **{'column': human_key, 'value': new_human_value})
         errors_found += [error_string]
         return errors_found, differences
 
@@ -756,13 +746,13 @@ def check_existence_signlanguage(gloss, nl, values):
         if SignLanguage.objects.filter(name__iexact=new_value):
             if new_value in found:
                 error_string = gloss_cell_error(gloss, nl, gettext(
-                    "For gloss '{annotation}' ({glossid}), Sign Language value '{value}' is a duplicate."), **{'value': new_value})
+                    "Row {row}: For gloss '{annotation}' ({glossid}), Sign Language value '{value}' is a duplicate."), **{'value': new_value})
                 errors.append(error_string)
             else:
                 found += [new_value]
         else:
             error_string = gloss_cell_error(gloss, nl, gettext(
-                "For gloss '{annotation}' ({glossid}), an unknown Sign Language value was encountered: '{value}'."), **{'value': new_value})
+                "Row {row}: For gloss '{annotation}' ({glossid}), an unknown Sign Language value was encountered: '{value}'."), **{'value': new_value})
             errors.append(error_string)
             not_found += [new_value]
         continue
@@ -815,7 +805,7 @@ def check_existence_dialect(gloss, nl, values):
                 found += [new_value]
         else:
             error_string = gloss_cell_error(gloss, nl, gettext(
-                "For gloss '{annotation}' ({glossid}), new Dialect value '{value}' not found."), **{'value': new_value})
+                "Row {row}: For gloss '{annotation}' ({glossid}), new Dialect value '{value}' not found."), **{'value': new_value})
             errors.append(error_string)
             not_found += [new_value]
         continue
@@ -932,7 +922,7 @@ def compare_semantic_fields(gloss, nl, new_human_value, human_key, errors_found,
     new_values_sorted_lookup = lookup_semantic_fields(new_human_value_list)
     if new_values_sorted_lookup.count() != len(new_human_value_list):
         error_string = gloss_cell_error(gloss, nl, gettext(
-            "For gloss '{annotation}' ({glossid}), could not parse '{value}' for '{column}'."), **{'column': human_key, 'value': new_human_value})
+            "Row {row}: For gloss '{annotation}' ({glossid}), could not parse '{value}' for '{column}'."), **{'column': human_key, 'value': new_human_value})
         errors_found += [error_string]
         return errors_found, differences
 
@@ -1023,7 +1013,7 @@ def compare_choice_field(gloss, nl, field, new_human_value, human_key, errors_fo
             new_machine_value = field_choice.machine_value
         except ObjectDoesNotExist:
             error_string = gloss_cell_error(gloss, nl, gettext(
-                "For gloss '{annotation}' ({glossid}), could not find option '{value}' for '{column}'."), **{'column': human_key, 'value': new_human_value})
+                "Row {row}: For gloss '{annotation}' ({glossid}), could not find option '{value}' for '{column}'."), **{'column': human_key, 'value': new_human_value})
             errors_found += [error_string]
             return errors_found, differences
 
@@ -1056,7 +1046,7 @@ def compare_handshape(gloss, nl, field, new_human_value, human_key, errors_found
         new_machine_value = handshape.machine_value
     except ObjectDoesNotExist:
         error_string = gloss_cell_error(gloss, nl, gettext(
-            "For gloss '{annotation}' ({glossid}), could not find option '{value}' for '{column}'."), **{'column': human_key, 'value': new_human_value})
+            "Row {row}: For gloss '{annotation}' ({glossid}), could not find option '{value}' for '{column}'."), **{'column': human_key, 'value': new_human_value})
         errors_found += [error_string]
         return errors_found, differences
 
@@ -1099,11 +1089,11 @@ def compare_booleans(gloss, nl, field, new_human_value, human_key, errors_found,
         if field.name in HANDEDNESS_ARTICULATION_FIELDS:
             if new_human_value is not None and new_human_value not in ['None', '']:
                 error_string = gloss_cell_error(gloss, nl, gettext(
-                    "For gloss '{annotation}' ({glossid}), value '{value}' for '{column}' should be a Boolean or Neutral."), **{'column': human_key, 'value': new_human_value})
+                    "Row {row}: For gloss '{annotation}' ({glossid}), value '{value}' for '{column}' should be a Boolean or Neutral."), **{'column': human_key, 'value': new_human_value})
         else:
             if new_human_value is not None and new_human_value not in ['None', '']:
                 error_string = gloss_cell_error(gloss, nl, gettext(
-                    "For gloss '{annotation}' ({glossid}), value '{value}' for '{column}' is not a Boolean."), **{'column': human_key, 'value': new_human_value})
+                    "Row {row}: For gloss '{annotation}' ({glossid}), value '{value}' for '{column}' is not a Boolean."), **{'column': human_key, 'value': new_human_value})
         if error_string:
             errors_found += [error_string]
         return errors_found, differences
