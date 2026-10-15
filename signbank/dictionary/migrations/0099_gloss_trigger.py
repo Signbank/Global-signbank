@@ -6,7 +6,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('dictionary', '0098_drop_reversion_tables'),
+        ('dictionary', '0099_signbankapitoken_management'),
     ]
 
     operations = [

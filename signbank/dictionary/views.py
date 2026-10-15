@@ -877,7 +877,7 @@ def import_csv_update(request):
 
     list_choice_fields_choices = choice_fields_choices()
 
-    if len(selected_datasets) > 1:
+    if selected_datasets.count() != 1:
 
         feedback_message = _('Please select only one dataset.')
         messages.add_message(request, messages.ERROR, feedback_message)
