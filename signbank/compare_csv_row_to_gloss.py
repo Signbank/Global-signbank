@@ -42,9 +42,8 @@ def gloss_cell_error(gloss, nl, message, **kwargs):
                           glossid=str(gloss.pk), **kwargs)
 
 
-def check_existence_simultaneous_morphology(gloss, nl, values):
-    default_annotationidglosstranslation = get_default_annotationidglosstranslation(gloss)
-
+def check_existence_simultaneous_morphology(gloss, nl, language_code, values):
+    activate(language_code)
     errors = []
     tuples_list = []
     checked = ''
@@ -90,7 +89,7 @@ def check_existence_simultaneous_morphology(gloss, nl, values):
 
     return checked, errors
 
-def compare_simultaneous_morphology(gloss, nl, new_human_value, human_key, errors_found, differences):
+def compare_simultaneous_morphology(gloss, nl, language_code, new_human_value, human_key, errors_found, differences):
     if new_human_value in ['None', '', '-']:
         return errors_found, differences
 
@@ -103,7 +102,7 @@ def compare_simultaneous_morphology(gloss, nl, new_human_value, human_key, error
 
     new_human_value_list = new_human_value.split(',')
 
-    (checked_new_human_value, errors) = check_existence_simultaneous_morphology(gloss, nl, new_human_value_list)
+    (checked_new_human_value, errors) = check_existence_simultaneous_morphology(gloss, nl, language_code, new_human_value_list)
 
     if len(errors):
         errors_found += errors
@@ -125,8 +124,8 @@ def compare_simultaneous_morphology(gloss, nl, new_human_value, human_key, error
     return errors_found, differences
 
 
-def check_existence_sequential_morphology(gloss, nl, values):
-    default_annotationidglosstranslation = get_default_annotationidglosstranslation(gloss)
+def check_existence_sequential_morphology(gloss, nl, language_code, values):
+    activate(language_code)
     new_values = values.split(' + ')
     errors = []
     found = []
@@ -157,7 +156,7 @@ def check_existence_sequential_morphology(gloss, nl, values):
     return found, not_found, errors
 
 
-def compare_sequential_morphology(gloss, nl, new_human_value, human_key, errors_found, differences):
+def compare_sequential_morphology(gloss, nl, language_code, new_human_value, human_key, errors_found, differences):
     if new_human_value in ['None', '', '-']:
         return errors_found, differences
 
@@ -165,7 +164,7 @@ def compare_sequential_morphology(gloss, nl, new_human_value, human_key, errors_
                  for morpheme in MorphologyDefinition.objects.filter(parent_gloss=gloss)]
     morphemes_string = " + ".join(morphemes)
 
-    (found, not_found, errors) = check_existence_sequential_morphology(gloss, nl, new_human_value)
+    (found, not_found, errors) = check_existence_sequential_morphology(gloss, nl, language_code, new_human_value)
 
     if len(errors):
         errors_found += errors
@@ -187,8 +186,8 @@ def compare_sequential_morphology(gloss, nl, new_human_value, human_key, errors_
     return errors_found, differences
 
 
-def check_existence_blend_morphology(gloss, nl, values):
-    default_annotationidglosstranslation = get_default_annotationidglosstranslation(gloss)
+def check_existence_blend_morphology(gloss, nl, language_code, values):
+    activate(language_code)
 
     errors = []
     tuples_list = []
@@ -229,7 +228,7 @@ def check_existence_blend_morphology(gloss, nl, values):
     return checked, errors
 
 
-def compare_blend_morphology(gloss, nl, new_human_value, human_key, errors_found, differences):
+def compare_blend_morphology(gloss, nl, language_code, new_human_value, human_key, errors_found, differences):
     if new_human_value in ['None', '', '-']:
         return errors_found, differences
 
@@ -244,7 +243,7 @@ def compare_blend_morphology(gloss, nl, new_human_value, human_key, errors_found
 
     new_human_value_list = [v.strip() for v in new_human_value.split(',')]
 
-    (checked_new_human_value, errors) = check_existence_blend_morphology(gloss, nl, new_human_value_list)
+    (checked_new_human_value, errors) = check_existence_blend_morphology(gloss, nl, language_code, new_human_value_list)
 
     if len(errors):
         errors_found += errors
@@ -266,10 +265,11 @@ def compare_blend_morphology(gloss, nl, new_human_value, human_key, errors_found
     return errors_found, differences
 
 
-def check_existence_relations(gloss, nl, values):
+def check_existence_relations(gloss, nl, language_code, values):
     # used by Import CSV Update
     # values representing relations are checked and sorted as per the display method of the model
     # any new reverse relations are put into dict side_effects for display in the template
+    activate(language_code)
     checked = ''
     side_effects = dict()
     errors = []
@@ -281,7 +281,7 @@ def check_existence_relations(gloss, nl, values):
 
     if errors:
         row_error = gloss_cell_error(gloss, nl, gettext(
-            "Row {row}: For gloss '{annotation}' ({glossid}), errors found in column Relations to other signs: "), **{})
+            "Row {row}: For gloss '{annotation}' ({glossid}), errors found in column 'Relations to other signs': '{values}'. "), **{'values': ','.join(values)})
         for e in errors:
             row_error += e
         joined_errors = [row_error]
@@ -311,7 +311,7 @@ def check_existence_relations(gloss, nl, values):
     return checked, side_effects, errors
 
 
-def compare_relations(gloss, nl, new_human_value, human_key, errors_found, differences):
+def compare_relations(gloss, nl, language_code, new_human_value, human_key, errors_found, differences):
     relations = [(relation.role_fk.name, get_default_annotationidglosstranslation(relation.target))
                  for relation in gloss.get_relations()]
     # remove duplicates and sort
@@ -324,7 +324,7 @@ def compare_relations(gloss, nl, new_human_value, human_key, errors_found, diffe
 
     new_human_value_list = [v.strip() for v in new_human_value.split(',')]
 
-    (checked_new_human_value, side_effects, errors) = check_existence_relations(gloss, nl, new_human_value_list)
+    (checked_new_human_value, side_effects, errors) = check_existence_relations(gloss, nl, language_code, new_human_value_list)
 
     if errors and DEBUG_CSV:
         print('subst check CSV import Relations errors: ', errors)
@@ -349,7 +349,8 @@ def compare_relations(gloss, nl, new_human_value, human_key, errors_found, diffe
     return errors_found, differences
 
 
-def check_existence_foreign_relations(gloss, nl, values):
+def check_existence_foreign_relations(gloss, nl, language_code, values):
+    activate(language_code)
     errors = []
     output_string = ''
     sorted_values = []
@@ -364,7 +365,7 @@ def check_existence_foreign_relations(gloss, nl, values):
             sorted_values.append((loan_word, other_lang, other_lang_gloss))
         except ValueError:
             error_string = gloss_cell_error(gloss, nl, gettext(
-                "Row {row}: For gloss '{annotation}' ({glossid}), formatting error in Relations to foreign signs: '{input}'. Tuple 'bool:string:string' expected."), **{'input' : new_value_tuple})
+                "Row {row}: For gloss '{annotation}' ({glossid}), formatting error in 'Relations to foreign signs': '{input}'. Tuple 'bool:string:string' expected."), **{'input' : new_value_tuple})
             errors.append(error_string)
 
     # remove duplicates
@@ -386,7 +387,7 @@ def check_existence_foreign_relations(gloss, nl, values):
                 output_string = f'{loan_word}:{other_lang}:{other_lang_gloss}'
         except ValueError:
             error_string = gloss_cell_error(gloss, nl, gettext(
-                "Row {row}: For gloss {annotation} ({glossid}), formatting error in Relations to foreign signs: '{loan_word}:{other_lang}:{other_lang_gloss}'. Tuple 'bool:string:string' expected."),
+                "Row {row}: For gloss {annotation} ({glossid}), formatting error in 'Relations to foreign signs': '{loan_word}:{other_lang}:{other_lang_gloss}'. Tuple 'bool:string:string' expected."),
                                             **{'loan_word': loan_word, 'other_lang': other_lang, 'other_lang_gloss': other_lang_gloss})
             errors.append(error_string)
 
@@ -395,7 +396,7 @@ def check_existence_foreign_relations(gloss, nl, values):
     return output_string, errors
 
 
-def compare_relations_to_foreign_signs(gloss, nl, new_human_value, human_key, errors_found, differences):
+def compare_relations_to_foreign_signs(gloss, nl, language_code, new_human_value, human_key, errors_found, differences):
 
     relations = [(str(relation.loan), relation.other_lang, relation.other_lang_gloss)
                  for relation in gloss.relationtoforeignsign_set.all().order_by('other_lang_gloss')]
@@ -412,7 +413,7 @@ def compare_relations_to_foreign_signs(gloss, nl, new_human_value, human_key, er
     else:
         new_human_value_list = [v.strip() for v in new_human_value.split(',')]
 
-    (checked_new_human_value, errors) = check_existence_foreign_relations(gloss, nl, new_human_value_list)
+    (checked_new_human_value, errors) = check_existence_foreign_relations(gloss, nl, language_code, new_human_value_list)
 
     if len(errors):
         errors_found += errors
@@ -453,9 +454,10 @@ def get_tags_as_string(gloss):
     return tag_names_string, tag_names_display
 
 
-def check_existence_tags(gloss, nl, new_human_value_list, tag_name_error):
+def check_existence_tags(gloss, nl, language_code, new_human_value_list, tag_name_error):
     # convert new Tags csv value to proper format
     # values is not empty
+    activate(language_code)
 
     tags_objects = Tag.objects.all()
     refreshed_tags = []
@@ -490,7 +492,7 @@ def check_existence_tags(gloss, nl, new_human_value_list, tag_name_error):
     return new_tag_names_display, sorted_new_tags, new_tag_errors, tag_name_error
 
 
-def compare_tags(gloss, nl, new_human_value, human_key, errors_found, differences, tag_name_error):
+def compare_tags(gloss, nl, language_code, new_human_value, human_key, errors_found, differences, tag_name_error):
     (tag_names_string, sorted_tags_display) = get_tags_as_string(gloss)
 
     if new_human_value in ['None', '']:
@@ -500,7 +502,7 @@ def compare_tags(gloss, nl, new_human_value, human_key, errors_found, difference
         new_human_value_list = [v.strip() for v in new_human_value.split(',')]
 
         (sorted_new_tags_display, sorted_new_tags, new_tag_errors, tag_name_error) = \
-            check_existence_tags(gloss, nl, new_human_value_list, tag_name_error)
+            check_existence_tags(gloss, nl, language_code, new_human_value_list, tag_name_error)
 
     if len(new_tag_errors):
         errors_found += new_tag_errors
@@ -522,7 +524,7 @@ def compare_tags(gloss, nl, new_human_value, human_key, errors_found, difference
     return errors_found, differences, tag_name_error
 
 
-def check_existence_notes(gloss, nl, values, note_type_error, note_tuple_error):
+def check_existence_notes(gloss, nl, language_code, values, note_type_error, note_tuple_error):
     # convert new Notes csv value to proper format
     # values is not empty
 
@@ -537,12 +539,13 @@ def check_existence_notes(gloss, nl, values, note_type_error, note_tuple_error):
     # first replace the note names with their machine value
     # this is needed in order to parse the input, since some notes have parentheses and numbers, etc.
     mapped_values, map_errors = map_values_to_notes_id(values)
+    activate(language_code)
 
     if map_errors:
         note_tuple_error = True
         # error in processing new notes
         error_string1 = gloss_cell_error(gloss, nl, gettext(
-            "Row {row}: For gloss '{annotation}' ({glossid}), unknown type for Notes: '{values}'"), **{'values': values})
+            "Row {row}: For gloss '{annotation}' ({glossid}), unknown type for Notes: '{values}'. "), **{'values': ','.join(values)})
         new_note_errors.append(error_string1)
         if not note_type_error:
             error_string2 = gettext("See the available Notes types in the table on the Import CSV Update Glosses page.")
@@ -581,7 +584,7 @@ def check_existence_notes(gloss, nl, values, note_type_error, note_tuple_error):
         else:
             # error in processing new notes
             error_string = gloss_cell_error(gloss, nl, gettext(
-                "Row {row}: For gloss '{annotation}' ({glossid}), could not parse Notes: '{values}'."), **{'values': values})
+                "Row {row}: For gloss '{annotation}' ({glossid}), could not parse Notes: '{values}'. "), **{'values': values})
 
             if not note_tuple_error:
                 new_note_errors += [error_string]
@@ -665,7 +668,7 @@ def get_notes_as_string(gloss):
     return notes_display, sorted_notes_display
 
 
-def compare_notes(gloss, nl, new_human_value, human_key, notes_assign_toggle, errors_found, differences, note_type_error, note_tuple_error):
+def compare_notes(gloss, nl, language_code, new_human_value, human_key, notes_assign_toggle, errors_found, differences, note_type_error, note_tuple_error):
 
     notes_list, sorted_notes_display = get_notes_as_string(gloss)
 
@@ -674,7 +677,7 @@ def compare_notes(gloss, nl, new_human_value, human_key, notes_assign_toggle, er
             ([], "", [], note_type_error, note_tuple_error)
     else:
         (new_notes_display, sorted_new_notes_display, new_note_errors, note_type_error, note_tuple_error) = \
-            check_existence_notes(gloss, nl, new_human_value, note_type_error, note_tuple_error)
+            check_existence_notes(gloss, nl, language_code, new_human_value, note_type_error, note_tuple_error)
 
     if len(new_note_errors):
         errors_found += new_note_errors
@@ -701,8 +704,9 @@ def compare_notes(gloss, nl, new_human_value, human_key, notes_assign_toggle, er
     return errors_found, differences, note_type_error, note_tuple_error
 
 
-def compare_dataset(gloss, nl, new_human_value, human_key, errors_found, differences, my_datasets):
+def compare_dataset(gloss, nl, language_code, new_human_value, human_key, errors_found, differences, my_datasets):
     current_dataset = gloss.lemma.dataset.acronym
+    activate(language_code)
 
     if new_human_value == 'None' or new_human_value == '':
         # This check assumes that if the Dataset column is empty, it means no change
@@ -739,7 +743,8 @@ def compare_dataset(gloss, nl, new_human_value, human_key, errors_found, differe
     return errors_found, differences
 
 
-def check_existence_signlanguage(gloss, nl, values):
+def check_existence_signlanguage(gloss, nl, language_code, values):
+    activate(language_code)
     errors = []
     found = []
     not_found = []
@@ -762,7 +767,7 @@ def check_existence_signlanguage(gloss, nl, values):
     return found, not_found, errors
 
 
-def compare_signlanguages(gloss, nl, new_human_value, human_key, errors_found, differences):
+def compare_signlanguages(gloss, nl, language_code, new_human_value, human_key, errors_found, differences):
     if new_human_value in ['None', '']:
         return errors_found, differences
 
@@ -770,7 +775,7 @@ def compare_signlanguages(gloss, nl, new_human_value, human_key, errors_found, d
 
     new_human_value_list = [v.strip() for v in new_human_value.split(',')]
 
-    (found, not_found, errors) = check_existence_signlanguage(gloss, nl, new_human_value_list)
+    (found, not_found, errors) = check_existence_signlanguage(gloss, nl, language_code, new_human_value_list)
 
     if len(errors):
         errors_found += errors
@@ -792,9 +797,8 @@ def compare_signlanguages(gloss, nl, new_human_value, human_key, errors_found, d
     return errors_found, differences
 
 
-def check_existence_dialect(gloss, nl, values):
-    default_annotationidglosstranslation = get_default_annotationidglosstranslation(gloss)
-
+def check_existence_dialect(gloss, nl, language_code, values):
+    activate(language_code)
     errors = []
     found = []
     not_found = []
@@ -815,7 +819,7 @@ def check_existence_dialect(gloss, nl, values):
     return found, not_found, errors
 
 
-def compare_dialects(gloss, nl, new_human_value, human_key, errors_found, differences):
+def compare_dialects(gloss, nl, language_code, new_human_value, human_key, errors_found, differences):
     if new_human_value in ['None', '', '-']:
         return errors_found, differences
 
@@ -824,7 +828,7 @@ def compare_dialects(gloss, nl, new_human_value, human_key, errors_found, differ
 
     new_human_value_list = [v.strip() for v in new_human_value.split(',')]
 
-    (found, not_found, errors) = check_existence_dialect(gloss, nl, new_human_value_list)
+    (found, not_found, errors) = check_existence_dialect(gloss, nl, language_code, new_human_value_list)
 
     if len(errors):
         errors_found += errors
@@ -846,11 +850,12 @@ def compare_dialects(gloss, nl, new_human_value, human_key, errors_found, differ
     return errors_found, differences
 
 
-def compare_example_sentences(gloss, nl, new_human_value, human_key, errors_found, differences):
+def compare_example_sentences(gloss, nl, language_code, new_human_value, human_key, errors_found, differences):
     example_sentences_key_prefix = "Example Sentences ("
     language_name_column = DEFAULT_LANGUAGE_HEADER_COLUMN['English']
     language_name = human_key[len(example_sentences_key_prefix):-1]
     language = Language.objects.filter(**{language_name_column: language_name}).first()
+    activate(language_code)
     if not language:
         error_string = gloss_cell_error(gloss, nl, gettext("Row {row}: Non-existent language specified for column: '{column}'"), **{'column': human_key})
         errors_found += [error_string]
@@ -913,7 +918,7 @@ def lookup_semantic_fields(values):
     return semantic_fields
 
 
-def compare_semantic_fields(gloss, nl, new_human_value, human_key, errors_found, differences, semfield_assign_toggle):
+def compare_semantic_fields(gloss, nl, language_code, new_human_value, human_key, errors_found, differences, semfield_assign_toggle):
     if new_human_value in ['', '0', ' ', None, 'None']:
         new_human_value = '-'
         new_human_value_list = []
@@ -923,6 +928,7 @@ def compare_semantic_fields(gloss, nl, new_human_value, human_key, errors_found,
     # make sure all fields exist
     new_values_sorted_lookup = lookup_semantic_fields(new_human_value_list)
     if new_values_sorted_lookup.count() != len(new_human_value_list):
+        activate(language_code)
         error_string = gloss_cell_error(gloss, nl, gettext(
             "Row {row}: For gloss '{annotation}' ({glossid}), could not parse '{value}' for '{column}'."), **{'column': human_key, 'value': new_human_value})
         errors_found += [error_string]
@@ -953,11 +959,12 @@ def compare_semantic_fields(gloss, nl, new_human_value, human_key, errors_found,
     return errors_found, differences
 
 
-def compare_senses(gloss, nl, new_human_value, human_key, errors_found, differences):
+def compare_senses(gloss, nl, language_code, new_human_value, human_key, errors_found, differences):
     keywords_key_prefix = "Senses ("
     language_name_column = DEFAULT_LANGUAGE_HEADER_COLUMN['English']
     language_name = human_key[len(keywords_key_prefix):-1]
     language = Language.objects.filter(**{language_name_column: language_name}).first()
+    activate(language_code)
     if not language:
         error_string = gloss_cell_error(gloss, nl, gettext("Row {row}: Non-existent language specified for Senses column: '{column}'"), **{'column': human_key})
         errors_found += [error_string]
@@ -998,7 +1005,7 @@ def compare_senses(gloss, nl, new_human_value, human_key, errors_found, differen
     return errors_found, differences, fatal_error
 
 
-def compare_choice_field(gloss, nl, field, new_human_value, human_key, errors_found, differences):
+def compare_choice_field(gloss, nl, language_code, field, new_human_value, human_key, errors_found, differences):
     if new_human_value in ['', '0', ' ', None, 'None']:
         # normalise to make this be the value for the empty field choice
         new_human_value = '-'
@@ -1014,6 +1021,7 @@ def compare_choice_field(gloss, nl, field, new_human_value, human_key, errors_fo
                                                    field=field.field_choice_category)
             new_machine_value = field_choice.machine_value
         except ObjectDoesNotExist:
+            activate(language_code)
             error_string = gloss_cell_error(gloss, nl, gettext(
                 "Row {row}: For gloss '{annotation}' ({glossid}), could not find option '{value}' for '{column}'."), **{'column': human_key, 'value': new_human_value})
             errors_found += [error_string]
@@ -1039,7 +1047,7 @@ def compare_choice_field(gloss, nl, field, new_human_value, human_key, errors_fo
     return errors_found, differences
 
 
-def compare_handshape(gloss, nl, field, new_human_value, human_key, errors_found, differences):
+def compare_handshape(gloss, nl, language_code, field, new_human_value, human_key, errors_found, differences):
     if new_human_value in ['', '0', ' ', None, 'None']:
         new_human_value = '-'
 
@@ -1047,6 +1055,7 @@ def compare_handshape(gloss, nl, field, new_human_value, human_key, errors_found
         handshape = Handshape.objects.get(name__iexact=new_human_value)
         new_machine_value = handshape.machine_value
     except ObjectDoesNotExist:
+        activate(language_code)
         error_string = gloss_cell_error(gloss, nl, gettext(
             "Row {row}: For gloss '{annotation}' ({glossid}), could not find option '{value}' for '{column}'."), **{'column': human_key, 'value': new_human_value})
         errors_found += [error_string]
@@ -1072,7 +1081,7 @@ def compare_handshape(gloss, nl, field, new_human_value, human_key, errors_found
     return errors_found, differences
 
 
-def compare_booleans(gloss, nl, field, new_human_value, human_key, errors_found, differences):
+def compare_booleans(gloss, nl, language_code, field, new_human_value, human_key, errors_found, differences):
     new_human_value_lower = new_human_value.lower()
     if new_human_value_lower == 'neutral' and (field.name in HANDEDNESS_ARTICULATION_FIELDS):
         new_machine_value = None
@@ -1086,6 +1095,7 @@ def compare_booleans(gloss, nl, field, new_human_value, human_key, errors_found,
         new_human_value = 'False'
     else:
         # Boolean expected
+        activate(language_code)
         error_string = ''
         # If the new value is empty, don't count this as a type error, error_string is generated conditionally
         if field.name in HANDEDNESS_ARTICULATION_FIELDS:
@@ -1176,11 +1186,12 @@ def compare_text(gloss, field, new_human_value, human_key, errors_found, differe
     return errors_found, differences
 
 
-def compare_annotations(gloss, nl, new_human_value, human_key, errors_found, differences):
+def compare_annotations(gloss, nl, language_code, new_human_value, human_key, errors_found, differences):
     annotation_idgloss_key_prefix = "Annotation ID Gloss ("
     language_name_column = DEFAULT_LANGUAGE_HEADER_COLUMN['English']
     language_name = human_key[len(annotation_idgloss_key_prefix):-1]
     language = Language.objects.filter(**{language_name_column: language_name}).first()
+    activate(language_code)
     if not language:
         error_string = gloss_cell_error(gloss, nl, gettext("Row {row}: Non-existent language specified for annotation column: '{column}'"), **{'column': human_key})
         errors_found += [error_string]

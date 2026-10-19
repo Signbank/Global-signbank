@@ -942,8 +942,8 @@ def import_csv_update(request):
     with override(LANGUAGE_CODE):
         columns_to_skip = {field.verbose_name: field for field in gloss_fields if field.name in FIELDS['frequency']}
 
-    # this is needed to make sure the interface shows the correct language
-    activate(request.LANGUAGE_CODE)
+    # # this is needed to make sure the interface shows the correct language
+    # activate(request.LANGUAGE_CODE)
 
     # Process Input File
     if len(request.FILES) > 0:
@@ -1199,7 +1199,7 @@ def import_csv_update(request):
 
             try:
                 (changes_found, errors_found, fatal_error) = \
-                            compare_valuedict_to_gloss(value_dict, gloss, user_datasets_names, nl,
+                            compare_valuedict_to_gloss(value_dict, gloss, user_datasets_names, nl, request.LANGUAGE_CODE,
                                                        notes_toggle, notes_assign_toggle,
                                                        semfield_toggle, semfield_assign_toggle, tags_toggle)
                 changes += changes_found

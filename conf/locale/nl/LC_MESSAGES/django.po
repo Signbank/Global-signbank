@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: \n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-19 11:48+0200\n"
+"POT-Creation-Date: 2026-10-19 15:52+0200\n"
 "PO-Revision-Date: 2018-03-08 18:54+0100\n"
 "Last-Translator: susanodd\n"
 "Language-Team: Dutch <LL@li.org>\n"
@@ -60,7 +60,7 @@ msgstr ""
 #: signbank/feedback/templates/feedback/recent_feedback.html:64
 #: signbank/gloss_update.py:44 signbank/gloss_update.py:103
 #: signbank/gloss_update.py:105 signbank/query_parameters.py:607
-#: signbank/tools.py:74
+#: signbank/tools.py:75
 msgid "Annotation ID Gloss"
 msgstr "Annotatie-ID-Glos"
 
@@ -89,7 +89,7 @@ msgstr "Annotatie-ID-Glos"
 #: signbank/dictionary/templates/dictionary/virtual_machine_gloss_update_api.html:129
 #: signbank/gloss_update.py:46 signbank/gloss_update.py:107
 #: signbank/gloss_update.py:109 signbank/query_parameters.py:610
-#: signbank/tools.py:71
+#: signbank/tools.py:72
 msgid "Lemma ID Gloss"
 msgstr "Lemma-ID-Glos"
 
@@ -114,7 +114,7 @@ msgstr "Lemma-ID-Glos"
 #: signbank/dictionary/templates/dictionary/virtual_machine_api.html:140
 #: signbank/dictionary/templates/dictionary/word.html:138
 #: signbank/query_parameters.py:613 signbank/query_parameters.py:1031
-#: signbank/tools.py:77
+#: signbank/tools.py:78
 msgid "Senses"
 msgstr "Betekenissen"
 
@@ -419,7 +419,9 @@ msgstr "De gebruiker van dit autorisatietoken is niet actief."
 #: signbank/api_token.py:111
 msgid ""
 "Your Authorization Token is read only and cannot be used for this request."
-msgstr "Je autorisatietoken is alleen-lezen en kan niet worden gebruikt voor dit verzoek."
+msgstr ""
+"Je autorisatietoken is alleen-lezen en kan niet worden gebruikt voor dit "
+"verzoek."
 
 #: signbank/attachments/templates/list.html:33
 msgid "File attachments:"
@@ -474,182 +476,202 @@ msgstr "De keuze voor het type communicatie is vereist."
 msgid "Some context variables are unavailable: "
 msgstr "Sommige contextvariabelen zijn niet beschikbaar."
 
-#: signbank/compare_csv_row_to_gloss.py:61
+#: signbank/compare_csv_row_to_gloss.py:60
 #, python-brace-format
 msgid ""
 "Row {row}: For gloss '{annotation}' ({glossid}), formatting error in "
 "Simultaneous Morphology: {input}. Tuple morpheme:role expected."
 msgstr ""
 "Rij {row}: Voor gloss '{annotation}' ({glossid}), opmaakfout in "
-"'Simultaneous Morphology': {input}. Een tupel van de vorm morfeem:rol werd verwacht."
+"'Simultaneous Morphology': {input}. Een tupel van de vorm morfeem:rol werd "
+"verwacht."
 
-#: signbank/compare_csv_row_to_gloss.py:72
+#: signbank/compare_csv_row_to_gloss.py:71
 #, python-brace-format
 msgid ""
 "Row {row}: For gloss '{annotation}' ({glossid}), new Simultaneous Morphology "
 "morpheme '{morpheme}' not found."
 msgstr ""
-"Rij {row}: Voor gloss '{annotation}' ({glossid}) is het nieuwe morfeem '{morpheme}' "
-"voor simultane morfologie niet gevonden."
+"Rij {row}: Voor gloss '{annotation}' ({glossid}) is het nieuwe morfeem "
+"'{morpheme}' voor simultane morfologie niet gevonden."
 
-#: signbank/compare_csv_row_to_gloss.py:77
+#: signbank/compare_csv_row_to_gloss.py:76
 #, python-brace-format
 msgid ""
 "Row {row}: For gloss '{annotation}' ({glossid}), multiple matches found for "
 "Simultaneous Morphology morpheme '{morpheme}'."
-msgstr "Rij {row}: Voor gloss '{annotation}' ({glossid}) zijn meerdere overeenkomsten "
-"gevonden voor het morfeem '{morpheme}' (simultane morfologie)."
+msgstr ""
+"Rij {row}: Voor gloss '{annotation}' ({glossid}) zijn meerdere "
+"overeenkomsten gevonden voor het morfeem '{morpheme}' (simultane morfologie)."
 
-#: signbank/compare_csv_row_to_gloss.py:83
+#: signbank/compare_csv_row_to_gloss.py:82
 #, python-brace-format
 msgid ""
 "Row {row}: For gloss '{annotation}' ({glossid}), new Simultaneous Morphology "
 "morpheme '{morpheme}' is not a morpheme."
 msgstr ""
-"Rij {row}: Voor gloss '{annotation}' ({glossid}) is het nieuwe 'Simultaneous Morphology'-morfeem "
-"'{morpheme}' geen morfeem."
+"Rij {row}: Voor gloss '{annotation}' ({glossid}) is het nieuwe 'Simultaneous "
+"Morphology'-morfeem '{morpheme}' geen morfeem."
 
-#: signbank/compare_csv_row_to_gloss.py:140
+#: signbank/compare_csv_row_to_gloss.py:139
 #, python-brace-format
 msgid ""
 "Row {row}: For gloss '{annotation}' ({glossid}), new Sequential Morphology "
 "gloss '{value}' not found."
 msgstr ""
-"Rij {row}: Voor gloss '{annotation}' ({glossid}) is de nieuwe 'Sequential Morphology'-gloss "
-"'{value}' niet gevonden."
+"Rij {row}: Voor gloss '{annotation}' ({glossid}) is de nieuwe 'Sequential "
+"Morphology'-gloss '{value}' niet gevonden."
 
-#: signbank/compare_csv_row_to_gloss.py:146
+#: signbank/compare_csv_row_to_gloss.py:145
 #, python-brace-format
 msgid ""
 "Row {row}: For gloss '{annotation}' ({glossid}), multiple matches found for "
 "Sequential Morphology gloss '{value}'."
 msgstr ""
-"Rij {row}: Voor gloss '{annotation}' ({glossid}) zijn meerdere overeenkomsten gevonden "
-"voor de 'Sequential Morphology'-gloss '{value}'."
+"Rij {row}: Voor gloss '{annotation}' ({glossid}) zijn meerdere "
+"overeenkomsten gevonden voor de 'Sequential Morphology'-gloss '{value}'."
 
-#: signbank/compare_csv_row_to_gloss.py:154
+#: signbank/compare_csv_row_to_gloss.py:153
 #, python-brace-format
 msgid ""
 "Row {row}: For gloss '{annotation}' ({glossid}), too many Sequential "
 "Morphology components."
 msgstr ""
+"Rij {row}: Voor gloss '{annotation}' ({glossid}) zijn er te veel sequentiële "
+"morfologiecomponenten."
 
-#: signbank/compare_csv_row_to_gloss.py:206
+#: signbank/compare_csv_row_to_gloss.py:205
 #, python-brace-format
 msgid ""
 "Row {row}: For gloss '{annotation}' ({glossid}), formatting error in Blend "
 "Morphology: {input}. Tuple gloss:role expected."
 msgstr ""
+"Rij {row}: Bij gloss '{annotation}' ({glossid}) is er een opmaakfout in "
+"Blend Morphology: {input}. Een tuple van het type gloss:rol wordt verwacht."
 
-#: signbank/compare_csv_row_to_gloss.py:216
+#: signbank/compare_csv_row_to_gloss.py:215
 #, python-brace-format
 msgid ""
 "Row {row}: For gloss '{annotation}' ({glossid}), new Blend Morphology gloss "
 "'{morpheme}' not found."
 msgstr ""
+"Rij {row}: Voor gloss '{annotation}' ({glossid}) is de nieuwe 'Blend "
+"Morphology'-gloss '{morpheme}' niet gevonden."
 
-#: signbank/compare_csv_row_to_gloss.py:221
+#: signbank/compare_csv_row_to_gloss.py:220
 #, python-brace-format
 msgid ""
 "Row {row}: For gloss '{annotation}' ({glossid}), multiple matches found for "
 "Blend Morphology gloss '{morpheme}'."
 msgstr ""
+"Rij {row}: Voor gloss '{annotation}' ({glossid}) zijn meerdere "
+"overeenkomsten gevonden voor 'Blend Morphology'-gloss '{morpheme}'"
 
 #: signbank/compare_csv_row_to_gloss.py:284
 #, python-brace-format
 msgid ""
 "Row {row}: For gloss '{annotation}' ({glossid}), errors found in column "
-"Relations to other signs: "
+"'Relations to other signs': '{values}'. "
 msgstr ""
+"Rij {row}: Voor gloss '{annotation}' ({glossid}) zijn fouten aangetroffen in "
+"kolom 'Relations to other signs': '{values}'. "
 
-#: signbank/compare_csv_row_to_gloss.py:367
+#: signbank/compare_csv_row_to_gloss.py:368
 #, python-brace-format
 msgid ""
 "Row {row}: For gloss '{annotation}' ({glossid}), formatting error in "
-"Relations to foreign signs: '{input}'. Tuple 'bool:string:string' expected."
+"'Relations to foreign signs': '{input}'. Tuple 'bool:string:string' expected."
 msgstr ""
+"Rij {row}: Bij gloss '{annotation}' ({glossid}) is er een opmaakfout in "
+"'Relations to foreign signs': {input}. Een tuple van het type 'bool:string:"
+"string' wordt verwacht."
 
-#: signbank/compare_csv_row_to_gloss.py:389
+#: signbank/compare_csv_row_to_gloss.py:390
 #, python-brace-format
 msgid ""
-"Row {row}: For gloss {annotation} ({glossid}), formatting error in Relations "
-"to foreign signs: '{loan_word}:{other_lang}:{other_lang_gloss}'. Tuple 'bool:"
-"string:string' expected."
+"Row {row}: For gloss {annotation} ({glossid}), formatting error in "
+"'Relations to foreign signs': '{loan_word}:{other_lang}:{other_lang_gloss}'. "
+"Tuple 'bool:string:string' expected."
 msgstr ""
+"Rij {row}: Bij gloss '{annotation}' ({glossid}) is er een opmaakfout in "
+"'Relations to foreign signs': '{loan_word}:{other_lang}:{other_lang_gloss}'. "
+"Een tuple van het type 'bool:string:string' wordt verwacht."
 
-#: signbank/compare_csv_row_to_gloss.py:478
+#: signbank/compare_csv_row_to_gloss.py:480
 #, python-brace-format
 msgid ""
 "Row {row}: For gloss '{annotation}' ({glossid}), an unknown Tag name was "
 "encountered: '{tag}'."
 msgstr ""
+"Rij {row}: Bij gloss '{annotation}' ({glossid}) werd een onbekende tagnaam "
+"aangetroffen: '{tag}'."
 
-#: signbank/compare_csv_row_to_gloss.py:481
+#: signbank/compare_csv_row_to_gloss.py:483
 msgid ""
 "See the available Tags in the table on the Import CSV Update Glosses page."
 msgstr ""
 "Bekijk de beschikbare tags in de tabel op de pagina Import CSV Update "
 "Glosses."
 
-#: signbank/compare_csv_row_to_gloss.py:545
+#: signbank/compare_csv_row_to_gloss.py:548
 #, python-brace-format
 msgid ""
 "Row {row}: For gloss '{annotation}' ({glossid}), unknown type for Notes: "
-"'{values}'"
+"'{values}'. "
 msgstr ""
-"Rij {row}: Voor gloss '{annotation}' ({glossid}), onbekend type voor 'Notes': "
-"'{values}'"
+"Rij {row}: Voor gloss '{annotation}' ({glossid}), onbekend type voor "
+"'Notes': '{values}'. "
 
-#: signbank/compare_csv_row_to_gloss.py:548
+#: signbank/compare_csv_row_to_gloss.py:551
 msgid ""
 "See the available Notes types in the table on the Import CSV Update Glosses "
 "page."
 msgstr ""
-"Bekijk de beschikbare typen notities in de tabel op de pagina "
-"'Import CSV Update Glosses'"
+"Bekijk de beschikbare typen notities in de tabel op de pagina 'Import CSV "
+"Update Glosses'"
 
-#: signbank/compare_csv_row_to_gloss.py:584
+#: signbank/compare_csv_row_to_gloss.py:587
 #, python-brace-format
 msgid ""
 "Row {row}: For gloss '{annotation}' ({glossid}), could not parse Notes: "
-"'{values}'."
+"'{values}'. "
 msgstr ""
-"Rij {row}: Voor gloss '{annotation}' ({glossid}) konden de notities niet worden verwerkt: "
-"'{values}'."
+"Rij {row}: Voor gloss '{annotation}' ({glossid}) konden de notities niet "
+"worden verwerkt: '{values}'. "
 
-#: signbank/compare_csv_row_to_gloss.py:588
+#: signbank/compare_csv_row_to_gloss.py:591
 msgid ""
 "Notes values must be a comma-separated list of tagged tuples: 'Type:(Boolean,"
 "Index,Text)'"
 msgstr ""
-"Opmerkingen: waarden moeten een door komma's gescheiden lijst van getagde tuples zijn: 'Type:(Boolean,"
-"Index,Text)'"
+"Opmerkingen: waarden moeten een door komma's gescheiden lijst van getagde "
+"tuples zijn: 'Type:(Boolean,Index,Text)'"
 
-#: signbank/compare_csv_row_to_gloss.py:590
+#: signbank/compare_csv_row_to_gloss.py:593
 msgid "Try exporting a CSV for glosses with Notes to check the format."
 msgstr ""
 "Probeer een CSV-bestand voor glossen inclusief notities te exporteren om de "
 "indeling te controleren."
 
-#: signbank/compare_csv_row_to_gloss.py:714
+#: signbank/compare_csv_row_to_gloss.py:718
 #, python-brace-format
 msgid ""
 "Row {row}: For gloss '{annotation}' ({glossid}), Dataset must be non-empty. "
 "There is currently no dataset defined for this gloss."
 msgstr ""
-"Rij {row}: Voor gloss '{annotation}' ({glossid}) geldt dat de dataset niet leeg mag zijn. "
-"Er is momenteel geen dataset gedefinieerd voor dit gloss-item."
+"Rij {row}: Voor gloss '{annotation}' ({glossid}) geldt dat de dataset niet "
+"leeg mag zijn. Er is momenteel geen dataset gedefinieerd voor dit gloss-item."
 
-#: signbank/compare_csv_row_to_gloss.py:722
+#: signbank/compare_csv_row_to_gloss.py:726
 #, python-brace-format
 msgid ""
 "Row {row}: For gloss '{annotation}' ({glossid}), you do not have change "
 "permission for dataset '{value}' for column '{column}'."
 msgstr ""
-"Rij {row}: Voor gloss '{annotation}' ({glossid}) heb je geen wijzigingsbevoegdheid "
-"voor dataset '{value}' in kolom '{column}'."
+"Rij {row}: Voor gloss '{annotation}' ({glossid}) heb je geen "
+"wijzigingsbevoegdheid voor dataset '{value}' in kolom '{column}'."
 
-#: signbank/compare_csv_row_to_gloss.py:751
+#: signbank/compare_csv_row_to_gloss.py:756
 #, python-brace-format
 msgid ""
 "Row {row}: For gloss '{annotation}' ({glossid}), Sign Language value "
@@ -658,7 +680,7 @@ msgstr ""
 "Rij {row}: Voor gloss '{annotation}' ({glossid}) is de gebarentaalwaarde "
 "'{value}' een duplicaat."
 
-#: signbank/compare_csv_row_to_gloss.py:757
+#: signbank/compare_csv_row_to_gloss.py:762
 #, python-brace-format
 msgid ""
 "Row {row}: For gloss '{annotation}' ({glossid}), an unknown Sign Language "
@@ -667,7 +689,7 @@ msgstr ""
 "Rij {row}: Bij gloss '{annotation}' ({glossid}) werd een onbekende waarde "
 "voor gebarentaal aangetroffen: '{value}'."
 
-#: signbank/compare_csv_row_to_gloss.py:810
+#: signbank/compare_csv_row_to_gloss.py:814
 #, python-brace-format
 msgid ""
 "Row {row}: For gloss '{annotation}' ({glossid}), new Dialect value '{value}' "
@@ -676,12 +698,12 @@ msgstr ""
 "Rij {row}: Voor gloss '{annotation}' ({glossid}) is de nieuwe dialectwaarde "
 "'{value}' niet gevonden."
 
-#: signbank/compare_csv_row_to_gloss.py:855
+#: signbank/compare_csv_row_to_gloss.py:860
 #, python-brace-format
 msgid "Row {row}: Non-existent language specified for column: '{column}'"
 msgstr "Rij {row}: Niet-bestaande taal opgegeven voor kolom: '{column}'"
 
-#: signbank/compare_csv_row_to_gloss.py:866
+#: signbank/compare_csv_row_to_gloss.py:871
 #, python-brace-format
 msgid ""
 "Row {row}: For gloss '{annotation}' ({glossid}), creation of new sentences "
@@ -689,36 +711,36 @@ msgid ""
 "sentences."
 msgstr ""
 "Rij {row}: Voor gloss '{annotation}' ({glossid}) is het aanmaken van nieuwe "
-"zinnen niet mogelijk: {column}. Er is alleen een update beschikbaar, maar de gloss "
-"heeft geen zinnen."
+"zinnen niet mogelijk: {column}. Er is alleen een update beschikbaar, maar de "
+"gloss heeft geen zinnen."
 
-#: signbank/compare_csv_row_to_gloss.py:875
-#: signbank/compare_csv_row_to_gloss.py:885
+#: signbank/compare_csv_row_to_gloss.py:880
+#: signbank/compare_csv_row_to_gloss.py:890
 #, python-brace-format
 msgid ""
 "Row {row}: For gloss {glossid}: Error parsing value in column {column}: "
 "{value}"
 msgstr ""
-"Rij {row}: Voor gloss {glossid}: Fout bij het verwerken van de waarde in kolom {column}: "
-"{value}"
+"Rij {row}: Voor gloss {glossid}: Fout bij het verwerken van de waarde in "
+"kolom {column}: {value}"
 
-#: signbank/compare_csv_row_to_gloss.py:927
+#: signbank/compare_csv_row_to_gloss.py:932
 #, python-brace-format
 msgid ""
 "Row {row}: For gloss '{annotation}' ({glossid}), could not parse '{value}' "
 "for '{column}'."
 msgstr ""
-"Rij {row}: Voor gloss '{annotation}' ({glossid}) kon de waarde '{value}' voor kolom "
-"'{column}' niet worden verwerkt."
+"Rij {row}: Voor gloss '{annotation}' ({glossid}) kon de waarde '{value}' "
+"voor kolom '{column}' niet worden verwerkt."
 
-#: signbank/compare_csv_row_to_gloss.py:962
+#: signbank/compare_csv_row_to_gloss.py:968
 #, python-brace-format
 msgid ""
 "Row {row}: Non-existent language specified for Senses column: '{column}'"
 msgstr ""
 "Rij {row}: Niet-bestaande taal opgegeven voor de kolom 'Senses': '{column}'"
 
-#: signbank/compare_csv_row_to_gloss.py:977
+#: signbank/compare_csv_row_to_gloss.py:983
 #, python-brace-format
 msgid ""
 "Row {row}: For gloss '{annotation}' ({glossid}), update of senses not "
@@ -727,7 +749,7 @@ msgstr ""
 "Rij {row}: Voor gloss '{annotation}' ({glossid}) is het bijwerken van "
 "betekenissen niet mogelijk: {column}: {value}."
 
-#: signbank/compare_csv_row_to_gloss.py:984
+#: signbank/compare_csv_row_to_gloss.py:990
 #, python-brace-format
 msgid ""
 "Row {row}: For gloss {glossid}: Error parsing value in Senses column "
@@ -736,8 +758,8 @@ msgstr ""
 "Rij {row}: Voor gloss {glossid}: Fout bij het verwerken van de waarde in de "
 "kolom voor betekenissen '{column}': {value}"
 
-#: signbank/compare_csv_row_to_gloss.py:1018
-#: signbank/compare_csv_row_to_gloss.py:1051
+#: signbank/compare_csv_row_to_gloss.py:1025
+#: signbank/compare_csv_row_to_gloss.py:1059
 #, python-brace-format
 msgid ""
 "Row {row}: For gloss '{annotation}' ({glossid}), could not find option "
@@ -746,7 +768,7 @@ msgstr ""
 "Rij {row}: Voor gloss '{annotation}' ({glossid}) kon optie '{value}' voor "
 "'{column}' niet worden gevonden."
 
-#: signbank/compare_csv_row_to_gloss.py:1094
+#: signbank/compare_csv_row_to_gloss.py:1103
 #, python-brace-format
 msgid ""
 "Row {row}: For gloss '{annotation}' ({glossid}), value '{value}' for "
@@ -755,23 +777,23 @@ msgstr ""
 "Rij {row}: Voor gloss '{annotation}' ({glossid}) moet de waarde '{value}' "
 "voor '{column}' een Booleaanse waarde of 'Neutral' zijn."
 
-#: signbank/compare_csv_row_to_gloss.py:1098
+#: signbank/compare_csv_row_to_gloss.py:1107
 #, python-brace-format
 msgid ""
 "Row {row}: For gloss '{annotation}' ({glossid}), value '{value}' for "
 "'{column}' is not a Boolean."
 msgstr ""
-"Rij {row}: Voor gloss '{annotation}' ({glossid}) is de waarde '{value}' voor '{column}' "
-"geen booleaanse waarde."
+"Rij {row}: Voor gloss '{annotation}' ({glossid}) is de waarde '{value}' voor "
+"'{column}' geen booleaanse waarde."
 
-#: signbank/compare_csv_row_to_gloss.py:1185
+#: signbank/compare_csv_row_to_gloss.py:1195
 #, python-brace-format
 msgid ""
 "Row {row}: Non-existent language specified for annotation column: '{column}'"
 msgstr ""
 "Rij {row}: Niet-bestaande taal opgegeven voor annotatiekolom: '{column}'"
 
-#: signbank/compare_csv_row_to_gloss.py:1199
+#: signbank/compare_csv_row_to_gloss.py:1209
 #, python-brace-format
 msgid ""
 "Row {row}: For gloss '{annotation}' ({glossid}), value '{value}' for "
@@ -780,7 +802,7 @@ msgstr ""
 "Rij {row}: Voor gloss '{annotation}' ({glossid}) mag de waarde '{value}' "
 "voor '{column}' niet leeg zijn."
 
-#: signbank/compare_csv_row_to_gloss.py:1210
+#: signbank/compare_csv_row_to_gloss.py:1220
 #, python-brace-format
 msgid ""
 "Row {row}: Signbank ID {glossid} annotation already exists in dataset: "
@@ -794,8 +816,8 @@ msgid ""
 "Sentence column values must be a |-separated list of tuples: '(SenseNr,"
 "SentenceID,Type,Negative,Text)'"
 msgstr ""
-"De waarden in de kolom 'Zin' moeten een door | gescheiden lijst van tuples zijn: '(SenseNr,"
-"SentenceID,Type,Negative,Text)'"
+"De waarden in de kolom 'Zin' moeten een door | gescheiden lijst van tuples "
+"zijn: '(SenseNr,SentenceID,Type,Negative,Text)'"
 
 #: signbank/csv_interface.py:325
 msgid "The Sense Number cannot be modified in CSV Update."
@@ -824,14 +846,14 @@ msgstr "De negatieve zin kan niet worden gewijzigd in een CSV-update."
 #: signbank/dictionary/templates/dictionary/related_signs_detail_view.html:109
 #: signbank/dictionary/templates/dictionary/related_signs_detail_view.html:194
 #: signbank/dictionary/templates/dictionary/related_signs_detail_view.html:251
-#: signbank/tools.py:95
+#: signbank/tools.py:96
 msgid "Tags"
 msgstr "Labels"
 
 #: signbank/csv_interface.py:1248 signbank/dictionary/models.py:1762
 #: signbank/dictionary/templates/dictionary/gloss_detail.html:4416
 #: signbank/dictionary/templates/dictionary/morpheme_detail.html:644
-#: signbank/tools.py:96
+#: signbank/tools.py:97
 msgid "Notes"
 msgstr "Aantekeningen"
 
@@ -975,7 +997,7 @@ msgstr "Bewerk naam query"
 #: signbank/dictionary/templates/dictionary/related_signs_detail_view.html:105
 #: signbank/dictionary/templates/dictionary/related_signs_detail_view.html:190
 #: signbank/dictionary/templates/dictionary/related_signs_detail_view.html:247
-#: signbank/tools.py:81
+#: signbank/tools.py:82
 msgid "Handedness"
 msgstr "Handigheid"
 
@@ -989,7 +1011,7 @@ msgstr "Handigheid"
 #: signbank/dictionary/templates/dictionary/related_signs_detail_view.html:106
 #: signbank/dictionary/templates/dictionary/related_signs_detail_view.html:191
 #: signbank/dictionary/templates/dictionary/related_signs_detail_view.html:248
-#: signbank/tools.py:82
+#: signbank/tools.py:83
 msgid "Strong Hand"
 msgstr "Sterke hand"
 
@@ -1003,7 +1025,7 @@ msgstr "Sterke hand"
 #: signbank/dictionary/templates/dictionary/related_signs_detail_view.html:107
 #: signbank/dictionary/templates/dictionary/related_signs_detail_view.html:192
 #: signbank/dictionary/templates/dictionary/related_signs_detail_view.html:249
-#: signbank/tools.py:83
+#: signbank/tools.py:84
 msgid "Weak Hand"
 msgstr "Zwakke hand"
 
@@ -1495,8 +1517,8 @@ msgstr ""
 #: signbank/dictionary/update.py:3225 signbank/dictionary/update_glosses.py:517
 #: signbank/dictionary/update_glosses.py:543 signbank/query_parameters.py:130
 #: signbank/query_parameters.py:629 signbank/query_parameters.py:632
-#: signbank/query_parameters.py:696 signbank/tools.py:1481
-#: signbank/tools.py:1486
+#: signbank/query_parameters.py:696 signbank/tools.py:1486
+#: signbank/tools.py:1491
 msgid "Yes"
 msgstr "Ja"
 
@@ -1540,7 +1562,7 @@ msgstr ""
 #: signbank/dictionary/update_glosses.py:517
 #: signbank/dictionary/update_glosses.py:543 signbank/query_parameters.py:130
 #: signbank/query_parameters.py:629 signbank/query_parameters.py:632
-#: signbank/query_parameters.py:698 signbank/tools.py:1486
+#: signbank/query_parameters.py:698 signbank/tools.py:1491
 msgid "No"
 msgstr "Nee"
 
@@ -1597,7 +1619,7 @@ msgstr "Andere media"
 #: signbank/dictionary/templates/dictionary/related_signs_detail_view.html:336
 #: signbank/gloss_morphology_update.py:33
 #: signbank/gloss_morphology_update.py:52
-#: signbank/gloss_morphology_update.py:63 signbank/tools.py:98
+#: signbank/gloss_morphology_update.py:63 signbank/tools.py:99
 msgid "Sequential Morphology"
 msgstr "Sequentiële morfologie"
 
@@ -1611,7 +1633,7 @@ msgstr "Sequentiële morfologie"
 #: signbank/dictionary/templates/dictionary/related_signs_detail_view.html:422
 #: signbank/gloss_morphology_update.py:34
 #: signbank/gloss_morphology_update.py:53
-#: signbank/gloss_morphology_update.py:64 signbank/tools.py:99
+#: signbank/gloss_morphology_update.py:64 signbank/tools.py:100
 msgid "Simultaneous Morphology"
 msgstr "Simultane morfologie"
 
@@ -1953,7 +1975,7 @@ msgstr "Geografische regio"
 #: signbank/dictionary/templates/dictionary/gloss.html:582
 #: signbank/dictionary/templates/dictionary/gloss_detail.html:3908
 #: signbank/dictionary/templates/dictionary/morpheme_detail.html:573
-#: signbank/tools.py:85
+#: signbank/tools.py:86
 msgid "Semantic Field"
 msgstr "Semantisch veld"
 
@@ -1967,7 +1989,7 @@ msgstr "Morfeem"
 
 #: signbank/dictionary/forms.py:224 signbank/dictionary/models.py:1779
 #: signbank/dictionary/models.py:3630 signbank/dictionary/models.py:3641
-#: signbank/tools.py:97
+#: signbank/tools.py:98
 msgid "Affiliation"
 msgstr "Affiliatie"
 
@@ -2540,7 +2562,7 @@ msgstr "Relatie tussen articulatoren"
 #: signbank/dictionary/templates/dictionary/related_signs_detail_view.html:108
 #: signbank/dictionary/templates/dictionary/related_signs_detail_view.html:193
 #: signbank/dictionary/templates/dictionary/related_signs_detail_view.html:250
-#: signbank/tools.py:84
+#: signbank/tools.py:85
 msgid "Location"
 msgstr "Plaats"
 
@@ -2615,7 +2637,7 @@ msgstr "Derivatieachtergrond"
 #: signbank/dictionary/models.py:1424
 #: signbank/dictionary/templates/dictionary/admin_toggle_view.html:259
 #: signbank/dictionary/templates/dictionary/gloss_detail.html:3953
-#: signbank/tools.py:87
+#: signbank/tools.py:88
 msgid "Named Entity"
 msgstr "Naam"
 
@@ -2659,7 +2681,7 @@ msgstr "Upload video met perspectief (rechts)"
 #: signbank/dictionary/templates/dictionary/related_signs_detail_view.html:395
 #: signbank/gloss_morphology_update.py:35
 #: signbank/gloss_morphology_update.py:54
-#: signbank/gloss_morphology_update.py:65 signbank/tools.py:100
+#: signbank/gloss_morphology_update.py:65 signbank/tools.py:101
 msgid "Blend Morphology"
 msgstr "Blend-morfologie"
 
@@ -3122,14 +3144,14 @@ msgstr "Aantal gebaarders"
 #: signbank/dictionary/models.py:1737 signbank/dictionary/models.py:1815
 #: signbank/dictionary/models.py:1842
 #: signbank/dictionary/templates/dictionary/related_signs_detail_view.html:452
-#: signbank/tools.py:88 signbank/tools.py:92
+#: signbank/tools.py:89 signbank/tools.py:93
 msgid "Link"
 msgstr "Link"
 
 #: signbank/dictionary/models.py:1741
 #: signbank/dictionary/templates/dictionary/admin_query_list.html:612
 #: signbank/dictionary/templates/dictionary/gloss_videos.html:113
-#: signbank/tools.py:89 signbank/tools.py:93
+#: signbank/tools.py:90 signbank/tools.py:94
 msgid "Video"
 msgstr "Video"
 
@@ -3145,12 +3167,12 @@ msgstr "Volgorde"
 
 #: signbank/dictionary/models.py:1804
 #: signbank/dictionary/templates/dictionary/gloss_videos.html:276
-#: signbank/tools.py:90 signbank/tools.py:94
+#: signbank/tools.py:91 signbank/tools.py:95
 msgid "Perspective Videos"
 msgstr "Perspectief video's"
 
 #: signbank/dictionary/models.py:1825 signbank/gloss_update.py:1002
-#: signbank/tools.py:113
+#: signbank/tools.py:114
 msgid "NME Videos"
 msgstr "NME Video's"
 
@@ -3261,8 +3283,9 @@ msgstr "Naam"
 
 #: signbank/dictionary/models.py:3583
 msgid "A label to recognise the token by, e.g. the script or machine using it"
-msgstr "Een label waaraan het token kan worden herkend, bijvoorbeeld het script "
-"of de machine die ervan gebruikmaakt"
+msgstr ""
+"Een label waaraan het token kan worden herkend, bijvoorbeeld het script of "
+"de machine die ervan gebruikmaakt"
 
 #: signbank/dictionary/models.py:3584
 msgid "Prefix"
@@ -3270,7 +3293,8 @@ msgstr "Voorvoegsel"
 
 #: signbank/dictionary/models.py:3585
 msgid "The first characters of the token, to help identify it"
-msgstr "De eerste tekens van het token, om te helpen bij de identificatie ervan"
+msgstr ""
+"De eerste tekens van het token, om te helpen bij de identificatie ervan"
 
 #: signbank/dictionary/models.py:3586
 msgid "Expires"
@@ -3298,7 +3322,9 @@ msgstr "Alleen-lezen"
 
 #: signbank/dictionary/models.py:3592
 msgid "Read only tokens can only be used for GET requests"
-msgstr "Tokens met alleen-lezenrechten kunnen uitsluitend worden gebruikt voor GET-verzoeken."
+msgstr ""
+"Tokens met alleen-lezenrechten kunnen uitsluitend worden gebruikt voor GET-"
+"verzoeken."
 
 #: signbank/dictionary/models.py:3593
 msgid "Rate limit"
@@ -3308,7 +3334,8 @@ msgstr "Limiet voor het aantal verzoeken"
 msgid ""
 "Maximum number of requests per hour. Leave empty to use the site default."
 msgstr ""
-"Maximaal aantal verzoeken per uur. Laat leeg om de standaardinstelling van de site te gebruiken."
+"Maximaal aantal verzoeken per uur. Laat leeg om de standaardinstelling van "
+"de site te gebruiken."
 
 #: signbank/dictionary/models.py:3598
 msgid "API Token"
@@ -4948,7 +4975,7 @@ msgstr "Semantische velden"
 
 #: signbank/dictionary/templates/dictionary/admin_toggle_view.html:257
 #: signbank/dictionary/templates/dictionary/morpheme_detail.html:520
-#: signbank/tools.py:86
+#: signbank/tools.py:87
 msgid "Word Class"
 msgstr "Woordsoort"
 
@@ -7680,9 +7707,7 @@ msgstr "Rij {row}: Signbank-ID {glossid} is al eerder tegengekomen."
 msgid ""
 "There are white space characters at the start or end of the text in the "
 "database."
-msgstr ""
-"Er staan ​​spaties aan het begin of einde van de tekst in de "
-"database."
+msgstr "Er staan ​​spaties aan het begin of einde van de tekst in de database."
 
 #: signbank/dictionary/views.py:1190
 msgid "Use Import CSV Lemma Update instead."
@@ -7693,7 +7718,8 @@ msgstr "Gebruik in plaats daarvan 'Import CSV Lemma Update'."
 msgid ""
 "Row {row}: Attempt to update Lemma translations for Signbank ID {glossid}."
 msgstr ""
-"Rij {row}: Poging om de lemmavertalingen voor Signbank-ID {glossid} bij te werken."
+"Rij {row}: Poging om de lemmavertalingen voor Signbank-ID {glossid} bij te "
+"werken."
 
 #: signbank/dictionary/views.py:1195
 #, python-brace-format
@@ -8430,45 +8456,32 @@ msgstr "Hebreeuws"
 msgid "Arabic"
 msgstr "Arabisch"
 
-#: signbank/tools.py:216
+#: signbank/tools.py:217
 #, python-brace-format
 msgid "Row {row} has an empty {column_name}"
 msgstr "Rij {row} heeft een lege {column_name}"
 
-#: signbank/tools.py:255
+#: signbank/tools.py:256
 #, python-brace-format
 msgid "Duplicate Annotation ID Gloss found for {language}: {annotation}"
 msgstr "Dubbele Annotatie-ID-Glos gevonden voor {language}: {annotation}"
 
-#: signbank/tools.py:285
+#: signbank/tools.py:286
 #, python-brace-format
 msgid "Row {row} is a duplicate gloss creation."
 msgstr "Rij {row} is een duplicaat van glosscreatie."
 
-#: signbank/tools.py:438
-#, python-brace-format
-msgid ""
-"For gloss '{annotation}' ({glossid}), could not identify column name: "
-"'{column}'."
-msgstr ""
-
-#: signbank/tools.py:444
-msgid "HINT: Try exporting a CSV file to see what column names can be used."
-msgstr ""
-"TIP: Probeer een CSV-bestand te exporteren om te zien welke kolomnamen "
-"kunnen worden gebruikt."
-
-#: signbank/tools.py:485
+#: signbank/tools.py:490
 #, python-brace-format
 msgid "Could not find lemma for ID {lemmaid}."
 msgstr ""
 
-#: signbank/tools.py:490
+#: signbank/tools.py:495
 #, python-brace-format
 msgid "Lemma ID {lemmaid} found in multiple rows (Row {row})."
 msgstr ""
 
-#: signbank/tools.py:513
+#: signbank/tools.py:518
 #, python-brace-format
 msgid "Row {row}: Lemma ID {lemmaid} must have at least one translation."
 msgstr ""
@@ -8855,3 +8868,8 @@ msgstr "vind alle strings in dit veld"
 #: templates/global-templates/tooltip.html:25
 msgid "use backslash to find <br/>special characters in field"
 msgstr "gebruik backslash om <br/>speciale karakters te zoeken"
+
+#~ msgid "HINT: Try exporting a CSV file to see what column names can be used."
+#~ msgstr ""
+#~ "TIP: Probeer een CSV-bestand te exporteren om te zien welke kolomnamen "
+#~ "kunnen worden gebruikt."

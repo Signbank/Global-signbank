@@ -13,6 +13,7 @@ from dateutil.parser import parse
 from django.db import models
 from django.db.models.fields import BooleanField
 from django.utils.translation import override, activate, gettext, gettext_lazy as _
+from django.utils import translation
 from django.views.decorators.csrf import csrf_exempt
 from django.utils.dateformat import format
 from django.utils.timezone import get_current_timezone
@@ -26,7 +27,7 @@ from urllib.parse import urlencode
 from guardian.shortcuts import get_objects_for_user
 
 from signbank.settings.server_specific import (FIELDS, DEFAULT_LANGUAGE_HEADER_COLUMN, WRITABLE_FOLDER, LANGUAGE_CODE,
-                                               WSGI_FILE,
+                                               WSGI_FILE, LANGUAGES,
                                                DEFAULT_DATASET_PK, TMP_DIR, FFMPEG_PROGRAM, GLOSS_VIDEO_DIRECTORY,
                                                GLOSS_IMAGE_DIRECTORY, DEFAULT_DATASET_ACRONYM, DEFAULT_KEYWORDS_LANGUAGE,
                                                ECV_SETTINGS, ECV_FOLDER_ABSOLUTE_PATH, URL, PREFIX_URL,
@@ -295,7 +296,7 @@ def create_gloss_from_valuedict(valuedict, dataset, row_nr, earlier_creation_sam
         earlier_creation_lemmaidgloss
 
 
-def compare_valuedict_to_gloss(valuedict, gloss, my_datasets, nl,
+def compare_valuedict_to_gloss(valuedict, gloss, my_datasets, nl, language_code,
                                notes_toggle, notes_assign_toggle, semfield_toggle, semfield_assign_toggle, tags_toggle):
     """Takes a dict of arbitrary key-value pairs, and compares them to a gloss"""
     # called by import_csv_update in views.py
@@ -309,9 +310,11 @@ def compare_valuedict_to_gloss(valuedict, gloss, my_datasets, nl,
     note_type_error = False
     note_tuple_error = False
 
+    # Because this is contained within a dynamic iteration, it is necessary to reset the translation language
+    translation.deactivate()
+
     # Create an overview of all fields, sorted by their human name
     with override(LANGUAGE_CODE):
-
         # these are the same fields as for csv export
         # do not include frequency fields
         fieldnames = FIELDS['main']+FIELDS['phonology']+FIELDS['semantics']+['inWeb', 'isNew']
@@ -323,150 +326,143 @@ def compare_valuedict_to_gloss(valuedict, gloss, my_datasets, nl,
         # this data structure is set up to reverse map column names to gloss fields
         for fieldname in glossfieldnames:
             field = Gloss.get_field(fieldname)
+            translation.activate('en')
             fields[field.verbose_name] = field
 
-        # Go through all values in the value dict, looking for differences with the gloss
-        for human_key, new_human_value in valuedict.items():
+    # Go through all values in the value dict, looking for differences with the gloss
+    for human_key, new_human_value in valuedict.items():
+        activate(LANGUAGE_CODE)
+        new_human_value = new_human_value.strip()
 
-            new_human_value = new_human_value.strip()
+        if human_key == 'Signbank ID':
+            continue
 
-            if human_key == 'Signbank ID':
+        annotation_idgloss_key_prefix = "Annotation ID Gloss ("
+        if human_key.startswith(annotation_idgloss_key_prefix):
+
+            errors_found, differences, fatal_error = compare_annotations(gloss, nl, language_code, new_human_value, human_key, errors_found, differences)
+            if fatal_error:
+                return differences, errors_found, fatal_error
+            else:
                 continue
 
-            annotation_idgloss_key_prefix = "Annotation ID Gloss ("
-            if human_key.startswith(annotation_idgloss_key_prefix):
+        lemma_idgloss_key_prefix = "Lemma ID Gloss ("
+        if human_key.startswith(lemma_idgloss_key_prefix):
+            # Any attempts to change the lemma translations are handled in the outer scope
+            continue
 
-                errors_found, differences, fatal_error = compare_annotations(gloss, nl, new_human_value, human_key, errors_found, differences)
-                if fatal_error:
-                    return differences, errors_found, fatal_error
-                else:
-                    continue
+        keywords_key_prefix = "Senses ("
+        if human_key.startswith(keywords_key_prefix):
 
-            lemma_idgloss_key_prefix = "Lemma ID Gloss ("
-            if human_key.startswith(lemma_idgloss_key_prefix):
-                # Any attempts to change the lemma translations are handled in the outer scope
+            errors_found, differences, fatal_error = compare_senses(gloss, nl, language_code, new_human_value, human_key, errors_found, differences)
+            if fatal_error:
+                return differences, errors_found, fatal_error
+            else:
                 continue
 
-            keywords_key_prefix = "Senses ("
-            if human_key.startswith(keywords_key_prefix):
+        example_sentences_key_prefix = "Example Sentences ("
+        if human_key.startswith(example_sentences_key_prefix):
 
-                errors_found, differences, fatal_error = compare_senses(gloss, nl, new_human_value, human_key, errors_found, differences)
-                if fatal_error:
-                    return differences, errors_found, fatal_error
-                else:
-                    continue
-
-            example_sentences_key_prefix = "Example Sentences ("
-            if human_key.startswith(example_sentences_key_prefix):
-
-                errors_found, differences, fatal_error = compare_example_sentences(gloss, nl, new_human_value, human_key, errors_found, differences)
-                if fatal_error:
-                    return differences, errors_found, fatal_error
-                else:
-                    continue
-
-            elif human_key == 'SignLanguages':
-
-                errors_found, differences = compare_signlanguages(gloss, nl, new_human_value, human_key, errors_found, differences)
+            errors_found, differences, fatal_error = compare_example_sentences(gloss, nl, language_code, new_human_value, human_key, errors_found, differences)
+            if fatal_error:
+                return differences, errors_found, fatal_error
+            else:
                 continue
 
-            elif human_key == 'Dialects':
+        elif human_key == 'SignLanguages':
 
-                errors_found, differences = compare_dialects(gloss, nl, new_human_value, human_key, errors_found, differences)
+            errors_found, differences = compare_signlanguages(gloss, nl, language_code, new_human_value, human_key, errors_found, differences)
+            continue
+
+        elif human_key == 'Dialects':
+
+            errors_found, differences = compare_dialects(gloss, nl, language_code, new_human_value, human_key, errors_found, differences)
+            continue
+
+        elif human_key == 'Dataset':
+
+            errors_found, differences = compare_dataset(gloss, nl, language_code, new_human_value, human_key, errors_found, differences, my_datasets)
+            continue
+
+        elif human_key == 'Relations to other signs':
+
+            errors_found, differences = compare_relations(gloss, nl, language_code, new_human_value, human_key, errors_found, differences)
+            continue
+
+        elif human_key == 'Relations to foreign signs':
+
+            errors_found, differences = compare_relations_to_foreign_signs(gloss, nl, language_code, new_human_value, human_key, errors_found, differences)
+            continue
+
+        elif human_key == 'Sequential Morphology':
+
+            errors_found, differences = compare_sequential_morphology(gloss, nl, language_code, new_human_value, human_key, errors_found, differences)
+            continue
+
+        elif human_key == 'Simultaneous Morphology':
+
+            errors_found, differences = compare_simultaneous_morphology(gloss, nl, language_code, new_human_value, human_key, errors_found, differences)
+            continue
+
+        elif human_key == 'Blend Morphology':
+
+            errors_found, differences = compare_blend_morphology(gloss, nl, language_code, new_human_value, human_key, errors_found, differences)
+            continue
+
+        elif human_key == 'Tags':
+
+            if tags_toggle == 'keep' and new_human_value in ['None', '']:
                 continue
 
-            elif human_key == 'Dataset':
+            errors_found, differences, tag_name_error = compare_tags(gloss, nl, language_code, new_human_value, human_key, errors_found, differences, tag_name_error)
+            continue
 
-                errors_found, differences = compare_dataset(gloss, nl, new_human_value, human_key, errors_found, differences, my_datasets)
+        elif human_key == 'Notes':
+
+            if notes_toggle == 'keep' and new_human_value in ['None', '']:
                 continue
 
-            elif human_key == 'Relations to other signs':
+            errors_found, differences, note_type_error, note_tuple_error = compare_notes(gloss, nl, language_code, new_human_value, human_key, notes_assign_toggle, errors_found, differences, note_type_error, note_tuple_error)
+            continue
 
-                errors_found, differences = compare_relations(gloss, nl, new_human_value, human_key, errors_found, differences)
+        elif human_key == 'Semantic Field':
+
+            if semfield_toggle == 'keep' and new_human_value == '-':
                 continue
 
-            elif human_key == 'Relations to foreign signs':
+            errors_found, differences = compare_semantic_fields(gloss, nl, language_code, new_human_value, human_key, errors_found, differences, semfield_assign_toggle)
+            continue
 
-                errors_found, differences = compare_relations_to_foreign_signs(gloss, nl, new_human_value, human_key, errors_found, differences)
-                continue
+        elif human_key in ['Derivation history', 'Derivation History']:
 
-            elif human_key == 'Sequential Morphology':
+            continue
 
-                errors_found, differences = compare_sequential_morphology(gloss, nl, new_human_value, human_key, errors_found, differences)
-                continue
+        # Before obtaining the Gloss field associated with the human key (column header) in the next step, make sure it is a field verbose name
+        if human_key not in fields.keys():
 
-            elif human_key == 'Simultaneous Morphology':
+            continue
 
-                errors_found, differences = compare_simultaneous_morphology(gloss, nl, new_human_value, human_key, errors_found, differences)
-                continue
+        # What follows is processing for the Gloss model fields that are not complex related models
+        field = fields[human_key]
 
-            elif human_key == 'Blend Morphology':
+        if hasattr(field, 'field_choice_category'):
+            errors_found, differences = compare_choice_field(gloss, nl, language_code, field, new_human_value, human_key, errors_found, differences)
 
-                errors_found, differences = compare_blend_morphology(gloss, nl, new_human_value, human_key, errors_found, differences)
-                continue
+            continue
 
-            elif human_key == 'Tags':
+        if isinstance(field, models.ForeignKey) and field.related_model == Handshape:
+            errors_found, differences = compare_handshape(gloss, nl, language_code, field, new_human_value, human_key, errors_found, differences)
 
-                if tags_toggle == 'keep' and new_human_value in ['None', '']:
-                    continue
+            continue
 
-                errors_found, differences, tag_name_error = compare_tags(gloss, nl, new_human_value, human_key, errors_found, differences, tag_name_error)
-                continue
+        if field.__class__.__name__ == 'BooleanField':
+            errors_found, differences = compare_booleans(gloss, nl, language_code, field, new_human_value, human_key, errors_found, differences)
 
-            elif human_key == 'Notes':
+            continue
+        if field.__class__.__name__ == 'CharField' or field.__class__.__name__ == 'TextField':
+            errors_found, differences = compare_text(gloss, field, new_human_value, human_key, errors_found, differences)
 
-                if notes_toggle == 'keep' and new_human_value in ['None', '']:
-                    continue
-
-                errors_found, differences, note_type_error, note_tuple_error = compare_notes(gloss, nl, new_human_value, human_key, notes_assign_toggle, errors_found, differences, note_type_error, note_tuple_error)
-                continue
-
-            elif human_key == 'Semantic Field':
-
-                if semfield_toggle == 'keep' and new_human_value == '-':
-                    continue
-
-                errors_found, differences = compare_semantic_fields(gloss, nl, new_human_value, human_key, errors_found, differences, semfield_assign_toggle)
-                continue
-
-            elif human_key in ['Derivation history', 'Derivation History']:
-
-                continue
-
-            # Before obtaining the Gloss field associated with the human key (column header) in the next step, make sure it is a field verbose name
-            if human_key not in fields.keys():
-                error_string = gettext("For gloss '{annotation}' ({glossid}), could not identify column name: '{column}'.").format(
-                    annotation=get_default_annotationidglosstranslation(gloss), glossid=str(gloss.id), column=human_key)
-                errors_found += [error_string]
-
-                if not column_name_error:
-                    # a setting is used to avoid repeating this feedback message
-                    error_string = gettext("HINT: Try exporting a CSV file to see what column names can be used.")
-                    errors_found += [error_string]
-                    column_name_error = True
-                continue
-
-            # What follows is processing for the Gloss model fields that are not complex related models
-            field = fields[human_key]
-
-            if hasattr(field, 'field_choice_category'):
-                errors_found, differences = compare_choice_field(gloss, nl, field, new_human_value, human_key, errors_found, differences)
-
-                continue
-
-            if isinstance(field, models.ForeignKey) and field.related_model == Handshape:
-                errors_found, differences = compare_handshape(gloss, nl, field, new_human_value, human_key, errors_found, differences)
-
-                continue
-
-            if field.__class__.__name__ == 'BooleanField':
-                errors_found, differences = compare_booleans(gloss, nl, field, new_human_value, human_key, errors_found, differences)
-
-                continue
-            if field.__class__.__name__ == 'CharField' or field.__class__.__name__ == 'TextField':
-                errors_found, differences = compare_text(gloss, field, new_human_value, human_key, errors_found, differences)
-
-                continue
+            continue
 
     return differences, errors_found, False
 
