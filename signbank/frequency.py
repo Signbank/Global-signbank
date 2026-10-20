@@ -4,7 +4,8 @@ import csv
 import locale
 
 from django.core.exceptions import ObjectDoesNotExist, MultipleObjectsReturned
-from django.shortcuts import get_object_or_404, HttpResponseRedirect, HttpResponse
+from django.shortcuts import get_object_or_404
+from django.http import HttpResponseRedirect, HttpResponse
 from django.views.decorators.http import require_http_methods
 from django.contrib import messages
 from django.db.models import Q
