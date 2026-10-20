@@ -18,7 +18,7 @@ from django.dispatch import receiver
 from django.db.models.signals import post_save, pre_delete, m2m_changed
 from django.utils.translation import gettext_noop, gettext_lazy as _, gettext, activate
 from django.forms.models import model_to_dict
-from django.core.exceptions import ObjectDoesNotExist, MultipleObjectsReturned
+from django.core.exceptions import ObjectDoesNotExist, MultipleObjectsReturned, ValidationError
 from django.db import DatabaseError, IntegrityError
 from django.db.transaction import TransactionManagementError
 from django.core.files import File
@@ -3372,12 +3372,6 @@ class Dataset(MetaModelMixin, models.Model):
                                             field_choice_category=FieldChoice.OTHERMEDIATYPE,
                                             verbose_name=_("Prominent Media Type"), related_name='prominent_media')
     use_provenance = models.BooleanField(default=False, help_text=_("Use provenance model"))
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-
-        # Keep original acronym for changes to GlossVideos
-        self._initial = model_to_dict(self, fields=['acronym', 'default_language'])
 
     def __str__(self):
         return self.acronym
