@@ -16,8 +16,7 @@ from signbank.settings.server_specific import (PREFIX_URL, WRITABLE_FOLDER, TEST
                                                DATASET_METADATA_DIRECTORY, METADATA_LOCATION,
                                                MINIMUM_OVERLAP_BETWEEN_SIGNING_HANDS)
 
-from signbank.dictionary.models import Dataset, Gloss, Corpus, Document, Speaker, GlossFrequency
-from signbank.compare_csv_row_to_gloss import get_default_annotationidglosstranslation
+from signbank.dictionary.models import Dataset, Gloss, Corpus, Document, Speaker, GlossFrequency, get_default_annotationidglosstranslation
 from signbank.tools import get_eaf_creation_time
 from signbank.sign_counter import SignCounter
 

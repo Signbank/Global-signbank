@@ -43,7 +43,7 @@ from signbank.video.forms import VideoUploadForGlossCreateForm
 from signbank.dictionary.models import (Dataset, Language, Gloss, Morpheme, LemmaIdgloss, LemmaIdglossTranslation,
                                         Handshape, SignLanguage, AnnotatedSentence,
                                         AnnotationIdglossTranslation, FieldChoice, AffiliatedUser, AffiliatedGloss,
-                                        DeletedGlossOrMedia,
+                                        DeletedGlossOrMedia, get_default_annotationidglosstranslation,
                                         get_default_language_id, CATEGORY_MODELS_MAPPING)
 from signbank.dictionary.forms import (LemmaCreateForm, GlossCreateForm, MorphemeCreateForm, ImageUploadForHandshapeForm,
                                        ImageUploadForGlossForm, CSVUploadForm)
@@ -52,7 +52,6 @@ from signbank.dictionary.update_csv import (update_simultaneous_morphology, upda
                                             update_sequential_morphology, subst_relations, subst_foreignrelations,
                                             update_tags, subst_notes, subst_semanticfield)
 from signbank.dictionary.context_data import get_selected_datasets
-from signbank.compare_csv_row_to_gloss import get_default_annotationidglosstranslation
 from signbank.tools import (get_two_letter_dir,
                             get_dataset_languages, get_datasets_with_public_glosses,
                             create_gloss_from_valuedict, compare_valuedict_to_gloss, compare_valuedict_to_lemma,

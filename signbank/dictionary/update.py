@@ -46,7 +46,7 @@ from signbank.dictionary.models import (Dataset, SignLanguage, Dialect, Gloss, M
                                         FieldChoice, FieldChoiceForeignKey, OtherMedia,
                                         SemanticField, SemanticFieldTranslation, PHONOLOGY_FIELDS_UPDATES,
                                         DerivationHistory, AnnotatedSentence, AnnotatedSentenceTranslation,
-                                        ExampleSentence, ExampleSentenceTranslation,
+                                        ExampleSentence, ExampleSentenceTranslation, get_default_annotationidglosstranslation,
                                         Affiliation, AffiliatedUser, AffiliatedGloss, SearchHistory,
                                         GlossRevision, SenseExamplesentence, SimultaneousMorphologyDefinition,
                                         AnnotatedSentenceSource, AnnotatedSentenceContext, UserProfile, QueryParameter,
@@ -59,7 +59,6 @@ from signbank.dictionary.forms import (RelationForm, VariantsForm, RelationToFor
 from signbank.dictionary.translate_choice_list import machine_value_to_translated_human_value
 from signbank.dictionary.context_data import get_selected_datasets
 
-from signbank.compare_csv_row_to_gloss import get_default_annotationidglosstranslation
 from signbank.tools import (gloss_from_identifier,
     copy_missing_lemmaidglosstranslation_from_annotationidglosstranslation, generate_tabbed_text_response,
                             update_boolean_checkbox, add_gloss_update_to_revision_history)

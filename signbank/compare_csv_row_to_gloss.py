@@ -6,32 +6,15 @@ from django.utils.translation import activate, gettext
 from django.core.exceptions import ObjectDoesNotExist
 
 from signbank.settings.server_specific import LANGUAGES, DEBUG_CSV, DEFAULT_LANGUAGE_HEADER_COLUMN, HANDEDNESS_ARTICULATION_FIELDS
-from signbank.dictionary.models import (Gloss, Morpheme, MorphologyDefinition, Relation, FieldChoice, SignLanguage, Dialect,
-                                        Language, SemanticField, Handshape)
+from signbank.dictionary.models import (Gloss, Morpheme, MorphologyDefinition, Relation, FieldChoice, SignLanguage,
+                                        Dialect, get_default_annotationidglosstranslation,
+                                        Language, SemanticField, Handshape, Dataset)
+from signbank.dictionary.related_objects import same_translation_languages, okay_to_move_gloss, transitive_related_objects, okay_to_move_glosses
 from signbank.dictionary.update_csv import validate_and_resolve_gloss_relations
 from signbank.csv_interface import (update_sentences_parse, sense_examplesentences_for_language, get_sense_numbers,
                                     get_senses_to_sentences, csv_sentence_tuples_list_compare, sense_translations_for_language,
                                     update_senses_parse, normalize_field_choice)
 from tagging.models import TaggedItem, Tag
-
-
-def get_default_annotationidglosstranslation(gloss):
-    if not gloss.lemma or not gloss.lemma.dataset:
-        return str(gloss.id)
-    dataset = gloss.lemma.dataset
-    language = dataset.default_language
-    if not language:
-        language = dataset.translation_languages.first()
-
-    annotationidglosstranslations = gloss.annotationidglosstranslation_set.all()
-
-    if not annotationidglosstranslations:
-        return str(gloss.id)
-
-    if annotationidglosstranslations.filter(language=language):
-        return annotationidglosstranslations.get(language=language).text
-
-    return annotationidglosstranslations.first().text
 
 
 def gloss_cell_error(gloss, nl, message, **kwargs):
@@ -708,7 +691,7 @@ def compare_dataset(gloss, nl, language_code, new_human_value, human_key, errors
     current_dataset = gloss.lemma.dataset.acronym
     activate(language_code)
 
-    if new_human_value == 'None' or new_human_value == '':
+    if new_human_value in ['None',  '']:
         # This check assumes that if the Dataset column is empty, it means no change
         # Since we already know the id of the gloss, we keep the original dataset
         # To be safe, confirm the original dataset is not empty, to catch legacy code
@@ -728,6 +711,28 @@ def compare_dataset(gloss, nl, language_code, new_human_value, human_key, errors
         return errors_found, differences
 
     if current_dataset == new_human_value:
+        return errors_found, differences
+
+    # the dataset was confirmed to exist at an outer scope in views.py
+    new_dataset = Dataset.objects.get(acronym=new_human_value)
+    if not same_translation_languages(current_dataset, new_dataset):
+        error_string = gloss_cell_error(gloss, nl,
+                                        gettext("Row {row}: For gloss '{annotation}' ({glossid}): The target dataset has different translation languages."))
+        errors_found += [error_string]
+        return errors_found, differences
+
+    okay_to_move, _ = okay_to_move_gloss(current_dataset, new_dataset)
+    if not okay_to_move:
+        error_string = gloss_cell_error(gloss, nl,
+                                        gettext("Row {row}: For gloss '{annotation}' ({glossid}): A similar gloss already exists in the target dataset."))
+        errors_found += [error_string]
+        return errors_found, differences
+
+    related_objects = transitive_related_objects(gloss)
+    if related_objects:
+        error_string = gloss_cell_error(gloss, nl,
+                                        gettext("Row {row}: For gloss '{annotation}' ({glossid}): This gloss has related glosses in the current dataset."))
+        errors_found += [error_string]
         return errors_found, differences
 
     differences.append({'pk': gloss.id,

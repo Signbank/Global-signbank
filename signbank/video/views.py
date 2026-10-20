@@ -18,8 +18,7 @@ from guardian.shortcuts import get_user_perms
 from signbank.video.models import GlossVideo, ExampleVideo, GlossVideoHistory, ExampleVideoHistory
 from signbank.video.forms import VideoUploadForObjectForm
 from signbank.dictionary.models import (Gloss, DeletedGlossOrMedia, ExampleSentence, Morpheme, AnnotatedSentence,
-                                        Dataset, GlossRevision, AnnotationIdglossTranslation)
-from signbank.compare_csv_row_to_gloss import get_default_annotationidglosstranslation
+                                        Dataset, GlossRevision, AnnotationIdglossTranslation, get_default_annotationidglosstranslation)
 from signbank.tools import generate_still_image
 
 from pympi.Elan import Eaf

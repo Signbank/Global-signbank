@@ -22,10 +22,9 @@ from signbank.dictionary.models import (Dataset, Gloss, Language, AnnotationIdgl
                                         Sense, SenseTranslation, ExampleSentence, Translation, AnnotatedGloss,
                                         AnnotatedSentence, AnnotatedSentenceSource, AnnotatedSentenceTranslation,
                                         AnnotatedSentenceContext, FieldChoice, FieldChoiceForeignKey,
-                                        CATEGORY_MODELS_MAPPING)
+                                        CATEGORY_MODELS_MAPPING, get_default_annotationidglosstranslation)
 from signbank.video.models import GlossVideoDescription, GlossVideoNME, AnnotatedVideo, NME_PERSPECTIVE_CHOICES
 from signbank.video.views import get_glosses_from_eaf
-from signbank.compare_csv_row_to_gloss import get_default_annotationidglosstranslation
 from signbank.tools import add_gloss_update_to_revision_history
 from signbank.csv_interface import normalize_field_choice, normalize_boolean
 from signbank.api_token import put_api_user_in_request
