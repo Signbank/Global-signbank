@@ -53,7 +53,7 @@ from signbank.dictionary.update_csv import (update_simultaneous_morphology, upda
                                             update_tags, subst_notes, subst_semanticfield)
 from signbank.dictionary.context_data import get_selected_datasets
 from signbank.tools import (get_two_letter_dir, get_default_annotationidglosstranslation,
-                            get_dataset_languages, get_datasets_with_public_glosses, get_interface_language_and_default_language_codes,
+                            get_dataset_languages, get_datasets_with_public_glosses,
                             create_gloss_from_valuedict, compare_valuedict_to_gloss, compare_valuedict_to_lemma,
                             create_zip_with_json_files,
                             detect_delimiter,
@@ -66,7 +66,7 @@ from signbank.csv_interface import (csv_create_senses, csv_update_sentences, csv
 from signbank.dictionary.translate_choice_list import (machine_value_to_translated_human_value,
                                                        choicelist_queryset_to_translated_dict)
 from signbank.abstract_machine import get_interface_language_api
-from signbank.api_token import put_api_user_in_request, put_api_user_in_request_read_only
+from signbank.api_token import put_api_user_in_request_read_only
 from signbank.dictionary.gloss_revision import pretty_print_revisions
 from signbank.dictionary.adminviews import show_warning
 

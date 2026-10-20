@@ -27,7 +27,7 @@ from urllib.parse import urlencode
 from guardian.shortcuts import get_objects_for_user
 
 from signbank.settings.server_specific import (FIELDS, DEFAULT_LANGUAGE_HEADER_COLUMN, WRITABLE_FOLDER, LANGUAGE_CODE,
-                                               WSGI_FILE, LANGUAGES,
+                                               WSGI_FILE,
                                                DEFAULT_DATASET_PK, TMP_DIR, FFMPEG_PROGRAM, GLOSS_VIDEO_DIRECTORY,
                                                GLOSS_IMAGE_DIRECTORY, DEFAULT_DATASET_ACRONYM, DEFAULT_KEYWORDS_LANGUAGE,
                                                ECV_SETTINGS, ECV_FOLDER_ABSOLUTE_PATH, URL, PREFIX_URL,
@@ -39,8 +39,7 @@ from signbank.dictionary.models import (Dataset, Gloss, Morpheme, Language, Fiel
                                         ExampleSentence, OtherMedia, Relation, GlossRevision)
 from signbank.csv_interface import (parse_sentence_row,
                                     required_csv_columns, trim_columns_in_row)
-from signbank.compare_csv_row_to_gloss import (get_default_annotationidglosstranslation,
-                                               compare_simultaneous_morphology,
+from signbank.compare_csv_row_to_gloss import (compare_simultaneous_morphology,
                                                compare_sequential_morphology, compare_blend_morphology,
                                                compare_relations,
                                                compare_relations_to_foreign_signs, compare_tags, compare_notes,

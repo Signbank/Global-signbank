@@ -1,10 +1,7 @@
 import re
 import csv
 import datetime as DT
-from xmlrpc.client import Boolean
 
-from django.db import models
-from django.forms.fields import BooleanField
 from django.utils.timezone import get_current_timezone
 from django.utils.translation import override, activate, gettext
 from django.core.exceptions import ObjectDoesNotExist, MultipleObjectsReturned
