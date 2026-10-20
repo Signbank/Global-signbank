@@ -11,9 +11,10 @@ from django.utils.translation import gettext
 
 from signbank.settings.base import STATIC_URL
 from signbank.dictionary.models import (Gloss, Language, LemmaIdglossTranslation, AnnotationIdglossTranslation,
-                                        GlossSense, Sense, SenseTranslation, GlossRevision, Keyword, Translation)
+                                        GlossSense, Sense, SenseTranslation, Keyword, Translation)
 from signbank.dictionary.forms import BatchEditForm
-from signbank.tools import get_default_annotationidglosstranslation, add_gloss_update_to_revision_history
+from signbank.compare_csv_row_to_gloss import get_default_annotationidglosstranslation
+from signbank.tools import add_gloss_update_to_revision_history
 
 
 def internal_batch_update_fields_for_gloss(gloss):

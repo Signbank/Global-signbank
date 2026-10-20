@@ -88,10 +88,11 @@ from signbank.dictionary.forms import (AnnotatedSentenceSearchForm, GlossSearchF
                                        check_language_fields, check_multilingual_fields, SentenceForm,
                                        GlossForeignRelationForm, OtherMediaUpdateForm,
                                        check_language_fields_annotatedsentence, GlossProvenanceForm, check_sortOrder_handshapes)
+from signbank.compare_csv_row_to_gloss import get_default_annotationidglosstranslation
 from signbank.tools import (write_ecv_file_for_dataset, find_duplicate_lemmas,
                             construct_scrollbar, get_dataset_languages, get_datasets_with_public_glosses,
                             searchform_panels, map_search_results_to_gloss_list,
-                            get_interface_language_and_default_language_codes, get_default_annotationidglosstranslation,
+                            get_interface_language_and_default_language_codes,
                             get_page_parameters_for_listview, filter_page_values, add_gloss_update_to_revision_history,)
 from signbank.csv_interface import (csv_gloss_to_row, csv_header_row_glosslist, csv_header_row_morphemelist,
                                     csv_morpheme_to_row, csv_header_row_handshapelist, csv_handshape_to_row,

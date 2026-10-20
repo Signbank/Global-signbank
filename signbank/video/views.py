@@ -4,7 +4,7 @@ import json
 import magic
 
 from django.utils.timezone import get_current_timezone
-from django.forms.utils import ValidationError
+from django.core.exceptions import ValidationError
 from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth.decorators import login_required
 from django.views.decorators.http import require_http_methods
@@ -19,7 +19,8 @@ from signbank.video.models import GlossVideo, ExampleVideo, GlossVideoHistory, E
 from signbank.video.forms import VideoUploadForObjectForm
 from signbank.dictionary.models import (Gloss, DeletedGlossOrMedia, ExampleSentence, Morpheme, AnnotatedSentence,
                                         Dataset, GlossRevision, AnnotationIdglossTranslation)
-from signbank.tools import generate_still_image, get_default_annotationidglosstranslation
+from signbank.compare_csv_row_to_gloss import get_default_annotationidglosstranslation
+from signbank.tools import generate_still_image
 
 from pympi.Elan import Eaf
 

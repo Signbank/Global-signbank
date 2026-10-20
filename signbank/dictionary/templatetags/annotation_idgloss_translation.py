@@ -8,7 +8,8 @@ from signbank.settings.base import ECV_SETTINGS
 
 from signbank.dictionary.models import Language
 from signbank.dictionary.forms import GlossSearchForm, MorphemeSearchForm, AnnotatedSentenceSearchForm
-from signbank.tools import get_ecv_description_for_gloss, get_default_annotationidglosstranslation, find_duplicate_lemmas
+from signbank.compare_csv_row_to_gloss import get_default_annotationidglosstranslation
+from signbank.tools import get_ecv_description_for_gloss, find_duplicate_lemmas
 from signbank.dataset_operations import dataset_lemma_constraints_check
 from signbank.dictionary.batch_edit import get_sense_numbers
 
