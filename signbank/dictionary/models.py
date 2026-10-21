@@ -18,7 +18,7 @@ from django.dispatch import receiver
 from django.db.models.signals import post_save, pre_delete, m2m_changed
 from django.utils.translation import gettext_noop, gettext_lazy as _, gettext, activate
 from django.forms.models import model_to_dict
-from django.core.exceptions import ObjectDoesNotExist, MultipleObjectsReturned
+from django.core.exceptions import ObjectDoesNotExist, MultipleObjectsReturned, ValidationError
 from django.db import DatabaseError, IntegrityError
 from django.db.transaction import TransactionManagementError
 from django.core.files import File
@@ -47,6 +47,25 @@ def get_default_language_id():
     if language is not None:
         return language.id
     return None
+
+
+def get_default_annotationidglosstranslation(gloss):
+    if not gloss.lemma or not gloss.lemma.dataset:
+        return str(gloss.id)
+    dataset = gloss.lemma.dataset
+    language = dataset.default_language
+    if not language:
+        language = dataset.translation_languages.first()
+
+    annotationidglosstranslations = gloss.annotationidglosstranslation_set.all()
+
+    if not annotationidglosstranslations:
+        return str(gloss.id)
+
+    if annotationidglosstranslations.filter(language=language):
+        return annotationidglosstranslations.get(language=language).text
+
+    return annotationidglosstranslations.first().text
 
 
 class FieldChoiceForeignKey(models.ForeignKey):
@@ -1570,13 +1589,11 @@ class Gloss(Phonology):
         return ", ".join([str(sl.name) for sl in self.signlanguage.all()])
 
     def get_morpheme_display(self):
-        from signbank.tools import get_default_annotationidglosstranslation
         simultaneous = self.simultaneous_morphology.filter(parent_gloss__archived__exact=False)
         return ", ".join([get_default_annotationidglosstranslation(sim_morph.morpheme)
                           + ':' + (sim_morph.role if sim_morph.role else '-') for sim_morph in simultaneous])
 
     def get_blendmorphology_display(self):
-        from signbank.tools import get_default_annotationidglosstranslation
         ble_morphemes = [(get_default_annotationidglosstranslation(m.glosses), m.role)
                          for m in self.blend_morphology.filter(parent_gloss__archived__exact=False,
                                                                glosses__archived__exact=False)]
@@ -1593,7 +1610,6 @@ class Gloss(Phonology):
                                    for x in relations_to_signs])
 
     def get_hasComponentOfType_display(self):
-        from signbank.tools import get_default_annotationidglosstranslation
         morphdefs = self.parent_glosses.filter(parent_gloss__archived__exact=False,
                                                morpheme__archived__exact=False)
         return " + ".join([get_default_annotationidglosstranslation(mdef.morpheme) for mdef in morphdefs])
@@ -1609,7 +1625,6 @@ class Gloss(Phonology):
         # To instead show only Yes or No, use the commented out return instead
         # return _('Yes') if (self.blend_morphology.filter(parent_gloss__archived__exact=False,
         #                                                  glosses__archived__exact=False).count() > 0) else _('No')
-        from signbank.tools import get_default_annotationidglosstranslation
         return " + ".join([get_default_annotationidglosstranslation(bm.glosses)
                            for bm in self.blend_morphology.filter(parent_gloss__archived__exact=False,
                                                                   glosses__archived__exact=False)])
@@ -1625,7 +1640,6 @@ class Gloss(Phonology):
             return ""
         glosses_comprising = blend_morphology.parent_gloss.blend_morphology.filter(parent_gloss__archived__exact=False,
                                                                                    glosses__archived__exact=False)
-        from signbank.tools import get_default_annotationidglosstranslation
         display = (get_default_annotationidglosstranslation(blend_morphology.parent_gloss) + ': '
                    + " + ".join([get_default_annotationidglosstranslation(bm.glosses) for bm in glosses_comprising]))
         return display
@@ -2896,7 +2910,6 @@ except:
 
 @receiver(pre_delete, sender=Gloss, dispatch_uid='gloss_delete_signal')
 def save_info_about_deleted_gloss(sender, instance, using, **kwarsg):
-    from signbank.tools import get_default_annotationidglosstranslation
     default_annotationidglosstranslation = get_default_annotationidglosstranslation(instance)
 
     deleted_gloss = DeletedGlossOrMedia()
@@ -2955,7 +2968,6 @@ def save_info_about_archived_gloss(sender, instance, using, update_fields=[], **
             deleted_gloss_or_media.delete()
         return
 
-    from signbank.tools import get_default_annotationidglosstranslation
     default_annotationidglosstranslation = get_default_annotationidglosstranslation(instance)
     deleted_gloss = DeletedGlossOrMedia()
     deleted_gloss.item_type = 'gloss'
@@ -3372,12 +3384,6 @@ class Dataset(MetaModelMixin, models.Model):
                                             field_choice_category=FieldChoice.OTHERMEDIATYPE,
                                             verbose_name=_("Prominent Media Type"), related_name='prominent_media')
     use_provenance = models.BooleanField(default=False, help_text=_("Use provenance model"))
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-
-        # Keep original acronym for changes to GlossVideos
-        self._initial = model_to_dict(self, fields=['acronym', 'default_language'])
 
     def __str__(self):
         return self.acronym

@@ -62,7 +62,7 @@ from signbank.video.models import (GlossVideo, find_dangling_video_files, delete
 from signbank.communication.models import generate_communication
 from signbank.dictionary.models import (Dataset, UserProfile, AffiliatedUser, AffiliatedGloss,
                                         Language, Dialect, Gloss, Morpheme, GlossSense, Sense, GLOSS_FIELDS_UPDATES, PHONOLOGY_FIELDS_UPDATES,
-                                        Corpus, Speaker, Document, GlossFrequency,
+                                        Corpus, Speaker, Document, GlossFrequency, get_default_annotationidglosstranslation,
                                         LemmaIdgloss, LemmaIdglossTranslation, AnnotationIdglossTranslation, Translation,
                                         AnnotatedGloss, AnnotatedSentence, AnnotatedSentenceTranslation, Handshape,
                                         SenseTranslation, SearchHistory, SemanticField,
@@ -91,7 +91,7 @@ from signbank.dictionary.forms import (AnnotatedSentenceSearchForm, GlossSearchF
 from signbank.tools import (write_ecv_file_for_dataset, find_duplicate_lemmas,
                             construct_scrollbar, get_dataset_languages, get_datasets_with_public_glosses,
                             searchform_panels, map_search_results_to_gloss_list,
-                            get_interface_language_and_default_language_codes, get_default_annotationidglosstranslation,
+                            get_interface_language_and_default_language_codes,
                             get_page_parameters_for_listview, filter_page_values, add_gloss_update_to_revision_history,)
 from signbank.csv_interface import (csv_gloss_to_row, csv_header_row_glosslist, csv_header_row_morphemelist,
                                     csv_morpheme_to_row, csv_header_row_handshapelist, csv_handshape_to_row,
