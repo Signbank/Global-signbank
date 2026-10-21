@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-19 11:48+0200\n"
+"POT-Creation-Date: 2026-10-21 13:14+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: susanodd\n"
 "Language-Team: Dutch <LL@li.org>\n"
@@ -18,27 +18,27 @@ msgstr ""
 
 #: signbank/registration/forms.py:49
 msgid "Username"
-msgstr ""
+msgstr "Gebruikersnaam"
 
 #: signbank/registration/forms.py:52
 msgid "First Name"
-msgstr ""
+msgstr "Voornaam"
 
 #: signbank/registration/forms.py:55
 msgid "Last Name"
-msgstr ""
+msgstr "Achternaam"
 
 #: signbank/registration/forms.py:57
 msgid "Your Email Address"
-msgstr ""
+msgstr "Je e-mailadres"
 
 #: signbank/registration/forms.py:59 signbank/registration/forms.py:229
 msgid "Password"
-msgstr ""
+msgstr "Wachtwoord"
 
 #: signbank/registration/forms.py:61
 msgid "Password (again)"
-msgstr ""
+msgstr "Wachtwoord (nogmaals)"
 
 #: signbank/registration/forms.py:75
 msgid "Requested Datasets"
@@ -53,20 +53,20 @@ msgid ""
 "Please explain why you would like to get access to this dataset. What are "
 "the purposes for which you wish to use it?"
 msgstr ""
-"Leg uit waarom u toegang wilt krijgen tot deze dataset. Voor welke doeleinden "
-"wilt u deze gebruiken?"
+"Leg uit waarom u toegang wilt krijgen tot deze dataset. Voor welke "
+"doeleinden wilt u deze gebruiken?"
 
 #: signbank/registration/forms.py:104
 msgid "Usernames should not have special characters."
-msgstr ""
+msgstr "Gebruikersnamen mogen geen speciale tekens bevatten."
 
 #: signbank/registration/forms.py:109
 msgid "This username is already taken. Please choose another."
-msgstr ""
+msgstr "Deze gebruikersnaam is al in gebruik. Kies een andere."
 
 #: signbank/registration/forms.py:119
 msgid "You must type the same password each time"
-msgstr ""
+msgstr "Je moet telkens hetzelfde wachtwoord invoeren"
 
 #: signbank/registration/forms.py:128
 msgid "Please provide motivation for your request"
@@ -99,6 +99,8 @@ msgid ""
 "Please enter a correct email and password. Note that password is case-"
 "sensitive."
 msgstr ""
+"Voer een geldig e-mailadres en wachtwoord in. Let op: bij het wachtwoord is "
+"hoofdlettergevoeligheid van belang."
 
 #: signbank/registration/forms.py:251
 msgid "This account is inactive."
@@ -109,42 +111,44 @@ msgid ""
 "Your Web browser doesn't appear to have cookies enabled. Cookies are "
 "required for logging in."
 msgstr ""
+"Het lijkt erop dat cookies in uw webbrowser niet zijn ingeschakeld. Cookies "
+"zijn vereist om in te kunnen loggen."
 
 #: signbank/registration/models.py:204
 msgid "user"
-msgstr ""
+msgstr "gebruiker"
 
 #: signbank/registration/models.py:205
 msgid "activation key"
-msgstr ""
+msgstr "activeringssleutel"
 
 #: signbank/registration/models.py:210
 msgid "registration profile"
-msgstr ""
+msgstr "registratieprofiel"
 
 #: signbank/registration/models.py:211
 msgid "registration profiles"
-msgstr ""
+msgstr "registratieprofielen"
 
 #: signbank/registration/templates/registration/registration_complete.html:8
 msgid "Signbank Registration"
-msgstr ""
+msgstr "Registratie voor Signbank"
 
 #: signbank/registration/templates/registration/registration_complete.html:9
 msgid "The following user registration request has been accepted:"
-msgstr ""
+msgstr "Het volgende verzoek tot gebruikersregistratie is geaccepteerd:"
 
 #: signbank/registration/templates/registration/registration_complete.html:11
 msgid "Username:"
-msgstr ""
+msgstr "Gebruikersnaam:"
 
 #: signbank/registration/templates/registration/registration_complete.html:12
 msgid "First name:"
-msgstr ""
+msgstr "Voornaam:"
 
 #: signbank/registration/templates/registration/registration_complete.html:13
 msgid "Last name:"
-msgstr ""
+msgstr "Achternaam:"
 
 #: signbank/registration/templates/registration/registration_complete.html:14
 msgid "E-mail:"
@@ -152,21 +156,24 @@ msgstr ""
 
 #: signbank/registration/templates/registration/registration_complete.html:15
 msgid "Requested datasets:"
-msgstr ""
+msgstr "Gevraagde datasets:"
 
 #: signbank/registration/templates/registration/registration_complete.html:22
 msgid "Groups:"
-msgstr ""
+msgstr "Groepen:"
 
 #: signbank/registration/templates/registration/registration_complete.html:31
 msgid ""
 "An email has been sent to your nominated address. Please check your email "
 "for details of how to complete the registration process."
 msgstr ""
+"Er is een e-mail verstuurd naar het door jou opgegeven e-mailadres. "
+"Controleer je e-mail voor informatie over hoe je het registratieproces kunt "
+"voltooien."
 
 #: signbank/registration/templates/registration/registration_form.html:54
 msgid "Registration"
-msgstr ""
+msgstr "Registratie"
 
 #: signbank/registration/templates/user_profile.html:19
 #: signbank/registration/templates/user_profile.html:254
@@ -184,6 +191,8 @@ msgstr "Gekopieerd"
 #: signbank/registration/templates/user_profile.html:70
 msgid "Delete this API token? Scripts using it will stop working."
 msgstr ""
+"Deze API-token verwijderen? Scripts die hiervan gebruikmaken, zullen niet "
+"langer werken."
 
 #: signbank/registration/templates/user_profile.html:80
 msgid "User Profile"
@@ -192,6 +201,10 @@ msgstr "Gebruikersprofiel"
 #: signbank/registration/templates/user_profile.html:86
 msgid "View Permission for Public Signs in Datasets"
 msgstr "Toestemming voor openbare borden in datasets bekijken"
+
+#: signbank/registration/templates/user_profile.html:102
+msgid "Expiration Date"
+msgstr "Vervaldatum"
 
 #: signbank/registration/templates/user_profile.html:104
 msgid "Selected Datasets"
@@ -203,15 +216,15 @@ msgstr "Toestemming voor weergave"
 
 #: signbank/registration/templates/user_profile.html:106
 msgid "Change Permission"
-msgstr ""
+msgstr "Toestemming om te wijzigen"
 
 #: signbank/registration/templates/user_profile.html:116
 msgid "days remaining"
-msgstr ""
+msgstr "resterende dagen"
 
 #: signbank/registration/templates/user_profile.html:149
 msgid "Extend Expiry"
-msgstr ""
+msgstr "Geldigheidsduur verlengen"
 
 #: signbank/registration/templates/user_profile.html:161
 msgid "Affiliation"
@@ -225,8 +238,9 @@ msgstr "Signbank API-tokens"
 msgid ""
 "API tokens let scripts and other programs use the Signbank API on your "
 "behalf."
-msgstr "Met API-tokens kunnen scripts en andere programma's namens jou "
-"gebruikmaken van de Signbank-API."
+msgstr ""
+"Met API-tokens kunnen scripts en andere programma's namens jou gebruikmaken "
+"van de Signbank-API."
 
 #: signbank/registration/templates/user_profile.html:183
 msgid "See the"
@@ -237,85 +251,85 @@ msgid "Signbank API manual"
 msgstr "Handleiding voor de Signbank-API"
 
 #: signbank/registration/templates/user_profile.html:184
-msgid "for how to use them."
-msgstr "over hoe je ze gebruikt."
+msgid " for how to use them."
+msgstr " over hoe je ze gebruikt."
 
 #: signbank/registration/templates/user_profile.html:190
 #: signbank/registration/templates/user_profile.html:226
 msgid "Name"
-msgstr ""
+msgstr "Naam"
 
 #: signbank/registration/templates/user_profile.html:191
 msgid "Token"
-msgstr ""
+msgstr "Token"
 
 #: signbank/registration/templates/user_profile.html:192
 msgid "Created"
-msgstr ""
+msgstr "Aangemaakt"
 
 #: signbank/registration/templates/user_profile.html:193
 msgid "Expires"
-msgstr ""
+msgstr "Vervalt"
 
 #: signbank/registration/templates/user_profile.html:194
 msgid "Last used"
-msgstr ""
+msgstr "Laatst gebruikt"
 
 #: signbank/registration/templates/user_profile.html:195
 msgid "Access"
-msgstr ""
+msgstr "Toegang"
 
 #: signbank/registration/templates/user_profile.html:196
 msgid "Rate limit"
-msgstr ""
+msgstr "Limiet voor het aantal verzoeken"
 
 #: signbank/registration/templates/user_profile.html:205
 #: signbank/registration/templates/user_profile.html:209
 #: signbank/registration/views.py:357
 msgid "Never"
-msgstr ""
+msgstr "Nooit"
 
 #: signbank/registration/templates/user_profile.html:206
 msgid "Expired"
-msgstr ""
+msgstr "Verlopen"
 
 #: signbank/registration/templates/user_profile.html:207
 msgid "Deactivated"
-msgstr ""
+msgstr "Gedeactiveerd"
 
 #: signbank/registration/templates/user_profile.html:210
 #: signbank/registration/templates/user_profile.html:244
 msgid "Read only"
-msgstr ""
+msgstr "Alleen-lezen"
 
 #: signbank/registration/templates/user_profile.html:210
 msgid "Read and write"
-msgstr ""
+msgstr "Lezen en schrijven"
 
 #: signbank/registration/templates/user_profile.html:211
 msgid "hour"
-msgstr ""
+msgstr "uur"
 
 #: signbank/registration/templates/user_profile.html:211
 #: signbank/registration/templates/user_profile.html:241
 msgid "Unlimited"
-msgstr ""
+msgstr "Onbeperkt"
 
 #: signbank/registration/templates/user_profile.html:215
 msgid "Delete"
-msgstr ""
+msgstr "Verwijderen"
 
 #: signbank/registration/templates/user_profile.html:228
 msgid "e.g. upload script"
-msgstr ""
+msgstr "bijv. uploadscript"
 
 #: signbank/registration/templates/user_profile.html:231
 msgid "Expires after"
-msgstr ""
+msgstr "Vervalt na"
 
 #: signbank/registration/templates/user_profile.html:239
 msgid "Requests per hour"
-msgstr ""
+msgstr "Verzoeken per uur"
 
 #: signbank/registration/templates/user_profile.html:247
 msgid "Generate Signbank API Token"
@@ -325,6 +339,8 @@ msgstr "Maak een Signbank API-token aan"
 msgid ""
 "Your new API token is shown below. Copy it now: it will not be shown again."
 msgstr ""
+"Je nieuwe API-token wordt hieronder weergegeven. Kopieer het nu: het zal "
+"niet opnieuw worden getoond."
 
 #: signbank/registration/templates/user_profile.html:255
 msgid "Done, refresh the token list"
@@ -374,6 +390,8 @@ msgstr "Ongeldige geldigheidsduur."
 #, python-format
 msgid "The rate limit must be a number from 1 to %(limit)s requests per hour."
 msgstr ""
+"De limiet voor het aantal verzoeken moet een getal zijn van 1 tot %(limit)s "
+"verzoeken per uur."
 
 #: signbank/registration/views.py:403
 msgid "The API token has been deleted."
