@@ -99,7 +99,7 @@ $(document).ready(function() {
     {% else %}
     <table class="table table-condensed table-condensed-light">
     <thead class="thead thead-light">
-    <tr><th>Username</th><th>Name</th><th>Email</th><th>Expiration Date</th>
+    <tr><th>Username</th><th>Name</th><th>Email</th><th>{% trans "Expiration Date" %}</th>
         {% if SHOW_DATASET_INTERFACE_OPTIONS %}
         <th style="white-space:nowrap;">{% trans "Selected Datasets" %}</th>
         <th style="white-space:nowrap;">{% trans "View Permission" %}</th>
@@ -181,7 +181,7 @@ $(document).ready(function() {
             {% trans "API tokens let scripts and other programs use the Signbank API on your behalf." %}
             {% if api_manual_url %}
             {% trans "See the" %} <a href="{{api_manual_url}}" target="_blank" rel="noopener">{% trans "Signbank API manual" %}</a>
-            {% trans "for how to use them." %}
+            {% trans " for how to use them." %}
             {% endif %}
         </td>
     </tr>

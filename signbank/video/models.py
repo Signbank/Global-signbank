@@ -12,9 +12,8 @@ import ffmpeg
 import subprocess
 
 from django.db import models
-from django.db.models.fields.files import FieldFile
 from django.dispatch import receiver
-from django.forms.utils import ValidationError
+from django.core.exceptions import ValidationError
 from django.core.exceptions import ObjectDoesNotExist
 from django.core.files.storage import FileSystemStorage
 from django.contrib.auth.models import User
@@ -30,7 +29,7 @@ from signbank.video.convertvideo import (extract_frame, convert_video, make_thum
                                          remove_stills, detect_video_file_extension, extension_on_filename)
 from signbank.video.operations import (filename_matches_nme, filename_matches_nme_backup, filename_matches_perspective,
                                        filename_matches_perspective_backup, filename_matches_video,
-                                       filename_matches_backup_video, move_file_to_prullenmand)
+                                       filename_matches_backup_video)
 from signbank.dictionary.models import (Gloss, Morpheme, Dataset, Language, LemmaIdgloss, LemmaIdglossTranslation,
                                         ExampleSentence, AnnotatedSentence, AnnotatedSentenceSource, PhonologicalVariation)
 from signbank.tools import get_two_letter_dir, generate_still_image, get_checksum_for_path

@@ -4290,8 +4290,8 @@ class CSVTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, "Target gloss KAAS not found or not unique.")
         print('Response contains error message: "Target gloss KAAS not found or not unique."')
-        self.assertContains(response, "FieldChoice for Gargoyle is not defined.")
-        print('Response contains error message: "FieldChoice for Gargoyle is not defined."')
+        self.assertContains(response, "Relation role Gargoyle is not defined.")
+        print('Response contains error message: "Relation role Gargoyle is not defined."')
 
         # test addition of reverse relations
         form_data = {'update_or_create': 'update'}

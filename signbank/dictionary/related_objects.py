@@ -1,8 +1,7 @@
 from django.utils.translation import gettext_lazy as _
 
 from signbank.dictionary.models import (Dataset, Gloss, Morpheme, Relation, SimultaneousMorphologyDefinition,
-                                        MorphologyDefinition, BlendMorphology)
-from signbank.tools import get_default_annotationidglosstranslation
+                                        MorphologyDefinition, BlendMorphology, get_default_annotationidglosstranslation)
 
 
 def morpheme_is_related_to(morpheme, interface_language_code, default_language_code):
