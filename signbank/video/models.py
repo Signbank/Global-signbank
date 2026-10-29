@@ -1376,7 +1376,7 @@ def move_videos_for_filter(filter, move_files_on_disk: bool=False) -> None:
 
 
 @receiver(models.signals.post_save, sender=Dataset)
-def process_dataset_changes(sender, instance, **kwargs):
+def process_dataset_changes(sender, instance, raw, **kwargs):
     """
     Makes changes to GlossVideos if a Dataset has been changed.
     :param sender: 
@@ -1384,6 +1384,10 @@ def process_dataset_changes(sender, instance, **kwargs):
     :param kwargs: 
     :return: 
     """
+    if raw:
+        # a fixture is being loaded
+        return
+
     # If the acronym has been changed, change all GlossVideos
     # and rename directories.
     dataset = instance
