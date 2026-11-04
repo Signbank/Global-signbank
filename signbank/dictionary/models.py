@@ -984,7 +984,7 @@ class Phonology(MetaModelMixin, models.Model):
                                       verbose_name=_("Final Primary Location"),
                                       related_name="%(class)s_final_primary_location")
 
-    locVirtObj = models.CharField(_("Virtual Object"), blank=True, null=True, max_length=50)
+    locVirtObj = models.CharField(_("Virtual Object"), blank=True, null=True, max_length=200)
 
     locsecond = FieldChoiceForeignKey(FieldChoice, on_delete=models.SET_NULL, null=True, blank=True,
                                       limit_choices_to={'field': FieldChoice.LOCATION},
@@ -1098,9 +1098,9 @@ class Phonology(MetaModelMixin, models.Model):
 
     phonOth = models.TextField(_("Phonology Other"), null=True, blank=True)
 
-    mouthG = models.CharField(_("Mouth Gesture"), max_length=50, blank=True)
-    mouthing = models.CharField(_("Mouthing"), max_length=50, blank=True)
-    phonetVar = models.CharField(_("Phonetic Variation"), max_length=100, blank=True)
+    mouthG = models.CharField(_("Mouth Gesture"), max_length=255, blank=True)
+    mouthing = models.CharField(_("Mouthing"), max_length=255, blank=True)
+    phonetVar = models.CharField(_("Phonetic Variation"), max_length=255, blank=True)
 
     locPrimLH = FieldChoiceForeignKey(FieldChoice, on_delete=models.SET_NULL, null=True, blank=True,
                                           limit_choices_to={'field': FieldChoice.LOCATION},
@@ -1347,7 +1347,7 @@ class Gloss(Phonology):
     bslgloss = models.CharField(_("BSL gloss"), max_length=50, blank=True)
     bslloantf = models.BooleanField(_("BSL loan sign"), null=True, blank=True)
 
-    useInstr = models.CharField(_("Annotation instructions"), max_length=50, blank=True)
+    useInstr = models.CharField(_("Annotation instructions"), max_length=255, blank=True)
     rmrks = models.CharField(_("Remarks"), max_length=50, blank=True)
 
     ########
@@ -1428,7 +1428,7 @@ class Gloss(Phonology):
 
     # Semantic fields
 
-    iconImg = models.CharField(_("Iconic Image"), max_length=50, blank=True)
+    iconImg = models.CharField(_("Iconic Image"), max_length=200, blank=True)
 
     iconType = FieldChoiceForeignKey(FieldChoice, on_delete=models.SET_NULL, null=True,
                                           limit_choices_to={'field': FieldChoice.ICONICITY},
@@ -1467,7 +1467,7 @@ class Gloss(Phonology):
                                           verbose_name=_("Valence"),
                                            related_name="valence")
 
-    concConcSet = models.CharField(_("Concepticon Concept Set"), null=True, blank=True, max_length=300)
+    concConcSet = models.CharField(_("Concepticon Concept Set"), null=True, blank=True, max_length=500)
 
     # Frequency fields
     tokNo = models.IntegerField(_("Number of Occurrences"), null=True, blank=True)
@@ -2982,11 +2982,11 @@ def save_info_about_archived_gloss(sender, instance, using, update_fields=[], **
 # We want to remember some stuff about deleted glosses
 class DeletedGlossOrMedia(models.Model):
     item_type = models.CharField(max_length=5, choices=(('gloss', 'gloss'), ('image', 'image'), ('video', 'video')))
-    idgloss = models.CharField("ID Gloss", max_length=50)
-    annotation_idgloss = models.CharField("Annotation ID Gloss", max_length=30)
+    idgloss = models.CharField("ID Gloss", max_length=400)
+    annotation_idgloss = models.CharField("Annotation ID Gloss", max_length=50)
     old_pk = models.IntegerField()
 
-    filename = models.CharField(max_length=100, blank=True)  # For media only
+    filename = models.CharField(max_length=500, blank=True)  # For media only
 
     deletion_date = models.DateField(default=date.today)
 
@@ -3375,7 +3375,7 @@ class Dataset(MetaModelMixin, models.Model):
     copyright = models.TextField(blank=True, help_text="Copyright. Content license."
                                                        "This is different than the software code license.")
     reference = models.TextField(blank=True, help_text="")
-    acronym = models.CharField(max_length=10, blank=True, help_text="Abbreviation for the dataset")
+    acronym = models.CharField(max_length=50, blank=True, help_text="Abbreviation for the dataset")
     owners = models.ManyToManyField(User, help_text="Users responsible for the dataset content.")
 
     exclude_choices = models.ManyToManyField('FieldChoice', help_text="Exclude these field choices", blank=True)
@@ -3707,7 +3707,7 @@ class DerivationHistoryTranslation(models.Model):
 
 class AnnotationIdglossTranslation(models.Model):
     """An annotation ID Gloss"""
-    text = models.CharField(_("Annotation ID Gloss"), max_length=30, help_text="""
+    text = models.CharField(_("Annotation ID Gloss"), max_length=100, help_text="""
         This is the name of a sign used by annotators when glossing the corpus in
         an ELAN annotation file.""")
     gloss = models.ForeignKey("Gloss", on_delete=models.CASCADE)
@@ -3804,7 +3804,7 @@ class LemmaIdgloss(MetaModelMixin, models.Model):
 
 class LemmaIdglossTranslation(models.Model):
     """A Lemma ID Gloss"""
-    text = models.CharField(_("Lemma ID Gloss translation"), max_length=30, help_text="""The lemma translation text.""")
+    text = models.CharField(_("Lemma ID Gloss translation"), max_length=100, help_text="""The lemma translation text.""")
     lemma = models.ForeignKey("LemmaIdgloss", on_delete=models.CASCADE)
     language = models.ForeignKey("Language", on_delete=models.CASCADE)
 
@@ -3848,8 +3848,8 @@ class GlossRevision(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     time = models.DateTimeField()
     field_name = models.CharField(max_length=100)
-    old_value = models.CharField(blank=True, max_length=100)
-    new_value = models.CharField(blank=True, max_length=100)
+    old_value = models.CharField(blank=True, max_length=500)
+    new_value = models.CharField(blank=True, max_length=500)
 
     def __str__(self):
 
