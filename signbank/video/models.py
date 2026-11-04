@@ -1375,7 +1375,7 @@ def move_videos_for_filter(filter, move_files_on_disk: bool=False) -> None:
         glossvideos_perspective.move_video(move_files_on_disk=move_files_on_disk)
 
 
-@receiver(models.signals.post_save, sender=Dataset)
+@receiver(models.signals.pre_save, sender=Dataset)
 def process_dataset_changes(sender, instance, **kwargs):
     """
     Makes changes to GlossVideos if a Dataset has been changed.
@@ -1387,30 +1387,28 @@ def process_dataset_changes(sender, instance, **kwargs):
     # If the acronym has been changed, change all GlossVideos
     # and rename directories.
     dataset = instance
-    if dataset._initial['acronym'] and dataset.acronym != dataset._initial['acronym']:
+    dataset_old = sender.objects.filter(pk=instance.pk).first()
+    if not dataset_old:
+        return
+
+    if dataset.acronym != dataset_old.acronym:
         move_videos_for_filter({'gloss__lemma__dataset': dataset}, move_files_on_disk=False)
 
         # Rename dirs
-        glossvideo_path_original = os.path.join(WRITABLE_FOLDER, GLOSS_VIDEO_DIRECTORY, dataset._initial['acronym'])
+        glossvideo_path_original = os.path.join(WRITABLE_FOLDER, GLOSS_VIDEO_DIRECTORY, dataset_old.acronym)
         glossvideo_path_new = os.path.join(WRITABLE_FOLDER, GLOSS_VIDEO_DIRECTORY, dataset.acronym)
         if os.path.exists(glossvideo_path_original):
             os.rename(glossvideo_path_original, glossvideo_path_new)
 
-        glossimage_path_original = os.path.join(WRITABLE_FOLDER, GLOSS_IMAGE_DIRECTORY, dataset._initial['acronym'])
+        glossimage_path_original = os.path.join(WRITABLE_FOLDER, GLOSS_IMAGE_DIRECTORY, dataset_old.acronym)
         glossimage_path_new = os.path.join(WRITABLE_FOLDER, GLOSS_IMAGE_DIRECTORY, dataset.acronym)
         if os.path.exists(glossimage_path_original):
             os.rename(glossimage_path_original, glossimage_path_new)
 
-        # Make sure that _initial reflect the database for the dataset object
-        dataset._initial['acronym'] = dataset.acronym
-
     # If the default language has been changed, change all GlossVideos
     # and move all video/poster files accordingly.
-    if dataset._initial['default_language'] and dataset.default_language_id != dataset._initial['default_language']:
+    if dataset.default_language_id != dataset_old.default_language_id:
         move_videos_for_filter({'gloss__lemma__dataset': dataset}, move_files_on_disk=True)
-
-        # Make sure that _initial reflect the database for the dataset object
-        dataset._initial['default_language'] = dataset.default_language_id
 
 
 @receiver(models.signals.post_save, sender=LemmaIdglossTranslation)
