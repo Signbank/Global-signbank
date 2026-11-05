@@ -1,3 +1,4 @@
+from PIL.ImageChops import logical_and
 from django.contrib.auth.decorators import login_required, permission_required
 from django.urls import re_path
 
@@ -185,10 +186,10 @@ urlpatterns = [
 
     # Ajax urls
     re_path(r'^ajax/tags/$', signbank.dictionary.tagviews.taglist_json),
-    re_path(r'^ajax/gloss/(?P<datasetid>\d+)/(?P<prefix>.*)$', signbank.dictionary.adminviews.gloss_ajax_complete, name='gloss_complete'),
+    re_path(r'^ajax/gloss/(?P<datasetid>\d+)/(?P<prefix>.*)$', login_required(signbank.dictionary.adminviews.gloss_ajax_complete), name='gloss_complete'),
     re_path(r'^ajax/similarglosses/(?P<gloss_id>.*)$', signbank.dictionary.batch_edit.similarglosses, name='similarglosses'),
 
-    re_path(r'^ajax/handshape/(?P<prefix>.*)$', signbank.dictionary.adminviews.handshape_ajax_complete, name='handshape_complete'),
+    re_path(r'^ajax/handshape/(?P<prefix>.*)$', login_required(signbank.dictionary.adminviews.handshape_ajax_complete), name='handshape_complete'),
 
     re_path(r'^ajax/semField/(?P<prefix>.*)$', signbank.dictionary.bloodhounds.semField_ajax_complete, name='semField_complete'),
     re_path(r'^ajax/derivHist/(?P<prefix>.*)$', signbank.dictionary.bloodhounds.derivHist_ajax_complete, name='derivHist_complete'),
@@ -197,7 +198,7 @@ urlpatterns = [
     re_path(r'^ajax/subhndsh/(?P<prefix>.*)$', signbank.dictionary.bloodhounds.subhndsh_ajax_complete, name='subhndsh_ajax_complete'),
     re_path(r'^ajax/dialect/(?P<datasetid>\d+)/(?P<prefix>.*)$', signbank.dictionary.bloodhounds.dialect_ajax_complete, name='dialect_complete'),
 
-    re_path(r'^ajax/morph/(?P<prefix>.*)$', signbank.dictionary.adminviews.morph_ajax_complete, name='morph_complete'),
+    re_path(r'^ajax/morph/(?P<prefix>.*)$', login_required(signbank.dictionary.adminviews.morph_ajax_complete), name='morph_complete'),
     re_path(r'^ajax/user/(?P<prefix>.*)$', permission_required('dictionary.change_gloss')(signbank.dictionary.adminviews.user_ajax_complete), name='user_complete'),
     re_path(r'^ajax/searchresults/$',signbank.dictionary.adminviews.gloss_ajax_search_results, name='ajax_search_results'),
     re_path(r'^ajax/handshapesearchresults/$', signbank.dictionary.adminviews.handshape_ajax_search_results, name='handshape_ajax_search_results'),
@@ -205,22 +206,21 @@ urlpatterns = [
     re_path(r'^ajax/annotatedsearchresults/$', signbank.dictionary.adminviews.annotatedsentence_ajax_search_results, name='annotatedsentence_ajax_search_results'),
     re_path(r'^ajax/lemma/(?P<dataset_id>.*)/(?P<language_code>.*)/(?P<q>.*)$', permission_required('dictionary.change_gloss')(signbank.dictionary.adminviews.lemma_ajax_complete), name='lemma_complete'),
     re_path(r'^ajax/sensetranslation/(?P<dataset_id>.*)/(?P<language_code>.*)/(?P<q>.*)$', permission_required('dictionary.change_gloss')(signbank.dictionary.adminviews.sensetranslation_ajax_complete), name='sensetranslation_complete'),
-    re_path(r'^ajax/homonyms/(?P<gloss_id>\d+)/$', signbank.dictionary.adminviews.homonyms_ajax_complete, name='homonyms_ajax_complete'),
-    re_path(r'^ajax/minimalpairs/(?P<gloss_id>.*)/$', signbank.dictionary.adminviews.minimalpairs_ajax_complete, name='minimalpairs_ajax_complete'),
+    re_path(r'^ajax/minimalpairs/(?P<gloss_id>.*)/$', login_required(signbank.dictionary.adminviews.minimalpairs_ajax_complete), name='minimalpairs_ajax_complete'),
     re_path(r'^ajax/glossrow/(?P<gloss_id>.*)/$', signbank.dictionary.adminviews.glosslist_ajax_complete, name='glosslist_ajax_complete'),
     re_path(r'^ajax/glosslistheader/$', signbank.dictionary.adminviews.glosslistheader_ajax, name='glosslistheader_ajax'),
-    re_path(r'^ajax/senserow/(?P<sense_id>.*)/$', signbank.dictionary.adminviews.senselist_ajax_complete, name='senselist_ajax_complete'),
-    re_path(r'^ajax/senselistheader/$', signbank.dictionary.adminviews.senselistheader_ajax, name='senselistheader_ajax'),
-    re_path(r'^ajax/lemmaglossrow/(?P<gloss_id>.*)/$', signbank.dictionary.adminviews.lemmaglosslist_ajax_complete, name='lemmaglosslist_ajax_complete'),
-    re_path(r'^ajax/fetch_video_stills_for_gloss/(?P<gloss_id>.*)/$', signbank.dictionary.adminviews.fetch_video_stills_for_gloss, name='fetch_video_stills_for_gloss'),
+    re_path(r'^ajax/senserow/(?P<sense_id>.*)/$', login_required(signbank.dictionary.adminviews.senselist_ajax_complete), name='senselist_ajax_complete'),
+    re_path(r'^ajax/senselistheader/$', login_required(signbank.dictionary.adminviews.senselistheader_ajax), name='senselistheader_ajax'),
+    re_path(r'^ajax/lemmaglossrow/(?P<gloss_id>.*)/$', login_required(signbank.dictionary.adminviews.lemmaglosslist_ajax_complete), name='lemmaglosslist_ajax_complete'),
+    re_path(r'^ajax/fetch_video_stills_for_gloss/(?P<gloss_id>.*)/$', login_required(signbank.dictionary.adminviews.fetch_video_stills_for_gloss), name='fetch_video_stills_for_gloss'),
     re_path(r'^ajax/preview_backup_video_for_gloss/(?P<gloss_id>.*)/(?P<glossvideo_id>.*)/$',
-            signbank.dictionary.adminviews.preview_backup_video_for_gloss, name='preview_backup_video_for_gloss'),
+            login_required(signbank.dictionary.adminviews.preview_backup_video_for_gloss), name='preview_backup_video_for_gloss'),
     re_path(r'^ajax/save_backup_video_as_gloss_video/(?P<gloss_id>.*)/(?P<glossvideo_id>.*)/$',
-            signbank.dictionary.adminviews.save_backup_video_as_gloss_video, name='save_backup_video_as_gloss_video'),
+            login_required(signbank.dictionary.adminviews.save_backup_video_as_gloss_video), name='save_backup_video_as_gloss_video'),
 
-    re_path(r'^ajax/annotatedglosslistheader/$', signbank.dictionary.adminviews.annotatedglosslistheader_ajax,
+    re_path(r'^ajax/annotatedglosslistheader/$', login_required(signbank.dictionary.adminviews.annotatedglosslistheader_ajax),
             name='annotatedglosslistheader_ajax'),
-    re_path(r'^ajax/annotatedglossrow/(?P<annotatedgloss_id>\d+)/$', signbank.dictionary.adminviews.annotatedglosslist_ajax_complete,
+    re_path(r'^ajax/annotatedglossrow/(?P<annotatedgloss_id>\d+)/$', login_required(signbank.dictionary.adminviews.annotatedglosslist_ajax_complete),
             name='annotatedglosslist_ajax_complete'),
 
     re_path(r'^ajax/choice_lists/$', signbank.dictionary.views.choice_lists,name='choice_lists'),
@@ -329,9 +329,9 @@ urlpatterns = [
     re_path(r'^gloss_relations/(?P<pk>\d+)', GlossRelationsDetailView.as_view(), name='admin_gloss_relations_view'),
     re_path(r'^morpheme/(?P<pk>\d+)', MorphemeDetailView.as_view(), name='admin_morpheme_view'),
     re_path(r'^handshape/(?P<pk>\d+)/$', HandshapeDetailView.as_view(), name='admin_handshape_view'),
-    re_path(r'^semanticfield/(?P<pk>\d+)', SemanticFieldDetailView.as_view(), name='admin_semanticfield_view'),
+    re_path(r'^semanticfield/(?P<pk>\d+)', permission_required('dictionary.search_gloss')(SemanticFieldDetailView.as_view()), name='admin_semanticfield_view'),
     re_path(r'^semanticfields/$', permission_required('dictionary.search_gloss')(SemanticFieldListView.as_view()), name='admin_semanticfield_list'),
-    re_path(r'^derivationhistory/(?P<pk>\d+)', DerivationHistoryDetailView.as_view(), name='admin_derivationhistory_view'),
+    re_path(r'^derivationhistory/(?P<pk>\d+)', permission_required('dictionary.search_gloss')(DerivationHistoryDetailView.as_view()), name='admin_derivationhistory_view'),
     re_path(r'^derivationhistory_list/$', permission_required('dictionary.search_gloss')(DerivationHistoryListView.as_view()),
         name='admin_derivationhistory_list'),
     # Lemma Idgloss views
@@ -339,14 +339,14 @@ urlpatterns = [
     re_path(r'^annotatedsentence/$', login_required(AnnotatedSentenceListView.as_view()), name='admin_annotatedsentence_list'),
     re_path(r'^lemma/add/$', permission_required('dictionary.add_lemmaidgloss')(LemmaCreateView.as_view()), name='create_lemma'),
     re_path(r'^lemma/delete/(?P<pk>\d+)', permission_required('dictionary.delete_lemmaidgloss')(LemmaDeleteView.as_view()), name='delete_lemma'),
-    re_path(r'lemma/add/(?P<glossid>\d+)$', signbank.dictionary.adminviews.create_lemma_for_gloss, name='create_lemma_gloss'),
+    re_path(r'lemma/add/(?P<glossid>\d+)$', permission_required('dictionary.add_lemmaidgloss')(signbank.dictionary.adminviews.create_lemma_for_gloss), name='create_lemma_gloss'),
     re_path(r'lemma/update/(?P<pk>\d+)$', permission_required('dictionary.change_lemmaidgloss')(LemmaUpdateView.as_view()), name='change_lemma'),
     re_path(r'lemma/updatetranslations/(?P<lemmaid>\d+)$', signbank.dictionary.update.update_lemma_idgloss, name='update_lemma'),
-    re_path(r'^annotatedsentence/(?P<pk>\d+)', AnnotatedSentenceDetailView.as_view(), name='admin_annotated_sentence_view'),
+    re_path(r'^annotatedsentence/(?P<pk>\d+)', login_required(AnnotatedSentenceDetailView.as_view()), name='admin_annotated_sentence_view'),
     re_path(r'^lemma/copymissinglanguage/(?P<lemmaid>\d+)/$',
             signbank.dictionary.update.copy_missing_language_lemma_idgloss),
 
-    re_path(r'^keywords/$', KeywordListView.as_view(), name='admin_keyword_list'),
+    re_path(r'^keywords/$', login_required(KeywordListView.as_view()), name='admin_keyword_list'),
 
     re_path(r'find_interesting_frequency_examples',signbank.dictionary.views.find_interesting_frequency_examples),
     re_path(r'missing_video_view', signbank.dictionary.views.missing_video_view),
