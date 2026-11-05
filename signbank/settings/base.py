@@ -63,7 +63,6 @@ MIDDLEWARE = (
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'signbank.pages.middleware.PageFallbackMiddleware',
-    'reversion.middleware.RevisionMiddleware',
     'django.middleware.common.CommonMiddleware'
 )
 
@@ -125,7 +124,6 @@ INSTALLED_APPS = (
     'django.contrib.staticfiles',
     'django.contrib.flatpages',
     'corsheaders',
-    'reversion',
     'tagging',
     'guardian',
     'bootstrap3',

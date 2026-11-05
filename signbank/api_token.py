@@ -2,14 +2,23 @@
 import hashlib
 import secrets
 import string
+from datetime import timedelta
 
+from django.core.cache import cache
 from django.http import HttpRequest, JsonResponse
+from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 
 from signbank.dictionary.models import SignbankAPIToken
 
+TOKEN_LENGTH = 40
+TOKEN_PREFIX_LENGTH = 6
+RATE_LIMIT_WINDOW_SECONDS = 3600
+# avoid a database write on every API call: last_used_at is only refreshed after this interval
+LAST_USED_UPDATE_INTERVAL = timedelta(minutes=1)
 
-def generate_auth_token(length=16):
+
+def generate_auth_token(length=TOKEN_LENGTH):
     """Generate a random authentication token."""
     alphabet = string.ascii_letters + string.digits
     return ''.join(secrets.choice(alphabet) for _ in range(length))
@@ -21,19 +30,64 @@ def hash_token(token):
     return hash_object.hexdigest()
 
 
+def create_api_token(user, name='', expires_at=None, rate_limit=None, read_only=False):
+    """
+    Create a SignbankAPIToken for the user.
+    Returns the token object and the plain token, which is not stored and can only be shown once.
+    """
+    new_token = generate_auth_token()
+    signbank_token = SignbankAPIToken.objects.create(signbank_user=user,
+                                                     api_token=hash_token(new_token),
+                                                     prefix=new_token[:TOKEN_PREFIX_LENGTH],
+                                                     name=name,
+                                                     expires_at=expires_at,
+                                                     rate_limit=rate_limit,
+                                                     read_only=read_only)
+    return signbank_token, new_token
+
+
 class APIAuthException(Exception):
     """ Exception class to raise any problems in authorizing a user for the API"""
-    pass
+    status = 401
 
 
-def get_api_user(request):
+class APIPermissionException(APIAuthException):
+    status = 403
+
+
+class APIRateLimitException(APIAuthException):
+    status = 429
+
+
+def check_rate_limit(signbank_token):
+    """Count the request in a fixed one hour window, raise an exception when over the limit"""
+    limit = signbank_token.effective_rate_limit()
+    if not limit:
+        return
+    window = int(timezone.now().timestamp()) // RATE_LIMIT_WINDOW_SECONDS
+    cache_key = f'api_token_rate:{signbank_token.pk}:{window}'
+    cache.add(cache_key, 0, RATE_LIMIT_WINDOW_SECONDS)
+    try:
+        count = cache.incr(cache_key)
+    except ValueError:
+        # the key expired between add and incr
+        cache.set(cache_key, 1, RATE_LIMIT_WINDOW_SECONDS)
+        count = 1
+    if count > limit:
+        raise APIRateLimitException(_("Rate limit exceeded: this token allows %(limit)s requests per hour.")
+                                    % {'limit': limit})
+
+
+def get_api_user(request, allow_read_only=False):
     """
     Return a user if there is a correct API token in the request.
     The HTTP header must contain:
 
     Authorization:"Bearer XXXXXX"
 
-    where XXXXXX represents the user's API Token
+    where XXXXXX represents the user's API Token.
+    Read only tokens are refused unless allow_read_only is set, which is only done for endpoints
+    that never change data. The HTTP method is not used for this, since not every endpoint checks it.
     """
     auth_token_request = request.headers.get('Authorization', '')
     if not auth_token_request:
@@ -44,15 +98,28 @@ def get_api_user(request):
         raise APIAuthException(_("No Authorization token found"))
 
     hashed_token = hash_token(auth_token)
-    signbank_token = SignbankAPIToken.objects.filter(api_token=hashed_token).first()
+    signbank_token = SignbankAPIToken.objects.filter(api_token=hashed_token).select_related('signbank_user').first()
     if not signbank_token:
         raise APIAuthException(_("Your Authorization Token does not match anything."))
+    if not signbank_token.is_active:
+        raise APIAuthException(_("Your Authorization Token has been deactivated."))
+    if signbank_token.is_expired():
+        raise APIAuthException(_("Your Authorization Token has expired."))
+    if not signbank_token.signbank_user.is_active:
+        raise APIAuthException(_("The user of this Authorization Token is not active."))
+    if signbank_token.read_only and not allow_read_only:
+        raise APIPermissionException(_("Your Authorization Token is read only and cannot be used for this request."))
+
+    check_rate_limit(signbank_token)
+
+    now = timezone.now()
+    if not signbank_token.last_used_at or now - signbank_token.last_used_at > LAST_USED_UPDATE_INTERVAL:
+        SignbankAPIToken.objects.filter(pk=signbank_token.pk).update(last_used_at=now)
 
     return signbank_token.signbank_user
 
 
-def put_api_user_in_request(func):
-    """A decorator to replace the request.user with the user found by checking an API token"""
+def _put_api_user_in_request(func, allow_read_only):
     def wrapper(*args, **kwargs):
         if not args or not isinstance(args[0], HttpRequest):
             return func(*args, **kwargs)
@@ -60,11 +127,24 @@ def put_api_user_in_request(func):
         request = args[0]
 
         try:
-            api_user = get_api_user(request)
+            api_user = get_api_user(request, allow_read_only=allow_read_only)
         except APIAuthException as api_auth_exception:
-            return JsonResponse({'errors': [str(api_auth_exception)]})
+            return JsonResponse({'errors': [str(api_auth_exception)]}, status=api_auth_exception.status)
 
         if api_user:
             request.user = api_user
         return func(*args, **kwargs)
     return wrapper
+
+
+def put_api_user_in_request(func):
+    """A decorator to replace the request.user with the user found by checking an API token"""
+    return _put_api_user_in_request(func, allow_read_only=False)
+
+
+def put_api_user_in_request_read_only(func):
+    """
+    Like put_api_user_in_request, but also accepts read only tokens.
+    Only use this for endpoints that never change data.
+    """
+    return _put_api_user_in_request(func, allow_read_only=True)

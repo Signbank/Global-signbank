@@ -485,7 +485,7 @@ body {
   height:115px;
   margin: auto;
   padding: 0px;
-  max-width: 115px;
+  width: 115px;
   object-fit: cover;
 }
 
@@ -699,7 +699,7 @@ tr.rotated th {
 .thumbnail-video
 {
     object-fit: cover;
-    max-width: 115px;
+    width: 115px;
     height: 115px;
     display:block;
 }

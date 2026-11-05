@@ -1,12 +1,22 @@
 name: Deploy
 on:
+  push:
+    branches: [master]
   workflow_dispatch:
+
 jobs:
   deploy:
+    concurrency:
+      group: deploy-${{ matrix.runner }}
+      cancel-in-progress: false 
+
     strategy:
+      fail-fast: false
       matrix:
         runner: [global, vgt]
+    
     runs-on: ${{ matrix.runner }}
+    
     steps:
       - name: Pull latest changes
         run: |

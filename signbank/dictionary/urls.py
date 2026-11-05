@@ -59,6 +59,8 @@ urlpatterns = [
             signbank.dictionary.update.delete_phonological_variation, name='delete_phonological_variation'),
     re_path(r'^update/add_phonological_variation_video/(?P<variationid>\d+)/$',
             signbank.dictionary.update.add_phonological_variation_video, name='add_phonological_variation_video'),
+    re_path(r'^update/make_phonological_variation_be_primary/(?P<variationid>\d+)/$',
+            signbank.dictionary.update.make_phonological_variation_be_primary, name='make_phonological_variation_be_primary'),
 
     re_path(r'^update/edit_gloss_save/(?P<glossid>\d+)$',
                 signbank.dictionary.update.edit_gloss_save, name='edit_gloss_save'),
@@ -191,6 +193,8 @@ urlpatterns = [
     re_path(r'^ajax/semField/(?P<prefix>.*)$', signbank.dictionary.bloodhounds.semField_ajax_complete, name='semField_complete'),
     re_path(r'^ajax/derivHist/(?P<prefix>.*)$', signbank.dictionary.bloodhounds.derivHist_ajax_complete, name='derivHist_complete'),
     re_path(r'^ajax/fieldchoice/(?P<field>.*)/(?P<prefix>.*)$', signbank.dictionary.bloodhounds.fieldchoice_ajax_complete, name='fieldchoice_complete'),
+    re_path(r'^ajax/domhndsh/(?P<prefix>.*)$', signbank.dictionary.bloodhounds.domhndsh_ajax_complete, name='domhndsh_ajax_complete'),
+    re_path(r'^ajax/subhndsh/(?P<prefix>.*)$', signbank.dictionary.bloodhounds.subhndsh_ajax_complete, name='subhndsh_ajax_complete'),
     re_path(r'^ajax/dialect/(?P<datasetid>\d+)/(?P<prefix>.*)$', signbank.dictionary.bloodhounds.dialect_ajax_complete, name='dialect_complete'),
 
     re_path(r'^ajax/morph/(?P<prefix>.*)$', signbank.dictionary.adminviews.morph_ajax_complete, name='morph_complete'),

@@ -5,7 +5,7 @@ import shutil
 import stat
 
 from django.core.files.uploadedfile import UploadedFile
-from django.forms.utils import ValidationError
+from django.core.exceptions import ValidationError
 from django import forms
 from django.conf import settings
 from django.core.mail import EmailMessage

@@ -62,7 +62,7 @@ from signbank.video.models import (GlossVideo, find_dangling_video_files, delete
 from signbank.communication.models import generate_communication
 from signbank.dictionary.models import (Dataset, UserProfile, AffiliatedUser, AffiliatedGloss,
                                         Language, Dialect, Gloss, Morpheme, GlossSense, Sense, GLOSS_FIELDS_UPDATES, PHONOLOGY_FIELDS_UPDATES,
-                                        Corpus, Speaker, Document, GlossFrequency,
+                                        Corpus, Speaker, Document, GlossFrequency, get_default_annotationidglosstranslation,
                                         LemmaIdgloss, LemmaIdglossTranslation, AnnotationIdglossTranslation, Translation,
                                         AnnotatedGloss, AnnotatedSentence, AnnotatedSentenceTranslation, Handshape,
                                         SenseTranslation, SearchHistory, SemanticField,
@@ -91,7 +91,7 @@ from signbank.dictionary.forms import (AnnotatedSentenceSearchForm, GlossSearchF
 from signbank.tools import (write_ecv_file_for_dataset, find_duplicate_lemmas,
                             construct_scrollbar, get_dataset_languages, get_datasets_with_public_glosses,
                             searchform_panels, map_search_results_to_gloss_list,
-                            get_interface_language_and_default_language_codes, get_default_annotationidglosstranslation,
+                            get_interface_language_and_default_language_codes,
                             get_page_parameters_for_listview, filter_page_values, add_gloss_update_to_revision_history,)
 from signbank.csv_interface import (csv_gloss_to_row, csv_header_row_glosslist, csv_header_row_morphemelist,
                                     csv_morpheme_to_row, csv_header_row_handshapelist, csv_handshape_to_row,
@@ -757,14 +757,8 @@ class GlossListView(ListView):
         if not self.request.user.has_perm('dictionary.export_csv'):
             raise PermissionDenied
 
-        fieldnames = FIELDS['main'] + FIELDS['phonology'] + FIELDS['semantics'] + FIELDS['frequency'] + ['inWeb', 'isNew']
-        fields = [Gloss.get_field(fname) for fname in fieldnames if fname in Gloss.get_field_names()]
-
         selected_datasets = get_selected_datasets(self.request)
         dataset_languages = get_dataset_languages(selected_datasets)
-
-        header = csv_header_row_glosslist(dataset_languages)
-        csv_rows = [header]
 
         if self.object_list:
             query_set = self.object_list
@@ -774,8 +768,19 @@ class GlossListView(ListView):
         if isinstance(query_set, QuerySet):
             query_set = list(query_set)
 
+        extended = False if len(query_set) > 100 else True
+
+        if extended:
+            fieldnames = FIELDS['phonology'] + FIELDS['semantics'] + FIELDS['frequency'] + FIELDS['main'] + ['inWeb', 'isNew']
+        else:
+            fieldnames = FIELDS['phonology']
+        fields = [Gloss.get_field(fname) for fname in fieldnames if fname in Gloss.get_field_names()]
+
+        header = csv_header_row_glosslist(dataset_languages, extended)
+        csv_rows = [header]
+
         for gloss in query_set:
-            safe_row = csv_gloss_to_row(gloss, dataset_languages, fields)
+            safe_row = csv_gloss_to_row(gloss, dataset_languages, fields, extended)
             csv_rows.append(safe_row)
 
         # this is based on an example in the Django 4.2 documentation
@@ -4294,15 +4299,15 @@ class DatasetManagerView(ListView):
 
     def render_to_add_user_response(self, context):
         dataset_object, response = self.get_dataset_from_request()
-        if response:
+        if not dataset_object:
             return response
         
         response = self.check_user_permissions_for_managing_dataset(dataset_object)
-        if response:
+        if response is not None:
             return response
 
         user_object, response = self.get_user_from_request()
-        if response:
+        if not user_object:
             return response
         username = user_object.username
 

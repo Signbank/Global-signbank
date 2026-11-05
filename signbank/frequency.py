@@ -4,7 +4,8 @@ import csv
 import locale
 
 from django.core.exceptions import ObjectDoesNotExist, MultipleObjectsReturned
-from django.shortcuts import get_object_or_404, HttpResponseRedirect, HttpResponse
+from django.shortcuts import get_object_or_404
+from django.http import HttpResponseRedirect, HttpResponse
 from django.views.decorators.http import require_http_methods
 from django.contrib import messages
 from django.db.models import Q
@@ -15,8 +16,8 @@ from signbank.settings.server_specific import (PREFIX_URL, WRITABLE_FOLDER, TEST
                                                DATASET_METADATA_DIRECTORY, METADATA_LOCATION,
                                                MINIMUM_OVERLAP_BETWEEN_SIGNING_HANDS)
 
-from signbank.dictionary.models import Dataset, Gloss, Corpus, Document, Speaker, GlossFrequency
-from signbank.tools import get_default_annotationidglosstranslation, get_eaf_creation_time
+from signbank.dictionary.models import Dataset, Gloss, Corpus, Document, Speaker, GlossFrequency, get_default_annotationidglosstranslation
+from signbank.tools import get_eaf_creation_time
 from signbank.sign_counter import SignCounter
 
 
