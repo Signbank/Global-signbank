@@ -18,4 +18,3 @@ python-magic==0.4.27
 requests==2.33.0
 django-cors-headers==4.9.0
 PyMySQL==1.2.3
-django-cors-headers==4.9.0
