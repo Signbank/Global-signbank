@@ -317,14 +317,9 @@ def missing_video_list(selected_datasets):
                 yield gloss, gloss_video_path
 
 
+@login_required
 def missing_video_view(request):
     """A view for the above list"""
-
-    # check that the user is logged in
-    if not request.user.is_authenticated:
-        messages.add_message(request, messages.ERROR, _('Please login to use this functionality.'))
-        return HttpResponseRedirect(PREFIX_URL + '/datasets/available')
-
     selected_datasets = get_selected_datasets(request)
 
     glosses = missing_video_list(selected_datasets)
@@ -333,6 +328,7 @@ def missing_video_view(request):
                               {'glosses': glosses})
 
 
+@login_required
 def try_code(request, pk):
     """A view for the developer to try out senses for a particular gloss"""
     context = {}
@@ -390,6 +386,7 @@ def try_code(request, pk):
 
 
 # this method is called from the Signbank menu bar
+@login_required
 def add_new_sign(request):
     if not request.user.has_perm('dictionary.add_gloss'):
         raise PermissionDenied
@@ -429,6 +426,7 @@ def add_new_sign(request):
     return render(request, 'dictionary/add_gloss.html', context)
 
 
+@login_required
 def add_new_morpheme(request):
 
     context = {}
@@ -460,6 +458,7 @@ def add_new_morpheme(request):
     return render(request,'dictionary/add_morpheme.html',context)
 
 
+@login_required
 def import_csv_create(request):
     user = request.user
     user_datasets = guardian.shortcuts.get_objects_for_user(user, 'change_dataset', Dataset)
@@ -865,6 +864,7 @@ def import_csv_create(request):
                    'SHOW_DATASET_INTERFACE_OPTIONS': SHOW_DATASET_INTERFACE_OPTIONS})
 
 
+@login_required
 def import_csv_update(request):
     user = request.user
     user_datasets = guardian.shortcuts.get_objects_for_user(user, 'change_dataset', Dataset)
@@ -1445,6 +1445,7 @@ def import_csv_update(request):
                    'SHOW_DATASET_INTERFACE_OPTIONS': SHOW_DATASET_INTERFACE_OPTIONS})
 
 
+@login_required
 def import_csv_lemmas(request):
     user = request.user
     user_datasets = guardian.shortcuts.get_objects_for_user(user, 'change_dataset', Dataset)
@@ -1756,6 +1757,7 @@ def switch_to_language(request,language):
     return HttpResponse('OK')
 
 
+@login_required
 def create_citation_image(request, pk):
     if 'HTTP_REFERER' in request.META:
         url = request.META['HTTP_REFERER']
@@ -1772,6 +1774,7 @@ def create_citation_image(request, pk):
     return redirect(url)
 
 
+@login_required
 def generate_video_stills_for_gloss(request, pk):
     if 'HTTP_REFERER' in request.META:
         url = request.META['HTTP_REFERER']
@@ -1788,6 +1791,7 @@ def generate_video_stills_for_gloss(request, pk):
     return redirect(url)
 
 
+@login_required
 def save_chosen_still_for_gloss(request, pk):
 
     gloss = get_object_or_404(Gloss, pk=pk, archived=False)
@@ -1820,6 +1824,7 @@ def save_chosen_still_for_gloss(request, pk):
     return JsonResponse({'redirect_url': redirect_url})
 
 
+@login_required
 @require_http_methods(["POST"])
 def add_image(request):
 
@@ -1903,6 +1908,7 @@ def add_image(request):
     return redirect(redirect_url)
 
 
+@login_required
 @require_http_methods(["POST"])
 def delete_image(request, pk):
 
@@ -1931,6 +1937,7 @@ def delete_image(request, pk):
     return redirect(url)
 
 
+@login_required
 @require_http_methods(["POST"])
 def add_handshape_image(request):
 
@@ -2018,6 +2025,7 @@ def gloss_annotations(this_gloss):
     return ", ".join(translations)
 
 
+@login_required
 def find_and_save_variants(request):
 
     selected_datasets = get_selected_datasets(request)
@@ -2111,6 +2119,7 @@ def find_and_save_variants(request):
                    })
 
 
+@login_required
 def get_unused_videos(request):
 
     selected_datasets = get_selected_datasets(request)
@@ -2314,6 +2323,7 @@ def protected_media(request, filename, document_root=WRITABLE_FOLDER, show_index
         return serve(request, filename, document_root, show_indexes)
 
 
+@login_required
 def show_glosses_with_no_lemma(request):
 
     selected_datasets = get_selected_datasets(request)
@@ -2431,6 +2441,7 @@ def show_unassigned_glosses(request):
                       })
 
 
+@login_required
 def choice_lists(request):
 
     selected_datasets = get_selected_datasets(request)
@@ -2490,6 +2501,7 @@ def choice_lists(request):
     return HttpResponse(json.dumps(all_choice_lists), content_type='application/json')
 
 
+@login_required
 def gloss_revision_history(request,gloss_pk):
 
     gloss = get_object_or_404(Gloss, pk=gloss_pk, archived=False)
@@ -2525,6 +2537,7 @@ def gloss_revision_history(request,gloss_pk):
                    })
 
 
+@login_required
 def find_interesting_frequency_examples(request):
 
     INTERESTING_FREQUENCY_THRESHOLD = 25
@@ -2646,6 +2659,7 @@ def gloss_api_get_sign_name_and_media_info(request):
     return HttpResponse(json.dumps(response), content_type="application/json")
 
 
+@login_required
 def import_csv_create_sentences(request):
     user = request.user
     user_datasets = get_objects_for_user(user, 'change_dataset', Dataset)
@@ -2913,6 +2927,7 @@ def import_csv_create_sentences(request):
                           'SHOW_DATASET_INTERFACE_OPTIONS': SHOW_DATASET_INTERFACE_OPTIONS})
 
 
+@login_required
 def test_abstract_machine(request, datasetid):
     # used to test api method since PyCharm runserver does not support CORS
     dataset_id = int(datasetid)
@@ -2938,6 +2953,7 @@ def test_abstract_machine(request, datasetid):
                    })
 
 
+@login_required
 @csrf_exempt
 def test_am_update_gloss(request, datasetid, glossid):
     # used to test api method since PyCharm runserver does not support CORS

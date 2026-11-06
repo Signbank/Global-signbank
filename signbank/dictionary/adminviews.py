@@ -888,6 +888,8 @@ class GlossListView(ListView):
 
             sorted_qs = order_queryset_by_sort_order(self.request.GET, qs, self.queryset_language_codes)
             self.page_get_parameters = get_page_parameters_for_listview(self.search_form, get, self.query_parameters)
+            if not self.request.user.is_authenticated or not self.request.user.has_perm('dictionary.search_gloss'):
+                return sorted_qs.filter(inWeb__exact=True)
             return sorted_qs
 
         # No filters or 'show_all' specified? show nothing
