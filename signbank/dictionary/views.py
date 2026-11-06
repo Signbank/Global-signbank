@@ -1,15 +1,17 @@
 import os.path
 import datetime as DT
+from datetime import date
 import csv
 import time
 import sys
 import re
 import json
 
+from django.utils import timezone
 from django.db import models
 from django.db.models import OuterRef, Subquery, Count, Prefetch
 from django.http import (HttpResponse, HttpResponseRedirect, HttpResponseBadRequest, HttpResponseNotAllowed,
-                         Http404, JsonResponse)
+                         Http404, JsonResponse, HttpResponseForbidden)
 from django.shortcuts import render, get_object_or_404, redirect
 from django.urls import reverse
 from django.contrib.auth.decorators import login_required
@@ -30,7 +32,7 @@ import guardian
 from guardian.shortcuts import get_user_perms, get_objects_for_user
 from wsgiref.util import FileWrapper
 
-from signbank.settings.server_specific import (PREFIX_URL, WRITABLE_FOLDER, GLOSS_VIDEO_DIRECTORY, GLOSS_IMAGE_DIRECTORY,
+from signbank.settings.server_specific import (URL, PREFIX_URL, WRITABLE_FOLDER, GLOSS_VIDEO_DIRECTORY, GLOSS_IMAGE_DIRECTORY,
                                                SHOW_DATASET_INTERFACE_OPTIONS, SIGNBANK_PACKAGES_FOLDER,
                                                LANGUAGE_CODE, USE_HANDSHAPE, HANDSHAPE_IMAGE_DIRECTORY,
                                                USE_REGULAR_EXPRESSIONS,
@@ -2152,55 +2154,62 @@ def package(request, language_code='en'):
     activate(language_code)
 
     if 'dataset_name' not in request.GET:
-        return HttpResponseBadRequest(gettext('No dataset name provided.'))
-    dataset_acronym = request.GET['dataset_name']
+        dataset_acronym = 'NGT'
+    else:
+        dataset_acronym = request.GET['dataset_name']
 
-    if not dataset_acronym:
-        return HttpResponseBadRequest(gettext('Dataset name empty.'))
     dataset = Dataset.objects.filter(acronym=dataset_acronym).first()
     if not dataset:
         return HttpResponseBadRequest(gettext('Dataset not found.'))
-    if request.user.is_authenticated:
-        available_glosses = Gloss.objects.filter(lemma__dataset=dataset, archived=False)
-        inWebSet = False  # not necessary
-    else:
-        available_glosses = Gloss.objects.filter(lemma__dataset=dataset, inWeb=True, archived=False)
-        inWebSet = True
 
-    first_part_of_file_name = 'signbank_pa'
-
-    timestamp_part_of_file_name = str(int(time.time()))
-
-    if 'since_timestamp' in request.GET:
-        first_part_of_file_name += 'tch'
-        since_timestamp = int(request.GET['since_timestamp'])
-        timestamp_part_of_file_name = request.GET['since_timestamp']+'-'+timestamp_part_of_file_name
-    else:
-        first_part_of_file_name += 'ckage'
-        since_timestamp = 0
+    datasets_user_can_view = get_objects_for_user(request.user, ['view_dataset'],
+                                                  Dataset, accept_global_perms=True, any_perm=True)
+    if dataset not in datasets_user_can_view or not dataset.is_public:
+        return HttpResponseForbidden(gettext('No permission to view dataset.'))
 
     if 'extended_fields' in request.GET and request.GET['extended_fields'] in [1, True, 'true', 'True']:
         extended_fields = True
     else:
         extended_fields = False
 
-    # these actually do nothing
-    video_folder_name = 'glossvideo'
-    image_folder_name = 'glossimage'
+    if 'since_timestamp' not in request.GET:
 
-    if 'small_videos' in request.GET and request.GET['small_videos'] not in [0, False, 'false']:
-        video_folder_name += '_small'
+        archive_file_name = write_package_file_for_dataset(language_code, dataset, extended_fields=extended_fields)
+        archive_file_path = SIGNBANK_PACKAGES_FOLDER + archive_file_name
+        if not os.path.exists(archive_file_path):
+            return JsonResponse({'message': gettext('File not found.'),
+                                 'status': 'error',
+                                 'status_code': 404})
+
+        return JsonResponse({'message': gettext('File not found.'),
+                             'status': 'error',
+                             'status_code': 404})
+
+
+    timestamp_part_of_file_name = str(int(time.time()))
+    first_part_of_file_name = 'signbank_patch'
+    since_timestamp = int(request.GET['since_timestamp'])
+    timestamp_part_of_file_name = request.GET['since_timestamp']+'-'+timestamp_part_of_file_name
+
+    aware_datetime = DT.datetime.fromtimestamp(since_timestamp, tz=timezone.get_current_timezone())
+
+    if request.user.is_authenticated and request.user.has_perm('dictionary.search_gloss'):
+        available_glosses = Gloss.objects.filter(lemma__dataset=dataset, archived=False, lastUpdated__gt=aware_datetime)
+        inWebSet = False  # not necessary
+    else:
+        available_glosses = Gloss.objects.filter(lemma__dataset=dataset, inWeb=True, archived=False, lastUpdated__gt=aware_datetime)
+        inWebSet = True
 
     archive_file_name = '.'.join([first_part_of_file_name, timestamp_part_of_file_name, 'zip'])
     archive_file_path = SIGNBANK_PACKAGES_FOLDER + archive_file_name
 
     video_urls = {os.path.splitext(os.path.basename(gv.videofile.name))[0]:
-                      reverse('dictionary:protected_media', args=[gv.small_video(use_name=True) or gv.videofile.name])
+                      f'{URL}{PREFIX_URL}/dictionary/protected_media/{gv.videofile.name}'
                   for gv in GlossVideo.objects.filter(gloss__in=available_glosses, glossvideonme=None, glossvideoperspective=None, version=0)
                   if gv.videofile and gv.videofile.name and os.path.exists(str(gv.videofile.path))
                   and os.path.getmtime(str(gv.videofile.path)) > since_timestamp}
     image_urls = {os.path.splitext(os.path.basename(gv.videofile.name))[0]:
-                       reverse('dictionary:protected_media', args=[gv.poster_file()])
+                      f'{URL}{PREFIX_URL}/dictionary/protected_media/{gv.poster_file()}'
                   for gv in GlossVideo.objects.filter(gloss__in=available_glosses, glossvideonme=None, glossvideoperspective=None, version=0)
                   if gv.videofile and gv.videofile.name and os.path.exists(str(gv.videofile.path))
                   and os.path.getmtime(str(gv.videofile.path)) > since_timestamp}
@@ -2220,6 +2229,35 @@ def package(request, language_code='en'):
     response = HttpResponse(FileWrapper(open(archive_file_path, 'rb')), content_type='application/zip')
     response['Content-Disposition'] = 'attachment; filename='+archive_file_name
     return response
+
+
+def write_package_file_for_dataset(language_code, dataset, extended_fields=False):
+
+    available_glosses = Gloss.objects.filter(lemma__dataset=dataset, archived=False)
+    first_part_of_file_name = f'signbank_package_{dataset.acronym}_{language_code}'
+    if extended_fields:
+        first_part_of_file_name += '_extended'
+    today_timestamp = DT.datetime.today()
+    timestamp_part_of_file_name = today_timestamp.strftime("%Y-%m-%d")
+    archive_file_name = '.'.join([first_part_of_file_name, timestamp_part_of_file_name, 'zip'])
+    archive_file_path = SIGNBANK_PACKAGES_FOLDER + archive_file_name
+    video_urls = {os.path.splitext(os.path.basename(gv.videofile.name))[0]:
+                      f'{URL}{PREFIX_URL}/dictionary/protected_media/{gv.videofile.name}'
+                  for gv in GlossVideo.objects.filter(gloss__in=available_glosses, glossvideonme=None, glossvideoperspective=None, version=0)
+                  if gv.videofile and gv.videofile.name and os.path.exists(str(gv.videofile.path))}
+    image_urls = {os.path.splitext(os.path.basename(gv.videofile.name))[0]:
+                      f'{URL}{PREFIX_URL}/dictionary/protected_media/{gv.poster_file()}'
+                  for gv in GlossVideo.objects.filter(gloss__in=available_glosses, glossvideonme=None, glossvideoperspective=None, version=0)
+                  if gv.videofile and gv.videofile.name and os.path.exists(str(gv.videofile.path))}
+
+    collected_data = {'video_urls': video_urls,
+                      'image_urls': image_urls,
+                      'glosses': get_gloss_data(0, language_code,
+                                                dataset, False, extended_fields)}
+
+    create_zip_with_json_files(collected_data, archive_file_path)
+
+    return archive_file_name
 
 
 @put_api_user_in_request_read_only
