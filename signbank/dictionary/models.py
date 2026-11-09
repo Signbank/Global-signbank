@@ -317,8 +317,8 @@ class Dialect(models.Model):
 
 
 class SemanticField(models.Model):
-
-    machine_value = models.IntegerField(_("Machine value"), primary_key=True)
+    new_id = models.AutoField(primary_key=True)
+    machine_value = models.IntegerField(_("Machine value"), unique=True)
 
     name = models.CharField(max_length=20, unique=True)
     field_color = ColorField(default='ffffff')
@@ -329,8 +329,8 @@ class SemanticField(models.Model):
 
 
 class DerivationHistory(models.Model):
-
-    machine_value = models.IntegerField(_("Machine value"), primary_key=True)
+    new_id = models.AutoField(primary_key=True)
+    machine_value = models.IntegerField(_("Machine value"), unique=True)
 
     name = models.CharField(max_length=20, unique=True)
     field_color = ColorField(default='ffffff')
@@ -380,7 +380,8 @@ class RelationToForeignSign(models.Model):
 
 
 class Handshape(MetaModelMixin, models.Model):
-    machine_value = models.IntegerField(_("Machine value"), primary_key=True)
+    new_id = models.AutoField(primary_key=True)
+    machine_value = models.IntegerField(_("Machine value"), unique=True)
     name = models.CharField(max_length=50)
     field_color = ColorField(default='ffffff')
     hsNumSel = FieldChoiceForeignKey(FieldChoice, on_delete=models.SET_NULL, null=True,
@@ -950,7 +951,7 @@ class Phonology(MetaModelMixin, models.Model):
     weakdrop = models.BooleanField(_("Weak Drop"), null=True, blank=True)
     weakprop = models.BooleanField(_("Weak Prop"), null=True, blank=True)
 
-    domhndsh = models.ForeignKey(Handshape, on_delete=models.SET_NULL, null=True,
+    domhndsh = models.ForeignKey(Handshape, on_delete=models.SET_NULL, null=True, blank=True,
                                  verbose_name=_("Strong Hand"),
                                  related_name="%(class)s_strong_hand")
 
@@ -1117,6 +1118,18 @@ class Phonology(MetaModelMixin, models.Model):
 
     class Meta:
         abstract = True
+
+    @classmethod
+    def contribute_to_class(cls, name, *args, **kwargs):
+        super().contribute_to_class(cls, name, *args, **kwargs)
+
+        if not cls._meta.abstract:
+            class_name = cls.__name__.lower()
+
+            cls._meta.get_field('domhndsh').db_column = f"{class_name}_domhndsh"
+            cls._meta.get_field('subhndsh').db_column = f"{class_name}_subhndsh"
+            cls._meta.get_field('final_domhndsh').db_column = f"{class_name}_final_domhndsh"
+            cls._meta.get_field('final_subhndsh').db_column = f"{class_name}_final_subhndsh"
 
     def display_handedness(self):
         return self.handedness.name if self.handedness else '-'
