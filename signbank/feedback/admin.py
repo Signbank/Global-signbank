@@ -1,11 +1,11 @@
-from django.contrib import admin 
+from django.contrib import admin
 from django.utils.translation import gettext_lazy as _
 from django.contrib.admin import SimpleListFilter
-
 from django.conf import settings
 
 from signbank.feedback.models import GeneralFeedback, SignFeedback, MissingSignFeedback, MorphemeFeedback
 from signbank.dictionary.models import Dataset
+
 
 class GeneralFeedbackAdmin(admin.ModelAdmin):
     readonly_fields = ['user', 'date', 'comment', 'video']
@@ -17,7 +17,6 @@ admin.site.register(GeneralFeedback, GeneralFeedbackAdmin)
 
 
 class SignFeedbackDatasetFilter(SimpleListFilter):
-
     title = _('Dataset')
     parameter_name = 'signfeedback_per_dataset'
 
@@ -60,7 +59,6 @@ admin.site.register(SignFeedback, SignFeedbackAdmin)
 
 
 class MissingSignFeedbackAdmin(admin.ModelAdmin):
-
     list_display = ['user', 'date']
     list_filter = ['user']
 
@@ -73,7 +71,6 @@ admin.site.register(MissingSignFeedback, MissingSignFeedbackAdmin)
 
 
 class MorphemeFeedbackDatasetFilter(SimpleListFilter):
-
     title = _('Dataset')
     parameter_name = 'morphemefeedback_per_dataset'
 

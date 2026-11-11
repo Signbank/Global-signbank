@@ -85,7 +85,11 @@ $(window).ready(function(){
         <dl class='dl-horizontal'>
             <dt>{% trans "Sign Language" %}</dt>
           {% if fb.gloss.signlanguage.all.count > 0 %}
-            <dd>{{fb.gloss.signlanguage.all}}</dd>
+            <dd>
+                {% for signlanguage in fb.gloss.signlanguage.all %}
+                    {{ signlanguage}}{% if not forloop.last %}, {% endif %}
+                {% endfor %}
+            </dd>
           {% elif fb.gloss.lemma.dataset %}
             <dd>{{fb.gloss.lemma.dataset.signlanguage}}</dd>
           {% else %}
@@ -123,7 +127,6 @@ $(window).ready(function(){
                      </div>
                   <form action="{{PREFIX_URL}}/feedback/sign/delete/{{fb.pk}}" method='post'>
                       {% csrf_token %}
-                      <input type='hidden' name='id' value='deletefeedbacksign_{{fb.pk}}'>
                       <input type='hidden' name='value' value='confirmed'>
                       <div class="modal-footer">
                         <button type="button" class="btn btn-primary" data-dismiss="modal">{% trans "Cancel" %}</button>
