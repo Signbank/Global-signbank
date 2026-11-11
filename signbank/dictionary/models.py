@@ -43,10 +43,8 @@ from signbank.settings.server_specific.asl_yale import HANDEDNESS_ARTICULATION_F
 # -*- coding: utf-8 -*-
 
 def get_default_language_id():
-    language = Language.objects.get(**DEFAULT_KEYWORDS_LANGUAGE)
-    if language is not None:
-        return language.id
-    return None
+    language = Language.objects.filter(**DEFAULT_KEYWORDS_LANGUAGE).first()
+    return language.id if language else 1
 
 
 def get_default_annotationidglosstranslation(gloss):
@@ -3378,10 +3376,11 @@ class Dataset(MetaModelMixin, models.Model):
     is_public = models.BooleanField(default=False, help_text="Is this dataset public or private?")
     signlanguage = models.ForeignKey("SignLanguage", on_delete=models.CASCADE)
     translation_languages = models.ManyToManyField("Language", help_text="These languages are shown as options"
-                                                                         "for translation equivalents.")
+                                                                         "for translation equivalents.",
+                                                   db_column='dataset_translation_languages')
     default_language = models.ForeignKey('Language', on_delete=models.DO_NOTHING,
                                          related_name='datasets_with_default_language',
-                                         null=True)
+                                         null=True, db_column='dataset_default_language')
     description = models.TextField()
     conditions_of_use = models.TextField(blank=True, help_text="Conditions of Use. Content license."
                                                                "This is different than the software code license.")
@@ -3730,8 +3729,6 @@ class AnnotationIdglossTranslation(models.Model):
         unique_together = (("gloss", "language"),)
 
     def __init__(self, *args, **kwargs):
-        if 'dataset' in kwargs:
-            self.dataset = kwargs.pop('dataset')
         super(AnnotationIdglossTranslation, self).__init__(*args, **kwargs)
 
     def save(self, *args, **kwargs):
