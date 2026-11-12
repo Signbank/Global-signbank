@@ -27,7 +27,7 @@ def renumber_pks_derivation_history(apps, schema_editor):
             setattr(derivationhistory_zero, 'new_id', new_id)
             derivationhistory_zero.save()
 
-            DerivationHistoryTranslation.objects.filter(semField_id=0).update(semField_id=new_id)
+            DerivationHistoryTranslation.objects.filter(derivHist_id=0).update(derivHist_id=new_id)
             QueryParameterDerivationHistory.objects.filter(fieldValue_id=0).update(fieldValue_id=new_id)
 
         except DerivationHistory.DoesNotExist:
