@@ -3376,11 +3376,9 @@ class Dataset(MetaModelMixin, models.Model):
     is_public = models.BooleanField(default=False, help_text="Is this dataset public or private?")
     signlanguage = models.ForeignKey("SignLanguage", on_delete=models.CASCADE)
     translation_languages = models.ManyToManyField("Language", help_text="These languages are shown as options"
-                                                                         "for translation equivalents.",
-                                                   db_column='dataset_translation_languages')
+                                                                         "for translation equivalents.")
     default_language = models.ForeignKey('Language', on_delete=models.DO_NOTHING,
-                                         related_name='datasets_with_default_language',
-                                         null=True, db_column='dataset_default_language')
+                                         related_name='datasets_with_default_language', null=True)
     description = models.TextField()
     conditions_of_use = models.TextField(blank=True, help_text="Conditions of Use. Content license."
                                                                "This is different than the software code license.")
