@@ -1,8 +1,8 @@
-Django==5.2
+Django==6.1
 django-bootstrap3==26.2
 django-colorfield==0.14.0
 django-guardian==3.4.1
-django-modeltranslation==0.19.12
+django-modeltranslation==0.20.6
 django-summernote==0.8.20
 django-tagging==0.5.0
 future==1.0.0
