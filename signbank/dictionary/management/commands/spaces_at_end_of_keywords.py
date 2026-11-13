@@ -19,6 +19,7 @@ class Command(BaseCommand):
             if translations.count() < 1:
                 print('No translations use keyword with space: ', kw)
                 keywords_to_delete.append(kw)
+                continue
             for tr in translations:
                 text_without_space = kw.text[:-1]
                 # keywords are unique
@@ -44,6 +45,7 @@ class Command(BaseCommand):
             if translations.count() < 1:
                 print('No translations use keyword with spaces: ', kw)
                 double_spaces_to_delete.append(kw)
+                continue
             for tr in translations:
                 text_without_spaces = kw.text[:-2]
                 # keywords are unique
