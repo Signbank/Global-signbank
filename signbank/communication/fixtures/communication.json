@@ -1,7 +1,7 @@
 [
   {
     "model": "communication.communication",
-    "pk": 0,
+    "pk": 1,
     "fields": {
       "label": "activation_email",
       "subject": "Request for account at {{site.name}}",
@@ -10,7 +10,7 @@
   },
   {
     "model": "communication.communication",
-    "pk": 1,
+    "pk": 2,
     "fields": {
       "label": "dataset_to_owner_existing_user_given_access",
       "subject": "A user has been given access to dataset {{dataset}} for {{site.name}}",
@@ -19,7 +19,7 @@
   },
   {
     "model": "communication.communication",
-    "pk": 2,
+    "pk": 3,
     "fields": {
       "label": "dataset_to_owner_new_user_given_access",
       "subject": "A new user has been given access to dataset {{dataset}} for {{site.name}}",
@@ -28,7 +28,7 @@
   },
   {
     "model": "communication.communication",
-    "pk": 3,
+    "pk": 4,
     "fields": {
       "label": "dataset_to_owner_user_requested_access",
       "subject": "Request for access to private dataset {{dataset}} for {{site.name}}",
@@ -37,7 +37,7 @@
   },
   {
     "model": "communication.communication",
-    "pk": 4,
+    "pk": 5,
     "fields": {
       "label": "dataset_to_user_existing_user_given_access",
       "subject": "Access granted to dataset {{dataset}} at {{site.name}}",

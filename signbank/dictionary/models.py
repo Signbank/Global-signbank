@@ -6,8 +6,10 @@ import os
 import json
 import tagging
 
+from functools import reduce
+import operator
 from django.utils.timezone import get_current_timezone
-from django.db.models import Q, When, Case, ForeignKey
+from django.db.models import Q, When, Case, F, Q, IntegerField, Value
 from django.db.models.fields import BooleanField, IntegerField, CharField, TextField
 from django.utils import timezone
 from django.db import models
@@ -43,10 +45,8 @@ from signbank.settings.server_specific.asl_yale import HANDEDNESS_ARTICULATION_F
 # -*- coding: utf-8 -*-
 
 def get_default_language_id():
-    language = Language.objects.get(**DEFAULT_KEYWORDS_LANGUAGE)
-    if language is not None:
-        return language.id
-    return None
+    language = Language.objects.filter(**DEFAULT_KEYWORDS_LANGUAGE).first()
+    return language.id if language else 1
 
 
 def get_default_annotationidglosstranslation(gloss):
@@ -317,8 +317,8 @@ class Dialect(models.Model):
 
 
 class SemanticField(models.Model):
-
-    machine_value = models.IntegerField(_("Machine value"), primary_key=True)
+    new_id = models.AutoField(primary_key=True)
+    machine_value = models.IntegerField(_("Machine value"), unique=True)
 
     name = models.CharField(max_length=20, unique=True)
     field_color = ColorField(default='ffffff')
@@ -329,8 +329,8 @@ class SemanticField(models.Model):
 
 
 class DerivationHistory(models.Model):
-
-    machine_value = models.IntegerField(_("Machine value"), primary_key=True)
+    new_id = models.AutoField(primary_key=True)
+    machine_value = models.IntegerField(_("Machine value"), unique=True)
 
     name = models.CharField(max_length=20, unique=True)
     field_color = ColorField(default='ffffff')
@@ -380,7 +380,8 @@ class RelationToForeignSign(models.Model):
 
 
 class Handshape(MetaModelMixin, models.Model):
-    machine_value = models.IntegerField(_("Machine value"), primary_key=True)
+    new_id = models.AutoField(primary_key=True)
+    machine_value = models.IntegerField(_("Machine value"), unique=True)
     name = models.CharField(max_length=50)
     field_color = ColorField(default='ffffff')
     hsNumSel = FieldChoiceForeignKey(FieldChoice, on_delete=models.SET_NULL, null=True,
@@ -950,7 +951,7 @@ class Phonology(MetaModelMixin, models.Model):
     weakdrop = models.BooleanField(_("Weak Drop"), null=True, blank=True)
     weakprop = models.BooleanField(_("Weak Prop"), null=True, blank=True)
 
-    domhndsh = models.ForeignKey(Handshape, on_delete=models.SET_NULL, null=True,
+    domhndsh = models.ForeignKey(Handshape, on_delete=models.SET_NULL, null=True, blank=True,
                                  verbose_name=_("Strong Hand"),
                                  related_name="%(class)s_strong_hand")
 
@@ -1117,6 +1118,18 @@ class Phonology(MetaModelMixin, models.Model):
 
     class Meta:
         abstract = True
+
+    @classmethod
+    def contribute_to_class(cls, name, *args, **kwargs):
+        super().contribute_to_class(cls, name, *args, **kwargs)
+
+        if not cls._meta.abstract:
+            class_name = cls.__name__.lower()
+
+            cls._meta.get_field('domhndsh').db_column = f"{class_name}_domhndsh"
+            cls._meta.get_field('subhndsh').db_column = f"{class_name}_subhndsh"
+            cls._meta.get_field('final_domhndsh').db_column = f"{class_name}_final_domhndsh"
+            cls._meta.get_field('final_subhndsh').db_column = f"{class_name}_final_subhndsh"
 
     def display_handedness(self):
         return self.handedness.name if self.handedness else '-'
@@ -2196,7 +2209,7 @@ class Gloss(Phonology):
         focus_gloss_values_tuple = self.minimal_pairs_tuple()
         index_of_handedness = settings.MINIMAL_PAIRS_FIELDS.index('handedness')
         handedness_of_this_gloss = focus_gloss_values_tuple[index_of_handedness]
-        empty_or_X_handedness = [str(fc.id) for fc in FieldChoice.objects.filter(field='Handedness', name__in=['-','N/A', 'X'])]
+        empty_or_X_handedness = [str(fc.pk) for fc in FieldChoice.objects.filter(field='Handedness', name__in=['-','N/A', 'X'])]
         if handedness_of_this_gloss in empty_or_X_handedness:
             # ignore gloss with empty or X handedness
             return minimalpairs_objects_list
@@ -2222,48 +2235,27 @@ class Gloss(Phonology):
                   Q(**{strong_hand_filter: empty_value})
 
         minimal_pairs_fields_qs = Gloss.objects.select_related('lemma').exclude(
-                id__in=finger_spelling_glosses).exclude(id=self.id).filter(q).exclude(q_empty).exclude(q_number_or_letter)
+                id__in=finger_spelling_glosses).exclude(id=self.pk).filter(q).exclude(q_empty).exclude(q_number_or_letter)
 
         minimal_pairs_fields = settings.MINIMAL_PAIRS_FIELDS
 
         zipped_tuples = zip(minimal_pairs_fields, focus_gloss_values_tuple)
 
+        diff_annotations = {}
         for (field, value_of_this_field) in zipped_tuples:
-            gloss_field = Gloss._meta.get_field(field)
-            if isinstance(gloss_field, models.ForeignKey) and gloss_field.related_model == Handshape:
-                # field is a handshape
-                different_field = 'different_' + field
-                field_compare = field + '__exact'
-                different_case = Case(When(**{ field_compare : value_of_this_field , 'then' : 0 }), default=1, output_field=IntegerField())
-                minimal_pairs_fields_qs = minimal_pairs_fields_qs.annotate(**{ different_field : different_case })
-            elif hasattr(gloss_field, 'field_choice_category'):
-                # field is a choice list
-                different_field = 'different_' + field
-                field_compare = field + '__exact'
-                different_case = Case(When(**{ field_compare : value_of_this_field , 'then' : 0 }), default=1, output_field=IntegerField())
-                minimal_pairs_fields_qs = minimal_pairs_fields_qs.annotate(**{ different_field : different_case })
 
-            else:
-                # field is a Boolean
-                different_field = 'different_' + field
-                field_compare = field + '__exact'
-                if value_of_this_field:
-                    different_case = Case(When(**{ field_compare : True , 'then' : 0 }), default=1, output_field=IntegerField())
+            condition = Q(**{f"{field}__exact": value_of_this_field})
 
-                    minimal_pairs_fields_qs = minimal_pairs_fields_qs.annotate(**{ different_field : different_case })
+            diff_annotations[f"different_{field}"] = Case(
+                When(condition, then=Value(0)),
+                default=Value(1),
+                output_field=IntegerField(),
+            )
 
-                else:
-                    # Boolean values might be empty, so compare to True and invert
-                    different_case = Case(When(**{ field_compare : True , 'then': 1 }), default=0, output_field=IntegerField())
-
-                    minimal_pairs_fields_qs = minimal_pairs_fields_qs.annotate(**{ different_field : different_case })
-
-        # construct extra filter to check that the number of different fields is exactly 1
-        extra_comparison = ' + '.join('different_'+field for field in minimal_pairs_fields)
-        extra_comparison = '(' + extra_comparison + ') = 1'
-        extra_comparison = [ extra_comparison ]
-
-        minimal_pairs_fields_qs = minimal_pairs_fields_qs.extra(where= extra_comparison )
+        minimal_pairs_fields_qs = minimal_pairs_fields_qs.annotate(**diff_annotations)
+        minimal_pairs_fields_qs = minimal_pairs_fields_qs.annotate(total_differences=reduce(
+                operator.add, (F(f"different_{field}") for field in minimal_pairs_fields)
+                )).filter(total_differences=1)
 
         for o in minimal_pairs_fields_qs:
             # return only the minimal pairs glosses, without the annotations
@@ -3367,8 +3359,7 @@ class Dataset(MetaModelMixin, models.Model):
     translation_languages = models.ManyToManyField("Language", help_text="These languages are shown as options"
                                                                          "for translation equivalents.")
     default_language = models.ForeignKey('Language', on_delete=models.DO_NOTHING,
-                                         related_name='datasets_with_default_language',
-                                         null=True)
+                                         related_name='datasets_with_default_language', null=True)
     description = models.TextField()
     conditions_of_use = models.TextField(blank=True, help_text="Conditions of Use. Content license."
                                                                "This is different than the software code license.")
@@ -3717,8 +3708,6 @@ class AnnotationIdglossTranslation(models.Model):
         unique_together = (("gloss", "language"),)
 
     def __init__(self, *args, **kwargs):
-        if 'dataset' in kwargs:
-            self.dataset = kwargs.pop('dataset')
         super(AnnotationIdglossTranslation, self).__init__(*args, **kwargs)
 
     def save(self, *args, **kwargs):
