@@ -26,7 +26,6 @@ def renumber_pks_handshape(apps, schema_editor):
             new_id = max_id + 1
 
             setattr(handshape_zero, 'new_id', new_id)
-            handshape_zero.machine_value = 0
             handshape_zero.save()
 
             handshape_machine_value_zero = Handshape.objects.get(machine_value=0)

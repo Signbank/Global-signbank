@@ -26,9 +26,10 @@ def renumber_pks_semantic_field(apps, schema_editor):
 
             setattr(semanticfield_zero, 'new_id', new_id)
             semanticfield_zero.save()
+            new_object = SemanticField.objects.get(machine_value=0)
 
-            SemanticFieldTranslation.objects.filter(semField_id=0).update(semField_id=new_id)
-            QueryParameterSemanticField.objects.filter(fieldValue_id=0).update(fieldValue_id=new_id)
+            SemanticFieldTranslation.objects.filter(semField_id=0).update(semField=new_object)
+            QueryParameterSemanticField.objects.filter(fieldValue_id=0).update(fieldValue=new_object)
 
         except SemanticField.DoesNotExist:
             pass
