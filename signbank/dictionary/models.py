@@ -6,8 +6,10 @@ import os
 import json
 import tagging
 
+from functools import reduce
+import operator
 from django.utils.timezone import get_current_timezone
-from django.db.models import Q, When, Case, ForeignKey
+from django.db.models import Q, When, Case, F, Q, IntegerField, Value
 from django.db.models.fields import BooleanField, IntegerField, CharField, TextField
 from django.utils import timezone
 from django.db import models
@@ -2207,7 +2209,7 @@ class Gloss(Phonology):
         focus_gloss_values_tuple = self.minimal_pairs_tuple()
         index_of_handedness = settings.MINIMAL_PAIRS_FIELDS.index('handedness')
         handedness_of_this_gloss = focus_gloss_values_tuple[index_of_handedness]
-        empty_or_X_handedness = [str(fc.id) for fc in FieldChoice.objects.filter(field='Handedness', name__in=['-','N/A', 'X'])]
+        empty_or_X_handedness = [str(fc.pk) for fc in FieldChoice.objects.filter(field='Handedness', name__in=['-','N/A', 'X'])]
         if handedness_of_this_gloss in empty_or_X_handedness:
             # ignore gloss with empty or X handedness
             return minimalpairs_objects_list
@@ -2233,48 +2235,27 @@ class Gloss(Phonology):
                   Q(**{strong_hand_filter: empty_value})
 
         minimal_pairs_fields_qs = Gloss.objects.select_related('lemma').exclude(
-                id__in=finger_spelling_glosses).exclude(id=self.id).filter(q).exclude(q_empty).exclude(q_number_or_letter)
+                id__in=finger_spelling_glosses).exclude(id=self.pk).filter(q).exclude(q_empty).exclude(q_number_or_letter)
 
         minimal_pairs_fields = settings.MINIMAL_PAIRS_FIELDS
 
         zipped_tuples = zip(minimal_pairs_fields, focus_gloss_values_tuple)
 
+        diff_annotations = {}
         for (field, value_of_this_field) in zipped_tuples:
-            gloss_field = Gloss._meta.get_field(field)
-            if isinstance(gloss_field, models.ForeignKey) and gloss_field.related_model == Handshape:
-                # field is a handshape
-                different_field = 'different_' + field
-                field_compare = field + '__exact'
-                different_case = Case(When(**{ field_compare : value_of_this_field , 'then' : 0 }), default=1, output_field=IntegerField())
-                minimal_pairs_fields_qs = minimal_pairs_fields_qs.annotate(**{ different_field : different_case })
-            elif hasattr(gloss_field, 'field_choice_category'):
-                # field is a choice list
-                different_field = 'different_' + field
-                field_compare = field + '__exact'
-                different_case = Case(When(**{ field_compare : value_of_this_field , 'then' : 0 }), default=1, output_field=IntegerField())
-                minimal_pairs_fields_qs = minimal_pairs_fields_qs.annotate(**{ different_field : different_case })
 
-            else:
-                # field is a Boolean
-                different_field = 'different_' + field
-                field_compare = field + '__exact'
-                if value_of_this_field:
-                    different_case = Case(When(**{ field_compare : True , 'then' : 0 }), default=1, output_field=IntegerField())
+            condition = Q(**{f"{field}__exact": value_of_this_field})
 
-                    minimal_pairs_fields_qs = minimal_pairs_fields_qs.annotate(**{ different_field : different_case })
+            diff_annotations[f"different_{field}"] = Case(
+                When(condition, then=Value(0)),
+                default=Value(1),
+                output_field=IntegerField(),
+            )
 
-                else:
-                    # Boolean values might be empty, so compare to True and invert
-                    different_case = Case(When(**{ field_compare : True , 'then': 1 }), default=0, output_field=IntegerField())
-
-                    minimal_pairs_fields_qs = minimal_pairs_fields_qs.annotate(**{ different_field : different_case })
-
-        # construct extra filter to check that the number of different fields is exactly 1
-        extra_comparison = ' + '.join('different_'+field for field in minimal_pairs_fields)
-        extra_comparison = '(' + extra_comparison + ') = 1'
-        extra_comparison = [ extra_comparison ]
-
-        minimal_pairs_fields_qs = minimal_pairs_fields_qs.extra(where= extra_comparison )
+        minimal_pairs_fields_qs = minimal_pairs_fields_qs.annotate(**diff_annotations)
+        minimal_pairs_fields_qs = minimal_pairs_fields_qs.annotate(total_differences=reduce(
+                operator.add, (F(f"different_{field}") for field in minimal_pairs_fields)
+                )).filter(total_differences=1)
 
         for o in minimal_pairs_fields_qs:
             # return only the minimal pairs glosses, without the annotations
