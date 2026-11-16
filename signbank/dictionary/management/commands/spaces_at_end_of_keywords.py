@@ -8,9 +8,11 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         keywords_to_delete = []
 
+        # Keyword ends with one space
         keyword_filter_values = Keyword.objects.filter(text__endswith=' ')
 
         for kw in keyword_filter_values:
+            # look for the exact same text without the space
             shorter_keyword = kw.text[:-1]
             shorter_keywords = Keyword.objects.filter(text=shorter_keyword)
             if shorter_keywords.count() < 1:
@@ -32,7 +34,10 @@ class Command(BaseCommand):
         if keywords_to_delete:
             print('Delete unused keywords with a space at the end: ', keywords_to_delete)
         for kw in keywords_to_delete:
-            kw.delete()
+            try:
+                kw.delete()
+            except ValueError:
+                print('Delete keyword failed for keyword: ', kw)
 
         double_spaces_to_delete = []
         keyword_filter_two_spaces = Keyword.objects.filter(text__endswith='  ')

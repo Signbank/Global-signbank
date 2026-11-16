@@ -7,8 +7,6 @@ from django.db.models import Max
 
 def renumber_pks_derivation_history(apps, schema_editor):
     DerivationHistory = apps.get_model('dictionary', 'DerivationHistory')
-    DerivationHistoryTranslation = apps.get_model('dictionary', 'DerivationHistoryTranslation')
-    QueryParameterDerivationHistory = apps.get_model('dictionary', 'QueryParameterDerivationHistory')
 
     for dh in DerivationHistory.objects.all():
         dh.new_id = dh.machine_value
@@ -26,10 +24,6 @@ def renumber_pks_derivation_history(apps, schema_editor):
 
             setattr(derivationhistory_zero, 'new_id', new_id)
             derivationhistory_zero.save()
-            new_object = DerivationHistory.objects.get(machine_value=0)
-
-            DerivationHistoryTranslation.objects.filter(derivHist_id=0).update(derivHist=new_object)
-            QueryParameterDerivationHistory.objects.filter(fieldValue_id=0).update(fieldValue=new_object)
 
         except DerivationHistory.DoesNotExist:
             pass
