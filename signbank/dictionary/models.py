@@ -3668,7 +3668,10 @@ class UserProfile(models.Model):
         return 'Profile for ' + str(self.user)
 
 
-def create_user_profile(sender, instance, created, **kwargs):
+def create_user_profile(sender, instance, created, raw, **kwargs):
+    if raw:
+        # a fixture is being loaded
+        return
     if created:
         UserProfile.objects.create(user=instance)
 
