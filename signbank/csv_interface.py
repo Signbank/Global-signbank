@@ -2,7 +2,6 @@ import re
 import csv
 import datetime as DT
 
-from django.db import models
 from django.utils.timezone import get_current_timezone
 from django.utils.translation import override, activate, gettext
 from django.core.exceptions import ObjectDoesNotExist, MultipleObjectsReturned
@@ -127,7 +126,7 @@ def sense_examplesentences_for_language(gloss, language):
     return sentences_display
 
 
-def map_values_to_sentence_type(values, include_sentences=True):
+def map_values_to_sentence_type(values, include_sentences=True, include_ids=False):
     map_errors = False
     activate(LANGUAGES[0][0])
     sentencetype_role_choices = [st.name for st in FieldChoice.objects.filter(field__iexact='SentenceType',
@@ -144,11 +143,14 @@ def map_values_to_sentence_type(values, include_sentences=True):
         pattern_sentence_types = '(-|N/A)'
     mapped_values = values
 
-    if include_sentences:
-        regex_string = (r'\s?\(([1-9]), %s, (True|False), %s([^\"]+)%s\)\s?'
+    if include_sentences and include_ids:
+        regex_string = (r'\s?\(([1-9][0-9]*),\s?([1-9][0-9]*), %s, (True|False), %s([^\"]+)%s\)\s?'
+                        % (pattern_sentence_types, LEFT_DOUBLE_QUOTE_PATTERNS, RIGHT_DOUBLE_QUOTE_PATTERNS))
+    elif include_sentences:
+        regex_string = (r'\s?\(([1-9][0-9]*), %s, (True|False), %s([^\"]+)%s\)\s?'
                         % (pattern_sentence_types, LEFT_DOUBLE_QUOTE_PATTERNS, RIGHT_DOUBLE_QUOTE_PATTERNS))
     else:
-        regex_string = r'\s?\(([1-9]), %s, (True|False)\)\s?' % pattern_sentence_types
+        regex_string = r'\s?\(([1-9][0-9]*), %s, (True|False)\)\s?' % pattern_sentence_types
     find_all = re.findall(regex_string, mapped_values)
     if not find_all:
         map_errors = True
@@ -218,7 +220,7 @@ def trim_columns_in_row(row):
 def parse_sentence_row(row_nr, sentence_dict):
     errors = []
     sentence_fields = '(' + sentence_dict['order'] + ', ' + sentence_dict['sentence_type'] + ', ' + sentence_dict['negative'] + ')'
-    find_all, map_errors = map_values_to_sentence_type(sentence_fields, include_sentences=False)
+    find_all, map_errors = map_values_to_sentence_type(sentence_fields, include_sentences=False, include_ids=False)
     if map_errors:
         errors += ['Row '+row_nr + ': Error parsing sentence columns Sense Number, Sentence Type, Negative: '+sentence_fields]
     gloss_pk = sentence_dict['gloss_pk']
@@ -252,9 +254,10 @@ def update_sentences_parse(sense_numbers, sense_numbers_to_sentences, new_senten
 
     new_sentence_tuples = []
     for sentence_tuple in new_sentences:
-        find_all, map_errors = map_values_to_sentence_type(sentence_tuple, include_sentences=True)
-        if map_errors or not find_all:
-            # examine errors
+        find_all, map_errors = map_values_to_sentence_type(sentence_tuple, include_sentences=True, include_ids=True)
+        if map_errors:
+            return False
+        if not find_all:
             continue
         new_sentence_tuples.append(find_all[0])
 
@@ -279,39 +282,48 @@ def update_sentences_parse(sense_numbers, sense_numbers_to_sentences, new_senten
 
 def sentence_tuple_list_to_string(sentence_tuple_string):
     tuple_list_of_strings = []
+    errors = False
 
     if not sentence_tuple_string:
-        return tuple_list_of_strings
+        return tuple_list_of_strings, errors
     sentences = [k for k in sentence_tuple_string.split(' | ')]
     for sentence_tuple in sentences:
-        find_all, map_errors = map_values_to_sentence_type(sentence_tuple, include_sentences=True)
-        if map_errors or not find_all:
-            # skip any non-parsing tuples, this was already checked so should not happen
+        find_all, map_errors = map_values_to_sentence_type(sentence_tuple, include_sentences=True, include_ids=True)
+        if map_errors:
+            errors = True
+            continue
+        if not find_all:
             continue
         tuple_list_of_strings.append(find_all[0])
 
-    return tuple_list_of_strings
+    return tuple_list_of_strings, errors
 
 
-def csv_sentence_tuples_list_compare(gloss_id, sentence_string_old, sentence_string_new, errors_found):
+def csv_sentence_tuples_list_compare(gloss, sentence_string_old, sentence_string_new):
     # convert input to list of tuples (order, sentence_id, sentence_type, negative, sentence_text)
-    sentence_tuples_old = sentence_tuple_list_to_string(sentence_string_old)
-    sentence_tuples_new = sentence_tuple_list_to_string(sentence_string_new)
+    sentence_tuples_old, _ = sentence_tuple_list_to_string(sentence_string_old)
+    sentence_tuples_new, map_errors = sentence_tuple_list_to_string(sentence_string_new)
 
     different_org = []
     different_new = []
-    errors = errors_found
+    errors = []
+
+    if map_errors:
+        error_string = gettext("Sentence column values must be a |-separated list of tuples: '(SenseNr,SentenceID,Type,Negative,Text)'")
+        errors_found = [error_string]
+        return different_org, different_new, errors_found
+
     original_sentences_lookup = {sid: (so, styp, sn, stxt)
                                  for (so, sid, styp, sn, stxt) in sentence_tuples_old}
     for (order, sentence_id, sentence_type, negative, sentence_text) in sentence_tuples_new:
         if (order, sentence_type, negative, sentence_text) != original_sentences_lookup[sentence_id]:
             (sord, styp, sneg, stxt) = original_sentences_lookup[sentence_id]
             if sord != order:
-                errors += ['ERROR Gloss ' + gloss_id + ': The Sense Number cannot be modified in CSV Update.']
+                errors += [gettext('The Sense Number cannot be modified in CSV Update.')]
             if styp != sentence_type:
-                errors += ['ERROR Gloss ' + gloss_id + ': The Sentence Type cannot be modified in CSV Update.']
+                errors += [gettext('The Sentence Type cannot be modified in CSV Update.')]
             if sneg != negative:
-                errors += ['ERROR Gloss ' + gloss_id + ': The Sentence Negative cannot be modified in CSV Update.']
+                errors += [gettext('The Sentence Negative cannot be modified in CSV Update.')]
             if errors:
                 continue
             tuple_string_new = '(' + order + ', ' + sentence_id + ', ' + sentence_type \
@@ -357,7 +369,7 @@ def csv_update_sentences(request, gloss, language, new_sentences_string, update=
 
     new_sentence_tuples = []
     for sentence_tuple in new_sentences:
-        find_all, map_errors = map_values_to_sentence_type(sentence_tuple, include_sentences=True)
+        find_all, map_errors = map_values_to_sentence_type(sentence_tuple, include_sentences=True, include_ids=False)
         if map_errors or not find_all:
             # examine errors
             if DEBUG_CSV:
@@ -709,9 +721,12 @@ def required_csv_columns(dataset_languages, create_or_update='create_gloss'):
     return required_columns, language_fields, optional_columns
 
 
-def csv_header_row_glosslist(dataset_languages):
+def csv_header_row_glosslist(dataset_languages, extended):
 
-    fieldnames = FIELDS['main'] + FIELDS['phonology'] + FIELDS['semantics'] + FIELDS['frequency'] + ['inWeb', 'isNew']
+    if extended:
+        fieldnames = FIELDS['phonology'] + FIELDS['semantics'] + FIELDS['frequency'] + FIELDS['main'] + ['inWeb', 'isNew']
+    else:
+        fieldnames = FIELDS['phonology']
     fields = [Gloss.get_field(fname) for fname in fieldnames if fname in Gloss.get_field_names()]
 
     lang_attr_name = 'name_' + DEFAULT_KEYWORDS_LANGUAGE['language_code_2char']
@@ -720,25 +735,28 @@ def csv_header_row_glosslist(dataset_languages):
     lemmaidglosstranslation_fields = ["Lemma ID Gloss" + " (" + getattr(language, lang_attr_name) + ")"
                                       for language in dataset_languages]
 
-    keyword_fields = ["Senses" + " (" + getattr(language, lang_attr_name) + ")"
-                      for language in dataset_languages]
-
-    sentence_fields = ["Example Sentences" + " (" + getattr(language, lang_attr_name) + ")"
-                       for language in dataset_languages]
-
     # CSV should be the first language in the settings
     activate(LANGUAGES[0][0])
-    header = ['Signbank ID', 'Dataset'] + lemmaidglosstranslation_fields + annotationidglosstranslation_fields \
-        + keyword_fields + sentence_fields + [f.verbose_name.encode('ascii', 'ignore').decode() for f in fields]
-    for extra_column in ['Dialects', 'Sequential Morphology', 'Simultaneous Morphology',
-                         'Blend Morphology',
-                         'Relations to other signs', 'Relations to foreign signs', 'Tags', 'Notes']:
-        header.append(extra_column)
 
+    if extended:
+        keyword_fields = ["Senses" + " (" + getattr(language, lang_attr_name) + ")"
+                          for language in dataset_languages]
+
+        sentence_fields = ["Example Sentences" + " (" + getattr(language, lang_attr_name) + ")"
+                           for language in dataset_languages]
+        header = ['Signbank ID', 'Dataset'] + lemmaidglosstranslation_fields + annotationidglosstranslation_fields \
+                 + keyword_fields + sentence_fields + [f.verbose_name.encode('ascii', 'ignore').decode() for f in fields]
+        for extra_column in ['Dialects', 'Sequential Morphology', 'Simultaneous Morphology',
+                             'Blend Morphology',
+                             'Relations to other signs', 'Relations to foreign signs', 'Tags', 'Notes']:
+            header.append(extra_column)
+    else:
+        header = ['Signbank ID', 'Dataset'] + lemmaidglosstranslation_fields + annotationidglosstranslation_fields \
+                 + [f.verbose_name.encode('ascii', 'ignore').decode() for f in fields]
     return header
 
 
-def csv_gloss_to_row(gloss, dataset_languages, fields):
+def csv_gloss_to_row(gloss, dataset_languages, fields, extended):
 
     row = [str(gloss.pk), gloss.lemma.dataset.acronym]
     for language in dataset_languages:
@@ -758,15 +776,16 @@ def csv_gloss_to_row(gloss, dataset_languages, fields):
         else:
             row.append("")
 
-    # Put senses (keywords) per language in a cell
-    for language in dataset_languages:
-        gloss_senses_of_language = sense_translations_for_language(gloss, language)
-        row.append(gloss_senses_of_language)
+    if extended:
+        # Put senses (keywords) per language in a cell
+        for language in dataset_languages:
+            gloss_senses_of_language = sense_translations_for_language(gloss, language)
+            row.append(gloss_senses_of_language)
 
-    # Put example sentences per language in a cell
-    for language in dataset_languages:
-        gloss_example_sentences_of_language = sense_examplesentences_for_language(gloss, language)
-        row.append(gloss_example_sentences_of_language)
+        # Put example sentences per language in a cell
+        for language in dataset_languages:
+            gloss_example_sentences_of_language = sense_examplesentences_for_language(gloss, language)
+            row.append(gloss_example_sentences_of_language)
 
     for f in fields:
         # Try the value of the choicelist
@@ -776,16 +795,15 @@ def csv_gloss_to_row(gloss, dataset_languages, fields):
             else:
                 field_value = getattr(gloss, f.name)
                 value = field_value.name if field_value else '-'
-        elif isinstance(f, models.ForeignKey) and f.related_model == Handshape:
+        elif f.related_model == Handshape:
             handshape_field_value = getattr(gloss, f.name)
             value = handshape_field_value.name if handshape_field_value else '-'
-        elif f.related_model == SemanticField:
+        elif f.related_model == SemanticField and extended:
             value = ", ".join([str(sf.name) for sf in gloss.semField.all()])
-        elif f.related_model == DerivationHistory:
+        elif f.related_model == DerivationHistory and extended:
             value = ", ".join([str(sf.name) for sf in gloss.derivHist.all()])
         else:
             internal_value = getattr(gloss, f.name)
-
             if ((f.__class__.__name__ == 'CharField' or f.__class__.__name__ == 'TextField')
                     and internal_value not in [None, '', '-', '------', ' ']):
                 # surround internal string value with double quotes for export, in case of punctuation (semi-colon) in string
@@ -805,68 +823,70 @@ def csv_gloss_to_row(gloss, dataset_languages, fields):
                 elif f.__class__.__name__ == 'CharField' or f.__class__.__name__ == 'TextField':
                     value = ''
                 elif f.__class__.__name__ == 'IntegerField':
-                    value = 0
+                    value = '0'
+                elif f.__class__.__name__ == 'BooleanField':
+                    value = str(value)
                 else:
                     # what to do here? leave it as None or use empty string (for export to csv)
                     value = ''
-
         if not isinstance(value, str):
             # this is needed for csv
             value = str(value)
         row.append(value)
 
-    # get dialects
-    dialects = gloss.get_dialect_display()
-    row.append(dialects)
+    if extended:
+        # get dialects
+        dialects = gloss.get_dialect_display()
+        row.append(dialects)
 
-    # get morphology
-    # Sequential Morphology
-    morphemes = gloss.get_hasComponentOfType_display()
-    row.append(morphemes)
+        # get morphology
+        # Sequential Morphology
+        morphemes = gloss.get_hasComponentOfType_display()
+        row.append(morphemes)
 
-    # Simultaneous Morphology
-    simultaneous_morphemes = gloss.get_morpheme_display()
-    row.append(simultaneous_morphemes)
+        # Simultaneous Morphology
+        simultaneous_morphemes = gloss.get_morpheme_display()
+        row.append(simultaneous_morphemes)
 
-    # Blend Morphology
-    blend_morphemes = gloss.get_blendmorphology_display()
-    row.append(blend_morphemes)
+        # Blend Morphology
+        blend_morphemes = gloss.get_blendmorphology_display()
+        row.append(blend_morphemes)
 
-    # get relations to other signs
-    relations_categories = gloss.get_relation_display()
-    row.append(relations_categories)
+        # get relations to other signs
+        relations_categories = gloss.get_relation_display()
+        row.append(relations_categories)
 
-    # get relations to foreign signs
-    relations_categories = gloss.get_relationToForeignSign_display()
-    row.append(relations_categories)
+        # get relations to foreign signs
+        relations_categories = gloss.get_relationToForeignSign_display()
+        row.append(relations_categories)
 
-    # export tags
-    tags_of_gloss = TaggedItem.objects.filter(object_id=gloss.id)
-    tag_names_of_gloss = []
-    for t_obj in tags_of_gloss:
-        tag_id = t_obj.tag_id
-        tag_name = Tag.objects.get(id=tag_id)
-        tag_names_of_gloss += [str(tag_name).replace('_', ' ')]
+        # export tags
+        tags_of_gloss = TaggedItem.objects.filter(object_id=gloss.id)
+        tag_names_of_gloss = []
+        for t_obj in tags_of_gloss:
+            tag_id = t_obj.tag_id
+            tag_name = Tag.objects.get(id=tag_id)
+            tag_names_of_gloss += [str(tag_name).replace('_', ' ')]
 
-    tag_names = ", ".join(tag_names_of_gloss)
-    row.append(tag_names)
+        tag_names = ", ".join(tag_names_of_gloss)
+        row.append(tag_names)
 
-    # export notes
-    notes_of_gloss = gloss.definition_set.all()
+        # export notes
+        notes_of_gloss = gloss.definition_set.all()
 
-    notes_list = []
-    for note in notes_of_gloss:
-        notes_list += [note.note_tuple()]
-    sorted_notes_list = sorted(notes_list, key=lambda x: (x[0], x[1], x[2], x[3]))
+        notes_list = []
+        for note in notes_of_gloss:
+            notes_list += [note.note_tuple()]
+        sorted_notes_list = sorted(notes_list, key=lambda x: (x[0], x[1], x[2], x[3]))
 
-    notes_list = []
-    for (role, published, count, text) in sorted_notes_list:
-        # does not use a comprehension because of nested parentheses in role and text fields
-        tuple_reordered = role + ': (' + published + ',' + count + ',' + text + ')'
-        notes_list.append(tuple_reordered)
+        notes_list = []
+        for (role, published, count, text) in sorted_notes_list:
+            # does not use a comprehension because of nested parentheses in role and text fields
+            tuple_reordered = role + ': (' + published + ',' + count + ',' + text + ')'
+            notes_list.append(tuple_reordered)
 
-    notes_display = ", ".join(notes_list)
-    row.append(notes_display)
+        notes_display = ", ".join(notes_list)
+        row.append(notes_display)
 
     # Make it safe for weird chars
     safe_row = []
@@ -922,7 +942,7 @@ def csv_morpheme_to_row(gloss, dataset_languages, fields):
             else:
                 field_value = getattr(gloss, f.name)
                 value = field_value.name if field_value else '-'
-        elif isinstance(f, models.ForeignKey) and f.related_model == Handshape:
+        elif f.related_model == Handshape:
             handshape_field_value = getattr(gloss, f.name)
             value = handshape_field_value.name if handshape_field_value else '-'
         elif f.related_model == SemanticField:

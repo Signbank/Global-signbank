@@ -43,7 +43,7 @@ from signbank.video.forms import VideoUploadForGlossCreateForm
 from signbank.dictionary.models import (Dataset, Language, Gloss, Morpheme, LemmaIdgloss, LemmaIdglossTranslation,
                                         Handshape, SignLanguage, AnnotatedSentence,
                                         AnnotationIdglossTranslation, FieldChoice, AffiliatedUser, AffiliatedGloss,
-                                        DeletedGlossOrMedia,
+                                        DeletedGlossOrMedia, get_default_annotationidglosstranslation,
                                         get_default_language_id, CATEGORY_MODELS_MAPPING)
 from signbank.dictionary.forms import (LemmaCreateForm, GlossCreateForm, MorphemeCreateForm, ImageUploadForHandshapeForm,
                                        ImageUploadForGlossForm, CSVUploadForm)
@@ -52,8 +52,8 @@ from signbank.dictionary.update_csv import (update_simultaneous_morphology, upda
                                             update_sequential_morphology, subst_relations, subst_foreignrelations,
                                             update_tags, subst_notes, subst_semanticfield)
 from signbank.dictionary.context_data import get_selected_datasets
-from signbank.tools import (get_two_letter_dir, get_default_annotationidglosstranslation,
-                            get_dataset_languages, get_datasets_with_public_glosses, get_interface_language_and_default_language_codes,
+from signbank.tools import (get_two_letter_dir,
+                            get_dataset_languages, get_datasets_with_public_glosses,
                             create_gloss_from_valuedict, compare_valuedict_to_gloss, compare_valuedict_to_lemma,
                             create_zip_with_json_files,
                             detect_delimiter,
@@ -66,7 +66,7 @@ from signbank.csv_interface import (csv_create_senses, csv_update_sentences, csv
 from signbank.dictionary.translate_choice_list import (machine_value_to_translated_human_value,
                                                        choicelist_queryset_to_translated_dict)
 from signbank.abstract_machine import get_interface_language_api
-from signbank.api_token import put_api_user_in_request
+from signbank.api_token import put_api_user_in_request_read_only
 from signbank.dictionary.gloss_revision import pretty_print_revisions
 from signbank.dictionary.adminviews import show_warning
 
@@ -317,14 +317,9 @@ def missing_video_list(selected_datasets):
                 yield gloss, gloss_video_path
 
 
+@login_required
 def missing_video_view(request):
     """A view for the above list"""
-
-    # check that the user is logged in
-    if not request.user.is_authenticated:
-        messages.add_message(request, messages.ERROR, _('Please login to use this functionality.'))
-        return HttpResponseRedirect(PREFIX_URL + '/datasets/available')
-
     selected_datasets = get_selected_datasets(request)
 
     glosses = missing_video_list(selected_datasets)
@@ -333,6 +328,7 @@ def missing_video_view(request):
                               {'glosses': glosses})
 
 
+@login_required
 def try_code(request, pk):
     """A view for the developer to try out senses for a particular gloss"""
     context = {}
@@ -390,6 +386,7 @@ def try_code(request, pk):
 
 
 # this method is called from the Signbank menu bar
+@login_required
 def add_new_sign(request):
     if not request.user.has_perm('dictionary.add_gloss'):
         raise PermissionDenied
@@ -429,6 +426,7 @@ def add_new_sign(request):
     return render(request, 'dictionary/add_gloss.html', context)
 
 
+@login_required
 def add_new_morpheme(request):
 
     context = {}
@@ -460,6 +458,7 @@ def add_new_morpheme(request):
     return render(request,'dictionary/add_morpheme.html',context)
 
 
+@login_required
 def import_csv_create(request):
     user = request.user
     user_datasets = guardian.shortcuts.get_objects_for_user(user, 'change_dataset', Dataset)
@@ -865,6 +864,7 @@ def import_csv_create(request):
                    'SHOW_DATASET_INTERFACE_OPTIONS': SHOW_DATASET_INTERFACE_OPTIONS})
 
 
+@login_required
 def import_csv_update(request):
     user = request.user
     user_datasets = guardian.shortcuts.get_objects_for_user(user, 'change_dataset', Dataset)
@@ -876,6 +876,31 @@ def import_csv_update(request):
     required_columns, language_fields, optional_columns = required_csv_columns(dataset_languages, 'update_gloss')
 
     list_choice_fields_choices = choice_fields_choices()
+
+    all_selected_datasets_have_change_permission = all([ds in user_datasets for ds in selected_datasets])
+
+    if selected_datasets.count() > 1 and not all_selected_datasets_have_change_permission:
+        # if more than one dataset is selected, only allowed if the user has change permission for all selected datasets, otherwise only one should be selected
+        feedback_message = _('Please select only one dataset.')
+        messages.add_message(request, messages.ERROR, feedback_message)
+
+        return render(request, 'dictionary/import_csv_update.html',
+                      {'form': CSVUploadForm(), 'stage': 0, 'changes': [],
+                       'creation': [],
+                       'gloss_already_exists': [],
+                       'error': [],
+                       'dataset_languages': dataset_languages,
+                       'selected_datasets': selected_datasets,
+                       'optional_columns': optional_columns,
+                       'choice_fields_choices': list_choice_fields_choices,
+                       'translation_languages_dict': {},
+                       'seen_datasets': [],
+                       'USE_REGULAR_EXPRESSIONS': USE_REGULAR_EXPRESSIONS,
+                       'SHOW_DATASET_INTERFACE_OPTIONS': SHOW_DATASET_INTERFACE_OPTIONS})
+
+    dataset = selected_datasets.first()
+
+    dataset_languages = dataset.translation_languages.all()
 
     translation_languages_dict = {}
     # this dictionary is used in the template, it maps each dataset to a list of
@@ -890,6 +915,7 @@ def import_csv_update(request):
 
     seen_datasets = []
     seen_dataset_names = []
+    earlier_updates_same_csv = []
 
     # fatal errors are duplicate column headers, data in columns without headers
     # column headers that do not correspond to database fields
@@ -906,8 +932,6 @@ def import_csv_update(request):
     error = []
     creation = []
     gloss_already_exists = []
-    earlier_updates_same_csv = []
-    earlier_updates_lemmaidgloss = {}
 
     encoding_error = False
 
@@ -918,8 +942,8 @@ def import_csv_update(request):
     with override(LANGUAGE_CODE):
         columns_to_skip = {field.verbose_name: field for field in gloss_fields if field.name in FIELDS['frequency']}
 
-    # this is needed to make sure the interface shows the correct language
-    activate(request.LANGUAGE_CODE)
+    # # this is needed to make sure the interface shows the correct language
+    # activate(request.LANGUAGE_CODE)
 
     # Process Input File
     if len(request.FILES) > 0:
@@ -1117,16 +1141,7 @@ def import_csv_update(request):
                 # break out of enumerate csv lines
                 # Dataset or Signbank ID data for configuring updates in the next step is compromised
                 break
-            # The Lemma ID Gloss may already exist.
-            lemmaidglosstranslations = {}
-            contextual_error_messages_lemmaidglosstranslations = []
-            for language in dataset.translation_languages.all():
-                language_name = getattr(language, DEFAULT_LANGUAGE_HEADER_COLUMN['English'])
-                column_name = "Lemma ID Gloss (%s)" % language_name
-                if column_name in value_dict:
-                    lemma_idgloss_value = value_dict[column_name].strip()
-                    # also stores empty values
-                    lemmaidglosstranslations[language] = lemma_idgloss_value
+
             # updating glosses
             try:
                 gloss = Gloss.objects.select_related().get(pk=pk, archived=False)
@@ -1135,28 +1150,56 @@ def import_csv_update(request):
                 error.append(e)
                 continue
 
-            if gloss.lemma.dataset != dataset:
-                e1 = gettext('Row {row}: The Dataset column ({acronym}) does not correspond to that of the Signbank ID ({glossid})').format(row=str(nl+2), acronym=dataset.acronym, glossid=str(pk))
-                error.append(e1)
-                # ignore the rest of the row
+            if gloss.pk in earlier_updates_same_csv:
+                e = gettext("Row {row}: Signbank ID {glossid} already seen.").format(row=str(nl+2), glossid=str(gloss.pk))
+                error.append(e)
                 continue
-            # dataset is the same
+            else:
+                earlier_updates_same_csv.append(gloss.pk)
 
-            # If there are changes in the LemmaIdglossTranslation, the changes should refer to another LemmaIdgloss
-            current_lemmaidglosstranslations = {}
-            for language in gloss.lemma.dataset.translation_languages.all():
-                lemma_translation = LemmaIdglossTranslation.objects.filter(language=language, lemma=gloss.lemma).first()
-                current_lemmaidglosstranslations[language] = lemma_translation.text if lemma_translation else ''
-            if lemmaidglosstranslations \
-                    and current_lemmaidglosstranslations != lemmaidglosstranslations:
-                help = gettext("Row {row}: Attempt to update Lemma translations for Signbank ID {glossid}. Use Import CSV Lemma Update instead.").format(row=str(nl+2), glossid=str(pk))
-                error.append(help)
+            def get_current_lemma_translations(lemma):
+                """Return {language: text} for every translation language of the lemma's dataset."""
+                languages = lemma.dataset.translation_languages.all()
+                stored = {t.language_id: t.text for t in lemma.lemmaidglosstranslation_set.all()}
+                return {language: stored.get(language.pk, '') for language in languages}
+
+            def differs_only_by_whitespace(csv_translations, current_translations):
+                """True if some stored text equals the CSV text once its surrounding whitespace is stripped."""
+                for language, csv_text in csv_translations.items():
+                    stored_text = current_translations.get(language)
+                    if stored_text is not None and stored_text != csv_text and stored_text.strip() == csv_text:
+                        return True
+                return False
+
+            # retrieve the values in the lemma translation columns of the csv for this gloss row
+            lemmaidglosstranslations = {}
+            for language in dataset.translation_languages.all():
+                language_name = getattr(language, DEFAULT_LANGUAGE_HEADER_COLUMN['English'])
+                column_name = "Lemma ID Gloss (%s)" % language_name
+                if column_name in value_dict:
+                    lemma_idgloss_value = value_dict[column_name].strip()
+                    # also stores empty values
+                    lemmaidglosstranslations[language] = lemma_idgloss_value
+            
+            current_lemmaidglosstranslations = get_current_lemma_translations(gloss.lemma)
+
+            if lemmaidglosstranslations and lemmaidglosstranslations != current_lemmaidglosstranslations:
+                if differs_only_by_whitespace(lemmaidglosstranslations, current_lemmaidglosstranslations):
+                    hint = gettext("There are white space characters at the start or end of the text in the database.")
+                else:
+                    hint = gettext("Use Import CSV Lemma Update instead.")
+
+                error.append(gettext("Row {row}: Attempt to update Lemma translations for Signbank ID {glossid}.")
+                             .format(row=nl + 2, glossid=pk))
+                error.append(
+                    gettext("The stored lemma translations differ from those in the CSV: {lemmaidglosstranslations}.")
+                    .format(lemmaidglosstranslations=current_lemmaidglosstranslations))
+                error.append(hint)
                 continue
 
             try:
-                (changes_found, errors_found, earlier_updates_same_csv, earlier_updates_lemmaidgloss) = \
-                            compare_valuedict_to_gloss(value_dict, gloss.id, user_datasets_names, nl,
-                                                       earlier_updates_same_csv, earlier_updates_lemmaidgloss,
+                (changes_found, errors_found, fatal_error) = \
+                            compare_valuedict_to_gloss(value_dict, gloss, user_datasets_names, nl, request.LANGUAGE_CODE,
                                                        notes_toggle, notes_assign_toggle,
                                                        semfield_toggle, semfield_assign_toggle, tags_toggle)
                 changes += changes_found
@@ -1164,6 +1207,9 @@ def import_csv_update(request):
                 if errors_found:
                     errors_found_string = '\n'.join(errors_found)
                     error += [errors_found_string]
+
+                if fatal_error:
+                    break
 
             except KeyError as e:
 
@@ -1399,6 +1445,7 @@ def import_csv_update(request):
                    'SHOW_DATASET_INTERFACE_OPTIONS': SHOW_DATASET_INTERFACE_OPTIONS})
 
 
+@login_required
 def import_csv_lemmas(request):
     user = request.user
     user_datasets = guardian.shortcuts.get_objects_for_user(user, 'change_dataset', Dataset)
@@ -1710,6 +1757,7 @@ def switch_to_language(request,language):
     return HttpResponse('OK')
 
 
+@login_required
 def create_citation_image(request, pk):
     if 'HTTP_REFERER' in request.META:
         url = request.META['HTTP_REFERER']
@@ -1726,6 +1774,7 @@ def create_citation_image(request, pk):
     return redirect(url)
 
 
+@login_required
 def generate_video_stills_for_gloss(request, pk):
     if 'HTTP_REFERER' in request.META:
         url = request.META['HTTP_REFERER']
@@ -1742,6 +1791,7 @@ def generate_video_stills_for_gloss(request, pk):
     return redirect(url)
 
 
+@login_required
 def save_chosen_still_for_gloss(request, pk):
 
     gloss = get_object_or_404(Gloss, pk=pk, archived=False)
@@ -1774,6 +1824,7 @@ def save_chosen_still_for_gloss(request, pk):
     return JsonResponse({'redirect_url': redirect_url})
 
 
+@login_required
 @require_http_methods(["POST"])
 def add_image(request):
 
@@ -1857,6 +1908,7 @@ def add_image(request):
     return redirect(redirect_url)
 
 
+@login_required
 @require_http_methods(["POST"])
 def delete_image(request, pk):
 
@@ -1885,6 +1937,7 @@ def delete_image(request, pk):
     return redirect(url)
 
 
+@login_required
 @require_http_methods(["POST"])
 def add_handshape_image(request):
 
@@ -1972,6 +2025,7 @@ def gloss_annotations(this_gloss):
     return ", ".join(translations)
 
 
+@login_required
 def find_and_save_variants(request):
 
     selected_datasets = get_selected_datasets(request)
@@ -2065,6 +2119,7 @@ def find_and_save_variants(request):
                    })
 
 
+@login_required
 def get_unused_videos(request):
 
     selected_datasets = get_selected_datasets(request)
@@ -2100,7 +2155,7 @@ def get_unused_videos(request):
 
 
 @csrf_exempt
-@put_api_user_in_request
+@put_api_user_in_request_read_only
 def package(request, language_code='en'):
 
     activate(language_code)
@@ -2176,7 +2231,7 @@ def package(request, language_code='en'):
     return response
 
 
-@put_api_user_in_request
+@put_api_user_in_request_read_only
 def info(request):
     user_datasets = guardian.shortcuts.get_objects_for_user(request.user, 'view_dataset', Dataset)
     viewable_datasets = get_datasets_with_public_glosses()
@@ -2268,6 +2323,7 @@ def protected_media(request, filename, document_root=WRITABLE_FOLDER, show_index
         return serve(request, filename, document_root, show_indexes)
 
 
+@login_required
 def show_glosses_with_no_lemma(request):
 
     selected_datasets = get_selected_datasets(request)
@@ -2385,6 +2441,7 @@ def show_unassigned_glosses(request):
                       })
 
 
+@login_required
 def choice_lists(request):
 
     selected_datasets = get_selected_datasets(request)
@@ -2444,6 +2501,7 @@ def choice_lists(request):
     return HttpResponse(json.dumps(all_choice_lists), content_type='application/json')
 
 
+@login_required
 def gloss_revision_history(request,gloss_pk):
 
     gloss = get_object_or_404(Gloss, pk=gloss_pk, archived=False)
@@ -2479,6 +2537,7 @@ def gloss_revision_history(request,gloss_pk):
                    })
 
 
+@login_required
 def find_interesting_frequency_examples(request):
 
     INTERESTING_FREQUENCY_THRESHOLD = 25
@@ -2600,6 +2659,7 @@ def gloss_api_get_sign_name_and_media_info(request):
     return HttpResponse(json.dumps(response), content_type="application/json")
 
 
+@login_required
 def import_csv_create_sentences(request):
     user = request.user
     user_datasets = get_objects_for_user(user, 'change_dataset', Dataset)
@@ -2867,6 +2927,7 @@ def import_csv_create_sentences(request):
                           'SHOW_DATASET_INTERFACE_OPTIONS': SHOW_DATASET_INTERFACE_OPTIONS})
 
 
+@login_required
 def test_abstract_machine(request, datasetid):
     # used to test api method since PyCharm runserver does not support CORS
     dataset_id = int(datasetid)
@@ -2892,6 +2953,7 @@ def test_abstract_machine(request, datasetid):
                    })
 
 
+@login_required
 @csrf_exempt
 def test_am_update_gloss(request, datasetid, glossid):
     # used to test api method since PyCharm runserver does not support CORS

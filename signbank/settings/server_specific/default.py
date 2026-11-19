@@ -293,6 +293,13 @@ USE_FIELD_CHOICE_FOREIGN_KEY = True
 # Gloss fields used in the API
 API_FIELDS = ['idgloss']
 
+# Maximum number of API requests per hour per token, used when a token has no rate limit of its own.
+# None means unlimited. Tokens created by users on their profile page can only lower this limit.
+API_TOKEN_DEFAULT_RATE_LIMIT = None
+
+# Manual for the API, linked from the API token section of the user profile. Leave empty to hide the link.
+API_MANUAL_URL = 'https://signbank.github.io/Global-signbank/'
+
 # How long will new glosses be considered new?
 import datetime
 RECENTLY_ADDED_SIGNS_PERIOD = datetime.timedelta(days=90)

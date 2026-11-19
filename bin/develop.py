@@ -2,6 +2,8 @@
 import os
 import sys
 from django.core.management import execute_from_command_line
+import pymysql
+pymysql.install_as_MySQLdb()
 
 if __name__ == "__main__":
     sys.path.append(os.path.dirname(os.path.dirname(__file__)))

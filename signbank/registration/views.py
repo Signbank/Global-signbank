@@ -2,11 +2,15 @@
 Views which allow users to create and activate accounts.
 """
 import json
-from datetime import date
+from datetime import date, timedelta
 
 from django.conf import settings
 from django.http import HttpResponseRedirect, HttpResponse, JsonResponse
 from django.shortcuts import render
+from django.urls import reverse
+from django.utils import timezone
+from django.contrib.auth.decorators import login_required
+from django.views.decorators.http import require_POST
 from django.utils.translation import gettext_lazy as _
 from django.middleware.csrf import get_token
 from django.contrib.auth.models import Group, User
@@ -25,7 +29,7 @@ from signbank.communication.models import generate_communication
 from signbank.dictionary.models import Dataset, UserProfile, SearchHistory, Affiliation, AffiliatedUser, SignbankAPIToken
 from signbank.dictionary.context_data import get_selected_datasets
 from signbank.tools import get_users_without_dataset
-from signbank.api_token import generate_auth_token, hash_token
+from signbank.api_token import create_api_token
 
 
 def activate(request, activation_key, template_name='registration/activate.html'):
@@ -329,8 +333,7 @@ def user_profile(request):
     user_can_change_glosses = len(change_permit_datasets) > 0
     possible_affiliations = [aff for aff in Affiliation.objects.all()]
     user_affiliation = [au for au in AffiliatedUser.objects.filter(user=request.user)]
-    user_has_api_tokens = user_object.tokens.all().count()
-    user_api_tokens = [str(token) for token in user_object.tokens.all()]
+    user_api_tokens = list(user_object.tokens.all())
     return render(request, 'user_profile.html', {'selected_datasets': selected_datasets,
                                                  'view_permit_datasets': view_permit_datasets,
                                                  'change_permit_datasets': change_permit_datasets,
@@ -338,21 +341,66 @@ def user_profile(request):
                                                  'user_has_queries': user_has_queries,
                                                  'possible_affiliations': possible_affiliations,
                                                  'user_affiliation': user_affiliation,
-                                                 'user_has_api_tokens': user_has_api_tokens,
                                                  'user_api_tokens': user_api_tokens,
+                                                 'api_token_expiry_choices': API_TOKEN_EXPIRY_CHOICES,
+                                                 'api_token_default_expiry_days': API_TOKEN_DEFAULT_EXPIRY_DAYS,
+                                                 'api_token_default_rate_limit': getattr(settings, 'API_TOKEN_DEFAULT_RATE_LIMIT', None),
+                                                 'api_token_max_rate_limit': (getattr(settings, 'API_TOKEN_DEFAULT_RATE_LIMIT', None)
+                                                                              or API_TOKEN_MAX_RATE_LIMIT),
+                                                 'api_manual_url': getattr(settings, 'API_MANUAL_URL', ''),
                                                  'SHOW_DATASET_INTERFACE_OPTIONS': settings.SHOW_DATASET_INTERFACE_OPTIONS,
                                                  'expiry': expiry,
                                                  'delta': delta})
 
 
-def auth_token(request):
+API_TOKEN_EXPIRY_CHOICES = [(30, _("30 days")), (90, _("90 days")), (180, _("180 days")),
+                            (365, _("1 year")), (0, _("Never"))]
+API_TOKEN_DEFAULT_EXPIRY_DAYS = 90
+# upper bound for a rate limit chosen on the profile page, well within the range of the database field
+API_TOKEN_MAX_RATE_LIMIT = 1000000
 
-    user_object = User.objects.get(username=request.user)
 
-    # generate a token and create a SignbankAPIToken for it
-    new_token = generate_auth_token()
-    hashed_token = hash_token(new_token)
-    signbank_Token = SignbankAPIToken.objects.create(signbank_user=user_object,
-                                                     api_token=hashed_token)
-    signbank_Token.save()
-    return JsonResponse({'new_token': new_token})
+@login_required
+@require_POST
+def generate_api_token(request):
+    """The token itself is returned once and never stored"""
+    name = request.POST.get('name', '').strip()[:100]
+
+    try:
+        expiry_days = int(request.POST.get('expiry_days', API_TOKEN_DEFAULT_EXPIRY_DAYS))
+    except ValueError:
+        expiry_days = -1
+    if expiry_days not in [days for days, label in API_TOKEN_EXPIRY_CHOICES]:
+        return JsonResponse({'errors': [str(_("Invalid expiry period."))]}, status=400)
+    expires_at = timezone.now() + timedelta(days=expiry_days) if expiry_days else None
+
+    rate_limit = request.POST.get('rate_limit', '').strip()
+    if rate_limit:
+        # checking the length first keeps int() away from huge inputs
+        if len(rate_limit) > len(str(API_TOKEN_MAX_RATE_LIMIT)) or not rate_limit.isdigit():
+            rate_limit = 0
+        rate_limit = int(rate_limit)
+        max_rate_limit = getattr(settings, 'API_TOKEN_DEFAULT_RATE_LIMIT', None) or API_TOKEN_MAX_RATE_LIMIT
+        if not 1 <= rate_limit <= max_rate_limit:
+            return JsonResponse({'errors': [str(_("The rate limit must be a number from 1 to %(limit)s requests per hour.")
+                                                % {'limit': max_rate_limit})]}, status=400)
+    else:
+        rate_limit = None
+
+    read_only = request.POST.get('read_only') in ['on', 'true', '1']
+
+    signbank_token, new_token = create_api_token(request.user, name=name, expires_at=expires_at,
+                                                 rate_limit=rate_limit, read_only=read_only)
+    return JsonResponse({'new_token': new_token, 'token_id': signbank_token.id})
+
+
+@login_required
+@require_POST
+def delete_api_token(request, token_id):
+    """Only the user's own tokens can be deleted"""
+    deleted, _deleted_per_model = SignbankAPIToken.objects.filter(pk=token_id, signbank_user=request.user).delete()
+    if deleted:
+        messages.add_message(request, messages.INFO, _("The API token has been deleted."))
+    else:
+        messages.add_message(request, messages.ERROR, _("The API token could not be found."))
+    return HttpResponseRedirect(reverse('registration:user_profile'))
