@@ -116,7 +116,13 @@
     <div class="nav navbar-left" style="height: 20px;box-sizing:content-box;">
         {% if user.is_authenticated %}
             <div class='navbar-text navbar-text-light'>
-                <a id="username_link" href="{% url 'logout' %}">{% trans "Logout" %} ({{ user.first_name }} {{ user.last_name }})</a></div>
+                <form action="{% url 'logout' %}" method="post">
+                    {% csrf_token %}
+                    <button type="submit" name="your_name" value="your_value" class="btn-link" style="margin: 0px; border: 0px">
+                        {% trans "Logout" %} ({{ user.first_name }} {{ user.last_name }})
+                    </button>
+                </form>
+            </div>
         {% else %}
             <div class='navbar-text navbar-text-light'><a href="{{PREFIX_URL}}/accounts/login/">{% trans "Login" %}</a></div>
         {% endif %}

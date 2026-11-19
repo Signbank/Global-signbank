@@ -18,7 +18,7 @@ from django.dispatch import receiver
 from django.db.models.signals import post_save, pre_delete, m2m_changed
 from django.utils.translation import gettext_noop, gettext_lazy as _, gettext, activate
 from django.forms.models import model_to_dict
-from django.core.exceptions import ObjectDoesNotExist, MultipleObjectsReturned
+from django.core.exceptions import ObjectDoesNotExist, MultipleObjectsReturned, ValidationError
 from django.db import DatabaseError, IntegrityError
 from django.db.transaction import TransactionManagementError
 from django.core.files import File
@@ -47,6 +47,25 @@ def get_default_language_id():
     if language is not None:
         return language.id
     return None
+
+
+def get_default_annotationidglosstranslation(gloss):
+    if not gloss.lemma or not gloss.lemma.dataset:
+        return str(gloss.id)
+    dataset = gloss.lemma.dataset
+    language = dataset.default_language
+    if not language:
+        language = dataset.translation_languages.first()
+
+    annotationidglosstranslations = gloss.annotationidglosstranslation_set.all()
+
+    if not annotationidglosstranslations:
+        return str(gloss.id)
+
+    if annotationidglosstranslations.filter(language=language):
+        return annotationidglosstranslations.get(language=language).text
+
+    return annotationidglosstranslations.first().text
 
 
 class FieldChoiceForeignKey(models.ForeignKey):
@@ -204,7 +223,7 @@ class Keyword(models.Model):
     def __str__(self):
         return self.text
 
-    text = models.CharField(max_length=100, unique=True)
+    text = models.CharField(max_length=255, unique=True)
 
     class Meta:
         ordering = ['text']
@@ -965,7 +984,7 @@ class Phonology(MetaModelMixin, models.Model):
                                       verbose_name=_("Final Primary Location"),
                                       related_name="%(class)s_final_primary_location")
 
-    locVirtObj = models.CharField(_("Virtual Object"), blank=True, null=True, max_length=50)
+    locVirtObj = models.CharField(_("Virtual Object"), blank=True, null=True, max_length=200)
 
     locsecond = FieldChoiceForeignKey(FieldChoice, on_delete=models.SET_NULL, null=True, blank=True,
                                       limit_choices_to={'field': FieldChoice.LOCATION},
@@ -1079,9 +1098,9 @@ class Phonology(MetaModelMixin, models.Model):
 
     phonOth = models.TextField(_("Phonology Other"), null=True, blank=True)
 
-    mouthG = models.CharField(_("Mouth Gesture"), max_length=50, blank=True)
-    mouthing = models.CharField(_("Mouthing"), max_length=50, blank=True)
-    phonetVar = models.CharField(_("Phonetic Variation"), max_length=50, blank=True)
+    mouthG = models.CharField(_("Mouth Gesture"), max_length=255, blank=True)
+    mouthing = models.CharField(_("Mouthing"), max_length=255, blank=True)
+    phonetVar = models.CharField(_("Phonetic Variation"), max_length=255, blank=True)
 
     locPrimLH = FieldChoiceForeignKey(FieldChoice, on_delete=models.SET_NULL, null=True, blank=True,
                                           limit_choices_to={'field': FieldChoice.LOCATION},
@@ -1328,7 +1347,7 @@ class Gloss(Phonology):
     bslgloss = models.CharField(_("BSL gloss"), max_length=50, blank=True)
     bslloantf = models.BooleanField(_("BSL loan sign"), null=True, blank=True)
 
-    useInstr = models.CharField(_("Annotation instructions"), max_length=50, blank=True)
+    useInstr = models.CharField(_("Annotation instructions"), max_length=255, blank=True)
     rmrks = models.CharField(_("Remarks"), max_length=50, blank=True)
 
     ########
@@ -1409,7 +1428,7 @@ class Gloss(Phonology):
 
     # Semantic fields
 
-    iconImg = models.CharField(_("Iconic Image"), max_length=50, blank=True)
+    iconImg = models.CharField(_("Iconic Image"), max_length=200, blank=True)
 
     iconType = FieldChoiceForeignKey(FieldChoice, on_delete=models.SET_NULL, null=True,
                                           limit_choices_to={'field': FieldChoice.ICONICITY},
@@ -1448,7 +1467,7 @@ class Gloss(Phonology):
                                           verbose_name=_("Valence"),
                                            related_name="valence")
 
-    concConcSet = models.CharField(_("Concepticon Concept Set"), null=True, blank=True, max_length=300)
+    concConcSet = models.CharField(_("Concepticon Concept Set"), null=True, blank=True, max_length=500)
 
     # Frequency fields
     tokNo = models.IntegerField(_("Number of Occurrences"), null=True, blank=True)
@@ -1457,6 +1476,8 @@ class Gloss(Phonology):
     creationDate = models.DateField(_('Creation date'), default=datetime(2015, 1, 1))
     lastUpdated = models.DateTimeField(_('Last updated'), auto_now=True)
     creator = models.ManyToManyField(User)
+    trigger = models.TextField(_("Trigger"), null=True, blank=True)
+
     alternative_id = models.CharField(max_length=50, null=True, blank=True)
 
     @property
@@ -1568,13 +1589,11 @@ class Gloss(Phonology):
         return ", ".join([str(sl.name) for sl in self.signlanguage.all()])
 
     def get_morpheme_display(self):
-        from signbank.tools import get_default_annotationidglosstranslation
         simultaneous = self.simultaneous_morphology.filter(parent_gloss__archived__exact=False)
         return ", ".join([get_default_annotationidglosstranslation(sim_morph.morpheme)
                           + ':' + (sim_morph.role if sim_morph.role else '-') for sim_morph in simultaneous])
 
     def get_blendmorphology_display(self):
-        from signbank.tools import get_default_annotationidglosstranslation
         ble_morphemes = [(get_default_annotationidglosstranslation(m.glosses), m.role)
                          for m in self.blend_morphology.filter(parent_gloss__archived__exact=False,
                                                                glosses__archived__exact=False)]
@@ -1591,7 +1610,6 @@ class Gloss(Phonology):
                                    for x in relations_to_signs])
 
     def get_hasComponentOfType_display(self):
-        from signbank.tools import get_default_annotationidglosstranslation
         morphdefs = self.parent_glosses.filter(parent_gloss__archived__exact=False,
                                                morpheme__archived__exact=False)
         return " + ".join([get_default_annotationidglosstranslation(mdef.morpheme) for mdef in morphdefs])
@@ -1607,7 +1625,6 @@ class Gloss(Phonology):
         # To instead show only Yes or No, use the commented out return instead
         # return _('Yes') if (self.blend_morphology.filter(parent_gloss__archived__exact=False,
         #                                                  glosses__archived__exact=False).count() > 0) else _('No')
-        from signbank.tools import get_default_annotationidglosstranslation
         return " + ".join([get_default_annotationidglosstranslation(bm.glosses)
                            for bm in self.blend_morphology.filter(parent_gloss__archived__exact=False,
                                                                   glosses__archived__exact=False)])
@@ -1623,7 +1640,6 @@ class Gloss(Phonology):
             return ""
         glosses_comprising = blend_morphology.parent_gloss.blend_morphology.filter(parent_gloss__archived__exact=False,
                                                                                    glosses__archived__exact=False)
-        from signbank.tools import get_default_annotationidglosstranslation
         display = (get_default_annotationidglosstranslation(blend_morphology.parent_gloss) + ': '
                    + " + ".join([get_default_annotationidglosstranslation(bm.glosses) for bm in glosses_comprising]))
         return display
@@ -2894,7 +2910,6 @@ except:
 
 @receiver(pre_delete, sender=Gloss, dispatch_uid='gloss_delete_signal')
 def save_info_about_deleted_gloss(sender, instance, using, **kwarsg):
-    from signbank.tools import get_default_annotationidglosstranslation
     default_annotationidglosstranslation = get_default_annotationidglosstranslation(instance)
 
     deleted_gloss = DeletedGlossOrMedia()
@@ -2953,7 +2968,6 @@ def save_info_about_archived_gloss(sender, instance, using, update_fields=[], **
             deleted_gloss_or_media.delete()
         return
 
-    from signbank.tools import get_default_annotationidglosstranslation
     default_annotationidglosstranslation = get_default_annotationidglosstranslation(instance)
     deleted_gloss = DeletedGlossOrMedia()
     deleted_gloss.item_type = 'gloss'
@@ -2968,11 +2982,11 @@ def save_info_about_archived_gloss(sender, instance, using, update_fields=[], **
 # We want to remember some stuff about deleted glosses
 class DeletedGlossOrMedia(models.Model):
     item_type = models.CharField(max_length=5, choices=(('gloss', 'gloss'), ('image', 'image'), ('video', 'video')))
-    idgloss = models.CharField("ID Gloss", max_length=50)
-    annotation_idgloss = models.CharField("Annotation ID Gloss", max_length=30)
+    idgloss = models.CharField("ID Gloss", max_length=400)
+    annotation_idgloss = models.CharField("Annotation ID Gloss", max_length=50)
     old_pk = models.IntegerField()
 
-    filename = models.CharField(max_length=100, blank=True)  # For media only
+    filename = models.CharField(max_length=500, blank=True)  # For media only
 
     deletion_date = models.DateField(default=date.today)
 
@@ -3361,7 +3375,7 @@ class Dataset(MetaModelMixin, models.Model):
     copyright = models.TextField(blank=True, help_text="Copyright. Content license."
                                                        "This is different than the software code license.")
     reference = models.TextField(blank=True, help_text="")
-    acronym = models.CharField(max_length=10, blank=True, help_text="Abbreviation for the dataset")
+    acronym = models.CharField(max_length=50, blank=True, help_text="Abbreviation for the dataset")
     owners = models.ManyToManyField(User, help_text="Users responsible for the dataset content.")
 
     exclude_choices = models.ManyToManyField('FieldChoice', help_text="Exclude these field choices", blank=True)
@@ -3370,12 +3384,6 @@ class Dataset(MetaModelMixin, models.Model):
                                             field_choice_category=FieldChoice.OTHERMEDIATYPE,
                                             verbose_name=_("Prominent Media Type"), related_name='prominent_media')
     use_provenance = models.BooleanField(default=False, help_text=_("Use provenance model"))
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-
-        # Keep original acronym for changes to GlossVideos
-        self._initial = model_to_dict(self, fields=['acronym', 'default_language'])
 
     def __str__(self):
         return self.acronym
@@ -3699,7 +3707,7 @@ class DerivationHistoryTranslation(models.Model):
 
 class AnnotationIdglossTranslation(models.Model):
     """An annotation ID Gloss"""
-    text = models.CharField(_("Annotation ID Gloss"), max_length=30, help_text="""
+    text = models.CharField(_("Annotation ID Gloss"), max_length=100, help_text="""
         This is the name of a sign used by annotators when glossing the corpus in
         an ELAN annotation file.""")
     gloss = models.ForeignKey("Gloss", on_delete=models.CASCADE)
@@ -3796,7 +3804,7 @@ class LemmaIdgloss(MetaModelMixin, models.Model):
 
 class LemmaIdglossTranslation(models.Model):
     """A Lemma ID Gloss"""
-    text = models.CharField(_("Lemma ID Gloss translation"), max_length=30, help_text="""The lemma translation text.""")
+    text = models.CharField(_("Lemma ID Gloss translation"), max_length=100, help_text="""The lemma translation text.""")
     lemma = models.ForeignKey("LemmaIdgloss", on_delete=models.CASCADE)
     language = models.ForeignKey("Language", on_delete=models.CASCADE)
 
@@ -3840,8 +3848,8 @@ class GlossRevision(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     time = models.DateTimeField()
     field_name = models.CharField(max_length=100)
-    old_value = models.CharField(blank=True, max_length=100)
-    new_value = models.CharField(blank=True, max_length=100)
+    old_value = models.CharField(blank=True, max_length=500)
+    new_value = models.CharField(blank=True, max_length=500)
 
     def __str__(self):
 
@@ -4285,7 +4293,7 @@ CATEGORY_MODELS_MAPPING = {
 
 
 # setting for the Gloss Edit template
-GLOSS_FIELDS_UPDATES = ['release_information', 'dialect', 'useInstr', 'wordClass',
+GLOSS_FIELDS_UPDATES = ['release_information', 'trigger', 'dialect', 'useInstr', 'wordClass',
                         'handedness', 'domhndsh', 'subhndsh', 'handCh',
                         'relatArtic', 'locprim', 'contType', 'movSh', 'movDir',
                         'repeat', 'altern',

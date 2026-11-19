@@ -15,7 +15,7 @@ from django.contrib.auth.decorators import permission_required
 from django.views.decorators.http import require_http_methods
 from django.db.models.fields import BooleanField, IntegerField, CharField, TextField
 from django.db.models import ForeignKey, Model
-from django.forms.utils import ValidationError
+from django.core.exceptions import ValidationError
 from django.db import DatabaseError, IntegrityError, transaction
 from django.utils.timezone import get_current_timezone
 from django.contrib import messages
@@ -46,7 +46,7 @@ from signbank.dictionary.models import (Dataset, SignLanguage, Dialect, Gloss, M
                                         FieldChoice, FieldChoiceForeignKey, OtherMedia,
                                         SemanticField, SemanticFieldTranslation, PHONOLOGY_FIELDS_UPDATES,
                                         DerivationHistory, AnnotatedSentence, AnnotatedSentenceTranslation,
-                                        ExampleSentence, ExampleSentenceTranslation,
+                                        ExampleSentence, ExampleSentenceTranslation, get_default_annotationidglosstranslation,
                                         Affiliation, AffiliatedUser, AffiliatedGloss, SearchHistory,
                                         GlossRevision, SenseExamplesentence, SimultaneousMorphologyDefinition,
                                         AnnotatedSentenceSource, AnnotatedSentenceContext, UserProfile, QueryParameter,
@@ -59,7 +59,7 @@ from signbank.dictionary.forms import (RelationForm, VariantsForm, RelationToFor
 from signbank.dictionary.translate_choice_list import machine_value_to_translated_human_value
 from signbank.dictionary.context_data import get_selected_datasets
 
-from signbank.tools import (gloss_from_identifier, get_default_annotationidglosstranslation,
+from signbank.tools import (gloss_from_identifier,
     copy_missing_lemmaidglosstranslation_from_annotationidglosstranslation, generate_tabbed_text_response,
                             update_boolean_checkbox, add_gloss_update_to_revision_history)
 from signbank.frequency import document_identifiers_from_paths, documents_paths_dictionary
@@ -1386,7 +1386,7 @@ def update_gloss(request, glossid):
     # field is a valid field
     # value is a valid value for field
 
-    fieldnames = FIELDS['main'] + FIELDS['phonology'] + FIELDS['semantics'] + ['inWeb', 'isNew', 'excludeFromEcv', 'release_information']
+    fieldnames = FIELDS['main'] + FIELDS['phonology'] + FIELDS['semantics'] + ['inWeb', 'isNew', 'excludeFromEcv', 'release_information', 'trigger']
     gloss_fields = [Gloss.get_field(fname) for fname in Gloss.get_field_names()]
     text_fields = [f.name for f in gloss_fields
                    if f.name in fieldnames and f.__class__.__name__ in ['CharField', 'TextField']]

@@ -4,7 +4,7 @@ from django.template.loader import render_to_string
 from django import template
 from django.template import Context, Template
 from django.template.base import VariableNode, NodeList
-from django.forms.utils import ValidationError
+from django.core.exceptions import ValidationError
 
 
 COMMUNICATION_TYPES = [('-', 'Type of Communication'),

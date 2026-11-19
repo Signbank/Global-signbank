@@ -753,7 +753,7 @@ $(document).ready(function() {
                 } else {
                     update[field_key] = field_values;
                 }
-            } else if (['release_information', 'useInstr'].includes(field)) {
+            } else if (['release_information', 'trigger', 'useInstr'].includes(field)) {
                 var field_lookup = '#'+field+'_text';
                 var field_key = $(field_lookup).attr("name");
                 var field_value = $(field_lookup).val();
