@@ -7,6 +7,8 @@ from django.db.models import Max
 
 def renumber_pks_semantic_field(apps, schema_editor):
     SemanticField = apps.get_model('dictionary', 'SemanticField')
+    SemanticFieldTranslation = apps.get_model('dictionary', 'SemanticFieldTranslation')
+    QueryParameterSemanticField = apps.get_model('dictionary', 'QueryParameterSemanticField')
 
     for sf in SemanticField.objects.all():
         sf.new_id = sf.machine_value
@@ -24,6 +26,9 @@ def renumber_pks_semantic_field(apps, schema_editor):
 
             setattr(semanticfield_zero, 'new_id', new_id)
             semanticfield_zero.save()
+
+            SemanticFieldTranslation.objects.filter(semField__machine_value=0).delete()
+            QueryParameterSemanticField.objects.filter(fieldValue__machine_value=0).update(fieldValue=None)
 
         except SemanticField.DoesNotExist:
             pass

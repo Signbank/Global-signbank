@@ -37,7 +37,7 @@ def renumber_pks_handshape(apps, schema_editor):
             PhonologicalVariation.objects.filter(final_domhndsh=handshape_zero).update(final_domhndsh=None)
             PhonologicalVariation.objects.filter(final_subhndsh=handshape_zero).update(final_subhndsh=None)
             QueryParameterHandshape.objects.filter(fieldValue_id=0).update(
-                fieldValue_id=new_id)
+                fieldValue=None)
 
         except Handshape.DoesNotExist:
             pass
