@@ -515,13 +515,12 @@ class HandshapeAdmin(TranslationAdmin):
 
     def has_delete_permission(self, request, obj=None):
         if not obj:
-            # print('ADMIN has_delete_permission obj is None')
             # just return False if there is no object, prevent arbitrary deletion of field choices
             return False
 
         machine_value = obj.__dict__.get('machine_value', 0)
-        if not machine_value:
-            print('ADMIN has_delete_permission: handshape ', obj.name, ' has an empty machine value')
+        if machine_value in [0, 1]:
+            return False
 
         # check if this is a duplicate, if so allow deletion
         handshapes_with_same_machine_value = Handshape.objects.filter(machine_value=machine_value).count()
@@ -1018,7 +1017,6 @@ class FieldChoiceAdmin(TranslationAdmin):
 
     def has_delete_permission(self, request, obj=None):
         if not obj:
-            # print('ADMIN has_delete_permission obj is None')
             # just return False if there is no object, prevent arbitrary deletion of field choices
             return False
 
