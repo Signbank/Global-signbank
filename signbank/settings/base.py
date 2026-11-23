@@ -63,7 +63,8 @@ MIDDLEWARE = (
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'signbank.pages.middleware.PageFallbackMiddleware',
-    'django.middleware.common.CommonMiddleware'
+    'django.middleware.common.CommonMiddleware',
+    'easyaudit.middleware.easyaudit.EasyAuditMiddleware',
 )
 
 CORS_ORIGIN_ALLOW_ALL = True
@@ -128,6 +129,7 @@ INSTALLED_APPS = (
     'guardian',
     'bootstrap3',
     'django_summernote',
+    'easyaudit',
     'signbank.dictionary',
     'signbank.feedback',
     #'signbank.registration',

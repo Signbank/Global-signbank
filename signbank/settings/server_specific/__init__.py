@@ -18,7 +18,10 @@ ECV_FOLDER = WRITABLE_FOLDER+ECV_FOLDER
 ECV_FILE = ECV_FOLDER+ECV_FILE
 
 if not SWITCH_TO_MYSQL:
-    DATABASES['default']['NAME'] = WRITABLE_FOLDER + DATABASES['default']['NAME']
-    DATABASES['default']['TEST']['NAME'] = WRITABLE_FOLDER + DATABASES['default']['TEST']['NAME']
+    for database in DATABASES.values():
+        if database.get('NAME'):
+            database['NAME'] = WRITABLE_FOLDER + database['NAME']
+        if database.get('TEST') and database['TEST'].get('NAME'):
+            database['TEST']['NAME'] = WRITABLE_FOLDER + database['TEST']['NAME']
 
 WSGI_FILE = ROOT+WSGI_FILE
