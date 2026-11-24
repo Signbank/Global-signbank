@@ -93,3 +93,10 @@ if SWITCH_TO_MYSQL:
             },
         },
     }
+    MIGRATION_MODULES = {
+        'dictionary': 'mysql_migrations.dictionary',
+        'feedback': 'mysql_migrations.feedback',
+        'pages': 'mysql_migrations.pages',
+        'video': 'mysql_migrations.video',
+        'tagging': 'mysql_migrations.tagging'
+    }
