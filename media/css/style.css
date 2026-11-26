@@ -27,8 +27,8 @@ html,
 body {
   height: auto;
   width: 100%;
-  margin: 0px;
-  padding: 0px;
+  margin: 0;
+  padding: 0;
   background-color: white;
   color: black;
   /* The html and body elements cannot have any padding or margin. */
@@ -45,8 +45,8 @@ body {
   /* Negative indent footer by its height */
   margin: auto auto -45px auto;
   /* Pad bottom by footer height */
-  padding: auto 0 45px auto;
-  position: auto;
+  padding: 0 0 45px 0;
+  position: static;
   /* Pad bottom to put space between footer and this wraper */
 }
 
@@ -65,7 +65,7 @@ body {
     width: auto;
     margin-right: 9px;
     margin-bottom: 15px;
-    margin-top: 0px;
+    margin-top: 0;
     background-color: inherit;
     color: inherit;
 }
@@ -78,9 +78,9 @@ body {
 #signinfo {
     background-color: inherit;
     color: inherit;
-    margin-bottom: 0px;
+    margin-bottom: 0;
     margin-top: 10px;
-    padding-left: 0px;
+    padding-left: 0;
 }
 
 #signinfo .navbar-text {
@@ -93,7 +93,7 @@ body {
 
 
 #signs { 
-   margin-right: 0em;
+   margin-right: 0;
    text-align: left;
    float: left; 
    width: 338px;  /* to match rh edge of video container */
@@ -101,7 +101,7 @@ body {
 
 
 #definitionblock {
-   margin-top: 0px;
+   margin-top: 0;
    background-color: inherit;
    color: inherit;
 }
@@ -217,7 +217,7 @@ body {
 
 #adminsearch #searchfields td {
     width: 33%;
-    border-top: 0px;
+    border-top: 0;
 }
 
 #adminsearch .table
@@ -227,7 +227,7 @@ body {
 
 #adminsearch .table-condensed .table-condensed
 {
-	margin-bottom: 0px;
+	margin-bottom: 0;
 }
 
 #adminsearch #searchpanels {
@@ -310,7 +310,7 @@ body {
 #fingerspellright {
    width: 470px; /* 847 - 320 - 20 - fiddle factor */
    float: left;
-   padding-left: 20px;or
+   padding-left: 20px;
 }
 
 #fstable td {
@@ -408,7 +408,7 @@ body {
 
 
 
-// typeahead dropdown styling
+/* typeahead dropdown styling*/
 
 .typeahead,
 .tt-query,
@@ -455,9 +455,9 @@ body {
   -webkit-border-radius: 8px;
      -moz-border-radius: 8px;
           border-radius: 8px;
-  -webkit-box-shadow: 0 5px 10px rgba(0,0,0,.2);
-     -moz-box-shadow: 0 5px 10px rgba(0,0,0,.2);
-          box-shadow: 0 5px 10px rgba(0,0,0,.2);
+  -webkit-box-shadow: 0 5px 10px rgba(0,0,0,0.2);
+     -moz-box-shadow: 0 5px 10px rgba(0,0,0,0.2);
+          box-shadow: 0 5px 10px rgba(0,0,0,0.2);
 }
 
 .tt-suggestion {
@@ -484,7 +484,7 @@ body {
 {
   height:115px;
   margin: auto;
-  padding: 0px;
+  padding: 0;
   width: 115px;
   object-fit: cover;
 }
@@ -493,8 +493,8 @@ body {
 {
   height:115px;
   margin: auto;
-  padding: 0px;
-  max-width: auto;
+  padding: 0;
+  max-width: 200px;
   object-fit: cover;
 }
 
@@ -515,8 +515,8 @@ body {
 
 .search-results-collapsable
 {
-    border: 0px;
-    box-shadow: 0;
+    border: 0;
+    box-shadow: none;
 }
 
 .formbutton
@@ -583,7 +583,7 @@ tr.rotated th {
     font-weight: 800;
 }
 
-//Tabs taken from a new version of bootstrap
+/*Tabs taken from a new version of bootstrap*/
 .nav-tabs
 {
     border-bottom: 1px solid #dee2e6;
@@ -597,10 +597,6 @@ tr.rotated th {
 .nav-tabs .nav-link
 {
     border: 1px solid transparent;
-        border-top-color: transparent;
-        border-right-color: transparent;
-        border-bottom-color: transparent;
-        border-left-color: transparent;
     border-top-left-radius: .25rem;
     border-top-right-radius: .25rem;
 }
@@ -643,7 +639,7 @@ tr.rotated th {
     text-align: center;
     text-decoration: none;
     line-height: 20px;
-    margin: 0px 10px 4px 10px;
+    margin: 0 10px 4px 10px;
 }
 
 .ribbon:before, .ribbon:after
@@ -651,7 +647,7 @@ tr.rotated th {
     position: absolute;
     content:'';
     width: 100%;
-    left: 0px;
+    left: 0;
     height: 10px;
     border-width: 2px;
     border-style: solid;
@@ -713,7 +709,7 @@ tr.rotated th {
 .exclude-field-choices th
 {
     position: sticky;
-    top: 0px;
+    top: 0;
     background-color: white;
 }
 
@@ -823,8 +819,12 @@ form {
     color: inherit;
 }
 
-@body-bg {
-    background-color: inherit;
+:root {
+    --body-bg: #ffffff;
+}
+
+body {
+    background-color: var(--body-bg);
     color: inherit;
 }
 
@@ -834,16 +834,11 @@ form {
 }
 
 @media screen {
-  background: inherit;
-  background-color: inherit;
-  color: inherit;
-  border-top-color: inherit;
-}
-
-@media screen body {
-  background: inherit;
-  background-color: inherit;
-  color: inherit;
+    body {
+        background: inherit;
+        color: inherit;
+        border-top-color: inherit;
+    }
 }
 /*
 .table > thead > tr > td {
@@ -977,7 +972,7 @@ input {
 }
 
 .collapse-light {
-    border: solid 1px inherit !important;
+    border: solid 1px currentColor !important;
     margin: 0 0 0 0;
     padding: 0 0 0 0;
 }
@@ -985,7 +980,7 @@ input {
     border: solid 1px var(--well-background) !important;
 }
 .well-light {
-    border: solid 1px inherit !important;
+    border: solid 1px currentColor !important;
 }
 /* .nav-bar {
     border: solid 1px purple !important;
@@ -999,7 +994,7 @@ input {
 /* .panel {
     background-color: inherit;
     border: solid 2px purple;
-    box-shadow: purple 0px 1px 1px 0px;
+    box-shadow: purple 0 1px 1px 0;
 } */
 /*
 .tr-dark > td {
@@ -1140,7 +1135,7 @@ input {
 .interface-language-light > input {
     background-color: inherit !important;
     color: inherit !important;
-    border: solid 1px inherit !important;
+    border: solid 1px currentColor !important;
 }
 .interface-language-dark {
     background-color: var(--nav-highlight) !important;
@@ -1153,7 +1148,7 @@ input {
     border: solid 1px var(--dark-label-background) !important;
 }
 .input-group-dark > input {
-    background-color: var(--text-container-dark-input-field) !important;
+    background-color: var(--text-container-dark-input-fill) !important;
     color: white !important;
     border: solid 1px var(--text-container-dark-input-border) !important;
 }

@@ -195,7 +195,7 @@ legend
 .invisible_button
 {
     border: none;
-    background-color: rgba(0,0,0,0%);
+    background-color: rgba(0,0,0,0);
     box-shadow: none;
     margin-left: -4px;
     outline: none;
