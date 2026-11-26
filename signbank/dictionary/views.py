@@ -2173,8 +2173,9 @@ def package(request, language_code='en'):
 
     datasets_user_can_view = get_objects_for_user(request.user, ['view_dataset'],
                                                   Dataset, accept_global_perms=True, any_perm=True)
-    if dataset not in datasets_user_can_view or not dataset.is_public:
-        return HttpResponseForbidden(gettext('No permission to view dataset.'))
+
+    if dataset not in datasets_user_can_view:
+        return HttpResponseBadRequest(gettext('No permission to view dataset.'))
 
     if 'extended_fields' in request.GET and request.GET['extended_fields'] in [1, True, 'true', 'True']:
         extended_fields = True
@@ -2185,15 +2186,11 @@ def package(request, language_code='en'):
 
         archive_file_name = write_package_file_for_dataset(language_code, dataset, extended_fields=extended_fields)
         archive_file_path = SIGNBANK_PACKAGES_FOLDER + archive_file_name
-        if not os.path.exists(archive_file_path):
-            return JsonResponse({'message': gettext('File not found.'),
-                                 'status': 'error',
-                                 'status_code': 404})
 
-        return JsonResponse({'message': gettext('File not found.'),
-                             'status': 'error',
-                             'status_code': 404})
-
+        response = HttpResponse(FileWrapper(open(archive_file_path, 'rb')), content_type='application/zip')
+        response['Content-Disposition'] = 'attachment; filename=' + archive_file_name
+        response.set_cookie("fileDownload", "true", max_age=20)
+        return response
 
     timestamp_part_of_file_name = str(int(time.time()))
     first_part_of_file_name = 'signbank_patch'
@@ -2250,6 +2247,9 @@ def write_package_file_for_dataset(language_code, dataset, extended_fields=False
     timestamp_part_of_file_name = today_timestamp.strftime("%Y-%m-%d")
     archive_file_name = '.'.join([first_part_of_file_name, timestamp_part_of_file_name, 'zip'])
     archive_file_path = SIGNBANK_PACKAGES_FOLDER + archive_file_name
+    if os.path.exists(archive_file_path):
+        return archive_file_name
+
     video_urls = {os.path.splitext(os.path.basename(gv.videofile.name))[0]:
                       f'{URL}{PREFIX_URL}/dictionary/protected_media/{gv.videofile.name}'
                   for gv in GlossVideo.objects.filter(gloss__in=available_glosses, glossvideonme=None, glossvideoperspective=None, version=0)
