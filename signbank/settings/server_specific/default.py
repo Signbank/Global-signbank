@@ -43,7 +43,7 @@ DATABASES = {'default':
 METADATA_LOCATION = 'metadata.csv'
 
 # Relative to WRITABLE_FOLDER, or an absolute path to the export from migration 0110.
-MYSQL_EXPORT_DIRECTORY = 'database/mysql_export'
+MYSQL_EXPORT_DIRECTORY = ROOT + WRITABLE_FOLDER + '/database/mysql_export'
 
 # Video software to use to get the middle frame
 FFMPEG_PROGRAM = "ffmpeg"
