@@ -3,6 +3,8 @@
 Stop writes and back up SQLite before exporting. Set SWITCH_TO_MYSQL=True,
 configure the MySQL connection and MYSQL_EXPORT_DIRECTORY, then run migrate.
 The export is retained for recovery; this data migration is irreversible.
+Progress is flushed to stdout per fixture and every 1,000 saved objects.
+Saved objects remain uncommitted until validation succeeds.
 """
 
 from collections import Counter
@@ -66,6 +68,7 @@ def import_fixtures(apps, connection, directory):
     alias = connection.alias
     counts = Counter()
     with connection.constraint_checks_disabled(), transaction.atomic(using=alias):
+        print('\nMySQL import: checking target tables are empty.', flush=True)
         for model in all_models:
             if model._meta.label_lower not in BOOTSTRAP_MODELS:
                 if model._base_manager.using(alias).exists():
@@ -74,19 +77,38 @@ def import_fixtures(apps, connection, directory):
                         'Use a fresh MySQL database; existing application data is not overwritten.'
                     )
 
+        print('MySQL import: clearing bootstrap data.', flush=True)
         for label in BOOTSTRAP_MODELS:
             apps.get_model(label)._base_manager.using(alias).all().delete()
 
-        for filename in FIXTURES:
+        total = 0
+        for index, filename in enumerate(FIXTURES, start=1):
+            print(f'MySQL import: [{index}/{len(FIXTURES)}] loading {filename}.', flush=True)
+            fixture_count = 0
             with (directory / filename).open(encoding='utf-8') as stream:
                 for item in HistoricalDeserializer(stream, using=alias):
                     item.save(using=alias)
                     counts[item.object._meta.label_lower] += 1
+                    fixture_count += 1
+                    total += 1
+                    if fixture_count % 1000 == 0:
+                        print(
+                            f'MySQL import: {filename}: {fixture_count} objects saved '
+                            f'({total} total; not yet committed).',
+                            flush=True,
+                        )
+            print(
+                f'MySQL import: finished {filename}: {fixture_count} objects saved '
+                f'({total} total; not yet committed).',
+                flush=True,
+            )
 
         # MySQL does not check existing rows when FOREIGN_KEY_CHECKS is re-enabled.
+        print('MySQL import: validating foreign-key constraints.', flush=True)
         connection.check_constraints(
             table_names=[model._meta.db_table for model in all_models]
         )
+        print('MySQL import: validating model counts.', flush=True)
         for model in models:
             expected = counts[model._meta.label_lower]
             actual = model._base_manager.using(alias).count()
@@ -95,6 +117,7 @@ def import_fixtures(apps, connection, directory):
                     f'Import count mismatch for {model._meta.label}: '
                     f'expected {expected}, found {actual}.'
                 )
+        print('MySQL import: resetting sequences before commit.', flush=True)
         with connection.cursor() as cursor:
             for sql in connection.ops.sequence_reset_sql(no_style(), models):
                 cursor.execute(sql)
@@ -142,7 +165,8 @@ def import_mysql_data(apps, schema_editor):
     print(
         f'\nMySQL migration complete: imported and validated {count} objects '
         f'from {directory}. Foreign-key checks are enabled. '
-        'The SQLite database and exported fixtures have been retained.'
+        'The SQLite database and exported fixtures have been retained.',
+        flush=True,
     )
 
 
