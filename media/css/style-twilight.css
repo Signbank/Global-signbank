@@ -28,16 +28,16 @@
     --table-dark-color: rgb(150, 150, 150);
     --table-dark-border: rgb(34, 34, 34);
     --dark-label-background: rgb(40, 40, 40);
-    --search-results-color: hsl(0, 0, 40%);
-    --search-results-dark: hsl(0, 0, 90%);
+    --search-results-color: hsl(0, 0%, 40%);
+    --search-results-dark: hsl(0, 0%, 90%);
     --search-results-luminosity: 0.35%;
     --search-results-luminosity-hover: 0.7%;
 }
 html,
 body {
   height: 100%;
-  margin: 0px;
-  padding: 0px;
+  margin: 0;
+  padding: 0;
   background-color: white;
   color: black;
   /* The html and body elements cannot have any padding or margin. */
@@ -53,9 +53,9 @@ body {
   /* Negative indent footer by its height */
   margin: auto auto -45px auto;
   /* Pad bottom by footer height */
-  padding: auto 0 45px auto;
-  position: auto;
-  /* Pad bottom to put space between footer and this wraper */
+  padding: 0 0 45px 0;
+  position: static;
+  /* Pad bottom to put space between footer and this wrapper */
 }
 
 .footer {
@@ -73,7 +73,7 @@ body {
     width: 100%;
     margin-right: 9px;
     margin-bottom: 15px;
-    margin-top: 0px;
+    margin-top: 0;
     background-color: inherit;
     color: inherit;
 }
@@ -86,9 +86,9 @@ body {
 #signinfo {
     background-color: inherit;
     color: inherit;
-    margin-bottom: 0px;
+    margin-bottom: 0;
     margin-top: 10px;
-    padding-left: 0px;
+    padding-left: 0;
 }
 
 #signinfo .navbar-text {
@@ -101,7 +101,7 @@ body {
 
 
 #signs {
-   margin-right: 0em;
+   margin-right: 0;
    text-align: left;
    float: left;
    width: 338px;  /* to match rh edge of video container */
@@ -109,7 +109,7 @@ body {
 
 
 #definitionblock {
-   margin-top: 0px;
+   margin-top: 0;
    background-color: inherit;
    color: inherit;
 }
@@ -237,7 +237,7 @@ table {
 
 #adminsearch #searchfields td {
     width: 33%;
-    border-top: 0px;
+    border-top: 0;
 }
 
 #adminsearch .table
@@ -247,7 +247,7 @@ table {
 
 #adminsearch .table-condensed .table-condensed
 {
-	margin-bottom: 0px;
+	margin-bottom: 0;
 }
 
 #adminsearch #searchpanels {
@@ -515,7 +515,7 @@ table {
 {
   height:115px;
   margin: auto;
-  padding: 0px;
+  padding: 0;
   width: 115px;
   object-fit: cover;
 }
@@ -524,8 +524,8 @@ table {
 {
   height:115px;
   margin: auto;
-  padding: 0px;
-  max-width: auto;
+  padding: 0;
+  max-width: 200px;
   object-fit: cover;
 }
 
@@ -546,8 +546,8 @@ table {
 
 .search-results-collapsable
 {
-    border: 0px;
-    box-shadow: 0;
+    border: 0;
+    box-shadow: none;
 }
 
 .formbutton
@@ -627,10 +627,6 @@ tr.rotated th {
 .nav-tabs .nav-link
 {
     border: 1px solid transparent;
-        border-top-color: transparent;
-        border-right-color: transparent;
-        border-bottom-color: transparent;
-        border-left-color: transparent;
     border-top-left-radius: .25rem;
     border-top-right-radius: .25rem;
 }
@@ -674,7 +670,7 @@ tr.rotated th {
     text-align: center;
     text-decoration: none;
     line-height: 20px;
-    margin: 0px 10px 4px 10px;
+    margin: 0 10px 4px 10px;
 }
 
 .ribbon:before, .ribbon:after
@@ -744,7 +740,7 @@ tr.rotated th {
 .exclude-field-choices th
 {
     position: sticky;
-    top: 0px;
+    top: 0;
     background-color: white;
 }
 
@@ -861,18 +857,26 @@ table .table-bordered {
     border: 1px solid black;
 }
 
-@body-bg {
-    background-color: inherit;
-    color: inherit;
+:root {
+    --body-bg: #ffffff;
+}
+
+body {
+    background-color: var(--body-bg);
+    color: currentColor;
 }
 
 .dark-mode {
   background-color: var(--dark-mode-very-dark) !important;
   color: var(--text-input-text) !important;
 }
-@media screen body {
-  background: inherit;
-  color: inherit;
+
+@media screen {
+    body {
+        background: inherit;
+        color: inherit;
+        border-top-color: inherit;
+    }
 }
 
 option {
@@ -911,7 +915,7 @@ input {
     color: inherit;
 }
 
-.modal fade {
+.modal.fade {
     background-color: inherit;
     color: inherit;
 }
@@ -997,16 +1001,16 @@ input {
     border-bottom-color: var(--well-background);
 }
 .collapse-light {
-    border: solid 1px inherit !important;
+    border: solid 1px currentColor !important;
     margin: 0 0 0 0;
     padding: 0 0 0 0;
 }
 .well-dark {
     background-color: var(--well-background) !important;
-    border: solid 1px inherit !important;
+    border: solid 1px currentColor !important;
 }
 .well-light {
-    border: solid 1px inherit !important;
+    border: solid 1px currentColor !important;
 }
 /* .nav-bar {
     border: solid 1px purple !important;
@@ -1203,7 +1207,7 @@ input:focus, input.form-control:focus {
     background-color: var(--text-container-dark-input-fill) !important;
     color: white !important;
     border: solid 1px var(--text-container-dark-input-border) !important;
-    box-shadow: var(--text-container-dark-input-fill) 0px 1px 1px 0px;
+    box-shadow: var(--text-container-dark-input-fill) 0 1px 1px 0;
 }
 .query-toggles {
     border-left: 2px solid grey;
@@ -1316,7 +1320,7 @@ input:focus, input.form-control:focus {
     background-color: var(--typeahead-background) !important;
     border-color: var(--typeahead-color) !important;
     color: var(--typeahead-color) !important;
-    border: var(--typeahead-color) ! !important;
+    border: var(--typeahead-color) !important;
 }
 .morphtypeahead-dark {
     background-color: var(--typeahead-background) !important;
