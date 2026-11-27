@@ -130,11 +130,10 @@ INSTALLED_APPS = (
     'django_summernote',
     'signbank.dictionary',
     'signbank.feedback',
-    #'signbank.registration',
     'signbank.pages',
-    'signbank.attachments',
     'signbank.communication',
-    'signbank.video'
+    'signbank.video',
+    'mysql_migrations'
     # 'debug_toolbar',
     # 'video_encoding'
 )

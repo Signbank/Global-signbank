@@ -76,8 +76,27 @@ TMP_DIR = '/var/www/writable/tmp'
 SWITCH_TO_MYSQL = False 
 
 if SWITCH_TO_MYSQL:
-    DATABASES = {'default': {
-        'ENGINE': 'django.db.backends.mysql',
-        'OPTIONS': 'mysql.conf',
-        'TEST': {'NAME':'sigbank_test'}
-    }}
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.mysql',
+            'NAME': 'signbank_mysql',
+            'USER': 'signbank',
+            'PASSWORD': 'signbank',
+            'HOST': '127.0.0.1',
+            'PORT': '3306',
+            'OPTIONS': {
+                'charset': 'utf8mb4',
+                'init_command': (
+                    "SET sql_mode='STRICT_TRANS_TABLES,"
+                    "NO_AUTO_VALUE_ON_ZERO'"
+                ),
+            },
+        },
+    }
+    MIGRATION_MODULES = {
+        'dictionary': 'mysql_migrations.dictionary',
+        'feedback': 'mysql_migrations.feedback',
+        'pages': 'mysql_migrations.pages',
+        'video': 'mysql_migrations.video',
+        'tagging': 'mysql_migrations.tagging'
+    }
